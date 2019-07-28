@@ -1,5 +1,4 @@
 const fs = require('fs');
-const execFileSync = require('child_process').execFileSync;
 const config = require('./config.js');
 const process = require('process');
 
@@ -29,6 +28,12 @@ function readFile(filePath, encoding, callback) {
     }
 }
 
+function print(s, backline = true) {
+    if (typeof s === 'string' && s.length > 0) {
+        process.stdout.write(`${s}${backline === true ? '\n' : ''}`);
+    }
+}
+
 function writeToFile(filePath, content) {
     fs.writeFileSync(filePath, content, 'utf8');
 }
@@ -46,7 +51,7 @@ function add_warning(output) {
 }
 
 function add_log(output, level) {
-    let disp = console.log;
+    let disp = console.log; // eslint-disable-line
     if (level === config.LOG_ERROR) {
         disp = console.error;
     } else if (level === config.LOG_WARNING) {
@@ -66,4 +71,5 @@ module.exports = {
     add_warning: add_warning,
     add_log: add_log,
     writeObjectToFile: writeObjectToFile,
+    print: print,
 };

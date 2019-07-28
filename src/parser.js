@@ -1,22 +1,22 @@
-var os = require('os');
+const os = require('os');
 const utils = require('./utils.js');
 
 
 function getString(content) {
     if (content.length < 1) {
-        return {"error": "No string received"};
+        return {'error': 'No string received'};
     }
-    var stop = content[0];
+    const stop = content[0];
 
-    if (stop !== '"' && stop !== "'") {
-        return {"error": `Expected \`'\` or \`"\` character, found \`${content[0]}\``};
+    if (stop !== '"' && stop !== '\'') {
+        return {'error': `Expected \`'\` or \`"\` character, found \`${content[0]}\``};
     }
-    for (var i = 1; i < content.length; ++i) {
+    for (let i = 1; i < content.length; ++i) {
         if (content[i] === stop && content[i - 1] !== '\\') {
-            return {"content": content.substring(1, i)};
+            return {'content': content.substring(1, i)};
         }
     }
-    return {"error": "Missing termination character"};
+    return {'error': 'Missing termination character'};
 }
 
 // Possible incomes:
@@ -26,20 +26,22 @@ function getString(content) {
 function parseClick(line) {
     if (line.startsWith('(')) {
         if (!line.endsWith(')')) {
-            return {"error": "Invalid syntax: expected position to end with ')'..."};
+            return {'error': 'Invalid syntax: expected position to end with \')\'...'};
         }
         if (line.match(/\([0-9]+,[ ]*[0-9]+\)/g) === null) {
-            return {"error": "Invalid syntax: expected \"([number], [number])\"..."};
+            return {'error': 'Invalid syntax: expected "([number], [number])"...'};
         }
-        var [x, y] = line.match(/\d+/g).map(function(f) { return parseInt(f) });
-        return {"instructions": [
+        const [x, y] = line.match(/\d+/g).map(function(f) {
+            return parseInt(f);
+        });
+        return {'instructions': [
             `page.mouse.click(${x},${y})`,
         ]};
     }
-    if (line.match(/([#|\.]?)([\w|:|\s|\.]+)/g) === null) {
-        return {"error": "Invalid CSS selector"};
+    if (line.match(/([#|\.]?)([\w|:|\s|\.]+)/g) === null) { // eslint-disable-line
+        return {'error': 'Invalid CSS selector'};
     }
-    return {"instructions": [
+    return {'instructions': [
         `page.click("${line}")`,
     ]};
 }
@@ -50,27 +52,27 @@ function parseClick(line) {
 // * CSS selector (for example: #elementID)
 function parseWaitFor(line) {
     if (line.match(/[0-9]+/) !== null) {
-        return {"instructions": [
+        return {'instructions': [
             `await page.waitFor(${parseInt(line)})`,
         ]};
-    } else if (line.match(/([#|\.]?)([\w|:|\s|\.]+)/g) !== null) {
-        return {"instructions": [
+    } else if (line.match(/([#|\.]?)([\w|:|\s|\.]+)/g) !== null) { // eslint-disable-line
+        return {'instructions': [
             `await page.waitFor("${line}")`,
         ]};
     }
-    return {"error": "Expected a number or a CSS selector"};
+    return {'error': 'Expected a number or a CSS selector'};
 }
 
 // Possible income:
 //
 // * CSS selector (for example: #elementID)
 function parseFocus(line) {
-    if (line.match(/([#|\.]?)([\w|:|\s|\.]+)/g) !== null) {
-        return {"instructions": [
+    if (line.match(/([#|\.]?)([\w|:|\s|\.]+)/g) !== null) { // eslint-disable-line
+        return {'instructions': [
             `page.focus("${line}")`,
         ]};
     }
-    return {"error": "Expected a CSS selector"};
+    return {'error': 'Expected a CSS selector'};
 }
 
 // Possible income (you have to put the double quotes!):
@@ -78,23 +80,23 @@ function parseFocus(line) {
 // * [CSS selector (for example: #elementID)] "text"
 // * "text" (in here, it'll write into the current focused element)
 function parseWrite(line) {
-    if (line.startsWith("\"") || line.startsWith("'")) { // current focused element
-        var x = getString(line);
+    if (line.startsWith('"') || line.startsWith('\'')) { // current focused element
+        const x = getString(line);
         if (x.error !== undefined) {
             return x;
         }
-        return {"instructions": [
+        return {'instructions': [
             `page.keyboard.type("${x.content}")`,
         ]};
-    } else if (line.indexOf("\"") === -1 && line.indexOf("'") === -1) {
-        return {"error": "Missing string. Requires '\"'"};
+    } else if (line.indexOf('"') === -1 && line.indexOf('\'') === -1) {
+        return {'error': 'Missing string. Requires \'"\''};
     }
-    var elem = line.split(' ')[0];
-    var text = getString(line.substr(elem.length + 1).trim());
+    const elem = line.split(' ')[0];
+    const text = getString(line.substr(elem.length + 1).trim());
     if (text.error !== undefined) {
-        return x;
+        return text;
     }
-    return {"instructions": [
+    return {'instructions': [
         `page.focus("${elem}")`,
         `page.keyboard.type("${text.content}")`,
     ]};
@@ -107,25 +109,27 @@ function parseWrite(line) {
 function parseMoveCursorTo(line) {
     if (line.startsWith('(')) {
         if (!line.endsWith(')')) {
-            return {"error": "Invalid syntax: expected position to end with ')'..."};
+            return {'error': 'Invalid syntax: expected position to end with \')\'...'};
         }
         if (line.match(/\([0-9]+,[ ]*[0-9]+\)/g) === null) {
-            return {"error": "Invalid syntax: expected \"([number], [number])\"..."};
+            return {'error': 'Invalid syntax: expected "([number], [number])"...'};
         }
-        var [x, y] = line.match(/\d+/g).map(function(f) { return parseInt(f) });
-        return {"instructions": [
+        const [x, y] = line.match(/\d+/g).map(function(f) {
+            return parseInt(f);
+        });
+        return {'instructions': [
             `page.mouse.move(${x},${y})`,
         ]};
-    } else if (line.match(/([#|\.]?)([\w|:|\s|\.]+)/g) !== null) {
-        return {"instructions": [
+    } else if (line.match(/([#|\.]?)([\w|:|\s|\.]+)/g) !== null) { // eslint-disable-line
+        return {'instructions': [
             `page.hover("${line}")`,
         ]};
     }
-    return {"error": "Invalid CSS selector"};
+    return {'error': 'Invalid CSS selector'};
 }
 
 function handlePathParameters(line, split, join) {
-    let parts = line.split(split);
+    const parts = line.split(split);
     if (parts.length > 1) {
         for (let i = 1; i < parts.length; ++i) {
             if (parts[i].charAt(0) === '/') { // to avoid having "//"
@@ -149,26 +153,26 @@ function handlePathParameters(line, split, join) {
 //       "file://{current-dir}{doc-path}/index.html"
 function parseGoTo(line, docPath) {
     // We just check if it goes to an HTML file, not checking much though...
-    if (line.startsWith("http") || line.startsWith("www.")) {
-        return {"instructions": [
+    if (line.startsWith('http') || line.startsWith('www.')) {
+        return {'instructions': [
             `await page.goto("${line}")`,
         ]};
-    } else if (line.startsWith("file://")) {
-        line = handlePathParameters(line, "{doc-path}", docPath);
-        line = handlePathParameters(line, "{current-dir}", utils.getCurrentDir());
-        return {"instructions": [
+    } else if (line.startsWith('file://')) {
+        line = handlePathParameters(line, '{doc-path}', docPath);
+        line = handlePathParameters(line, '{current-dir}', utils.getCurrentDir());
+        return {'instructions': [
             `await page.goto("${line}")`,
         ]};
-    } else if (line.startsWith(".")) {
-        return {"instructions": [
+    } else if (line.startsWith('.')) {
+        return {'instructions': [
             `await page.goto(page.url().split("/").slice(0, -1).join("/") + "/" + "${line}")`,
         ]};
-    } else if (line.startsWith("/")) {
-        return {"instructions": [
+    } else if (line.startsWith('/')) {
+        return {'instructions': [
             `await page.goto(page.url().split("/").slice(0, -1).join("/") + "${line}")`,
         ]};
     }
-    return {"error": "A relative path or a full URL was expected"};
+    return {'error': 'A relative path or a full URL was expected'};
 }
 
 // Possible incomes:
@@ -185,17 +189,19 @@ function parseScrollTo(line) {
 function parseSize(line) {
     if (line.startsWith('(')) {
         if (!line.endsWith(')')) {
-            return {"error": "Invalid syntax: expected size to end with ')'..."};
+            return {'error': 'Invalid syntax: expected size to end with \')\'...'};
         }
         if (line.match(/\([0-9]+,[ ]*[0-9]+\)/g) === null) {
-            return {"error": "Invalid syntax: expected \"([number], [number])\"..."};
+            return {'error': 'Invalid syntax: expected "([number], [number])"...'};
         }
-        var [width, height] = line.match(/\d+/g).map(function(f) { return parseInt(f) });
-        return {"instructions": [
+        const [width, height] = line.match(/\d+/g).map(function(f) {
+            return parseInt(f);
+        });
+        return {'instructions': [
             `page.setViewport({width: ${width}, height: ${height}})`,
         ]};
     }
-    return {"error": "Expected '(' character as start"};
+    return {'error': 'Expected \'(\' character as start'};
 }
 
 // Possible income:
@@ -203,26 +209,28 @@ function parseSize(line) {
 // * JSON object (for example: {"key": "value", "another key": "another value"})
 function parseLocalStorage(line) {
     if (!line.startsWith('{')) {
-        return {"error": `Expected json object (object wrapped inside "{}"), found "${line}"`};
+        return {'error': `Expected json object (object wrapped inside "{}"), found "${line}"`};
     }
     try {
-        var d = JSON.parse(line);
-        var content = [];
-        for (var key in d) {
-            if (key.length > 0 && d.hasOwnProperty(key)) {
-                content.push(`localStorage.setItem("${key.split('"').join('\\"')}", "${d[key].split('"').join('\\"')}");`);
+        const d = JSON.parse(line);
+        const content = [];
+        for (const key in d) {
+            if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
+                const key_s = key.split('"').join('\\"');
+                const value_s = d[key].split('"').join('\\"');
+                content.push(`localStorage.setItem("${key_s}", "${value_s}");`);
             }
         }
         if (content.length === 0) {
-            return {"instructions": []};
+            return {'instructions': []};
         }
-        return {"instructions": [
+        return {'instructions': [
             `page.evaluate(() => {
                 ${content.join('\n')}
-            })`
+            })`,
         ]};
-    } catch(e) {
-        return {"error": "Error when parsing JSON content: " + e};
+    } catch (e) {
+        return {'error': 'Error when parsing JSON content: ' + e};
     }
 }
 
@@ -239,31 +247,31 @@ const ORDERS = {
 };
 
 function parseContent(content, docPath) {
-    var lines = content.split(os.EOL);
-    var commands = {"instructions": []};
-    var res;
+    const lines = content.split(os.EOL);
+    const commands = {'instructions': []};
+    let res;
 
-    for (var i = 0; i < lines.length; ++i) {
-        var line = lines[i].split('// ')[0].trim();
+    for (let i = 0; i < lines.length; ++i) {
+        const line = lines[i].split('// ')[0].trim();
         if (line.length === 0) {
             continue;
         }
-        var order = line.split(':')[0].toLowerCase();
-        if (ORDERS.hasOwnProperty(order)) {
+        const order = line.split(':')[0].toLowerCase();
+        if (Object.prototype.hasOwnProperty.call(ORDERS, order)) {
             res = ORDERS[order](lines[i].substr(order.length + 1).trim(), docPath);
             if (res.error !== undefined) {
                 res.line = i + 1;
                 return [res];
             }
-            for (var y = 0; y < res["instructions"].length; ++y) {
-                if (commands["instructions"].length === 0 &&
-                    res["instructions"][y].startsWith('await page.goto(') !== true) {
-                    return {"error": "First command must be `goto`!", "line": i};
+            for (let y = 0; y < res['instructions'].length; ++y) {
+                if (commands['instructions'].length === 0 &&
+                    res['instructions'][y].startsWith('await page.goto(') !== true) {
+                    return {'error': 'First command must be `goto`!', 'line': i};
                 }
-                commands["instructions"].push({'code': res["instructions"][y], 'original': line});
+                commands['instructions'].push({'code': res['instructions'][y], 'original': line});
             }
         } else {
-            return {"error": `Unknown command "${order}"`, "line": i};
+            return {'error': `Unknown command "${order}"`, 'line': i};
         }
     }
     return commands;
