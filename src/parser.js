@@ -20,11 +20,11 @@ function getString(content) {
 }
 
 function cssSelector(s) {
-    return s.match(/([#|\.]?)([\w|:|\s|\.]+)/g) === null; // eslint-disable-line
+    return s.match(/([#|\.]?)([\w|:|\s|\.]+)/g) !== null; // eslint-disable-line
 }
 
 function matchPosition(s) {
-    return s.match(/\([0-9]+,[ ]*[0-9]+\)/g) === null;
+    return s.match(/\([0-9]+,[ ]*[0-9]+\)/g) !== null;
 }
 
 // Possible incomes:
@@ -63,7 +63,7 @@ function parseWaitFor(line) {
         return {'instructions': [
             `await page.waitFor(${parseInt(line)})`,
         ]};
-    } else if (cssSelector(line) !== true) {
+    } else if (cssSelector(line) === true) {
         return {'instructions': [
             `await page.waitFor("${line}")`,
         ]};
@@ -75,7 +75,7 @@ function parseWaitFor(line) {
 //
 // * CSS selector (for example: #elementID)
 function parseFocus(line) {
-    if (cssSelector(line) !== true) {
+    if (cssSelector(line) === true) {
         return {'instructions': [
             `page.focus("${line}")`,
         ]};
@@ -128,7 +128,7 @@ function parseMoveCursorTo(line) {
         return {'instructions': [
             `page.mouse.move(${x},${y})`,
         ]};
-    } else if (cssSelector(line) !== true) {
+    } else if (cssSelector(line) === true) {
         return {'instructions': [
             `page.hover("${line}")`,
         ]};
