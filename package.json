@@ -1,0 +1,22 @@
+{
+    "name": "browser-ui-test",
+    "version": "0.0.1",
+    "author": "Guillaume Gomez <guillaume1.gomez@gmail.com> (https://guillaume-gomez.fr)",
+    "license": "MIT",
+    "description": "Small JS framework to easily provide UI screenshot-based tests",
+    "keywords": ["UI", "test", "browser"],
+    "homepage": "https://github.com/GuillaumeGomez/browser-UI-test",
+    "main": "src/tester.js",
+    "scripts": {
+        "test": "node src/tester.js --test-folder tests/scripts/ --failure-folder failures --doc-path tests/html_files/"
+    },
+    "files": ["src/*.js"],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/GuillaumeGomez/browser-UI-test"
+    },
+    "dependencies": {
+        "png-js": "0.1.1",
+        "puppeteer": "1.19"
+    }
+}
