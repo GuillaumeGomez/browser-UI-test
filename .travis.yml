@@ -5,4 +5,3 @@ before_install:
   - npm install -r
 script:
   - npm run lint
-  - npm run test
