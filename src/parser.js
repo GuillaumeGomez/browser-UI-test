@@ -20,7 +20,7 @@ function getString(content) {
 }
 
 function cssSelector(s) {
-    return s.match(/([#|\.]?)([\w|:|\s|\.]+)/g) === null;
+    return s.match(/([#|\.]?)([\w|:|\s|\.]+)/g) === null; // eslint-disable-line
 }
 
 function matchPosition(s) {
@@ -46,7 +46,7 @@ function parseClick(line) {
             `page.mouse.click(${x},${y})`,
         ]};
     }
-    if (cssSelector(line) !== true) { // eslint-disable-line
+    if (cssSelector(line) !== true) {
         return {'error': 'Invalid CSS selector'};
     }
     return {'instructions': [
@@ -63,7 +63,7 @@ function parseWaitFor(line) {
         return {'instructions': [
             `await page.waitFor(${parseInt(line)})`,
         ]};
-    } else if (cssSelector(line) !== true) { // eslint-disable-line
+    } else if (cssSelector(line) !== true) {
         return {'instructions': [
             `await page.waitFor("${line}")`,
         ]};
@@ -75,7 +75,7 @@ function parseWaitFor(line) {
 //
 // * CSS selector (for example: #elementID)
 function parseFocus(line) {
-    if (cssSelector(line) !== true) { // eslint-disable-line
+    if (cssSelector(line) !== true) {
         return {'instructions': [
             `page.focus("${line}")`,
         ]};
@@ -128,7 +128,7 @@ function parseMoveCursorTo(line) {
         return {'instructions': [
             `page.mouse.move(${x},${y})`,
         ]};
-    } else if (cssSelector(line) !== true) { // eslint-disable-line
+    } else if (cssSelector(line) !== true) {
         return {'instructions': [
             `page.hover("${line}")`,
         ]};
