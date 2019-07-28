@@ -23,6 +23,10 @@ function cssSelector(s) {
     return s.match(/([#|\.]?)([\w|:|\s|\.]+)/g) === null;
 }
 
+function matchPosition(s) {
+    return s.match(/\([0-9]+,[ ]*[0-9]+\)/g) === null;
+}
+
 // Possible incomes:
 //
 // * (X, Y)
@@ -32,7 +36,7 @@ function parseClick(line) {
         if (!line.endsWith(')')) {
             return {'error': 'Invalid syntax: expected position to end with \')\'...'};
         }
-        if (line.match(/\([0-9]+,[ ]*[0-9]+\)/g) === null) {
+        if (matchPosition(line) !== true) {
             return {'error': 'Invalid syntax: expected "([number], [number])"...'};
         }
         const [x, y] = line.match(/\d+/g).map(function(f) {
@@ -115,7 +119,7 @@ function parseMoveCursorTo(line) {
         if (!line.endsWith(')')) {
             return {'error': 'Invalid syntax: expected position to end with \')\'...'};
         }
-        if (line.match(/\([0-9]+,[ ]*[0-9]+\)/g) === null) {
+        if (matchPosition(line) !== true) {
             return {'error': 'Invalid syntax: expected "([number], [number])"...'};
         }
         const [x, y] = line.match(/\d+/g).map(function(f) {
@@ -195,7 +199,7 @@ function parseSize(line) {
         if (!line.endsWith(')')) {
             return {'error': 'Invalid syntax: expected size to end with \')\'...'};
         }
-        if (line.match(/\([0-9]+,[ ]*[0-9]+\)/g) === null) {
+        if (matchPosition(line) !== true) {
             return {'error': 'Invalid syntax: expected "([number], [number])"...'};
         }
         const [width, height] = line.match(/\d+/g).map(function(f) {
