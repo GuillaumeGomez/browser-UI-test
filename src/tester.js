@@ -182,6 +182,15 @@ async function runTests(argv, saveLogs = true) {
         logs = appendLog(logs, loaded[i]['file'] + '... ', saveLogs);
         const page = await browser.newPage();
         try {
+            await page.evaluateOnNewDocument(() => {
+                const s = 'body, html {font-family: Arial,Helvetica Neue,Helvetica,sans-serif;}';
+                window.addEventListener("DOMContentLoaded", () => {
+                    const style = document.createElement('style');
+                    style.type = 'text/css';
+                    style.innerHTML = s;
+                    document.getElementsByTagName('head')[0].appendChild(style);
+                });
+            });
             error_log = '';
             const commands = loaded[i]['commands'];
             for (let x = 0; x < commands.length; ++x) {
@@ -273,8 +282,8 @@ async function runTests(argv, saveLogs = true) {
 
 if (require.main === module) {
     runTests(process.argv, false).then(x => {
-        const [_output, error_code] = x;
-        process.exit(error_code);
+        const [_output, nb_failures] = x;
+        process.exit(nb_failures);
     }).catch(err => {
         print(err);
         process.exit(1);
