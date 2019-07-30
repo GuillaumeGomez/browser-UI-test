@@ -2,9 +2,38 @@
 
 Small JS framework to easily provide UI screenshot-based tests.
 
-## Details
+## Description
 
 This framework provides the possibility to quickly check browser UI through small script files (with the `.gom` extension). Once the script is done, it takes a screenshot of the page and compares it to the expected one. If they're different, the test will fail.
+
+## Usage
+
+You can use it either by providing it the folder with the `.gom` files to run or import it like this:
+
+```js
+const runTests = require('browser-ui-test').runTests;
+
+runTests(['--test-folder', 'tests/scripts/',
+          '--failure-folder', 'failures',
+          '--doc-path', 'tests/html_files/']).then(result => {
+    const [output, nb_failures] = result;
+    if (nb_failures === 0) {
+        console.log('Tests succeeded!');
+    } else {
+        console.error(`Tests failed...\n${output}`);
+    }
+}).catch(err => {
+    console.error(`An error occurred: ${err}`);
+});
+```
+
+## Run tests
+
+If you want to run this repository's tests:
+
+```bash
+$ node src/tester.js --test-folder tests/scripts/ --failure-folder failures --doc-path tests/html_files/
+```
 
 ## `.gom` scripts
 
