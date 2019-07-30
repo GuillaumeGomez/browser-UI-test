@@ -65,7 +65,7 @@ click: (10, 12)
 
 **waitfor** command waits for a given duration or for an element to be created. It expects a CSS selector (a class name or an id) or a duration in milliseconds.
 
-**/!\\** Be careful when using it: if the given selector never appears, the test will hang forever.
+**/!\\** Be careful when using it: if the given selector never appears, the test will timeout after 30 seconds.
 
 Examples:
 
