@@ -20,7 +20,13 @@ function getString(content) {
 }
 
 function cssSelector(s) {
-    return s.match(/([#|\.]?)([\w|:|\s|\.]+)/g) !== null; // eslint-disable-line
+    return s.startsWith('"') === false &&
+           s.startsWith('\'') === false &&
+           s.indexOf('`') === -1;
+}
+
+function cleanCssSelector(s) {
+    return s.replace(/"/g, '\\"').replace(/'/g, '\\\'').replace(/\\/g, '\\\\');
 }
 
 function matchPosition(s) {
@@ -50,7 +56,7 @@ function parseClick(line) {
         return {'error': 'Invalid CSS selector'};
     }
     return {'instructions': [
-        `page.click("${line}")`,
+        `page.click("${cleanCssSelector(line)}")`,
     ]};
 }
 
@@ -65,7 +71,7 @@ function parseWaitFor(line) {
         ]};
     } else if (cssSelector(line) === true) {
         return {'instructions': [
-            `await page.waitFor("${line}")`,
+            `await page.waitFor("${cleanCssSelector(line)}")`,
         ]};
     }
     return {'error': 'Expected a number or a CSS selector'};
@@ -77,7 +83,7 @@ function parseWaitFor(line) {
 function parseFocus(line) {
     if (cssSelector(line) === true) {
         return {'instructions': [
-            `page.focus("${line}")`,
+            `page.focus("${cleanCssSelector(line)}")`,
         ]};
     }
     return {'error': 'Expected a CSS selector'};
@@ -130,10 +136,10 @@ function parseMoveCursorTo(line) {
         ]};
     } else if (cssSelector(line) === true) {
         return {'instructions': [
-            `page.hover("${line}")`,
+            `page.hover("${cleanCssSelector(line)}")`,
         ]};
     }
-    return {'error': 'Invalid CSS selector'};
+    return {'error': 'Invalid CSS selector or invalid position'};
 }
 
 function handlePathParameters(line, split, join) {
@@ -260,7 +266,7 @@ function parseContent(content, docPath) {
     let res;
 
     for (let i = 0; i < lines.length; ++i) {
-        const line = lines[i].split('// ')[0].trim();
+        const line = lines[i].split('// ')[0].trim(); // We remove the comment part if any.
         if (line.length === 0) {
             continue;
         }

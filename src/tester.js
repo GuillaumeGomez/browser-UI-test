@@ -183,8 +183,8 @@ async function runTests(argv, saveLogs = true) {
         const page = await browser.newPage();
         try {
             await page.evaluateOnNewDocument(() => {
-                const s = 'body, html {font-family: Arial,Helvetica Neue,Helvetica,sans-serif;}';
-                window.addEventListener("DOMContentLoaded", () => {
+                const s = getGlobalStyle(textHiding);
+                window.addEventListener('DOMContentLoaded', () => {
                     const style = document.createElement('style');
                     style.type = 'text/css';
                     style.innerHTML = s;
