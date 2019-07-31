@@ -27,6 +27,10 @@ runTests(['--test-folder', 'tests/scripts/',
 });
 ```
 
+### Font issues
+
+Unfortunately, font rendering differs depending on the computer **and** on the OS. To bypass this problem but still allow to have a global UI check, the text is invisible by default. If you are **sure** that you need to check with the text visible, you can use the option `--show-text`.
+
 ## Run tests
 
 If you want to run this repository's tests:
@@ -53,17 +57,17 @@ Here's the command list:
 
 #### click
 
-**click** command send a click event on an element or at the specified position. It expects a CSS selector (a class name or an id) or a position. Examples:
+**click** command send a click event on an element or at the specified position. It expects a CSS selector or a position. Examples:
 
 ```
 click: .element
-click: #element
+click: #element > a
 click: (10, 12)
 ```
 
 #### waitfor
 
-**waitfor** command waits for a given duration or for an element to be created. It expects a CSS selector (a class name or an id) or a duration in milliseconds.
+**waitfor** command waits for a given duration or for an element to be created. It expects a CSS selector or a duration in milliseconds.
 
 **/!\\** Be careful when using it: if the given selector never appears, the test will timeout after 30 seconds.
 
@@ -71,13 +75,13 @@ Examples:
 
 ```
 waitfor: .element
-waitfor: #element
+waitfor: #element > a
 waitfor: 1000
 ```
 
 #### focus
 
-**focus** command focuses (who would have guessed?) on a given element. It expects a CSS selector (a class name or an id). Examples:
+**focus** command focuses (who would have guessed?) on a given element. It expects a CSS selector. Examples:
 
 ```
 focus: .element
@@ -86,7 +90,7 @@ focus: #element
 
 #### write
 
-**write** command sends keyboard inputs on given element. If no element is provided, it'll write into the currently focused element. It expects a string and/or a CSS selector (a class name or an id). The string has to be surrounded by quotes (either `'` or `"`). Examples:
+**write** command sends keyboard inputs on given element. If no element is provided, it'll write into the currently focused element. It expects a string and/or a CSS selector. The string has to be surrounded by quotes (either `'` or `"`). Examples:
 
 ```
 write: .element "text"
@@ -96,7 +100,7 @@ write: "text"
 
 #### movecursorto
 
-**movecursorto** command moves the mouse cursor to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector (a class name or an id). Examples:
+**movecursorto** command moves the mouse cursor to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector. Examples:
 
 ```
 movecursorto: #element
@@ -136,7 +140,7 @@ goto: file://{current-dir}/{doc-path}/file.html
 
 #### scrollto
 
-**scrollto** command scrolls to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector (a class name or an id). Examples:
+**scrollto** command scrolls to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector. Examples:
 
 ```
 scrollto: #element
