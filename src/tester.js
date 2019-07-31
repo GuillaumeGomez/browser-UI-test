@@ -67,7 +67,12 @@ function helper() {
     print('                            run comparison tests');
     print('  --doc-path [PATH]       : doc path to be used on `goto` local paths');
     print('  --no-headless           : Disable headless mode');
+    print('  --show-text             : Disable text hiding (be careful when using it!)');
     print('  --help | -h             : Show this text');
+}
+
+function getGlobalStyle(textHiding) {
+    return `html {font-family: Arial,Helvetica Neue,Helvetica,sans-serif;}${textHiding}`;
 }
 
 async function runTests(argv, saveLogs = true) {
@@ -76,6 +81,7 @@ async function runTests(argv, saveLogs = true) {
     let runId = '';
     let headless = true;
     let generateImages = false;
+    let showText = false;
     let testFolderPath = '';
     let failuresFolderPath = '';
     let docPath = '/';
@@ -86,12 +92,15 @@ async function runTests(argv, saveLogs = true) {
                 runId = argv[it + 1];
                 it += 1;
             } else {
-                return ['Missing id after \'--run-id\' option', 1];
+                logs = appendLog(logs, 'Missing id after \'--run-id\' option\n', saveLogs);
+                return [logs, 1];
             }
         } else if (argv[it] === '--generate-images') {
             generateImages = true;
         } else if (argv[it] === '--no-headless') {
             headless = false;
+        } else if (argv[it] === '--show-text') {
+            showText = true;
         } else if (argv[it] === '--help' || argv[it] === '-h') {
             helper();
             return ['', 0];
@@ -100,32 +109,41 @@ async function runTests(argv, saveLogs = true) {
                 testFolderPath = utils.addSlash(argv[it + 1]);
                 it += 1;
             } else {
-                return ['Missing path after \'--test-folder\' option', 1];
+                logs = appendLog(logs, 'Missing path after \'--test-folder\' option\n', saveLogs);
+                return [logs, 1];
             }
         } else if (argv[it] === '--doc-path') {
             if (it + 1 < argv.length) {
                 docPath = utils.addSlash(argv[it + 1]);
                 it += 1;
             } else {
-                return ['Missing path after \'--doc-path\' option', 1];
+                logs = appendLog(logs, 'Missing path after \'--doc-path\' option\n', saveLogs);
+                return [logs, 1];
             }
         } else if (argv[it] === '--failure-folder') {
             if (it + 1 < argv.length) {
                 failuresFolderPath = utils.addSlash(argv[it + 1]);
                 it += 1;
             } else {
-                return ['Missing path after \'--failure-folder\' option', 1];
+                logs = appendLog(logs,
+                    'Missing path after \'--failure-folder\' option\n',
+                    saveLogs);
+                return [logs, 1];
             }
         } else {
-            return [`Unknown option '${argv[it]}'\n` +
-                    'Use \'--help\' if you want the list of the available commands', 1];
+            const err = `Unknown option '${argv[it]}'\n` +
+                'Use \'--help\' if you want the list of the available commands\n';
+            logs = appendLog(logs, err, saveLogs);
+            return [logs, 1];
         }
     }
 
     if (testFolderPath.length === 0) {
-        return ['You need to provide \'--test-folder\' option!', 1];
+        logs = appendLog(logs, 'You need to provide \'--test-folder\' option!\n', saveLogs);
+        return [logs, 1];
     } else if (failuresFolderPath.length === 0) {
-        return ['You need to provide \'--failure-folder\' option!', 1];
+        logs = appendLog(logs, 'You need to provide \'--failure-folder\' option!\n', saveLogs);
+        return [logs, 1];
     }
 
     // If no run id has been provided to the script, we create a little one so test files
@@ -133,8 +151,11 @@ async function runTests(argv, saveLogs = true) {
     if (runId.length === 0) {
         runId = 'test';
     } else if (runId.indexOf('/') !== -1) {
-        return ['\'--run-id\' cannot contain \'/\' character!', 1];
+        logs = appendLog(logs, '\'--run-id\' cannot contain \'/\' character!\n', saveLogs);
+        return [logs, 1];
     }
+
+    const textHiding = showText === true ? '' : '* { color: rgba(0,0,0,0) !important; }';
 
     logs = appendLog('', '=> Starting doc-ui tests...\n', saveLogs);
 
@@ -173,7 +194,7 @@ async function runTests(argv, saveLogs = true) {
     }
 
     let error_log;
-    const options = {};
+    const options = {'args': ['--font-render-hinting=none']};
     if (headless === false) {
         options['headless'] = false;
     }
@@ -182,6 +203,14 @@ async function runTests(argv, saveLogs = true) {
         logs = appendLog(logs, loaded[i]['file'] + '... ', saveLogs);
         const page = await browser.newPage();
         try {
+            await page.evaluateOnNewDocument(s => {
+                window.addEventListener('DOMContentLoaded', () => {
+                    const style = document.createElement('style');
+                    style.type = 'text/css';
+                    style.innerHTML = s;
+                    document.getElementsByTagName('head')[0].appendChild(style);
+                });
+            }, getGlobalStyle(textHiding));
             error_log = '';
             const commands = loaded[i]['commands'];
             for (let x = 0; x < commands.length; ++x) {
@@ -273,8 +302,8 @@ async function runTests(argv, saveLogs = true) {
 
 if (require.main === module) {
     runTests(process.argv, false).then(x => {
-        const [_output, error_code] = x;
-        process.exit(error_code);
+        const [_output, nb_failures] = x;
+        process.exit(nb_failures);
     }).catch(err => {
         print(err);
         process.exit(1);
