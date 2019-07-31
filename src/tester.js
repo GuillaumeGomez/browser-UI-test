@@ -194,7 +194,7 @@ async function runTests(argv, saveLogs = true) {
     }
 
     let error_log;
-    const options = {};
+    const options = {'args': ['--font-render-hinting=none']};
     if (headless === false) {
         options['headless'] = false;
     }
@@ -203,15 +203,14 @@ async function runTests(argv, saveLogs = true) {
         logs = appendLog(logs, loaded[i]['file'] + '... ', saveLogs);
         const page = await browser.newPage();
         try {
-            await page.evaluateOnNewDocument(() => {
-                const s = getGlobalStyle(textHiding);
+            await page.evaluateOnNewDocument(s => {
                 window.addEventListener('DOMContentLoaded', () => {
                     const style = document.createElement('style');
                     style.type = 'text/css';
                     style.innerHTML = s;
                     document.getElementsByTagName('head')[0].appendChild(style);
                 });
-            });
+            }, getGlobalStyle(textHiding));
             error_log = '';
             const commands = loaded[i]['commands'];
             for (let x = 0; x < commands.length; ++x) {
