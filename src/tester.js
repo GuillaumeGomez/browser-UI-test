@@ -71,91 +71,88 @@ function helper() {
     print('  --help | -h             : Show this text');
 }
 
+class Options {
+    constructor() {
+        this.runId = 'test';
+        this.generateImages = false;
+        this.headless = true;
+        this.testFolderPath = '';
+        this.docPath = '/';
+        this.failuresFolderPath = '';
+        this.showText = false;
+    }
+
+    parseArguments(args = []) {
+        for (let it = 0; it < args.length; ++it) {
+            if (args[it] === '--run-id') {
+                if (it + 1 < args.length) {
+                    this.runId = args[it + 1];
+                    if (this.runId.indexOf('/') !== -1) {
+                        throw '\'--run-id\' cannot contain \'/\' character!';
+                    }
+                    it += 1;
+                } else {
+                    throw 'Missing id after \'--run-id\' option';
+                }
+            } else if (args[it] === '--generate-images') {
+                this.generateImages = true;
+            } else if (args[it] === '--no-headless') {
+                this.headless = false;
+            } else if (args[it] === '--show-text') {
+                this.showText = true;
+            } else if (args[it] === '--help' || args[it] === '-h') {
+                helper();
+                return false;
+            } else if (args[it] === '--test-folder') {
+                if (it + 1 < args.length) {
+                    this.testFolderPath = utils.addSlash(args[it + 1]);
+                    it += 1;
+                } else {
+                    throw 'Missing path after \'--test-folder\' option';
+                }
+            } else if (args[it] === '--doc-path') {
+                if (it + 1 < args.length) {
+                    this.docPath = utils.addSlash(args[it + 1]);
+                    it += 1;
+                } else {
+                    throw 'Missing path after \'--doc-path\' option';
+                }
+            } else if (args[it] === '--failure-folder') {
+                if (it + 1 < args.length) {
+                    this.failuresFolderPath = utils.addSlash(args[it + 1]);
+                    it += 1;
+                } else {
+                    throw 'Missing path after \'--failure-folder\' option';
+                }
+            } else {
+                throw `Unknown option '${args[it]}'\n` +
+                        'Use \'--help\' if you want the list of the available commands';
+            }
+        }
+        return true;
+    }
+
+    validate() {
+        if (this.testFolderPath.length === 0) {
+            throw 'You need to provide \'--test-folder\' option!';
+        } else if (this.failuresFolderPath.length === 0) {
+            throw 'You need to provide \'--failure-folder\' option!';
+        }
+    }
+}
+
 function getGlobalStyle(textHiding) {
     return `html {font-family: Arial,Helvetica Neue,Helvetica,sans-serif;}${textHiding}`;
 }
 
-async function runTests(argv, saveLogs = true) {
+async function runTests(options, saveLogs = true) {
+    if (!options || options.validate === undefined) {
+        throw 'Options must be an "Options" type!';
+    }
+    options.validate();
+
     let logs = '';
-
-    let runId = '';
-    let headless = true;
-    let generateImages = false;
-    let showText = false;
-    let testFolderPath = '';
-    let failuresFolderPath = '';
-    let docPath = '/';
-
-    for (let it = 2; it < argv.length; ++it) {
-        if (argv[it] === '--run-id') {
-            if (it + 1 < argv.length) {
-                runId = argv[it + 1];
-                it += 1;
-            } else {
-                logs = appendLog(logs, 'Missing id after \'--run-id\' option\n', saveLogs);
-                return [logs, 1];
-            }
-        } else if (argv[it] === '--generate-images') {
-            generateImages = true;
-        } else if (argv[it] === '--no-headless') {
-            headless = false;
-        } else if (argv[it] === '--show-text') {
-            showText = true;
-        } else if (argv[it] === '--help' || argv[it] === '-h') {
-            helper();
-            return ['', 0];
-        } else if (argv[it] === '--test-folder') {
-            if (it + 1 < argv.length) {
-                testFolderPath = utils.addSlash(argv[it + 1]);
-                it += 1;
-            } else {
-                logs = appendLog(logs, 'Missing path after \'--test-folder\' option\n', saveLogs);
-                return [logs, 1];
-            }
-        } else if (argv[it] === '--doc-path') {
-            if (it + 1 < argv.length) {
-                docPath = utils.addSlash(argv[it + 1]);
-                it += 1;
-            } else {
-                logs = appendLog(logs, 'Missing path after \'--doc-path\' option\n', saveLogs);
-                return [logs, 1];
-            }
-        } else if (argv[it] === '--failure-folder') {
-            if (it + 1 < argv.length) {
-                failuresFolderPath = utils.addSlash(argv[it + 1]);
-                it += 1;
-            } else {
-                logs = appendLog(logs,
-                    'Missing path after \'--failure-folder\' option\n',
-                    saveLogs);
-                return [logs, 1];
-            }
-        } else {
-            const err = `Unknown option '${argv[it]}'\n` +
-                'Use \'--help\' if you want the list of the available commands\n';
-            logs = appendLog(logs, err, saveLogs);
-            return [logs, 1];
-        }
-    }
-
-    if (testFolderPath.length === 0) {
-        logs = appendLog(logs, 'You need to provide \'--test-folder\' option!\n', saveLogs);
-        return [logs, 1];
-    } else if (failuresFolderPath.length === 0) {
-        logs = appendLog(logs, 'You need to provide \'--failure-folder\' option!\n', saveLogs);
-        return [logs, 1];
-    }
-
-    // If no run id has been provided to the script, we create a little one so test files
-    // don't have an ugly name.
-    if (runId.length === 0) {
-        runId = 'test';
-    } else if (runId.indexOf('/') !== -1) {
-        logs = appendLog(logs, '\'--run-id\' cannot contain \'/\' character!\n', saveLogs);
-        return [logs, 1];
-    }
-
-    const textHiding = showText === true ? '' : '* { color: rgba(0,0,0,0) !important; }';
+    const textHiding = options.showText === true ? '' : '* { color: rgba(0,0,0,0) !important; }';
 
     logs = appendLog('', '=> Starting doc-ui tests...\n', saveLogs);
 
@@ -163,11 +160,11 @@ async function runTests(argv, saveLogs = true) {
     let failures = 0;
     let ignored = 0;
     let total = 0;
-    fs.readdirSync(testFolderPath).forEach(function(file) {
-        const fullPath = testFolderPath + file;
+    fs.readdirSync(options.testFolderPath).forEach(function(file) {
+        const fullPath = options.testFolderPath + file;
         if (file.endsWith('.gom') && fs.lstatSync(fullPath).isFile()) {
             total += 1;
-            const commands = parser.parseContent(utils.readFile(fullPath), docPath);
+            const commands = parser.parseContent(utils.readFile(fullPath), options.docPath);
             if (Object.prototype.hasOwnProperty.call(commands, 'error')) {
                 logs = appendLog(logs, file.substr(0, file.length - 4) + '... FAILED', saveLogs);
                 logs = appendLog(logs,
@@ -194,11 +191,11 @@ async function runTests(argv, saveLogs = true) {
     }
 
     let error_log;
-    const options = {'args': ['--font-render-hinting=none']};
-    if (headless === false) {
-        options['headless'] = false;
+    const puppeteer_options = {'args': ['--font-render-hinting=none']};
+    if (options.headless === false) {
+        puppeteer_options['headless'] = false;
     }
-    const browser = await puppeteer.launch(options);
+    const browser = await puppeteer.launch(puppeteer_options);
     for (let i = 0; i < loaded.length; ++i) {
         logs = appendLog(logs, loaded[i]['file'] + '... ', saveLogs);
         const page = await browser.newPage();
@@ -231,15 +228,15 @@ async function runTests(argv, saveLogs = true) {
                 continue;
             }
 
-            const newImage = `${testFolderPath}${loaded[i]['file']}-${runId}.png`;
+            const newImage = `${options.testFolderPath}${loaded[i]['file']}-${options.runId}.png`;
             await page.screenshot({
                 path: newImage,
                 fullPage: true,
             });
 
-            const originalImage = `${testFolderPath}${loaded[i]['file']}.png`;
+            const originalImage = `${options.testFolderPath}${loaded[i]['file']}.png`;
             if (fs.existsSync(originalImage) === false) {
-                if (generateImages === false) {
+                if (options.generateImages === false) {
                     ignored += 1;
                     // eslint-disable-next-line
                     logs = appendLog(logs,
@@ -255,13 +252,13 @@ async function runTests(argv, saveLogs = true) {
             if (comparePixels(PNG.load(newImage).imgData,
                 PNG.load(originalImage).imgData) === false) {
                 failures += 1;
-                const saved = save_failure(testFolderPath, failuresFolderPath,
-                    loaded[i]['file'] + `-${runId}.png`,
-                    loaded[i]['file'] + '.png', runId);
+                const saved = save_failure(options.testFolderPath, options.failuresFolderPath,
+                    loaded[i]['file'] + `-${options.runId}.png`,
+                    loaded[i]['file'] + '.png', options.runId);
                 if (saved === true) {
                     // eslint-disable-next-line
                     logs = appendLog(logs,
-                        `FAILED (images "${loaded[i]['file']}-${runId}.png" and ` +
+                        `FAILED (images "${loaded[i]['file']}-${options.runId}.png" and ` +
                         `"${loaded[i]['file']}" are different)`,
                         saveLogs,
                         true);
@@ -301,7 +298,16 @@ async function runTests(argv, saveLogs = true) {
 }
 
 if (require.main === module) {
-    runTests(process.argv, false).then(x => {
+    const options = new Options();
+    try {
+        if (options.parseArguments(process.argv.slice(2)) === false) {
+            process.exit(0);
+        }
+    } catch (err) {
+        print(err);
+        process.exit(1);
+    }
+    runTests(options, false).then(x => {
         const [_output, nb_failures] = x;
         process.exit(nb_failures);
     }).catch(err => {
@@ -311,5 +317,6 @@ if (require.main === module) {
 } else {
     module.exports = {
         runTests: runTests,
+        Options: Options,
     };
 }
