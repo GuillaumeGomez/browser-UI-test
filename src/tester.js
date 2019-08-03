@@ -3,6 +3,7 @@ const fs = require('fs');
 const PNG = require('png-js');
 const parser = require('./parser.js');
 const utils = require('./utils.js');
+const Options = require('./options.js').Options;
 const add_warn = utils.add_warning;
 const process = require('process');
 const print = utils.print;
@@ -34,7 +35,7 @@ function appendLog(logs, newLog, saveLogs, noBackline) {
 
 function save_failure(folderIn, failuresFolder, newImage, originalImage, runId) {
     if (fs.existsSync(failuresFolder) === false) {
-    // We cannot save the failures...
+        // We cannot save the failures...
         return false;
     }
     if (fs.existsSync(failuresFolder + runId) === false) {
@@ -54,91 +55,6 @@ function save_failure(folderIn, failuresFolder, newImage, originalImage, runId) 
         return false;
     }
     return true;
-}
-
-function helper() {
-    print('tester');
-    print('  --test-folder [PATH]    : path of the folder where `.gom` script files are');
-    print('  --failure-folder [PATH] : path of the folder where failed tests image will');
-    print('                            be placed');
-    print('  --run-id [id]           : id to be used for failed images extension (\'test\'');
-    print('                            by default)');
-    print('  --generate-images       : If provided, it\'ll generate test images and won\'t');
-    print('                            run comparison tests');
-    print('  --doc-path [PATH]       : doc path to be used on `goto` local paths');
-    print('  --no-headless           : Disable headless mode');
-    print('  --show-text             : Disable text invisibility (be careful when using it!)');
-    print('  --help | -h             : Show this text');
-}
-
-class Options {
-    constructor() {
-        this.runId = 'test';
-        this.generateImages = false;
-        this.headless = true;
-        this.testFolderPath = '';
-        this.docPath = '/';
-        this.failuresFolderPath = '';
-        this.showText = false;
-    }
-
-    parseArguments(args = []) {
-        for (let it = 0; it < args.length; ++it) {
-            if (args[it] === '--run-id') {
-                if (it + 1 < args.length) {
-                    this.runId = args[it + 1];
-                    if (this.runId.indexOf('/') !== -1) {
-                        throw '\'--run-id\' cannot contain \'/\' character!';
-                    }
-                    it += 1;
-                } else {
-                    throw 'Missing id after \'--run-id\' option';
-                }
-            } else if (args[it] === '--generate-images') {
-                this.generateImages = true;
-            } else if (args[it] === '--no-headless') {
-                this.headless = false;
-            } else if (args[it] === '--show-text') {
-                this.showText = true;
-            } else if (args[it] === '--help' || args[it] === '-h') {
-                helper();
-                return false;
-            } else if (args[it] === '--test-folder') {
-                if (it + 1 < args.length) {
-                    this.testFolderPath = utils.addSlash(args[it + 1]);
-                    it += 1;
-                } else {
-                    throw 'Missing path after \'--test-folder\' option';
-                }
-            } else if (args[it] === '--doc-path') {
-                if (it + 1 < args.length) {
-                    this.docPath = utils.addSlash(args[it + 1]);
-                    it += 1;
-                } else {
-                    throw 'Missing path after \'--doc-path\' option';
-                }
-            } else if (args[it] === '--failure-folder') {
-                if (it + 1 < args.length) {
-                    this.failuresFolderPath = utils.addSlash(args[it + 1]);
-                    it += 1;
-                } else {
-                    throw 'Missing path after \'--failure-folder\' option';
-                }
-            } else {
-                throw `Unknown option '${args[it]}'\n` +
-                        'Use \'--help\' if you want the list of the available commands';
-            }
-        }
-        return true;
-    }
-
-    validate() {
-        if (this.testFolderPath.length === 0) {
-            throw 'You need to provide \'--test-folder\' option!';
-        } else if (this.failuresFolderPath.length === 0) {
-            throw 'You need to provide \'--failure-folder\' option!';
-        }
-    }
 }
 
 function getGlobalStyle(textHiding) {
