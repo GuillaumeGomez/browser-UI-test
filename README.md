@@ -31,6 +31,45 @@ runTests(['--test-folder', 'tests/scripts/',
 
 Unfortunately, font rendering differs depending on the computer **and** on the OS. To bypass this problem but still allow to have a global UI check, the text is invisible by default. If you are **sure** that you need to check with the text visible, you can use the option `--show-text`.
 
+## Using this framework as a dependency
+
+You can do so by importing both `runTests` and `Options` from `tester.js`. `Options` is a class where you can set the parameters you need/want. If you feel better providing "command-line args"-like parameters, you can use it as follows:
+
+```js
+let options = new Options();
+try {
+    options.parseArguments(['--doc-path', 'somewhere', '--test-folder', 'some-other-place']);
+} catch (error) {
+    console.error(`invalid argument: ${error}`);
+    process.exit(1);
+}
+````
+
+Then you just pass this `options` variable to the `runTests` function and it's done:
+
+```js
+runTests(options).then(x => {
+    const [output, nb_failures] = x;
+    console.log(output);
+    process.exit(nb_failures);
+}).catch(err => {
+    console.error(err);
+    process.exit(1);
+});
+````
+
+### Options
+
+The list of fields of the `Options` class is the following:
+
+ * testFolder: path of the folder where `.gom` script files are
+ * failureFolder: path of the folder where failed tests image will be placed
+ * runId: id to be used for failed images extension ('test' by default)
+ * generateImages: if provided, it'll generate test images and won't run comparison tests
+ * docPath: doc path to be used on `goto` local paths
+ * noHeadless: disable headless mode
+ * showText: disable text invisibility (be careful when using it!)
+
 ## Run tests
 
 If you want to run this repository's tests:

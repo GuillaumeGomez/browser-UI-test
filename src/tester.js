@@ -63,11 +63,11 @@ function helper() {
     print('                            be placed');
     print('  --run-id [id]           : id to be used for failed images extension (\'test\'');
     print('                            by default)');
-    print('  --generate-images       : if provided, it\'ll generate test images and won\'t');
+    print('  --generate-images       : If provided, it\'ll generate test images and won\'t');
     print('                            run comparison tests');
     print('  --doc-path [PATH]       : doc path to be used on `goto` local paths');
     print('  --no-headless           : Disable headless mode');
-    print('  --show-text             : Disable text hiding (be careful when using it!)');
+    print('  --show-text             : Disable text invisibility (be careful when using it!)');
     print('  --help | -h             : Show this text');
 }
 
