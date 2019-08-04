@@ -43,7 +43,7 @@ try {
     console.error(`invalid argument: ${error}`);
     process.exit(1);
 }
-````
+```
 
 Then you just pass this `options` variable to the `runTests` function and it's done:
 
@@ -56,7 +56,7 @@ runTests(options).then(x => {
     console.error(err);
     process.exit(1);
 });
-````
+```
 
 ### Options
 
@@ -93,6 +93,7 @@ Here's the command list:
  * [`scrollto`](#scrollto)
  * [`size`](#size)
  * [`localstorage`](#localstorage)
+ * [`screenshot`](#screenshot)
 
 #### click
 
@@ -201,6 +202,14 @@ size: (700, 1000)
 
 ```
 localstorage: {"key": "value", "another key": "another value"}
+```
+
+#### screenshot
+
+**screenshot** command enables/disables the screenshot at the end of the script (and therefore its comparison). It expects a boolean value. Example:
+
+```
+screenshot: false
 ```
 
 ### Comments?
