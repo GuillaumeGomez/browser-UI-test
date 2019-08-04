@@ -12,7 +12,7 @@ const print = utils.print;
 function loadContent(content) {
     const Module = module.constructor;
     const m = new Module();
-    m._compile(`async function f(page){ return ${content}; } module.exports.f = f;`, 'tmp.js');
+    m._compile(`async function f(page, arg){ return ${content}; } module.exports.f = f;`, 'tmp.js');
     return m.exports.f;
 }
 
@@ -115,6 +115,7 @@ async function runTests(options, saveLogs = true) {
     for (let i = 0; i < loaded.length; ++i) {
         logs = appendLog(logs, loaded[i]['file'] + '... ', saveLogs);
         const page = await browser.newPage();
+        let notOk = false;
         try {
             await page.evaluateOnNewDocument(s => {
                 window.addEventListener('DOMContentLoaded', () => {
@@ -126,21 +127,33 @@ async function runTests(options, saveLogs = true) {
             }, getGlobalStyle(textHiding));
             error_log = '';
             const commands = loaded[i]['commands'];
+            const extras = {
+                'takeScreenshot': true,
+            };
             for (let x = 0; x < commands.length; ++x) {
-                await loadContent(commands[x]['code'])(page).catch(err => {
+                await loadContent(commands[x]['code'])(page, extras).catch(err => {
                     const s_err = err.toString();
                     error_log = `[ERROR] ${s_err}: for command "${commands[x]['original']}"`;
                 });
                 if (error_log.length > 0) {
                     break;
                 }
-                // We wait a bit between each command to be sure the browser can follow.
-                await page.waitFor(100);
+                if (commands[x].wait !== false) {
+                    // We wait a bit between each command to be sure the browser can follow.
+                    await page.waitFor(100);
+                }
             }
             if (error_log.length > 0) {
                 logs = appendLog(logs, 'FAILED', saveLogs, true); // eslint-disable-line
                 logs = appendLog(logs, error_log + '\n', saveLogs); // eslint-disable-line
                 failures += 1;
+                await page.close();
+                continue;
+            }
+
+            if (extras.takeScreenshot !== true) {
+                logs = appendLog(logs, 'ok', saveLogs, true); // eslint-disable-line
+                await page.close();
                 continue;
             }
 
@@ -159,13 +172,12 @@ async function runTests(options, saveLogs = true) {
                         'ignored ("' + originalImage + '" not found)',
                         saveLogs,
                         true);
+                    notOk = true;
                 } else {
                     fs.renameSync(newImage, originalImage);
                     logs = appendLog(logs, 'generated', saveLogs, true); // eslint-disable-line
                 }
-                continue;
-            }
-            if (comparePixels(PNG.load(newImage).imgData,
+            } else if (comparePixels(PNG.load(newImage).imgData,
                 PNG.load(originalImage).imgData) === false) {
                 failures += 1;
                 const saved = save_failure(options.testFolderPath, options.failuresFolderPath,
@@ -184,20 +196,23 @@ async function runTests(options, saveLogs = true) {
                         `FAILED (images "${newImage}" and "${originalImage}" are different)`,
                         saveLogs,
                         true);
+                    notOk = true;
                 }
-                continue;
+            } else {
+                // If everything worked as expected, we can remove the generated image.
+                fs.unlinkSync(newImage);
             }
-            // If everything worked as expected, we can remove the generated image.
-            fs.unlinkSync(newImage);
         } catch (err) {
             failures += 1;
             logs = appendLog(logs, 'FAILED', saveLogs, true); // eslint-disable-line
             // eslint-disable-next-line
             logs = appendLog(logs, loaded[i]['file'] + ' output:\n' + err + '\n', saveLogs);
-            continue;
+            notOk = true;
         }
         await page.close();
-        logs = appendLog(logs, 'ok', saveLogs, true); // eslint-disable-line
+        if (notOk === false) {
+            logs = appendLog(logs, 'ok', saveLogs, true); // eslint-disable-line
+        }
     }
     await browser.close();
 
