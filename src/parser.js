@@ -70,9 +70,12 @@ function parseWaitFor(line) {
             `await page.waitFor(${parseInt(line)})`,
         ]};
     } else if (cssSelector(line) === true) {
-        return {'instructions': [
-            `await page.waitFor("${cleanCssSelector(line)}")`,
-        ]};
+        return {
+            'instructions': [
+                `await page.waitFor("${cleanCssSelector(line)}")`,
+            ],
+            'wait': false,
+        };
     }
     return {'error': 'Expected a number or a CSS selector'};
 }
@@ -248,6 +251,18 @@ function parseLocalStorage(line) {
     }
 }
 
+function parseScreenshot(line) {
+    if (line !== 'true' && line !== 'false') {
+        return {'error': `Expected "true" or "false" value, found "${line}"`};
+    }
+    return {
+        'instructions': [
+            `arg.takeScreenshot = ${line === 'true' ? 'true' : 'false'};`,
+        ],
+        'wait': false,
+    };
+}
+
 const ORDERS = {
     'click': parseClick,
     'focus': parseFocus,
@@ -258,12 +273,14 @@ const ORDERS = {
     'waitfor': parseWaitFor,
     'write': parseWrite,
     'localstorage': parseLocalStorage,
+    'screenshot': parseScreenshot,
 };
 
 function parseContent(content, docPath) {
     const lines = content.split(os.EOL);
     const commands = {'instructions': []};
     let res;
+    let firstGotoParsed = false;
 
     for (let i = 0; i < lines.length; ++i) {
         const line = lines[i].split('// ')[0].trim(); // We remove the comment part if any.
@@ -272,16 +289,21 @@ function parseContent(content, docPath) {
         }
         const order = line.split(':')[0].toLowerCase();
         if (Object.prototype.hasOwnProperty.call(ORDERS, order)) {
-            res = ORDERS[order](lines[i].substr(order.length + 1).trim(), docPath);
+            res = ORDERS[order](line.substr(order.length + 1).trim(), docPath);
             if (res.error !== undefined) {
                 res.line = i + 1;
                 return [res];
             }
-            for (let y = 0; y < res['instructions'].length; ++y) {
-                if (commands['instructions'].length === 0 &&
-                    res['instructions'][y].startsWith('await page.goto(') !== true) {
-                    return {'error': 'First command must be `goto`!', 'line': i};
+            if (firstGotoParsed === false) {
+                if (order !== 'screenshot' && order !== 'goto') {
+                    return {
+                        'error': 'First command must be `goto` (`screenshot` can be used before)!',
+                        'line': i,
+                    };
                 }
+                firstGotoParsed = order === 'goto';
+            }
+            for (let y = 0; y < res['instructions'].length; ++y) {
                 commands['instructions'].push({'code': res['instructions'][y], 'original': line});
             }
         } else {
