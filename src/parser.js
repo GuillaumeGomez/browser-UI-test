@@ -251,6 +251,45 @@ function parseLocalStorage(line) {
     }
 }
 
+function isWhiteSpace(c) {
+    return c === ' ' || c === '\t';
+}
+
+function isStringChar(c) {
+    return c === '\'' || c === '"';
+}
+
+function parseString(s) {
+    let i = 0;
+
+    while (i < s.length && isWhiteSpace(s.charAt(i)) === true) {
+        i += 1;
+    }
+    if (i >= s.length) {
+        return {'error': 'no string'};
+    }
+    const endChar = s.charAt(i);
+    if (isStringChar(endChar) === false) {
+        return {'error': 'expected \' or " character'};
+    }
+    i += 1;
+    const start = i;
+    let c;
+    while (i < s.length) {
+        c = s.charAt(i);
+        if (c === endChar) {
+            return {'value': s.substring(start, i)};
+        } else if (c === '\\') {
+            i += 1;
+        }
+        i += 1;
+    }
+    return {'error': `expected ${endChar} character at the end of the string`};
+}
+
+// Possible income:
+//
+// * boolean value (`true` or `false`)
 function parseScreenshot(line) {
     if (line !== 'true' && line !== 'false') {
         return {'error': `Expected "true" or "false" value, found "${line}"`};
