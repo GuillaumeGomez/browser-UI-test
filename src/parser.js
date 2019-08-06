@@ -25,12 +25,20 @@ function cssSelector(s) {
            s.indexOf('`') === -1;
 }
 
+function cleanString(s) {
+    return s.replace(/"/g, '\\"').replace(/'/g, '\\\'');
+}
+
 function cleanCssSelector(s) {
-    return s.replace(/"/g, '\\"').replace(/'/g, '\\\'').replace(/\\/g, '\\\\');
+    return cleanString(s).replace(/\\/g, '\\\\');
 }
 
 function matchPosition(s) {
     return s.match(/\([0-9]+,[ ]*[0-9]+\)/g) !== null;
+}
+
+function matchInteger(s) {
+    return s.match(/[0-9]+/g) !== null;
 }
 
 // Possible incomes:
@@ -270,7 +278,7 @@ function parseString(s) {
     }
     const endChar = s.charAt(i);
     if (isStringChar(endChar) === false) {
-        return {'error': 'expected \' or " character'};
+        return {'error': 'expected `\'` or `"` character'};
     }
     i += 1;
     const start = i;
@@ -278,13 +286,86 @@ function parseString(s) {
     while (i < s.length) {
         c = s.charAt(i);
         if (c === endChar) {
-            return {'value': s.substring(start, i)};
+            return {'value': s.substring(start, i), 'pos': i};
         } else if (c === '\\') {
             i += 1;
         }
         i += 1;
     }
-    return {'error': `expected ${endChar} character at the end of the string`};
+    return {'error': `expected \`${endChar}\` character at the end of the string`};
+}
+
+function parseAssert(s) {
+    if (s.charAt(0) !== '(') {
+        return {'error': 'expected `(` character'};
+    } else if (s.charAt(s.length - 1) !== ')') {
+        return {'error': 'expected to end with `)` character'};
+    }
+    const ret = parseString(s.substring(1));
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    let pos = ret.pos + 1;
+    while (isWhiteSpace(s.charAt(pos)) === true) {
+        pos += 1;
+    }
+    const path = cleanCssSelector(ret.value);
+    if (s.charAt(pos) === ')') {
+        return {'instructions': [
+            `if (page.$("${path}") === null) { throw '"${path}" not found'; }`,
+        ]};
+    } else if (s.charAt(pos) !== ',') {
+        return {'error': `expected \`,\` or \`)\`, found \`${s.charAt(pos)}\``};
+    }
+    // We take everything between the comma and the paren.
+    const sub = s.substring(pos + 1, s.length - 1).trim();
+    if (sub.length === 0) {
+        return {'error': 'expected something as second parameter or remove the comma'};
+    } else if (sub.startsWith('"') || sub.startsWith('\'')) {
+        const secondParam = parseString(sub);
+        if (secondParam.error !== undefined) {
+            return secondParam;
+        }
+        let i = secondParam.pos + 1;
+        while (i < sub.length) {
+            if (isWhiteSpace(sub.charAt(i)) !== true) {
+                return {'error': `unexpected token: \`${sub.charAt(i)}\``};
+            }
+            i += 1;
+        }
+        const value = secondParam.value;
+        return {'instructions': [
+            `if (await page.$("${path}") === null) { throw '"${path}" not found'; }`,
+            // TODO: maybe check differently depending on the tag kind?
+            `if ((await page.$("${path}")).innerText !== "${value}") { throw '"' + ` +
+            `(await page.$("${path}")).innerText + '" !== "${value}"'; }`,
+        ]};
+    } else if (sub.startsWith('{')) {
+        let d;
+        try {
+            d = JSON.parse(sub);
+        } catch (error) {
+            return {'error': `Invalid JSON object: "${error}"`};
+        }
+        let instructions = [
+            `if (await page.$("${path}") === null) { throw '"${path}" not found'; }`,
+        ];
+        for (const key in d) {
+            if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
+                // TODO: check how to compare CSS property
+                instructions.push();
+            }
+        }
+        return {'instructions': instructions};
+    } else if (matchInteger(sub) === true) {
+        return {'instructions': [
+            `if (await page.$("${path}") === null) { throw '"${path}" not found'; }`,
+            // TODO: maybe check differently depending on the tag kind?
+            `if ((await page.$$("${path}")).length !== ${sub}) { throw 'expect ${sub} ` +
+            `elements, found ' + (await page.$$("${path}")).length; }`,
+        ]};
+    }
+    return {'error': `expected [integer] or [string] or [JSON object], found \`${sub}\``};
 }
 
 // Possible income:
