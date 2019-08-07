@@ -13,6 +13,7 @@ function helper() {
     print('  --doc-path [PATH]       : doc path to be used on `goto` local paths');
     print('  --no-headless           : Disable headless mode');
     print('  --show-text             : Disable text invisibility (be careful when using it!)');
+    print('  --debug                 : Display more information');
     print('  --help | -h             : Show this text');
 }
 
@@ -25,6 +26,7 @@ class Options {
         this.docPath = '/';
         this.failuresFolderPath = '';
         this.showText = false;
+        this.debug = false;
     }
 
     parseArguments(args = []) {
@@ -45,6 +47,8 @@ class Options {
                 this.headless = false;
             } else if (args[it] === '--show-text') {
                 this.showText = true;
+            } else if (args[it] === '--debug') {
+                this.debug = true;
             } else if (args[it] === '--help' || args[it] === '-h') {
                 helper();
                 return false;
