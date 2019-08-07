@@ -57,6 +57,13 @@ function save_failure(folderIn, failuresFolder, newImage, originalImage, runId) 
     return true;
 }
 
+function showDebug(debug_log, saveLogs, logs) {
+    if (debug_log.length > 0) {
+        return appendLog(logs, `[DEBUG]\n${debug_log}`, saveLogs);
+    }
+    return logs;
+}
+
 function getGlobalStyle(textHiding) {
     return `html {font-family: Arial,Helvetica Neue,Helvetica,sans-serif;}${textHiding}`;
 }
@@ -116,6 +123,7 @@ async function runTests(options, saveLogs = true) {
         logs = appendLog(logs, loaded[i]['file'] + '... ', saveLogs);
         const page = await browser.newPage();
         let notOk = false;
+        let debug_log = '';
         try {
             await page.evaluateOnNewDocument(s => {
                 window.addEventListener('DOMContentLoaded', () => {
@@ -131,6 +139,9 @@ async function runTests(options, saveLogs = true) {
                 'takeScreenshot': true,
             };
             for (let x = 0; x < commands.length; ++x) {
+                if (options.debug === true) {
+                    debug_log += `EXECUTING "${commands[x]['code']}"\n`;
+                }
                 try {
                     await loadContent(commands[x]['code'])(page, extras).catch(err => {
                         const s_err = err.toString();
@@ -138,7 +149,7 @@ async function runTests(options, saveLogs = true) {
                     });
                 } catch (error) {
                     error_log = 'output:\n' + error + '\n';
-                    if (options.debug) {
+                    if (options.debug === true) {
                         error_log += `command "${x}" failed: ${commands[x]['code']}\n`;
                     }
                 }
@@ -153,6 +164,7 @@ async function runTests(options, saveLogs = true) {
             if (error_log.length > 0) {
                 logs = appendLog(logs, 'FAILED', saveLogs, true); // eslint-disable-line
                 logs = appendLog(logs, error_log + '\n', saveLogs); // eslint-disable-line
+                logs = showDebug(debug_log, saveLogs, logs); // eslint-disable-line
                 failures += 1;
                 await page.close();
                 continue;
@@ -160,6 +172,7 @@ async function runTests(options, saveLogs = true) {
 
             if (extras.takeScreenshot !== true) {
                 logs = appendLog(logs, 'ok', saveLogs, true); // eslint-disable-line
+                logs = showDebug(debug_log, saveLogs, logs); // eslint-disable-line
                 await page.close();
                 continue;
             }
@@ -220,6 +233,7 @@ async function runTests(options, saveLogs = true) {
         if (notOk === false) {
             logs = appendLog(logs, 'ok', saveLogs, true); // eslint-disable-line
         }
+        logs = showDebug(debug_log, saveLogs, logs); // eslint-disable-line
     }
     await browser.close();
 

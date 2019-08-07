@@ -1,0 +1,6 @@
+screenshot: false
+goto: file://{current-dir}/{doc-path}/basic.html
+assert: ("#button")
+assert: ("#button", "Go somewhere else!")
+assert: ("div", 1)
+assert: ("#button", {"padding": "5px"})

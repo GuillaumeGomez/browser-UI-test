@@ -335,11 +335,11 @@ function parseAssert(s) {
         }
         const value = secondParam.value;
         return {'instructions': [
-            `window.parseAssertElemStr = await page.$("${path}")`,
-            `if (window.parseAssertElemStr === null) { throw '"${path}" not found'; }`,
+            `let parseAssertElemStr = await page.$("${path}");\n` +
+            `if (parseAssertElemStr === null) { throw '"${path}" not found'; }\n` +
             // TODO: maybe check differently depending on the tag kind?
-            `if (window.parseAssertElemStr.innerText !== "${value}") { throw '"' + ` +
-            `window.parseAssertElemStr.innerText + '" !== "${value}"'; }`,
+            'let t = await (await parseAssertElemStr.getProperty("textContent")).jsonValue();' +
+            `if (t !== "${value}") { throw '"' + t + '" !== "${value}"'; }`,
         ]};
     } else if (sub.startsWith('{')) {
         let d;
@@ -348,27 +348,33 @@ function parseAssert(s) {
         } catch (error) {
             return {'error': `Invalid JSON object: "${error}"`};
         }
-        const instructions = [
-            `window.parseAssertElemJson = await page.$("${path}")`,
-            `if (window.parseAssertElemJson === null) { throw '"${path}" not found'; }`,
-            'window.assertComputedStyle = getComputedStyle(window.parseAssertElemJson)',
-        ];
+        let code = '';
         for (const key in d) {
             if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
                 const clean = cleanString(d[key]);
                 const cKey = cleanString(key);
                 // TODO: check how to compare CSS property
-                instructions.push(`if (window.assertComputedStyle["${cKey}"] != "${clean}") { ` +
-                    `throw 'expected "${clean}", got for key "${cKey}" for "${path}"'; }`);
+                code += `if (assertComputedStyle["${cKey}"] != "${clean}") { ` +
+                    `throw 'expected "${clean}", got for key "${cKey}" for "${path}"'; }`;
             }
         }
-        return {'instructions': instructions};
+        if (code.length === 0) {
+            return {'instructions': []};
+        }
+        return {'instructions': [
+            `let parseAssertElemJson = await page.$("${path}");\n` +
+            `if (parseAssertElemJson === null) { throw '"${path}" not found'; }\n` +
+            'await page.evaluate(e => {' +
+            'let assertComputedStyle = getComputedStyle(e);\n' +
+            code +
+            '}, parseAssertElemJson);',
+        ]};
     } else if (matchInteger(sub) === true) {
         return {'instructions': [
-            `window.parseAssertElemInt = await page.$$("${path}")`,
+            `let parseAssertElemInt = await page.$$("${path}");\n` +
             // TODO: maybe check differently depending on the tag kind?
-            `if (window.parseAssertElemInt.length !== ${sub}) { throw 'expected ${sub} ` +
-            'elements, found \' + window.parseAssertElemInt.length; }',
+            `if (parseAssertElemInt.length !== ${sub}) { throw 'expected ${sub} ` +
+            'elements, found \' + parseAssertElemInt.length; }',
         ]};
     }
     return {'error': `expected [integer] or [string] or [JSON object], found \`${sub}\``};
