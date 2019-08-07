@@ -305,7 +305,7 @@ function parseAssert(s) {
     if (ret.error !== undefined) {
         return ret;
     }
-    let pos = ret.pos + 1;
+    let pos = ret.pos + 2;
     while (isWhiteSpace(s.charAt(pos)) === true) {
         pos += 1;
     }
@@ -348,15 +348,15 @@ function parseAssert(s) {
         } catch (error) {
             return {'error': `Invalid JSON object: "${error}"`};
         }
-        let instructions = [
+        const instructions = [
             `window.parseAssertElemJson = await page.$("${path}")`,
             `if (window.parseAssertElemJson === null) { throw '"${path}" not found'; }`,
-            `window.assertComputedStyle = getComputedStyle(window.parseAssertElemJson)`,
+            'window.assertComputedStyle = getComputedStyle(window.parseAssertElemJson)',
         ];
         for (const key in d) {
             if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
-                let clean = cleanString(d[key]);
-                let cKey = cleanString(key);
+                const clean = cleanString(d[key]);
+                const cKey = cleanString(key);
                 // TODO: check how to compare CSS property
                 instructions.push(`if (window.assertComputedStyle["${cKey}"] != "${clean}") { ` +
                     `throw 'expected "${clean}", got for key "${cKey}" for "${path}"'; }`);
@@ -368,7 +368,7 @@ function parseAssert(s) {
             `window.parseAssertElemInt = await page.$$("${path}")`,
             // TODO: maybe check differently depending on the tag kind?
             `if (window.parseAssertElemInt.length !== ${sub}) { throw 'expected ${sub} ` +
-            `elements, found ' + window.parseAssertElemInt.length; }`,
+            'elements, found \' + window.parseAssertElemInt.length; }',
         ]};
     }
     return {'error': `expected [integer] or [string] or [JSON object], found \`${sub}\``};
@@ -400,6 +400,7 @@ const ORDERS = {
     'write': parseWrite,
     'localstorage': parseLocalStorage,
     'screenshot': parseScreenshot,
+    'assert': parseAssert,
 };
 
 function parseContent(content, docPath) {
@@ -418,7 +419,7 @@ function parseContent(content, docPath) {
             res = ORDERS[order](line.substr(order.length + 1).trim(), docPath);
             if (res.error !== undefined) {
                 res.line = i + 1;
-                return [res];
+                return res;
             }
             if (firstGotoParsed === false) {
                 if (order !== 'screenshot' && order !== 'goto') {
