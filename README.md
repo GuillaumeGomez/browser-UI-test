@@ -69,6 +69,7 @@ The list of fields of the `Options` class is the following:
  * docPath: doc path to be used on `goto` local paths
  * noHeadless: disable headless mode
  * showText: disable text invisibility (be careful when using it!)
+ * debug: display more information
 
 ## Run tests
 
@@ -210,6 +211,21 @@ localstorage: {"key": "value", "another key": "another value"}
 
 ```
 screenshot: false
+```
+
+#### assert
+
+**assert** command checks if the condition is true, otherwise fail. Four different functionalities are available:
+
+```
+// will check that "#id > .class" exists
+assert: ("#id > .class")
+// will check that first "#id > .class" has text "hello"
+assert: ("#id > .class", "hello")
+// will check that there are 2 "#id > .class"
+assert: ("#id > .class", 2)
+// will check that "#id > .class" has blue color
+assert: ("#id > .class", { "color": "blue" })
 ```
 
 ### Comments?
