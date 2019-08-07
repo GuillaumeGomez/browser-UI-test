@@ -335,10 +335,11 @@ function parseAssert(s) {
         }
         const value = secondParam.value;
         return {'instructions': [
-            `if (await page.$("${path}") === null) { throw '"${path}" not found'; }`,
+            `window.parseAssertElemStr = await page.$("${path}")`,
+            `if (window.parseAssertElemStr === null) { throw '"${path}" not found'; }`,
             // TODO: maybe check differently depending on the tag kind?
-            `if ((await page.$("${path}")).innerText !== "${value}") { throw '"' + ` +
-            `(await page.$("${path}")).innerText + '" !== "${value}"'; }`,
+            `if (window.parseAssertElemStr.innerText !== "${value}") { throw '"' + ` +
+            `window.parseAssertElemStr.innerText + '" !== "${value}"'; }`,
         ]};
     } else if (sub.startsWith('{')) {
         let d;
@@ -348,21 +349,26 @@ function parseAssert(s) {
             return {'error': `Invalid JSON object: "${error}"`};
         }
         let instructions = [
-            `if (await page.$("${path}") === null) { throw '"${path}" not found'; }`,
+            `window.parseAssertElemJson = await page.$("${path}")`,
+            `if (window.parseAssertElemJson === null) { throw '"${path}" not found'; }`,
+            `window.assertComputedStyle = getComputedStyle(window.parseAssertElemJson)`,
         ];
         for (const key in d) {
             if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
+                let clean = cleanString(d[key]);
+                let cKey = cleanString(key);
                 // TODO: check how to compare CSS property
-                instructions.push();
+                instructions.push(`if (window.assertComputedStyle["${cKey}"] != "${clean}") { ` +
+                    `throw 'expected "${clean}", got for key "${cKey}" for "${path}"'; }`);
             }
         }
         return {'instructions': instructions};
     } else if (matchInteger(sub) === true) {
         return {'instructions': [
-            `if (await page.$("${path}") === null) { throw '"${path}" not found'; }`,
+            `window.parseAssertElemInt = await page.$$("${path}")`,
             // TODO: maybe check differently depending on the tag kind?
-            `if ((await page.$$("${path}")).length !== ${sub}) { throw 'expect ${sub} ` +
-            `elements, found ' + (await page.$$("${path}")).length; }`,
+            `if (window.parseAssertElemInt.length !== ${sub}) { throw 'expected ${sub} ` +
+            `elements, found ' + window.parseAssertElemInt.length; }`,
         ]};
     }
     return {'error': `expected [integer] or [string] or [JSON object], found \`${sub}\``};
