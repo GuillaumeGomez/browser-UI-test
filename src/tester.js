@@ -12,7 +12,7 @@ const print = utils.print;
 function loadContent(content) {
     const Module = module.constructor;
     const m = new Module();
-    m._compile(`async function f(page, arg){ return ${content}; } module.exports.f = f;`, 'tmp.js');
+    m._compile(`async function f(page, arg){ ${content} } module.exports.f = f;`, 'tmp.js');
     return m.exports.f;
 }
 
@@ -131,10 +131,17 @@ async function runTests(options, saveLogs = true) {
                 'takeScreenshot': true,
             };
             for (let x = 0; x < commands.length; ++x) {
-                await loadContent(commands[x]['code'])(page, extras).catch(err => {
-                    const s_err = err.toString();
-                    error_log = `[ERROR] ${s_err}: for command "${commands[x]['original']}"`;
-                });
+                try {
+                    await loadContent(commands[x]['code'])(page, extras).catch(err => {
+                        const s_err = err.toString();
+                        error_log = `[ERROR] ${s_err}: for command "${commands[x]['original']}"`;
+                    });
+                } catch (error) {
+                    error_log = 'output:\n' + error + '\n';
+                    if (options.debug) {
+                        error_log += `command "${x}" failed: ${commands[x]['code']}\n`;
+                    }
+                }
                 if (error_log.length > 0) {
                     break;
                 }
