@@ -96,6 +96,8 @@ Here's the command list:
  * [`size`](#size)
  * [`localstorage`](#localstorage)
  * [`screenshot`](#screenshot)
+ * [`assert`](#assert)
+ * [`text`](#text)
 
 #### click
 
@@ -227,6 +229,14 @@ assert: ("#id > .class", "hello")
 assert: ("#id > .class", 2)
 // will check that "#id > .class" has blue color
 assert: ("#id > .class", { "color": "blue" })
+```
+
+#### text
+
+**text** command allows to update an element's text. Example:
+
+```
+text: ("#button", "hello")
 ```
 
 ### Comments?
