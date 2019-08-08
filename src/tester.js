@@ -4,6 +4,7 @@ const PNG = require('png-js');
 const parser = require('./parser.js');
 const utils = require('./utils.js');
 const Options = require('./options.js').Options;
+const Logs = require('./logs.js').Logs;
 const add_warn = utils.add_warning;
 const process = require('process');
 const print = utils.print;
@@ -18,19 +19,6 @@ function loadContent(content) {
 
 function comparePixels(img1, img2) {
     return img1.equals(img2);
-}
-
-function appendLog(logs, newLog, saveLogs, noBackline) {
-    if (logs.length === 0 || noBackline === true) {
-        if (saveLogs !== true) {
-            process.stdout.write(`${newLog}`);
-        }
-        return `${logs}${newLog}`;
-    }
-    if (saveLogs !== true) {
-        process.stdout.write(`\n${newLog}`);
-    }
-    return `${logs}\n${newLog}`;
 }
 
 function save_failure(folderIn, failuresFolder, newImage, originalImage, runId) {
@@ -57,11 +45,10 @@ function save_failure(folderIn, failuresFolder, newImage, originalImage, runId) 
     return true;
 }
 
-function showDebug(debug_log, saveLogs, logs) {
+function showDebug(debug_log, logs) {
     if (debug_log.length > 0) {
-        return appendLog(logs, `[DEBUG]\n${debug_log}`, saveLogs);
+        logs.append(`[DEBUG]\n${debug_log}`);
     }
-    return logs;
 }
 
 function getGlobalStyle(textHiding) {
@@ -74,10 +61,10 @@ async function runTests(options, saveLogs = true) {
     }
     options.validate();
 
-    let logs = '';
+    const logs = new Logs(saveLogs);
     const textHiding = options.showText === true ? '' : '* { color: rgba(0,0,0,0) !important; }';
 
-    logs = appendLog('', '=> Starting doc-ui tests...\n', saveLogs);
+    logs.append('=> Starting doc-ui tests...\n');
 
     const loaded = [];
     let failures = 0;
@@ -89,16 +76,14 @@ async function runTests(options, saveLogs = true) {
             total += 1;
             const commands = parser.parseContent(utils.readFile(fullPath), options.docPath);
             if (Object.prototype.hasOwnProperty.call(commands, 'error')) {
-                logs = appendLog(logs, file.substr(0, file.length - 4) + '... FAILED', saveLogs);
-                logs = appendLog(logs,
-                    `[ERROR] line ${commands['line']}: ${commands['error']}`,
-                    saveLogs);
+                logs.append(file.substr(0, file.length - 4) + '... FAILED');
+                logs.append(`[ERROR] line ${commands['line']}: ${commands['error']}`);
                 failures += 1;
                 return;
             }
             if (commands['instructions'].length === 0) {
-                logs = appendLog(logs, file.substr(0, file.length - 4) + '... FAILED', saveLogs);
-                logs = appendLog(logs, 'No command to execute', saveLogs);
+                logs.append(file.substr(0, file.length - 4) + '... FAILED');
+                logs.append('No command to execute');
                 failures += 1;
                 return;
             }
@@ -110,7 +95,7 @@ async function runTests(options, saveLogs = true) {
     });
 
     if (loaded.length === 0) {
-        return [logs, failures];
+        return [logs.logs, failures];
     }
 
     let error_log;
@@ -120,7 +105,7 @@ async function runTests(options, saveLogs = true) {
     }
     const browser = await puppeteer.launch(puppeteer_options);
     for (let i = 0; i < loaded.length; ++i) {
-        logs = appendLog(logs, loaded[i]['file'] + '... ', saveLogs);
+        logs.append(loaded[i]['file'] + '... ');
         const page = await browser.newPage();
         let notOk = false;
         let debug_log = '';
@@ -162,9 +147,9 @@ async function runTests(options, saveLogs = true) {
                 }
             }
             if (error_log.length > 0) {
-                logs = appendLog(logs, 'FAILED', saveLogs, true); // eslint-disable-line
-                logs = appendLog(logs, error_log + '\n', saveLogs); // eslint-disable-line
-                logs = showDebug(debug_log, saveLogs, logs); // eslint-disable-line
+                logs.append('FAILED', true);
+                logs.append(error_log + '\n', saveLogs);
+                showDebug(debug_log, logs);
                 failures += 1;
                 await page.close();
                 continue;
@@ -174,8 +159,8 @@ async function runTests(options, saveLogs = true) {
                 if (options.debug === true) {
                     debug_log += '=> [NO SCREENSHOT COMPARISON]\n';
                 }
-                logs = appendLog(logs, 'ok', saveLogs, true); // eslint-disable-line
-                logs = showDebug(debug_log, saveLogs, logs); // eslint-disable-line
+                logs.append('ok', true);
+                showDebug(debug_log, logs);
                 await page.close();
                 continue;
             }
@@ -193,15 +178,11 @@ async function runTests(options, saveLogs = true) {
             if (fs.existsSync(originalImage) === false) {
                 if (options.generateImages === false) {
                     ignored += 1;
-                    // eslint-disable-next-line
-                    logs = appendLog(logs,
-                        'ignored ("' + originalImage + '" not found)',
-                        saveLogs,
-                        true);
+                    logs.append('ignored ("' + originalImage + '" not found)', true);
                     notOk = true;
                 } else {
                     fs.renameSync(newImage, originalImage);
-                    logs = appendLog(logs, 'generated', saveLogs, true); // eslint-disable-line
+                    logs.append('generated', true);
                 }
             } else if (comparePixels(PNG.load(newImage).imgData,
                 PNG.load(originalImage).imgData) === false) {
@@ -210,17 +191,13 @@ async function runTests(options, saveLogs = true) {
                     loaded[i]['file'] + `-${options.runId}.png`,
                     loaded[i]['file'] + '.png', options.runId);
                 if (saved === true) {
-                    // eslint-disable-next-line
-                    logs = appendLog(logs,
+                    logs.append(
                         `FAILED (images "${loaded[i]['file']}-${options.runId}.png" and ` +
                         `"${loaded[i]['file']}" are different)`,
-                        saveLogs,
                         true);
                 } else {
-                    // eslint-disable-next-line
-                    logs = appendLog(logs,
+                    logs.append(
                         `FAILED (images "${newImage}" and "${originalImage}" are different)`,
-                        saveLogs,
                         true);
                     notOk = true;
                 }
@@ -230,29 +207,27 @@ async function runTests(options, saveLogs = true) {
             }
         } catch (err) {
             failures += 1;
-            logs = appendLog(logs, 'FAILED', saveLogs, true); // eslint-disable-line
-            // eslint-disable-next-line
-            logs = appendLog(logs, loaded[i]['file'] + ' output:\n' + err + '\n', saveLogs);
+            logs.append('FAILED', true);
+            logs.append(loaded[i]['file'] + ' output:\n' + err + '\n');
             notOk = true;
         }
         await page.close();
         if (notOk === false) {
-            logs = appendLog(logs, 'ok', saveLogs, true); // eslint-disable-line
+            logs.append('ok', true);
         }
-        logs = showDebug(debug_log, saveLogs, logs); // eslint-disable-line
+        showDebug(debug_log, logs);
     }
     await browser.close();
 
-    logs = appendLog(logs,
+    logs.append(
         '\n<= doc-ui tests done: ' + (total - failures - ignored) +
-                     ' succeeded, ' + ignored + ' ignored, ' + failures + ' failed',
-        saveLogs);
+        ' succeeded, ' + ignored + ' ignored, ' + failures + ' failed');
 
     if (saveLogs !== true) {
         process.stdout.write('\n');
     }
 
-    return [logs, failures];
+    return [logs.logs, failures];
 }
 
 if (require.main === module) {
