@@ -136,7 +136,7 @@ async function runTests(options, saveLogs = true) {
             error_log = '';
             const commands = loaded[i]['commands'];
             const extras = {
-                'takeScreenshot': true,
+                'takeScreenshot': options.noScreenshot === false,
             };
             for (let x = 0; x < commands.length; ++x) {
                 if (options.debug === true) {
@@ -171,12 +171,18 @@ async function runTests(options, saveLogs = true) {
             }
 
             if (extras.takeScreenshot !== true) {
+                if (options.debug === true) {
+                    debug_log += '=> [NO SCREENSHOT COMPARISON]\n';
+                }
                 logs = appendLog(logs, 'ok', saveLogs, true); // eslint-disable-line
                 logs = showDebug(debug_log, saveLogs, logs); // eslint-disable-line
                 await page.close();
                 continue;
             }
 
+            if (options.debug === true) {
+                debug_log += '=> [SCREENSHOT COMPARISON]\n';
+            }
             const newImage = `${options.testFolderPath}${loaded[i]['file']}-${options.runId}.png`;
             await page.screenshot({
                 path: newImage,
