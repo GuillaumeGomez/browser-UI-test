@@ -333,7 +333,7 @@ function parseAssert(s) {
             }
             i += 1;
         }
-        const value = secondParam.value;
+        const value = cleanString(secondParam.value);
         return {'instructions': [
             `let parseAssertElemStr = await page.$("${path}");\n` +
             `if (parseAssertElemStr === null) { throw '"${path}" not found'; }\n` +
@@ -380,6 +380,50 @@ function parseAssert(s) {
     return {'error': `expected [integer] or [string] or [JSON object], found \`${sub}\``};
 }
 
+function parseText(s) {
+    if (s.charAt(0) !== '(') {
+        return {'error': 'expected `(` character'};
+    } else if (s.charAt(s.length - 1) !== ')') {
+        return {'error': 'expected to end with `)` character'};
+    }
+    const ret = parseString(s.substring(1));
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    let pos = ret.pos + 2;
+    while (isWhiteSpace(s.charAt(pos)) === true) {
+        pos += 1;
+    }
+    const path = cleanCssSelector(ret.value);
+    if (s.charAt(pos) !== ',') {
+        return {'error': `expected \`,\` or \`)\`, found \`${s.charAt(pos)}\``};
+    }
+    // We take everything between the comma and the paren.
+    const sub = s.substring(pos + 1, s.length - 1).trim();
+    if (sub.length === 0) {
+        return {'error': 'expected a string as second parameter'};
+    } else if (sub.startsWith('"') || sub.startsWith('\'')) {
+        const secondParam = parseString(sub);
+        if (secondParam.error !== undefined) {
+            return secondParam;
+        }
+        let i = secondParam.pos + 1;
+        while (i < sub.length) {
+            if (isWhiteSpace(sub.charAt(i)) !== true) {
+                return {'error': `unexpected token: \`${sub.charAt(i)}\``};
+            }
+            i += 1;
+        }
+        const value = cleanString(secondParam.value);
+        return {'instructions': [
+            `let parseTextElemStr = await page.$("${path}");\n` +
+            `if (parseTextElemStr === null) { throw '"${path}" not found'; }\n` +
+            `await page.evaluate(e => { e.innerText = "${value}";}, parseTextElemStr);`,
+        ]};
+    }
+    return {'error': `expected [string], found \`${sub}\``};
+}
+
 // Possible income:
 //
 // * boolean value (`true` or `false`)
@@ -407,6 +451,7 @@ const ORDERS = {
     'localstorage': parseLocalStorage,
     'screenshot': parseScreenshot,
     'assert': parseAssert,
+    'text': parseText,
 };
 
 function parseContent(content, docPath) {
