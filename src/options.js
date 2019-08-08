@@ -3,17 +3,18 @@ const print = utils.print;
 
 function helper() {
     print('tester');
-    print('  --test-folder [PATH]    : path of the folder where `.gom` script files are');
-    print('  --failure-folder [PATH] : path of the folder where failed tests image will');
+    print('  --test-folder [PATH]    : Path of the folder where `.gom` script files are');
+    print('  --failure-folder [PATH] : Path of the folder where failed tests image will');
     print('                            be placed');
-    print('  --run-id [id]           : id to be used for failed images extension (\'test\'');
+    print('  --run-id [id]           : Id to be used for failed images extension (\'test\'');
     print('                            by default)');
     print('  --generate-images       : If provided, it\'ll generate test images and won\'t');
     print('                            run comparison tests');
-    print('  --doc-path [PATH]       : doc path to be used on `goto` local paths');
+    print('  --doc-path [PATH]       : Doc path to be used on `goto` local paths');
     print('  --no-headless           : Disable headless mode');
     print('  --show-text             : Disable text invisibility (be careful when using it!)');
     print('  --debug                 : Display more information');
+    print('  --no-screenshot         : Disable screenshots at the end of the scripts by the end');
     print('  --help | -h             : Show this text');
 }
 
@@ -27,6 +28,7 @@ class Options {
         this.failuresFolderPath = '';
         this.showText = false;
         this.debug = false;
+        this.noScreenshot = false;
     }
 
     parseArguments(args = []) {
@@ -49,6 +51,8 @@ class Options {
                 this.showText = true;
             } else if (args[it] === '--debug') {
                 this.debug = true;
+            } else if (args[it] === '--no-screenshot') {
+                this.noScreenshot = true;
             } else if (args[it] === '--help' || args[it] === '-h') {
                 helper();
                 return false;
