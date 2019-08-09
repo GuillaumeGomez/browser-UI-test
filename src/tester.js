@@ -64,23 +64,23 @@ async function innerRunTests(logs, options) {
 
     fs.readdirSync(options.testFolderPath).forEach(function(file) {
         const fullPath = options.testFolderPath + file;
-        if (file.endsWith('.gom') && fs.lstatSync(fullPath).isFile()) {
+        if (file.endsWith('.goml') && fs.lstatSync(fullPath).isFile()) {
             total += 1;
             const commands = parser.parseContent(utils.readFile(fullPath), options.docPath);
             if (Object.prototype.hasOwnProperty.call(commands, 'error')) {
-                logs.append(file.substr(0, file.length - 4) + '... FAILED');
+                logs.append(file.substr(0, file.length - 5) + '... FAILED');
                 logs.append(`[ERROR] line ${commands['line']}: ${commands['error']}`);
                 failures += 1;
                 return;
             }
             if (commands['instructions'].length === 0) {
-                logs.append(file.substr(0, file.length - 4) + '... FAILED');
+                logs.append(file.substr(0, file.length - 5) + '... FAILED');
                 logs.append('No command to execute');
                 failures += 1;
                 return;
             }
             loaded.push({
-                'file': file.substr(0, file.length - 4),
+                'file': file.substr(0, file.length - 5),
                 'commands': commands['instructions'],
             });
         }

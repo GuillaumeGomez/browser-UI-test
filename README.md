@@ -4,11 +4,11 @@ Small JS framework to easily provide UI screenshot-based tests.
 
 ## Description
 
-This framework provides the possibility to quickly check browser UI through small script files (with the `.gom` extension). Once the script is done, it takes a screenshot of the page and compares it to the expected one. If they're different, the test will fail.
+This framework provides the possibility to quickly check browser UI through small script files (with the `.goml` extension). Once the script is done, it takes a screenshot of the page and compares it to the expected one. If they're different, the test will fail.
 
 ## Usage
 
-You can use it either by providing it the folder with the `.gom` files to run or import it like this:
+You can use it either by providing it the folder with the `.goml` files to run or import it like this:
 
 ```js
 const runTests = require('browser-ui-test').runTests;
@@ -62,7 +62,7 @@ runTests(options).then(x => {
 
 The list of fields of the `Options` class is the following:
 
- * testFolder: path of the folder where `.gom` script files are
+ * testFolder: path of the folder where `.goml` script files are
  * failureFolder: path of the folder where failed tests image will be placed
  * runId: id to be used for failed images extension ('test' by default)
  * generateImages: if provided, it'll generate test images and won't run comparison tests
@@ -80,7 +80,7 @@ If you want to run this repository's tests:
 $ node src/tester.js --test-folder tests/scripts/ --failure-folder failures --doc-path tests/html_files/
 ```
 
-## `.gom` scripts
+## `.goml` scripts
 
 Those scripts aim to be as quick to write and as small as possible. To do so, they provide a short list of commands. Please note that those scripts must **always** start with a [`goto`](#goto) command.
 
@@ -252,7 +252,7 @@ attribute: ("#button", "attribute-name", "attribute-value")
 
 ### Comments?
 
-You can add comments in the `.gom` scripts with `// ` (the whitespace is mandatory). Example:
+You can add comments in the `.goml` scripts with `// ` (the whitespace is mandatory). Example:
 
 ```
 goto: https://somewhere.com // let's start somewhere!

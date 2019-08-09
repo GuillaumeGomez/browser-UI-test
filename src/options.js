@@ -3,7 +3,7 @@ const print = utils.print;
 
 function helper() {
     print('tester');
-    print('  --test-folder [PATH]    : Path of the folder where `.gom` script files are');
+    print('  --test-folder [PATH]    : Path of the folder where `.goml` script files are');
     print('  --failure-folder [PATH] : Path of the folder where failed tests image will');
     print('                            be placed');
     print('  --run-id [id]           : Id to be used for failed images extension (\'test\'');
