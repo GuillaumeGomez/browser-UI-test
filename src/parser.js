@@ -153,12 +153,12 @@ function parseWrite(line) {
         if (line.charAt(line.length - 1) !== ')') {
             return {'error': 'expected to end with `)` character'};
         }
-        let ret = parseString(s.substring(1));
+        let ret = parseString(line.substring(1));
         if (ret.error !== undefined) {
             return ret;
         }
         let pos = ret.pos + 1;
-        while (pos < line.length && isWhiteSpace(s.charAt(pos)) === true) {
+        while (pos < line.length && isWhiteSpace(line.charAt(pos)) === true) {
             pos += 1;
         }
         if (line.charAt(pos) !== ',') {
@@ -192,7 +192,7 @@ function parseWrite(line) {
             return x;
         }
         // check there is nothing after the string
-        let i = ret.pos + 1;
+        let i = x.pos + 1;
         while (i < line.length) {
             if (isWhiteSpace(line.charAt(i)) !== true) {
                 return {'error': `unexpected token \`${line.charAt(i)}\` after string`};
@@ -395,6 +395,13 @@ function parseAssert(s) {
         const thirdParam = parseString(third);
         if (thirdParam.error !== undefined) {
             return thirdParam;
+        }
+        i = thirdParam.pos + 1;
+        while (i < third.length) {
+            if (isWhiteSpace(third.charAt(i)) !== true) {
+                return {'error': `expected \`)\`, found \`${third.charAt(i)}\``};
+            }
+            i += 1;
         }
         const value = cleanString(thirdParam.value);
         return {'instructions': [
