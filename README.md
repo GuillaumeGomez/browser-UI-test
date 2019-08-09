@@ -230,6 +230,8 @@ assert: ("#id > .class", "hello")
 assert: ("#id > .class", 2)
 // will check that "#id > .class" has blue color
 assert: ("#id > .class", { "color": "blue" })
+// will check that "#id > .class" has an attribute called "attribute-name" with value "attribute-value"
+assert: ("#id > .class", "attribute-name", "attribute-value")
 ```
 
 #### text

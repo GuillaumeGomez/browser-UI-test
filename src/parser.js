@@ -386,15 +386,24 @@ function parseAssert(s) {
         if (sub.charAt(i) !== ',') {
             return {'error': `unexpected token after second parameter: \`${sub.charAt(i)}\``};
         }
+        const attributeName = cleanString(secondParam.value);
         // Since we check for attribute, the attribute name cannot be empty
-        if (value.length < 1) {
-            ;
+        if (attributeName.length === 0) {
+            return {'error': 'attribute name cannot be empty'};
         }
         const third = sub.substring(i + 1).trim();
         const thirdParam = parseString(third);
         if (thirdParam.error !== undefined) {
             return thirdParam;
         }
+        const value = cleanString(thirdParam.value);
+        return {'instructions': [
+            `let parseAssertElemAttr = await page.$("${path}");\n` +
+            `if (parseAssertElemAttr === null) { throw '"${path}" not found'; }\n` +
+            `await page.evaluate(e => { if (e.getAttribute("${attributeName}") !== "${value}") {` +
+            ` throw 'expected "${value}", found "' + e.getAttribute("${attributeName}") + '"` +
+            ` for attribute "${attributeName}"'; } }, parseAssertElemAttr);`,
+        ]};
     } else if (sub.startsWith('{')) {
         let d;
         try {
