@@ -55,21 +55,13 @@ function getGlobalStyle(textHiding) {
     return `html {font-family: Arial,Helvetica Neue,Helvetica,sans-serif;}${textHiding}`;
 }
 
-async function runTests(options, saveLogs = true) {
-    if (!options || options.validate === undefined) {
-        throw 'Options must be an "Options" type!';
-    }
-    options.validate();
-
-    const logs = new Logs(saveLogs);
+async function innerRunTests(logs, options) {
     const textHiding = options.showText === true ? '' : '* { color: rgba(0,0,0,0) !important; }';
-
-    logs.append('=> Starting doc-ui tests...\n');
-
     const loaded = [];
     let failures = 0;
     let ignored = 0;
     let total = 0;
+
     fs.readdirSync(options.testFolderPath).forEach(function(file) {
         const fullPath = options.testFolderPath + file;
         if (file.endsWith('.gom') && fs.lstatSync(fullPath).isFile()) {
@@ -148,7 +140,7 @@ async function runTests(options, saveLogs = true) {
             }
             if (error_log.length > 0) {
                 logs.append('FAILED', true);
-                logs.append(error_log + '\n', saveLogs);
+                logs.append(error_log + '\n');
                 showDebug(debug_log, logs);
                 failures += 1;
                 await page.close();
@@ -223,11 +215,29 @@ async function runTests(options, saveLogs = true) {
         '\n<= doc-ui tests done: ' + (total - failures - ignored) +
         ' succeeded, ' + ignored + ' ignored, ' + failures + ' failed');
 
-    if (saveLogs !== true) {
+    if (logs.saveLogs !== true) {
         process.stdout.write('\n');
     }
 
     return [logs.logs, failures];
+}
+
+async function runTests(options, saveLogs = true) {
+    if (!options || options.validate === undefined) {
+        throw 'Options must be an "Options" type!';
+    }
+    options.validate();
+
+    const logs = new Logs(saveLogs);
+
+    logs.append('=> Starting doc-ui tests...\n');
+
+    try {
+        return innerRunTests(logs, options);
+    } catch (error) {
+        logs.append(`An exception occured: ${error}\n== STACKTRACE ==\n${new Error().stack}`);
+        return [logs.logs, 1];
+    }
 }
 
 if (require.main === module) {

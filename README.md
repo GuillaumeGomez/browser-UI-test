@@ -86,18 +86,19 @@ Those scripts aim to be as quick to write and as small as possible. To do so, th
 
 Here's the command list:
 
+ * [`assert`](#assert)
+ * [`attribute`](#attribute)
  * [`click`](#click)
- * [`waitfor`](#waitfor)
  * [`focus`](#focus)
- * [`write`](#write)
- * [`movecursorto`](#movecursorto)
  * [`goto`](#goto)
+ * [`localstorage`](#localstorage)
+ * [`movecursorto`](#movecursorto)
+ * [`screenshot`](#screenshot)
  * [`scrollto`](#scrollto)
  * [`size`](#size)
- * [`localstorage`](#localstorage)
- * [`screenshot`](#screenshot)
- * [`assert`](#assert)
  * [`text`](#text)
+ * [`waitfor`](#waitfor)
+ * [`write`](#write)
 
 #### click
 
@@ -237,6 +238,14 @@ assert: ("#id > .class", { "color": "blue" })
 
 ```
 text: ("#button", "hello")
+```
+
+#### attribute
+
+**attribute** command allows to update an element's attribute. Example:
+
+```
+attribute: ("#button", "attribute-name", "attribute-value")
 ```
 
 ### Comments?

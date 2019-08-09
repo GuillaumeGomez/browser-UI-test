@@ -410,18 +410,82 @@ function parseText(s) {
         let i = secondParam.pos + 1;
         while (i < sub.length) {
             if (isWhiteSpace(sub.charAt(i)) !== true) {
-                return {'error': `unexpected token: \`${sub.charAt(i)}\``};
+                return {'error': `unexpected token: \`${sub.charAt(i)}\` after second parameter`};
             }
             i += 1;
         }
         const value = cleanString(secondParam.value);
         return {'instructions': [
-            `let parseTextElemStr = await page.$("${path}");\n` +
-            `if (parseTextElemStr === null) { throw '"${path}" not found'; }\n` +
-            `await page.evaluate(e => { e.innerText = "${value}";}, parseTextElemStr);`,
+            `let parseTextElem = await page.$("${path}");\n` +
+            `if (parseTextElem === null) { throw '"${path}" not found'; }\n` +
+            `await page.evaluate(e => { e.innerText = "${value}";}, parseTextElem);`,
         ]};
     }
     return {'error': `expected [string], found \`${sub}\``};
+}
+
+function parseAttribute(s) {
+    if (s.charAt(0) !== '(') {
+        return {'error': 'expected `(` character'};
+    } else if (s.charAt(s.length - 1) !== ')') {
+        return {'error': 'expected to end with `)` character'};
+    }
+    let ret = parseString(s.substring(1));
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    let pos = ret.pos + 2;
+    while (isWhiteSpace(s.charAt(pos)) === true) {
+        pos += 1;
+    }
+    if (ret.value.length < 1) {
+        return {'error': 'path (first parameter) cannot be empty'};
+    }
+    const path = cleanCssSelector(ret.value);
+    if (s.charAt(pos) !== ',') {
+        return {'error': `expected \`,\`, found \`${s.charAt(pos)}\``};
+    }
+    pos += 1;
+    while (isWhiteSpace(s.charAt(pos)) === true) {
+        pos += 1;
+    }
+    ret = parseString(s.substring(pos));
+    if (ret.error !== undefined) {
+        return ret;
+    } else if (ret.value.length < 1) {
+        return {'error': 'attribute name (second parameter) cannot be empty'};
+    }
+    const attributeName = cleanString(ret.value);
+    pos += ret.pos + 1;
+    while (isWhiteSpace(s.charAt(pos)) === true) {
+        pos += 1;
+    }
+    if (s.charAt(pos) !== ',') {
+        return {'error': `expected \`,\` or \`)\`, found \`${s.charAt(pos)}\``};
+    }
+    // We take everything between the comma and the paren.
+    const sub = s.substring(pos + 1, s.length - 1).trim();
+    if (sub.length === 0) {
+        return {'error': 'expected a string as third parameter'};
+    }
+    ret = parseString(sub);
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    let i = ret.pos + 1;
+    while (i < sub.length) {
+        if (isWhiteSpace(sub.charAt(i)) !== true) {
+            return {'error': `unexpected token: \`${sub.charAt(i)}\` after third parameter`};
+        }
+        i += 1;
+    }
+    const value = cleanString(ret.value);
+    return {'instructions': [
+        `let parseAttributeElem = await page.$("${path}");\n` +
+        `if (parseAttributeElem === null) { throw '"${path}" not found'; }\n` +
+        `await page.evaluate(e => { e.setAttribute("${attributeName}","${value}"); }, ` +
+        'parseAttributeElem);',
+    ]};
 }
 
 // Possible income:
@@ -452,6 +516,7 @@ const ORDERS = {
     'screenshot': parseScreenshot,
     'assert': parseAssert,
     'text': parseText,
+    'attribute': parseAttribute,
 };
 
 function parseContent(content, docPath) {
