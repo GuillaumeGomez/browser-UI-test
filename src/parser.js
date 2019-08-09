@@ -2,23 +2,6 @@ const os = require('os');
 const utils = require('./utils.js');
 
 
-function getString(content) {
-    if (content.length < 1) {
-        return {'error': 'No string received'};
-    }
-    const stop = content[0];
-
-    if (stop !== '"' && stop !== '\'') {
-        return {'error': `Expected \`'\` or \`"\` character, found \`${content[0]}\``};
-    }
-    for (let i = 1; i < content.length; ++i) {
-        if (content[i] === stop && content[i - 1] !== '\\') {
-            return {'content': content.substring(1, i)};
-        }
-    }
-    return {'error': 'Missing termination character'};
-}
-
 function cssSelector(s) {
     return s.startsWith('"') === false &&
            s.startsWith('\'') === false &&
@@ -39,6 +22,55 @@ function matchPosition(s) {
 
 function matchInteger(s) {
     return s.match(/[0-9]+/g) !== null;
+}
+
+function isWhiteSpace(c) {
+    return c === ' ' || c === '\t';
+}
+
+function isStringChar(c) {
+    return c === '\'' || c === '"';
+}
+
+function parseString(s) {
+    let i = 0;
+
+    while (i < s.length && isWhiteSpace(s.charAt(i)) === true) {
+        i += 1;
+    }
+    if (i >= s.length) {
+        return {'error': 'no string'};
+    }
+    const endChar = s.charAt(i);
+    if (isStringChar(endChar) === false) {
+        return {'error': 'expected `\'` or `"` character'};
+    }
+    i += 1;
+    const start = i;
+    let c;
+    while (i < s.length) {
+        c = s.charAt(i);
+        if (c === endChar) {
+            return {'value': s.substring(start, i), 'pos': i};
+        } else if (c === '\\') {
+            i += 1;
+        }
+        i += 1;
+    }
+    return {'error': `expected \`${endChar}\` character at the end of the string`};
+}
+
+function handlePathParameters(line, split, join) {
+    const parts = line.split(split);
+    if (parts.length > 1) {
+        for (let i = 1; i < parts.length; ++i) {
+            if (parts[i].charAt(0) === '/') { // to avoid having "//"
+                parts[i] = parts[i].substr(1);
+            }
+        }
+        line = parts.join(join);
+    }
+    return line;
 }
 
 // Possible incomes:
@@ -63,8 +95,12 @@ function parseClick(line) {
     if (cssSelector(line) !== true) {
         return {'error': 'Invalid CSS selector'};
     }
+    const selector = cleanCssSelector(line).trim();
+    if (selector.length === 0) {
+        return {'error': 'selector cannot be empty'};
+    }
     return {'instructions': [
-        `page.click("${cleanCssSelector(line)}")`,
+        `page.click("${selector}")`,
     ]};
 }
 
@@ -78,9 +114,13 @@ function parseWaitFor(line) {
             `await page.waitFor(${parseInt(line)})`,
         ]};
     } else if (cssSelector(line) === true) {
+        const selector = cleanCssSelector(line).trim();
+        if (selector.length === 0) {
+            return {'error': 'selector cannot be empty'};
+        }
         return {
             'instructions': [
-                `await page.waitFor("${cleanCssSelector(line)}")`,
+                `await page.waitFor("${selector}")`,
             ],
             'wait': false,
         };
@@ -93,8 +133,12 @@ function parseWaitFor(line) {
 // * CSS selector (for example: #elementID)
 function parseFocus(line) {
     if (cssSelector(line) === true) {
+        const selector = cleanCssSelector(line).trim();
+        if (selector.length === 0) {
+            return {'error': 'selector cannot be empty'};
+        }
         return {'instructions': [
-            `page.focus("${cleanCssSelector(line)}")`,
+            `page.focus("${selector}")`,
         ]};
     }
     return {'error': 'Expected a CSS selector'};
@@ -102,29 +146,64 @@ function parseFocus(line) {
 
 // Possible income (you have to put the double quotes!):
 //
-// * [CSS selector (for example: #elementID)] "text"
+// * ("[CSS selector (for example: #elementID)]", "text")
 // * "text" (in here, it'll write into the current focused element)
 function parseWrite(line) {
-    if (line.startsWith('"') || line.startsWith('\'')) { // current focused element
-        const x = getString(line);
+    if (line.startsWith('(') === true) {
+        if (line.charAt(line.length - 1) !== ')') {
+            return {'error': 'expected to end with `)` character'};
+        }
+        let ret = parseString(s.substring(1));
+        if (ret.error !== undefined) {
+            return ret;
+        }
+        let pos = ret.pos + 1;
+        while (pos < line.length && isWhiteSpace(s.charAt(pos)) === true) {
+            pos += 1;
+        }
+        if (line.charAt(pos) !== ',') {
+            return {'error': `expected \`,\` after first parameter, found \`${line.charAt(pos)}\``};
+        }
+        const path = cleanCssSelector(ret.value).trim();
+        if (path.length === 0) {
+            return {'error': 'selector cannot be empty'};
+        }
+        // We take everything between the comma and the paren.
+        const sub = line.substring(pos + 1, line.length - 1).trim();
+        ret = parseString(sub); // no trim call in here!
+        if (ret.error !== undefined) {
+            return ret;
+        }
+        // check there is nothing after the second parameter
+        let i = ret.pos + 1;
+        while (i < sub.length) {
+            if (isWhiteSpace(sub.charAt(i)) !== true) {
+                return {'error': `unexpected token \`${sub.charAt(i)}\` after second parameter`};
+            }
+            i += 1;
+        }
+        return {'instructions': [
+            `page.focus("${path}")`,
+            `page.keyboard.type("${ret.value}")`,
+        ]};
+    } else if (line.startsWith('"') || line.startsWith('\'')) { // current focused element
+        const x = parseString(line);
         if (x.error !== undefined) {
             return x;
         }
+        // check there is nothing after the string
+        let i = ret.pos + 1;
+        while (i < line.length) {
+            if (isWhiteSpace(line.charAt(i)) !== true) {
+                return {'error': `unexpected token \`${line.charAt(i)}\` after string`};
+            }
+            i += 1;
+        }
         return {'instructions': [
-            `page.keyboard.type("${x.content}")`,
+            `page.keyboard.type("${x.value}")`,
         ]};
-    } else if (line.indexOf('"') === -1 && line.indexOf('\'') === -1) {
-        return {'error': 'Missing string. Requires \'"\''};
     }
-    const elem = line.split(' ')[0];
-    const text = getString(line.substr(elem.length + 1).trim());
-    if (text.error !== undefined) {
-        return text;
-    }
-    return {'instructions': [
-        `page.focus("${elem}")`,
-        `page.keyboard.type("${text.content}")`,
-    ]};
+    return {'error': 'expected [string] or ([path], [string])'};
 }
 
 // Possible incomes:
@@ -146,24 +225,15 @@ function parseMoveCursorTo(line) {
             `page.mouse.move(${x},${y})`,
         ]};
     } else if (cssSelector(line) === true) {
+        const path = cleanCssSelector(line).trim();
+        if (path.length === 0) {
+            return {'error': 'selector cannot be empty'};
+        }
         return {'instructions': [
-            `page.hover("${cleanCssSelector(line)}")`,
+            `page.hover("${path}")`,
         ]};
     }
     return {'error': 'Invalid CSS selector or invalid position'};
-}
-
-function handlePathParameters(line, split, join) {
-    const parts = line.split(split);
-    if (parts.length > 1) {
-        for (let i = 1; i < parts.length; ++i) {
-            if (parts[i].charAt(0) === '/') { // to avoid having "//"
-                parts[i] = parts[i].substr(1);
-            }
-        }
-        line = parts.join(join);
-    }
-    return line;
 }
 
 // Possible incomes:
@@ -226,7 +296,7 @@ function parseSize(line) {
             `page.setViewport({width: ${width}, height: ${height}})`,
         ]};
     }
-    return {'error': 'Expected \'(\' character as start'};
+    return {'error': `Expected \`(\` character, found \`${line.charAt(0)}\``};
 }
 
 // Possible income:
@@ -259,42 +329,6 @@ function parseLocalStorage(line) {
     }
 }
 
-function isWhiteSpace(c) {
-    return c === ' ' || c === '\t';
-}
-
-function isStringChar(c) {
-    return c === '\'' || c === '"';
-}
-
-function parseString(s) {
-    let i = 0;
-
-    while (i < s.length && isWhiteSpace(s.charAt(i)) === true) {
-        i += 1;
-    }
-    if (i >= s.length) {
-        return {'error': 'no string'};
-    }
-    const endChar = s.charAt(i);
-    if (isStringChar(endChar) === false) {
-        return {'error': 'expected `\'` or `"` character'};
-    }
-    i += 1;
-    const start = i;
-    let c;
-    while (i < s.length) {
-        c = s.charAt(i);
-        if (c === endChar) {
-            return {'value': s.substring(start, i), 'pos': i};
-        } else if (c === '\\') {
-            i += 1;
-        }
-        i += 1;
-    }
-    return {'error': `expected \`${endChar}\` character at the end of the string`};
-}
-
 function parseAssert(s) {
     if (s.charAt(0) !== '(') {
         return {'error': 'expected `(` character'};
@@ -309,7 +343,10 @@ function parseAssert(s) {
     while (isWhiteSpace(s.charAt(pos)) === true) {
         pos += 1;
     }
-    const path = cleanCssSelector(ret.value);
+    const path = cleanCssSelector(ret.value).trim();
+    if (path.length === 0) {
+        return {'error': 'selector cannot be empty'};
+    }
     if (s.charAt(pos) === ')') {
         return {'instructions': [
             `if (page.$("${path}") === null) { throw '"${path}" not found'; }`,
@@ -327,20 +364,37 @@ function parseAssert(s) {
             return secondParam;
         }
         let i = secondParam.pos + 1;
-        while (i < sub.length) {
-            if (isWhiteSpace(sub.charAt(i)) !== true) {
-                return {'error': `unexpected token: \`${sub.charAt(i)}\``};
-            }
+        while (i < sub.length && isWhiteSpace(sub.charAt(i)) === true) {
             i += 1;
         }
-        const value = cleanString(secondParam.value);
-        return {'instructions': [
-            `let parseAssertElemStr = await page.$("${path}");\n` +
-            `if (parseAssertElemStr === null) { throw '"${path}" not found'; }\n` +
-            // TODO: maybe check differently depending on the tag kind?
-            'let t = await (await parseAssertElemStr.getProperty("textContent")).jsonValue();' +
-            `if (t !== "${value}") { throw '"' + t + '" !== "${value}"'; }`,
-        ]};
+        //
+        // TEXT CONTENT CHECK
+        //
+        if (i >= sub.length) {
+            const value = cleanString(secondParam.value);
+            return {'instructions': [
+                `let parseAssertElemStr = await page.$("${path}");\n` +
+                `if (parseAssertElemStr === null) { throw '"${path}" not found'; }\n` +
+                // TODO: maybe check differently depending on the tag kind?
+                'let t = await (await parseAssertElemStr.getProperty("textContent")).jsonValue();' +
+                `if (t !== "${value}") { throw '"' + t + '" !== "${value}"'; }`,
+            ]};
+        }
+        //
+        // ATTRIBUTE CHECK
+        //
+        if (sub.charAt(i) !== ',') {
+            return {'error': `unexpected token after second parameter: \`${sub.charAt(i)}\``};
+        }
+        // Since we check for attribute, the attribute name cannot be empty
+        if (value.length < 1) {
+            ;
+        }
+        const third = sub.substring(i + 1).trim();
+        const thirdParam = parseString(third);
+        if (thirdParam.error !== undefined) {
+            return thirdParam;
+        }
     } else if (sub.startsWith('{')) {
         let d;
         try {
@@ -394,8 +448,10 @@ function parseText(s) {
     while (isWhiteSpace(s.charAt(pos)) === true) {
         pos += 1;
     }
-    const path = cleanCssSelector(ret.value);
-    if (s.charAt(pos) !== ',') {
+    const path = cleanCssSelector(ret.value).trim();
+    if (path.length === 0) {
+        return {'error': 'selector cannot be empty'};
+    } else if (s.charAt(pos) !== ',') {
         return {'error': `expected \`,\` or \`)\`, found \`${s.charAt(pos)}\``};
     }
     // We take everything between the comma and the paren.
@@ -441,8 +497,10 @@ function parseAttribute(s) {
     if (ret.value.length < 1) {
         return {'error': 'path (first parameter) cannot be empty'};
     }
-    const path = cleanCssSelector(ret.value);
-    if (s.charAt(pos) !== ',') {
+    const path = cleanCssSelector(ret.value).trim();
+    if (path.length === 0) {
+        return {'error': 'selector cannot be empty'};
+    } else if (s.charAt(pos) !== ',') {
         return {'error': `expected \`,\`, found \`${s.charAt(pos)}\``};
     }
     pos += 1;
