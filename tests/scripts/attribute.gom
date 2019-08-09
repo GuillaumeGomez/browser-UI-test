@@ -1,0 +1,4 @@
+screenshot: false
+goto: file://{current-dir}/{doc-path}/basic.html
+attribute: ("#button", "id", "another-id")
+assert: ("#another-button")
