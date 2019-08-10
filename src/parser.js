@@ -2,12 +2,6 @@ const os = require('os');
 const utils = require('./utils.js');
 
 
-function cssSelector(s) {
-    return s.startsWith('"') === false &&
-           s.startsWith('\'') === false &&
-           s.indexOf('`') === -1;
-}
-
 function cleanString(s) {
     return s.replace(/"/g, '\\"').replace(/'/g, '\\\'');
 }
@@ -73,10 +67,29 @@ function handlePathParameters(line, split, join) {
     return line;
 }
 
-// Possible incomes:
+function parseCssSelector(line) {
+    const ret = parseString(line);
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    const selector = cleanCssSelector(ret.value).trim();
+    if (selector.length === 0) {
+        return {'error': 'selector cannot be empty'};
+    }
+    let i = ret.pos + 1;
+    while (i < line.length) {
+        if (isWhiteSpace(line.charAt(i)) !== true) {
+            return {'error': `unexpected token \`${line.charAt(i)}\` after CSS selector`};
+        }
+        i += 1;
+    }
+    return {'value': selector};
+}
+
+// Possible inputs:
 //
 // * (X, Y)
-// * CSS selector (for example: #elementID)
+// * "CSS selector" (for example: "#elementID")
 function parseClick(line) {
     if (line.startsWith('(')) {
         if (!line.endsWith(')')) {
@@ -91,60 +104,62 @@ function parseClick(line) {
         return {'instructions': [
             `page.mouse.click(${x},${y})`,
         ]};
+    } else if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
+        return {'error': 'Expected a position or a CSS selector'};
     }
-    if (cssSelector(line) !== true) {
-        return {'error': 'Invalid CSS selector'};
+    const ret = parseCssSelector(line);
+    if (ret.error !== undefined) {
+        return ret;
     }
-    const selector = cleanCssSelector(line).trim();
-    if (selector.length === 0) {
-        return {'error': 'selector cannot be empty'};
-    }
+    const selector = ret.value;
     return {'instructions': [
         `page.click("${selector}")`,
     ]};
 }
 
-// Possible incomes:
+// Possible inputs:
 //
 // * Number of milliseconds
-// * CSS selector (for example: #elementID)
+// * "CSS selector" (for example: "#elementID")
 function parseWaitFor(line) {
     if (line.match(/[0-9]+/) !== null) {
         return {'instructions': [
             `await page.waitFor(${parseInt(line)})`,
         ]};
-    } else if (cssSelector(line) === true) {
-        const selector = cleanCssSelector(line).trim();
-        if (selector.length === 0) {
-            return {'error': 'selector cannot be empty'};
-        }
-        return {
-            'instructions': [
-                `await page.waitFor("${selector}")`,
-            ],
-            'wait': false,
-        };
+    } else if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
+        return {'error': 'Expected a number or a CSS selector'};
     }
-    return {'error': 'Expected a number or a CSS selector'};
+    const ret = parseCssSelector(line);
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    const selector = ret.value;
+    return {
+        'instructions': [
+            `await page.waitFor("${selector}")`,
+        ],
+        'wait': false,
+    };
 }
 
-// Possible income:
+// Possible inputs:
 //
-// * CSS selector (for example: #elementID)
+// * "CSS selector" (for example: "#elementID")
 function parseFocus(line) {
-    if (cssSelector(line) === true) {
-        const selector = cleanCssSelector(line).trim();
-        if (selector.length === 0) {
-            return {'error': 'selector cannot be empty'};
-        }
-        return {'instructions': [
-            `page.focus("${selector}")`,
-        ]};
+    if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
+        return {'error': 'Expected a CSS selector'};
     }
-    return {'error': 'Expected a CSS selector'};
+    const ret = parseCssSelector(line);
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    const selector = ret.value;
+    return {'instructions': [
+        `page.focus("${selector}")`,
+    ]};
 }
 
-// Possible income (you have to put the double quotes!):
+// Possible inputs:
 //
 // * ("[CSS selector (for example: #elementID)]", "text")
 // * "text" (in here, it'll write into the current focused element)
@@ -206,10 +221,10 @@ function parseWrite(line) {
     return {'error': 'expected [string] or ([path], [string])'};
 }
 
-// Possible incomes:
+// Possible inputs:
 //
 // * (X, Y)
-// * CSS selector (for example: #elementID)
+// * "CSS selector" (for example: "#elementID")
 function parseMoveCursorTo(line) {
     if (line.startsWith('(')) {
         if (!line.endsWith(')')) {
@@ -224,19 +239,20 @@ function parseMoveCursorTo(line) {
         return {'instructions': [
             `page.mouse.move(${x},${y})`,
         ]};
-    } else if (cssSelector(line) === true) {
-        const path = cleanCssSelector(line).trim();
-        if (path.length === 0) {
-            return {'error': 'selector cannot be empty'};
-        }
-        return {'instructions': [
-            `page.hover("${path}")`,
-        ]};
+    } else if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
+        return {'error': 'Expected a position or a CSS selector'};
     }
-    return {'error': 'Invalid CSS selector or invalid position'};
+    const ret = parseCssSelector(line);
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    const selector = ret.value;
+    return {'instructions': [
+        `page.hover("${selector}")`,
+    ]};
 }
 
-// Possible incomes:
+// Possible inputs:
 //
 // * relative path (example: ../struct.Path.html)
 // * full URL (for example: https://doc.rust-lang.org/std/struct.Path.html)
@@ -270,15 +286,15 @@ function parseGoTo(line, docPath) {
     return {'error': 'A relative path or a full URL was expected'};
 }
 
-// Possible incomes:
+// Possible inputs:
 //
 // * (X, Y)
-// * CSS selector (for example: #elementID)
+// * "CSS selector" (for example: "#elementID")
 function parseScrollTo(line) {
     return parseMoveCursorTo(line); // The page will scroll to the element
 }
 
-// Possible income:
+// Possible inputs:
 //
 // * (width, height)
 function parseSize(line) {
@@ -299,7 +315,7 @@ function parseSize(line) {
     return {'error': `Expected \`(\` character, found \`${line.charAt(0)}\``};
 }
 
-// Possible income:
+// Possible inputs:
 //
 // * JSON object (for example: {"key": "value", "another key": "another value"})
 function parseLocalStorage(line) {
@@ -329,6 +345,13 @@ function parseLocalStorage(line) {
     }
 }
 
+// Possible inputs:
+//
+// * ("CSS selector")
+// * ("CSS selector", text [STRING])
+// * ("CSS selector", number of occurences [integer])
+// * ("CSS selector", CSS elements [JSON object])
+// * ("CSS selector", attribute name [STRING], attribute value [STRING])
 function parseAssert(s) {
     if (s.charAt(0) !== '(') {
         return {'error': 'expected `(` character'};
@@ -450,6 +473,9 @@ function parseAssert(s) {
     return {'error': `expected [integer] or [string] or [JSON object], found \`${sub}\``};
 }
 
+// Possible inputs:
+//
+// * ("CSS selector", "text")
 function parseText(s) {
     if (s.charAt(0) !== '(') {
         return {'error': 'expected `(` character'};
@@ -496,6 +522,9 @@ function parseText(s) {
     return {'error': `expected [string], found \`${sub}\``};
 }
 
+// Possible inputs:
+//
+// * ("CSS selector", "attribute name", "attribute value")
 function parseAttribute(s) {
     if (s.charAt(0) !== '(') {
         return {'error': 'expected `(` character'};
@@ -562,7 +591,7 @@ function parseAttribute(s) {
     ]};
 }
 
-// Possible income:
+// Possible inputs:
 //
 // * boolean value (`true` or `false`)
 function parseScreenshot(line) {

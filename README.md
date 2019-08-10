@@ -105,8 +105,8 @@ Here's the command list:
 **click** command send a click event on an element or at the specified position. It expects a CSS selector or a position. Examples:
 
 ```
-click: .element
-click: #element > a
+click: ".element"
+click: "#element > a"
 click: (10, 12)
 ```
 
@@ -119,8 +119,8 @@ click: (10, 12)
 Examples:
 
 ```
-waitfor: .element
-waitfor: #element > a
+waitfor: ".element"
+waitfor: "#element > a"
 waitfor: 1000
 ```
 
@@ -129,8 +129,8 @@ waitfor: 1000
 **focus** command focuses (who would have guessed?) on a given element. It expects a CSS selector. Examples:
 
 ```
-focus: .element
-focus: #element
+focus: ".element"
+focus: "#element"
 ```
 
 #### write
@@ -138,8 +138,8 @@ focus: #element
 **write** command sends keyboard inputs on given element. If no element is provided, it'll write into the currently focused element. It expects a string and/or a CSS selector. The string has to be surrounded by quotes (either `'` or `"`). Examples:
 
 ```
-write: .element "text"
-write: #element "text"
+write: (".element", "text")
+write: ("#element", "text")
 write: "text"
 ```
 
@@ -148,8 +148,8 @@ write: "text"
 **movecursorto** command moves the mouse cursor to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector. Examples:
 
 ```
-movecursorto: #element
-movecursorto: .element
+movecursorto: "#element"
+movecursorto: ".element"
 movecursorto: (10, 12)
 ```
 
@@ -188,8 +188,8 @@ goto: file://{current-dir}/{doc-path}/file.html
 **scrollto** command scrolls to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector. Examples:
 
 ```
-scrollto: #element
-scrollto: .element
+scrollto: "#element"
+scrollto: ".element"
 scrollto: (10, 12)
 ```
 
@@ -252,7 +252,7 @@ attribute: ("#button", "attribute-name", "attribute-value")
 
 ### Comments?
 
-You can add comments in the `.goml` scripts with `// ` (the whitespace is mandatory). Example:
+You can add comments in the `.goml` scripts with `// ` (the whitespace after the `//` is mandatory). Example:
 
 ```
 goto: https://somewhere.com // let's start somewhere!

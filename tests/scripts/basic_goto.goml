@@ -1,2 +1,2 @@
 goto: file://{current-dir}/{doc-path}/basic.html
-click: #button
+click: "#button"
