@@ -91,13 +91,13 @@ Here's the command list:
  * [`click`](#click)
  * [`focus`](#focus)
  * [`goto`](#goto)
- * [`localstorage`](#localstorage)
- * [`movecursorto`](#movecursorto)
+ * [`local-storage`](#local-storage)
+ * [`move-cursor-to`](#move-cursor-to)
  * [`screenshot`](#screenshot)
- * [`scrollto`](#scrollto)
+ * [`scroll-to`](#scroll-to)
  * [`size`](#size)
  * [`text`](#text)
- * [`waitfor`](#waitfor)
+ * [`wait-for`](#wait-for)
  * [`write`](#write)
 
 #### click
@@ -110,18 +110,18 @@ click: "#element > a"
 click: (10, 12)
 ```
 
-#### waitfor
+#### wait-for
 
-**waitfor** command waits for a given duration or for an element to be created. It expects a CSS selector or a duration in milliseconds.
+**wait-for** command waits for a given duration or for an element to be created. It expects a CSS selector or a duration in milliseconds.
 
 **/!\\** Be careful when using it: if the given selector never appears, the test will timeout after 30 seconds.
 
 Examples:
 
 ```
-waitfor: ".element"
-waitfor: "#element > a"
-waitfor: 1000
+wait-for: ".element"
+wait-for: "#element > a"
+wait-for: 1000
 ```
 
 #### focus
@@ -143,14 +143,14 @@ write: ("#element", "text")
 write: "text"
 ```
 
-#### movecursorto
+#### move-cursor-to
 
-**movecursorto** command moves the mouse cursor to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector. Examples:
+**move-cursor-to** command moves the mouse cursor to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector. Examples:
 
 ```
-movecursorto: "#element"
-movecursorto: ".element"
-movecursorto: (10, 12)
+move-cursor-to: "#element"
+move-cursor-to: ".element"
+move-cursor-to: (10, 12)
 ```
 
 #### goto
@@ -183,14 +183,14 @@ You can of course use `{doc-path}` and `{current-dir}` at the same time:
 goto: file://{current-dir}/{doc-path}/file.html
 ```
 
-#### scrollto
+#### scroll-to
 
-**scrollto** command scrolls to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector. Examples:
+**scroll-to** command scrolls to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector. Examples:
 
 ```
-scrollto: "#element"
-scrollto: ".element"
-scrollto: (10, 12)
+scroll-to: "#element"
+scroll-to: ".element"
+scroll-to: (10, 12)
 ```
 
 #### size
@@ -201,12 +201,12 @@ scrollto: (10, 12)
 size: (700, 1000)
 ```
 
-#### localstorage
+#### local-storage
 
-**localstorage** command sets local storage's values. It expect a JSON object. Example:
+**local-storage** command sets local storage's values. It expect a JSON object. Example:
 
 ```
-localstorage: {"key": "value", "another key": "another value"}
+local-storage: {"key": "value", "another key": "another value"}
 ```
 
 #### screenshot

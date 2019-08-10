@@ -607,19 +607,19 @@ function parseScreenshot(line) {
 }
 
 const ORDERS = {
+    'assert': parseAssert,
+    'attribute': parseAttribute,
     'click': parseClick,
     'focus': parseFocus,
     'goto': parseGoTo,
-    'movecursorto': parseMoveCursorTo,
-    'scrollto': parseScrollTo,
-    'size': parseSize,
-    'waitfor': parseWaitFor,
-    'write': parseWrite,
-    'localstorage': parseLocalStorage,
+    'local-storage': parseLocalStorage,
+    'move-cursor-to': parseMoveCursorTo,
     'screenshot': parseScreenshot,
-    'assert': parseAssert,
+    'scroll-to': parseScrollTo,
+    'size': parseSize,
     'text': parseText,
-    'attribute': parseAttribute,
+    'wait-for': parseWaitFor,
+    'write': parseWrite,
 };
 
 function parseContent(content, docPath) {
