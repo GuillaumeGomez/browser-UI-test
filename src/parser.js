@@ -325,7 +325,7 @@ function parseScrollTo(line) {
 function parseSize(line) {
     if (line.startsWith('(')) {
         if (!line.endsWith(')')) {
-            return {'error': 'Invalid syntax: expected size to end with \')\'...'};
+            return {'error': 'Invalid syntax: expected size to end with `)`...'};
         }
         if (matchPosition(line) !== true) {
             return {'error': 'Invalid syntax: expected "([number], [number])"...'};

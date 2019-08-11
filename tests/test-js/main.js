@@ -68,11 +68,11 @@ function checkClick() {
     x.assert(func('('), {'error': 'Invalid syntax: expected position to end with \')\'...'});
     x.assert(func('(1)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
     x.assert(func('(1,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(1,2)'), {'instructions': ['page.mouse.click(1,2)']});
     x.assert(func('(1,2,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
     x.assert(func('(1,,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
     x.assert(func('(,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
     x.assert(func('(a,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,2)'), {'instructions': ['page.mouse.click(1,2)']});
 
     // Check css selector
     x.assert(func('"'), {'error': 'expected `"` character at the end of the string'});
@@ -126,11 +126,31 @@ function checkScreenshot() {
     return x;
 }
 
+function checkSize() {
+    const func = require('../../src/parser.js').parseSize;
+    const x = new Assert();
+
+    // Check position
+    x.assert(func('hello'), {'error': 'Expected `(` character, found `h`'});
+    x.assert(func('()'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('('), {'error': 'Invalid syntax: expected size to end with \`)\`...'});
+    x.assert(func('(1)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,2,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(a,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,2)'), {'instructions': ['page.setViewport({width: 1, height: 2})']});
+
+    return x;
+}
+
 const TO_CHECK = [
     {'name': 'click', 'func': checkClick},
     {'name': 'fail', 'func': checkFail},
     {'name': 'focus', 'func': checkFocus},
     {'name': 'screenshot', 'func': checkScreenshot},
+    {'name': 'size', 'func': checkSize},
 ];
 
 function checkCommands() {
