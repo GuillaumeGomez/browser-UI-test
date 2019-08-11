@@ -638,6 +638,11 @@ const ORDERS = {
     'write': parseWrite,
 };
 
+const NO_INTERACTION_COMMANDS = [
+    'fail',
+    'screenshot',
+];
+
 function parseContent(content, docPath) {
     const lines = content.split(os.EOL);
     const commands = {'instructions': []};
@@ -657,10 +662,10 @@ function parseContent(content, docPath) {
                 return res;
             }
             if (firstGotoParsed === false) {
-                if (order !== 'screenshot' && order !== 'goto' && order !== 'fail') {
+                if (order !== 'goto' && NO_INTERACTION_COMMANDS.indexOf(order) === -1) {
+                    const cmds = NO_INTERACTION_COMMANDS.map(x => `\`${x}\``).join(', ');
                     return {
-                        'error': 'First command must be `goto` (`screenshot` and/or `fail` can ' +
-                            'be used before)!',
+                        'error': `First command must be \`goto\` (${cmds} can be used before)!`,
                         'line': i,
                     };
                 }
