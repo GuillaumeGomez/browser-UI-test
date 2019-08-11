@@ -182,16 +182,23 @@ const TO_CHECK = [
 ];
 
 function checkCommands() {
-    let nb_errors = 0;
+    let nbErrors = 0;
+
+    print('=> Starting tests...');
+    print('');
 
     for (let i = 0; i < TO_CHECK.length; ++i) {
         print(`==> Checking ${TO_CHECK[i].name}...`);
         const errors = TO_CHECK[i].func();
-        nb_errors += errors.errors;
+        nbErrors += errors.errors;
         print(`<== ${TO_CHECK[i].name}: ${errors.errors} ${plural('error', errors.errors)} (in ` +
               `${errors.ranTests} ${plural('test', errors.ranTests)})`);
     }
-    return nb_errors;
+
+    print('');
+    print(`<= Ending tests with ${nbErrors} ${plural('error', nbErrors)}`);
+
+    return nbErrors;
 }
 
 if (require.main === module) {
