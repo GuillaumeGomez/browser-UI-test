@@ -101,9 +101,11 @@ function parseClick(line) {
         const [x, y] = line.match(/\d+/g).map(function(f) {
             return parseInt(f);
         });
-        return {'instructions': [
-            `page.mouse.click(${x},${y})`,
-        ]};
+        return {
+            'instructions': [
+                `page.mouse.click(${x},${y})`,
+            ],
+        };
     } else if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
         return {'error': 'Expected a position or a CSS selector'};
     }
@@ -112,9 +114,11 @@ function parseClick(line) {
         return ret;
     }
     const selector = ret.value;
-    return {'instructions': [
-        `page.click("${selector}")`,
-    ]};
+    return {
+        'instructions': [
+            `page.click("${selector}")`,
+        ],
+    };
 }
 
 // Possible inputs:
@@ -123,9 +127,12 @@ function parseClick(line) {
 // * "CSS selector" (for example: "#elementID")
 function parseWaitFor(line) {
     if (line.match(/[0-9]+/) !== null) {
-        return {'instructions': [
-            `await page.waitFor(${parseInt(line)})`,
-        ]};
+        return {
+            'instructions': [
+                `await page.waitFor(${parseInt(line)})`,
+            ],
+            'wait': false,
+        };
     } else if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
         return {'error': 'Expected a number or a CSS selector'};
     }
@@ -154,9 +161,11 @@ function parseFocus(line) {
         return ret;
     }
     const selector = ret.value;
-    return {'instructions': [
-        `page.focus("${selector}")`,
-    ]};
+    return {
+        'instructions': [
+            `page.focus("${selector}")`,
+        ],
+    };
 }
 
 // Possible inputs:
@@ -197,10 +206,12 @@ function parseWrite(line) {
             }
             i += 1;
         }
-        return {'instructions': [
-            `page.focus("${path}")`,
-            `page.keyboard.type("${ret.value}")`,
-        ]};
+        return {
+            'instructions': [
+                `page.focus("${path}")`,
+                `page.keyboard.type("${ret.value}")`,
+            ],
+        };
     } else if (line.startsWith('"') || line.startsWith('\'')) { // current focused element
         const x = parseString(line);
         if (x.error !== undefined) {
@@ -214,9 +225,11 @@ function parseWrite(line) {
             }
             i += 1;
         }
-        return {'instructions': [
-            `page.keyboard.type("${x.value}")`,
-        ]};
+        return {
+            'instructions': [
+                `page.keyboard.type("${x.value}")`,
+            ],
+        };
     }
     return {'error': 'expected [string] or ([path], [string])'};
 }
@@ -236,9 +249,11 @@ function parseMoveCursorTo(line) {
         const [x, y] = line.match(/\d+/g).map(function(f) {
             return parseInt(f);
         });
-        return {'instructions': [
-            `page.mouse.move(${x},${y})`,
-        ]};
+        return {
+            'instructions': [
+                `page.mouse.move(${x},${y})`,
+            ],
+        };
     } else if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
         return {'error': 'Expected a position or a CSS selector'};
     }
@@ -247,9 +262,11 @@ function parseMoveCursorTo(line) {
         return ret;
     }
     const selector = ret.value;
-    return {'instructions': [
-        `page.hover("${selector}")`,
-    ]};
+    return {
+        'instructions': [
+            `page.hover("${selector}")`,
+        ],
+    };
 }
 
 // Possible inputs:
@@ -265,23 +282,31 @@ function parseMoveCursorTo(line) {
 function parseGoTo(line, docPath) {
     // We just check if it goes to an HTML file, not checking much though...
     if (line.startsWith('http') || line.startsWith('www.')) {
-        return {'instructions': [
-            `await page.goto("${line}")`,
-        ]};
+        return {
+            'instructions': [
+                `await page.goto("${line}")`,
+            ],
+        };
     } else if (line.startsWith('file://')) {
         line = handlePathParameters(line, '{doc-path}', docPath);
         line = handlePathParameters(line, '{current-dir}', utils.getCurrentDir());
-        return {'instructions': [
-            `await page.goto("${line}")`,
-        ]};
+        return {
+            'instructions': [
+                `await page.goto("${line}")`,
+            ],
+        };
     } else if (line.startsWith('.')) {
-        return {'instructions': [
-            `await page.goto(page.url().split("/").slice(0, -1).join("/") + "/" + "${line}")`,
-        ]};
+        return {
+            'instructions': [
+                `await page.goto(page.url().split("/").slice(0, -1).join("/") + "/" + "${line}")`,
+            ],
+        };
     } else if (line.startsWith('/')) {
-        return {'instructions': [
-            `await page.goto(page.url().split("/").slice(0, -1).join("/") + "${line}")`,
-        ]};
+        return {
+            'instructions': [
+                `await page.goto(page.url().split("/").slice(0, -1).join("/") + "${line}")`,
+            ],
+        };
     }
     return {'error': 'A relative path or a full URL was expected'};
 }
@@ -308,9 +333,11 @@ function parseSize(line) {
         const [width, height] = line.match(/\d+/g).map(function(f) {
             return parseInt(f);
         });
-        return {'instructions': [
-            `page.setViewport({width: ${width}, height: ${height}})`,
-        ]};
+        return {
+            'instructions': [
+                `page.setViewport({width: ${width}, height: ${height}})`,
+            ],
+        };
     }
     return {'error': `Expected \`(\` character, found \`${line.charAt(0)}\``};
 }
@@ -335,11 +362,13 @@ function parseLocalStorage(line) {
         if (content.length === 0) {
             return {'instructions': []};
         }
-        return {'instructions': [
-            `page.evaluate(() => {
-                ${content.join('\n')}
-            })`,
-        ]};
+        return {
+            'instructions': [
+                `page.evaluate(() => {
+                    ${content.join('\n')}
+                })`,
+            ],
+        };
     } catch (e) {
         return {'error': 'Error when parsing JSON content: ' + e};
     }
@@ -371,9 +400,12 @@ function parseAssert(s) {
         return {'error': 'selector cannot be empty'};
     }
     if (s.charAt(pos) === ')') {
-        return {'instructions': [
-            `if (page.$("${path}") === null) { throw '"${path}" not found'; }`,
-        ]};
+        return {
+            'instructions': [
+                `if (page.$("${path}") === null) { throw '"${path}" not found'; }`,
+            ],
+            'wait': false,
+        };
     } else if (s.charAt(pos) !== ',') {
         return {'error': `expected \`,\` or \`)\`, found \`${s.charAt(pos)}\``};
     }
@@ -395,13 +427,17 @@ function parseAssert(s) {
         //
         if (i >= sub.length) {
             const value = cleanString(secondParam.value);
-            return {'instructions': [
-                `let parseAssertElemStr = await page.$("${path}");\n` +
-                `if (parseAssertElemStr === null) { throw '"${path}" not found'; }\n` +
-                // TODO: maybe check differently depending on the tag kind?
-                'let t = await (await parseAssertElemStr.getProperty("textContent")).jsonValue();' +
-                `if (t !== "${value}") { throw '"' + t + '" !== "${value}"'; }`,
-            ]};
+            const varName = 'parseAssertElemStr';
+            return {
+                'instructions': [
+                    `let ${varName} = await page.$("${path}");\n` +
+                    `if (${varName} === null) { throw '"${path}" not found'; }\n` +
+                    // TODO: maybe check differently depending on the tag kind?
+                    `let t = await (await ${varName}.getProperty("textContent")).jsonValue();\n` +
+                    `if (t !== "${value}") { throw '"' + t + '" !== "${value}"'; }`,
+                ],
+                'wait': false,
+            };
         }
         //
         // ATTRIBUTE CHECK
@@ -427,13 +463,18 @@ function parseAssert(s) {
             i += 1;
         }
         const value = cleanString(thirdParam.value);
-        return {'instructions': [
-            `let parseAssertElemAttr = await page.$("${path}");\n` +
-            `if (parseAssertElemAttr === null) { throw '"${path}" not found'; }\n` +
-            `await page.evaluate(e => { if (e.getAttribute("${attributeName}") !== "${value}") {` +
-            ` throw 'expected "${value}", found "' + e.getAttribute("${attributeName}") + '"` +
-            ` for attribute "${attributeName}"'; } }, parseAssertElemAttr);`,
-        ]};
+        const varName = 'parseAssertElemAttr';
+        return {
+            'instructions': [
+                `let ${varName} = await page.$("${path}");\n` +
+                `if (${varName} === null) { throw '"${path}" not found'; }\n` +
+                'await page.evaluate(e => {\n' +
+                `if (e.getAttribute("${attributeName}") !== "${value}") {\n` +
+                `throw 'expected "${value}", found "' + e.getAttribute("${attributeName}") + '"` +
+                ` for attribute "${attributeName}"';\n}\n}, ${varName});`,
+            ],
+            'wait': false,
+        };
     } else if (sub.startsWith('{')) {
         let d;
         try {
@@ -448,27 +489,37 @@ function parseAssert(s) {
                 const cKey = cleanString(key);
                 // TODO: check how to compare CSS property
                 code += `if (assertComputedStyle["${cKey}"] != "${clean}") { ` +
-                    `throw 'expected "${clean}", got for key "${cKey}" for "${path}"'; }`;
+                    `throw 'expected "${clean}", got for key "${cKey}" for "${path}"'; }\n`;
             }
         }
         if (code.length === 0) {
-            return {'instructions': []};
+            return {
+                'instructions': [],
+                'wait': false,
+            };
         }
-        return {'instructions': [
-            `let parseAssertElemJson = await page.$("${path}");\n` +
-            `if (parseAssertElemJson === null) { throw '"${path}" not found'; }\n` +
-            'await page.evaluate(e => {' +
-            'let assertComputedStyle = getComputedStyle(e);\n' +
-            code +
-            '}, parseAssertElemJson);',
-        ]};
+        const varName = 'parseAssertElemJson';
+        return {
+            'instructions': [
+                `let ${varName} = await page.$("${path}");\n` +
+                `if (${varName} === null) { throw '"${path}" not found'; }\n` +
+                'await page.evaluate(e => {' +
+                `let assertComputedStyle = getComputedStyle(e);\n${code}` +
+                `}, ${varName});`,
+            ],
+            'wait': false,
+        };
     } else if (matchInteger(sub) === true) {
-        return {'instructions': [
-            `let parseAssertElemInt = await page.$$("${path}");\n` +
-            // TODO: maybe check differently depending on the tag kind?
-            `if (parseAssertElemInt.length !== ${sub}) { throw 'expected ${sub} ` +
-            'elements, found \' + parseAssertElemInt.length; }',
-        ]};
+        const varName = 'parseAssertElemInt';
+        return {
+            'instructions': [
+                `let ${varName} = await page.$$("${path}");\n` +
+                // TODO: maybe check differently depending on the tag kind?
+                `if (${varName}.length !== ${sub}) { throw 'expected ${sub} ` +
+                `elements, found ' + ${varName}.length; }`,
+            ],
+            'wait': false,
+        };
     }
     return {'error': `expected [integer] or [string] or [JSON object], found \`${sub}\``};
 }
@@ -513,11 +564,14 @@ function parseText(s) {
             i += 1;
         }
         const value = cleanString(secondParam.value);
-        return {'instructions': [
-            `let parseTextElem = await page.$("${path}");\n` +
-            `if (parseTextElem === null) { throw '"${path}" not found'; }\n` +
-            `await page.evaluate(e => { e.innerText = "${value}";}, parseTextElem);`,
-        ]};
+        const varName = 'parseTextElem';
+        return {
+            'instructions': [
+                `let ${varName} = await page.$("${path}");\n` +
+                `if (${varName} === null) { throw '"${path}" not found'; }\n` +
+                `await page.evaluate(e => { e.innerText = "${value}";}, ${varName});`,
+            ],
+        };
     }
     return {'error': `expected [string], found \`${sub}\``};
 }
@@ -583,12 +637,15 @@ function parseAttribute(s) {
         i += 1;
     }
     const value = cleanString(ret.value);
-    return {'instructions': [
-        `let parseAttributeElem = await page.$("${path}");\n` +
-        `if (parseAttributeElem === null) { throw '"${path}" not found'; }\n` +
-        `await page.evaluate(e => { e.setAttribute("${attributeName}","${value}"); }, ` +
-        'parseAttributeElem);',
-    ]};
+        const varName = 'parseAttributeElem';
+    return {
+        'instructions': [
+            `let ${varName} = await page.$("${path}");\n` +
+            `if (${varName} === null) { throw '"${path}" not found'; }\n` +
+            `await page.evaluate(e => { e.setAttribute("${attributeName}","${value}"); }, ` +
+            `${varName});`,
+        ],
+    };
 }
 
 // Possible inputs:
