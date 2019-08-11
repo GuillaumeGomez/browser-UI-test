@@ -637,7 +637,7 @@ function parseAttribute(s) {
         i += 1;
     }
     const value = cleanString(ret.value);
-        const varName = 'parseAttributeElem';
+    const varName = 'parseAttributeElem';
     return {
         'instructions': [
             `let ${varName} = await page.$("${path}");\n` +

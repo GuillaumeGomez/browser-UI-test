@@ -4,7 +4,7 @@ const PNG = require('png-js');
 const parser = require('./parser.js');
 const utils = require('./utils.js');
 const Options = require('./options.js').Options;
-const Logs = require('./logs.js').Logs;
+const {Debug, Logs} = require('./logs.js');
 const add_warn = utils.add_warning;
 const process = require('process');
 const print = utils.print;
@@ -43,12 +43,6 @@ function save_failure(folderIn, failuresFolder, newImage, originalImage, runId) 
         return false;
     }
     return true;
-}
-
-function showDebug(debug_log, logs) {
-    if (debug_log.length > 0) {
-        logs.append(`[DEBUG]\n${debug_log}`);
-    }
 }
 
 function getGlobalStyle(textHiding) {
@@ -100,7 +94,7 @@ async function innerRunTests(logs, options) {
         logs.append(loaded[i]['file'] + '... ');
         const page = await browser.newPage();
         let notOk = false;
-        let debug_log = '';
+        const debug_log = new Debug(options.debug);
         try {
             await page.evaluateOnNewDocument(s => {
                 window.addEventListener('DOMContentLoaded', () => {
@@ -117,18 +111,16 @@ async function innerRunTests(logs, options) {
                 'expectedToFail': false,
             };
             for (let x = 0; x < commands.length; ++x) {
-                if (options.debug === true) {
-                    debug_log += `EXECUTING "${commands[x]['code']}"\n`;
-                }
+                debug_log.append(`EXECUTING "${commands[x]['code']}"`);
                 try {
                     await loadContent(commands[x]['code'])(page, extras).catch(err => {
                         const s_err = err.toString();
                         if (extras.expectedToFail !== true) {
                             const original = commands[x]['original'];
                             error_log = `[ERROR] ${s_err}: for command "${original}"`;
-                        } else if (options.debug === true) {
+                        } else {
                             // it's an expected failure so no need to log it
-                            debug_log += `[EXPECTED FAILURE]: ${s_err}\n`;
+                            debug_log.append(`[EXPECTED FAILURE]: ${s_err}`);
                         }
                     });
                 } catch (error) { // parsing error
@@ -148,25 +140,22 @@ async function innerRunTests(logs, options) {
             if (error_log.length > 0) {
                 logs.append('FAILED', true);
                 logs.append(error_log + '\n');
-                showDebug(debug_log, logs);
+                debug_log.show(logs);
                 failures += 1;
                 await page.close();
                 continue;
             }
 
             if (extras.takeScreenshot !== true) {
-                if (options.debug === true) {
-                    debug_log += '=> [NO SCREENSHOT COMPARISON]\n'; // eslint-disable-line
-                }
                 logs.append('ok', true);
-                showDebug(debug_log, logs);
+                debug_log.append('=> [NO SCREENSHOT COMPARISON]');
+                debug_log.show(logs);
                 await page.close();
                 continue;
             }
 
-            if (options.debug === true) {
-                debug_log += '=> [SCREENSHOT COMPARISON]\n'; // eslint-disable-line
-            }
+            const compare_s = options.generateImages === false ? 'COMPARISON' : 'GENERATION';
+            debug_log.append(`=> [SCREENSHOT ${compare_s}]`);
             const newImage = `${options.testFolderPath}${loaded[i]['file']}-${options.runId}.png`;
             await page.screenshot({
                 path: newImage,
@@ -214,7 +203,7 @@ async function innerRunTests(logs, options) {
         if (notOk === false) {
             logs.append('ok', true);
         }
-        showDebug(debug_log, logs);
+        debug_log.show(logs);
     }
     await browser.close();
 
