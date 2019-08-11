@@ -228,7 +228,6 @@ function checkSize() {
     const func = parserFuncs.parseSize;
     const x = new Assert();
 
-    // Check position
     x.assert(func('hello'), {'error': 'Expected `(` character, found `h`'});
     x.assert(func('()'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
     x.assert(func('('), {'error': 'Invalid syntax: expected size to end with `)`...'});
@@ -239,6 +238,29 @@ function checkSize() {
     x.assert(func('(,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
     x.assert(func('(a,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
     x.assert(func('(1,2)'), {'instructions': ['page.setViewport({width: 1, height: 2})']});
+
+    return x;
+}
+
+function checkText() {
+    const func = parserFuncs.parseText;
+    const x = new Assert();
+
+    x.assert(func('"'), {'error': 'expected `(` character'});
+    x.assert(func('("a", "b"'), {'error': 'expected to end with `)` character'});
+    x.assert(func('("a")'), {'error': 'expected `,`, found `)`'});
+    x.assert(func('("a", )'), {'error': 'expected a string as second parameter'});
+    x.assert(func('("a", "b", "c")'), {'error': 'unexpected token: `,` after second parameter'});
+    x.assert(func('("a", "b" "c")'), {'error': 'unexpected token: `"` after second parameter'});
+    x.assert(func('(\'\', "b")'), {'error': 'selector cannot be empty'});
+    x.assert(func('("a", "b")'),
+        {
+            'instructions': [
+                'let parseTextElem = await page.$("a");\nif (parseTextElem === null) ' +
+                '{ throw \'"a" not found\'; }\nawait page.evaluate(e => { e.innerText = "b";}, ' +
+                'parseTextElem);'
+            ],
+        });
 
     return x;
 }
@@ -273,6 +295,7 @@ const TO_CHECK = [
     {'name': 'screenshot', 'func': checkScreenshot},
     {'name': 'scroll-to', 'func': checkScrollTo},
     {'name': 'size', 'func': checkSize},
+    {'name': 'text', 'func': checkText},
     {'name': 'wait-for', 'func': checkWaitFor},
 ];
 
