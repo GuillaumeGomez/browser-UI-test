@@ -181,19 +181,23 @@ function parseWrite(line) {
         if (ret.error !== undefined) {
             return ret;
         }
-        let pos = ret.pos + 1;
+        let pos = ret.pos + 2;
         while (pos < line.length && isWhiteSpace(line.charAt(pos)) === true) {
             pos += 1;
-        }
-        if (line.charAt(pos) !== ',') {
-            return {'error': `expected \`,\` after first parameter, found \`${line.charAt(pos)}\``};
         }
         const path = cleanCssSelector(ret.value).trim();
         if (path.length === 0) {
             return {'error': 'selector cannot be empty'};
+        } else if (line.charAt(pos) !== ',') {
+            return {'error': `expected \`,\` after first parameter, found \`${line.charAt(pos)}\``};
         }
         // We take everything between the comma and the paren.
         const sub = line.substring(pos + 1, line.length - 1).trim();
+        if (sub.length === 0) {
+            return {'error': 'expected a string as second parameter'};
+        } else if (sub.charAt(0) !== '"' && sub.charAt(0) !== '\'') {
+            return {'error': `expected a string as second parameter, found \`${sub}\``};
+        }
         ret = parseString(sub); // no trim call in here!
         if (ret.error !== undefined) {
             return ret;
@@ -227,11 +231,11 @@ function parseWrite(line) {
         }
         return {
             'instructions': [
-                `page.keyboard.type("${x.value}")`,
+                `page.keyboard.type("${cleanString(x.value)}")`,
             ],
         };
     }
-    return {'error': 'expected [string] or ([path], [string])'};
+    return {'error': 'expected [string] or ([CSS path], [string])'};
 }
 
 // Possible inputs:
@@ -543,7 +547,7 @@ function parseText(s) {
     if (path.length === 0) {
         return {'error': 'selector cannot be empty'};
     } else if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\`, found \`${s.charAt(pos)}\``};
+        return {'error': `expected \`,\` after first argument, found \`${s.charAt(pos)}\``};
     }
     // We take everything between the comma and the paren.
     const sub = s.substring(pos + 1, s.length - 1).trim();
@@ -571,7 +575,7 @@ function parseText(s) {
             ],
         };
     }
-    return {'error': `expected [string], found \`${sub}\``};
+    return {'error': `expected [string] as second parameter, found \`${sub}\``};
 }
 
 // Possible inputs:
