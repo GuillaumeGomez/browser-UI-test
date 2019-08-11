@@ -3,7 +3,10 @@ const utils = require('./utils.js');
 
 
 function cleanString(s) {
-    return s.replace(/"/g, '\\"').replace(/'/g, '\\\'');
+    if (s.replace !== undefined) {
+        return s.replace(/"/g, '\\"').replace(/'/g, '\\\'');
+    }
+    return s;
 }
 
 function cleanCssSelector(s) {
@@ -126,7 +129,7 @@ function parseClick(line) {
 // * Number of milliseconds
 // * "CSS selector" (for example: "#elementID")
 function parseWaitFor(line) {
-    if (line.match(/[0-9]+/) !== null) {
+    if (line.match(/^[0-9]+$/g) !== null) {
         return {
             'instructions': [
                 `await page.waitFor(${parseInt(line)})`,
@@ -134,7 +137,7 @@ function parseWaitFor(line) {
             'wait': false,
         };
     } else if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
-        return {'error': 'Expected a number or a CSS selector'};
+        return {'error': 'Expected an integer or a CSS selector'};
     }
     const ret = parseCssSelector(line);
     if (ret.error !== undefined) {
@@ -181,19 +184,23 @@ function parseWrite(line) {
         if (ret.error !== undefined) {
             return ret;
         }
-        let pos = ret.pos + 1;
+        let pos = ret.pos + 2;
         while (pos < line.length && isWhiteSpace(line.charAt(pos)) === true) {
             pos += 1;
-        }
-        if (line.charAt(pos) !== ',') {
-            return {'error': `expected \`,\` after first parameter, found \`${line.charAt(pos)}\``};
         }
         const path = cleanCssSelector(ret.value).trim();
         if (path.length === 0) {
             return {'error': 'selector cannot be empty'};
+        } else if (line.charAt(pos) !== ',') {
+            return {'error': `expected \`,\` after first parameter, found \`${line.charAt(pos)}\``};
         }
         // We take everything between the comma and the paren.
         const sub = line.substring(pos + 1, line.length - 1).trim();
+        if (sub.length === 0) {
+            return {'error': 'expected a string as second parameter'};
+        } else if (sub.charAt(0) !== '"' && sub.charAt(0) !== '\'') {
+            return {'error': `expected a string as second parameter, found \`${sub}\``};
+        }
         ret = parseString(sub); // no trim call in here!
         if (ret.error !== undefined) {
             return ret;
@@ -227,11 +234,11 @@ function parseWrite(line) {
         }
         return {
             'instructions': [
-                `page.keyboard.type("${x.value}")`,
+                `page.keyboard.type("${cleanString(x.value)}")`,
             ],
         };
     }
-    return {'error': 'expected [string] or ([path], [string])'};
+    return {'error': 'expected [string] or ([CSS path], [string])'};
 }
 
 // Possible inputs:
@@ -281,7 +288,7 @@ function parseMoveCursorTo(line) {
 //       "file://{current-dir}{doc-path}/index.html"
 function parseGoTo(line, docPath) {
     // We just check if it goes to an HTML file, not checking much though...
-    if (line.startsWith('http') || line.startsWith('www.')) {
+    if (line.startsWith('http://') || line.startsWith('https://') || line.startsWith('www.')) {
         return {
             'instructions': [
                 `await page.goto("${line}")`,
@@ -298,7 +305,7 @@ function parseGoTo(line, docPath) {
     } else if (line.startsWith('.')) {
         return {
             'instructions': [
-                `await page.goto(page.url().split("/").slice(0, -1).join("/") + "/" + "${line}")`,
+                `await page.goto(page.url().split("/").slice(0, -1).join("/") + "/${line}")`,
             ],
         };
     } else if (line.startsWith('/')) {
@@ -325,7 +332,7 @@ function parseScrollTo(line) {
 function parseSize(line) {
     if (line.startsWith('(')) {
         if (!line.endsWith(')')) {
-            return {'error': 'Invalid syntax: expected size to end with \')\'...'};
+            return {'error': 'Invalid syntax: expected size to end with `)`...'};
         }
         if (matchPosition(line) !== true) {
             return {'error': 'Invalid syntax: expected "([number], [number])"...'};
@@ -347,15 +354,15 @@ function parseSize(line) {
 // * JSON object (for example: {"key": "value", "another key": "another value"})
 function parseLocalStorage(line) {
     if (!line.startsWith('{')) {
-        return {'error': `Expected json object (object wrapped inside "{}"), found "${line}"`};
+        return {'error': `Expected JSON object, found \`${line}\``};
     }
     try {
         const d = JSON.parse(line);
         const content = [];
         for (const key in d) {
             if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
-                const key_s = key.split('"').join('\\"');
-                const value_s = d[key].split('"').join('\\"');
+                const key_s = cleanString(key);
+                const value_s = cleanString(d[key]);
                 content.push(`localStorage.setItem("${key_s}", "${value_s}");`);
             }
         }
@@ -364,9 +371,7 @@ function parseLocalStorage(line) {
         }
         return {
             'instructions': [
-                `page.evaluate(() => {
-                    ${content.join('\n')}
-                })`,
+                `page.evaluate(() => { ${content.join('\n')} })`,
             ],
         };
     } catch (e) {
@@ -389,6 +394,7 @@ function parseAssert(s) {
     }
     const ret = parseString(s.substring(1));
     if (ret.error !== undefined) {
+        ret.error += ' (first argument)';
         return ret;
     }
     let pos = ret.pos + 2;
@@ -412,10 +418,14 @@ function parseAssert(s) {
     // We take everything between the comma and the paren.
     const sub = s.substring(pos + 1, s.length - 1).trim();
     if (sub.length === 0) {
-        return {'error': 'expected something as second parameter or remove the comma'};
+        return {
+            'error': 'expected something (aka [string], [integer] or [JSON]) as second parameter ' +
+                'or remove the comma',
+        };
     } else if (sub.startsWith('"') || sub.startsWith('\'')) {
         const secondParam = parseString(sub);
         if (secondParam.error !== undefined) {
+            secondParam.error += ' (second argument)';
             return secondParam;
         }
         let i = secondParam.pos + 1;
@@ -453,6 +463,7 @@ function parseAssert(s) {
         const third = sub.substring(i + 1).trim();
         const thirdParam = parseString(third);
         if (thirdParam.error !== undefined) {
+            thirdParam.error += ' (third argument)';
             return thirdParam;
         }
         i = thirdParam.pos + 1;
@@ -510,12 +521,23 @@ function parseAssert(s) {
             'wait': false,
         };
     } else if (matchInteger(sub) === true) {
+        const occurences = sub.match(/[0-9]+/g);
+        if (occurences.length !== 1) {
+            return {'error': 'Nothing was expected after second argument [integer]'};
+        }
+        let i = occurences.length;
+        while (i < sub.length) {
+            if (isWhiteSpace(sub.charAt(i)) !== true) {
+                return {'error': `expected \`)\`, found \`${sub.charAt(i)}\``};
+            }
+            i += 1;
+        }
         const varName = 'parseAssertElemInt';
         return {
             'instructions': [
                 `let ${varName} = await page.$$("${path}");\n` +
                 // TODO: maybe check differently depending on the tag kind?
-                `if (${varName}.length !== ${sub}) { throw 'expected ${sub} ` +
+                `if (${varName}.length !== ${occurences}) { throw 'expected ${occurences} ` +
                 `elements, found ' + ${varName}.length; }`,
             ],
             'wait': false,
@@ -545,7 +567,7 @@ function parseText(s) {
     if (path.length === 0) {
         return {'error': 'selector cannot be empty'};
     } else if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\` or \`)\`, found \`${s.charAt(pos)}\``};
+        return {'error': `expected \`,\` after first argument, found \`${s.charAt(pos)}\``};
     }
     // We take everything between the comma and the paren.
     const sub = s.substring(pos + 1, s.length - 1).trim();
@@ -573,7 +595,7 @@ function parseText(s) {
             ],
         };
     }
-    return {'error': `expected [string], found \`${sub}\``};
+    return {'error': `expected [string] as second parameter, found \`${sub}\``};
 }
 
 // Possible inputs:
@@ -587,6 +609,7 @@ function parseAttribute(s) {
     }
     let ret = parseString(s.substring(1));
     if (ret.error !== undefined) {
+        ret.error += ' (first parameter)';
         return ret;
     }
     let pos = ret.pos + 2;
@@ -594,13 +617,13 @@ function parseAttribute(s) {
         pos += 1;
     }
     if (ret.value.length < 1) {
-        return {'error': 'path (first parameter) cannot be empty'};
+        return {'error': 'CSS path (first parameter) cannot be empty'};
     }
     const path = cleanCssSelector(ret.value).trim();
     if (path.length === 0) {
-        return {'error': 'selector cannot be empty'};
+        return {'error': 'CSS path (first argument) cannot be empty'};
     } else if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\`, found \`${s.charAt(pos)}\``};
+        return {'error': `expected \`,\` after first argument, found \`${s.charAt(pos)}\``};
     }
     pos += 1;
     while (isWhiteSpace(s.charAt(pos)) === true) {
@@ -608,6 +631,7 @@ function parseAttribute(s) {
     }
     ret = parseString(s.substring(pos));
     if (ret.error !== undefined) {
+        ret.error += ' (second parameter)';
         return ret;
     } else if (ret.value.length < 1) {
         return {'error': 'attribute name (second parameter) cannot be empty'};
@@ -618,7 +642,7 @@ function parseAttribute(s) {
         pos += 1;
     }
     if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\` or \`)\`, found \`${s.charAt(pos)}\``};
+        return {'error': `expected \`,\` after second argument, found \`${s.charAt(pos)}\``};
     }
     // We take everything between the comma and the paren.
     const sub = s.substring(pos + 1, s.length - 1).trim();
@@ -627,6 +651,7 @@ function parseAttribute(s) {
     }
     ret = parseString(sub);
     if (ret.error !== undefined) {
+        ret.error += ' (third parameter)';
         return ret;
     }
     let i = ret.pos + 1;
@@ -653,7 +678,7 @@ function parseAttribute(s) {
 // * boolean value (`true` or `false`)
 function parseScreenshot(line) {
     if (line !== 'true' && line !== 'false') {
-        return {'error': `Expected "true" or "false" value, found "${line}"`};
+        return {'error': `Expected "true" or "false" value, found \`${line}\``};
     }
     return {
         'instructions': [
@@ -668,7 +693,7 @@ function parseScreenshot(line) {
 // * boolean value (`true` or `false`)
 function parseFail(line) {
     if (line !== 'true' && line !== 'false') {
-        return {'error': `Expected "true" or "false" value, found "${line}"`};
+        return {'error': `Expected "true" or "false" value, found \`${line}\``};
     }
     return {
         'instructions': [
@@ -740,4 +765,20 @@ function parseContent(content, docPath) {
 
 module.exports = {
     parseContent: parseContent,
+
+    // Those functions shouldn't be used directly!
+    parseAssert: parseAssert,
+    parseAttribute: parseAttribute,
+    parseClick: parseClick,
+    parseFail: parseFail,
+    parseFocus: parseFocus,
+    parseGoTo: parseGoTo,
+    parseLocalStorage: parseLocalStorage,
+    parseMoveCursorTo: parseMoveCursorTo,
+    parseScreenshot: parseScreenshot,
+    parseScrollTo: parseScrollTo,
+    parseSize: parseSize,
+    parseText: parseText,
+    parseWaitFor: parseWaitFor,
+    parseWrite: parseWrite,
 };
