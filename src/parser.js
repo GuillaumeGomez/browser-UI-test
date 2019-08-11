@@ -589,6 +589,7 @@ function parseAttribute(s) {
     }
     let ret = parseString(s.substring(1));
     if (ret.error !== undefined) {
+        ret.error += ' (first parameter)';
         return ret;
     }
     let pos = ret.pos + 2;
@@ -596,13 +597,13 @@ function parseAttribute(s) {
         pos += 1;
     }
     if (ret.value.length < 1) {
-        return {'error': 'path (first parameter) cannot be empty'};
+        return {'error': 'CSS path (first parameter) cannot be empty'};
     }
     const path = cleanCssSelector(ret.value).trim();
     if (path.length === 0) {
-        return {'error': 'selector cannot be empty'};
+        return {'error': 'CSS path (first argument) cannot be empty'};
     } else if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\`, found \`${s.charAt(pos)}\``};
+        return {'error': `expected \`,\` after first argument, found \`${s.charAt(pos)}\``};
     }
     pos += 1;
     while (isWhiteSpace(s.charAt(pos)) === true) {
@@ -610,6 +611,7 @@ function parseAttribute(s) {
     }
     ret = parseString(s.substring(pos));
     if (ret.error !== undefined) {
+        ret.error += ' (second parameter)';
         return ret;
     } else if (ret.value.length < 1) {
         return {'error': 'attribute name (second parameter) cannot be empty'};
@@ -620,7 +622,7 @@ function parseAttribute(s) {
         pos += 1;
     }
     if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\` or \`)\`, found \`${s.charAt(pos)}\``};
+        return {'error': `expected \`,\` after second argument, found \`${s.charAt(pos)}\``};
     }
     // We take everything between the comma and the paren.
     const sub = s.substring(pos + 1, s.length - 1).trim();
@@ -629,6 +631,7 @@ function parseAttribute(s) {
     }
     ret = parseString(sub);
     if (ret.error !== undefined) {
+        ret.error += ' (third parameter)';
         return ret;
     }
     let i = ret.pos + 1;
