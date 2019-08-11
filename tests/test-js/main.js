@@ -25,12 +25,21 @@ function print(x, out) {
     }
 }
 
+function plural(x, nb) {
+    if (nb !== 1) {
+        return `${x}s`;
+    }
+    return x;
+}
+
 class Assert {
     constructor() {
         this.errors = 0;
+        this.ranTests = 0;
     }
 
     assert(value1, value2) {
+        this.ranTests += 1;
         if (typeof value2 !== 'undefined') {
             value1 = toJSON(value1);
             value2 = toJSON(value2);
@@ -73,7 +82,7 @@ function checkClick() {
     x.assert(func('\'a\''), {'instructions': ['page.click("a")']});
     x.assert(func('\'"a\''), {'instructions': ['page.click("\\\\"a")']});
 
-    return x.errors;
+    return x;
 }
 
 function checkFail() {
@@ -86,12 +95,26 @@ function checkFail() {
     x.assert(func('false'), {'instructions': ['arg.expectedToFail = false;'], 'wait': false});
     x.assert(func('true'), {'instructions': ['arg.expectedToFail = true;'], 'wait': false});
 
-    return x.errors;
+    return x;
+}
+
+function checkScreenshot() {
+    const func = require('../../src/parser.js').parseScreenshot;
+    const x = new Assert();
+
+    x.assert(func('hello'), {'error': 'Expected "true" or "false" value, found `hello`'});
+    x.assert(func('"true"'), {'error': 'Expected "true" or "false" value, found `"true"`'});
+    x.assert(func('tru'), {'error': 'Expected "true" or "false" value, found `tru`'});
+    x.assert(func('false'), {'instructions': ['arg.takeScreenshot = false;'], 'wait': false});
+    x.assert(func('true'), {'instructions': ['arg.takeScreenshot = true;'], 'wait': false});
+
+    return x;
 }
 
 const TO_CHECK = [
     {'name': 'click', 'func': checkClick},
     {'name': 'fail', 'func': checkFail},
+    {'name': 'screenshot', 'func': checkScreenshot},
 ];
 
 function checkCommands() {
@@ -100,8 +123,9 @@ function checkCommands() {
     for (let i = 0; i < TO_CHECK.length; ++i) {
         print(`==> Checking ${TO_CHECK[i].name}...`);
         const errors = TO_CHECK[i].func();
-        nb_errors += errors;
-        print(`<== ${TO_CHECK[i].name}: ${errors} error${errors !== 1 ? 's' : ''}`);
+        nb_errors += errors.errors;
+        print(`<== ${TO_CHECK[i].name}: ${errors.errors} ${plural('error', errors.errors)} (in ` +
+              `${errors.ranTests} ${plural('test', errors.ranTests)})`);
     }
     return nb_errors;
 }

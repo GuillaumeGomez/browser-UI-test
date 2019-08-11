@@ -653,7 +653,7 @@ function parseAttribute(s) {
 // * boolean value (`true` or `false`)
 function parseScreenshot(line) {
     if (line !== 'true' && line !== 'false') {
-        return {'error': `Expected "true" or "false" value, found "${line}"`};
+        return {'error': `Expected "true" or "false" value, found \`${line}\``};
     }
     return {
         'instructions': [
