@@ -248,7 +248,7 @@ function checkText() {
 
     x.assert(func('"'), {'error': 'expected `(` character'});
     x.assert(func('("a", "b"'), {'error': 'expected to end with `)` character'});
-    x.assert(func('("a")'), {'error': 'expected `,`, found `)`'});
+    x.assert(func('("a")'), {'error': 'expected `,` after first argument, found `)`'});
     x.assert(func('("a", )'), {'error': 'expected a string as second parameter'});
     x.assert(func('("a", "b", "c")'), {'error': 'unexpected token: `,` after second parameter'});
     x.assert(func('("a", "b" "c")'), {'error': 'unexpected token: `"` after second parameter'});
@@ -285,6 +285,31 @@ function checkWaitFor() {
     return x;
 }
 
+function checkWrite() {
+    const func = parserFuncs.parseWrite;
+    const x = new Assert();
+
+    // check tuple argument
+    x.assert(func('"'), {'error': 'expected `"` character at the end of the string'});
+    x.assert(func('("a", "b"'), {'error': 'expected to end with `)` character'});
+    x.assert(func('("a")'), {'error': 'expected `,` after first parameter, found `)`'});
+    x.assert(func('("a", )'), {'error': 'expected a string as second parameter'});
+    x.assert(func('("a", "b", "c")'), {'error': 'unexpected token `,` after second parameter'});
+    x.assert(func('("a", "b" "c")'), {'error': 'unexpected token `"` after second parameter'});
+    x.assert(func('(\'\', "b")'), {'error': 'selector cannot be empty'});
+    x.assert(func('("a", "b")'), {'instructions': ['page.focus("a")', 'page.keyboard.type("b")']});
+
+    // check string argument
+    x.assert(func('"'), {'error': 'expected `"` character at the end of the string'});
+    x.assert(func('\''), {'error': 'expected `\'` character at the end of the string'});
+    x.assert(func('\'\''), {'instructions': ['page.keyboard.type("")']});
+    x.assert(func('"a"'), {'instructions': ['page.keyboard.type("a")']});
+    x.assert(func('\'a\''), {'instructions': ['page.keyboard.type("a")']});
+    x.assert(func('\'"a\''), {'instructions': ['page.keyboard.type("\\"a")']});
+
+    return x;
+}
+
 const TO_CHECK = [
     {'name': 'click', 'func': checkClick},
     {'name': 'fail', 'func': checkFail},
@@ -297,6 +322,7 @@ const TO_CHECK = [
     {'name': 'size', 'func': checkSize},
     {'name': 'text', 'func': checkText},
     {'name': 'wait-for', 'func': checkWaitFor},
+    {'name': 'write', 'func': checkWrite},
 ];
 
 function checkCommands() {
