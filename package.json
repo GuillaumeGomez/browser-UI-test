@@ -13,8 +13,9 @@
     "main": "src/tester.js",
     "scripts": {
         "test": "node src/tester.js --test-folder tests/scripts/ --failure-folder failures --doc-path tests/html_files/",
-        "lint": "eslint src",
-        "lint-fix": "eslint --fix src"
+        "api-test": "node tests/test-js/main.js",
+        "lint": "eslint src tests/test-js",
+        "lint-fix": "eslint --fix src tests/test-js"
     },
     "files": [
         "src/*.js"

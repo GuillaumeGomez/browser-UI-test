@@ -668,7 +668,7 @@ function parseScreenshot(line) {
 // * boolean value (`true` or `false`)
 function parseFail(line) {
     if (line !== 'true' && line !== 'false') {
-        return {'error': `Expected "true" or "false" value, found "${line}"`};
+        return {'error': `Expected "true" or "false" value, found \`${line}\``};
     }
     return {
         'instructions': [
@@ -740,4 +740,20 @@ function parseContent(content, docPath) {
 
 module.exports = {
     parseContent: parseContent,
+
+    // Those functions shouldn't be used directly!
+    parseAssert: parseAssert,
+    parseAttribute: parseAttribute,
+    parseClick: parseClick,
+    parseFail: parseFail,
+    parseFocus: parseFocus,
+    parseGoTo: parseGoTo,
+    parseLocalStorage: parseLocalStorage,
+    parseMoveCursorTo: parseMoveCursorTo,
+    parseScreenshot: parseScreenshot,
+    parseScrollTo: parseScrollTo,
+    parseSize: parseSize,
+    parseText: parseText,
+    parseWaitFor: parseWaitFor,
+    parseWrite: parseWrite,
 };
