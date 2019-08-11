@@ -59,6 +59,39 @@ class Assert {
     }
 }
 
+function checkAttribute() {
+    const func = parserFuncs.parseAttribute;
+    const x = new Assert();
+
+    x.assert(func('"'), {'error': 'expected `(` character'});
+    x.assert(func('("a", "b"'), {'error': 'expected to end with `)` character'});
+    x.assert(func('("a")'), {'error': 'expected `,` after first argument, found `)`'});
+    x.assert(func('("a", )'), {'error': 'expected `\'` or `"` character (second parameter)'});
+    x.assert(func('("a", "b", )'), {'error': 'expected a string as third parameter'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` after second argument, found `"`'});
+    x.assert(func('("a", )'), {'error': 'expected `\'` or `"` character (second parameter)'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` after second argument, found `"`'});
+    x.assert(func('("a", "b")'), {'error': 'expected `,` after second argument, found `)`'});
+    x.assert(func('("a", "b", "c")'),
+        {
+            'instructions': [
+                'let parseAttributeElem = await page.$("a");\nif (parseAttributeElem === null) { ' +
+                'throw \'"a" not found\'; }\nawait page.evaluate(e => { e.setAttribute("b","c"); ' +
+                '}, parseAttributeElem);',
+            ],
+        });
+    x.assert(func('("a", "\\"b", "c")'),
+        {
+            'instructions': [
+                'let parseAttributeElem = await page.$("a");\nif (parseAttributeElem === null) { ' +
+                'throw \'"a" not found\'; }\nawait page.evaluate(e => { e.setAttribute("\\\\"b",' +
+                '"c"); }, parseAttributeElem);',
+            ],
+        });
+
+    return x;
+}
+
 function checkClick() {
     const func = parserFuncs.parseClick;
     const x = new Assert();
@@ -258,7 +291,7 @@ function checkText() {
             'instructions': [
                 'let parseTextElem = await page.$("a");\nif (parseTextElem === null) ' +
                 '{ throw \'"a" not found\'; }\nawait page.evaluate(e => { e.innerText = "b";}, ' +
-                'parseTextElem);'
+                'parseTextElem);',
             ],
         });
 
@@ -311,6 +344,7 @@ function checkWrite() {
 }
 
 const TO_CHECK = [
+    {'name': 'attribute', 'func': checkAttribute},
     {'name': 'click', 'func': checkClick},
     {'name': 'fail', 'func': checkFail},
     {'name': 'focus', 'func': checkFocus},
