@@ -59,6 +59,79 @@ class Assert {
     }
 }
 
+function checkAssert() {
+    const func = parserFuncs.parseAssert;
+    const x = new Assert();
+
+    x.assert(func('"'), {'error': 'expected `(` character'});
+    x.assert(func('(a, "b")'), {'error': 'expected `\'` or `"` character (first argument)'});
+    x.assert(func('("a", "b"'), {'error': 'expected to end with `)` character'});
+    x.assert(func('("a")'),
+        {
+            'instructions': ['if (page.$("a") === null) { throw \'"a" not found\'; }'],
+            'wait': false,
+        });
+    x.assert(func('("a", )'),
+        {
+            'error': 'expected something (aka [string], [integer] or [JSON]) as second parameter ' +
+                'or remove the comma',
+        });
+    x.assert(func('("a", "b", )'), {'error': 'no string (third argument)'});
+    x.assert(func('("a", "b" "c")'), {'error': 'unexpected token after second parameter: `"`'});
+    x.assert(func('("a", "b")'),
+        {
+            'instructions': [
+                'let parseAssertElemStr = await page.$("a");\nif (parseAssertElemStr === null) { ' +
+                'throw \'"a" not found\'; }\nlet t = await (await ' +
+                'parseAssertElemStr.getProperty("textContent")).jsonValue();\nif (t !== "b") { ' +
+                'throw \'"\' + t + \'" !== "b"\'; }'],
+            'wait': false,
+        });
+    x.assert(func('("a", "b", "c")'),
+        {
+            'instructions': [
+                'let parseAssertElemAttr = await page.$("a");\nif (parseAssertElemAttr === null) ' +
+                '{ throw \'"a" not found\'; }\nawait page.evaluate(e => {\nif ' +
+                '(e.getAttribute("b") !== "c") {\nthrow \'expected "c", found "\' + ' +
+                'e.getAttribute("b") + \'" for attribute "b"\';\n}\n}, parseAssertElemAttr);'],
+            'wait': false,
+        });
+    x.assert(func('("a", "\\"b", "c")'),
+        {
+            'instructions': [
+                'let parseAssertElemAttr = await page.$("a");\nif (parseAssertElemAttr === null) ' +
+                '{ throw \'"a" not found\'; }\nawait page.evaluate(e => {\nif ' +
+                '(e.getAttribute("\\\\"b") !== "c") {\nthrow \'expected "c", found "\' + ' +
+                'e.getAttribute("\\\\"b") + \'" for attribute "\\\\"b"\';\n}\n}, ' +
+                'parseAssertElemAttr);'],
+            'wait': false,
+        });
+    x.assert(func('("a", 1, "c")'), {'error': 'expected `)`, found `,`'});
+    x.assert(func('("a", 1 2)'), {'error': 'Nothing was expected after second argument [integer]'});
+    x.assert(func('("a", 1 a)'), {'error': 'expected `)`, found `a`'});
+    x.assert(func('("a", 1)'),
+        {
+            'instructions': [
+                'let parseAssertElemInt = await page.$$("a");\nif (parseAssertElemInt.length !== ' +
+                '1) { throw \'expected 1 elements, found \' + parseAssertElemInt.length; }'],
+            'wait': false,
+        });
+    x.assert(func('("a", {)').error !== undefined); // JSON syntax error
+    x.assert(func('("a", {\'a\': 1})').error !== undefined); // JSON syntax error
+    x.assert(func('("a", {"a": 1)').error !== undefined); // JSON syntax error
+    x.assert(func('("a", {"a": 1})'), {
+        'instructions': [
+            'let parseAssertElemJson = await page.$("a");\nif (parseAssertElemJson === null) { ' +
+            'throw \'"a" not found\'; }\nawait page.evaluate(e => {let assertComputedStyle = ' +
+            'getComputedStyle(e);\nif (assertComputedStyle["a"] != "1") { throw \'expected "1", ' +
+            'got for key "a" for "a"\'; }\n}, parseAssertElemJson);',
+        ],
+        'wait': false,
+    });
+
+    return x;
+}
+
 function checkAttribute() {
     const func = parserFuncs.parseAttribute;
     const x = new Assert();
@@ -180,7 +253,9 @@ function checkLocalStorage() {
     x.assert(func('hello'), {'error': 'Expected JSON object, found `hello`'});
     x.assert(func('{').error !== undefined); // JSON syntax error
     x.assert(func('{\'a\': 1}').error !== undefined); // JSON syntax error
-    x.assert(func('{"a": 1}').error !== undefined); // JSON syntax error
+    x.assert(func('{"a": 1}'), {
+        'instructions': ['page.evaluate(() => { localStorage.setItem("a", "1"); })'],
+    });
     x.assert(func('{"a": "1"}'),
         {'instructions': ['page.evaluate(() => { localStorage.setItem("a", "1"); })']});
     x.assert(func('{"a": "1", "b": "2px"}'),
@@ -344,6 +419,7 @@ function checkWrite() {
 }
 
 const TO_CHECK = [
+    {'name': 'assert', 'func': checkAssert},
     {'name': 'attribute', 'func': checkAttribute},
     {'name': 'click', 'func': checkClick},
     {'name': 'fail', 'func': checkFail},
