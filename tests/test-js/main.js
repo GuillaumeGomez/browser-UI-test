@@ -114,6 +114,32 @@ function checkFocus() {
     return x;
 }
 
+function checkGoTo() {
+    const func = parserFuncs.parseGoTo;
+    const x = new Assert();
+
+    x.assert(func('a'), {'error': 'A relative path or a full URL was expected'});
+    x.assert(func('"'), {'error': 'A relative path or a full URL was expected'});
+    x.assert(func('http:/a'), {'error': 'A relative path or a full URL was expected'});
+    x.assert(func('https:/a'), {'error': 'A relative path or a full URL was expected'});
+    x.assert(func('https://a'), {'instructions': ['await page.goto("https://a")']});
+    x.assert(func('www.x'), {'instructions': ['await page.goto("www.x")']});
+    x.assert(func('/a'), {
+        'instructions': ['await page.goto(page.url().split("/").slice(0, -1).join("/") + "/a")'],
+    });
+    x.assert(func('./a'), {
+        'instructions': ['await page.goto(page.url().split("/").slice(0, -1).join("/") + "/./a")'],
+    });
+    x.assert(func('file:///a'), {
+        'instructions': ['await page.goto("file:///a")'],
+    });
+    x.assert(func('file://{doc-path}/a', 'foo/'), { // `docPath` parameter always ends with '/'
+        'instructions': ['await page.goto("file://foo/a")'],
+    });
+
+    return x;
+}
+
 function checkMoveCursorTo() {
     const func = parserFuncs.parseMoveCursorTo;
     const x = new Assert();
@@ -224,6 +250,7 @@ const TO_CHECK = [
     {'name': 'click', 'func': checkClick},
     {'name': 'fail', 'func': checkFail},
     {'name': 'focus', 'func': checkFocus},
+    {'name': 'goto', 'func': checkGoTo},
     {'name': 'move-cursor-to', 'func': checkMoveCursorTo},
     {'name': 'screenshot', 'func': checkScreenshot},
     {'name': 'scroll-to', 'func': checkScrollTo},
