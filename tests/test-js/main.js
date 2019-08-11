@@ -1,5 +1,6 @@
 const path = require('path');
 const process = require('process');
+const parserFuncs = require('../../src/parser.js');
 
 function toJSON(value) {
     if (typeof value === 'object') {
@@ -59,7 +60,7 @@ class Assert {
 }
 
 function checkClick() {
-    const func = require('../../src/parser.js').parseClick;
+    const func = parserFuncs.parseClick;
     const x = new Assert();
 
     // Check position
@@ -86,7 +87,7 @@ function checkClick() {
 }
 
 function checkFail() {
-    const func = require('../../src/parser.js').parseFail;
+    const func = parserFuncs.parseFail;
     const x = new Assert();
 
     x.assert(func('hello'), {'error': 'Expected "true" or "false" value, found `hello`'});
@@ -99,7 +100,7 @@ function checkFail() {
 }
 
 function checkFocus() {
-    const func = require('../../src/parser.js').parseFocus;
+    const func = parserFuncs.parseFocus;
     const x = new Assert();
 
     x.assert(func('a'), {'error': 'Expected a CSS selector'});
@@ -114,7 +115,7 @@ function checkFocus() {
 }
 
 function checkMoveCursorTo() {
-    const func = require('../../src/parser.js').parseMoveCursorTo;
+    const func = parserFuncs.parseMoveCursorTo;
     const x = new Assert();
 
     // Check position
@@ -141,7 +142,7 @@ function checkMoveCursorTo() {
 }
 
 function checkScreenshot() {
-    const func = require('../../src/parser.js').parseScreenshot;
+    const func = parserFuncs.parseScreenshot;
     const x = new Assert();
 
     x.assert(func('hello'), {'error': 'Expected "true" or "false" value, found `hello`'});
@@ -154,7 +155,7 @@ function checkScreenshot() {
 }
 
 function checkScrollTo() {
-    const func = require('../../src/parser.js').parseScrollTo;
+    const func = parserFuncs.parseScrollTo;
     const x = new Assert();
 
     // Check position
@@ -181,7 +182,7 @@ function checkScrollTo() {
 }
 
 function checkSize() {
-    const func = require('../../src/parser.js').parseSize;
+    const func = parserFuncs.parseSize;
     const x = new Assert();
 
     // Check position
@@ -199,6 +200,26 @@ function checkSize() {
     return x;
 }
 
+function checkWaitFor() {
+    const func = parserFuncs.parseWaitFor;
+    const x = new Assert();
+
+    // Check integer
+    x.assert(func('hello'), {'error': 'Expected an integer or a CSS selector'});
+    x.assert(func('1 2'), {'error': 'Expected an integer or a CSS selector'});
+    x.assert(func('1'), {'instructions': ['await page.waitFor(1)'], 'wait': false});
+
+    // Check css selector
+    x.assert(func('"'), {'error': 'expected `"` character at the end of the string'});
+    x.assert(func('\''), {'error': 'expected `\'` character at the end of the string'});
+    x.assert(func('\'\''), {'error': 'selector cannot be empty'});
+    x.assert(func('"a"'), {'instructions': ['await page.waitFor("a")'], 'wait': false});
+    x.assert(func('\'a\''), {'instructions': ['await page.waitFor("a")'], 'wait': false});
+    x.assert(func('\'"a\''), {'instructions': ['await page.waitFor("\\\\"a")'], 'wait': false});
+
+    return x;
+}
+
 const TO_CHECK = [
     {'name': 'click', 'func': checkClick},
     {'name': 'fail', 'func': checkFail},
@@ -207,6 +228,7 @@ const TO_CHECK = [
     {'name': 'screenshot', 'func': checkScreenshot},
     {'name': 'scroll-to', 'func': checkScrollTo},
     {'name': 'size', 'func': checkSize},
+    {'name': 'wait-for', 'func': checkWaitFor},
 ];
 
 function checkCommands() {
