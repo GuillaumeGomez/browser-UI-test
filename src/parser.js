@@ -3,7 +3,10 @@ const utils = require('./utils.js');
 
 
 function cleanString(s) {
-    return s.replace(/"/g, '\\"').replace(/'/g, '\\\'');
+    if (s.replace !== undefined) {
+        return s.replace(/"/g, '\\"').replace(/'/g, '\\\'');
+    }
+    return s;
 }
 
 function cleanCssSelector(s) {
@@ -391,6 +394,7 @@ function parseAssert(s) {
     }
     const ret = parseString(s.substring(1));
     if (ret.error !== undefined) {
+        ret.error += ' (first argument)';
         return ret;
     }
     let pos = ret.pos + 2;
@@ -414,10 +418,14 @@ function parseAssert(s) {
     // We take everything between the comma and the paren.
     const sub = s.substring(pos + 1, s.length - 1).trim();
     if (sub.length === 0) {
-        return {'error': 'expected something as second parameter or remove the comma'};
+        return {
+            'error': 'expected something (aka [string], [integer] or [JSON]) as second parameter ' +
+                'or remove the comma',
+        };
     } else if (sub.startsWith('"') || sub.startsWith('\'')) {
         const secondParam = parseString(sub);
         if (secondParam.error !== undefined) {
+            secondParam.error += ' (second argument)';
             return secondParam;
         }
         let i = secondParam.pos + 1;
@@ -455,6 +463,7 @@ function parseAssert(s) {
         const third = sub.substring(i + 1).trim();
         const thirdParam = parseString(third);
         if (thirdParam.error !== undefined) {
+            thirdParam.error += ' (third argument)';
             return thirdParam;
         }
         i = thirdParam.pos + 1;
@@ -512,12 +521,23 @@ function parseAssert(s) {
             'wait': false,
         };
     } else if (matchInteger(sub) === true) {
+        const occurences = sub.match(/[0-9]+/g);
+        if (occurences.length !== 1) {
+            return {'error': 'Nothing was expected after second argument [integer]'};
+        }
+        let i = occurences.length;
+        while (i < sub.length) {
+            if (isWhiteSpace(sub.charAt(i)) !== true) {
+                return {'error': `expected \`)\`, found \`${sub.charAt(i)}\``};
+            }
+            i += 1;
+        }
         const varName = 'parseAssertElemInt';
         return {
             'instructions': [
                 `let ${varName} = await page.$$("${path}");\n` +
                 // TODO: maybe check differently depending on the tag kind?
-                `if (${varName}.length !== ${sub}) { throw 'expected ${sub} ` +
+                `if (${varName}.length !== ${occurences}) { throw 'expected ${occurences} ` +
                 `elements, found ' + ${varName}.length; }`,
             ],
             'wait': false,
