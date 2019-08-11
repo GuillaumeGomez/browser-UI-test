@@ -126,7 +126,7 @@ function parseClick(line) {
 // * Number of milliseconds
 // * "CSS selector" (for example: "#elementID")
 function parseWaitFor(line) {
-    if (line.match(/[0-9]+/) !== null) {
+    if (line.match(/^[0-9]+$/g) !== null) {
         return {
             'instructions': [
                 `await page.waitFor(${parseInt(line)})`,
@@ -134,7 +134,7 @@ function parseWaitFor(line) {
             'wait': false,
         };
     } else if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
-        return {'error': 'Expected a number or a CSS selector'};
+        return {'error': 'Expected an integer or a CSS selector'};
     }
     const ret = parseCssSelector(line);
     if (ret.error !== undefined) {
