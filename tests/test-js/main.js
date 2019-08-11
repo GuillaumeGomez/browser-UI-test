@@ -153,6 +153,33 @@ function checkScreenshot() {
     return x;
 }
 
+function checkScrollTo() {
+    const func = require('../../src/parser.js').parseScrollTo;
+    const x = new Assert();
+
+    // Check position
+    x.assert(func('hello'), {'error': 'Expected a position or a CSS selector'});
+    x.assert(func('()'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('('), {'error': 'Invalid syntax: expected position to end with \')\'...'});
+    x.assert(func('(1)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,2,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(a,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,2)'), {'instructions': ['page.mouse.move(1,2)']});
+
+    // Check css selector
+    x.assert(func('"'), {'error': 'expected `"` character at the end of the string'});
+    x.assert(func('\''), {'error': 'expected `\'` character at the end of the string'});
+    x.assert(func('\'\''), {'error': 'selector cannot be empty'});
+    x.assert(func('"a"'), {'instructions': ['page.hover("a")']});
+    x.assert(func('\'a\''), {'instructions': ['page.hover("a")']});
+    x.assert(func('\'"a\''), {'instructions': ['page.hover("\\\\"a")']});
+
+    return x;
+}
+
 function checkSize() {
     const func = require('../../src/parser.js').parseSize;
     const x = new Assert();
@@ -178,6 +205,7 @@ const TO_CHECK = [
     {'name': 'focus', 'func': checkFocus},
     {'name': 'move-cursor-to', 'func': checkMoveCursorTo},
     {'name': 'screenshot', 'func': checkScreenshot},
+    {'name': 'scroll-to', 'func': checkScrollTo},
     {'name': 'size', 'func': checkSize},
 ];
 
@@ -188,10 +216,10 @@ function checkCommands() {
     print('');
 
     for (let i = 0; i < TO_CHECK.length; ++i) {
-        print(`==> Checking ${TO_CHECK[i].name}...`);
+        print(`==> Checking "${TO_CHECK[i].name}"...`);
         const errors = TO_CHECK[i].func();
         nbErrors += errors.errors;
-        print(`<== ${TO_CHECK[i].name}: ${errors.errors} ${plural('error', errors.errors)} (in ` +
+        print(`<== "${TO_CHECK[i].name}": ${errors.errors} ${plural('error', errors.errors)} (in ` +
               `${errors.ranTests} ${plural('test', errors.ranTests)})`);
     }
 
