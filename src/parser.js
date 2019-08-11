@@ -347,15 +347,15 @@ function parseSize(line) {
 // * JSON object (for example: {"key": "value", "another key": "another value"})
 function parseLocalStorage(line) {
     if (!line.startsWith('{')) {
-        return {'error': `Expected json object (object wrapped inside "{}"), found "${line}"`};
+        return {'error': `Expected JSON object, found \`${line}\``};
     }
     try {
         const d = JSON.parse(line);
         const content = [];
         for (const key in d) {
             if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
-                const key_s = key.split('"').join('\\"');
-                const value_s = d[key].split('"').join('\\"');
+                const key_s = cleanString(key);
+                const value_s = cleanString(d[key]);
                 content.push(`localStorage.setItem("${key_s}", "${value_s}");`);
             }
         }
@@ -364,9 +364,7 @@ function parseLocalStorage(line) {
         }
         return {
             'instructions': [
-                `page.evaluate(() => {
-                    ${content.join('\n')}
-                })`,
+                `page.evaluate(() => { ${content.join('\n')} })`,
             ],
         };
     } catch (e) {

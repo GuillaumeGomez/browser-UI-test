@@ -140,6 +140,23 @@ function checkGoTo() {
     return x;
 }
 
+function checkLocalStorage() {
+    const func = parserFuncs.parseLocalStorage;
+    const x = new Assert();
+
+    x.assert(func('hello'), {'error': 'Expected JSON object, found `hello`'});
+    x.assert(func('{').error !== undefined); // JSON syntax error
+    x.assert(func('{\'a\': 1}').error !== undefined); // JSON syntax error
+    x.assert(func('{"a": 1}').error !== undefined); // JSON syntax error
+    x.assert(func('{"a": "1"}'),
+        {'instructions': ['page.evaluate(() => { localStorage.setItem("a", "1"); })']});
+    x.assert(func('{"a": "1", "b": "2px"}'),
+        {'instructions': ['page.evaluate(() => { localStorage.setItem("a", "1");\n' +
+            'localStorage.setItem("b", "2px"); })']});
+
+    return x;
+}
+
 function checkMoveCursorTo() {
     const func = parserFuncs.parseMoveCursorTo;
     const x = new Assert();
@@ -251,6 +268,7 @@ const TO_CHECK = [
     {'name': 'fail', 'func': checkFail},
     {'name': 'focus', 'func': checkFocus},
     {'name': 'goto', 'func': checkGoTo},
+    {'name': 'local-storage', 'func': checkLocalStorage},
     {'name': 'move-cursor-to', 'func': checkMoveCursorTo},
     {'name': 'screenshot', 'func': checkScreenshot},
     {'name': 'scroll-to', 'func': checkScrollTo},
