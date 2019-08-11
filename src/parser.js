@@ -606,10 +606,26 @@ function parseScreenshot(line) {
     };
 }
 
+// Possible inputs:
+//
+// * boolean value (`true` or `false`)
+function parseFail(line) {
+    if (line !== 'true' && line !== 'false') {
+        return {'error': `Expected "true" or "false" value, found "${line}"`};
+    }
+    return {
+        'instructions': [
+            `arg.expectedToFail = ${line === 'true' ? 'true' : 'false'};`,
+        ],
+        'wait': false,
+    };
+}
+
 const ORDERS = {
     'assert': parseAssert,
     'attribute': parseAttribute,
     'click': parseClick,
+    'fail': parseFail,
     'focus': parseFocus,
     'goto': parseGoTo,
     'local-storage': parseLocalStorage,
@@ -641,9 +657,10 @@ function parseContent(content, docPath) {
                 return res;
             }
             if (firstGotoParsed === false) {
-                if (order !== 'screenshot' && order !== 'goto') {
+                if (order !== 'screenshot' && order !== 'goto' && order !== 'fail') {
                     return {
-                        'error': 'First command must be `goto` (`screenshot` can be used before)!',
+                        'error': 'First command must be `goto` (`screenshot` and/or `fail` can ' +
+                            'be used before)!',
                         'line': i,
                     };
                 }

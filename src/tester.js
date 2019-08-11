@@ -114,6 +114,7 @@ async function innerRunTests(logs, options) {
             const commands = loaded[i]['commands'];
             const extras = {
                 'takeScreenshot': options.noScreenshot === false,
+                'expectedToFail': false,
             };
             for (let x = 0; x < commands.length; ++x) {
                 if (options.debug === true) {
@@ -122,9 +123,15 @@ async function innerRunTests(logs, options) {
                 try {
                     await loadContent(commands[x]['code'])(page, extras).catch(err => {
                         const s_err = err.toString();
-                        error_log = `[ERROR] ${s_err}: for command "${commands[x]['original']}"`;
+                        if (extras.expectedToFail !== true) {
+                            const original = commands[x]['original'];
+                            error_log = `[ERROR] ${s_err}: for command "${original}"`;
+                        } else if (options.debug === true) {
+                            // it's an expected failure so no need to log it
+                            debug_log += `[EXPECTED FAILURE]: ${s_err}\n`;
+                        }
                     });
-                } catch (error) {
+                } catch (error) { // parsing error
                     error_log = 'output:\n' + error + '\n';
                     if (options.debug === true) {
                         error_log += `command "${x}" failed: ${commands[x]['code']}\n`;
@@ -149,7 +156,7 @@ async function innerRunTests(logs, options) {
 
             if (extras.takeScreenshot !== true) {
                 if (options.debug === true) {
-                    debug_log += '=> [NO SCREENSHOT COMPARISON]\n';
+                    debug_log += '=> [NO SCREENSHOT COMPARISON]\n'; // eslint-disable-line
                 }
                 logs.append('ok', true);
                 showDebug(debug_log, logs);
@@ -158,7 +165,7 @@ async function innerRunTests(logs, options) {
             }
 
             if (options.debug === true) {
-                debug_log += '=> [SCREENSHOT COMPARISON]\n';
+                debug_log += '=> [SCREENSHOT COMPARISON]\n'; // eslint-disable-line
             }
             const newImage = `${options.testFolderPath}${loaded[i]['file']}-${options.runId}.png`;
             await page.screenshot({
