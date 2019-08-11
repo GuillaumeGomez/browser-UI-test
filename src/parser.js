@@ -281,7 +281,7 @@ function parseMoveCursorTo(line) {
 //       "file://{current-dir}{doc-path}/index.html"
 function parseGoTo(line, docPath) {
     // We just check if it goes to an HTML file, not checking much though...
-    if (line.startsWith('http') || line.startsWith('www.')) {
+    if (line.startsWith('http://') || line.startsWith('https://') || line.startsWith('www.')) {
         return {
             'instructions': [
                 `await page.goto("${line}")`,
@@ -298,7 +298,7 @@ function parseGoTo(line, docPath) {
     } else if (line.startsWith('.')) {
         return {
             'instructions': [
-                `await page.goto(page.url().split("/").slice(0, -1).join("/") + "/" + "${line}")`,
+                `await page.goto(page.url().split("/").slice(0, -1).join("/") + "/${line}")`,
             ],
         };
     } else if (line.startsWith('/')) {
