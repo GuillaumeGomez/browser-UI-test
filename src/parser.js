@@ -543,7 +543,7 @@ function parseText(s) {
     if (path.length === 0) {
         return {'error': 'selector cannot be empty'};
     } else if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\` or \`)\`, found \`${s.charAt(pos)}\``};
+        return {'error': `expected \`,\`, found \`${s.charAt(pos)}\``};
     }
     // We take everything between the comma and the paren.
     const sub = s.substring(pos + 1, s.length - 1).trim();
