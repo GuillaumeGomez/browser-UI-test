@@ -250,6 +250,28 @@ text: ("#button", "hello")
 attribute: ("#button", "attribute-name", "attribute-value")
 ```
 
+#### fail
+
+**fail** command sets a test to be expected to fail (or not). Example:
+
+```
+fail: false
+```
+
+You can use it as follows too:
+
+```
+// text of "#elem" is "hello"
+assert: ("#elem", "hello")
+text: ("#elem", "not hello")
+// we want to check if the text changed (strangely but whatever)
+fail: true
+assert: ("#elem", "hello")
+// now we set it back to false to check the new text
+fail: false
+assert: ("#elem", "not hello")
+```
+
 ### Comments?
 
 You can add comments in the `.goml` scripts with `// ` (the whitespace after the `//` is mandatory). Example:

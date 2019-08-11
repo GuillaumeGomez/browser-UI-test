@@ -1,0 +1,8 @@
+screenshot: false
+goto: file://{current-dir}/{doc-path}/basic.html
+assert: ("#button", "Go somewhere else!")
+text: ("#button", "hello")
+fail: true
+assert: ("#button", "Go somewhere else!")
+fail: false
+assert: ("#button", "hello")
