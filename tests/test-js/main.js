@@ -113,6 +113,33 @@ function checkFocus() {
     return x;
 }
 
+function checkMoveCursorTo() {
+    const func = require('../../src/parser.js').parseMoveCursorTo;
+    const x = new Assert();
+
+    // Check position
+    x.assert(func('hello'), {'error': 'Expected a position or a CSS selector'});
+    x.assert(func('()'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('('), {'error': 'Invalid syntax: expected position to end with \')\'...'});
+    x.assert(func('(1)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,2,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(a,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,2)'), {'instructions': ['page.mouse.move(1,2)']});
+
+    // Check css selector
+    x.assert(func('"'), {'error': 'expected `"` character at the end of the string'});
+    x.assert(func('\''), {'error': 'expected `\'` character at the end of the string'});
+    x.assert(func('\'\''), {'error': 'selector cannot be empty'});
+    x.assert(func('"a"'), {'instructions': ['page.hover("a")']});
+    x.assert(func('\'a\''), {'instructions': ['page.hover("a")']});
+    x.assert(func('\'"a\''), {'instructions': ['page.hover("\\\\"a")']});
+
+    return x;
+}
+
 function checkScreenshot() {
     const func = require('../../src/parser.js').parseScreenshot;
     const x = new Assert();
@@ -133,7 +160,7 @@ function checkSize() {
     // Check position
     x.assert(func('hello'), {'error': 'Expected `(` character, found `h`'});
     x.assert(func('()'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('('), {'error': 'Invalid syntax: expected size to end with \`)\`...'});
+    x.assert(func('('), {'error': 'Invalid syntax: expected size to end with `)`...'});
     x.assert(func('(1)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
     x.assert(func('(1,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
     x.assert(func('(1,2,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
@@ -149,6 +176,7 @@ const TO_CHECK = [
     {'name': 'click', 'func': checkClick},
     {'name': 'fail', 'func': checkFail},
     {'name': 'focus', 'func': checkFocus},
+    {'name': 'move-cursor-to', 'func': checkMoveCursorTo},
     {'name': 'screenshot', 'func': checkScreenshot},
     {'name': 'size', 'func': checkSize},
 ];
