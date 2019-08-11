@@ -98,6 +98,21 @@ function checkFail() {
     return x;
 }
 
+function checkFocus() {
+    const func = require('../../src/parser.js').parseFocus;
+    const x = new Assert();
+
+    x.assert(func('a'), {'error': 'Expected a CSS selector'});
+    x.assert(func('"'), {'error': 'expected `"` character at the end of the string'});
+    x.assert(func('\''), {'error': 'expected `\'` character at the end of the string'});
+    x.assert(func('\'\''), {'error': 'selector cannot be empty'});
+    x.assert(func('"a"'), {'instructions': ['page.focus("a")']});
+    x.assert(func('\'a\''), {'instructions': ['page.focus("a")']});
+    x.assert(func('\'"a\''), {'instructions': ['page.focus("\\\\"a")']});
+
+    return x;
+}
+
 function checkScreenshot() {
     const func = require('../../src/parser.js').parseScreenshot;
     const x = new Assert();
@@ -114,6 +129,7 @@ function checkScreenshot() {
 const TO_CHECK = [
     {'name': 'click', 'func': checkClick},
     {'name': 'fail', 'func': checkFail},
+    {'name': 'focus', 'func': checkFocus},
     {'name': 'screenshot', 'func': checkScreenshot},
 ];
 
