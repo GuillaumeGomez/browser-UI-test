@@ -29,6 +29,10 @@ function isStringChar(c) {
     return c === '\'' || c === '"';
 }
 
+function isNumber(c) {
+    return c >= '0' && c <= '9';
+}
+
 function parseString(s) {
     let i = 0;
 
@@ -55,6 +59,214 @@ function parseString(s) {
         i += 1;
     }
     return {'error': `expected \`${endChar}\` character at the end of the string`};
+}
+
+class Parser {
+    constructor(text) {
+        this.text = text;
+        this.pos = 0;
+        this.elems = [];
+    }
+
+    parse(endChar = null, pushTo = null) {
+        let prev = '';
+
+        const checker = (t, c, toCall) => {
+            if (t.elems.length > 0 && prev !== ',') {
+                t.elems[t.elems.length - 1].error = `Expected \`,\`, found \`${c}\``;
+                t.pos = t.text.length;
+            } else {
+                t[toCall](pushTo);
+            }
+        };
+
+        while (this.pos < this.text.length) {
+            const c = this.text.charAt(this.pos);
+
+            if (isStringChar(c)) {
+                checker(this, c, 'parseString');
+            } else if (c === '{') {
+                checker(this, c, 'parseJson');
+            } else if (isWhiteSpace(c)) {
+                // do nothing
+            } else if (c === ',') {
+                if (this.elems.length === 0) {
+                    this.push(new CharElement('char', ',', this.pos, 'Unexpected `,` as first element'), pushTo);
+                    this.pos = this.text.length;
+                } else if (this.elems[this.elems.length - 1].kind === 'char') {
+                    const prev = this.elems[this.elems.length - 1].text;
+                    this.push(new CharElement('char', ',', this.pos, `Unexpected \`,\` after \`${prev}\``), pushTo);
+                    this.pos = this.text.length;
+                } else {
+                    prev = ',';
+                }
+            } else if (isNumber(c)) {
+                checker(this, c, 'parseNumber');
+            } else if (c === '(') {
+                checker(this, c, 'parseTuple');
+            } else if (c === endChar) {
+                return;
+            } else {
+                if (this.elems.length === 0) {
+                    this.push(new CharElement('char', c, this.pos, `Unexpected \`${c}\` as first token`), pushTo);
+                } else {
+                    const prev = this.elems[this.elems.length - 1].text;
+                    this.push(new CharElement('char', c, this.pos, `Unexpected \`${c}\` after \`${prev}\``), pushTo);
+                }
+            }
+            this.pos += 1;
+        }
+    }
+
+    parseTuple(pushTo = null) {
+        const start = this.pos;
+        const elems = [];
+
+        this.parse(')', elems);
+        this.push(new TupleElement(start, this.pos), pushTo);
+    }
+
+    parseString(pushTo = null) {
+        const start = this.pos;
+        const endChar = this.text.charAt(this.pos);
+        let done = false;
+
+        this.pos += 1;
+        while (done === false && this.pos < this.text.length) {
+            const c = this.text.charAt(this.pos);
+            if (c === endChar) {
+                const e = new Element('string', this.text.substring(start + 1, this.pos), start, this.pos);
+                this.push(e, pushTo);
+                done = true;
+                break;
+            } else if (c === '\\') {
+                this.pos += 1;
+            }
+            this.pos += 1;
+        }
+        if (done === false) {
+            const e = new Element('string', this.text.substring(start + 1, this.pos), start, this.pos,
+                `expected \`${endChar}\` at the end of the string`);
+            this.push(e, pushTo);
+        }
+    }
+
+    parseNumber(pushTo = null) {
+        const start = this.pos;
+
+        while (this.pos < this.text.length) {
+            const c = this.text.charAt(this.pos);
+
+            if (!isNumber(c)) {
+                break;
+            }
+            this.pos += 1;
+        }
+        if (done === false) {
+            const e = new Element('number', this.text.substring(start, this.pos), start, this.pos);
+            this.push(e, pushTo);
+        }
+    }
+
+    push(e, pushTo = null) {
+        if (pushTo !== null) {
+            pushTo.push(e);
+        } else {
+            this.elems.push(e);
+        }
+    }
+
+    parseJson(pushTo = null) {
+        const start = this.pos;
+        const elems = [];
+        let key = null;
+        let prevChar = '';
+
+        this.pos += 1;
+        while (this.pos < this.text.length) {
+            const c = this.text.charAt(this.pos);
+
+            if (c === '}') {
+                this.push(new JsonElement(start, this.pos, elems));
+                break;
+            } else if (isStringChar(c)) {
+                const tmp = [];
+                this.parseString(tmp);
+                if (key === null) {
+                    if (prevChar !== ',' && elems.length > 0) {
+                        const last = elems[elems.length - 1].value;
+                        this.push(new JsonElement(start, this.pos, elems, `expected \`,\` after \`${last}\`, found \`:\``), pushTo);
+                    }
+                    key = tmp[0];
+                } else {
+                    if (prevChar !== ':') {
+                        this.push(new JsonElement(start, this.pos, elems, `expected \`:\` after \`${key}\``), pushTo);
+                        this.pos = this.text.length;
+                    }
+                    prevChar = '';
+                    elems.push({'key': key, 'value': tmp[0]});
+                    key = null;
+                }
+            } else if (c === ',') {
+                if (key !== null) {
+                    this.push(new JsonElement(start, this.pos, elems, `expected \`:\` after \`${key}\`, found \`,\``), pushTo);
+                    this.pos = this.text.length;
+                }
+                prevChar = ',';
+            } else if (c === ':') {
+                if (key === null) {
+                    if (elems.length > 0) {
+                        const last = elems[elems.length - 1].value;
+                        this.push(new JsonElement(start, this.pos, elems, `expected \`,\` after \`${last}\`, found \`:\``), pushTo);
+                    } else {
+                        this.push(new JsonElement(start, this.pos, elems, 'unexpected `:` after `{`'), pushTo);
+                    }
+                    this.pos = this.text.length;
+                }
+                prevChar = ':';
+            } else if (isWhiteSpace(c)) {
+                // do nothing
+            } else if (isNumber(c)) {
+                const tmp = [];
+                this.parseNumber(tmp);
+                if (key === null) {
+                    this.push(new NumberElement(start, this.pos, tmp[0], 'numbers cannot be used as keys'), pushTo);
+                    this.pos = this.text.length;
+                } else if (prevChar !== ':') {
+                    this.push(new NumberElement(start, this.pos, tmp[0], `expected \`:\` after \`${key}\``), pushTo);
+                    this.pos = this.text.length;
+                } else {
+                    prevChar = '';
+                    elems.push({'key': key, 'value': tmp[0]});
+                    key = null;
+                }
+            } else if (c === '{') {
+                const tmp = [];
+                this.parseJson(tmp);
+
+                if (key === null) {
+                    this.push(new JsonElement(start, this.pos, elems, 'JSON objects cannot be used as keys'), pushTo);
+                    this.pos = this.text.length;
+                } else if (prevChar !== ':') {
+                    this.push(new JsonElement(start, this.pos, elems, `expected \`:\` after \`${key}\``), pushTo);
+                    this.pos = this.text.length;
+                } else {
+                    prevChar = '';
+                    elems.push({'key': key, 'value': tmp[0]});
+                    key = null;
+                }
+            } else {
+                if (elems.length > 0) {
+                    const last = elems[elems.length - 1].value;
+                    this.push(new JsonElement(start, this.pos, elems, `unexpected \`${c}\` after \`${last}\``), pushTo);
+                } else {
+                    this.push(new JsonElement(start, this.pos, elems, `unexpected \`${c}\` after \`{\``), pushTo);
+                }
+                this.pos = this.text.length;
+            }
+            this.pos += 1;
+        }
+    }
 }
 
 function handlePathParameters(line, split, join) {
@@ -738,6 +950,7 @@ function parseContent(content, docPath) {
         }
         const order = line.split(':')[0].toLowerCase();
         if (Object.prototype.hasOwnProperty.call(ORDERS, order)) {
+            // goto command shouldn't use Parser!
             res = ORDERS[order](line.substr(order.length + 1).trim(), docPath);
             if (res.error !== undefined) {
                 res.line = i + 1;
