@@ -50,6 +50,18 @@ class JsonElement extends Element {
     }
 }
 
+class BoolElement extends Element {
+    constructor(value, startPos, endPos, error = null) {
+        super('bool', value, startPos, endPos, error);
+    }
+}
+
+class UnknownElement extends Element {
+    constructor(value, startPos, endPos, error = null) {
+        super('unknown', value, startPos, endPos, error);
+    }
+}
+
 class Parser {
     constructor(text) {
         this.text = text;
@@ -97,32 +109,40 @@ class Parser {
             } else if (c === endChar) {
                 return prev;
             } else {
+                checker(this, c, 'parseBoolean');
                 const elems = pushTo !== null ? pushTo : this.elems;
-                // While we're here, let's take the full token.
-                const [token, start] = this.parseFullToken();
-                if (elems.length === 0) {
-                    this.push(new CharElement(c, start, `Unexpected \`${token}\` as first token`), pushTo);
-                } else {
-                    const prevElem = elems[elems.length - 1].text;
-                    this.push(new CharElement(c, start, `Unexpected \`${token}\` after \`${prevElem}\``), pushTo);
+                const el = elems[elems.length - 1];
+                if (el.kind === 'unknown') {
+                    const token = el.value;
+                    if (elems.length === 1) {
+                        this.push(new CharElement(c, start, `Unexpected \`${token}\` as first token`), pushTo);
+                    } else {
+                        const prevElem = elems[elems.length - 2].value;
+                        this.push(new CharElement(c, start, `Unexpected \`${token}\` after \`${prevElem}\``), pushTo);
+                    }
+                    this.pos = this.text.length;
                 }
-                this.pos = this.text.length;
             }
             this.pos += 1;
         }
     }
 
-    parseFullToken() {
+    parseBoolean(pushTo = null) {
         const start = this.pos;
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
 
-            if (isWhiteSpace(x) || isStringChar(x) || x === '(' || x === '{' || x === ':' || x === ',') {
+            if (isWhiteSpace(x) || isStringChar(x) || '({:,-+/*;.!?|[=%'.indexOf(x) !== -1) {
                 break;
             }
             this.pos += 1;
         }
-        return [this.text.substring(start, this.pos), start];
+        const token = this.text.substring(start, this.pos);
+        if (token === 'true' || token === 'false') {
+            this.push(new BoolElement(token === 'true', start, this.pos), pushTo);
+        } else {
+            this.push(new UnknownElement(token, start, this.pos), pushTo);
+        }
     }
 
     parseTuple(pushTo = null) {
@@ -256,10 +276,12 @@ class Parser {
                 const tmp = [];
                 this.parseNumber(tmp);
                 if (key === null) {
-                    this.push(new NumberElement(tmp[0], start, this.pos, 'numbers cannot be used as keys'), pushTo);
+                    elems.push({key: tmp[0]});
+                    this.push(new JsonElement(elems, start, this.pos, 'numbers cannot be used as keys'), pushTo);
                     this.pos = this.text.length;
                 } else if (prevChar !== ':') {
-                    this.push(new NumberElement(tmp[0], start, this.pos, `expected \`:\` after \`${key.value}\``), pushTo);
+                    elems.push({key: key});
+                    this.push(new JsonElement(elems, start, this.pos, `expected \`:\` after \`${key.value}\`, found \`${tmp[0].value}\``), pushTo);
                     this.pos = this.text.length;
                 } else {
                     prevChar = '';
@@ -268,7 +290,7 @@ class Parser {
                 }
             } else if (c === '{') {
                 if (prevChar !== ':') {
-                    this.push(new JsonElement(elems, start, this.pos, `expected \`:\` after \`${key.value}\``), pushTo);
+                    this.push(new JsonElement(elems, start, this.pos, `expected \`:\` after \`${key.value}\`, found \`${tmp[0].value}\``), pushTo);
                     this.pos = this.text.length;
                     break;
                 }
@@ -276,10 +298,12 @@ class Parser {
                 this.parseJson(tmp);
 
                 if (key === null) {
+                    elems.push({key: tmp[0]});
                     this.push(new JsonElement(elems, start, this.pos, 'JSON objects cannot be used as keys'), pushTo);
                     this.pos = this.text.length;
                 } else if (prevChar !== ':') {
-                    this.push(new JsonElement(elems, start, this.pos, `expected \`:\` after \`${key.value}\``), pushTo);
+                    elems.push({key: tmp[0]});
+                    this.push(new JsonElement(elems, start, this.pos, `expected \`:\` after \`${key.value}\`, found \`${tmp[0].value}\``), pushTo);
                     this.pos = this.text.length;
                 } else {
                     prevChar = '';
@@ -287,15 +311,30 @@ class Parser {
                     key = null;
                 }
             } else {
-                // While we're here, let's take the full token.
-                const [token, start] = this.parseFullToken();
-                if (elems.length > 0) {
-                    const last = elems[elems.length - 1].value;
-                    this.push(new JsonElement(elems, start, this.pos, `unexpected \`${token}\` after \`${last}\``), pushTo);
+                const tmp = [];
+                this.parseBoolean(tmp);
+                const el = tmp[0];
+                if (el.kind === 'unknown') {
+                    if (elems.length > 1) {
+                        const last = elems[elems.length - 2].value;
+                        this.push(new JsonElement(elems, start, this.pos, `unexpected \`${token}\` after \`${last}\``), pushTo);
+                    } else {
+                        this.push(new JsonElement(elems, start, this.pos, `unexpected \`${token}\` after \`{\``), pushTo);
+                    }
+                    this.pos = this.text.length;
+                } else if (key === null) {
+                    elems.push({key: el});
+                    this.push(new JsonElement(elems, start, this.pos, 'booleans cannot be used as keys'), pushTo);
+                    this.pos = this.text.length;
+                } else if (prevChar !== ':') {
+                    elems.push({key: key});
+                    this.push(new JsonElement(elems, start, this.pos, `expected \`:\` after \`${key.value}\`, found \`${el.value}\``), pushTo);
+                    this.pos = this.text.length;
                 } else {
-                    this.push(new JsonElement(elems, start, this.pos, `unexpected \`${token}\` after \`{\``), pushTo);
+                    prevChar = '';
+                    elems.push({'key': key, 'value': el});
+                    key = null;
                 }
-                this.pos = this.text.length;
             }
             this.pos += 1;
         }
