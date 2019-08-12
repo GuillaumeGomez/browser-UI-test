@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const PNG = require('png-js');
-const parser = require('./parser.js');
+const parser = require('./commands.js');
 const utils = require('./utils.js');
 const Options = require('./options.js').Options;
 const {Debug, Logs} = require('./logs.js');
