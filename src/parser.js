@@ -74,11 +74,12 @@ class Parser {
         let prev = '';
 
         const checker = (t, c, toCall) => {
-            if (t.elems.length > 0 && prev !== ',') {
-                t.elems[t.elems.length - 1].error = `Expected \`,\`, found \`${c}\``;
+            if (t.elems.length > 0 && prev !== separator) {
+                t.elems[t.elems.length - 1].error = `Expected \`${separator}\`, found \`${c}\``;
                 t.pos = t.text.length;
             } else {
                 t[toCall](pushTo);
+                prev = '';
             }
         };
 
@@ -116,10 +117,10 @@ class Parser {
                 if (el.kind === 'unknown') {
                     const token = el.value;
                     if (elems.length === 1) {
-                        this.push(new CharElement(c, start, `Unexpected \`${token}\` as first token`), pushTo);
+                        el.error = `Unexpected \`${token}\` as first token`;
                     } else {
                         const prevElem = elems[elems.length - 2].value;
-                        this.push(new CharElement(c, start, `Unexpected \`${token}\` after \`${prevElem}\``), pushTo);
+                        el.error = `Unexpected token \`${token}\` after \`${prevElem}\``;
                     }
                     this.pos = this.text.length;
                 }
@@ -133,7 +134,7 @@ class Parser {
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
 
-            if (isWhiteSpace(c) || isStringChar(c) || '({:,-+/*;.!?|[=%'.indexOf(c) !== -1) {
+            if (' \t\r`\\"\'(){}:,-+/*;.!?|[]=%'.indexOf(c) !== -1) {
                 break;
             }
             this.pos += 1;
@@ -141,13 +142,13 @@ class Parser {
         const token = this.text.substring(start, this.pos);
         if (token === 'true' || token === 'false') {
             this.push(new BoolElement(token === 'true', start, this.pos), pushTo);
+            this.pos -= 1; // we need to go back to the last "good" character
         } else {
             if (token.length === 0) {
                 token = this.text.charAt(start);
             }
             this.push(new UnknownElement(token, start, this.pos), pushTo);
         }
-        this.pos -= 1; // we need to go back to the last "good" character
     }
 
     parseTuple(pushTo = null) {
@@ -164,7 +165,7 @@ class Parser {
                 // this case should never happen but just in case...
                 this.push(new TupleElement(elems, start, this.pos, `unexpected \`${prev}\` after \`(\``), pushTo);
             }
-        } else if (this.pos >= this.text.length || this.charAt(this.pos) !== ')') {
+        } else if (this.pos >= this.text.length || this.text.charAt(this.pos) !== ')') {
             this.push(new TupleElement(elems, start, this.pos, 'expected `)` at the end'), pushTo);
         } else if (elems.length === 0) {
             this.push(new TupleElement(elems, start, this.pos, 'unexpected `()`'), pushTo);
