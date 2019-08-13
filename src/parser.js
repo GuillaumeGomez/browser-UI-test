@@ -10,6 +10,10 @@ function isNumber(c) {
     return c >= '0' && c <= '9';
 }
 
+function isLetter(c) {
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
 class Element {
     constructor(kind, value, startPos, endPos, error = null) {
         this.kind = kind;
@@ -75,7 +79,9 @@ class Parser {
 
         const checker = (t, c, toCall) => {
             if (t.elems.length > 0 && prev !== separator) {
-                t.elems[t.elems.length - 1].error = `Expected \`${separator}\`, found \`${c}\``;
+                const e = new CharElement(separator, t.pos,
+                    `Expected \`${separator}\`, found \`${c}\``);
+                t.push(e, pushTo);
                 t.pos = t.text.length;
             } else {
                 t[toCall](pushTo);
@@ -134,12 +140,12 @@ class Parser {
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
 
-            if (' \t\r`\\"\'(){}:,-+/*;.!?|[]=%'.indexOf(c) !== -1) {
+            if (!isNumber(c) && !isLetter(c)) {
                 break;
             }
             this.pos += 1;
         }
-        const token = this.text.substring(start, this.pos);
+        let token = this.text.substring(start, this.pos);
         if (token === 'true' || token === 'false') {
             this.push(new BoolElement(token === 'true', start, this.pos), pushTo);
             this.pos -= 1; // we need to go back to the last "good" character
@@ -158,17 +164,21 @@ class Parser {
         this.pos += 1;
         const prev = this.parse(')', elems, ',');
         if (prev !== '') {
-            if (elems.length > 0) {
+            if (elems.length > 1) {
                 const el = elems[elems.length - 1].value;
-                this.push(new TupleElement(elems, start, this.pos, `unexpected \`${prev}\` after \`${el}\``), pushTo);
+                const prevEl = typeof prev !== 'undefined' ? prev : elems[elems.length - 2].value;
+                this.push(new TupleElement(elems, start, this.pos, `unexpected \`${el}\` after \`${prevEl}\``), pushTo);
             } else {
+                const el = elems[elems.length - 1].value;
                 // this case should never happen but just in case...
-                this.push(new TupleElement(elems, start, this.pos, `unexpected \`${prev}\` after \`(\``), pushTo);
+                this.push(new TupleElement(elems, start, this.pos, `unexpected \`${el}\` after \`(\``), pushTo);
             }
         } else if (this.pos >= this.text.length || this.text.charAt(this.pos) !== ')') {
             this.push(new TupleElement(elems, start, this.pos, 'expected `)` at the end'), pushTo);
         } else if (elems.length === 0) {
             this.push(new TupleElement(elems, start, this.pos, 'unexpected `()`'), pushTo);
+        } else if (elems[elems.length - 1].error !== null) {
+            this.push(new TupleElement(elems, start, this.pos, elems[elems.length - 1].error), pushTo);
         } else {
             this.push(new TupleElement(elems, start, this.pos), pushTo);
         }
