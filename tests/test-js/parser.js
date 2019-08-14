@@ -1,15 +1,5 @@
 const process = require('process');
-const {
-    Parser,
-    Element,
-    CharElement,
-    TupleElement,
-    StringElement,
-    NumberElement,
-    UnknownElement,
-    JsonElement,
-    BoolElement,
-} = require('../../src/parser.js');
+const Parser = require('../../src/parser.js').Parser;
 const {Assert, plural, print} = require('./utils.js');
 
 function checkTuple() {
@@ -147,7 +137,6 @@ function checkTuple() {
     x.assert(p.elems[0].value[1].getValue(), 's');
     x.assert(p.elems[0].value[2].error, null);
     x.assert(p.elems[0].value[2].kind, 'json');
-    x.assert(p.elems[0].value[2].getValue(), {"a": "b"});
     x.assert(p.elems[0].value[2].getText(), '{"a": "b"}');
     x.assert(p.elems[0].value[3].error, null);
     x.assert(p.elems[0].value[3].kind, 'number');
@@ -341,11 +330,234 @@ function checkNumber() {
     return x;
 }
 
+function checkJson() {
+    const x = new Assert();
+
+    let p = new Parser('{1: 2}');
+    p.parse();
+    x.assert(p.error, 'numbers cannot be used as keys (for `1`)');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'numbers cannot be used as keys (for `1`)');
+    x.assert(p.elems[0].getText(), '{1');
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].key.kind, 'number');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '1');
+    x.assert(p.elems[0].getValue()[0].value === undefined);
+
+
+    p = new Parser('{true: 1}');
+    p.parse();
+    x.assert(p.error, 'booleans cannot be used as keys');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'booleans cannot be used as keys');
+    x.assert(p.elems[0].getText(), '{true');
+
+
+    p = new Parser('{{"a": 2}: 1}');
+    p.parse();
+    x.assert(p.error, 'JSON objects cannot be used as keys');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'JSON objects cannot be used as keys');
+    x.assert(p.elems[0].getText(), '{{"a": 2}');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'json');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '{"a": 2}');
+    x.assert(p.elems[0].getValue()[0].value === undefined);
+
+
+    p = new Parser('{x: 1}');
+    p.parse();
+    x.assert(p.error, 'unexpected `x` after `{`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'unexpected `x` after `{`');
+    x.assert(p.elems[0].getText(), '{x:');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'unknown');
+    x.assert(p.elems[0].getValue()[0].key.getText(), 'x');
+    x.assert(p.elems[0].getValue()[0].value === undefined);
+
+
+    p = new Parser('{"x": y}');
+    p.parse();
+    x.assert(p.error, 'invalid value `y` for key `"x"`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'invalid value `y` for key `"x"`');
+    x.assert(p.elems[0].getText(), '{"x": y}');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'unknown');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), 'y');
+
+
+    p = new Parser('{"x": 1,}');
+    p.parse();
+    x.assert(p.error, 'unexpected `,` before `}`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'unexpected `,` before `}`');
+    x.assert(p.elems[0].getText(), '{"x": 1,}');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'number');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), '1');
+
+
+    p = new Parser('{"x": y,}');
+    p.parse();
+    x.assert(p.error, 'invalid value `y` for key `"x"`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'invalid value `y` for key `"x"`');
+    x.assert(p.elems[0].getText(), '{"x": y,');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'unknown');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), 'y');
+
+
+    p = new Parser('{"x": }');
+    p.parse();
+    x.assert(p.error, 'unexpected `}` after `"x":`: expected a value');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'unexpected `}` after `"x":`: expected a value');
+    x.assert(p.elems[0].getText(), '{"x": }');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value === undefined);
+
+
+    p = new Parser('{"x": "a"}');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getText(), '{"x": "a"}');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].value.getText(), '"a"');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), 'a');
+
+
+    p = new Parser('{"x": "a", "y": true, "z": 56}');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].getValue().length, 3);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getText(), '{"x": "a", "y": true, "z": 56}');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].value.getText(), '"a"');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), 'a');
+    x.assert(p.elems[0].getValue()[1].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[1].key.getText(), '"y"');
+    x.assert(p.elems[0].getValue()[1].key.getValue(), 'y');
+    x.assert(p.elems[0].getValue()[1].value.kind, 'bool');
+    x.assert(p.elems[0].getValue()[1].value.getValue(), true);
+    x.assert(p.elems[0].getValue()[2].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[2].key.getText(), '"z"');
+    x.assert(p.elems[0].getValue()[2].key.getValue(), 'z');
+    x.assert(p.elems[0].getValue()[2].value.kind, 'number');
+    x.assert(p.elems[0].getValue()[2].value.getValue(), '56');
+
+
+    p = new Parser('{"x": "a", "y":{"tadam":{"re":{"cur":{"sion":"yo"},"done": false}}}, "z": 56}');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].getValue().length, 3);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getText(),
+        '{"x": "a", "y":{"tadam":{"re":{"cur":{"sion":"yo"},"done": false}}}, "z": 56}');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].value.getText(), '"a"');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), 'a');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[1].key.getText(), '"y"');
+    x.assert(p.elems[0].getValue()[1].key.getValue(), 'y');
+
+    // Recursion hell check
+    x.assert(p.elems[0].getValue()[1].value.kind, 'json');
+    x.assert(p.elems[0].getValue()[1].value.getText(),
+        '{"tadam":{"re":{"cur":{"sion":"yo"},"done": false}}}');
+    x.assert(p.elems[0].getValue()[1].value.getValue().length, 1);
+
+    // welcome to level 1, young padawan
+    const sub = p.elems[0].getValue()[1].value.getValue();
+    x.assert(sub[0].key.kind, 'string');
+    x.assert(sub[0].key.getText(), '"tadam"');
+    x.assert(sub[0].key.getValue(), 'tadam');
+    x.assert(sub[0].value.kind, 'json');
+    x.assert(sub[0].value.getText(), '{"re":{"cur":{"sion":"yo"},"done": false}}');
+
+    // welcome to level 2, knight
+    const subsub = sub[0].value.getValue();
+    x.assert(subsub.length, 1);
+    x.assert(subsub[0].key.kind, 'string');
+    x.assert(subsub[0].key.getText(), '"re"');
+    x.assert(subsub[0].key.getValue(), 're');
+    x.assert(subsub[0].value.kind, 'json');
+    x.assert(subsub[0].value.getText(), '{"cur":{"sion":"yo"},"done": false}');
+
+    // welcome to level 3, master
+    const subsubsub = subsub[0].value.getValue();
+    x.assert(subsubsub.length, 2);
+    x.assert(subsubsub[0].key.kind, 'string');
+    x.assert(subsubsub[0].key.getText(), '"cur"');
+    x.assert(subsubsub[0].key.getValue(), 'cur');
+    x.assert(subsubsub[0].value.kind, 'json');
+    x.assert(subsubsub[0].value.getText(), '{"sion":"yo"}');
+    x.assert(subsubsub[1].key.kind, 'string');
+    x.assert(subsubsub[1].key.getText(), '"done"');
+    x.assert(subsubsub[1].key.getValue(), 'done');
+    x.assert(subsubsub[1].value.kind, 'bool');
+    x.assert(subsubsub[1].value.getValue(), false);
+
+    // welcome to level 4... json god?
+    const subsubsubsub = subsubsub[0].value.getValue();
+    x.assert(subsubsubsub.length, 1);
+    x.assert(subsubsubsub[0].key.kind, 'string');
+    x.assert(subsubsubsub[0].key.getText(), '"sion"');
+    x.assert(subsubsubsub[0].key.getValue(), 'sion');
+    x.assert(subsubsubsub[0].value.kind, 'string');
+    x.assert(subsubsubsub[0].value.getText(), '"yo"');
+    x.assert(subsubsubsub[0].value.getValue(), 'yo');
+
+    // back to top \o/
+    x.assert(p.elems[0].getValue()[2].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[2].key.getText(), '"z"');
+    x.assert(p.elems[0].getValue()[2].key.getValue(), 'z');
+    x.assert(p.elems[0].getValue()[2].value.kind, 'number');
+    x.assert(p.elems[0].getValue()[2].value.getValue(), '56');
+
+    return x;
+}
+
+// TODO add check comments for string: '"// not a comment!"'
 const TO_CHECK = [
     {'name': 'tuple', 'func': checkTuple},
     {'name': 'bool', 'func': checkBool},
     {'name': 'string', 'func': checkString},
     {'name': 'number', 'func': checkNumber},
+    {'name': 'json', 'func': checkJson},
 ];
 
 function checkCommands() {
