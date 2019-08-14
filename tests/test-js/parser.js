@@ -551,13 +551,73 @@ function checkJson() {
     return x;
 }
 
-// TODO add check comments for string: '"// not a comment!"'
+function checkComment() {
+    const x = new Assert();
+
+    let p = new Parser('1 // just a test');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), '1');
+
+
+    p = new Parser('(1) //oups, a comment!');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].kind, 'number');
+    x.assert(p.elems[0].getValue()[0].getValue(), '1');
+
+
+    p = new Parser('(1//oups, an error!');
+    p.parse();
+    x.assert(p.error, 'expected `)` after `1`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].error, 'expected `)` after `1`');
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].kind, 'number');
+    x.assert(p.elems[0].getValue()[0].getValue(), '1');
+
+
+    p = new Parser('{"a": 1//oups, an error!');
+    p.parse();
+    x.assert(p.error, 'unclosed JSON object: expected `}` after `1`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'unclosed JSON object: expected `}` after `1`');
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'a');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"a"');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'number');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), '1');
+
+
+    p = new Parser('"just a string// with a comment in the middle!"');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), 'just a string// with a comment in the middle!');
+    x.assert(p.elems[0].getText(), '"just a string// with a comment in the middle!"');
+
+    return x;
+}
+
 const TO_CHECK = [
     {'name': 'tuple', 'func': checkTuple},
     {'name': 'bool', 'func': checkBool},
     {'name': 'string', 'func': checkString},
     {'name': 'number', 'func': checkNumber},
     {'name': 'json', 'func': checkJson},
+    {'name': 'comment', 'func': checkComment},
 ];
 
 function checkCommands() {
