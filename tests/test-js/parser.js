@@ -23,6 +23,30 @@ function checkTuple() {
     x.assert(p.elems[0].error, 'unexpected `()`: tuples need at least one argument');
 
 
+    p = new Parser('("hello",');
+    p.parse();
+    x.assert(p.error, 'unexpected `,` after `"hello"`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].error, 'unexpected `,` after `"hello"`');
+    x.assert(p.elems[0].value.length, 1);
+    x.assert(p.elems[0].value[0].error, null);
+    x.assert(p.elems[0].value[0].kind, 'string');
+
+
+    p = new Parser('("hello", 2');
+    p.parse();
+    x.assert(p.error, 'expected `)` after `2`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].error, 'expected `)` after `2`');
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].value[0].error, null);
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[1].error, null);
+    x.assert(p.elems[0].value[1].kind, 'number');
+
+
     p = new Parser('("hello", 2, true, {"a": {"b": 3}, "c": "d"},)');
     p.parse();
     x.assert(p.error, 'unexpected `,` after `{"a": {"b": 3}, "c": "d"}`');
@@ -123,7 +147,8 @@ function checkTuple() {
     x.assert(p.elems[0].value[1].getValue(), 's');
     x.assert(p.elems[0].value[2].error, null);
     x.assert(p.elems[0].value[2].kind, 'json');
-    x.assert(p.elems[0].value[2].getValue(), '{"a": "b"}');
+    x.assert(p.elems[0].value[2].getValue(), {"a": "b"});
+    x.assert(p.elems[0].value[2].getText(), '{"a": "b"}');
     x.assert(p.elems[0].value[3].error, null);
     x.assert(p.elems[0].value[3].kind, 'number');
     x.assert(p.elems[0].value[3].getValue(), '3');
@@ -172,12 +197,107 @@ function checkBool() {
     x.assert(p.elems[1].error, 'expected nothing, found `,`');
     x.assert(p.elems[1].getValue(), ',');
 
+
+    p = new Parser('tre');
+    p.parse();
+    x.assert(p.error, 'Unexpected `tre` as first token');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'unknown');
+    x.assert(p.elems[0].error, 'Unexpected `tre` as first token');
+    x.assert(p.elems[0].getValue(), 'tre');
+
+    return x;
+}
+
+function checkString() {
+    const x = new Assert();
+
+    let p = new Parser('"hello');
+    p.parse();
+    x.assert(p.error, 'expected `"` at the end of the string');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, 'expected `"` at the end of the string');
+    x.assert(p.elems[0].getValue(), 'hello');
+    x.assert(p.elems[0].getText(), '"hello');
+
+
+    p = new Parser('"hello\\"');
+    p.parse();
+    x.assert(p.error, 'expected `"` at the end of the string');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, 'expected `"` at the end of the string');
+    x.assert(p.elems[0].getValue(), 'hello\\"');
+    x.assert(p.elems[0].getText(), '"hello\\"');
+
+
+    p = new Parser('"hello"');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), 'hello');
+    x.assert(p.elems[0].getText(), '"hello"');
+
+
+    p = new Parser('"hello\\""');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), 'hello\\"');
+    x.assert(p.elems[0].getText(), '"hello\\""');
+
+
+    p = new Parser('\'hello');
+    p.parse();
+    x.assert(p.error, 'expected `\'` at the end of the string');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, 'expected `\'` at the end of the string');
+    x.assert(p.elems[0].getValue(), 'hello');
+    x.assert(p.elems[0].getText(), '\'hello');
+
+
+    p = new Parser('\'hello\\\'');
+    p.parse();
+    x.assert(p.error, 'expected `\'` at the end of the string');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, 'expected `\'` at the end of the string');
+    x.assert(p.elems[0].getValue(), 'hello\\\'');
+    x.assert(p.elems[0].getText(), '\'hello\\\'');
+
+
+    p = new Parser('\'hello\'');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), 'hello');
+    x.assert(p.elems[0].getText(), '\'hello\'');
+
+
+    p = new Parser('\'hello\\\'\'');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), 'hello\\\'');
+    x.assert(p.elems[0].getText(), '\'hello\\\'\'');
+
     return x;
 }
 
 const TO_CHECK = [
     {'name': 'tuple', 'func': checkTuple},
     {'name': 'bool', 'func': checkBool},
+    {'name': 'string', 'func': checkString},
 ];
 
 function checkCommands() {

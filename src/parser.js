@@ -26,6 +26,11 @@ class Element {
     getValue() {
         return this.value;
     }
+
+    // This method is useful for string which returns the text with double quotes
+    getText() {
+        return this.value;
+    }
 }
 
 class CharElement extends Element {
@@ -41,8 +46,13 @@ class TupleElement extends Element {
 }
 
 class StringElement extends Element {
-    constructor(value, startPos, endPos, error = null) {
+    constructor(value, startPos, endPos, fullText, error = null) {
         super('string', value, startPos, endPos, error);
+        this.fullText = fullText;
+    }
+
+    getText() {
+        return this.fullText;
     }
 }
 
@@ -59,6 +69,10 @@ class JsonElement extends Element {
     }
 
     getValue() {
+        return JSON.parse(this.fullText);
+    }
+
+    getText() {
         return this.fullText;
     }
 }
@@ -142,11 +156,13 @@ class Parser {
                         const prevElem = elems[elems.length - 2].value;
                         el.error = `Unexpected token \`${token}\` after \`${prevElem}\``;
                     }
+                    this.error = el.error;
                     this.pos = this.text.length;
                 }
             }
             this.pos += 1;
         }
+        return prev;
     }
 
     parseBoolean(pushTo = null) {
@@ -177,28 +193,32 @@ class Parser {
 
         this.pos += 1;
         const prev = this.parse(')', elems, ',');
-        if (prev !== '') {
-            if (elems.length > 0 && elems[elems.length - 1].error !== null) {
-                this.push(new TupleElement(elems, start, this.pos, elems[elems.length - 1].error), pushTo);
-            } else if (prev === ',') {
+        if (elems.length > 0 && elems[elems.length - 1].error !== null) {
+            this.push(new TupleElement(elems, start, this.pos, elems[elems.length - 1].error), pushTo);
+        } else if (prev !== '') {
+            if (prev === ',') {
                 if (elems.length > 0) {
-                    const el = elems[elems.length - 1].getValue();
+                    const el = elems[elems.length - 1].getText();
                     this.push(new TupleElement(elems, start, this.pos, `unexpected \`,\` after \`${el}\``), pushTo);
                 } else {
                     this.push(new TupleElement(elems, start, this.pos, `unexpected \`,\` after \`(\``), pushTo);
                 }
                 this.pos = this.text.length;
             } else if (elems.length > 1) { // we're at the end of the text
-                const el = elems[elems.length - 1].getValue();
-                const prevEl = typeof prev !== 'undefined' ? prev : elems[elems.length - 2].getValue();
+                const el = elems[elems.length - 1].getText();
+                const prevEl = typeof prev !== 'undefined' ? prev : elems[elems.length - 2].getText();
                 this.push(new TupleElement(elems, start, this.pos, `unexpected \`${el}\` after \`${prevEl}\``), pushTo);
             } else {
-                const el = elems[elems.length - 1].getValue();
+                const el = elems[elems.length - 1].getText();
                 // this case should never happen but just in case...
                 this.push(new TupleElement(elems, start, this.pos, `unexpected \`${el}\` after \`(\``), pushTo);
             }
         } else if (this.pos >= this.text.length || this.text.charAt(this.pos) !== ')') {
-            this.push(new TupleElement(elems, start, this.pos, 'expected `)` at the end'), pushTo);
+            if (elems.length === 0) {
+                this.push(new TupleElement(elems, start, this.pos, 'expected `)` at the end'), pushTo);
+            } else {
+                this.push(new TupleElement(elems, start, this.pos, `expected \`)\` after \`${elems[elems.length - 1].getText()}\``), pushTo);
+            }
         } else if (elems.length === 0) {
             this.push(new TupleElement(elems, start, this.pos, 'unexpected `()`: tuples need at least one argument'), pushTo);
         } else if (elems[elems.length - 1].error !== null) {
@@ -216,7 +236,9 @@ class Parser {
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
             if (c === endChar) {
-                const e = new StringElement(this.text.substring(start + 1, this.pos), start, this.pos);
+                const value = this.text.substring(start + 1, this.pos);
+                const full = this.text.substring(start, this.pos + 1);
+                const e = new StringElement(value, start, this.pos, full);
                 this.push(e, pushTo);
                 return;
             } else if (c === '\\') {
@@ -224,7 +246,9 @@ class Parser {
             }
             this.pos += 1;
         }
-        const e = new StringElement(this.text.substring(start + 1, this.pos), start, this.pos,
+        const value = this.text.substring(start + 1, this.pos);
+        const full = this.text.substring(start, this.pos);
+        const e = new StringElement(value, start, this.pos, full,
             `expected \`${endChar}\` at the end of the string`);
         this.push(e, pushTo);
     }
@@ -278,9 +302,9 @@ class Parser {
                 const fullText = this.text.substring(start, this.pos + 1);
                 if (key !== null) {
                     if (prevChar === ':') {
-                        parseEnd(this, pushTo, `unexpected \`}\` after \`${key.getValue()}:\``);
+                        parseEnd(this, pushTo, `unexpected \`}\` after \`${key.getText()}:\``);
                     } else {
-                        parseEnd(this, pushTo, `unexpected \`}\` after \`${key.getValue()}\``);
+                        parseEnd(this, pushTo, `unexpected \`}\` after \`${key.getText()}\``);
                     }
                 } else {
                     parseEnd(this, pushTo);
@@ -291,13 +315,13 @@ class Parser {
                 this.parseString(tmp);
                 if (key === null) {
                     if (prevChar !== ',' && elems.length > 0) {
-                        const last = elems[elems.length - 1].getValue();
+                        const last = elems[elems.length - 1].getText();
                         parseEnd(this, pushTo, `expected \`,\` after \`${last}\`, found \`:\``);
                     }
                     key = tmp[0];
                 } else {
                     if (prevChar !== ':') {
-                        parseEnd(this, pushTo, `expected \`:\` after \`${key.getValue()}\``);
+                        parseEnd(this, pushTo, `expected \`:\` after \`${key.getText()}\``);
                     } else {
                         prevChar = '';
                         elems.push({'key': key, 'value': tmp[0]});
@@ -309,7 +333,7 @@ class Parser {
                 }
             } else if (c === ',') {
                 if (key !== null) {
-                    let err = `expected \`:\` after \`${key.getValue()}\`, found \`,\``;
+                    let err = `expected \`:\` after \`${key.getText()}\`, found \`,\``;
                     if (prevChar === ':') {
                         err = 'unexpected `,` after `:`';
                     }
@@ -320,7 +344,7 @@ class Parser {
                 if (key === null) {
                     const fullText = this.text.substring(start, this.pos + 1);
                     if (elems.length > 0) {
-                        const last = elems[elems.length - 1].getValue();
+                        const last = elems[elems.length - 1].getText();
                         parseEnd(this, pushTo, `expected \`,\` after \`${last}\`, found \`:\``);
                     } else {
                         parseEnd(this, pushTo, 'unexpected `:` after `{`');
@@ -336,7 +360,7 @@ class Parser {
                     parseEnd(this, pushTo, 'numbers cannot be used as keys');
                 } else if (prevChar !== ':') {
                     parseEnd(this, pushTo,
-                        `expected \`:\` after \`${key.getValue()}\`, found \`${tmp[0].getValue()}\``);
+                        `expected \`:\` after \`${key.getText()}\`, found \`${tmp[0].getText()}\``);
                 } else {
                     prevChar = '';
                     // no possible errors with number parsing
@@ -346,7 +370,7 @@ class Parser {
             } else if (c === '{') {
                 if (prevChar !== ':') {
                     parseEnd(this, pushTo,
-                        `expected \`:\` after \`${key.getValue()}\`, found \`${tmp[0].getValue()}\``);
+                        `expected \`:\` after \`${key.getText()}\`, found \`${tmp[0].getText()}\``);
                     return;
                 }
                 const tmp = [];
@@ -356,7 +380,7 @@ class Parser {
                     parseEnd(this, pushTo, 'JSON objects cannot be used as keys');
                 } else if (prevChar !== ':') {
                     parseEnd(this, pushTo,
-                        `expected \`:\` after \`${key.getValue()}\`, found \`${tmp[0].getValue()}\``);
+                        `expected \`:\` after \`${key.getText()}\`, found \`${tmp[0].getText()}\``);
                 } else {
                     prevChar = '';
                     elems.push({'key': key, 'value': tmp[0]});
@@ -370,9 +394,9 @@ class Parser {
                 this.parseBoolean(tmp);
                 const el = tmp[0];
                 if (el.kind === 'unknown') {
-                    const token = el.getValue();
+                    const token = el.getText();
                     if (elems.length > 1) {
-                        const last = elems[elems.length - 2].getValue();
+                        const last = elems[elems.length - 2].getText();
                         parseEnd(this, pushTo, `unexpected \`${token}\` after \`${last}\``);
                     } else {
                         parseEnd(this, pushTo, `unexpected \`${token}\` after \`{\``);
@@ -381,7 +405,7 @@ class Parser {
                     parseEnd(this, pushTo, 'booleans cannot be used as keys');
                 } else if (prevChar !== ':') {
                     parseEnd(this, pushTo,
-                        `expected \`:\` after \`${key.getValue()}\`, found \`${el.getValue()}\``);
+                        `expected \`:\` after \`${key.getText()}\`, found \`${el.getText()}\``);
                 } else {
                     prevChar = '';
                     elems.push({'key': key, 'value': el});
@@ -391,11 +415,11 @@ class Parser {
             this.pos += 1;
         }
         if (key !== null) {
-            parseEnd(this, pushTo, `missing value after \`${key.getValue()}\``);
+            parseEnd(this, pushTo, `missing value after \`${key.getText()}\``);
         } else if (elems.length === 0) {
             parseEnd(this, pushTo, 'unclosed empty JSON object');
         } else {
-            const el = elems[elems.length - 1].getValue();
+            const el = elems[elems.length - 1].getText();
             parseEnd(this, pushTo, `unclosed JSON object: expected \`}\` after \`${el}\``);
         }
     }
