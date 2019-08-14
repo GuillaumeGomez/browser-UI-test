@@ -89,7 +89,8 @@ class Parser {
         const checker = (t, c, toCall) => {
             const elems = pushTo !== null ? pushTo : t.elems;
             if (elems.length > 0 && prev !== separator) {
-                const e = new CharElement(c, t.pos, `expected \`${separator}\`, found \`${c}\``);
+                const msg = separator === null ? 'nothing' : `\`${separator}\``;
+                const e = new CharElement(c, t.pos, `expected ${msg}, found \`${c}\``);
                 t.push(e, pushTo);
                 t.pos = t.text.length;
             } else {

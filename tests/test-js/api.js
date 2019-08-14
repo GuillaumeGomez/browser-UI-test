@@ -393,7 +393,7 @@ function checkCommands() {
                   `${errors.ranTests} ${plural('test', errors.ranTests)})`);
         } catch (err) {
             nbErrors += 1;
-            print(`<== "${TO_CHECK[i].name}" failed: ${err}`);
+            print(`<== "${TO_CHECK[i].name}" failed: ${err}\n${err.stack}`);
         }
     }
 

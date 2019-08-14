@@ -20,6 +20,7 @@ function checkTuple() {
     x.assert(p.error, 'unexpected `()`: tuples need at least one argument');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].error, 'unexpected `()`: tuples need at least one argument');
 
 
     p = new Parser('("hello", 2, true, {"a": {"b": 3}, "c": "d"},)');
@@ -27,6 +28,7 @@ function checkTuple() {
     x.assert(p.error, 'unexpected `,` after `{"a": {"b": 3}, "c": "d"}`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].error, 'unexpected `,` after `{"a": {"b": 3}, "c": "d"}`');
     x.assert(p.elems[0].value.length, 4);
     x.assert(p.elems[0].value[0].error, null);
     x.assert(p.elems[0].value[1].error, null);
@@ -39,6 +41,7 @@ function checkTuple() {
     x.assert(p.error, 'expected `,`, found `f`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].error, 'expected `,`, found `f`');
     x.assert(p.elems[0].value.length, 2);
     x.assert(p.elems[0].value[0].error, null);
     x.assert(p.elems[0].value[0].kind, 'bool');
@@ -53,6 +56,7 @@ function checkTuple() {
     x.assert(p.error, 'unexpected `,` after `,`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].error, 'unexpected `,` after `,`');
     x.assert(p.elems[0].value.length, 2);
     x.assert(p.elems[0].value[0].error, null);
     x.assert(p.elems[0].value[0].kind, 'bool');
@@ -67,6 +71,7 @@ function checkTuple() {
     x.assert(p.error, 'expected `,`, found `|`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].error, 'expected `,`, found `|`');
     x.assert(p.elems[0].value.length, 2);
     x.assert(p.elems[0].value[0].error, null);
     x.assert(p.elems[0].value[0].kind, 'bool');
@@ -81,6 +86,7 @@ function checkTuple() {
     x.assert(p.error, null);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].value.length, 1);
     x.assert(p.elems[0].value[0].error, null);
     x.assert(p.elems[0].value[0].kind, 'bool');
@@ -92,6 +98,7 @@ function checkTuple() {
     x.assert(p.error, null);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].value.length, 2);
     x.assert(p.elems[0].value[0].error, null);
     x.assert(p.elems[0].value[0].kind, 'bool');
@@ -106,6 +113,7 @@ function checkTuple() {
     x.assert(p.error, null);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].value.length, 4);
     x.assert(p.elems[0].value[0].error, null);
     x.assert(p.elems[0].value[0].kind, 'bool');
@@ -123,8 +131,53 @@ function checkTuple() {
     return x;
 }
 
+function checkBool() {
+    const x = new Assert();
+
+    let p = new Parser('false');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'bool');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), false);
+
+
+    p = new Parser('true');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'bool');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), true);
+
+
+    p = new Parser('     \t   false                 ');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'bool');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), false);
+
+
+    p = new Parser('true,');
+    p.parse();
+    x.assert(p.error, 'expected nothing, found `,`');
+    x.assert(p.elems.length, 2);
+    x.assert(p.elems[0].kind, 'bool');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), true);
+    x.assert(p.elems[1].kind, 'char');
+    x.assert(p.elems[1].error, 'expected nothing, found `,`');
+    x.assert(p.elems[1].getValue(), ',');
+
+    return x;
+}
+
 const TO_CHECK = [
     {'name': 'tuple', 'func': checkTuple},
+    {'name': 'bool', 'func': checkBool},
 ];
 
 function checkCommands() {
@@ -142,7 +195,7 @@ function checkCommands() {
                   `${errors.ranTests} ${plural('test', errors.ranTests)})`);
         } catch (err) {
             nbErrors += 1;
-            print(`<== "${TO_CHECK[i].name}" failed: ${err}`);
+            print(`<== "${TO_CHECK[i].name}" failed: ${err}\n${err.stack}`);
         }
     }
 
