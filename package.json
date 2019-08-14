@@ -14,6 +14,7 @@
     "scripts": {
         "test": "node src/tester.js --test-folder tests/scripts/ --failure-folder failures --doc-path tests/html_files/",
         "api-test": "node tests/test-js/api.js",
+        "parser-test": "node tests/test-js/parser.js",
         "lint": "eslint src tests/test-js",
         "lint-fix": "eslint --fix src tests/test-js"
     },

@@ -381,15 +381,20 @@ const TO_CHECK = [
 function checkCommands() {
     let nbErrors = 0;
 
-    print('=> Starting tests...');
+    print('=> Starting API tests...');
     print('');
 
     for (let i = 0; i < TO_CHECK.length; ++i) {
         print(`==> Checking "${TO_CHECK[i].name}"...`);
-        const errors = TO_CHECK[i].func();
-        nbErrors += errors.errors;
-        print(`<== "${TO_CHECK[i].name}": ${errors.errors} ${plural('error', errors.errors)} (in ` +
-              `${errors.ranTests} ${plural('test', errors.ranTests)})`);
+        try {
+            const errors = TO_CHECK[i].func();
+            nbErrors += errors.errors;
+            print(`<== "${TO_CHECK[i].name}": ${errors.errors} ${plural('error', errors.errors)} (in ` +
+                  `${errors.ranTests} ${plural('test', errors.ranTests)})`);
+        } catch (err) {
+            nbErrors += 1;
+            print(`<== "${TO_CHECK[i].name}" failed: ${err}`);
+        }
     }
 
     print('');
