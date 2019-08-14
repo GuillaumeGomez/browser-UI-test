@@ -449,6 +449,147 @@ function checkJson() {
     x.assert(p.elems[0].getValue()[0].value.getValue(), 'a');
 
 
+    p = new Parser('{"x": "a" "y": 2}');
+    p.parse();
+    x.assert(p.error, 'expected `,` after `"a"`, found `"y"`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'expected `,` after `"a"`, found `"y"`');
+    x.assert(p.elems[0].getText(), '{"x": "a" "y"');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].value.getText(), '"a"');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), 'a');
+
+
+    p = new Parser('{"x" 2}');
+    p.parse();
+    x.assert(p.error, 'expected `:` after `"x"`, found `2`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `2`');
+    x.assert(p.elems[0].getText(), '{"x" 2');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'number');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), '2');
+
+
+    p = new Parser('{"x" "a"}');
+    p.parse();
+    x.assert(p.error, 'expected `:` after `"x"`, found `"a"`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `"a"`');
+    x.assert(p.elems[0].getText(), '{"x" "a"');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].value.getText(), '"a"');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), 'a');
+
+
+    p = new Parser('{"x", "a"}');
+    p.parse();
+    x.assert(p.error, 'expected `:` after `"x"`, found `,`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `,`');
+    x.assert(p.elems[0].getText(), '{"x",');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+
+
+    p = new Parser('{"x": "a": "y": "b"}');
+    p.parse();
+    x.assert(p.error, 'expected `,` after `"a"`, found `:`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'expected `,` after `"a"`, found `:`');
+    x.assert(p.elems[0].getText(), '{"x": "a":');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].value.getText(), '"a"');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), 'a');
+
+
+    p = new Parser('{, "a"}');
+    p.parse();
+    x.assert(p.error, 'unexpected `,` after `{`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'unexpected `,` after `{`');
+    x.assert(p.elems[0].getText(), '{,');
+
+
+    p = new Parser('{"x": 2|"y": "a"}');
+    p.parse();
+    x.assert(p.error, 'unexpected `|` after `2`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'unexpected `|` after `2`');
+    x.assert(p.elems[0].getText(), '{"x": 2|');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'number');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), '2');
+
+
+    p = new Parser('{"x": 2,|"y": "a"}');
+    p.parse();
+    x.assert(p.error, 'unexpected `|` after `,`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'unexpected `|` after `,`');
+    x.assert(p.elems[0].getText(), '{"x": 2,|');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'number');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), '2');
+
+
+    p = new Parser('{"x" {"y": 1}}');
+    p.parse();
+    x.assert(p.error, 'expected `:` after `"x"`, found `{"y": 1}`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `{"y": 1}`');
+    x.assert(p.elems[0].getText(), '{"x" {"y": 1}');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'json');
+    x.assert(p.elems[0].getValue()[0].value.getText(), '{"y": 1}');
+    x.assert(p.elems[0].getValue()[0].value.getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].value.getValue()[0].key.getValue(), 'y');
+    x.assert(p.elems[0].getValue()[0].value.getValue()[0].key.getText(), '"y"');
+    x.assert(p.elems[0].getValue()[0].value.getValue()[0].value.kind, 'number');
+    x.assert(p.elems[0].getValue()[0].value.getValue()[0].value.getValue(), '1');
+
+
+    p = new Parser('{"x" true}');
+    p.parse();
+    x.assert(p.error, 'expected `:` after `"x"`, found `true`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `true`');
+    x.assert(p.elems[0].getText(), '{"x" true');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), true);
+
+
     p = new Parser('{"x": "a", "y": true, "z": 56}');
     p.parse();
     x.assert(p.error, null);
