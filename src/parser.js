@@ -138,6 +138,8 @@ class Parser {
                 checker(this, c, 'parseNumber');
             } else if (c === '(') {
                 checker(this, c, 'parseTuple');
+            } else if (c === '/') {
+                this.parseComment(this, pushTo);
             } else if (c === endChar) {
                 return prev;
             } else {
@@ -159,6 +161,14 @@ class Parser {
             this.pos += 1;
         }
         return prev;
+    }
+
+    parseComment(pushTo = null) {
+        if (this.text.charAt(this.pos + 1) === '/') {
+            this.pos = this.text.length;
+        } else {
+            this.push(new UnknownElement('/', start, this.pos), pushTo);
+        }
     }
 
     parseBoolean(pushTo = null) {
@@ -311,6 +321,8 @@ class Parser {
                     parseEnd(this, pushTo);
                 }
                 return;
+            } else if (c === '/') {
+                this.parseComment(this, pushTo);
             } else if (isStringChar(c)) {
                 const tmp = [];
                 this.parseString(tmp);
@@ -437,7 +449,7 @@ class Parser {
         } else if (elems.length === 0) {
             parseEnd(this, pushTo, 'unclosed empty JSON object');
         } else {
-            const el = elems[elems.length - 1].getText();
+            const el = elems[elems.length - 1].value.getText();
             parseEnd(this, pushTo, `unclosed JSON object: expected \`}\` after \`${el}\``);
         }
     }
