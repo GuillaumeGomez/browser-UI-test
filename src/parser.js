@@ -303,6 +303,7 @@ class Parser {
         };
 
         this.pos += 1;
+        // TODO: instead of using a kind of state machine, maybe make it work as step?
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
 
@@ -328,16 +329,20 @@ class Parser {
                 this.parseString(tmp);
                 if (key === null) {
                     if (prevChar !== ',' && elems.length > 0) {
-                        const last = elems[elems.length - 1].getText();
-                        parseEnd(this, pushTo, `expected \`,\` after \`${last}\`, found \`:\``);
+                        const last = elems[elems.length - 1].value.getText();
+                        parseEnd(this, pushTo, `expected \`,\` after \`${last}\`, found \`${tmp[0].getText()}\``);
                     }
-                    key = tmp[0];
+                    if (tmp[0].error !== null) {
+                        parseEnd(this, pushTo, tmp[0].error);
+                    } else {
+                        key = tmp[0];
+                    }
                 } else {
+                    elems.push({'key': key, 'value': tmp[0]});
                     if (prevChar !== ':') {
-                        parseEnd(this, pushTo, `expected \`:\` after \`${key.getText()}\``);
+                        parseEnd(this, pushTo, `expected \`:\` after \`${key.getText()}\`, found \`${tmp[0].getText()}\``);
                     } else {
                         prevChar = '';
-                        elems.push({'key': key, 'value': tmp[0]});
                         if (tmp[0].error !== null) {
                             parseEnd(this, pushTo, tmp[0].error);
                         }
@@ -346,11 +351,14 @@ class Parser {
                 }
             } else if (c === ',') {
                 if (key !== null) {
+                    elems.push({'key': key});
                     let err = `expected \`:\` after \`${key.getText()}\`, found \`,\``;
                     if (prevChar === ':') {
                         err = 'unexpected `,` after `:`';
                     }
                     parseEnd(this, pushTo, err);
+                } else if (elems.length === 0) {
+                    parseEnd(this, pushTo, 'unexpected `,` after `{`');
                 } else {
                     prevChar = ',';
                 }
@@ -360,7 +368,7 @@ class Parser {
                     if (elems.length > 0) {
                         let msg = 'unexpected `:` after `,`';
                         if (prevChar !== ',') {
-                            const last = elems[elems.length - 1].getText();
+                            const last = elems[elems.length - 1].value.getText();
                             msg = `expected \`,\` after \`${last}\`, found \`:\``;
                         }
                         parseEnd(this, pushTo, msg);
@@ -381,7 +389,7 @@ class Parser {
                 } else if (prevChar !== ':') {
                     elems.push({'key': key, value: tmp[0]});
                     parseEnd(this, pushTo,
-                        `expected \`:\` after \`${key.getText()}\`, found \`${el.getText()}\``);
+                        `expected \`:\` after \`${key.getText()}\`, found \`${tmp[0].getText()}\``);
                 } else {
                     elems.push({'key': key, value: tmp[0]});
                     prevChar = '';
@@ -415,7 +423,7 @@ class Parser {
                     if (key === null) {
                         elems.push({'key': el});
                         if (elems.length > 1) {
-                            const last = elems[elems.length - 2].getText();
+                            const last = prevChar === ',' ? ',' : elems[elems.length - 2].value.getText();
                             parseEnd(this, pushTo, `unexpected \`${token}\` after \`${last}\``);
                         } else {
                             parseEnd(this, pushTo, `unexpected \`${token}\` after \`{\``);
