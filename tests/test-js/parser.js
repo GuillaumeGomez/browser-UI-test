@@ -200,10 +200,10 @@ function checkBool() {
 
     p = new Parser('tre');
     p.parse();
-    x.assert(p.error, 'Unexpected `tre` as first token');
+    x.assert(p.error, 'unexpected `tre` as first token');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'unknown');
-    x.assert(p.elems[0].error, 'Unexpected `tre` as first token');
+    x.assert(p.elems[0].error, 'unexpected `tre` as first token');
     x.assert(p.elems[0].getValue(), 'tre');
 
     return x;
@@ -294,10 +294,58 @@ function checkString() {
     return x;
 }
 
+function checkNumber() {
+    const x = new Assert();
+
+    let p = new Parser('1');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), '1');
+
+
+    p = new Parser('     \t   23                 ');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), '23');
+
+
+    p = new Parser('42,');
+    p.parse();
+    x.assert(p.error, 'expected nothing, found `,`');
+    x.assert(p.elems.length, 2);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), '42');
+    x.assert(p.elems[1].kind, 'char');
+    x.assert(p.elems[1].error, 'expected nothing, found `,`');
+    x.assert(p.elems[1].getValue(), ',');
+
+
+    p = new Parser('4.2');
+    p.parse();
+    x.assert(p.error, 'expected nothing, found `.`');
+    x.assert(p.elems.length, 2);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), '4');
+    x.assert(p.elems[1].kind, 'char');
+    x.assert(p.elems[1].error, 'expected nothing, found `.`');
+    x.assert(p.elems[1].getValue(), '.');
+
+    return x;
+}
+
 const TO_CHECK = [
     {'name': 'tuple', 'func': checkTuple},
     {'name': 'bool', 'func': checkBool},
     {'name': 'string', 'func': checkString},
+    {'name': 'number', 'func': checkNumber},
 ];
 
 function checkCommands() {

@@ -151,10 +151,10 @@ class Parser {
                 if (el.kind === 'unknown') {
                     const token = el.value;
                     if (elems.length === 1) {
-                        el.error = `Unexpected \`${token}\` as first token`;
+                        el.error = `unexpected \`${token}\` as first token`;
                     } else {
                         const prevElem = elems[elems.length - 2].value;
-                        el.error = `Unexpected token \`${token}\` after \`${prevElem}\``;
+                        el.error = `unexpected token \`${token}\` after \`${prevElem}\``;
                     }
                     this.error = el.error;
                     this.pos = this.text.length;
