@@ -278,9 +278,20 @@ function parseMoveCursorTo(line) {
 //   /!\ Please also note that you need to provide a full path to the web browser. You can add
 //       the full current path by using "{current-dir}". For example:
 //       "file://{current-dir}{doc-path}/index.html"
-function parseGoTo(line, docPath) {
+function parseGoTo(input, docPath) {
     // This function doesn't use the parser so we still need to remove the comment part.
-    line = line.split('//')[0].trim();
+    const parts = input.split('//');
+    let line = '';
+    for (let i = 0; i < parts.length; ++i) {
+        if (parts[i].endsWith(':')) {
+            line += `${parts[i]}//`;
+            if (i + 1 < parts.length) {
+                i += 1;
+                line += parts[i];
+            }
+        }
+    }
+    line = line.trim();
     // We just check if it goes to an HTML file, not checking much though...
     if (line.startsWith('http://') || line.startsWith('https://') || line.startsWith('www.')) {
         return {
@@ -309,7 +320,7 @@ function parseGoTo(line, docPath) {
             ],
         };
     }
-    return {'error': 'A relative path or a full URL was expected'};
+    return {'error': `a relative path or a full URL was expected, found \`${line}\``};
 }
 
 // Possible inputs:
@@ -385,7 +396,7 @@ function parseLocalStorage(line) {
 // * ("CSS selector", CSS elements [JSON object])
 // * ("CSS selector", text [STRING])
 // * ("CSS selector", attribute name [STRING], attribute value [STRING])
-function parseAssert(s) {
+function parseAssert(line) {
     const p = new Parser(line);
     p.parse();
     if (p.error !== null) {
@@ -409,7 +420,7 @@ function parseAssert(s) {
         //
         return {
             'instructions': [
-                `if (page.$("${path}") === null) { throw '"${path}" not found'; }`,
+                `if (page.$("${selector}") === null) { throw '"${selector}" not found'; }`,
             ],
             'wait': false,
         };
@@ -525,7 +536,7 @@ function parseAssert(s) {
 // Possible inputs:
 //
 // * ("CSS selector", "text")
-function parseText(s) {
+function parseText(line) {
     const p = new Parser(line);
     p.parse();
     if (p.error !== null) {
@@ -555,7 +566,7 @@ function parseText(s) {
 // Possible inputs:
 //
 // * ("CSS selector", "attribute name", "attribute value")
-function parseAttribute(s) {
+function parseAttribute(line) {
     const p = new Parser(line);
     p.parse();
     if (p.error !== null) {
@@ -576,7 +587,7 @@ function parseAttribute(s) {
     if (selector.length === 0) {
         return {'error': 'attribute name (second argument) cannot be empty'};
     }
-    const value = cleanString(ret.value);
+    const value = cleanString(tuple[2].getValue());
     const varName = 'parseAttributeElem';
     return {
         'instructions': [
@@ -655,6 +666,10 @@ function parseContent(content, docPath) {
     let firstGotoParsed = false;
 
     for (let i = 0; i < lines.length; ++i) {
+        const line = lines[i].trim();
+        if (line.length === 0) {
+            continue;
+        }
         const order = line.split(':')[0].toLowerCase();
         if (Object.prototype.hasOwnProperty.call(ORDERS, order)) {
             if (firstGotoParsed === false) {
