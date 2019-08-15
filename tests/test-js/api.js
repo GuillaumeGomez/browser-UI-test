@@ -78,14 +78,16 @@ function checkAttribute() {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
     x.assert(func('("a")'),
-        {'error': 'expected `("CSS selector", "attribute name", "attribute value")`'});
+        {'error': 'expected `("CSS selector", "attribute name", "attribute value")` or `("CSS ' +
+            'selector", [JSON object])`'});
     x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
     x.assert(func('("a", "b", )'), {'error': 'unexpected `,` after `"b"`'});
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
     x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
-    x.assert(func('("a", "b")'),
-        {'error': 'expected `("CSS selector", "attribute name", "attribute value")`'});
+    x.assert(func('("a", "b")'), {
+        'error': 'expected json as second argument (since there are only arguments), found string',
+    });
     x.assert(func('("a", "b", "c")'),
         {
             'instructions': [
@@ -102,6 +104,15 @@ function checkAttribute() {
                 '"c"); }, parseAttributeElem);',
             ],
         });
+    x.assert(func('("a", {"b": "c"})'),
+        {
+            'instructions': [
+                'let parseAttributeElemJson = await page.$("a");\nif (parseAttributeElemJson ' +
+                '=== null) { throw \'"a" not found\'; }\nawait page.evaluate(e => { ' +
+                'e.setAttribute("b","c"); },parseAttributeElemJson);\n',
+            ],
+        });
+    // TODO: add checks for more complex json objects
 
     return x;
 }
