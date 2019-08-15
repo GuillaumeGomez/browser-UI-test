@@ -1,26 +1,3 @@
-const os = require('os');
-const utils = require('./utils.js');
-
-
-function cleanString(s) {
-    if (s.replace !== undefined) {
-        return s.replace(/"/g, '\\"').replace(/'/g, '\\\'');
-    }
-    return s;
-}
-
-function cleanCssSelector(s) {
-    return cleanString(s).replace(/\\/g, '\\\\');
-}
-
-function matchPosition(s) {
-    return s.match(/\([0-9]+,[ ]*[0-9]+\)/g) !== null;
-}
-
-function matchInteger(s) {
-    return s.match(/[0-9]+/g) !== null;
-}
-
 function isWhiteSpace(c) {
     return c === ' ' || c === '\t';
 }
@@ -29,756 +6,490 @@ function isStringChar(c) {
     return c === '\'' || c === '"';
 }
 
-function parseString(s) {
-    let i = 0;
-
-    while (i < s.length && isWhiteSpace(s.charAt(i)) === true) {
-        i += 1;
-    }
-    if (i >= s.length) {
-        return {'error': 'no string'};
-    }
-    const endChar = s.charAt(i);
-    if (isStringChar(endChar) === false) {
-        return {'error': 'expected `\'` or `"` character'};
-    }
-    i += 1;
-    const start = i;
-    let c;
-    while (i < s.length) {
-        c = s.charAt(i);
-        if (c === endChar) {
-            return {'value': s.substring(start, i), 'pos': i};
-        } else if (c === '\\') {
-            i += 1;
-        }
-        i += 1;
-    }
-    return {'error': `expected \`${endChar}\` character at the end of the string`};
+function isNumber(c) {
+    return c >= '0' && c <= '9';
 }
 
-function handlePathParameters(line, split, join) {
-    const parts = line.split(split);
-    if (parts.length > 1) {
-        for (let i = 1; i < parts.length; ++i) {
-            if (parts[i].charAt(0) === '/') { // to avoid having "//"
-                parts[i] = parts[i].substr(1);
+function isLetter(c) {
+    return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
+}
+
+class Element {
+    constructor(kind, value, startPos, endPos, error = null) {
+        this.kind = kind;
+        this.value = value;
+        this.startPos = startPos;
+        this.endPos = endPos;
+        this.error = error;
+    }
+
+    getValue() {
+        return this.value;
+    }
+
+    // This method is useful for string which returns the text with double quotes
+    getText() {
+        return this.value;
+    }
+}
+
+class CharElement extends Element {
+    constructor(value, startPos, error = null) {
+        super('char', value, startPos, startPos, error);
+    }
+}
+
+class TupleElement extends Element {
+    constructor(value, startPos, endPos, error = null) {
+        super('tuple', value, startPos, endPos, error);
+    }
+}
+
+class StringElement extends Element {
+    constructor(value, startPos, endPos, fullText, error = null) {
+        super('string', value, startPos, endPos, error);
+        this.fullText = fullText;
+    }
+
+    getText() {
+        return this.fullText;
+    }
+}
+
+class NumberElement extends Element {
+    constructor(value, startPos, endPos, error = null) {
+        super('number', value, startPos, endPos, error);
+    }
+}
+
+class JsonElement extends Element {
+    constructor(value, startPos, endPos, fullText, error = null) {
+        super('json', value, startPos, endPos, error);
+        this.fullText = fullText;
+    }
+
+    getText() {
+        return this.fullText;
+    }
+}
+
+class BoolElement extends Element {
+    constructor(value, startPos, endPos, error = null) {
+        super('bool', value, startPos, endPos, error);
+    }
+}
+
+class UnknownElement extends Element {
+    constructor(value, startPos, endPos, error = null) {
+        super('unknown', value, startPos, endPos, error);
+    }
+}
+
+class Parser {
+    constructor(text) {
+        this.text = text;
+        this.pos = 0;
+        this.elems = [];
+        this.error = null;
+    }
+
+    parse(endChar = null, pushTo = null, separator = null) {
+        let prev = '';
+
+        const checker = (t, c, toCall) => {
+            const elems = pushTo !== null ? pushTo : t.elems;
+            if (elems.length > 0 && prev !== separator) {
+                const msg = separator === null ? 'nothing' : `\`${separator}\``;
+                const e = new CharElement(c, t.pos, `expected ${msg}, found \`${c}\``);
+                t.push(e, pushTo);
+                t.pos = t.text.length;
+            } else {
+                t[toCall](pushTo);
+                prev = '';
             }
-        }
-        line = parts.join(join);
-    }
-    return line;
-}
-
-function parseCssSelector(line) {
-    const ret = parseString(line);
-    if (ret.error !== undefined) {
-        return ret;
-    }
-    const selector = cleanCssSelector(ret.value).trim();
-    if (selector.length === 0) {
-        return {'error': 'selector cannot be empty'};
-    }
-    let i = ret.pos + 1;
-    while (i < line.length) {
-        if (isWhiteSpace(line.charAt(i)) !== true) {
-            return {'error': `unexpected token \`${line.charAt(i)}\` after CSS selector`};
-        }
-        i += 1;
-    }
-    return {'value': selector};
-}
-
-// Possible inputs:
-//
-// * (X, Y)
-// * "CSS selector" (for example: "#elementID")
-function parseClick(line) {
-    if (line.startsWith('(')) {
-        if (!line.endsWith(')')) {
-            return {'error': 'Invalid syntax: expected position to end with \')\'...'};
-        }
-        if (matchPosition(line) !== true) {
-            return {'error': 'Invalid syntax: expected "([number], [number])"...'};
-        }
-        const [x, y] = line.match(/\d+/g).map(function(f) {
-            return parseInt(f);
-        });
-        return {
-            'instructions': [
-                `page.mouse.click(${x},${y})`,
-            ],
         };
-    } else if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
-        return {'error': 'Expected a position or a CSS selector'};
-    }
-    const ret = parseCssSelector(line);
-    if (ret.error !== undefined) {
-        return ret;
-    }
-    const selector = ret.value;
-    return {
-        'instructions': [
-            `page.click("${selector}")`,
-        ],
-    };
-}
 
-// Possible inputs:
-//
-// * Number of milliseconds
-// * "CSS selector" (for example: "#elementID")
-function parseWaitFor(line) {
-    if (line.match(/^[0-9]+$/g) !== null) {
-        return {
-            'instructions': [
-                `await page.waitFor(${parseInt(line)})`,
-            ],
-            'wait': false,
-        };
-    } else if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
-        return {'error': 'Expected an integer or a CSS selector'};
-    }
-    const ret = parseCssSelector(line);
-    if (ret.error !== undefined) {
-        return ret;
-    }
-    const selector = ret.value;
-    return {
-        'instructions': [
-            `await page.waitFor("${selector}")`,
-        ],
-        'wait': false,
-    };
-}
+        while (this.pos < this.text.length) {
+            const c = this.text.charAt(this.pos);
 
-// Possible inputs:
-//
-// * "CSS selector" (for example: "#elementID")
-function parseFocus(line) {
-    if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
-        return {'error': 'Expected a CSS selector'};
-    }
-    const ret = parseCssSelector(line);
-    if (ret.error !== undefined) {
-        return ret;
-    }
-    const selector = ret.value;
-    return {
-        'instructions': [
-            `page.focus("${selector}")`,
-        ],
-    };
-}
-
-// Possible inputs:
-//
-// * ("[CSS selector (for example: #elementID)]", "text")
-// * "text" (in here, it'll write into the current focused element)
-function parseWrite(line) {
-    if (line.startsWith('(') === true) {
-        if (line.charAt(line.length - 1) !== ')') {
-            return {'error': 'expected to end with `)` character'};
-        }
-        let ret = parseString(line.substring(1));
-        if (ret.error !== undefined) {
-            return ret;
-        }
-        let pos = ret.pos + 2;
-        while (pos < line.length && isWhiteSpace(line.charAt(pos)) === true) {
-            pos += 1;
-        }
-        const path = cleanCssSelector(ret.value).trim();
-        if (path.length === 0) {
-            return {'error': 'selector cannot be empty'};
-        } else if (line.charAt(pos) !== ',') {
-            return {'error': `expected \`,\` after first parameter, found \`${line.charAt(pos)}\``};
-        }
-        // We take everything between the comma and the paren.
-        const sub = line.substring(pos + 1, line.length - 1).trim();
-        if (sub.length === 0) {
-            return {'error': 'expected a string as second parameter'};
-        } else if (sub.charAt(0) !== '"' && sub.charAt(0) !== '\'') {
-            return {'error': `expected a string as second parameter, found \`${sub}\``};
-        }
-        ret = parseString(sub); // no trim call in here!
-        if (ret.error !== undefined) {
-            return ret;
-        }
-        // check there is nothing after the second parameter
-        let i = ret.pos + 1;
-        while (i < sub.length) {
-            if (isWhiteSpace(sub.charAt(i)) !== true) {
-                return {'error': `unexpected token \`${sub.charAt(i)}\` after second parameter`};
-            }
-            i += 1;
-        }
-        return {
-            'instructions': [
-                `page.focus("${path}")`,
-                `page.keyboard.type("${ret.value}")`,
-            ],
-        };
-    } else if (line.startsWith('"') || line.startsWith('\'')) { // current focused element
-        const x = parseString(line);
-        if (x.error !== undefined) {
-            return x;
-        }
-        // check there is nothing after the string
-        let i = x.pos + 1;
-        while (i < line.length) {
-            if (isWhiteSpace(line.charAt(i)) !== true) {
-                return {'error': `unexpected token \`${line.charAt(i)}\` after string`};
-            }
-            i += 1;
-        }
-        return {
-            'instructions': [
-                `page.keyboard.type("${cleanString(x.value)}")`,
-            ],
-        };
-    }
-    return {'error': 'expected [string] or ([CSS path], [string])'};
-}
-
-// Possible inputs:
-//
-// * (X, Y)
-// * "CSS selector" (for example: "#elementID")
-function parseMoveCursorTo(line) {
-    if (line.startsWith('(')) {
-        if (!line.endsWith(')')) {
-            return {'error': 'Invalid syntax: expected position to end with \')\'...'};
-        }
-        if (matchPosition(line) !== true) {
-            return {'error': 'Invalid syntax: expected "([number], [number])"...'};
-        }
-        const [x, y] = line.match(/\d+/g).map(function(f) {
-            return parseInt(f);
-        });
-        return {
-            'instructions': [
-                `page.mouse.move(${x},${y})`,
-            ],
-        };
-    } else if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
-        return {'error': 'Expected a position or a CSS selector'};
-    }
-    const ret = parseCssSelector(line);
-    if (ret.error !== undefined) {
-        return ret;
-    }
-    const selector = ret.value;
-    return {
-        'instructions': [
-            `page.hover("${selector}")`,
-        ],
-    };
-}
-
-// Possible inputs:
-//
-// * relative path (example: ../struct.Path.html)
-// * full URL (for example: https://doc.rust-lang.org/std/struct.Path.html)
-// * local path (example: file://some-file.html)
-//   /!\ Please note for this one that you can use "{doc-path}" inside it if you want to use
-//       the "--doc-path" argument. For example: "file://{doc-path}/index.html"
-//   /!\ Please also note that you need to provide a full path to the web browser. You can add
-//       the full current path by using "{current-dir}". For example:
-//       "file://{current-dir}{doc-path}/index.html"
-function parseGoTo(line, docPath) {
-    // We just check if it goes to an HTML file, not checking much though...
-    if (line.startsWith('http://') || line.startsWith('https://') || line.startsWith('www.')) {
-        return {
-            'instructions': [
-                `await page.goto("${line}")`,
-            ],
-        };
-    } else if (line.startsWith('file://')) {
-        line = handlePathParameters(line, '{doc-path}', docPath);
-        line = handlePathParameters(line, '{current-dir}', utils.getCurrentDir());
-        return {
-            'instructions': [
-                `await page.goto("${line}")`,
-            ],
-        };
-    } else if (line.startsWith('.')) {
-        return {
-            'instructions': [
-                `await page.goto(page.url().split("/").slice(0, -1).join("/") + "/${line}")`,
-            ],
-        };
-    } else if (line.startsWith('/')) {
-        return {
-            'instructions': [
-                `await page.goto(page.url().split("/").slice(0, -1).join("/") + "${line}")`,
-            ],
-        };
-    }
-    return {'error': 'A relative path or a full URL was expected'};
-}
-
-// Possible inputs:
-//
-// * (X, Y)
-// * "CSS selector" (for example: "#elementID")
-function parseScrollTo(line) {
-    return parseMoveCursorTo(line); // The page will scroll to the element
-}
-
-// Possible inputs:
-//
-// * (width, height)
-function parseSize(line) {
-    if (line.startsWith('(')) {
-        if (!line.endsWith(')')) {
-            return {'error': 'Invalid syntax: expected size to end with `)`...'};
-        }
-        if (matchPosition(line) !== true) {
-            return {'error': 'Invalid syntax: expected "([number], [number])"...'};
-        }
-        const [width, height] = line.match(/\d+/g).map(function(f) {
-            return parseInt(f);
-        });
-        return {
-            'instructions': [
-                `page.setViewport({width: ${width}, height: ${height}})`,
-            ],
-        };
-    }
-    return {'error': `Expected \`(\` character, found \`${line.charAt(0)}\``};
-}
-
-// Possible inputs:
-//
-// * JSON object (for example: {"key": "value", "another key": "another value"})
-function parseLocalStorage(line) {
-    if (!line.startsWith('{')) {
-        return {'error': `Expected JSON object, found \`${line}\``};
-    }
-    try {
-        const d = JSON.parse(line);
-        const content = [];
-        for (const key in d) {
-            if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
-                const key_s = cleanString(key);
-                const value_s = cleanString(d[key]);
-                content.push(`localStorage.setItem("${key_s}", "${value_s}");`);
-            }
-        }
-        if (content.length === 0) {
-            return {'instructions': []};
-        }
-        return {
-            'instructions': [
-                `page.evaluate(() => { ${content.join('\n')} })`,
-            ],
-        };
-    } catch (e) {
-        return {'error': 'Error when parsing JSON content: ' + e};
-    }
-}
-
-// Possible inputs:
-//
-// * ("CSS selector")
-// * ("CSS selector", text [STRING])
-// * ("CSS selector", number of occurences [integer])
-// * ("CSS selector", CSS elements [JSON object])
-// * ("CSS selector", attribute name [STRING], attribute value [STRING])
-function parseAssert(s) {
-    if (s.charAt(0) !== '(') {
-        return {'error': 'expected `(` character'};
-    } else if (s.charAt(s.length - 1) !== ')') {
-        return {'error': 'expected to end with `)` character'};
-    }
-    const ret = parseString(s.substring(1));
-    if (ret.error !== undefined) {
-        ret.error += ' (first argument)';
-        return ret;
-    }
-    let pos = ret.pos + 2;
-    while (isWhiteSpace(s.charAt(pos)) === true) {
-        pos += 1;
-    }
-    const path = cleanCssSelector(ret.value).trim();
-    if (path.length === 0) {
-        return {'error': 'selector cannot be empty'};
-    }
-    if (s.charAt(pos) === ')') {
-        return {
-            'instructions': [
-                `if (page.$("${path}") === null) { throw '"${path}" not found'; }`,
-            ],
-            'wait': false,
-        };
-    } else if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\` or \`)\`, found \`${s.charAt(pos)}\``};
-    }
-    // We take everything between the comma and the paren.
-    const sub = s.substring(pos + 1, s.length - 1).trim();
-    if (sub.length === 0) {
-        return {
-            'error': 'expected something (aka [string], [integer] or [JSON]) as second parameter ' +
-                'or remove the comma',
-        };
-    } else if (sub.startsWith('"') || sub.startsWith('\'')) {
-        const secondParam = parseString(sub);
-        if (secondParam.error !== undefined) {
-            secondParam.error += ' (second argument)';
-            return secondParam;
-        }
-        let i = secondParam.pos + 1;
-        while (i < sub.length && isWhiteSpace(sub.charAt(i)) === true) {
-            i += 1;
-        }
-        //
-        // TEXT CONTENT CHECK
-        //
-        if (i >= sub.length) {
-            const value = cleanString(secondParam.value);
-            const varName = 'parseAssertElemStr';
-            return {
-                'instructions': [
-                    `let ${varName} = await page.$("${path}");\n` +
-                    `if (${varName} === null) { throw '"${path}" not found'; }\n` +
-                    // TODO: maybe check differently depending on the tag kind?
-                    `let t = await (await ${varName}.getProperty("textContent")).jsonValue();\n` +
-                    `if (t !== "${value}") { throw '"' + t + '" !== "${value}"'; }`,
-                ],
-                'wait': false,
-            };
-        }
-        //
-        // ATTRIBUTE CHECK
-        //
-        if (sub.charAt(i) !== ',') {
-            return {'error': `unexpected token after second parameter: \`${sub.charAt(i)}\``};
-        }
-        const attributeName = cleanString(secondParam.value);
-        // Since we check for attribute, the attribute name cannot be empty
-        if (attributeName.length === 0) {
-            return {'error': 'attribute name cannot be empty'};
-        }
-        const third = sub.substring(i + 1).trim();
-        const thirdParam = parseString(third);
-        if (thirdParam.error !== undefined) {
-            thirdParam.error += ' (third argument)';
-            return thirdParam;
-        }
-        i = thirdParam.pos + 1;
-        while (i < third.length) {
-            if (isWhiteSpace(third.charAt(i)) !== true) {
-                return {'error': `expected \`)\`, found \`${third.charAt(i)}\``};
-            }
-            i += 1;
-        }
-        const value = cleanString(thirdParam.value);
-        const varName = 'parseAssertElemAttr';
-        return {
-            'instructions': [
-                `let ${varName} = await page.$("${path}");\n` +
-                `if (${varName} === null) { throw '"${path}" not found'; }\n` +
-                'await page.evaluate(e => {\n' +
-                `if (e.getAttribute("${attributeName}") !== "${value}") {\n` +
-                `throw 'expected "${value}", found "' + e.getAttribute("${attributeName}") + '"` +
-                ` for attribute "${attributeName}"';\n}\n}, ${varName});`,
-            ],
-            'wait': false,
-        };
-    } else if (sub.startsWith('{')) {
-        let d;
-        try {
-            d = JSON.parse(sub);
-        } catch (error) {
-            return {'error': `Invalid JSON object: "${error}"`};
-        }
-        let code = '';
-        for (const key in d) {
-            if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
-                const clean = cleanString(d[key]);
-                const cKey = cleanString(key);
-                // TODO: check how to compare CSS property
-                code += `if (assertComputedStyle["${cKey}"] != "${clean}") { ` +
-                    `throw 'expected "${clean}", got for key "${cKey}" for "${path}"'; }\n`;
-            }
-        }
-        if (code.length === 0) {
-            return {
-                'instructions': [],
-                'wait': false,
-            };
-        }
-        const varName = 'parseAssertElemJson';
-        return {
-            'instructions': [
-                `let ${varName} = await page.$("${path}");\n` +
-                `if (${varName} === null) { throw '"${path}" not found'; }\n` +
-                'await page.evaluate(e => {' +
-                `let assertComputedStyle = getComputedStyle(e);\n${code}` +
-                `}, ${varName});`,
-            ],
-            'wait': false,
-        };
-    } else if (matchInteger(sub) === true) {
-        const occurences = sub.match(/[0-9]+/g);
-        if (occurences.length !== 1) {
-            return {'error': 'Nothing was expected after second argument [integer]'};
-        }
-        let i = occurences.length;
-        while (i < sub.length) {
-            if (isWhiteSpace(sub.charAt(i)) !== true) {
-                return {'error': `expected \`)\`, found \`${sub.charAt(i)}\``};
-            }
-            i += 1;
-        }
-        const varName = 'parseAssertElemInt';
-        return {
-            'instructions': [
-                `let ${varName} = await page.$$("${path}");\n` +
-                // TODO: maybe check differently depending on the tag kind?
-                `if (${varName}.length !== ${occurences}) { throw 'expected ${occurences} ` +
-                `elements, found ' + ${varName}.length; }`,
-            ],
-            'wait': false,
-        };
-    }
-    return {'error': `expected [integer] or [string] or [JSON object], found \`${sub}\``};
-}
-
-// Possible inputs:
-//
-// * ("CSS selector", "text")
-function parseText(s) {
-    if (s.charAt(0) !== '(') {
-        return {'error': 'expected `(` character'};
-    } else if (s.charAt(s.length - 1) !== ')') {
-        return {'error': 'expected to end with `)` character'};
-    }
-    const ret = parseString(s.substring(1));
-    if (ret.error !== undefined) {
-        return ret;
-    }
-    let pos = ret.pos + 2;
-    while (isWhiteSpace(s.charAt(pos)) === true) {
-        pos += 1;
-    }
-    const path = cleanCssSelector(ret.value).trim();
-    if (path.length === 0) {
-        return {'error': 'selector cannot be empty'};
-    } else if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\` after first argument, found \`${s.charAt(pos)}\``};
-    }
-    // We take everything between the comma and the paren.
-    const sub = s.substring(pos + 1, s.length - 1).trim();
-    if (sub.length === 0) {
-        return {'error': 'expected a string as second parameter'};
-    } else if (sub.startsWith('"') || sub.startsWith('\'')) {
-        const secondParam = parseString(sub);
-        if (secondParam.error !== undefined) {
-            return secondParam;
-        }
-        let i = secondParam.pos + 1;
-        while (i < sub.length) {
-            if (isWhiteSpace(sub.charAt(i)) !== true) {
-                return {'error': `unexpected token: \`${sub.charAt(i)}\` after second parameter`};
-            }
-            i += 1;
-        }
-        const value = cleanString(secondParam.value);
-        const varName = 'parseTextElem';
-        return {
-            'instructions': [
-                `let ${varName} = await page.$("${path}");\n` +
-                `if (${varName} === null) { throw '"${path}" not found'; }\n` +
-                `await page.evaluate(e => { e.innerText = "${value}";}, ${varName});`,
-            ],
-        };
-    }
-    return {'error': `expected [string] as second parameter, found \`${sub}\``};
-}
-
-// Possible inputs:
-//
-// * ("CSS selector", "attribute name", "attribute value")
-function parseAttribute(s) {
-    if (s.charAt(0) !== '(') {
-        return {'error': 'expected `(` character'};
-    } else if (s.charAt(s.length - 1) !== ')') {
-        return {'error': 'expected to end with `)` character'};
-    }
-    let ret = parseString(s.substring(1));
-    if (ret.error !== undefined) {
-        ret.error += ' (first parameter)';
-        return ret;
-    }
-    let pos = ret.pos + 2;
-    while (isWhiteSpace(s.charAt(pos)) === true) {
-        pos += 1;
-    }
-    if (ret.value.length < 1) {
-        return {'error': 'CSS path (first parameter) cannot be empty'};
-    }
-    const path = cleanCssSelector(ret.value).trim();
-    if (path.length === 0) {
-        return {'error': 'CSS path (first argument) cannot be empty'};
-    } else if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\` after first argument, found \`${s.charAt(pos)}\``};
-    }
-    pos += 1;
-    while (isWhiteSpace(s.charAt(pos)) === true) {
-        pos += 1;
-    }
-    ret = parseString(s.substring(pos));
-    if (ret.error !== undefined) {
-        ret.error += ' (second parameter)';
-        return ret;
-    } else if (ret.value.length < 1) {
-        return {'error': 'attribute name (second parameter) cannot be empty'};
-    }
-    const attributeName = cleanString(ret.value);
-    pos += ret.pos + 1;
-    while (isWhiteSpace(s.charAt(pos)) === true) {
-        pos += 1;
-    }
-    if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\` after second argument, found \`${s.charAt(pos)}\``};
-    }
-    // We take everything between the comma and the paren.
-    const sub = s.substring(pos + 1, s.length - 1).trim();
-    if (sub.length === 0) {
-        return {'error': 'expected a string as third parameter'};
-    }
-    ret = parseString(sub);
-    if (ret.error !== undefined) {
-        ret.error += ' (third parameter)';
-        return ret;
-    }
-    let i = ret.pos + 1;
-    while (i < sub.length) {
-        if (isWhiteSpace(sub.charAt(i)) !== true) {
-            return {'error': `unexpected token: \`${sub.charAt(i)}\` after third parameter`};
-        }
-        i += 1;
-    }
-    const value = cleanString(ret.value);
-    const varName = 'parseAttributeElem';
-    return {
-        'instructions': [
-            `let ${varName} = await page.$("${path}");\n` +
-            `if (${varName} === null) { throw '"${path}" not found'; }\n` +
-            `await page.evaluate(e => { e.setAttribute("${attributeName}","${value}"); }, ` +
-            `${varName});`,
-        ],
-    };
-}
-
-// Possible inputs:
-//
-// * boolean value (`true` or `false`)
-function parseScreenshot(line) {
-    if (line !== 'true' && line !== 'false') {
-        return {'error': `Expected "true" or "false" value, found \`${line}\``};
-    }
-    return {
-        'instructions': [
-            `arg.takeScreenshot = ${line === 'true' ? 'true' : 'false'};`,
-        ],
-        'wait': false,
-    };
-}
-
-// Possible inputs:
-//
-// * boolean value (`true` or `false`)
-function parseFail(line) {
-    if (line !== 'true' && line !== 'false') {
-        return {'error': `Expected "true" or "false" value, found \`${line}\``};
-    }
-    return {
-        'instructions': [
-            `arg.expectedToFail = ${line === 'true' ? 'true' : 'false'};`,
-        ],
-        'wait': false,
-    };
-}
-
-const ORDERS = {
-    'assert': parseAssert,
-    'attribute': parseAttribute,
-    'click': parseClick,
-    'fail': parseFail,
-    'focus': parseFocus,
-    'goto': parseGoTo,
-    'local-storage': parseLocalStorage,
-    'move-cursor-to': parseMoveCursorTo,
-    'screenshot': parseScreenshot,
-    'scroll-to': parseScrollTo,
-    'size': parseSize,
-    'text': parseText,
-    'wait-for': parseWaitFor,
-    'write': parseWrite,
-};
-
-const NO_INTERACTION_COMMANDS = [
-    'fail',
-    'screenshot',
-];
-
-function parseContent(content, docPath) {
-    const lines = content.split(os.EOL);
-    const commands = {'instructions': []};
-    let res;
-    let firstGotoParsed = false;
-
-    for (let i = 0; i < lines.length; ++i) {
-        const line = lines[i].split('// ')[0].trim(); // We remove the comment part if any.
-        if (line.length === 0) {
-            continue;
-        }
-        const order = line.split(':')[0].toLowerCase();
-        if (Object.prototype.hasOwnProperty.call(ORDERS, order)) {
-            res = ORDERS[order](line.substr(order.length + 1).trim(), docPath);
-            if (res.error !== undefined) {
-                res.line = i + 1;
-                return res;
-            }
-            if (firstGotoParsed === false) {
-                if (order !== 'goto' && NO_INTERACTION_COMMANDS.indexOf(order) === -1) {
-                    const cmds = NO_INTERACTION_COMMANDS.map(x => `\`${x}\``).join(', ');
-                    return {
-                        'error': `First command must be \`goto\` (${cmds} can be used before)!`,
-                        'line': i,
-                    };
+            if (isStringChar(c)) {
+                checker(this, c, 'parseString');
+            } else if (c === '{') {
+                checker(this, c, 'parseJson');
+            } else if (isWhiteSpace(c)) {
+                // do nothing
+            } else if (c === separator) {
+                const elems = pushTo !== null ? pushTo : this.elems;
+                if (elems.length === 0) {
+                    this.push(new CharElement(separator, this.pos,
+                        `unexpected \`${separator}\` as first element`), pushTo);
+                    this.pos = this.text.length;
+                } else if (prev === separator) {
+                    this.push(new CharElement(separator, this.pos,
+                        `unexpected \`${separator}\` after \`${separator}\``), pushTo);
+                    this.pos = this.text.length;
+                } else if (elems[elems.length - 1].kind === 'char') {
+                    // TODO: not sure if this block is useful...
+                    const prevElem = elems[elems.length - 1].text;
+                    this.push(new CharElement(separator, this.pos,
+                        `unexpected \`${separator}\` after \`${prevElem}\``), pushTo);
+                    this.pos = this.text.length;
+                } else {
+                    prev = separator;
                 }
-                firstGotoParsed = order === 'goto';
+            } else if (isNumber(c)) {
+                checker(this, c, 'parseNumber');
+            } else if (c === '(') {
+                checker(this, c, 'parseTuple');
+            } else if (c === '/') {
+                this.parseComment(this, pushTo);
+            } else if (c === endChar) {
+                return prev;
+            } else {
+                checker(this, c, 'parseBoolean');
+                const elems = pushTo !== null ? pushTo : this.elems;
+                const el = elems[elems.length - 1];
+                if (el.kind === 'unknown') {
+                    const token = el.value;
+                    if (elems.length === 1) {
+                        el.error = `unexpected \`${token}\` as first token`;
+                    } else {
+                        const prevElem = elems[elems.length - 2].value;
+                        el.error = `unexpected token \`${token}\` after \`${prevElem}\``;
+                    }
+                    this.error = el.error;
+                    this.pos = this.text.length;
+                }
             }
-            for (let y = 0; y < res['instructions'].length; ++y) {
-                commands['instructions'].push({'code': res['instructions'][y], 'original': line});
-            }
+            this.pos += 1;
+        }
+        return prev;
+    }
+
+    parseComment(pushTo = null) {
+        const start = this.pos;
+        if (this.text.charAt(this.pos + 1) === '/') {
+            this.pos = this.text.length;
         } else {
-            return {'error': `Unknown command "${order}"`, 'line': i};
+            this.push(new UnknownElement('/', start, this.pos), pushTo);
         }
     }
-    return commands;
+
+    parseBoolean(pushTo = null) {
+        const start = this.pos;
+        while (this.pos < this.text.length) {
+            const c = this.text.charAt(this.pos);
+
+            if (!isNumber(c) && !isLetter(c)) {
+                break;
+            }
+            this.pos += 1;
+        }
+        let token = this.text.substring(start, this.pos);
+        if (token === 'true' || token === 'false') {
+            this.push(new BoolElement(token === 'true', start, this.pos), pushTo);
+            this.pos -= 1; // we need to go back to the last "good" character
+        } else {
+            if (token.length === 0) {
+                token = this.text.charAt(start);
+            }
+            this.push(new UnknownElement(token, start, this.pos), pushTo);
+        }
+    }
+
+    parseTuple(pushTo = null) {
+        const start = this.pos;
+        const elems = [];
+
+        this.pos += 1;
+        const prev = this.parse(')', elems, ',');
+        if (elems.length > 0 && elems[elems.length - 1].error !== null) {
+            this.push(new TupleElement(elems, start, this.pos, elems[elems.length - 1].error),
+                pushTo);
+        } else if (prev !== '') {
+            if (prev === ',') {
+                if (elems.length > 0) {
+                    const el = elems[elems.length - 1].getText();
+                    this.push(new TupleElement(elems, start, this.pos,
+                        `unexpected \`,\` after \`${el}\``), pushTo);
+                } else {
+                    this.push(new TupleElement(elems, start, this.pos,
+                        'unexpected `,` after `(`'), pushTo);
+                }
+                this.pos = this.text.length;
+            } else if (elems.length > 1) { // we're at the end of the text
+                const el = elems[elems.length - 1].getText();
+                const prevText = elems[elems.length - 2].getText();
+                const prevEl = typeof prev !== 'undefined' ? prev : prevText;
+                this.push(new TupleElement(elems, start, this.pos,
+                    `unexpected \`${el}\` after \`${prevEl}\``), pushTo);
+            } else {
+                const el = elems[elems.length - 1].getText();
+                // this case should never happen but just in case...
+                this.push(new TupleElement(elems, start, this.pos,
+                    `unexpected \`${el}\` after \`(\``), pushTo);
+            }
+        } else if (this.pos >= this.text.length || this.text.charAt(this.pos) !== ')') {
+            if (elems.length === 0) {
+                this.push(new TupleElement(elems, start, this.pos, 'expected `)` at the end'),
+                    pushTo);
+            } else {
+                this.push(new TupleElement(elems, start, this.pos,
+                    `expected \`)\` after \`${elems[elems.length - 1].getText()}\``), pushTo);
+            }
+        } else if (elems.length === 0) {
+            this.push(new TupleElement(elems, start, this.pos,
+                'unexpected `()`: tuples need at least one argument'), pushTo);
+        } else if (elems[elems.length - 1].error !== null) {
+            this.push(new TupleElement(elems, start, this.pos, elems[elems.length - 1].error),
+                pushTo);
+        } else {
+            this.push(new TupleElement(elems, start, this.pos), pushTo);
+        }
+    }
+
+    parseString(pushTo = null) {
+        const start = this.pos;
+        const endChar = this.text.charAt(this.pos);
+
+        this.pos += 1;
+        while (this.pos < this.text.length) {
+            const c = this.text.charAt(this.pos);
+            if (c === endChar) {
+                const value = this.text.substring(start + 1, this.pos);
+                const full = this.text.substring(start, this.pos + 1);
+                const e = new StringElement(value, start, this.pos, full);
+                this.push(e, pushTo);
+                return;
+            } else if (c === '\\') {
+                this.pos += 1;
+            }
+            this.pos += 1;
+        }
+        const value = this.text.substring(start + 1, this.pos);
+        const full = this.text.substring(start, this.pos);
+        const e = new StringElement(value, start, this.pos, full,
+            `expected \`${endChar}\` at the end of the string`);
+        this.push(e, pushTo);
+    }
+
+    parseNumber(pushTo = null) {
+        const start = this.pos;
+
+        while (this.pos < this.text.length) {
+            const c = this.text.charAt(this.pos);
+
+            if (!isNumber(c)) {
+                const nb = this.text.substring(start, this.pos);
+                this.push(new NumberElement(nb, start, this.pos), pushTo);
+                this.pos -= 1;
+                return;
+            }
+            this.pos += 1;
+        }
+        this.push(new NumberElement(this.text.substring(start, this.pos), start, this.pos), pushTo);
+    }
+
+    push(e, pushTo = null) {
+        if (pushTo !== null) {
+            pushTo.push(e);
+        } else {
+            if (e.error !== null) {
+                this.error = e.error;
+            }
+            this.elems.push(e);
+        }
+    }
+
+    parseJson(pushTo = null) {
+        const start = this.pos;
+        const elems = [];
+        let key = null;
+        let prevChar = '';
+        let errorHappened = false;
+        const parseEnd = (obj, pushTo, err) => {
+            const fullText = obj.text.substring(start, obj.pos + 1);
+            obj.push(new JsonElement(elems, start, obj.pos, fullText, err), pushTo);
+            if (typeof err !== 'undefined') {
+                obj.pos = obj.text.length;
+                errorHappened = true;
+            }
+        };
+
+        this.pos += 1;
+        // TODO: instead of using a kind of state machine, maybe make it work as step?
+        while (this.pos < this.text.length) {
+            const c = this.text.charAt(this.pos);
+
+            if (c === '}') {
+                if (key !== null) {
+                    let k = key.getText();
+                    if (prevChar === ':') {
+                        k += ':';
+                    }
+                    elems.push({'key': key});
+                    parseEnd(this, pushTo, `unexpected \`}\` after \`${k}\`: expected a value`);
+                } else if (prevChar === ',') {
+                    parseEnd(this, pushTo, 'unexpected `,` before `}`');
+                } else {
+                    parseEnd(this, pushTo);
+                }
+                return;
+            } else if (c === '/') {
+                this.parseComment(this, pushTo);
+            } else if (isStringChar(c)) {
+                const tmp = [];
+                this.parseString(tmp);
+                if (key === null) {
+                    if (prevChar !== ',' && elems.length > 0) {
+                        const last = elems[elems.length - 1].value.getText();
+                        parseEnd(this, pushTo,
+                            `expected \`,\` after \`${last}\`, found \`${tmp[0].getText()}\``);
+                    }
+                    if (tmp[0].error !== null) {
+                        parseEnd(this, pushTo, tmp[0].error);
+                    } else {
+                        key = tmp[0];
+                    }
+                } else {
+                    elems.push({'key': key, 'value': tmp[0]});
+                    if (prevChar !== ':') {
+                        const text = tmp[0].getText();
+                        parseEnd(this, pushTo,
+                            `expected \`:\` after \`${key.getText()}\`, found \`${text}\``);
+                    } else {
+                        prevChar = '';
+                        if (tmp[0].error !== null) {
+                            parseEnd(this, pushTo, tmp[0].error);
+                        }
+                        key = null;
+                    }
+                }
+            } else if (c === ',') {
+                if (key !== null) {
+                    elems.push({'key': key});
+                    let err = `expected \`:\` after \`${key.getText()}\`, found \`,\``;
+                    if (prevChar === ':') {
+                        err = 'unexpected `,` after `:`';
+                    }
+                    parseEnd(this, pushTo, err);
+                } else if (elems.length === 0) {
+                    parseEnd(this, pushTo, 'unexpected `,` after `{`');
+                } else {
+                    prevChar = ',';
+                }
+            } else if (c === ':') {
+                if (key === null) {
+                    if (elems.length > 0) {
+                        let msg = 'unexpected `:` after `,`';
+                        if (prevChar !== ',') {
+                            const last = elems[elems.length - 1].value.getText();
+                            msg = `expected \`,\` after \`${last}\`, found \`:\``;
+                        }
+                        parseEnd(this, pushTo, msg);
+                    } else {
+                        parseEnd(this, pushTo, 'unexpected `:` after `{`');
+                    }
+                } else {
+                    prevChar = ':';
+                }
+            } else if (isWhiteSpace(c)) {
+                // do nothing
+            } else if (isNumber(c)) {
+                const tmp = [];
+                this.parseNumber(tmp);
+                if (key === null) {
+                    elems.push({'key': tmp[0]});
+                    const text = tmp[0].getText();
+                    parseEnd(this, pushTo, `numbers cannot be used as keys (for \`${text}\`)`);
+                } else if (prevChar !== ':') {
+                    elems.push({'key': key, value: tmp[0]});
+                    parseEnd(this, pushTo,
+                        `expected \`:\` after \`${key.getText()}\`, found \`${tmp[0].getText()}\``);
+                } else {
+                    elems.push({'key': key, value: tmp[0]});
+                    prevChar = '';
+                    key = null;
+                }
+            } else if (c === '{') {
+                const tmp = [];
+                this.parseJson(tmp);
+
+                if (key === null) {
+                    elems.push({'key': tmp[0]});
+                    parseEnd(this, pushTo, 'JSON objects cannot be used as keys');
+                } else if (prevChar !== ':') {
+                    elems.push({'key': key, 'value': tmp[0]});
+                    parseEnd(this, pushTo,
+                        `expected \`:\` after \`${key.getText()}\`, found \`${tmp[0].getText()}\``);
+                } else {
+                    prevChar = '';
+                    elems.push({'key': key, 'value': tmp[0]});
+                    if (tmp[0].error !== null) {
+                        parseEnd(this, pushTo, tmp[0].error);
+                    }
+                    key = null;
+                }
+            } else {
+                const tmp = [];
+                this.parseBoolean(tmp);
+                const el = tmp[0];
+                if (el.kind === 'unknown') {
+                    const token = el.getText();
+                    if (key === null) {
+                        elems.push({'key': el});
+                        if (elems.length > 1) {
+                            const text = elems[elems.length - 2].value.getText();
+                            const last = prevChar === ',' ? ',' : text;
+                            parseEnd(this, pushTo, `unexpected \`${token}\` after \`${last}\``);
+                        } else {
+                            parseEnd(this, pushTo, `unexpected \`${token}\` after \`{\``);
+                        }
+                    } else if (prevChar !== ':') {
+                        elems.push({'key': key, 'value': el});
+                        parseEnd(this, pushTo,
+                            `expected \`:\` after \`${key.getText()}\`, found \`${token}\` after`);
+                    } else {
+                        elems.push({'key': key, 'value': el});
+                        parseEnd(this, pushTo,
+                            `invalid value \`${token}\` for key \`${key.getText()}\``);
+                    }
+                } else if (key === null) {
+                    elems.push({'key': el});
+                    parseEnd(this, pushTo, 'booleans cannot be used as keys');
+                } else if (prevChar !== ':') {
+                    elems.push({'key': key, 'value': el});
+                    parseEnd(this, pushTo,
+                        `expected \`:\` after \`${key.getText()}\`, found \`${el.getText()}\``);
+                } else {
+                    prevChar = '';
+                    elems.push({'key': key, 'value': el});
+                    key = null;
+                }
+            }
+            this.pos += 1;
+        }
+        if (errorHappened === true) {
+            // do nothing
+        } else if (key !== null) {
+            parseEnd(this, pushTo, `missing value after \`${key.getText()}\``);
+        } else if (elems.length === 0) {
+            parseEnd(this, pushTo, 'unclosed empty JSON object');
+        } else {
+            const el = elems[elems.length - 1].value.getText();
+            parseEnd(this, pushTo, `unclosed JSON object: expected \`}\` after \`${el}\``);
+        }
+    }
 }
 
 module.exports = {
-    parseContent: parseContent,
-
-    // Those functions shouldn't be used directly!
-    parseAssert: parseAssert,
-    parseAttribute: parseAttribute,
-    parseClick: parseClick,
-    parseFail: parseFail,
-    parseFocus: parseFocus,
-    parseGoTo: parseGoTo,
-    parseLocalStorage: parseLocalStorage,
-    parseMoveCursorTo: parseMoveCursorTo,
-    parseScreenshot: parseScreenshot,
-    parseScrollTo: parseScrollTo,
-    parseSize: parseSize,
-    parseText: parseText,
-    parseWaitFor: parseWaitFor,
-    parseWrite: parseWrite,
+    Parser: Parser,
+    Element: Element,
+    CharElement: CharElement,
+    TupleElement: TupleElement,
+    StringElement: StringElement,
+    NumberElement: NumberElement,
+    UnknownElement: UnknownElement,
+    JsonElement: JsonElement,
+    BoolElement: BoolElement,
 };

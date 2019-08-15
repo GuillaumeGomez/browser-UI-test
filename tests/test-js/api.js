@@ -1,83 +1,22 @@
-const path = require('path');
 const process = require('process');
-const parserFuncs = require('../../src/parser.js');
-
-function toJSON(value) {
-    if (typeof value === 'object') {
-        return JSON.stringify(value);
-    }
-    return value;
-}
-
-function getStackInfo(stack) {
-    const parent = stack.split('at ')[2].trim();
-    const parts = parent.split(':');
-    const line = parts[parts.length - 2];
-    const file_name = path.basename(parts[0].split('(')[1]);
-    return {'file': file_name, 'line': line};
-}
-
-function print(x, out) {
-    if (typeof out !== 'undefined') {
-        out(x);
-    } else {
-        // eslint-disable-next-line
-        console.log(x);
-    }
-}
-
-function plural(x, nb) {
-    if (nb !== 1) {
-        return `${x}s`;
-    }
-    return x;
-}
-
-class Assert {
-    constructor() {
-        this.errors = 0;
-        this.ranTests = 0;
-    }
-
-    assert(value1, value2) {
-        this.ranTests += 1;
-        if (typeof value2 !== 'undefined') {
-            value1 = toJSON(value1);
-            value2 = toJSON(value2);
-            if (value1 !== value2) {
-                const pos = getStackInfo(new Error().stack);
-                print(`[${pos.file}:${pos.line}] failed: \`${value1}\` != \`${value2}\``);
-                this.errors += 1;
-                return;
-            }
-        } else if (!value1) {
-            const pos = getStackInfo(new Error().stack);
-            print(`[${pos.file}:${pos.line}] failed: \`${value1}\` is evalued to false`);
-            this.errors += 1;
-            return;
-        }
-    }
-}
+const parserFuncs = require('../../src/commands.js');
+const {Assert, plural, print} = require('./utils.js');
 
 function checkAssert() {
     const func = parserFuncs.parseAssert;
     const x = new Assert();
 
-    x.assert(func('"'), {'error': 'expected `(` character'});
-    x.assert(func('(a, "b")'), {'error': 'expected `\'` or `"` character (first argument)'});
-    x.assert(func('("a", "b"'), {'error': 'expected to end with `)` character'});
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('(a, "b")'), {'error': 'unexpected `a` as first token'});
+    x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
     x.assert(func('("a")'),
         {
             'instructions': ['if (page.$("a") === null) { throw \'"a" not found\'; }'],
             'wait': false,
         });
-    x.assert(func('("a", )'),
-        {
-            'error': 'expected something (aka [string], [integer] or [JSON]) as second parameter ' +
-                'or remove the comma',
-        });
-    x.assert(func('("a", "b", )'), {'error': 'no string (third argument)'});
-    x.assert(func('("a", "b" "c")'), {'error': 'unexpected token after second parameter: `"`'});
+    x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
+    x.assert(func('("a", "b", )'), {'error': 'unexpected `,` after `"b"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
     x.assert(func('("a", "b")'),
         {
             'instructions': [
@@ -106,9 +45,9 @@ function checkAssert() {
                 'parseAssertElemAttr);'],
             'wait': false,
         });
-    x.assert(func('("a", 1, "c")'), {'error': 'expected `)`, found `,`'});
-    x.assert(func('("a", 1 2)'), {'error': 'Nothing was expected after second argument [integer]'});
-    x.assert(func('("a", 1 a)'), {'error': 'expected `)`, found `a`'});
+    x.assert(func('("a", 1, "c")'), {'error': 'unexpected argument after number of occurences'});
+    x.assert(func('("a", 1 2)'), {'error': 'expected `,`, found `2`'});
+    x.assert(func('("a", 1 a)'), {'error': 'expected `,`, found `a`'});
     x.assert(func('("a", 1)'),
         {
             'instructions': [
@@ -136,15 +75,17 @@ function checkAttribute() {
     const func = parserFuncs.parseAttribute;
     const x = new Assert();
 
-    x.assert(func('"'), {'error': 'expected `(` character'});
-    x.assert(func('("a", "b"'), {'error': 'expected to end with `)` character'});
-    x.assert(func('("a")'), {'error': 'expected `,` after first argument, found `)`'});
-    x.assert(func('("a", )'), {'error': 'expected `\'` or `"` character (second parameter)'});
-    x.assert(func('("a", "b", )'), {'error': 'expected a string as third parameter'});
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` after second argument, found `"`'});
-    x.assert(func('("a", )'), {'error': 'expected `\'` or `"` character (second parameter)'});
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` after second argument, found `"`'});
-    x.assert(func('("a", "b")'), {'error': 'expected `,` after second argument, found `)`'});
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
+    x.assert(func('("a")'),
+        {'error': 'expected `("CSS selector", "attribute name", "attribute value")`'});
+    x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
+    x.assert(func('("a", "b", )'), {'error': 'unexpected `,` after `"b"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", "b")'),
+        {'error': 'expected `("CSS selector", "attribute name", "attribute value")`'});
     x.assert(func('("a", "b", "c")'),
         {
             'instructions': [
@@ -170,20 +111,20 @@ function checkClick() {
     const x = new Assert();
 
     // Check position
-    x.assert(func('hello'), {'error': 'Expected a position or a CSS selector'});
-    x.assert(func('()'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('('), {'error': 'Invalid syntax: expected position to end with \')\'...'});
-    x.assert(func('(1)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(1,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(1,2,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(1,,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(a,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
+    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {'error': 'invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,)'), {'error': 'unexpected `,` after `1`'});
+    x.assert(func('(1,2,)'), {'error': 'unexpected `,` after `2`'});
+    x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
+    x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
+    x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
     x.assert(func('(1,2)'), {'instructions': ['page.mouse.click(1,2)']});
 
     // Check css selector
-    x.assert(func('"'), {'error': 'expected `"` character at the end of the string'});
-    x.assert(func('\''), {'error': 'expected `\'` character at the end of the string'});
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
     x.assert(func('\'\''), {'error': 'selector cannot be empty'});
     x.assert(func('"a"'), {'instructions': ['page.click("a")']});
     x.assert(func('\'a\''), {'instructions': ['page.click("a")']});
@@ -196,9 +137,9 @@ function checkFail() {
     const func = parserFuncs.parseFail;
     const x = new Assert();
 
-    x.assert(func('hello'), {'error': 'Expected "true" or "false" value, found `hello`'});
-    x.assert(func('"true"'), {'error': 'Expected "true" or "false" value, found `"true"`'});
-    x.assert(func('tru'), {'error': 'Expected "true" or "false" value, found `tru`'});
+    x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
+    x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
+    x.assert(func('tru'), {'error': 'unexpected `tru` as first token'});
     x.assert(func('false'), {'instructions': ['arg.expectedToFail = false;'], 'wait': false});
     x.assert(func('true'), {'instructions': ['arg.expectedToFail = true;'], 'wait': false});
 
@@ -209,9 +150,9 @@ function checkFocus() {
     const func = parserFuncs.parseFocus;
     const x = new Assert();
 
-    x.assert(func('a'), {'error': 'Expected a CSS selector'});
-    x.assert(func('"'), {'error': 'expected `"` character at the end of the string'});
-    x.assert(func('\''), {'error': 'expected `\'` character at the end of the string'});
+    x.assert(func('a'), {'error': 'unexpected `a` as first token'});
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
     x.assert(func('\'\''), {'error': 'selector cannot be empty'});
     x.assert(func('"a"'), {'instructions': ['page.focus("a")']});
     x.assert(func('\'a\''), {'instructions': ['page.focus("a")']});
@@ -224,10 +165,12 @@ function checkGoTo() {
     const func = parserFuncs.parseGoTo;
     const x = new Assert();
 
-    x.assert(func('a'), {'error': 'A relative path or a full URL was expected'});
-    x.assert(func('"'), {'error': 'A relative path or a full URL was expected'});
-    x.assert(func('http:/a'), {'error': 'A relative path or a full URL was expected'});
-    x.assert(func('https:/a'), {'error': 'A relative path or a full URL was expected'});
+    x.assert(func('a'), {'error': 'a relative path or a full URL was expected, found `a`'});
+    x.assert(func('"'), {'error': 'a relative path or a full URL was expected, found `"`'});
+    x.assert(func('http:/a'),
+        {'error': 'a relative path or a full URL was expected, found `http:/a`'});
+    x.assert(func('https:/a'),
+        {'error': 'a relative path or a full URL was expected, found `https:/a`'});
     x.assert(func('https://a'), {'instructions': ['await page.goto("https://a")']});
     x.assert(func('www.x'), {'instructions': ['await page.goto("www.x")']});
     x.assert(func('/a'), {
@@ -250,7 +193,7 @@ function checkLocalStorage() {
     const func = parserFuncs.parseLocalStorage;
     const x = new Assert();
 
-    x.assert(func('hello'), {'error': 'Expected JSON object, found `hello`'});
+    x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('{').error !== undefined); // JSON syntax error
     x.assert(func('{\'a\': 1}').error !== undefined); // JSON syntax error
     x.assert(func('{"a": 1}'), {
@@ -270,20 +213,20 @@ function checkMoveCursorTo() {
     const x = new Assert();
 
     // Check position
-    x.assert(func('hello'), {'error': 'Expected a position or a CSS selector'});
-    x.assert(func('()'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('('), {'error': 'Invalid syntax: expected position to end with \')\'...'});
-    x.assert(func('(1)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(1,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(1,2,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(1,,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(a,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
+    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {'error': 'invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,)'), {'error': 'unexpected `,` after `1`'});
+    x.assert(func('(1,2,)'), {'error': 'unexpected `,` after `2`'});
+    x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
+    x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
+    x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
     x.assert(func('(1,2)'), {'instructions': ['page.mouse.move(1,2)']});
 
     // Check css selector
-    x.assert(func('"'), {'error': 'expected `"` character at the end of the string'});
-    x.assert(func('\''), {'error': 'expected `\'` character at the end of the string'});
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
     x.assert(func('\'\''), {'error': 'selector cannot be empty'});
     x.assert(func('"a"'), {'instructions': ['page.hover("a")']});
     x.assert(func('\'a\''), {'instructions': ['page.hover("a")']});
@@ -296,9 +239,9 @@ function checkScreenshot() {
     const func = parserFuncs.parseScreenshot;
     const x = new Assert();
 
-    x.assert(func('hello'), {'error': 'Expected "true" or "false" value, found `hello`'});
-    x.assert(func('"true"'), {'error': 'Expected "true" or "false" value, found `"true"`'});
-    x.assert(func('tru'), {'error': 'Expected "true" or "false" value, found `tru`'});
+    x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
+    x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
+    x.assert(func('tru'), {'error': 'unexpected `tru` as first token'});
     x.assert(func('false'), {'instructions': ['arg.takeScreenshot = false;'], 'wait': false});
     x.assert(func('true'), {'instructions': ['arg.takeScreenshot = true;'], 'wait': false});
 
@@ -310,20 +253,20 @@ function checkScrollTo() {
     const x = new Assert();
 
     // Check position
-    x.assert(func('hello'), {'error': 'Expected a position or a CSS selector'});
-    x.assert(func('()'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('('), {'error': 'Invalid syntax: expected position to end with \')\'...'});
-    x.assert(func('(1)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(1,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(1,2,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(1,,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(a,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
+    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {'error': 'invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1,)'), {'error': 'unexpected `,` after `1`'});
+    x.assert(func('(1,2,)'), {'error': 'unexpected `,` after `2`'});
+    x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
+    x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
+    x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
     x.assert(func('(1,2)'), {'instructions': ['page.mouse.move(1,2)']});
 
     // Check css selector
-    x.assert(func('"'), {'error': 'expected `"` character at the end of the string'});
-    x.assert(func('\''), {'error': 'expected `\'` character at the end of the string'});
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
     x.assert(func('\'\''), {'error': 'selector cannot be empty'});
     x.assert(func('"a"'), {'instructions': ['page.hover("a")']});
     x.assert(func('\'a\''), {'instructions': ['page.hover("a")']});
@@ -336,15 +279,15 @@ function checkSize() {
     const func = parserFuncs.parseSize;
     const x = new Assert();
 
-    x.assert(func('hello'), {'error': 'Expected `(` character, found `h`'});
-    x.assert(func('()'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('('), {'error': 'Invalid syntax: expected size to end with `)`...'});
-    x.assert(func('(1)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(1,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(1,2,)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(1,,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
-    x.assert(func('(a,2)'), {'error': 'Invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
+    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {'error': 'expected `([number], [number])`'});
+    x.assert(func('(1,)'), {'error': 'unexpected `,` after `1`'});
+    x.assert(func('(1,2,)'), {'error': 'unexpected `,` after `2`'});
+    x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
+    x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
+    x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
     x.assert(func('(1,2)'), {'instructions': ['page.setViewport({width: 1, height: 2})']});
 
     return x;
@@ -354,13 +297,13 @@ function checkText() {
     const func = parserFuncs.parseText;
     const x = new Assert();
 
-    x.assert(func('"'), {'error': 'expected `(` character'});
-    x.assert(func('("a", "b"'), {'error': 'expected to end with `)` character'});
-    x.assert(func('("a")'), {'error': 'expected `,` after first argument, found `)`'});
-    x.assert(func('("a", )'), {'error': 'expected a string as second parameter'});
-    x.assert(func('("a", "b", "c")'), {'error': 'unexpected token: `,` after second parameter'});
-    x.assert(func('("a", "b" "c")'), {'error': 'unexpected token: `"` after second parameter'});
-    x.assert(func('(\'\', "b")'), {'error': 'selector cannot be empty'});
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
+    x.assert(func('("a")'), {'error': 'expected `("CSS selector", "text")`'});
+    x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
+    x.assert(func('("a", "b", "c")'), {'error': 'expected `("CSS selector", "text")`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('(\'\', "b")'), {'error': 'CSS selector cannot be empty'});
     x.assert(func('("a", "b")'),
         {
             'instructions': [
@@ -378,13 +321,13 @@ function checkWaitFor() {
     const x = new Assert();
 
     // Check integer
-    x.assert(func('hello'), {'error': 'Expected an integer or a CSS selector'});
-    x.assert(func('1 2'), {'error': 'Expected an integer or a CSS selector'});
+    x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
+    x.assert(func('1 2'), {'error': 'expected nothing, found `2`'});
     x.assert(func('1'), {'instructions': ['await page.waitFor(1)'], 'wait': false});
 
     // Check css selector
-    x.assert(func('"'), {'error': 'expected `"` character at the end of the string'});
-    x.assert(func('\''), {'error': 'expected `\'` character at the end of the string'});
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
     x.assert(func('\'\''), {'error': 'selector cannot be empty'});
     x.assert(func('"a"'), {'instructions': ['await page.waitFor("a")'], 'wait': false});
     x.assert(func('\'a\''), {'instructions': ['await page.waitFor("a")'], 'wait': false});
@@ -398,18 +341,20 @@ function checkWrite() {
     const x = new Assert();
 
     // check tuple argument
-    x.assert(func('"'), {'error': 'expected `"` character at the end of the string'});
-    x.assert(func('("a", "b"'), {'error': 'expected to end with `)` character'});
-    x.assert(func('("a")'), {'error': 'expected `,` after first parameter, found `)`'});
-    x.assert(func('("a", )'), {'error': 'expected a string as second parameter'});
-    x.assert(func('("a", "b", "c")'), {'error': 'unexpected token `,` after second parameter'});
-    x.assert(func('("a", "b" "c")'), {'error': 'unexpected token `"` after second parameter'});
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
+    x.assert(func('("a")'),
+        {'error': 'invalid number of arguments in tuple, expected ([CSS selector], [string])'});
+    x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
+    x.assert(func('("a", "b", "c")'),
+        {'error': 'invalid number of arguments in tuple, expected ([CSS selector], [string])'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
     x.assert(func('(\'\', "b")'), {'error': 'selector cannot be empty'});
     x.assert(func('("a", "b")'), {'instructions': ['page.focus("a")', 'page.keyboard.type("b")']});
 
     // check string argument
-    x.assert(func('"'), {'error': 'expected `"` character at the end of the string'});
-    x.assert(func('\''), {'error': 'expected `\'` character at the end of the string'});
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
     x.assert(func('\'\''), {'instructions': ['page.keyboard.type("")']});
     x.assert(func('"a"'), {'instructions': ['page.keyboard.type("a")']});
     x.assert(func('\'a\''), {'instructions': ['page.keyboard.type("a")']});
@@ -438,15 +383,20 @@ const TO_CHECK = [
 function checkCommands() {
     let nbErrors = 0;
 
-    print('=> Starting tests...');
+    print('=> Starting API tests...');
     print('');
 
     for (let i = 0; i < TO_CHECK.length; ++i) {
         print(`==> Checking "${TO_CHECK[i].name}"...`);
-        const errors = TO_CHECK[i].func();
-        nbErrors += errors.errors;
-        print(`<== "${TO_CHECK[i].name}": ${errors.errors} ${plural('error', errors.errors)} (in ` +
-              `${errors.ranTests} ${plural('test', errors.ranTests)})`);
+        try {
+            const errors = TO_CHECK[i].func();
+            nbErrors += errors.errors;
+            print(`<== "${TO_CHECK[i].name}": ${errors.errors} ${plural('error', errors.errors)}` +
+                ` (in ${errors.ranTests} ${plural('test', errors.ranTests)})`);
+        } catch (err) {
+            nbErrors += 1;
+            print(`<== "${TO_CHECK[i].name}" failed: ${err}\n${err.stack}`);
+        }
     }
 
     print('');
