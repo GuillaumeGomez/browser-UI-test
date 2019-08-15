@@ -19,9 +19,9 @@ function checkTuple() {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
     x.assert(p.elems[0].error, 'unexpected `,` after `"hello"`');
-    x.assert(p.elems[0].value.length, 1);
-    x.assert(p.elems[0].value[0].error, null);
-    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'string');
 
 
     p = new Parser('("hello", 2');
@@ -30,11 +30,11 @@ function checkTuple() {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
     x.assert(p.elems[0].error, 'expected `)` after `2`');
-    x.assert(p.elems[0].value.length, 2);
-    x.assert(p.elems[0].value[0].error, null);
-    x.assert(p.elems[0].value[0].kind, 'string');
-    x.assert(p.elems[0].value[1].error, null);
-    x.assert(p.elems[0].value[1].kind, 'number');
+    x.assert(p.elems[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'string');
+    x.assert(p.elems[0].getValue()[1].error, null);
+    x.assert(p.elems[0].getValue()[1].kind, 'number');
 
 
     p = new Parser('("hello", 2, true, {"a": {"b": 3}, "c": "d"},)');
@@ -43,11 +43,11 @@ function checkTuple() {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
     x.assert(p.elems[0].error, 'unexpected `,` after `{"a": {"b": 3}, "c": "d"}`');
-    x.assert(p.elems[0].value.length, 4);
-    x.assert(p.elems[0].value[0].error, null);
-    x.assert(p.elems[0].value[1].error, null);
-    x.assert(p.elems[0].value[2].error, null);
-    x.assert(p.elems[0].value[3].error, null);
+    x.assert(p.elems[0].getValue().length, 4);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[1].error, null);
+    x.assert(p.elems[0].getValue()[2].error, null);
+    x.assert(p.elems[0].getValue()[3].error, null);
 
 
     p = new Parser('(true false)');
@@ -56,13 +56,13 @@ function checkTuple() {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
     x.assert(p.elems[0].error, 'expected `,`, found `f`');
-    x.assert(p.elems[0].value.length, 2);
-    x.assert(p.elems[0].value[0].error, null);
-    x.assert(p.elems[0].value[0].kind, 'bool');
-    x.assert(p.elems[0].value[0].getValue(), true);
-    x.assert(p.elems[0].value[1].error, 'expected `,`, found `f`');
-    x.assert(p.elems[0].value[1].kind, 'char');
-    x.assert(p.elems[0].value[1].getValue(), 'f');
+    x.assert(p.elems[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), true);
+    x.assert(p.elems[0].getValue()[1].error, 'expected `,`, found `f`');
+    x.assert(p.elems[0].getValue()[1].kind, 'char');
+    x.assert(p.elems[0].getValue()[1].getValue(), 'f');
 
 
     p = new Parser('(true,,true)');
@@ -71,13 +71,13 @@ function checkTuple() {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
     x.assert(p.elems[0].error, 'unexpected `,` after `,`');
-    x.assert(p.elems[0].value.length, 2);
-    x.assert(p.elems[0].value[0].error, null);
-    x.assert(p.elems[0].value[0].kind, 'bool');
-    x.assert(p.elems[0].value[0].getValue(), true);
-    x.assert(p.elems[0].value[1].error, 'unexpected `,` after `,`');
-    x.assert(p.elems[0].value[1].kind, 'char');
-    x.assert(p.elems[0].value[1].getValue(), ',');
+    x.assert(p.elems[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), true);
+    x.assert(p.elems[0].getValue()[1].error, 'unexpected `,` after `,`');
+    x.assert(p.elems[0].getValue()[1].kind, 'char');
+    x.assert(p.elems[0].getValue()[1].getValue(), ',');
 
 
     p = new Parser('(true|false)');
@@ -86,13 +86,13 @@ function checkTuple() {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
     x.assert(p.elems[0].error, 'expected `,`, found `|`');
-    x.assert(p.elems[0].value.length, 2);
-    x.assert(p.elems[0].value[0].error, null);
-    x.assert(p.elems[0].value[0].kind, 'bool');
-    x.assert(p.elems[0].value[0].getValue(), true);
-    x.assert(p.elems[0].value[1].error, 'expected `,`, found `|`');
-    x.assert(p.elems[0].value[1].kind, 'char');
-    x.assert(p.elems[0].value[1].getValue(), '|');
+    x.assert(p.elems[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), true);
+    x.assert(p.elems[0].getValue()[1].error, 'expected `,`, found `|`');
+    x.assert(p.elems[0].getValue()[1].kind, 'char');
+    x.assert(p.elems[0].getValue()[1].getValue(), '|');
 
 
     p = new Parser('(false)');
@@ -101,10 +101,10 @@ function checkTuple() {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].value.length, 1);
-    x.assert(p.elems[0].value[0].error, null);
-    x.assert(p.elems[0].value[0].kind, 'bool');
-    x.assert(p.elems[0].value[0].getValue(), false);
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), false);
 
 
     p = new Parser('(false,true)');
@@ -113,13 +113,13 @@ function checkTuple() {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].value.length, 2);
-    x.assert(p.elems[0].value[0].error, null);
-    x.assert(p.elems[0].value[0].kind, 'bool');
-    x.assert(p.elems[0].value[0].getValue(), false);
-    x.assert(p.elems[0].value[1].error, null);
-    x.assert(p.elems[0].value[1].kind, 'bool');
-    x.assert(p.elems[0].value[1].getValue(), true);
+    x.assert(p.elems[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), false);
+    x.assert(p.elems[0].getValue()[1].error, null);
+    x.assert(p.elems[0].getValue()[1].kind, 'bool');
+    x.assert(p.elems[0].getValue()[1].getValue(), true);
 
 
     p = new Parser('(false,"s",   {"a": "b"}, 3)');
@@ -128,19 +128,19 @@ function checkTuple() {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].value.length, 4);
-    x.assert(p.elems[0].value[0].error, null);
-    x.assert(p.elems[0].value[0].kind, 'bool');
-    x.assert(p.elems[0].value[0].getValue(), false);
-    x.assert(p.elems[0].value[1].error, null);
-    x.assert(p.elems[0].value[1].kind, 'string');
-    x.assert(p.elems[0].value[1].getValue(), 's');
-    x.assert(p.elems[0].value[2].error, null);
-    x.assert(p.elems[0].value[2].kind, 'json');
-    x.assert(p.elems[0].value[2].getText(), '{"a": "b"}');
-    x.assert(p.elems[0].value[3].error, null);
-    x.assert(p.elems[0].value[3].kind, 'number');
-    x.assert(p.elems[0].value[3].getValue(), '3');
+    x.assert(p.elems[0].getValue().length, 4);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), false);
+    x.assert(p.elems[0].getValue()[1].error, null);
+    x.assert(p.elems[0].getValue()[1].kind, 'string');
+    x.assert(p.elems[0].getValue()[1].getValue(), 's');
+    x.assert(p.elems[0].getValue()[2].error, null);
+    x.assert(p.elems[0].getValue()[2].kind, 'json');
+    x.assert(p.elems[0].getValue()[2].getText(), '{"a": "b"}');
+    x.assert(p.elems[0].getValue()[3].error, null);
+    x.assert(p.elems[0].getValue()[3].kind, 'number');
+    x.assert(p.elems[0].getValue()[3].getValue(), '3');
 
     return x;
 }

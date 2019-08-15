@@ -1,5 +1,6 @@
 const os = require('os');
 const utils = require('./utils.js');
+const Parser = require('./parser.js').Parser;
 
 
 function cleanString(s) {
@@ -10,7 +11,7 @@ function cleanString(s) {
 }
 
 function cleanCssSelector(s) {
-    return cleanString(s).replace(/\\/g, '\\\\');
+    return cleanString(s).replace(/\\/g, '\\\\').trim();
 }
 
 function matchPosition(s) {
@@ -98,32 +99,34 @@ function parseCssSelector(line) {
 // * (X, Y)
 // * "CSS selector" (for example: "#elementID")
 function parseClick(line) {
-    if (line.startsWith('(')) {
-        if (!line.endsWith(')')) {
-            return {'error': 'Invalid syntax: expected position to end with \')\'...'};
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1) {
+        return {'error': 'expected a position or a CSS selector'};
+    } else if (p.elems[0].kind === 'string') {
+        const selector = cleanCssSelector(p.elems[0].getValue());
+        if (selector.length === 0) {
+            return {'error': 'selector cannot be empty'};
         }
-        if (matchPosition(line) !== true) {
-            return {'error': 'Invalid syntax: expected "([number], [number])"...'};
-        }
-        const [x, y] = line.match(/\d+/g).map(function(f) {
-            return parseInt(f);
-        });
         return {
             'instructions': [
-                `page.mouse.click(${x},${y})`,
+                `page.click("${selector}")`,
             ],
         };
-    } else if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
-        return {'error': 'Expected a position or a CSS selector'};
+    } else if (p.elems[0].kind !== 'tuple') {
+        return {'error': 'expected a position or a CSS selector'};
     }
-    const ret = parseCssSelector(line);
-    if (ret.error !== undefined) {
-        return ret;
+    const tuple = p.elems[0].getValue();
+    if (tuple.length !== 2 || tuple[0].kind !== 'number' || tuple[1].kind !== 'number') {
+        return {'error': 'invalid syntax: expected "([number], [number])"...'};
     }
-    const selector = ret.value;
+    const x = tuple[0].getValue();
+    const y = tuple[1].getValue();
     return {
         'instructions': [
-            `page.click("${selector}")`,
+            `page.mouse.click(${x},${y})`,
         ],
     };
 }
@@ -133,21 +136,26 @@ function parseClick(line) {
 // * Number of milliseconds
 // * "CSS selector" (for example: "#elementID")
 function parseWaitFor(line) {
-    if (line.match(/^[0-9]+$/g) !== null) {
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1) {
+        return {'error': 'expected an integer or a CSS selector'};
+    } else if (p.elems[0].kind === 'number') {
         return {
             'instructions': [
-                `await page.waitFor(${parseInt(line)})`,
+                `await page.waitFor(${p.elems[0].getValue()})`,
             ],
             'wait': false,
         };
-    } else if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
-        return {'error': 'Expected an integer or a CSS selector'};
+    } else if (p.elems[0].kind !== 'string') {
+        return {'error': 'expected an integer or a CSS selector'};
     }
-    const ret = parseCssSelector(line);
-    if (ret.error !== undefined) {
-        return ret;
+    const selector = cleanCssSelector(p.elems[0].getValue());
+    if (selector.length === 0) {
+        return {'error': 'selector cannot be empty'};
     }
-    const selector = ret.value;
     return {
         'instructions': [
             `await page.waitFor("${selector}")`,
@@ -160,14 +168,17 @@ function parseWaitFor(line) {
 //
 // * "CSS selector" (for example: "#elementID")
 function parseFocus(line) {
-    if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
-        return {'error': 'Expected a CSS selector'};
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'string') {
+        return {'error': 'expected a CSS selector'};
     }
-    const ret = parseCssSelector(line);
-    if (ret.error !== undefined) {
-        return ret;
+    const selector = cleanCssSelector(p.elems[0].getValue());
+    if (selector.length === 0) {
+        return {'error': 'selector cannot be empty'};
     }
-    const selector = ret.value;
     return {
         'instructions': [
             `page.focus("${selector}")`,
@@ -180,69 +191,44 @@ function parseFocus(line) {
 // * ("[CSS selector (for example: #elementID)]", "text")
 // * "text" (in here, it'll write into the current focused element)
 function parseWrite(line) {
-    if (line.startsWith('(') === true) {
-        if (line.charAt(line.length - 1) !== ')') {
-            return {'error': 'expected to end with `)` character'};
-        }
-        let ret = parseString(line.substring(1));
-        if (ret.error !== undefined) {
-            return ret;
-        }
-        let pos = ret.pos + 2;
-        while (pos < line.length && isWhiteSpace(line.charAt(pos)) === true) {
-            pos += 1;
-        }
-        const path = cleanCssSelector(ret.value).trim();
-        if (path.length === 0) {
-            return {'error': 'selector cannot be empty'};
-        } else if (line.charAt(pos) !== ',') {
-            return {'error': `expected \`,\` after first parameter, found \`${line.charAt(pos)}\``};
-        }
-        // We take everything between the comma and the paren.
-        const sub = line.substring(pos + 1, line.length - 1).trim();
-        if (sub.length === 0) {
-            return {'error': 'expected a string as second parameter'};
-        } else if (sub.charAt(0) !== '"' && sub.charAt(0) !== '\'') {
-            return {'error': `expected a string as second parameter, found \`${sub}\``};
-        }
-        ret = parseString(sub); // no trim call in here!
-        if (ret.error !== undefined) {
-            return ret;
-        }
-        // check there is nothing after the second parameter
-        let i = ret.pos + 1;
-        while (i < sub.length) {
-            if (isWhiteSpace(sub.charAt(i)) !== true) {
-                return {'error': `unexpected token \`${sub.charAt(i)}\` after second parameter`};
-            }
-            i += 1;
-        }
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1) {
+        return {'error': 'expected [string] or ([CSS selector], [string])'};
+    } else if (p.elems[0].kind === 'string') {
         return {
             'instructions': [
-                `page.focus("${path}")`,
-                `page.keyboard.type("${ret.value}")`,
+                `page.keyboard.type("${cleanString(p.elems[0].getValue())}")`,
             ],
         };
-    } else if (line.startsWith('"') || line.startsWith('\'')) { // current focused element
-        const x = parseString(line);
-        if (x.error !== undefined) {
-            return x;
-        }
-        // check there is nothing after the string
-        let i = x.pos + 1;
-        while (i < line.length) {
-            if (isWhiteSpace(line.charAt(i)) !== true) {
-                return {'error': `unexpected token \`${line.charAt(i)}\` after string`};
-            }
-            i += 1;
-        }
-        return {
-            'instructions': [
-                `page.keyboard.type("${cleanString(x.value)}")`,
-            ],
-        };
+    } else if (p.elems[0].kind !== 'tuple') {
+        return {'error': 'expected [string] or ([CSS selector], [string])'};
     }
-    return {'error': 'expected [string] or ([CSS path], [string])'};
+    const tuple = p.elems[0].getValue();
+    if (tuple.length !== 2) {
+        return {
+            'error': 'invalid number of arguments in tuple, expected ([CSS selector], [string])',
+        };
+    } else if (tuple[0].kind !== 'string') {
+        return {
+            'error':
+            `expected a CSS selector as tuple first argument, found a ${tuple[0].kind}`,
+        };
+    } else if (tuple[1].kind !== 'string') {
+        return {'error': `expected a string as tuple second argument, found a ${tuple[1].kind}`};
+    }
+    const selector = cleanCssSelector(tuple[0].getValue());
+    if (selector.length === 0) {
+        return {'error': 'selector cannot be empty'};
+    }
+    return {
+        'instructions': [
+            `page.focus("${selector}")`,
+            `page.keyboard.type("${tuple[1].getValue()}")`,
+        ],
+    };
 }
 
 // Possible inputs:
@@ -250,32 +236,34 @@ function parseWrite(line) {
 // * (X, Y)
 // * "CSS selector" (for example: "#elementID")
 function parseMoveCursorTo(line) {
-    if (line.startsWith('(')) {
-        if (!line.endsWith(')')) {
-            return {'error': 'Invalid syntax: expected position to end with \')\'...'};
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1) {
+        return {'error': 'expected a position or a CSS selector'};
+    } else if (p.elems[0].kind === 'string') {
+        const selector = cleanCssSelector(p.elems[0].getValue());
+        if (selector.length === 0) {
+            return {'error': 'selector cannot be empty'};
         }
-        if (matchPosition(line) !== true) {
-            return {'error': 'Invalid syntax: expected "([number], [number])"...'};
-        }
-        const [x, y] = line.match(/\d+/g).map(function(f) {
-            return parseInt(f);
-        });
         return {
             'instructions': [
-                `page.mouse.move(${x},${y})`,
+                `page.hover("${selector}")`,
             ],
         };
-    } else if (line.charAt(0) !== '"' && line.charAt(0) !== '\'') {
-        return {'error': 'Expected a position or a CSS selector'};
+    } else if (p.elems[0].kind !== 'tuple') {
+        return {'error': 'expected a position or a CSS selector'};
     }
-    const ret = parseCssSelector(line);
-    if (ret.error !== undefined) {
-        return ret;
+    const tuple = p.elems[0].getValue();
+    if (tuple.length !== 2 || tuple[0].kind !== 'number' || tuple[1].kind !== 'number') {
+        return {'error': 'invalid syntax: expected "([number], [number])"...'};
     }
-    const selector = ret.value;
+    const x = tuple[0].getValue();
+    const y = tuple[1].getValue();
     return {
         'instructions': [
-            `page.hover("${selector}")`,
+            `page.mouse.move(${x},${y})`,
         ],
     };
 }
@@ -291,6 +279,8 @@ function parseMoveCursorTo(line) {
 //       the full current path by using "{current-dir}". For example:
 //       "file://{current-dir}{doc-path}/index.html"
 function parseGoTo(line, docPath) {
+    // This function doesn't use the parser so we still need to remove the comment part.
+    line = line.split('//')[0].trim();
     // We just check if it goes to an HTML file, not checking much though...
     if (line.startsWith('http://') || line.startsWith('https://') || line.startsWith('www.')) {
         return {
@@ -334,34 +324,39 @@ function parseScrollTo(line) {
 //
 // * (width, height)
 function parseSize(line) {
-    if (line.startsWith('(')) {
-        if (!line.endsWith(')')) {
-            return {'error': 'Invalid syntax: expected size to end with `)`...'};
-        }
-        if (matchPosition(line) !== true) {
-            return {'error': 'Invalid syntax: expected "([number], [number])"...'};
-        }
-        const [width, height] = line.match(/\d+/g).map(function(f) {
-            return parseInt(f);
-        });
-        return {
-            'instructions': [
-                `page.setViewport({width: ${width}, height: ${height}})`,
-            ],
-        };
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
+        return {'error': 'expected `([number], [number])`'};
     }
-    return {'error': `Expected \`(\` character, found \`${line.charAt(0)}\``};
+    const tuple = p.elems[0].getValue();
+    if (tuple.length !== 2 || tuple[0].kind !== 'number' || tuple[1].kind !== 'number') {
+        return {'error': 'expected `([number], [number])`'};
+    }
+    const width = tuple[0].getValue();
+    const height = tuple[1].getValue();
+    return {
+        'instructions': [
+            `page.setViewport({width: ${width}, height: ${height}})`,
+        ],
+    };
 }
 
 // Possible inputs:
 //
 // * JSON object (for example: {"key": "value", "another key": "another value"})
 function parseLocalStorage(line) {
-    if (!line.startsWith('{')) {
-        return {'error': `Expected JSON object, found \`${line}\``};
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'json') {
+        return {'error': 'expected json'};
     }
     try {
-        const d = JSON.parse(line);
+        const d = JSON.parse(p.elems[0].getText());
         const content = [];
         for (const key in d) {
             if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
@@ -386,114 +381,66 @@ function parseLocalStorage(line) {
 // Possible inputs:
 //
 // * ("CSS selector")
-// * ("CSS selector", text [STRING])
 // * ("CSS selector", number of occurences [integer])
 // * ("CSS selector", CSS elements [JSON object])
+// * ("CSS selector", text [STRING])
 // * ("CSS selector", attribute name [STRING], attribute value [STRING])
 function parseAssert(s) {
-    if (s.charAt(0) !== '(') {
-        return {'error': 'expected `(` character'};
-    } else if (s.charAt(s.length - 1) !== ')') {
-        return {'error': 'expected to end with `)` character'};
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
+        return {'error': 'expected a tuple, read the documentation to see the accepted inputs'};
     }
-    const ret = parseString(s.substring(1));
-    if (ret.error !== undefined) {
-        ret.error += ' (first argument)';
-        return ret;
+    const tuple = p.elems[0].getValue();
+    if (tuple.length < 1 || tuple.length > 3) {
+        return {'error': 'expected a tuple, read the documentation to see the accepted inputs'};
+    } else if (tuple[0].kind !== 'string') {
+        return {'error': `expected first argument to be a CSS selector, found a ${tuple[0].kind}`};
     }
-    let pos = ret.pos + 2;
-    while (isWhiteSpace(s.charAt(pos)) === true) {
-        pos += 1;
+    const selector = cleanCssSelector(tuple[0].getValue());
+    if (selector.length === 0) {
+        return {'error': 'CSS selector cannot be empty'};
     }
-    const path = cleanCssSelector(ret.value).trim();
-    if (path.length === 0) {
-        return {'error': 'selector cannot be empty'};
-    }
-    if (s.charAt(pos) === ')') {
+    if (tuple.length === 1) {
+        //
+        // EXISTENCE CHECK
+        //
         return {
             'instructions': [
                 `if (page.$("${path}") === null) { throw '"${path}" not found'; }`,
             ],
             'wait': false,
         };
-    } else if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\` or \`)\`, found \`${s.charAt(pos)}\``};
-    }
-    // We take everything between the comma and the paren.
-    const sub = s.substring(pos + 1, s.length - 1).trim();
-    if (sub.length === 0) {
-        return {
-            'error': 'expected something (aka [string], [integer] or [JSON]) as second parameter ' +
-                'or remove the comma',
-        };
-    } else if (sub.startsWith('"') || sub.startsWith('\'')) {
-        const secondParam = parseString(sub);
-        if (secondParam.error !== undefined) {
-            secondParam.error += ' (second argument)';
-            return secondParam;
-        }
-        let i = secondParam.pos + 1;
-        while (i < sub.length && isWhiteSpace(sub.charAt(i)) === true) {
-            i += 1;
-        }
+    } else if (tuple[1].kind === 'number') {
         //
-        // TEXT CONTENT CHECK
+        // NUMBER OF OCCURENCES CHECK
         //
-        if (i >= sub.length) {
-            const value = cleanString(secondParam.value);
-            const varName = 'parseAssertElemStr';
-            return {
-                'instructions': [
-                    `let ${varName} = await page.$("${path}");\n` +
-                    `if (${varName} === null) { throw '"${path}" not found'; }\n` +
-                    // TODO: maybe check differently depending on the tag kind?
-                    `let t = await (await ${varName}.getProperty("textContent")).jsonValue();\n` +
-                    `if (t !== "${value}") { throw '"' + t + '" !== "${value}"'; }`,
-                ],
-                'wait': false,
-            };
+        if (tuple.length !== 2) {
+            return {'error': 'unexpected argument after number of occurences'};
         }
-        //
-        // ATTRIBUTE CHECK
-        //
-        if (sub.charAt(i) !== ',') {
-            return {'error': `unexpected token after second parameter: \`${sub.charAt(i)}\``};
-        }
-        const attributeName = cleanString(secondParam.value);
-        // Since we check for attribute, the attribute name cannot be empty
-        if (attributeName.length === 0) {
-            return {'error': 'attribute name cannot be empty'};
-        }
-        const third = sub.substring(i + 1).trim();
-        const thirdParam = parseString(third);
-        if (thirdParam.error !== undefined) {
-            thirdParam.error += ' (third argument)';
-            return thirdParam;
-        }
-        i = thirdParam.pos + 1;
-        while (i < third.length) {
-            if (isWhiteSpace(third.charAt(i)) !== true) {
-                return {'error': `expected \`)\`, found \`${third.charAt(i)}\``};
-            }
-            i += 1;
-        }
-        const value = cleanString(thirdParam.value);
-        const varName = 'parseAssertElemAttr';
+        const occurences = tuple[1].getValue();
+        const varName = 'parseAssertElemInt';
         return {
             'instructions': [
-                `let ${varName} = await page.$("${path}");\n` +
-                `if (${varName} === null) { throw '"${path}" not found'; }\n` +
-                'await page.evaluate(e => {\n' +
-                `if (e.getAttribute("${attributeName}") !== "${value}") {\n` +
-                `throw 'expected "${value}", found "' + e.getAttribute("${attributeName}") + '"` +
-                ` for attribute "${attributeName}"';\n}\n}, ${varName});`,
+                `let ${varName} = await page.$$("${selector}");\n` +
+                // TODO: maybe check differently depending on the tag kind?
+                `if (${varName}.length !== ${occurences}) { throw 'expected ${occurences} ` +
+                `elements, found ' + ${varName}.length; }`,
             ],
             'wait': false,
         };
-    } else if (sub.startsWith('{')) {
+    } else if (tuple[1].kind === 'json') {
+        //
+        // CSS PROPERTIES CHECK
+        //
+        if (tuple.length !== 2) {
+            return {'error': 'unexpected argument after CSS properties'};
+        }
         let d;
         try {
-            d = JSON.parse(sub);
+            d = JSON.parse(tuple[1].getText());
         } catch (error) {
             return {'error': `Invalid JSON object: "${error}"`};
         }
@@ -504,7 +451,7 @@ function parseAssert(s) {
                 const cKey = cleanString(key);
                 // TODO: check how to compare CSS property
                 code += `if (assertComputedStyle["${cKey}"] != "${clean}") { ` +
-                    `throw 'expected "${clean}", got for key "${cKey}" for "${path}"'; }\n`;
+                    `throw 'expected "${clean}", got for key "${cKey}" for "${selector}"'; }\n`;
             }
         }
         if (code.length === 0) {
@@ -516,161 +463,125 @@ function parseAssert(s) {
         const varName = 'parseAssertElemJson';
         return {
             'instructions': [
-                `let ${varName} = await page.$("${path}");\n` +
-                `if (${varName} === null) { throw '"${path}" not found'; }\n` +
+                `let ${varName} = await page.$("${selector}");\n` +
+                `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
                 'await page.evaluate(e => {' +
                 `let assertComputedStyle = getComputedStyle(e);\n${code}` +
                 `}, ${varName});`,
             ],
             'wait': false,
         };
-    } else if (matchInteger(sub) === true) {
-        const occurences = sub.match(/[0-9]+/g);
-        if (occurences.length !== 1) {
-            return {'error': 'Nothing was expected after second argument [integer]'};
-        }
-        let i = occurences.length;
-        while (i < sub.length) {
-            if (isWhiteSpace(sub.charAt(i)) !== true) {
-                return {'error': `expected \`)\`, found \`${sub.charAt(i)}\``};
-            }
-            i += 1;
-        }
-        const varName = 'parseAssertElemInt';
+    } else if (tuple[1].kind === 'string' && tuple.length === 2) {
+        //
+        // TEXT CONTENT CHECK
+        //
+        const value = tuple[1].getValue();
+        const varName = 'parseAssertElemStr';
         return {
             'instructions': [
-                `let ${varName} = await page.$$("${path}");\n` +
+                `let ${varName} = await page.$("${selector}");\n` +
+                `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
                 // TODO: maybe check differently depending on the tag kind?
-                `if (${varName}.length !== ${occurences}) { throw 'expected ${occurences} ` +
-                `elements, found ' + ${varName}.length; }`,
+                `let t = await (await ${varName}.getProperty("textContent")).jsonValue();\n` +
+                `if (t !== "${value}") { throw '"' + t + '" !== "${value}"'; }`,
+            ],
+            'wait': false,
+        };
+    } else if (tuple[1].kind === 'string') {
+        //
+        // ATTRIBUTE CHECK
+        //
+        if (tuple[2].kind !== 'string') {
+            const kind = tuple[2].kind;
+            return {
+                'error': 'expected a string as third argument for the attribute value, found ' +
+                    `a ${kind}`,
+            };
+        }
+        const attributeName = cleanString(tuple[1].getValue().trim());
+        if (attributeName.length === 0) {
+            return {'error': 'attribute name (second argument) cannot be empty'};
+        }
+        const value = cleanString(tuple[2].getValue());
+        const varName = 'parseAssertElemAttr';
+        return {
+            'instructions': [
+                `let ${varName} = await page.$("${selector}");\n` +
+                `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
+                'await page.evaluate(e => {\n' +
+                `if (e.getAttribute("${attributeName}") !== "${value}") {\n` +
+                `throw 'expected "${value}", found "' + e.getAttribute("${attributeName}") + '"` +
+                ` for attribute "${attributeName}"';\n}\n}, ${varName});`,
             ],
             'wait': false,
         };
     }
-    return {'error': `expected [integer] or [string] or [JSON object], found \`${sub}\``};
+    const kind = tuple[1].kind;
+    return {
+        'error': `expected "string" or "json" or "number" as second argument, found a ${kind}`,
+    };
 }
 
 // Possible inputs:
 //
 // * ("CSS selector", "text")
 function parseText(s) {
-    if (s.charAt(0) !== '(') {
-        return {'error': 'expected `(` character'};
-    } else if (s.charAt(s.length - 1) !== ')') {
-        return {'error': 'expected to end with `)` character'};
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
+        return {'error': 'expected `("CSS selector", "text")`'};
     }
-    const ret = parseString(s.substring(1));
-    if (ret.error !== undefined) {
-        return ret;
+    const tuple = p.elems[0].getValue();
+    if (tuple.length !== 2 || tuple[0].kind !== 'string' || tuple[1].kind !== 'string') {
+        return {'error': 'expected `("CSS selector", "text")`'};
     }
-    let pos = ret.pos + 2;
-    while (isWhiteSpace(s.charAt(pos)) === true) {
-        pos += 1;
+    const selector = cleanCssSelector(tuple[0].getValue());
+    if (selector.length === 0) {
+        return {'error': 'CSS selector cannot be empty'};
     }
-    const path = cleanCssSelector(ret.value).trim();
-    if (path.length === 0) {
-        return {'error': 'selector cannot be empty'};
-    } else if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\` after first argument, found \`${s.charAt(pos)}\``};
-    }
-    // We take everything between the comma and the paren.
-    const sub = s.substring(pos + 1, s.length - 1).trim();
-    if (sub.length === 0) {
-        return {'error': 'expected a string as second parameter'};
-    } else if (sub.startsWith('"') || sub.startsWith('\'')) {
-        const secondParam = parseString(sub);
-        if (secondParam.error !== undefined) {
-            return secondParam;
-        }
-        let i = secondParam.pos + 1;
-        while (i < sub.length) {
-            if (isWhiteSpace(sub.charAt(i)) !== true) {
-                return {'error': `unexpected token: \`${sub.charAt(i)}\` after second parameter`};
-            }
-            i += 1;
-        }
-        const value = cleanString(secondParam.value);
-        const varName = 'parseTextElem';
-        return {
-            'instructions': [
-                `let ${varName} = await page.$("${path}");\n` +
-                `if (${varName} === null) { throw '"${path}" not found'; }\n` +
-                `await page.evaluate(e => { e.innerText = "${value}";}, ${varName});`,
-            ],
-        };
-    }
-    return {'error': `expected [string] as second parameter, found \`${sub}\``};
+    const value = cleanString(tuple[1].getValue());
+    const varName = 'parseTextElem';
+    return {
+        'instructions': [
+            `let ${varName} = await page.$("${selector}");\n` +
+            `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
+            `await page.evaluate(e => { e.innerText = "${value}";}, ${varName});`,
+        ],
+    };
 }
 
 // Possible inputs:
 //
 // * ("CSS selector", "attribute name", "attribute value")
 function parseAttribute(s) {
-    if (s.charAt(0) !== '(') {
-        return {'error': 'expected `(` character'};
-    } else if (s.charAt(s.length - 1) !== ')') {
-        return {'error': 'expected to end with `)` character'};
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
+        return {'error': 'expected `("CSS selector", "attribute name", "attribute value")'};
     }
-    let ret = parseString(s.substring(1));
-    if (ret.error !== undefined) {
-        ret.error += ' (first parameter)';
-        return ret;
+    const tuple = p.elems[0].getValue();
+    if (tuple.length !== 3 || tuple[0].kind !== 'string' || tuple[1].kind !== 'string' ||
+        tuple[2].kind !== 'string') {
+        return {'error': 'expected `("CSS selector", "attribute name", "attribute value")`'};
     }
-    let pos = ret.pos + 2;
-    while (isWhiteSpace(s.charAt(pos)) === true) {
-        pos += 1;
+    const selector = cleanCssSelector(tuple[0].getValue());
+    if (selector.length === 0) {
+        return {'error': 'CSS selector (first argument) cannot be empty'};
     }
-    if (ret.value.length < 1) {
-        return {'error': 'CSS path (first parameter) cannot be empty'};
-    }
-    const path = cleanCssSelector(ret.value).trim();
-    if (path.length === 0) {
-        return {'error': 'CSS path (first argument) cannot be empty'};
-    } else if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\` after first argument, found \`${s.charAt(pos)}\``};
-    }
-    pos += 1;
-    while (isWhiteSpace(s.charAt(pos)) === true) {
-        pos += 1;
-    }
-    ret = parseString(s.substring(pos));
-    if (ret.error !== undefined) {
-        ret.error += ' (second parameter)';
-        return ret;
-    } else if (ret.value.length < 1) {
-        return {'error': 'attribute name (second parameter) cannot be empty'};
-    }
-    const attributeName = cleanString(ret.value);
-    pos += ret.pos + 1;
-    while (isWhiteSpace(s.charAt(pos)) === true) {
-        pos += 1;
-    }
-    if (s.charAt(pos) !== ',') {
-        return {'error': `expected \`,\` after second argument, found \`${s.charAt(pos)}\``};
-    }
-    // We take everything between the comma and the paren.
-    const sub = s.substring(pos + 1, s.length - 1).trim();
-    if (sub.length === 0) {
-        return {'error': 'expected a string as third parameter'};
-    }
-    ret = parseString(sub);
-    if (ret.error !== undefined) {
-        ret.error += ' (third parameter)';
-        return ret;
-    }
-    let i = ret.pos + 1;
-    while (i < sub.length) {
-        if (isWhiteSpace(sub.charAt(i)) !== true) {
-            return {'error': `unexpected token: \`${sub.charAt(i)}\` after third parameter`};
-        }
-        i += 1;
+    const attributeName = cleanString(tuple[1].getValue().trim());
+    if (selector.length === 0) {
+        return {'error': 'attribute name (second argument) cannot be empty'};
     }
     const value = cleanString(ret.value);
     const varName = 'parseAttributeElem';
     return {
         'instructions': [
-            `let ${varName} = await page.$("${path}");\n` +
-            `if (${varName} === null) { throw '"${path}" not found'; }\n` +
+            `let ${varName} = await page.$("${selector}");\n` +
+            `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
             `await page.evaluate(e => { e.setAttribute("${attributeName}","${value}"); }, ` +
             `${varName});`,
         ],
@@ -681,12 +592,16 @@ function parseAttribute(s) {
 //
 // * boolean value (`true` or `false`)
 function parseScreenshot(line) {
-    if (line !== 'true' && line !== 'false') {
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'bool') {
         return {'error': `Expected "true" or "false" value, found \`${line}\``};
     }
     return {
         'instructions': [
-            `arg.takeScreenshot = ${line === 'true' ? 'true' : 'false'};`,
+            `arg.takeScreenshot = ${p.elems[0].getValue()};`,
         ],
         'wait': false,
     };
@@ -696,12 +611,16 @@ function parseScreenshot(line) {
 //
 // * boolean value (`true` or `false`)
 function parseFail(line) {
-    if (line !== 'true' && line !== 'false') {
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'bool') {
         return {'error': `Expected "true" or "false" value, found \`${line}\``};
     }
     return {
         'instructions': [
-            `arg.expectedToFail = ${line === 'true' ? 'true' : 'false'};`,
+            `arg.expectedToFail = ${p.elems[0].getValue()};`,
         ],
         'wait': false,
     };
@@ -736,18 +655,8 @@ function parseContent(content, docPath) {
     let firstGotoParsed = false;
 
     for (let i = 0; i < lines.length; ++i) {
-        const line = lines[i].split('// ')[0].trim(); // We remove the comment part if any.
-        if (line.length === 0) {
-            continue;
-        }
         const order = line.split(':')[0].toLowerCase();
         if (Object.prototype.hasOwnProperty.call(ORDERS, order)) {
-            // goto command shouldn't use Parser!
-            res = ORDERS[order](line.substr(order.length + 1).trim(), docPath);
-            if (res.error !== undefined) {
-                res.line = i + 1;
-                return res;
-            }
             if (firstGotoParsed === false) {
                 if (order !== 'goto' && NO_INTERACTION_COMMANDS.indexOf(order) === -1) {
                     const cmds = NO_INTERACTION_COMMANDS.map(x => `\`${x}\``).join(', ');
@@ -757,6 +666,11 @@ function parseContent(content, docPath) {
                     };
                 }
                 firstGotoParsed = order === 'goto';
+            }
+            res = ORDERS[order](line.substr(order.length + 1).trim(), docPath);
+            if (res.error !== undefined) {
+                res.line = i + 1;
+                return res;
             }
             for (let y = 0; y < res['instructions'].length; ++y) {
                 commands['instructions'].push({'code': res['instructions'][y], 'original': line});
