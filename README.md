@@ -274,7 +274,7 @@ assert: ("#elem", "not hello")
 
 ### Comments?
 
-You can add comments in the `.goml` scripts with `// ` (the whitespace after the `//` is mandatory). Example:
+You can add comments in the `.goml` scripts with `//`. Example:
 
 ```
 goto: https://somewhere.com // let's start somewhere!
