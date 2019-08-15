@@ -772,8 +772,8 @@ function checkCommands() {
         try {
             const errors = TO_CHECK[i].func();
             nbErrors += errors.errors;
-            print(`<== "${TO_CHECK[i].name}": ${errors.errors} ${plural('error', errors.errors)} (in ` +
-                  `${errors.ranTests} ${plural('test', errors.ranTests)})`);
+            print(`<== "${TO_CHECK[i].name}": ${errors.errors} ${plural('error', errors.errors)}` +
+                ` (in ${errors.ranTests} ${plural('test', errors.ranTests)})`);
         } catch (err) {
             nbErrors += 1;
             print(`<== "${TO_CHECK[i].name}" failed: ${err}\n${err.stack}`);

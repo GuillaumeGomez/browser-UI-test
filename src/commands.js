@@ -14,54 +14,6 @@ function cleanCssSelector(s) {
     return cleanString(s).replace(/\\/g, '\\\\').trim();
 }
 
-function matchPosition(s) {
-    return s.match(/\([0-9]+,[ ]*[0-9]+\)/g) !== null;
-}
-
-function matchInteger(s) {
-    return s.match(/[0-9]+/g) !== null;
-}
-
-function isWhiteSpace(c) {
-    return c === ' ' || c === '\t';
-}
-
-function isStringChar(c) {
-    return c === '\'' || c === '"';
-}
-
-function isNumber(c) {
-    return c >= '0' && c <= '9';
-}
-
-function parseString(s) {
-    let i = 0;
-
-    while (i < s.length && isWhiteSpace(s.charAt(i)) === true) {
-        i += 1;
-    }
-    if (i >= s.length) {
-        return {'error': 'no string'};
-    }
-    const endChar = s.charAt(i);
-    if (isStringChar(endChar) === false) {
-        return {'error': 'expected `\'` or `"` character'};
-    }
-    i += 1;
-    const start = i;
-    let c;
-    while (i < s.length) {
-        c = s.charAt(i);
-        if (c === endChar) {
-            return {'value': s.substring(start, i), 'pos': i};
-        } else if (c === '\\') {
-            i += 1;
-        }
-        i += 1;
-    }
-    return {'error': `expected \`${endChar}\` character at the end of the string`};
-}
-
 function handlePathParameters(line, split, join) {
     const parts = line.split(split);
     if (parts.length > 1) {
@@ -73,25 +25,6 @@ function handlePathParameters(line, split, join) {
         line = parts.join(join);
     }
     return line;
-}
-
-function parseCssSelector(line) {
-    const ret = parseString(line);
-    if (ret.error !== undefined) {
-        return ret;
-    }
-    const selector = cleanCssSelector(ret.value).trim();
-    if (selector.length === 0) {
-        return {'error': 'selector cannot be empty'};
-    }
-    let i = ret.pos + 1;
-    while (i < line.length) {
-        if (isWhiteSpace(line.charAt(i)) !== true) {
-            return {'error': `unexpected token \`${line.charAt(i)}\` after CSS selector`};
-        }
-        i += 1;
-    }
-    return {'value': selector};
 }
 
 // Possible inputs:

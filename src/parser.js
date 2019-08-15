@@ -11,7 +11,7 @@ function isNumber(c) {
 }
 
 function isLetter(c) {
-    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+    return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
 }
 
 class Element {
@@ -121,15 +121,18 @@ class Parser {
             } else if (c === separator) {
                 const elems = pushTo !== null ? pushTo : this.elems;
                 if (elems.length === 0) {
-                    this.push(new CharElement(separator, this.pos, `unexpected \`${separator}\` as first element`), pushTo);
+                    this.push(new CharElement(separator, this.pos,
+                        `unexpected \`${separator}\` as first element`), pushTo);
                     this.pos = this.text.length;
                 } else if (prev === separator) {
-                    this.push(new CharElement(separator, this.pos, `unexpected \`${separator}\` after \`${separator}\``), pushTo);
+                    this.push(new CharElement(separator, this.pos,
+                        `unexpected \`${separator}\` after \`${separator}\``), pushTo);
                     this.pos = this.text.length;
                 } else if (elems[elems.length - 1].kind === 'char') {
                     // TODO: not sure if this block is useful...
                     const prevElem = elems[elems.length - 1].text;
-                    this.push(new CharElement(separator, this.pos, `unexpected \`${separator}\` after \`${prevElem}\``), pushTo);
+                    this.push(new CharElement(separator, this.pos,
+                        `unexpected \`${separator}\` after \`${prevElem}\``), pushTo);
                     this.pos = this.text.length;
                 } else {
                     prev = separator;
@@ -164,6 +167,7 @@ class Parser {
     }
 
     parseComment(pushTo = null) {
+        const start = this.pos;
         if (this.text.charAt(this.pos + 1) === '/') {
             this.pos = this.text.length;
         } else {
@@ -200,35 +204,45 @@ class Parser {
         this.pos += 1;
         const prev = this.parse(')', elems, ',');
         if (elems.length > 0 && elems[elems.length - 1].error !== null) {
-            this.push(new TupleElement(elems, start, this.pos, elems[elems.length - 1].error), pushTo);
+            this.push(new TupleElement(elems, start, this.pos, elems[elems.length - 1].error),
+                pushTo);
         } else if (prev !== '') {
             if (prev === ',') {
                 if (elems.length > 0) {
                     const el = elems[elems.length - 1].getText();
-                    this.push(new TupleElement(elems, start, this.pos, `unexpected \`,\` after \`${el}\``), pushTo);
+                    this.push(new TupleElement(elems, start, this.pos,
+                        `unexpected \`,\` after \`${el}\``), pushTo);
                 } else {
-                    this.push(new TupleElement(elems, start, this.pos, `unexpected \`,\` after \`(\``), pushTo);
+                    this.push(new TupleElement(elems, start, this.pos,
+                        'unexpected `,` after `(`'), pushTo);
                 }
                 this.pos = this.text.length;
             } else if (elems.length > 1) { // we're at the end of the text
                 const el = elems[elems.length - 1].getText();
-                const prevEl = typeof prev !== 'undefined' ? prev : elems[elems.length - 2].getText();
-                this.push(new TupleElement(elems, start, this.pos, `unexpected \`${el}\` after \`${prevEl}\``), pushTo);
+                const prevText = elems[elems.length - 2].getText();
+                const prevEl = typeof prev !== 'undefined' ? prev : prevText;
+                this.push(new TupleElement(elems, start, this.pos,
+                    `unexpected \`${el}\` after \`${prevEl}\``), pushTo);
             } else {
                 const el = elems[elems.length - 1].getText();
                 // this case should never happen but just in case...
-                this.push(new TupleElement(elems, start, this.pos, `unexpected \`${el}\` after \`(\``), pushTo);
+                this.push(new TupleElement(elems, start, this.pos,
+                    `unexpected \`${el}\` after \`(\``), pushTo);
             }
         } else if (this.pos >= this.text.length || this.text.charAt(this.pos) !== ')') {
             if (elems.length === 0) {
-                this.push(new TupleElement(elems, start, this.pos, 'expected `)` at the end'), pushTo);
+                this.push(new TupleElement(elems, start, this.pos, 'expected `)` at the end'),
+                    pushTo);
             } else {
-                this.push(new TupleElement(elems, start, this.pos, `expected \`)\` after \`${elems[elems.length - 1].getText()}\``), pushTo);
+                this.push(new TupleElement(elems, start, this.pos,
+                    `expected \`)\` after \`${elems[elems.length - 1].getText()}\``), pushTo);
             }
         } else if (elems.length === 0) {
-            this.push(new TupleElement(elems, start, this.pos, 'unexpected `()`: tuples need at least one argument'), pushTo);
+            this.push(new TupleElement(elems, start, this.pos,
+                'unexpected `()`: tuples need at least one argument'), pushTo);
         } else if (elems[elems.length - 1].error !== null) {
-            this.push(new TupleElement(elems, start, this.pos, elems[elems.length - 1].error), pushTo);
+            this.push(new TupleElement(elems, start, this.pos, elems[elems.length - 1].error),
+                pushTo);
         } else {
             this.push(new TupleElement(elems, start, this.pos), pushTo);
         }
@@ -308,7 +322,6 @@ class Parser {
             const c = this.text.charAt(this.pos);
 
             if (c === '}') {
-                const fullText = this.text.substring(start, this.pos + 1);
                 if (key !== null) {
                     let k = key.getText();
                     if (prevChar === ':') {
@@ -330,7 +343,8 @@ class Parser {
                 if (key === null) {
                     if (prevChar !== ',' && elems.length > 0) {
                         const last = elems[elems.length - 1].value.getText();
-                        parseEnd(this, pushTo, `expected \`,\` after \`${last}\`, found \`${tmp[0].getText()}\``);
+                        parseEnd(this, pushTo,
+                            `expected \`,\` after \`${last}\`, found \`${tmp[0].getText()}\``);
                     }
                     if (tmp[0].error !== null) {
                         parseEnd(this, pushTo, tmp[0].error);
@@ -340,7 +354,9 @@ class Parser {
                 } else {
                     elems.push({'key': key, 'value': tmp[0]});
                     if (prevChar !== ':') {
-                        parseEnd(this, pushTo, `expected \`:\` after \`${key.getText()}\`, found \`${tmp[0].getText()}\``);
+                        const text = tmp[0].getText();
+                        parseEnd(this, pushTo,
+                            `expected \`:\` after \`${key.getText()}\`, found \`${text}\``);
                     } else {
                         prevChar = '';
                         if (tmp[0].error !== null) {
@@ -364,7 +380,6 @@ class Parser {
                 }
             } else if (c === ':') {
                 if (key === null) {
-                    const fullText = this.text.substring(start, this.pos + 1);
                     if (elems.length > 0) {
                         let msg = 'unexpected `:` after `,`';
                         if (prevChar !== ',') {
@@ -385,7 +400,8 @@ class Parser {
                 this.parseNumber(tmp);
                 if (key === null) {
                     elems.push({'key': tmp[0]});
-                    parseEnd(this, pushTo, `numbers cannot be used as keys (for \`${tmp[0].getText()}\`)`);
+                    const text = tmp[0].getText();
+                    parseEnd(this, pushTo, `numbers cannot be used as keys (for \`${text}\`)`);
                 } else if (prevChar !== ':') {
                     elems.push({'key': key, value: tmp[0]});
                     parseEnd(this, pushTo,
@@ -423,17 +439,20 @@ class Parser {
                     if (key === null) {
                         elems.push({'key': el});
                         if (elems.length > 1) {
-                            const last = prevChar === ',' ? ',' : elems[elems.length - 2].value.getText();
+                            const text = elems[elems.length - 2].value.getText();
+                            const last = prevChar === ',' ? ',' : text;
                             parseEnd(this, pushTo, `unexpected \`${token}\` after \`${last}\``);
                         } else {
                             parseEnd(this, pushTo, `unexpected \`${token}\` after \`{\``);
                         }
                     } else if (prevChar !== ':') {
                         elems.push({'key': key, 'value': el});
-                        parseEnd(this, pushTo, `expected \`:\` after \`${key.getText()}\`, found \`${token}\` after`);
+                        parseEnd(this, pushTo,
+                            `expected \`:\` after \`${key.getText()}\`, found \`${token}\` after`);
                     } else {
                         elems.push({'key': key, 'value': el});
-                        parseEnd(this, pushTo, `invalid value \`${token}\` for key \`${key.getText()}\``);
+                        parseEnd(this, pushTo,
+                            `invalid value \`${token}\` for key \`${key.getText()}\``);
                     }
                 } else if (key === null) {
                     elems.push({'key': el});

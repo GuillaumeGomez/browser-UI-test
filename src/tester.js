@@ -79,7 +79,7 @@ async function innerRunTests(logs, options) {
                     'file': testName,
                     'commands': commands['instructions'],
                 });
-            } catch(err) {
+            } catch (err) {
                 failures += 1;
                 logs.append(testName + '... FAILED (exception occured)');
                 logs.append(`${err}\n${err.stack}`);
