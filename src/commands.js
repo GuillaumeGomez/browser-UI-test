@@ -215,14 +215,18 @@ function parseGoTo(input, docPath) {
     // This function doesn't use the parser so we still need to remove the comment part.
     const parts = input.split('//');
     let line = '';
-    for (let i = 0; i < parts.length; ++i) {
-        if (parts[i].endsWith(':')) {
-            line += `${parts[i]}//`;
-            if (i + 1 < parts.length) {
-                i += 1;
-                line += parts[i];
+    if (parts.length > 1) {
+        for (let i = 0; i < parts.length; ++i) {
+            if (parts[i].endsWith(':')) {
+                line += `${parts[i]}//`;
+                if (i + 1 < parts.length) {
+                    i += 1;
+                    line += parts[i];
+                }
             }
         }
+    } else {
+        line = input;
     }
     line = line.trim();
     // We just check if it goes to an HTML file, not checking much though...
@@ -541,7 +545,7 @@ function parseScreenshot(line) {
     if (p.error !== null) {
         return {'error': p.error};
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'bool') {
-        return {'error': `Expected "true" or "false" value, found \`${line}\``};
+        return {'error': `expected \`true\` or \`false\` value, found \`${line}\``};
     }
     return {
         'instructions': [
@@ -560,7 +564,7 @@ function parseFail(line) {
     if (p.error !== null) {
         return {'error': p.error};
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'bool') {
-        return {'error': `Expected "true" or "false" value, found \`${line}\``};
+        return {'error': `expected \`true\` or \`false\` value, found \`${line}\``};
     }
     return {
         'instructions': [
