@@ -503,35 +503,89 @@ function parseText(line) {
 // Possible inputs:
 //
 // * ("CSS selector", "attribute name", "attribute value")
+// * ("CSS selector", [JSON object])
 function parseAttribute(line) {
     const p = new Parser(line);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
-        return {'error': 'expected `("CSS selector", "attribute name", "attribute value")'};
+        return {
+            'error': 'expected `("CSS selector", "attribute name", "attribute value")` or ' +
+                '`("CSS selector", [JSON object])`',
+        };
     }
     const tuple = p.elems[0].getValue();
-    if (tuple.length !== 3 || tuple[0].kind !== 'string' || tuple[1].kind !== 'string' ||
-        tuple[2].kind !== 'string') {
-        return {'error': 'expected `("CSS selector", "attribute name", "attribute value")`'};
+    if (tuple[0].kind !== 'string') {
+        return {
+            'error': 'expected `("CSS selector", "attribute name", "attribute value")` or ' +
+                '`("CSS selector", [JSON object])`',
+        };
     }
     const selector = cleanCssSelector(tuple[0].getValue());
     if (selector.length === 0) {
         return {'error': 'CSS selector (first argument) cannot be empty'};
     }
-    const attributeName = cleanString(tuple[1].getValue().trim());
-    if (selector.length === 0) {
-        return {'error': 'attribute name (second argument) cannot be empty'};
+    if (tuple.length === 3) {
+        if (tuple[1].kind !== 'string' || tuple[2].kind !== 'string') {
+            return {
+                'error': 'expected strings for attribute name and attribute value (second and ' +
+                    'third arguments)',
+            };
+        }
+        const attributeName = cleanString(tuple[1].getValue().trim());
+        if (selector.length === 0) {
+            return {'error': 'attribute name (second argument) cannot be empty'};
+        }
+        const value = cleanString(tuple[2].getValue());
+        const varName = 'parseAttributeElem';
+        return {
+            'instructions': [
+                `let ${varName} = await page.$("${selector}");\n` +
+                `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
+                `await page.evaluate(e => { e.setAttribute("${attributeName}","${value}"); }, ` +
+                `${varName});`,
+            ],
+        };
+    } else if (tuple.length !== 2) {
+        return {
+            'error': 'expected `("CSS selector", "attribute name", "attribute value")` or ' +
+                '`("CSS selector", [JSON object])`',
+        };
     }
-    const value = cleanString(tuple[2].getValue());
-    const varName = 'parseAttributeElem';
+    if (tuple[1].kind !== 'json') {
+        return {
+            'error': 'expected json as second argument (since there are only arguments), found ' +
+                `${tuple[1].kind}`,
+        };
+    }
+    let d;
+    try {
+        d = JSON.parse(tuple[1].getText());
+    } catch (error) {
+        return {'error': `Invalid JSON object: "${error}"`};
+    }
+    let code = '';
+    const varName = 'parseAttributeElemJson';
+    for (const key in d) {
+        if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
+            const clean = cleanString(d[key]);
+            // TODO: instead of parsing JSON, maybe check if strings/number/bool in json object?
+            const cKey = cleanString(key);
+            code += `await page.evaluate(e => { e.setAttribute("${cKey}","${clean}"); },` +
+                `${varName});\n`;
+        }
+    }
+    if (code.length === 0) {
+        return {
+            'instructions': [],
+            'wait': false,
+        };
+    }
     return {
         'instructions': [
             `let ${varName} = await page.$("${selector}");\n` +
-            `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
-            `await page.evaluate(e => { e.setAttribute("${attributeName}","${value}"); }, ` +
-            `${varName});`,
+            `if (${varName} === null) { throw '"${selector}" not found'; }\n${code}`,
         ],
     };
 }

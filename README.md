@@ -126,6 +126,12 @@ assert: ("#id > .class", "attribute-name", "attribute-value")
 attribute: ("#button", "attribute-name", "attribute-value")
 ```
 
+To set multiple attributes at a time, you can use a JSON object:
+
+```
+attribute: ("#button", {"attribute name": "attribute value", "another": "x"})
+```
+
 #### click
 
 **click** command send a click event on an element or at the specified position. It expects a CSS selector or a position. Examples:

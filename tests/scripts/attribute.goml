@@ -2,4 +2,6 @@ screenshot: false
 goto: file://{current-dir}/{doc-path}/basic.html
 assert: ("#button", "id", "button")
 attribute: ("#button", "id", "another-id")
-assert: ("#another-button")
+assert: ("#another-id")
+attribute: ("#another-id", {"id": "yet-another-id", "test": "lol"})
+assert: ("#yet-another-id", "test", "lol")
