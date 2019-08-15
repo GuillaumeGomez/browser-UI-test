@@ -82,13 +82,14 @@ $ node src/tester.js --test-folder tests/scripts/ --failure-folder failures --do
 
 ## `.goml` scripts
 
-Those scripts aim to be as quick to write and as small as possible. To do so, they provide a short list of commands. Please note that those scripts must **always** start with a [`goto`](#goto) command.
+Those scripts aim to be as quick to write and as small as possible. To do so, they provide a short list of commands. Please note that those scripts must **always** start with a [`goto`](#goto) command (non-interactional commands such as `screenshot` or `fail` can be use first as well).
 
 Here's the command list:
 
  * [`assert`](#assert)
  * [`attribute`](#attribute)
  * [`click`](#click)
+ * [`fail`](#fail)
  * [`focus`](#focus)
  * [`goto`](#goto)
  * [`local-storage`](#local-storage)
@@ -100,6 +101,31 @@ Here's the command list:
  * [`wait-for`](#wait-for)
  * [`write`](#write)
 
+#### assert
+
+**assert** command checks if the condition is true, otherwise fail. Four different functionalities are available:
+
+```
+// will check that "#id > .class" exists
+assert: ("#id > .class")
+// will check that first "#id > .class" has text "hello"
+assert: ("#id > .class", "hello")
+// will check that there are 2 "#id > .class"
+assert: ("#id > .class", 2)
+// will check that "#id > .class" has blue color
+assert: ("#id > .class", { "color": "blue" })
+// will check that "#id > .class" has an attribute called "attribute-name" with value "attribute-value"
+assert: ("#id > .class", "attribute-name", "attribute-value")
+```
+
+#### attribute
+
+**attribute** command allows to update an element's attribute. Example:
+
+```
+attribute: ("#button", "attribute-name", "attribute-value")
+```
+
 #### click
 
 **click** command send a click event on an element or at the specified position. It expects a CSS selector or a position. Examples:
@@ -110,18 +136,26 @@ click: "#element > a"
 click: (10, 12)
 ```
 
-#### wait-for
+#### fail
 
-**wait-for** command waits for a given duration or for an element to be created. It expects a CSS selector or a duration in milliseconds.
-
-**/!\\** Be careful when using it: if the given selector never appears, the test will timeout after 30 seconds.
-
-Examples:
+**fail** command sets a test to be expected to fail (or not). Example:
 
 ```
-wait-for: ".element"
-wait-for: "#element > a"
-wait-for: 1000
+fail: false
+```
+
+You can use it as follows too:
+
+```
+// text of "#elem" is "hello"
+assert: ("#elem", "hello")
+text: ("#elem", "not hello")
+// we want to check if the text changed (strangely but whatever)
+fail: true
+assert: ("#elem", "hello")
+// now we set it back to false to check the new text
+fail: false
+assert: ("#elem", "not hello")
 ```
 
 #### focus
@@ -131,26 +165,6 @@ wait-for: 1000
 ```
 focus: ".element"
 focus: "#element"
-```
-
-#### write
-
-**write** command sends keyboard inputs on given element. If no element is provided, it'll write into the currently focused element. It expects a string and/or a CSS selector. The string has to be surrounded by quotes (either `'` or `"`). Examples:
-
-```
-write: (".element", "text")
-write: ("#element", "text")
-write: "text"
-```
-
-#### move-cursor-to
-
-**move-cursor-to** command moves the mouse cursor to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector. Examples:
-
-```
-move-cursor-to: "#element"
-move-cursor-to: ".element"
-move-cursor-to: (10, 12)
 ```
 
 #### goto
@@ -183,6 +197,32 @@ You can of course use `{doc-path}` and `{current-dir}` at the same time:
 goto: file://{current-dir}/{doc-path}/file.html
 ```
 
+#### local-storage
+
+**local-storage** command sets local storage's values. It expect a JSON object. Example:
+
+```
+local-storage: {"key": "value", "another key": "another value"}
+```
+
+#### move-cursor-to
+
+**move-cursor-to** command moves the mouse cursor to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector. Examples:
+
+```
+move-cursor-to: "#element"
+move-cursor-to: ".element"
+move-cursor-to: (10, 12)
+```
+
+#### screenshot
+
+**screenshot** command enables/disables the screenshot at the end of the script (and therefore its comparison). It expects a boolean value. Example:
+
+```
+screenshot: false
+```
+
 #### scroll-to
 
 **scroll-to** command scrolls to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector. Examples:
@@ -201,39 +241,6 @@ scroll-to: (10, 12)
 size: (700, 1000)
 ```
 
-#### local-storage
-
-**local-storage** command sets local storage's values. It expect a JSON object. Example:
-
-```
-local-storage: {"key": "value", "another key": "another value"}
-```
-
-#### screenshot
-
-**screenshot** command enables/disables the screenshot at the end of the script (and therefore its comparison). It expects a boolean value. Example:
-
-```
-screenshot: false
-```
-
-#### assert
-
-**assert** command checks if the condition is true, otherwise fail. Four different functionalities are available:
-
-```
-// will check that "#id > .class" exists
-assert: ("#id > .class")
-// will check that first "#id > .class" has text "hello"
-assert: ("#id > .class", "hello")
-// will check that there are 2 "#id > .class"
-assert: ("#id > .class", 2)
-// will check that "#id > .class" has blue color
-assert: ("#id > .class", { "color": "blue" })
-// will check that "#id > .class" has an attribute called "attribute-name" with value "attribute-value"
-assert: ("#id > .class", "attribute-name", "attribute-value")
-```
-
 #### text
 
 **text** command allows to update an element's text. Example:
@@ -242,34 +249,28 @@ assert: ("#id > .class", "attribute-name", "attribute-value")
 text: ("#button", "hello")
 ```
 
-#### attribute
+#### wait-for
 
-**attribute** command allows to update an element's attribute. Example:
+**wait-for** command waits for a given duration or for an element to be created. It expects a CSS selector or a duration in milliseconds.
 
-```
-attribute: ("#button", "attribute-name", "attribute-value")
-```
+**/!\\** Be careful when using it: if the given selector never appears, the test will timeout after 30 seconds.
 
-#### fail
-
-**fail** command sets a test to be expected to fail (or not). Example:
+Examples:
 
 ```
-fail: false
+wait-for: ".element"
+wait-for: "#element > a"
+wait-for: 1000
 ```
 
-You can use it as follows too:
+#### write
+
+**write** command sends keyboard inputs on given element. If no element is provided, it'll write into the currently focused element. It expects a string and/or a CSS selector. The string has to be surrounded by quotes (either `'` or `"`). Examples:
 
 ```
-// text of "#elem" is "hello"
-assert: ("#elem", "hello")
-text: ("#elem", "not hello")
-// we want to check if the text changed (strangely but whatever)
-fail: true
-assert: ("#elem", "hello")
-// now we set it back to false to check the new text
-fail: false
-assert: ("#elem", "not hello")
+write: (".element", "text")
+write: ("#element", "text")
+write: "text"
 ```
 
 ### Comments?
