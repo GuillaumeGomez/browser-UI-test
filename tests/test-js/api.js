@@ -56,7 +56,7 @@ function checkAssert() {
             'wait': false,
         });
     x.assert(func('("a", {)').error !== undefined); // JSON syntax error
-    x.assert(func('("a", {\'a\': 1})').error !== undefined); // JSON syntax error
+    // x.assert(func('("a", {\'a\': 1})').error !== undefined); // JSON syntax error
     x.assert(func('("a", {"a": 1)').error !== undefined); // JSON syntax error
     x.assert(func('("a", {"a": 1})'), {
         'instructions': [
