@@ -19,6 +19,17 @@ class Logs {
             this.logs += `\n${newLog}`;
         }
     }
+
+    // Accepts either a string or an array of string.
+    warn(newLog) {
+        if (typeof newLog === 'object') {
+            newLog = newLog.join('\n');
+        }
+        if (typeof newLog !== 'string') {
+            return;
+        }
+        this.append('[WARNING] ' + newLog.split('\n').join('\n[WARNING] '));
+    }
 }
 
 class Debug {
