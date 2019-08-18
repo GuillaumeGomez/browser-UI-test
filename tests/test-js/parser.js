@@ -18,6 +18,7 @@ function checkTuple() {
     x.assert(p.error, 'unexpected `,` after `"hello"`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].isRecursive(), true);
     x.assert(p.elems[0].error, 'unexpected `,` after `"hello"`');
     x.assert(p.elems[0].getValue().length, 1);
     x.assert(p.elems[0].getValue()[0].error, null);
@@ -596,9 +597,11 @@ function checkJson() {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].getValue().length, 3);
     x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].isRecursive(), true);
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getText(), '{"x": "a", "y": true, "z": 56}');
     x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.isRecursive(), false);
     x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
     x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');
     x.assert(p.elems[0].getValue()[0].value.kind, 'string');
@@ -609,10 +612,12 @@ function checkJson() {
     x.assert(p.elems[0].getValue()[1].key.getValue(), 'y');
     x.assert(p.elems[0].getValue()[1].value.kind, 'bool');
     x.assert(p.elems[0].getValue()[1].value.getValue(), true);
+    x.assert(p.elems[0].getValue()[1].value.isRecursive(), false);
     x.assert(p.elems[0].getValue()[2].key.kind, 'string');
     x.assert(p.elems[0].getValue()[2].key.getText(), '"z"');
     x.assert(p.elems[0].getValue()[2].key.getValue(), 'z');
     x.assert(p.elems[0].getValue()[2].value.kind, 'number');
+    x.assert(p.elems[0].getValue()[2].value.isRecursive(), false);
     x.assert(p.elems[0].getValue()[2].value.getValue(), '56');
 
 

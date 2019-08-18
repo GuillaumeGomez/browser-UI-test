@@ -206,7 +206,6 @@ function checkLocalStorage() {
 
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('{').error !== undefined); // JSON syntax error
-    x.assert(func('{\'a\': 1}').error !== undefined); // JSON syntax error
     x.assert(func('{"a": 1}'), {
         'instructions': ['page.evaluate(() => { localStorage.setItem("a", "1"); })'],
     });

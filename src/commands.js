@@ -303,27 +303,37 @@ function parseLocalStorage(line) {
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'json') {
         return {'error': 'expected json'};
     }
-    try {
-        const d = JSON.parse(p.elems[0].getText());
-        const content = [];
-        for (const key in d) {
-            if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
-                const key_s = cleanString(key);
-                const value_s = cleanString(d[key]);
-                content.push(`localStorage.setItem("${key_s}", "${value_s}");`);
-            }
+    const json = p.elems[0].getValue();
+    const content = [];
+    let warnings = [];
+
+    for (let i = 0; i < json.length; ++i) {
+        const entry = json[i];
+
+        if (entry['value'] === undefined) {
+            warnings.append(`No value for key \`${entry['key'].getValue()}\``);
+            continue;
+        } else if (entry['key'].isRecursive() === true) {
+            warnings.append(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
+            continue;
         }
-        if (content.length === 0) {
-            return {'instructions': []};
-        }
-        return {
-            'instructions': [
-                `page.evaluate(() => { ${content.join('\n')} })`,
-            ],
-        };
-    } catch (e) {
-        return {'error': 'Error when parsing JSON content: ' + e};
+        const key_s = cleanString(entry['key'].getValue());
+        const value_s = cleanString(entry['value'].getValue());
+        content.push(`localStorage.setItem("${key_s}", "${value_s}");`);
     }
+    warnings = warnings.length > 0 ? warnings : undefined;
+    if (content.length === 0) {
+        return {
+            'instructions': [],
+            'warnings': warnings,
+        };
+    }
+    return {
+        'instructions': [
+            `page.evaluate(() => { ${content.join('\n')} })`,
+        ],
+        'warnings': warnings,
+    };
 }
 
 // Possible inputs:
