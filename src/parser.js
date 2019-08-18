@@ -31,6 +31,11 @@ class Element {
     getText() {
         return this.value;
     }
+
+    isRecursive() {
+        // Only Tuple and JSON elements are "recursive" (meaning they can contain sub-levels).
+        return false;
+    }
 }
 
 class CharElement extends Element {
@@ -42,6 +47,10 @@ class CharElement extends Element {
 class TupleElement extends Element {
     constructor(value, startPos, endPos, error = null) {
         super('tuple', value, startPos, endPos, error);
+    }
+
+    isRecursive() {
+        return true;
     }
 }
 
@@ -70,6 +79,10 @@ class JsonElement extends Element {
 
     getText() {
         return this.fullText;
+    }
+
+    isRecursive() {
+        return true;
     }
 }
 

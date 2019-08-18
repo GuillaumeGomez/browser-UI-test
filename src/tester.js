@@ -71,13 +71,15 @@ async function innerRunTests(logs, options) {
                 }
                 if (commands['instructions'].length === 0) {
                     logs.append(testName + '... FAILED');
-                    logs.append('No command to execute');
+                    logs.append('=> No command to execute');
+                    logs.warn(commands['warnings']);
                     failures += 1;
                     return;
                 }
                 loaded.push({
                     'file': testName,
                     'commands': commands['instructions'],
+                    'warnings': commands['warnings'],
                 });
             } catch (err) {
                 failures += 1;
@@ -148,6 +150,7 @@ async function innerRunTests(logs, options) {
             }
             if (error_log.length > 0) {
                 logs.append('FAILED', true);
+                logs.warn(loaded[i]['warnings']);
                 logs.append(error_log + '\n');
                 debug_log.show(logs);
                 failures += 1;
@@ -158,6 +161,7 @@ async function innerRunTests(logs, options) {
             if (extras.takeScreenshot !== true) {
                 logs.append('ok', true);
                 debug_log.append('=> [NO SCREENSHOT COMPARISON]');
+                logs.warn(loaded[i]['warnings']);
                 debug_log.show(logs);
                 await page.close();
                 continue;

@@ -303,27 +303,37 @@ function parseLocalStorage(line) {
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'json') {
         return {'error': 'expected json'};
     }
-    try {
-        const d = JSON.parse(p.elems[0].getText());
-        const content = [];
-        for (const key in d) {
-            if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
-                const key_s = cleanString(key);
-                const value_s = cleanString(d[key]);
-                content.push(`localStorage.setItem("${key_s}", "${value_s}");`);
-            }
+    const json = p.elems[0].getValue();
+    const content = [];
+    let warnings = [];
+
+    for (let i = 0; i < json.length; ++i) {
+        const entry = json[i];
+
+        if (entry['value'] === undefined) {
+            warnings.append(`No value for key \`${entry['key'].getValue()}\``);
+            continue;
+        } else if (entry['key'].isRecursive() === true) {
+            warnings.append(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
+            continue;
         }
-        if (content.length === 0) {
-            return {'instructions': []};
-        }
-        return {
-            'instructions': [
-                `page.evaluate(() => { ${content.join('\n')} })`,
-            ],
-        };
-    } catch (e) {
-        return {'error': 'Error when parsing JSON content: ' + e};
+        const key_s = cleanString(entry['key'].getValue());
+        const value_s = cleanString(entry['value'].getValue());
+        content.push(`localStorage.setItem("${key_s}", "${value_s}");`);
     }
+    warnings = warnings.length > 0 ? warnings : undefined;
+    if (content.length === 0) {
+        return {
+            'instructions': [],
+            'warnings': warnings,
+        };
+    }
+    return {
+        'instructions': [
+            `page.evaluate(() => { ${content.join('\n')} })`,
+        ],
+        'warnings': warnings,
+    };
 }
 
 // Possible inputs:
@@ -386,26 +396,32 @@ function parseAssert(line) {
         if (tuple.length !== 2) {
             return {'error': 'unexpected argument after CSS properties'};
         }
-        let d;
-        try {
-            d = JSON.parse(tuple[1].getText());
-        } catch (error) {
-            return {'error': `Invalid JSON object: "${error}"`};
-        }
         let code = '';
-        for (const key in d) {
-            if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
-                const clean = cleanString(d[key]);
-                const cKey = cleanString(key);
-                // TODO: check how to compare CSS property
-                code += `if (assertComputedStyle["${cKey}"] != "${clean}") { ` +
-                    `throw 'expected "${clean}", got for key "${cKey}" for "${selector}"'; }\n`;
+        let warnings = [];
+        const json = tuple[1].getValue();
+
+        for (let i = 0; i < json.length; ++i) {
+            const entry = json[i];
+
+            if (entry['value'] === undefined) {
+                warnings.append(`No value for key \`${entry['key'].getValue()}\``);
+                continue;
+            } else if (entry['key'].isRecursive() === true) {
+                warnings.append(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
+                continue;
             }
+            const key_s = cleanString(entry['key'].getValue());
+            const value_s = cleanString(entry['value'].getValue());
+            // TODO: check how to compare CSS property
+            code += `if (assertComputedStyle["${key_s}"] != "${value_s}") { ` +
+                `throw 'expected "${value_s}", got for key "${key_s}" for "${selector}"'; }\n`;
         }
+        warnings = warnings.length > 0 ? warnings : undefined;
         if (code.length === 0) {
             return {
                 'instructions': [],
                 'wait': false,
+                'warnings': warnings,
             };
         }
         const varName = 'parseAssertElemJson';
@@ -418,6 +434,7 @@ function parseAssert(line) {
                 `}, ${varName});`,
             ],
             'wait': false,
+            'warnings': warnings,
         };
     } else if (tuple[1].kind === 'string' && tuple.length === 2) {
         //
@@ -559,27 +576,33 @@ function parseAttribute(line) {
                 `${tuple[1].kind}`,
         };
     }
-    let d;
-    try {
-        d = JSON.parse(tuple[1].getText());
-    } catch (error) {
-        return {'error': `Invalid JSON object: "${error}"`};
-    }
     let code = '';
+    let warnings = [];
+    const json = tuple[1].getValue();
     const varName = 'parseAttributeElemJson';
-    for (const key in d) {
-        if (key.length > 0 && Object.prototype.hasOwnProperty.call(d, key)) {
-            const clean = cleanString(d[key]);
-            // TODO: instead of parsing JSON, maybe check if strings/number/bool in json object?
-            const cKey = cleanString(key);
-            code += `await page.evaluate(e => { e.setAttribute("${cKey}","${clean}"); },` +
-                `${varName});\n`;
+
+    for (let i = 0; i < json.length; ++i) {
+        const entry = json[i];
+
+        if (entry['value'] === undefined) {
+            warnings.append(`No value for key \`${entry['key'].getValue()}\``);
+            continue;
+        } else if (entry['key'].isRecursive() === true) {
+            warnings.append(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
+            continue;
         }
+        const key_s = cleanString(entry['key'].getValue());
+        const value_s = cleanString(entry['value'].getValue());
+        // TODO: check how to compare CSS property
+        code += `await page.evaluate(e => { e.setAttribute("${key_s}","${value_s}"); },` +
+                `${varName});\n`;
     }
+    warnings = warnings.length > 0 ? warnings : undefined;
     if (code.length === 0) {
         return {
             'instructions': [],
             'wait': false,
+            'warnings': warnings,
         };
     }
     return {
@@ -587,6 +610,7 @@ function parseAttribute(line) {
             `let ${varName} = await page.$("${selector}");\n` +
             `if (${varName} === null) { throw '"${selector}" not found'; }\n${code}`,
         ],
+        'warnings': warnings,
     };
 }
 
