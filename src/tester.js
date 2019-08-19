@@ -184,6 +184,7 @@ async function innerRunTests(logs, options) {
                 } else {
                     fs.renameSync(newImage, originalImage);
                     logs.append('generated', true);
+                    notOk = true;
                 }
             } else if (comparePixels(PNG.load(newImage).imgData,
                 PNG.load(originalImage).imgData) === false) {
