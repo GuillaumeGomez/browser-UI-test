@@ -1,0 +1,4 @@
+goto: file://{current-dir}/{doc-path}/basic.html
+assert: ("#button", {"border-radius": "5px"})
+css: ("#button", "border-radius", "50%")
+assert: ("#button", {"border-radius": "50%"})

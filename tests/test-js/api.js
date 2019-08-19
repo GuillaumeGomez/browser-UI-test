@@ -117,6 +117,52 @@ function checkAttribute() {
     return x;
 }
 
+function checkCss() {
+    const func = parserFuncs.parseCss;
+    const x = new Assert();
+
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
+    x.assert(func('("a")'),
+        {'error': 'expected `("CSS selector", "CSS attribute name", "CSS attribute value")` or ' +
+            '`("CSS selector", [JSON object])`'});
+    x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
+    x.assert(func('("a", "b", )'), {'error': 'unexpected `,` after `"b"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", "b")'), {
+        'error': 'expected json as second argument (since there are only arguments), found string',
+    });
+    x.assert(func('("a", "b", "c")'),
+        {
+            'instructions': [
+                'let parseCssElem = await page.$("a");\nif (parseCssElem === null) { ' +
+                'throw \'"a" not found\'; }\nawait page.evaluate(e => { ' +
+                'e.style["b"] = "c"; }, parseCssElem);',
+            ],
+        });
+    x.assert(func('("a", "\\"b", "c")'),
+        {
+            'instructions': [
+                'let parseCssElem = await page.$("a");\nif (parseCssElem === null) { ' +
+                'throw \'"a" not found\'; }\nawait page.evaluate(e => { ' +
+                'e.style["\\\\"b"] = "c"; }, parseCssElem);',
+            ],
+        });
+    x.assert(func('("a", {"b": "c"})'),
+        {
+            'instructions': [
+                'let parseCssElemJson = await page.$("a");\nif (parseCssElemJson ' +
+                '=== null) { throw \'"a" not found\'; }\nawait page.evaluate(e => { ' +
+                'e.style["b"] = "c"; }, parseCssElemJson);\n',
+            ],
+        });
+    // TODO: add checks for more complex json objects
+
+    return x;
+}
+
 function checkClick() {
     const func = parserFuncs.parseClick;
     const x = new Assert();
@@ -377,6 +423,7 @@ const TO_CHECK = [
     {'name': 'assert', 'func': checkAssert},
     {'name': 'attribute', 'func': checkAttribute},
     {'name': 'click', 'func': checkClick},
+    {'name': 'css', 'func': checkCss},
     {'name': 'fail', 'func': checkFail},
     {'name': 'focus', 'func': checkFocus},
     {'name': 'goto', 'func': checkGoTo},

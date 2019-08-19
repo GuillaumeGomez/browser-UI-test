@@ -593,9 +593,103 @@ function parseAttribute(line) {
         }
         const key_s = cleanString(entry['key'].getValue());
         const value_s = cleanString(entry['value'].getValue());
-        // TODO: check how to compare CSS property
         code += `await page.evaluate(e => { e.setAttribute("${key_s}","${value_s}"); },` +
                 `${varName});\n`;
+    }
+    warnings = warnings.length > 0 ? warnings : undefined;
+    if (code.length === 0) {
+        return {
+            'instructions': [],
+            'wait': false,
+            'warnings': warnings,
+        };
+    }
+    return {
+        'instructions': [
+            `let ${varName} = await page.$("${selector}");\n` +
+            `if (${varName} === null) { throw '"${selector}" not found'; }\n${code}`,
+        ],
+        'warnings': warnings,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector", "CSS property name", "CSS property value")
+// * ("CSS selector", [JSON object])
+function parseCss(line) {
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
+        return {
+            'error': 'expected `("CSS selector", "CSS property name", "CSS property value")` or ' +
+                '`("CSS selector", [JSON object])`',
+        };
+    }
+    const tuple = p.elems[0].getValue();
+    if (tuple[0].kind !== 'string') {
+        return {
+            'error': 'expected `("CSS selector", "CSS property name", "CSS property value")` or ' +
+                '`("CSS selector", [JSON object])`',
+        };
+    }
+    const selector = cleanCssSelector(tuple[0].getValue());
+    if (selector.length === 0) {
+        return {'error': 'CSS selector (first argument) cannot be empty'};
+    }
+    if (tuple.length === 3) {
+        if (tuple[1].kind !== 'string' || tuple[2].kind !== 'string') {
+            return {
+                'error': 'expected strings for CSS property name and CSS property value (second ' +
+                    'and third arguments)',
+            };
+        }
+        const attributeName = cleanString(tuple[1].getValue().trim());
+        if (selector.length === 0) {
+            return {'error': 'attribute name (second argument) cannot be empty'};
+        }
+        const value = cleanString(tuple[2].getValue());
+        const varName = 'parseCssElem';
+        return {
+            'instructions': [
+                `let ${varName} = await page.$("${selector}");\n` +
+                `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
+                `await page.evaluate(e => { e.style["${attributeName}"] = "${value}"; }, ` +
+                `${varName});`,
+            ],
+        };
+    } else if (tuple.length !== 2) {
+        return {
+            'error': 'expected `("CSS selector", "CSS attribute name", "CSS attribute value")` or' +
+                ' `("CSS selector", [JSON object])`',
+        };
+    }
+    if (tuple[1].kind !== 'json') {
+        return {
+            'error': 'expected json as second argument (since there are only arguments), found ' +
+                `${tuple[1].kind}`,
+        };
+    }
+    let code = '';
+    let warnings = [];
+    const json = tuple[1].getValue();
+    const varName = 'parseCssElemJson';
+
+    for (let i = 0; i < json.length; ++i) {
+        const entry = json[i];
+
+        if (entry['value'] === undefined) {
+            warnings.append(`No value for key \`${entry['key'].getValue()}\``);
+            continue;
+        } else if (entry['key'].isRecursive() === true) {
+            warnings.append(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
+            continue;
+        }
+        const key_s = cleanString(entry['key'].getValue());
+        const value_s = cleanString(entry['value'].getValue());
+        code += `await page.evaluate(e => { e.style["${key_s}"] = "${value_s}"; }, ${varName});\n`;
     }
     warnings = warnings.length > 0 ? warnings : undefined;
     if (code.length === 0) {
@@ -656,6 +750,7 @@ const ORDERS = {
     'assert': parseAssert,
     'attribute': parseAttribute,
     'click': parseClick,
+    'css': parseCss,
     'fail': parseFail,
     'focus': parseFocus,
     'goto': parseGoTo,
@@ -713,21 +808,22 @@ function parseContent(content, docPath) {
 }
 
 module.exports = {
-    parseContent: parseContent,
+    'parseContent': parseContent,
 
     // Those functions shouldn't be used directly!
-    parseAssert: parseAssert,
-    parseAttribute: parseAttribute,
-    parseClick: parseClick,
-    parseFail: parseFail,
-    parseFocus: parseFocus,
-    parseGoTo: parseGoTo,
-    parseLocalStorage: parseLocalStorage,
-    parseMoveCursorTo: parseMoveCursorTo,
-    parseScreenshot: parseScreenshot,
-    parseScrollTo: parseScrollTo,
-    parseSize: parseSize,
-    parseText: parseText,
-    parseWaitFor: parseWaitFor,
-    parseWrite: parseWrite,
+    'parseAssert': parseAssert,
+    'parseAttribute': parseAttribute,
+    'parseClick': parseClick,
+    'parseCss': parseCss,
+    'parseFail': parseFail,
+    'parseFocus': parseFocus,
+    'parseGoTo': parseGoTo,
+    'parseLocalStorage': parseLocalStorage,
+    'parseMoveCursorTo': parseMoveCursorTo,
+    'parseScreenshot': parseScreenshot,
+    'parseScrollTo': parseScrollTo,
+    'parseSize': parseSize,
+    'parseText': parseText,
+    'parseWaitFor': parseWaitFor,
+    'parseWrite': parseWrite,
 };
