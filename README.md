@@ -80,6 +80,13 @@ If you want to run this repository's tests:
 $ node src/tester.js --test-folder tests/scripts/ --failure-folder failures --doc-path tests/html_files/
 ```
 
+If you want to test "internals", run:
+
+```bash
+$ npm run api-test
+$ npm run parser-test
+```
+
 ## `.goml` scripts
 
 Those scripts aim to be as quick to write and as small as possible. To do so, they provide a short list of commands. Please note that those scripts must **always** start with a [`goto`](#goto) command (non-interactional commands such as `screenshot` or `fail` can be use first as well).
@@ -89,6 +96,7 @@ Here's the command list:
  * [`assert`](#assert)
  * [`attribute`](#attribute)
  * [`click`](#click)
+ * [`css`](#css)
  * [`fail`](#fail)
  * [`focus`](#focus)
  * [`goto`](#goto)
@@ -140,6 +148,20 @@ attribute: ("#button", {"attribute name": "attribute value", "another": "x"})
 click: ".element"
 click: "#element > a"
 click: (10, 12)
+```
+
+#### css
+
+**css** command allows to update an element's style. Example:
+
+```
+css: ("#button", "background-color", "red")
+```
+
+To set multiple styles at a time, you can use a JSON object:
+
+```
+css: ("#button", {"background-color": "red", "border": "1px solid"})
 ```
 
 #### fail
@@ -223,10 +245,12 @@ move-cursor-to: (10, 12)
 
 #### screenshot
 
-**screenshot** command enables/disables the screenshot at the end of the script (and therefore its comparison). It expects a boolean value. Example:
+**screenshot** command enables/disables the screenshot at the end of the script (and therefore its comparison). It expects a boolean value or a CSS selector. Example:
 
 ```
-screenshot: false
+screenshot: false // disable screenshot comparison at the end of the script
+screenshot: "#test" // will take a screenshot of the specified element and compare it at the end
+screenshot: true // back to "normal", full page screenshot and comparison
 ```
 
 #### scroll-to

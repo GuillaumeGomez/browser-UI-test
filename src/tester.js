@@ -158,21 +158,34 @@ async function innerRunTests(logs, options) {
                 continue;
             }
 
+            let elem = page;
             if (extras.takeScreenshot !== true) {
-                logs.append('ok', true);
-                debug_log.append('=> [NO SCREENSHOT COMPARISON]');
-                logs.warn(loaded[i]['warnings']);
-                debug_log.show(logs);
-                await page.close();
-                continue;
+                if (extras.takeScreenshot === false) {
+                    logs.append('ok', true);
+                    debug_log.append('=> [NO SCREENSHOT COMPARISON]');
+                    logs.warn(loaded[i]['warnings']);
+                    debug_log.show(logs);
+                    await page.close();
+                    continue;
+                }
+                elem = await page.$(extras.takeScreenshot);
+                if (elem === null) {
+                    logs.append('FAILED', true);
+                    logs.append(`Cannot take screenshot: element \`${extras.takeScreenshot}\`` +
+                        ' not found');
+                    logs.warn(loaded[i]['warnings']);
+                    debug_log.show(logs);
+                    await page.close();
+                    continue;
+                }
             }
 
             const compare_s = options.generateImages === false ? 'COMPARISON' : 'GENERATION';
             debug_log.append(`=> [SCREENSHOT ${compare_s}]`);
             const newImage = `${options.testFolderPath}${loaded[i]['file']}-${options.runId}.png`;
-            await page.screenshot({
+            await elem.screenshot({
                 path: newImage,
-                fullPage: true,
+                fullPage: extras.takeScreenshot === true ? true : undefined,
             });
 
             const originalImage = `${options.testFolderPath}${loaded[i]['file']}.png`;

@@ -62,8 +62,9 @@ function checkAssert() {
         'instructions': [
             'let parseAssertElemJson = await page.$("a");\nif (parseAssertElemJson === null) { ' +
             'throw \'"a" not found\'; }\nawait page.evaluate(e => {let assertComputedStyle = ' +
-            'getComputedStyle(e);\nif (assertComputedStyle["a"] != "1") { throw \'expected "1", ' +
-            'got for key "a" for "a"\'; }\n}, parseAssertElemJson);',
+            'getComputedStyle(e);\nif (e.style["a"] != "1" && assertComputedStyle["a"] != "1") {' +
+            ' throw \'expected `1` for key `a` for `a`, found `\' + assertComputedStyle["a"] + ' +
+            '\'`\'; }\n}, parseAssertElemJson);',
         ],
         'wait': false,
     });
@@ -182,7 +183,7 @@ function checkClick() {
     // Check css selector
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
-    x.assert(func('\'\''), {'error': 'selector cannot be empty'});
+    x.assert(func('\'\''), {'error': 'CSS selector cannot be empty'});
     x.assert(func('"a"'), {'instructions': ['page.click("a")']});
     x.assert(func('\'a\''), {'instructions': ['page.click("a")']});
     x.assert(func('\'"a\''), {'instructions': ['page.click("\\\\"a")']});
@@ -210,7 +211,7 @@ function checkFocus() {
     x.assert(func('a'), {'error': 'unexpected `a` as first token'});
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
-    x.assert(func('\'\''), {'error': 'selector cannot be empty'});
+    x.assert(func('\'\''), {'error': 'CSS selector cannot be empty'});
     x.assert(func('"a"'), {'instructions': ['page.focus("a")']});
     x.assert(func('\'a\''), {'instructions': ['page.focus("a")']});
     x.assert(func('\'"a\''), {'instructions': ['page.focus("\\\\"a")']});
@@ -283,7 +284,7 @@ function checkMoveCursorTo() {
     // Check css selector
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
-    x.assert(func('\'\''), {'error': 'selector cannot be empty'});
+    x.assert(func('\'\''), {'error': 'CSS selector cannot be empty'});
     x.assert(func('"a"'), {'instructions': ['page.hover("a")']});
     x.assert(func('\'a\''), {'instructions': ['page.hover("a")']});
     x.assert(func('\'"a\''), {'instructions': ['page.hover("\\\\"a")']});
@@ -295,11 +296,20 @@ function checkScreenshot() {
     const func = parserFuncs.parseScreenshot;
     const x = new Assert();
 
+    x.assert(func(''), {'error': 'expected boolean or CSS selector, found nothing'});
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
-    x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
+    x.assert(func('"true"'),
+        {
+            'instructions': ['arg.takeScreenshot = "true";'],
+            'wait': false,
+            'warnings': '`"true"` is a string and will be used as CSS selector. If you want to ' +
+                'set `true` or `false` value, remove quotes.',
+        });
     x.assert(func('tru'), {'error': 'unexpected `tru` as first token'});
     x.assert(func('false'), {'instructions': ['arg.takeScreenshot = false;'], 'wait': false});
     x.assert(func('true'), {'instructions': ['arg.takeScreenshot = true;'], 'wait': false});
+    x.assert(func('\'\''), {'error': 'CSS selector cannot be empty'});
+    x.assert(func('"test"'), {'instructions': ['arg.takeScreenshot = "test";'], 'wait': false});
 
     return x;
 }
@@ -323,7 +333,7 @@ function checkScrollTo() {
     // Check css selector
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
-    x.assert(func('\'\''), {'error': 'selector cannot be empty'});
+    x.assert(func('\'\''), {'error': 'CSS selector cannot be empty'});
     x.assert(func('"a"'), {'instructions': ['page.hover("a")']});
     x.assert(func('\'a\''), {'instructions': ['page.hover("a")']});
     x.assert(func('\'"a\''), {'instructions': ['page.hover("\\\\"a")']});
@@ -384,7 +394,7 @@ function checkWaitFor() {
     // Check css selector
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
-    x.assert(func('\'\''), {'error': 'selector cannot be empty'});
+    x.assert(func('\'\''), {'error': 'CSS selector cannot be empty'});
     x.assert(func('"a"'), {'instructions': ['await page.waitFor("a")'], 'wait': false});
     x.assert(func('\'a\''), {'instructions': ['await page.waitFor("a")'], 'wait': false});
     x.assert(func('\'"a\''), {'instructions': ['await page.waitFor("\\\\"a")'], 'wait': false});
@@ -405,7 +415,7 @@ function checkWrite() {
     x.assert(func('("a", "b", "c")'),
         {'error': 'invalid number of arguments in tuple, expected ([CSS selector], [string])'});
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
-    x.assert(func('(\'\', "b")'), {'error': 'selector cannot be empty'});
+    x.assert(func('(\'\', "b")'), {'error': 'CSS selector cannot be empty'});
     x.assert(func('("a", "b")'), {'instructions': ['page.focus("a")', 'page.keyboard.type("b")']});
 
     // check string argument
