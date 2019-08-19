@@ -41,7 +41,7 @@ function parseClick(line) {
     } else if (p.elems[0].kind === 'string') {
         const selector = cleanCssSelector(p.elems[0].getValue());
         if (selector.length === 0) {
-            return {'error': 'selector cannot be empty'};
+            return {'error': 'CSS selector cannot be empty'};
         }
         return {
             'instructions': [
@@ -87,7 +87,7 @@ function parseWaitFor(line) {
     }
     const selector = cleanCssSelector(p.elems[0].getValue());
     if (selector.length === 0) {
-        return {'error': 'selector cannot be empty'};
+        return {'error': 'CSS selector cannot be empty'};
     }
     return {
         'instructions': [
@@ -110,7 +110,7 @@ function parseFocus(line) {
     }
     const selector = cleanCssSelector(p.elems[0].getValue());
     if (selector.length === 0) {
-        return {'error': 'selector cannot be empty'};
+        return {'error': 'CSS selector cannot be empty'};
     }
     return {
         'instructions': [
@@ -154,7 +154,7 @@ function parseWrite(line) {
     }
     const selector = cleanCssSelector(tuple[0].getValue());
     if (selector.length === 0) {
-        return {'error': 'selector cannot be empty'};
+        return {'error': 'CSS selector cannot be empty'};
     }
     return {
         'instructions': [
@@ -178,7 +178,7 @@ function parseMoveCursorTo(line) {
     } else if (p.elems[0].kind === 'string') {
         const selector = cleanCssSelector(p.elems[0].getValue());
         if (selector.length === 0) {
-            return {'error': 'selector cannot be empty'};
+            return {'error': 'CSS selector cannot be empty'};
         }
         return {
             'instructions': [
@@ -311,10 +311,10 @@ function parseLocalStorage(line) {
         const entry = json[i];
 
         if (entry['value'] === undefined) {
-            warnings.append(`No value for key \`${entry['key'].getValue()}\``);
+            warnings.push(`No value for key \`${entry['key'].getValue()}\``);
             continue;
         } else if (entry['key'].isRecursive() === true) {
-            warnings.append(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
+            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
             continue;
         }
         const key_s = cleanString(entry['key'].getValue());
@@ -404,17 +404,19 @@ function parseAssert(line) {
             const entry = json[i];
 
             if (entry['value'] === undefined) {
-                warnings.append(`No value for key \`${entry['key'].getValue()}\``);
+                warnings.push(`No value for key \`${entry['key'].getValue()}\``);
                 continue;
             } else if (entry['key'].isRecursive() === true) {
-                warnings.append(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
+                warnings.push(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
                 continue;
             }
             const key_s = cleanString(entry['key'].getValue());
             const value_s = cleanString(entry['value'].getValue());
             // TODO: check how to compare CSS property
-            code += `if (assertComputedStyle["${key_s}"] != "${value_s}") { ` +
-                `throw 'expected "${value_s}", got for key "${key_s}" for "${selector}"'; }\n`;
+            code += `if (e.style["${key_s}"] != "${value_s}" && ` +
+                `assertComputedStyle["${key_s}"] != "${value_s}") { ` +
+                `throw 'expected \`${value_s}\` for key \`${key_s}\` for \`${selector}\`, ` +
+                `found \`' + assertComputedStyle["${key_s}"] + '\`'; }\n`;
         }
         warnings = warnings.length > 0 ? warnings : undefined;
         if (code.length === 0) {
@@ -585,10 +587,10 @@ function parseAttribute(line) {
         const entry = json[i];
 
         if (entry['value'] === undefined) {
-            warnings.append(`No value for key \`${entry['key'].getValue()}\``);
+            warnings.push(`No value for key \`${entry['key'].getValue()}\``);
             continue;
         } else if (entry['key'].isRecursive() === true) {
-            warnings.append(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
+            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
             continue;
         }
         const key_s = cleanString(entry['key'].getValue());
@@ -681,10 +683,10 @@ function parseCss(line) {
         const entry = json[i];
 
         if (entry['value'] === undefined) {
-            warnings.append(`No value for key \`${entry['key'].getValue()}\``);
+            warnings.push(`No value for key \`${entry['key'].getValue()}\``);
             continue;
         } else if (entry['key'].isRecursive() === true) {
-            warnings.append(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
+            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
             continue;
         }
         const key_s = cleanString(entry['key'].getValue());
@@ -711,19 +713,38 @@ function parseCss(line) {
 // Possible inputs:
 //
 // * boolean value (`true` or `false`)
+// * CSS selector
 function parseScreenshot(line) {
     const p = new Parser(line);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
-    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'bool') {
-        return {'error': `expected \`true\` or \`false\` value, found \`${line}\``};
+    } else if (p.elems.length !== 1) {
+        return {'error': 'expected boolean or CSS selector, found nothing'};
+    } else if (p.elems[0].kind !== 'bool' && p.elems[0].kind !== 'string') {
+        return {'error': `expected boolean or CSS selector, found \`${line}\``};
+    } else if (p.elems[0].kind === 'bool') {
+        return {
+            'instructions': [
+                `arg.takeScreenshot = ${p.elems[0].getValue()};`,
+            ],
+            'wait': false,
+        };
+    }
+    const warnings = [];
+    const selector = cleanCssSelector(p.elems[0].getValue());
+    if (selector.length === 0) {
+        return {'error': 'CSS selector cannot be empty'};
+    } else if (selector === 'true' || selector === 'false') {
+        warnings.push(`\`${p.elems[0].getText()}\` is a string and will be used as CSS selector.` +
+            ' If you want to set `true` or `false` value, remove quotes.');
     }
     return {
         'instructions': [
-            `arg.takeScreenshot = ${p.elems[0].getValue()};`,
+            `arg.takeScreenshot = "${selector}";`,
         ],
         'wait': false,
+        'warnings': warnings.length > 0 ? warnings.join('\n') : undefined,
     };
 }
 
