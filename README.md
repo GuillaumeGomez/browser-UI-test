@@ -8,34 +8,15 @@ This framework provides the possibility to quickly check browser UI through smal
 
 ## Usage
 
-You can use it either by providing it the folder with the `.goml` files to run or import it like this:
+You can either use this framework by using it as dependency or running it directly.
 
-```js
-const runTests = require('browser-ui-test').runTests;
-
-runTests(['--test-folder', 'tests/scripts/',
-          '--failure-folder', 'failures',
-          '--doc-path', 'tests/html_files/']).then(result => {
-    const [output, nb_failures] = result;
-    if (nb_failures === 0) {
-        console.log('Tests succeeded!');
-    } else {
-        console.error(`Tests failed...\n${output}`);
-    }
-}).catch(err => {
-    console.error(`An error occurred: ${err}`);
-});
-```
-
-### Font issues
-
-Unfortunately, font rendering differs depending on the computer **and** on the OS. To bypass this problem but still allow to have a global UI check, the text is invisible by default. If you are **sure** that you need to check with the text visible, you can use the option `--show-text`.
-
-## Using this framework as a dependency
+### Using this framework as a dependency
 
 You can do so by importing both `runTests` and `Options` from `index.js`. `Options` is a class where you can set the parameters you need/want. If you feel better providing "command-line args"-like parameters, you can use it as follows:
 
 ```js
+const {Options, runTests} = require('browser-ui-test');
+
 let options = new Options();
 try {
     options.parseArguments(['--doc-path', 'somewhere', '--test-folder', 'some-other-place']);
@@ -58,19 +39,31 @@ runTests(options).then(x => {
 });
 ```
 
-### Options
+#### Options
 
 The list of fields of the `Options` class is the following:
 
- * testFolder: path of the folder where `.goml` script files are
- * failureFolder: path of the folder where failed tests image will be placed
- * runId: id to be used for failed images extension ('test' by default)
- * generateImages: if provided, it'll generate test images and won't run comparison tests
- * docPath: doc path to be used on `goto` local paths
- * noHeadless: disable headless mode
- * showText: disable text invisibility (be careful when using it!)
- * debug: display more information
- * noScreenshot: disable screenshots at the end of the scripts by the end
+ * `testFolder`: path of the folder where `.goml` script files are
+ * `failureFolder`: path of the folder where failed tests image will be placed
+ * `runId`: id to be used for failed images extension ('test' by default)
+ * `generateImages`: if provided, it'll generate test images and won't run comparison tests
+ * `docPath`: doc path to be used on `goto` local paths
+ * `noHeadless`: disable headless mode
+ * `showText`: disable text invisibility (be careful when using it!)
+ * `debug`: display more information
+ * `noScreenshot`: disable screenshots at the end of the scripts by the end
+
+### Running it directly
+
+You need to pass options through the command line but it's basically the same as doing it with code. Let's run it with the same options as presented above:
+
+```bash
+$ node src/index.js --doc-path somewhere --test-folder some-other-place
+```
+
+## Font issues
+
+Unfortunately, font rendering differs depending on the computer **and** on the OS. To bypass this problem but still allow to have a global UI check, the text is invisible by default. If you are **sure** that you need to check with the text visible, you can use the option `--show-text`.
 
 ## Run tests
 
