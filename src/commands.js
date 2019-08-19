@@ -2,6 +2,7 @@ const os = require('os');
 const utils = require('./utils.js');
 const Parser = require('./parser.js').Parser;
 
+const COMMENT_START = '//';
 
 function cleanString(s) {
     if (s.replace !== undefined) {
@@ -213,7 +214,7 @@ function parseMoveCursorTo(line) {
 //       "file://{current-dir}{doc-path}/index.html"
 function parseGoTo(input, docPath) {
     // This function doesn't use the parser so we still need to remove the comment part.
-    const parts = input.split('//');
+    const parts = input.split(COMMENT_START);
     let line = '';
     if (parts.length > 1) {
         for (let i = 0; i < parts.length; ++i) {
@@ -822,6 +823,10 @@ function parseContent(content, docPath) {
                 commands['instructions'].push({'code': res['instructions'][y], 'original': line});
             }
         } else {
+            // First, let's check if it's just a comment:
+            if (line.trim().startsWith(COMMENT_START) === true) {
+                continue;
+            }
             return {'error': `Unknown command "${order}"`, 'line': i};
         }
     }

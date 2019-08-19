@@ -429,6 +429,47 @@ function checkWrite() {
     return x;
 }
 
+function checkParseContent() {
+    const func = parserFuncs.parseContent;
+    const x = new Assert();
+
+    x.assert(func(''), {'instructions': []});
+    x.assert(func('// just a comment'), {'instructions': []});
+    x.assert(func('  // just a comment'), {'instructions': []});
+    x.assert(func('a: '), {'error': 'Unknown command "a"', 'line': 0});
+    x.assert(func(':'), {'error': 'Unknown command ""', 'line': 0});
+
+
+    x.assert(func('goto: file:///home'),
+        {
+            'instructions': [{
+                'code': 'await page.goto("file:///home")',
+                'original': 'goto: file:///home',
+            }],
+        });
+    x.assert(func('focus: "#foo"'),
+        {
+            'error': 'First command must be `goto` (`fail`, `screenshot` can be used before)!',
+            'line': 0,
+        });
+    x.assert(func('fail: true\ngoto: file:///home'),
+        {
+            'instructions': [
+                {
+                    'code': 'arg.expectedToFail = true;',
+                    'original': 'fail: true',
+                },
+                {
+                    'code': 'await page.goto("file:///home")',
+                    'original': 'goto: file:///home',
+                },
+            ],
+        });
+    x.assert(func('// just a comment\na: b'), {'error': 'Unknown command "a"', 'line': 1});
+
+    return x;
+}
+
 const TO_CHECK = [
     {'name': 'assert', 'func': checkAssert},
     {'name': 'attribute', 'func': checkAttribute},
@@ -445,6 +486,8 @@ const TO_CHECK = [
     {'name': 'text', 'func': checkText},
     {'name': 'wait-for', 'func': checkWaitFor},
     {'name': 'write', 'func': checkWrite},
+    // This one is a bit "on its own".
+    {'name': 'parseContent', 'func': checkParseContent},
 ];
 
 function checkCommands() {
