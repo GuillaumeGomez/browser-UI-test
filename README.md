@@ -17,8 +17,9 @@ You can do so by importing both `runTests` and `Options` from `index.js`. `Optio
 ```js
 const {Options, runTests} = require('browser-ui-test');
 
-let options = new Options();
+const options = new Options();
 try {
+    // This is more convenient that setting fields one by one.
     options.parseArguments(['--doc-path', 'somewhere', '--test-folder', 'some-other-place']);
 } catch (error) {
     console.error(`invalid argument: ${error}`);
