@@ -33,7 +33,7 @@ Unfortunately, font rendering differs depending on the computer **and** on the O
 
 ## Using this framework as a dependency
 
-You can do so by importing both `runTests` and `Options` from `tester.js`. `Options` is a class where you can set the parameters you need/want. If you feel better providing "command-line args"-like parameters, you can use it as follows:
+You can do so by importing both `runTests` and `Options` from `index.js`. `Options` is a class where you can set the parameters you need/want. If you feel better providing "command-line args"-like parameters, you can use it as follows:
 
 ```js
 let options = new Options();
@@ -77,7 +77,7 @@ The list of fields of the `Options` class is the following:
 If you want to run this repository's tests:
 
 ```bash
-$ node src/tester.js --test-folder tests/scripts/ --failure-folder failures --doc-path tests/html_files/
+$ node src/index.js --test-folder tests/scripts/ --failure-folder failures --doc-path tests/html_files/
 ```
 
 If you want to test "internals", run:
