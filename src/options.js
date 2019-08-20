@@ -11,6 +11,7 @@ function helper() {
     print('  --generate-images       : If provided, it\'ll generate test images and won\'t');
     print('                            run comparison tests');
     print('  --doc-path [PATH]       : Doc path to be used on `goto` local paths');
+    print('  --url [URL]             : URL to be used on `goto` urls');
     print('  --no-headless           : Disable headless mode');
     print('  --show-text             : Disable text invisibility (be careful when using it!)');
     print('  --debug                 : Display more information');
@@ -29,6 +30,7 @@ class Options {
         this.showText = false;
         this.debug = false;
         this.noScreenshot = false;
+        this.url = '';
     }
 
     parseArguments(args = []) {
@@ -69,6 +71,13 @@ class Options {
                     it += 1;
                 } else {
                     throw 'Missing path after \'--doc-path\' option';
+                }
+            } else if (args[it] === '--url') {
+                if (it + 1 < args.length) {
+                    this.url = utils.addSlash(args[it + 1]);
+                    it += 1;
+                } else {
+                    throw 'Missing URL after \'--url\' option';
                 }
             } else if (args[it] === '--failure-folder') {
                 if (it + 1 < args.length) {

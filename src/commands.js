@@ -212,7 +212,7 @@ function parseMoveCursorTo(line) {
 //   /!\ Please also note that you need to provide a full path to the web browser. You can add
 //       the full current path by using "{current-dir}". For example:
 //       "file://{current-dir}{doc-path}/index.html"
-function parseGoTo(input, docPath) {
+function parseGoTo(input, options) {
     // This function doesn't use the parser so we still need to remove the comment part.
     const parts = input.split(COMMENT_START);
     let line = '';
@@ -232,29 +232,40 @@ function parseGoTo(input, docPath) {
     line = line.trim();
     // We just check if it goes to an HTML file, not checking much though...
     if (line.startsWith('http://') || line.startsWith('https://') || line.startsWith('www.')) {
+        line = handlePathParameters(line, '{url}',
+            typeof options !== 'undefined' ? options.url : '');
         return {
             'instructions': [
-                `await page.goto("${line}")`,
+                `await page.goto("${cleanString(line)}")`,
+            ],
+        };
+    } else if (line === '{url}') {
+        return {
+            'instructions': [
+                `await page.goto("${cleanString(options.url)}")`,
             ],
         };
     } else if (line.startsWith('file://')) {
-        line = handlePathParameters(line, '{doc-path}', docPath);
+        line = handlePathParameters(line, '{doc-path}',
+            typeof options !== 'undefined' ? options.docPath : '');
         line = handlePathParameters(line, '{current-dir}', utils.getCurrentDir());
         return {
             'instructions': [
-                `await page.goto("${line}")`,
+                `await page.goto("${cleanString(line)}")`,
             ],
         };
     } else if (line.startsWith('.')) {
         return {
             'instructions': [
-                `await page.goto(page.url().split("/").slice(0, -1).join("/") + "/${line}")`,
+                'await page.goto(page.url().split("/").slice(0, -1).join("/") + ' +
+                `"/${cleanString(line)}")`,
             ],
         };
     } else if (line.startsWith('/')) {
         return {
             'instructions': [
-                `await page.goto(page.url().split("/").slice(0, -1).join("/") + "${line}")`,
+                'await page.goto(page.url().split("/").slice(0, -1).join("/") + ' +
+                `"${cleanString(line)}")`,
             ],
         };
     }
@@ -828,7 +839,7 @@ const NO_INTERACTION_COMMANDS = [
     'screenshot',
 ];
 
-function parseContent(content, docPath) {
+function parseContent(content, options) {
     const lines = content.split(os.EOL);
     const commands = {'instructions': []};
     let res;
@@ -851,7 +862,7 @@ function parseContent(content, docPath) {
                 }
                 firstGotoParsed = order === 'goto';
             }
-            res = ORDERS[order](line.substr(order.length + 1).trim(), docPath);
+            res = ORDERS[order](line.substr(order.length + 1).trim(), options);
             if (res.error !== undefined) {
                 res.line = i + 1;
                 return res;

@@ -48,7 +48,8 @@ The list of fields of the `Options` class is the following:
  * `failureFolder`: path of the folder where failed tests image will be placed
  * `runId`: id to be used for failed images extension ('test' by default)
  * `generateImages`: if provided, it'll generate test images and won't run comparison tests
- * `docPath`: doc path to be used on `goto` local paths
+ * `docPath`: doc path to be used on `goto` local paths using `{doc-path}`
+ * `url`: URL to be used on `goto` urls using `{url}`
  * `noHeadless`: disable headless mode
  * `showText`: disable text invisibility (be careful when using it!)
  * `debug`: display more information
