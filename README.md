@@ -52,7 +52,7 @@ The list of fields of the `Options` class is the following:
  * `noHeadless`: disable headless mode
  * `showText`: disable text invisibility (be careful when using it!)
  * `debug`: display more information
- * `noScreenshot`: disable screenshots at the end of the scripts by the end
+ * `noScreenshot`: disable screenshots generation and comparison at the end of the scripts
 
 ### Running it directly
 
