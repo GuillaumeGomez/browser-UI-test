@@ -240,8 +240,18 @@ function checkGoTo() {
     x.assert(func('file:///a'), {
         'instructions': ['await page.goto("file:///a")'],
     });
-    x.assert(func('file://{doc-path}/a', 'foo/'), { // `docPath` parameter always ends with '/'
+    // `docPath` parameter always ends with '/'
+    x.assert(func('file://{doc-path}/a', {'docPath': 'foo/'}), {
         'instructions': ['await page.goto("file://foo/a")'],
+    });
+    x.assert(func('{url}', {'url': 'http://foo'}), {
+        'instructions': ['await page.goto("http://foo")'],
+    });
+    x.assert(func('http://foo/{url}fa', {'url': 'tadam/'}), {
+        'instructions': ['await page.goto("http://foo/tadam/fa")'],
+    });
+    x.assert(func('http://foo/{url}/fa', {'url': 'tadam/'}), {
+        'instructions': ['await page.goto("http://foo/tadam/fa")'],
     });
 
     return x;
@@ -429,6 +439,37 @@ function checkWrite() {
     return x;
 }
 
+function checkReload() {
+    const func = parserFuncs.parseReload;
+    const x = new Assert();
+
+    // check tuple argument
+    x.assert(func(''),
+        {
+            'instructions': [
+                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 30000});',
+            ],
+        });
+    x.assert(func('"a"'), {'error': 'expected either [integer] or no arguments, got string'});
+    x.assert(func('12'),
+        {
+            'instructions': [
+                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 12});',
+            ],
+        });
+    x.assert(func('12 24'), {'error': 'expected nothing, found `2`'});
+    x.assert(func('0'),
+        {
+            'instructions': [
+                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 0});',
+            ],
+            'warnings': 'You passed 0 as timeout, it means the timeout has been disabled on ' +
+                'this reload',
+        });
+
+    return x;
+}
+
 function checkParseContent() {
     const func = parserFuncs.parseContent;
     const x = new Assert();
@@ -466,37 +507,6 @@ function checkParseContent() {
             ],
         });
     x.assert(func('// just a comment\na: b'), {'error': 'Unknown command "a"', 'line': 1});
-
-    return x;
-}
-
-function checkReload() {
-    const func = parserFuncs.parseReload;
-    const x = new Assert();
-
-    // check tuple argument
-    x.assert(func(''),
-        {
-            'instructions': [
-                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 30000});',
-            ],
-        });
-    x.assert(func('"a"'), {'error': 'expected either [integer] or no arguments, got string'});
-    x.assert(func('12'),
-        {
-            'instructions': [
-                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 12});',
-            ],
-        });
-    x.assert(func('12 24'), {'error': 'expected nothing, found `2`'});
-    x.assert(func('0'),
-        {
-            'instructions': [
-                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 0});',
-            ],
-            'warnings': 'You passed 0 as timeout, it means the timeout has been disabled on ' +
-                'this reload',
-        });
 
     return x;
 }

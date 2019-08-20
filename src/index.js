@@ -62,7 +62,7 @@ async function innerRunTests(logs, options) {
             const testName = file.substr(0, file.length - 5);
             try {
                 total += 1;
-                const commands = parser.parseContent(utils.readFile(fullPath), options.docPath);
+                const commands = parser.parseContent(utils.readFile(fullPath), options);
                 if (Object.prototype.hasOwnProperty.call(commands, 'error')) {
                     logs.append(testName + '... FAILED');
                     logs.append(`[ERROR] line ${commands['line']}: ${commands['error']}`);
