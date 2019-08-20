@@ -110,7 +110,7 @@ function checkAttribute() {
             'instructions': [
                 'let parseAttributeElemJson = await page.$("a");\nif (parseAttributeElemJson ' +
                 '=== null) { throw \'"a" not found\'; }\nawait page.evaluate(e => { ' +
-                'e.setAttribute("b","c"); },parseAttributeElemJson);\n',
+                'e.setAttribute("b","c"); }, parseAttributeElemJson);\n',
             ],
         });
     // TODO: add checks for more complex json objects
@@ -125,7 +125,7 @@ function checkCss() {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
     x.assert(func('("a")'),
-        {'error': 'expected `("CSS selector", "CSS attribute name", "CSS attribute value")` or ' +
+        {'error': 'expected `("CSS selector", "CSS property name", "CSS property value")` or ' +
             '`("CSS selector", [JSON object])`'});
     x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
     x.assert(func('("a", "b", )'), {'error': 'unexpected `,` after `"b"`'});
