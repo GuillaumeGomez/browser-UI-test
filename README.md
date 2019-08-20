@@ -96,6 +96,7 @@ Here's the command list:
  * [`goto`](#goto)
  * [`local-storage`](#local-storage)
  * [`move-cursor-to`](#move-cursor-to)
+ * [`reload`](#reload)
  * [`screenshot`](#screenshot)
  * [`scroll-to`](#scroll-to)
  * [`size`](#size)
@@ -235,6 +236,16 @@ local-storage: {"key": "value", "another key": "another value"}
 move-cursor-to: "#element"
 move-cursor-to: ".element"
 move-cursor-to: (10, 12)
+```
+
+#### reload
+
+**reload** command reloads the current page. Example:
+
+```
+reload:
+reload: 12000 // reload the current page with a timeout of 12 seconds
+reload: 0 // disable timeout, be careful when using it!
 ```
 
 #### screenshot
