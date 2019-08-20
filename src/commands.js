@@ -531,25 +531,21 @@ function parseText(line) {
     };
 }
 
-// Possible inputs:
-//
-// * ("CSS selector", "attribute name", "attribute value")
-// * ("CSS selector", [JSON object])
-function parseAttribute(line) {
+function innerParseCssAttribute(line, argName, varName, callback) {
     const p = new Parser(line);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
         return {
-            'error': 'expected `("CSS selector", "attribute name", "attribute value")` or ' +
+            'error': `expected \`("CSS selector", "${argName} name", "${argName} value")\` or ` +
                 '`("CSS selector", [JSON object])`',
         };
     }
     const tuple = p.elems[0].getValue();
     if (tuple[0].kind !== 'string') {
         return {
-            'error': 'expected `("CSS selector", "attribute name", "attribute value")` or ' +
+            'error': `expected \`("CSS selector", "${argName} name", "${argName} value")\` or ` +
                 '`("CSS selector", [JSON object])`',
         };
     }
@@ -560,8 +556,8 @@ function parseAttribute(line) {
     if (tuple.length === 3) {
         if (tuple[1].kind !== 'string' || tuple[2].kind !== 'string') {
             return {
-                'error': 'expected strings for attribute name and attribute value (second and ' +
-                    'third arguments)',
+                'error': `expected strings for ${argName} name and ${argName} value (second ` +
+                    'and third arguments)',
             };
         }
         const attributeName = cleanString(tuple[1].getValue().trim());
@@ -569,18 +565,17 @@ function parseAttribute(line) {
             return {'error': 'attribute name (second argument) cannot be empty'};
         }
         const value = cleanString(tuple[2].getValue());
-        const varName = 'parseAttributeElem';
         return {
             'instructions': [
                 `let ${varName} = await page.$("${selector}");\n` +
                 `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
-                `await page.evaluate(e => { e.setAttribute("${attributeName}","${value}"); }, ` +
+                `await page.evaluate(e => { ${callback(attributeName, value)} }, ` +
                 `${varName});`,
             ],
         };
     } else if (tuple.length !== 2) {
         return {
-            'error': 'expected `("CSS selector", "attribute name", "attribute value")` or ' +
+            'error': `expected \`("CSS selector", "${argName} name", "${argName} value")\` or ` +
                 '`("CSS selector", [JSON object])`',
         };
     }
@@ -593,7 +588,7 @@ function parseAttribute(line) {
     let code = '';
     let warnings = [];
     const json = tuple[1].getValue();
-    const varName = 'parseAttributeElemJson';
+    varName += 'Json';
 
     for (let i = 0; i < json.length; ++i) {
         const entry = json[i];
@@ -607,8 +602,7 @@ function parseAttribute(line) {
         }
         const key_s = cleanString(entry['key'].getValue());
         const value_s = cleanString(entry['value'].getValue());
-        code += `await page.evaluate(e => { e.setAttribute("${key_s}","${value_s}"); },` +
-                `${varName});\n`;
+        code += `await page.evaluate(e => { ${callback(key_s, value_s)} }, ${varName});\n`;
     }
     warnings = warnings.length > 0 ? warnings : undefined;
     if (code.length === 0) {
@@ -629,97 +623,20 @@ function parseAttribute(line) {
 
 // Possible inputs:
 //
+// * ("CSS selector", "attribute name", "attribute value")
+// * ("CSS selector", [JSON object])
+function parseAttribute(line) {
+    return innerParseCssAttribute(line, 'attribute', 'parseAttributeElem',
+        (key, value) => `e.setAttribute("${key}","${value}");`);
+}
+
+// Possible inputs:
+//
 // * ("CSS selector", "CSS property name", "CSS property value")
 // * ("CSS selector", [JSON object])
 function parseCss(line) {
-    const p = new Parser(line);
-    p.parse();
-    if (p.error !== null) {
-        return {'error': p.error};
-    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
-        return {
-            'error': 'expected `("CSS selector", "CSS property name", "CSS property value")` or ' +
-                '`("CSS selector", [JSON object])`',
-        };
-    }
-    const tuple = p.elems[0].getValue();
-    if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected `("CSS selector", "CSS property name", "CSS property value")` or ' +
-                '`("CSS selector", [JSON object])`',
-        };
-    }
-    const selector = cleanCssSelector(tuple[0].getValue());
-    if (selector.length === 0) {
-        return {'error': 'CSS selector (first argument) cannot be empty'};
-    }
-    if (tuple.length === 3) {
-        if (tuple[1].kind !== 'string' || tuple[2].kind !== 'string') {
-            return {
-                'error': 'expected strings for CSS property name and CSS property value (second ' +
-                    'and third arguments)',
-            };
-        }
-        const attributeName = cleanString(tuple[1].getValue().trim());
-        if (selector.length === 0) {
-            return {'error': 'attribute name (second argument) cannot be empty'};
-        }
-        const value = cleanString(tuple[2].getValue());
-        const varName = 'parseCssElem';
-        return {
-            'instructions': [
-                `let ${varName} = await page.$("${selector}");\n` +
-                `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
-                `await page.evaluate(e => { e.style["${attributeName}"] = "${value}"; }, ` +
-                `${varName});`,
-            ],
-        };
-    } else if (tuple.length !== 2) {
-        return {
-            'error': 'expected `("CSS selector", "CSS attribute name", "CSS attribute value")` or' +
-                ' `("CSS selector", [JSON object])`',
-        };
-    }
-    if (tuple[1].kind !== 'json') {
-        return {
-            'error': 'expected json as second argument (since there are only arguments), found ' +
-                `${tuple[1].kind}`,
-        };
-    }
-    let code = '';
-    let warnings = [];
-    const json = tuple[1].getValue();
-    const varName = 'parseCssElemJson';
-
-    for (let i = 0; i < json.length; ++i) {
-        const entry = json[i];
-
-        if (entry['value'] === undefined) {
-            warnings.push(`No value for key \`${entry['key'].getValue()}\``);
-            continue;
-        } else if (entry['key'].isRecursive() === true) {
-            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
-            continue;
-        }
-        const key_s = cleanString(entry['key'].getValue());
-        const value_s = cleanString(entry['value'].getValue());
-        code += `await page.evaluate(e => { e.style["${key_s}"] = "${value_s}"; }, ${varName});\n`;
-    }
-    warnings = warnings.length > 0 ? warnings : undefined;
-    if (code.length === 0) {
-        return {
-            'instructions': [],
-            'wait': false,
-            'warnings': warnings,
-        };
-    }
-    return {
-        'instructions': [
-            `let ${varName} = await page.$("${selector}");\n` +
-            `if (${varName} === null) { throw '"${selector}" not found'; }\n${code}`,
-        ],
-        'warnings': warnings,
-    };
+    return innerParseCssAttribute(line, 'CSS property', 'parseCssElem',
+        (key, value) => `e.style["${key}"] = "${value}";`);
 }
 
 // Possible inputs:
