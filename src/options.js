@@ -8,8 +8,7 @@ function helper() {
     print('                            be placed');
     print('  --run-id [id]           : Id to be used for failed images extension (\'test\'');
     print('                            by default)');
-    print('  --generate-images       : If provided, it\'ll generate test images and won\'t');
-    print('                            run comparison tests');
+    print('  --generate-images       : If provided, it\'ll generate missing test images');
     print('  --doc-path [PATH]       : Doc path to be used on `goto` local paths');
     print('  --url [URL]             : URL to be used on `goto` urls');
     print('  --no-headless           : Disable headless mode');
@@ -97,8 +96,9 @@ class Options {
     validate() {
         if (this.testFolderPath.length === 0) {
             throw 'You need to provide \'--test-folder\' option!';
-        } else if (this.failuresFolderPath.length === 0) {
-            throw 'You need to provide \'--failure-folder\' option!';
+        } else if (this.failuresFolderPath.length === 0 && this.noScreenshot === true) {
+            throw 'You need to provide \'--failure-folder\' option if \'--no-screenshot\' isn\'t ' +
+                'used!';
         }
     }
 }
