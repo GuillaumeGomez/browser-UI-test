@@ -470,6 +470,37 @@ function checkParseContent() {
     return x;
 }
 
+function checkReload() {
+    const func = parserFuncs.parseReload;
+    const x = new Assert();
+
+    // check tuple argument
+    x.assert(func(''),
+        {
+            'instructions': [
+                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 30000});',
+            ],
+        });
+    x.assert(func('"a"'), {'error': 'expected either [integer] or no arguments, got string'});
+    x.assert(func('12'),
+        {
+            'instructions': [
+                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 12});',
+            ],
+        });
+    x.assert(func('12 24'), {'error': 'expected nothing, found `2`'});
+    x.assert(func('0'),
+        {
+            'instructions': [
+                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 0});',
+            ],
+            'warnings': 'You passed 0 as timeout, it means the timeout has been disabled on ' +
+                'this reload',
+        });
+
+    return x;
+}
+
 const TO_CHECK = [
     {'name': 'assert', 'func': checkAssert},
     {'name': 'attribute', 'func': checkAttribute},
@@ -480,6 +511,7 @@ const TO_CHECK = [
     {'name': 'goto', 'func': checkGoTo},
     {'name': 'local-storage', 'func': checkLocalStorage},
     {'name': 'move-cursor-to', 'func': checkMoveCursorTo},
+    {'name': 'reload', 'func': checkReload},
     {'name': 'screenshot', 'func': checkScreenshot},
     {'name': 'scroll-to', 'func': checkScrollTo},
     {'name': 'size', 'func': checkSize},

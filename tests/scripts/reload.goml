@@ -1,0 +1,7 @@
+screenshot: false
+goto: file://{current-dir}/{doc-path}/basic.html
+assert: ("#button", "Go somewhere else!")
+text: ("#button", "hello")
+assert: ("#button", "hello")
+reload:
+assert: ("#button", "Go somewhere else!")

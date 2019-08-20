@@ -768,6 +768,42 @@ function parseFail(line) {
     };
 }
 
+// Possible inputs:
+//
+// * nothing
+// * number (of milliseconds before timeout)
+function parseReload(line) {
+    let timeout = 30000;
+    const warnings = [];
+
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length > 1) {
+        return {
+            'error': `expected either [integer] or no arguments, got ${p.elems.length} arguments`,
+        };
+    } else if (p.elems.length !== 0) {
+        if (p.elems[0].kind !== 'number') {
+            return {
+                'error': `expected either [integer] or no arguments, got ${p.elems[0].kind}`,
+            };
+        }
+        timeout = p.elems[0].getValue();
+        if (timeout === '0') {
+            warnings.push('You passed 0 as timeout, it means the timeout has been disabled on ' +
+                'this reload');
+        }
+    }
+    return {
+        'instructions': [
+            `await page.reload({'waitUntil': 'domcontentloaded', 'timeout': ${timeout}});`,
+        ],
+        'warnings': warnings.length > 0 ? warnings.join('\n') : undefined,
+    };
+}
+
 const ORDERS = {
     'assert': parseAssert,
     'attribute': parseAttribute,
@@ -778,6 +814,7 @@ const ORDERS = {
     'goto': parseGoTo,
     'local-storage': parseLocalStorage,
     'move-cursor-to': parseMoveCursorTo,
+    'reload': parseReload,
     'screenshot': parseScreenshot,
     'scroll-to': parseScrollTo,
     'size': parseSize,
@@ -846,6 +883,7 @@ module.exports = {
     'parseGoTo': parseGoTo,
     'parseLocalStorage': parseLocalStorage,
     'parseMoveCursorTo': parseMoveCursorTo,
+    'parseReload': parseReload,
     'parseScreenshot': parseScreenshot,
     'parseScrollTo': parseScrollTo,
     'parseSize': parseSize,
