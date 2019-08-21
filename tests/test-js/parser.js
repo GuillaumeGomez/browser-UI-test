@@ -2,9 +2,7 @@ const process = require('process');
 const Parser = require('../../src/parser.js').Parser;
 const {Assert, plural, print} = require('./utils.js');
 
-function checkTuple() {
-    const x = new Assert();
-
+function checkTuple(x) {
     let p = new Parser('()');
     p.parse();
     x.assert(p.error, 'unexpected `()`: tuples need at least one argument');
@@ -142,13 +140,9 @@ function checkTuple() {
     x.assert(p.elems[0].getValue()[3].error, null);
     x.assert(p.elems[0].getValue()[3].kind, 'number');
     x.assert(p.elems[0].getValue()[3].getValue(), '3');
-
-    return x;
 }
 
-function checkBool() {
-    const x = new Assert();
-
+function checkBool(x) {
     let p = new Parser('false');
     p.parse();
     x.assert(p.error, null);
@@ -195,13 +189,9 @@ function checkBool() {
     x.assert(p.elems[0].kind, 'unknown');
     x.assert(p.elems[0].error, 'unexpected `tre` as first token');
     x.assert(p.elems[0].getValue(), 'tre');
-
-    return x;
 }
 
-function checkString() {
-    const x = new Assert();
-
+function checkString(x) {
     let p = new Parser('"hello');
     p.parse();
     x.assert(p.error, 'expected `"` at the end of the string');
@@ -280,13 +270,9 @@ function checkString() {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getValue(), 'hello\\\'');
     x.assert(p.elems[0].getText(), '\'hello\\\'\'');
-
-    return x;
 }
 
-function checkNumber() {
-    const x = new Assert();
-
+function checkNumber(x) {
     let p = new Parser('1');
     p.parse();
     x.assert(p.error, null);
@@ -327,13 +313,9 @@ function checkNumber() {
     x.assert(p.elems[1].kind, 'char');
     x.assert(p.elems[1].error, 'expected nothing, found `.`');
     x.assert(p.elems[1].getValue(), '.');
-
-    return x;
 }
 
-function checkJson() {
-    const x = new Assert();
-
+function checkJson(x) {
     let p = new Parser('{1: 2}');
     p.parse();
     x.assert(p.error, 'numbers cannot be used as keys (for `1`)');
@@ -693,13 +675,9 @@ function checkJson() {
     x.assert(p.elems[0].getValue()[2].key.getValue(), 'z');
     x.assert(p.elems[0].getValue()[2].value.kind, 'number');
     x.assert(p.elems[0].getValue()[2].value.getValue(), '56');
-
-    return x;
 }
 
-function checkComment() {
-    const x = new Assert();
-
+function checkComment(x) {
     let p = new Parser('1 // just a test');
     p.parse();
     x.assert(p.error, null);
@@ -753,8 +731,6 @@ function checkComment() {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getValue(), 'just a string// with a comment in the middle!');
     x.assert(p.elems[0].getText(), '"just a string// with a comment in the middle!"');
-
-    return x;
 }
 
 const TO_CHECK = [
@@ -767,28 +743,27 @@ const TO_CHECK = [
 ];
 
 function checkCommands() {
-    let nbErrors = 0;
+    const x = new Assert();
 
     print('=> Starting parser tests...');
     print('');
 
     for (let i = 0; i < TO_CHECK.length; ++i) {
-        print(`==> Checking "${TO_CHECK[i].name}"...`);
+        x.startTestSuite(TO_CHECK[i].name);
         try {
-            const errors = TO_CHECK[i].func();
-            nbErrors += errors.errors;
-            print(`<== "${TO_CHECK[i].name}": ${errors.errors} ${plural('error', errors.errors)}` +
-                ` (in ${errors.ranTests} ${plural('test', errors.ranTests)})`);
+            TO_CHECK[i].func(x);
+            x.endTestSuite();
         } catch (err) {
-            nbErrors += 1;
+            x.endTestSuite(false);
             print(`<== "${TO_CHECK[i].name}" failed: ${err}\n${err.stack}`);
         }
     }
 
     print('');
-    print(`<= Ending tests with ${nbErrors} ${plural('error', nbErrors)}`);
+    print(`<= Ending ${x.totalRanTests} ${plural('test', x.totalRanTests)} with ` +
+        `${x.totalErrors} ${plural('error', x.totalErrors)}`);
 
-    return nbErrors;
+    return x.totalErrors;
 }
 
 if (require.main === module) {

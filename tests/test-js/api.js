@@ -2,10 +2,7 @@ const process = require('process');
 const parserFuncs = require('../../src/commands.js');
 const {Assert, plural, print} = require('./utils.js');
 
-function checkAssert() {
-    const func = parserFuncs.parseAssert;
-    const x = new Assert();
-
+function checkAssert(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('(a, "b")'), {'error': 'unexpected `a` as first token'});
     x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
@@ -68,14 +65,9 @@ function checkAssert() {
         ],
         'wait': false,
     });
-
-    return x;
 }
 
-function checkAttribute() {
-    const func = parserFuncs.parseAttribute;
-    const x = new Assert();
-
+function checkAttribute(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
     x.assert(func('("a")'),
@@ -114,14 +106,9 @@ function checkAttribute() {
             ],
         });
     // TODO: add checks for more complex json objects
-
-    return x;
 }
 
-function checkCss() {
-    const func = parserFuncs.parseCss;
-    const x = new Assert();
-
+function checkCss(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
     x.assert(func('("a")'),
@@ -160,14 +147,9 @@ function checkCss() {
             ],
         });
     // TODO: add checks for more complex json objects
-
-    return x;
 }
 
-function checkClick() {
-    const func = parserFuncs.parseClick;
-    const x = new Assert();
-
+function checkClick(x, func) {
     // Check position
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
@@ -187,27 +169,17 @@ function checkClick() {
     x.assert(func('"a"'), {'instructions': ['page.click("a")']});
     x.assert(func('\'a\''), {'instructions': ['page.click("a")']});
     x.assert(func('\'"a\''), {'instructions': ['page.click("\\\\"a")']});
-
-    return x;
 }
 
-function checkFail() {
-    const func = parserFuncs.parseFail;
-    const x = new Assert();
-
+function checkFail(x, func) {
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
     x.assert(func('tru'), {'error': 'unexpected `tru` as first token'});
     x.assert(func('false'), {'instructions': ['arg.expectedToFail = false;'], 'wait': false});
     x.assert(func('true'), {'instructions': ['arg.expectedToFail = true;'], 'wait': false});
-
-    return x;
 }
 
-function checkFocus() {
-    const func = parserFuncs.parseFocus;
-    const x = new Assert();
-
+function checkFocus(x, func) {
     x.assert(func('a'), {'error': 'unexpected `a` as first token'});
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
@@ -215,14 +187,9 @@ function checkFocus() {
     x.assert(func('"a"'), {'instructions': ['page.focus("a")']});
     x.assert(func('\'a\''), {'instructions': ['page.focus("a")']});
     x.assert(func('\'"a\''), {'instructions': ['page.focus("\\\\"a")']});
-
-    return x;
 }
 
-function checkGoTo() {
-    const func = parserFuncs.parseGoTo;
-    const x = new Assert();
-
+function checkGoTo(x, func) {
     x.assert(func('a'), {'error': 'a relative path or a full URL was expected, found `a`'});
     x.assert(func('"'), {'error': 'a relative path or a full URL was expected, found `"`'});
     x.assert(func('http:/a'),
@@ -253,14 +220,9 @@ function checkGoTo() {
     x.assert(func('http://foo/{url}/fa', {'url': 'tadam/'}), {
         'instructions': ['await page.goto("http://foo/tadam/fa")'],
     });
-
-    return x;
 }
 
-function checkLocalStorage() {
-    const func = parserFuncs.parseLocalStorage;
-    const x = new Assert();
-
+function checkLocalStorage(x, func) {
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('{').error !== undefined); // JSON syntax error
     x.assert(func('{"a": 1}'), {
@@ -271,14 +233,9 @@ function checkLocalStorage() {
     x.assert(func('{"a": "1", "b": "2px"}'),
         {'instructions': ['page.evaluate(() => { localStorage.setItem("a", "1");\n' +
             'localStorage.setItem("b", "2px"); })']});
-
-    return x;
 }
 
-function checkMoveCursorTo() {
-    const func = parserFuncs.parseMoveCursorTo;
-    const x = new Assert();
-
+function checkMoveCursorTo(x, func) {
     // Check position
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
@@ -298,14 +255,9 @@ function checkMoveCursorTo() {
     x.assert(func('"a"'), {'instructions': ['page.hover("a")']});
     x.assert(func('\'a\''), {'instructions': ['page.hover("a")']});
     x.assert(func('\'"a\''), {'instructions': ['page.hover("\\\\"a")']});
-
-    return x;
 }
 
-function checkScreenshot() {
-    const func = parserFuncs.parseScreenshot;
-    const x = new Assert();
-
+function checkScreenshot(x, func) {
     x.assert(func(''), {'error': 'expected boolean or CSS selector, found nothing'});
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('"true"'),
@@ -320,14 +272,9 @@ function checkScreenshot() {
     x.assert(func('true'), {'instructions': ['arg.takeScreenshot = true;'], 'wait': false});
     x.assert(func('\'\''), {'error': 'CSS selector cannot be empty'});
     x.assert(func('"test"'), {'instructions': ['arg.takeScreenshot = "test";'], 'wait': false});
-
-    return x;
 }
 
-function checkScrollTo() {
-    const func = parserFuncs.parseScrollTo;
-    const x = new Assert();
-
+function checkScrollTo(x, func) {
     // Check position
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
@@ -347,14 +294,9 @@ function checkScrollTo() {
     x.assert(func('"a"'), {'instructions': ['page.hover("a")']});
     x.assert(func('\'a\''), {'instructions': ['page.hover("a")']});
     x.assert(func('\'"a\''), {'instructions': ['page.hover("\\\\"a")']});
-
-    return x;
 }
 
-function checkSize() {
-    const func = parserFuncs.parseSize;
-    const x = new Assert();
-
+function checkSize(x, func) {
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
@@ -365,14 +307,9 @@ function checkSize() {
     x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
     x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
     x.assert(func('(1,2)'), {'instructions': ['page.setViewport({width: 1, height: 2})']});
-
-    return x;
 }
 
-function checkText() {
-    const func = parserFuncs.parseText;
-    const x = new Assert();
-
+function checkText(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
     x.assert(func('("a")'), {'error': 'expected `("CSS selector", "text")`'});
@@ -388,14 +325,9 @@ function checkText() {
                 'parseTextElem);',
             ],
         });
-
-    return x;
 }
 
-function checkWaitFor() {
-    const func = parserFuncs.parseWaitFor;
-    const x = new Assert();
-
+function checkWaitFor(x, func) {
     // Check integer
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('1 2'), {'error': 'expected nothing, found `2`'});
@@ -408,14 +340,9 @@ function checkWaitFor() {
     x.assert(func('"a"'), {'instructions': ['await page.waitFor("a")'], 'wait': false});
     x.assert(func('\'a\''), {'instructions': ['await page.waitFor("a")'], 'wait': false});
     x.assert(func('\'"a\''), {'instructions': ['await page.waitFor("\\\\"a")'], 'wait': false});
-
-    return x;
 }
 
-function checkWrite() {
-    const func = parserFuncs.parseWrite;
-    const x = new Assert();
-
+function checkWrite(x, func) {
     // check tuple argument
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
@@ -435,14 +362,9 @@ function checkWrite() {
     x.assert(func('"a"'), {'instructions': ['page.keyboard.type("a")']});
     x.assert(func('\'a\''), {'instructions': ['page.keyboard.type("a")']});
     x.assert(func('\'"a\''), {'instructions': ['page.keyboard.type("\\"a")']});
-
-    return x;
 }
 
-function checkReload() {
-    const func = parserFuncs.parseReload;
-    const x = new Assert();
-
+function checkReload(x, func) {
     // check tuple argument
     x.assert(func(''),
         {
@@ -466,20 +388,14 @@ function checkReload() {
             'warnings': 'You passed 0 as timeout, it means the timeout has been disabled on ' +
                 'this reload',
         });
-
-    return x;
 }
 
-function checkParseContent() {
-    const func = parserFuncs.parseContent;
-    const x = new Assert();
-
+function checkParseContent(x, func) {
     x.assert(func(''), {'instructions': []});
     x.assert(func('// just a comment'), {'instructions': []});
     x.assert(func('  // just a comment'), {'instructions': []});
     x.assert(func('a: '), {'error': 'Unknown command "a"', 'line': 0});
     x.assert(func(':'), {'error': 'Unknown command ""', 'line': 0});
-
 
     x.assert(func('goto: file:///home'),
         {
@@ -507,54 +423,51 @@ function checkParseContent() {
             ],
         });
     x.assert(func('// just a comment\na: b'), {'error': 'Unknown command "a"', 'line': 1});
-
-    return x;
 }
 
 const TO_CHECK = [
-    {'name': 'assert', 'func': checkAssert},
-    {'name': 'attribute', 'func': checkAttribute},
-    {'name': 'click', 'func': checkClick},
-    {'name': 'css', 'func': checkCss},
-    {'name': 'fail', 'func': checkFail},
-    {'name': 'focus', 'func': checkFocus},
-    {'name': 'goto', 'func': checkGoTo},
-    {'name': 'local-storage', 'func': checkLocalStorage},
-    {'name': 'move-cursor-to', 'func': checkMoveCursorTo},
-    {'name': 'reload', 'func': checkReload},
-    {'name': 'screenshot', 'func': checkScreenshot},
-    {'name': 'scroll-to', 'func': checkScrollTo},
-    {'name': 'size', 'func': checkSize},
-    {'name': 'text', 'func': checkText},
-    {'name': 'wait-for', 'func': checkWaitFor},
-    {'name': 'write', 'func': checkWrite},
+    {'name': 'assert', 'func': checkAssert, 'toCall': parserFuncs.parseAssert},
+    {'name': 'attribute', 'func': checkAttribute, 'toCall': parserFuncs.parseAttribute},
+    {'name': 'click', 'func': checkClick, 'toCall': parserFuncs.parseClick},
+    {'name': 'css', 'func': checkCss, 'toCall': parserFuncs.parseCss},
+    {'name': 'fail', 'func': checkFail, 'toCall': parserFuncs.parseFail},
+    {'name': 'focus', 'func': checkFocus, 'toCall': parserFuncs.parseFocus},
+    {'name': 'goto', 'func': checkGoTo, 'toCall': parserFuncs.parseGoTo},
+    {'name': 'local-storage', 'func': checkLocalStorage, 'toCall': parserFuncs.parseLocalStorage},
+    {'name': 'move-cursor-to', 'func': checkMoveCursorTo, 'toCall': parserFuncs.parseMoveCursorTo},
+    {'name': 'reload', 'func': checkReload, 'toCall': parserFuncs.parseReload},
+    {'name': 'screenshot', 'func': checkScreenshot, 'toCall': parserFuncs.parseScreenshot},
+    {'name': 'scroll-to', 'func': checkScrollTo, 'toCall': parserFuncs.parseScrollTo},
+    {'name': 'size', 'func': checkSize, 'toCall': parserFuncs.parseSize},
+    {'name': 'text', 'func': checkText, 'toCall': parserFuncs.parseText},
+    {'name': 'wait-for', 'func': checkWaitFor, 'toCall': parserFuncs.parseWaitFor},
+    {'name': 'write', 'func': checkWrite, 'toCall': parserFuncs.parseWrite},
     // This one is a bit "on its own".
-    {'name': 'parseContent', 'func': checkParseContent},
+    {'name': 'parseContent', 'func': checkParseContent, 'toCall': parserFuncs.parseContent},
 ];
 
 function checkCommands() {
-    let nbErrors = 0;
+    const x = new Assert();
 
     print('=> Starting API tests...');
     print('');
 
     for (let i = 0; i < TO_CHECK.length; ++i) {
-        print(`==> Checking "${TO_CHECK[i].name}"...`);
+        x.startTestSuite(TO_CHECK[i].name);
         try {
-            const errors = TO_CHECK[i].func();
-            nbErrors += errors.errors;
-            print(`<== "${TO_CHECK[i].name}": ${errors.errors} ${plural('error', errors.errors)}` +
-                ` (in ${errors.ranTests} ${plural('test', errors.ranTests)})`);
+            TO_CHECK[i].func(x, TO_CHECK[i].toCall);
+            x.endTestSuite();
         } catch (err) {
-            nbErrors += 1;
+            x.endTestSuite(false);
             print(`<== "${TO_CHECK[i].name}" failed: ${err}\n${err.stack}`);
         }
     }
 
     print('');
-    print(`<= Ending tests with ${nbErrors} ${plural('error', nbErrors)}`);
+    print(`<= Ending ${x.totalRanTests} ${plural('test', x.totalRanTests)} with ` +
+        `${x.totalErrors} ${plural('error', x.totalErrors)}`);
 
-    return nbErrors;
+    return x.totalErrors;
 }
 
 if (require.main === module) {
