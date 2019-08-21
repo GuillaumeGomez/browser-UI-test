@@ -61,7 +61,7 @@ class Options {
                 return false;
             } else if (args[it] === '--test-folder') {
                 if (it + 1 < args.length) {
-                    this.testFolderPath = utils.addSlash(args[it + 1]);
+                    this.testFolderPath = args[it + 1];
                     it += 1;
                 } else {
                     throw 'Missing path after \'--test-folder\' option';
@@ -106,7 +106,7 @@ class Options {
         if (this.testFolderPath.length === 0 && this.testFiles.length === 0) {
             throw 'You need to provide \'--test-folder\' option or at least one file to test ' +
                 'with \'--test-files\' option!';
-        } else if (this.failuresFolderPath.length === 0 && this.noScreenshot === true) {
+        } else if (this.failuresFolderPath.length === 0 && this.noScreenshot === false) {
             throw 'You need to provide \'--failure-folder\' option if \'--no-screenshot\' isn\'t ' +
                 'used!';
         }
