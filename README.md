@@ -42,10 +42,13 @@ runTests(options).then(x => {
 
 #### Options
 
+If you want to see all the available options, just run with the `-h` or `--help` options. If you want to build the `Options` object yourself, you might be interested by what follows.
+
 The list of fields of the `Options` class is the following:
 
  * `testFolder`: path of the folder where `.goml` script files are
  * `failureFolder`: path of the folder where failed tests image will be placed
+ * `testFiles`: list of `.goml` files' path to be run
  * `runId`: id to be used for failed images extension ('test' by default)
  * `generateImages`: if provided, it'll generate test images and won't run comparison tests
  * `docPath`: doc path to be used on `goto` local paths using `{doc-path}`
