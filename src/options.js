@@ -61,7 +61,7 @@ class Options {
                 return false;
             } else if (args[it] === '--test-folder') {
                 if (it + 1 < args.length) {
-                    this.testFolderPath = utils.addSlash(args[it + 1]);
+                    this.testFolderPath = args[it + 1];
                     it += 1;
                 } else {
                     throw 'Missing path after \'--test-folder\' option';

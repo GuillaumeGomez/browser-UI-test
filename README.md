@@ -40,6 +40,34 @@ runTests(options).then(x => {
 });
 ```
 
+To be noted that there is also a function `runTest` which only runs the specified test file:
+
+```js
+const {runTest} = require('browser-ui-test');
+
+runTest('someFile.goml').then(x => {
+    const [output, nb_failures] = x;
+    console.log(output);
+    process.exit(nb_failures);
+}).catch(err => {
+    console.error(err);
+    process.exit(1);
+});
+```
+
+### Exported elements
+
+Like said above, you can use this framework through code directly. Here is the list of available elements:
+
+ * `runTest`: Function to run a specific test. Parameters:
+   * testPath: String [MANDATORY]
+   * options: `Options` type [OPTIONAL]
+   * saveLogs: Boolean [OPTIONAL]
+ * `runTests`: Function to run tests based on the received options. Parameters:
+   * options: `Options` type [OPTIONAL]
+   * saveLogs: Boolean [OPTIONAL]
+ * `Options`: Object used to store run options. More information follows in the [`Options`](#Options) section.
+
 #### Options
 
 If you want to see all the available options, just run with the `-h` or `--help` options. If you want to build the `Options` object yourself, you might be interested by what follows.
