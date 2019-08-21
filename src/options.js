@@ -106,7 +106,7 @@ class Options {
         if (this.testFolderPath.length === 0 && this.testFiles.length === 0) {
             throw 'You need to provide \'--test-folder\' option or at least one file to test ' +
                 'with \'--test-files\' option!';
-        } else if (this.failuresFolderPath.length === 0 && this.noScreenshot === true) {
+        } else if (this.failuresFolderPath.length === 0 && this.noScreenshot === false) {
             throw 'You need to provide \'--failure-folder\' option if \'--no-screenshot\' isn\'t ' +
                 'used!';
         }
