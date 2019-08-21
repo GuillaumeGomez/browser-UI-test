@@ -33,12 +33,16 @@ function plural(x, nb) {
 
 class Assert {
     constructor() {
+        this.totalRanTests = 0;
+        this.totalErrors = 0;
         this.errors = 0;
         this.ranTests = 0;
+        this.currentTestSuite = null;
     }
 
     assert(value1, value2) {
         this.ranTests += 1;
+        this.totalRanTests += 1;
         if (typeof value2 !== 'undefined') {
             value1 = toJSON(value1);
             value2 = toJSON(value2);
@@ -46,14 +50,40 @@ class Assert {
                 const pos = getStackInfo(new Error().stack);
                 print(`[${pos.file}:${pos.line}] failed: \`${value1}\` != \`${value2}\``);
                 this.errors += 1;
+                this.totalErrors += 1;
                 return;
             }
         } else if (!value1) {
             const pos = getStackInfo(new Error().stack);
             print(`[${pos.file}:${pos.line}] failed: \`${value1}\` is evalued to false`);
             this.errors += 1;
+            this.totalErrors += 1;
             return;
         }
+    }
+
+    startTestSuite(name, printMsg = true) {
+        if (this.currentTestSuite !== null) {
+            throw `The test suite "${this.currentTestSuite}" is already running, call ` +
+                '`endTestSuite` first';
+        }
+        this.currentTestSuite = name;
+        if (printMsg === true) {
+            print(`==> Checking "${this.currentTestSuite}"...`);
+        }
+    }
+
+    endTestSuite(printMsg = true) {
+        if (this.currentTestSuite === null) {
+            throw 'No test suite is running, call `startTestSuite` first';
+        }
+        if (printMsg === true) {
+            print(`<== "${this.currentTestSuite}": ${this.errors} ${plural('error', this.errors)}` +
+                ` (in ${this.ranTests} ${plural('test', this.ranTests)})`);
+        }
+        this.currentTestSuite = null;
+        this.ranTests = 0;
+        this.errors = 0;
     }
 }
 
