@@ -8,6 +8,7 @@ const {Debug, Logs} = require('./logs.js');
 const add_warn = utils.add_warning;
 const process = require('process');
 const print = utils.print;
+const path = require('path');
 
 
 function loadContent(content) {
@@ -55,40 +56,56 @@ async function innerRunTests(logs, options) {
     let failures = 0;
     let ignored = 0;
     let total = 0;
+    const allFiles = [];
 
     fs.readdirSync(options.testFolderPath).forEach(function(file) {
         const fullPath = options.testFolderPath + file;
         if (file.endsWith('.goml') && fs.lstatSync(fullPath).isFile()) {
-            const testName = file.substr(0, file.length - 5);
-            try {
-                total += 1;
-                const commands = parser.parseContent(utils.readFile(fullPath), options);
-                if (Object.prototype.hasOwnProperty.call(commands, 'error')) {
-                    logs.append(testName + '... FAILED');
-                    logs.append(`[ERROR] line ${commands['line']}: ${commands['error']}`);
-                    failures += 1;
-                    return;
-                }
-                if (commands['instructions'].length === 0) {
-                    logs.append(testName + '... FAILED');
-                    logs.append('=> No command to execute');
-                    logs.warn(commands['warnings']);
-                    failures += 1;
-                    return;
-                }
-                loaded.push({
-                    'file': testName,
-                    'commands': commands['instructions'],
-                    'warnings': commands['warnings'],
-                });
-            } catch (err) {
-                failures += 1;
-                logs.append(testName + '... FAILED (exception occured)');
-                logs.append(`${err}\n${err.stack}`);
-                return;
-            }
+            allFiles.push(path.resolve(fullPath));
         }
     });
+    for (let i = 0; i < options.testFiles.length; ++i) {
+        if (fs.lstatSync(options.testFiles[i]).isFile()) {
+            const fullPath = path.resolve(options.testFiles[i]);
+            if (allFiles.indexOf(fullPath) === -1) {
+                allFiles.push(fullPath);
+            }
+        }
+    }
+    // A little sort on tests' name.
+    allFiles.sort((a, b) => path.basename(a) > path.basename(b));
+
+    for (let i = 0; i < allFiles.length; ++i) {
+        const fullPath = allFiles[i];
+        const basename = path.basename(fullPath);
+        const testName = basename.substr(0, basename.length - 5);
+        try {
+            total += 1;
+            const commands = parser.parseContent(utils.readFile(fullPath), options);
+            if (Object.prototype.hasOwnProperty.call(commands, 'error')) {
+                logs.append(testName + '... FAILED');
+                logs.append(`[ERROR] line ${commands['line']}: ${commands['error']}`);
+                failures += 1;
+                continue;
+            }
+            if (commands['instructions'].length === 0) {
+                logs.append(testName + '... FAILED');
+                logs.append('=> No command to execute');
+                logs.warn(commands['warnings']);
+                failures += 1;
+                continue;
+            }
+            loaded.push({
+                'file': testName,
+                'commands': commands['instructions'],
+                'warnings': commands['warnings'],
+            });
+        } catch (err) {
+            failures += 1;
+            logs.append(testName + '... FAILED (exception occured)');
+            logs.append(`${err}\n${err.stack}`);
+        }
+    }
 
     if (loaded.length === 0) {
         logs.append('');
@@ -184,8 +201,8 @@ async function innerRunTests(logs, options) {
             debug_log.append(`=> [SCREENSHOT ${compare_s}]`);
             const newImage = `${options.testFolderPath}${loaded[i]['file']}-${options.runId}.png`;
             await elem.screenshot({
-                path: newImage,
-                fullPage: extras.takeScreenshot === true ? true : undefined,
+                'path': newImage,
+                'fullPage': extras.takeScreenshot === true ? true : undefined,
             });
 
             const originalImage = `${options.testFolderPath}${loaded[i]['file']}.png`;

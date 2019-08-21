@@ -6,6 +6,7 @@ function helper() {
     print('  --test-folder [PATH]    : Path of the folder where `.goml` script files are');
     print('  --failure-folder [PATH] : Path of the folder where failed tests image will');
     print('                            be placed');
+    print('  --test-files [PATHs]    : List of `.goml` files\' path to be run');
     print('  --run-id [id]           : Id to be used for failed images extension (\'test\'');
     print('                            by default)');
     print('  --generate-images       : If provided, it\'ll generate missing test images');
@@ -30,6 +31,7 @@ class Options {
         this.debug = false;
         this.noScreenshot = false;
         this.url = '';
+        this.testFiles = [];
     }
 
     parseArguments(args = []) {
@@ -85,6 +87,13 @@ class Options {
                 } else {
                     throw 'Missing path after \'--failure-folder\' option';
                 }
+            } else if (args[it] === '--test-files') {
+                if (it + 1 >= args.length) {
+                    throw 'Expected at least one path for \'--test-files\' option';
+                }
+                for (it = it + 1; it < args.length; ++it) {
+                    this.testFiles.push(args[it]);
+                }
             } else {
                 throw `Unknown option '${args[it]}'\n` +
                         'Use \'--help\' if you want the list of the available commands';
@@ -94,11 +103,38 @@ class Options {
     }
 
     validate() {
-        if (this.testFolderPath.length === 0) {
-            throw 'You need to provide \'--test-folder\' option!';
+        if (this.testFolderPath.length === 0 && this.testFiles.length === 0) {
+            throw 'You need to provide \'--test-folder\' option or at least one file to test ' +
+                'with \'--test-files\' option!';
         } else if (this.failuresFolderPath.length === 0 && this.noScreenshot === true) {
             throw 'You need to provide \'--failure-folder\' option if \'--no-screenshot\' isn\'t ' +
                 'used!';
+        }
+        for (let i = 0; i < this.testFiles.length; ++i) {
+            if (this.testFiles[i].endsWith('.goml') === false) {
+                throw 'Only `.goml` script files are allowed in the `--test-files` option, ' +
+                    `got \`${this.testFiles[i]}\``;
+            }
+        }
+
+        // Check if variables have the expected types (you never know...).
+        const validateField = (fieldName, expectedType) => {
+            if (typeof this[fieldName] !== expectedType) {
+                throw `\`Options.${fieldName}\` field is supposed to be a ${expectedType}!`;
+            }
+        };
+        validateField('runId', 'string');
+        validateField('generateImages', 'boolean');
+        validateField('headless', 'boolean');
+        validateField('testFolderPath', 'string');
+        validateField('docPath', 'string');
+        validateField('failuresFolderPath', 'string');
+        validateField('showText', 'boolean');
+        validateField('debug', 'boolean');
+        validateField('noScreenshot', 'boolean');
+        validateField('url', 'string');
+        if (Array.isArray(this.testFiles) !== true) {
+            throw '`Options.files` field is supposed to be an array!';
         }
     }
 }
