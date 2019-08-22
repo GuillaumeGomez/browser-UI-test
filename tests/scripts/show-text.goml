@@ -1,0 +1,7 @@
+screenshot: false
+goto: file://{current-dir}/{doc-path}/basic.html
+assert: ("#button", {"color": "rgba(0, 0, 0, 0)"})
+show-text: true
+assert: ("#button", {"color": "rgb(17, 17, 17)"})
+show-text: false
+assert: ("#button", {"color": "rgba(0, 0, 0, 0)"})

@@ -131,6 +131,7 @@ Here's the command list:
  * [`reload`](#reload)
  * [`screenshot`](#screenshot)
  * [`scroll-to`](#scroll-to)
+ * [`show-text`](#show-text)
  * [`size`](#size)
  * [`text`](#text)
  * [`wait-for`](#wait-for)
@@ -298,6 +299,14 @@ screenshot: true // back to "normal", full page screenshot and comparison
 scroll-to: "#element"
 scroll-to: ".element"
 scroll-to: (10, 12)
+```
+
+#### show-text
+
+**show-text** command allows to enable/disable the text hiding. Example:
+
+```
+show-text: true // text won't be invisible anymore
 ```
 
 #### size

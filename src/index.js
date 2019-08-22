@@ -9,6 +9,7 @@ const add_warn = utils.add_warning;
 const process = require('process');
 const print = utils.print;
 const path = require('path');
+const consts = require('./consts.js');
 
 
 // Make it into a class to provide some utility methods like 'isFailure'.
@@ -57,8 +58,17 @@ function save_failure(folderIn, failuresFolder, newImage, originalImage, runId) 
     return true;
 }
 
-function getGlobalStyle(textHiding) {
-    return `html {font-family: Arial,Helvetica Neue,Helvetica,sans-serif;}${textHiding}`;
+function getGlobalStyle(showText) {
+    const css = [
+        {'content': 'html {font-family: Arial,Helvetica Neue,Helvetica,sans-serif;}'},
+    ];
+    if (showText === false) {
+        css.push({
+            'content': consts.CSS_TEXT_HIDE,
+            'id': consts.STYLE_HIDE_TEXT_ID,
+        });
+    }
+    return css;
 }
 
 function parseTest(testPath, logs, options) {
@@ -91,7 +101,6 @@ function parseTest(testPath, logs, options) {
 }
 
 async function runCommand(loaded, logs, options, browser) {
-    const textHiding = options.showText === true ? '' : '* { color: rgba(0,0,0,0) !important; }';
     let error_log;
     logs.append(loaded['file'] + '... ');
 
@@ -100,20 +109,39 @@ async function runCommand(loaded, logs, options, browser) {
     const debug_log = new Debug(options.debug);
     const page = await browser.newPage();
     try {
-        await page.evaluateOnNewDocument(s => {
-            window.addEventListener('DOMContentLoaded', () => {
-                const style = document.createElement('style');
-                style.type = 'text/css';
-                style.innerHTML = s;
-                document.getElementsByTagName('head')[0].appendChild(style);
-            });
-        }, getGlobalStyle(textHiding));
-        error_log = '';
-        const commands = loaded['commands'];
         const extras = {
             'takeScreenshot': options.noScreenshot === false,
             'expectedToFail': false,
+            'showText': options.showText,
         };
+        await page.exposeFunction('BrowserUiStyleInserter', () => {
+            return getGlobalStyle(extras.showText);
+        });
+        await page.evaluateOnNewDocument(() => {
+            window.addEventListener('DOMContentLoaded', async() => {
+                window.browserUiCreateNewStyleElement = function(css, id) {
+                    if (id !== undefined) {
+                        const el = document.getElementById(id);
+                        if (el) {
+                            el.remove();
+                        }
+                    }
+                    if (typeof css === 'undefined' || css.length === undefined) {
+                        return;
+                    }
+                    const style = document.createElement('style');
+                    style.type = 'text/css';
+                    style.innerHTML = css;
+                    style.id = id;
+                    document.getElementsByTagName('head')[0].appendChild(style);
+                };
+                (await window.BrowserUiStyleInserter()).forEach(e => {
+                    window.browserUiCreateNewStyleElement(e['content'], e['id']);
+                });
+            });
+        });
+        error_log = '';
+        const commands = loaded['commands'];
         for (let x = 0; x < commands.length; ++x) {
             debug_log.append(`EXECUTING "${commands[x]['code']}"`);
             try {

@@ -296,6 +296,26 @@ function checkScrollTo(x, func) {
     x.assert(func('\'"a\''), {'instructions': ['page.hover("\\\\"a")']});
 }
 
+function checkShowText(x, func) {
+    x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
+    x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
+    x.assert(func('tru'), {'error': 'unexpected `tru` as first token'});
+    x.assert(func('false'), {
+        'instructions': [
+            'arg.showText = false;',
+            'page.evaluate(() => {window.browserUiCreateNewStyleElement(\'* { color: rgba(0,0,0,' +
+            '0) !important; }\', \'browser-ui-test-style-text-hide\');});',
+        ],
+    });
+    x.assert(func('true'), {
+        'instructions': [
+            'arg.showText = true;',
+            'page.evaluate(() => {let tmp = document.getElementById(\'browser-ui-test-style-text' +
+            '-hide\');if (tmp) { tmp.remove(); }});',
+        ],
+    });
+}
+
 function checkSize(x, func) {
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
@@ -438,6 +458,7 @@ const TO_CHECK = [
     {'name': 'reload', 'func': checkReload, 'toCall': parserFuncs.parseReload},
     {'name': 'screenshot', 'func': checkScreenshot, 'toCall': parserFuncs.parseScreenshot},
     {'name': 'scroll-to', 'func': checkScrollTo, 'toCall': parserFuncs.parseScrollTo},
+    {'name': 'show-text', 'func': checkShowText, 'toCall': parserFuncs.parseShowText},
     {'name': 'size', 'func': checkSize, 'toCall': parserFuncs.parseSize},
     {'name': 'text', 'func': checkText, 'toCall': parserFuncs.parseText},
     {'name': 'wait-for', 'func': checkWaitFor, 'toCall': parserFuncs.parseWaitFor},
