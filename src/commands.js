@@ -1,6 +1,7 @@
 const os = require('os');
 const utils = require('./utils.js');
 const Parser = require('./parser.js').Parser;
+const consts = require('./consts.js');
 
 const COMMENT_START = '//';
 
@@ -732,6 +733,36 @@ function parseReload(line) {
     };
 }
 
+// Possible inputs:
+//
+// * boolean value (`true` or `false`)
+function parseShowText(line) {
+    const p = new Parser(line);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'bool') {
+        return {'error': `expected \`true\` or \`false\` value, found \`${line}\``};
+    }
+    // We need the value to be updated first.
+    const instructions = [`arg.showText = ${p.elems[0].getValue()};`];
+    // And then to make the expected changes to the DOM.
+    if (p.elems[0].getValue() === true) {
+        instructions.push('page.evaluate(() => {' +
+            `let tmp = document.getElementById('${consts.STYLE_HIDE_TEXT_ID}');` +
+            'if (tmp) { tmp.remove(); }' +
+            '});');
+    } else {
+        instructions.push('page.evaluate(() => {' +
+            `window.${consts.STYLE_ADDER_FUNCTION}('${consts.CSS_TEXT_HIDE}', ` +
+            `'${consts.STYLE_HIDE_TEXT_ID}');` +
+            '});');
+    }
+    return {
+        'instructions': instructions,
+    };
+}
+
 const ORDERS = {
     'assert': parseAssert,
     'attribute': parseAttribute,
@@ -745,6 +776,7 @@ const ORDERS = {
     'reload': parseReload,
     'screenshot': parseScreenshot,
     'scroll-to': parseScrollTo,
+    'show-text': parseShowText,
     'size': parseSize,
     'text': parseText,
     'wait-for': parseWaitFor,
@@ -814,6 +846,7 @@ module.exports = {
     'parseReload': parseReload,
     'parseScreenshot': parseScreenshot,
     'parseScrollTo': parseScrollTo,
+    'parseShowText': parseShowText,
     'parseSize': parseSize,
     'parseText': parseText,
     'parseWaitFor': parseWaitFor,
