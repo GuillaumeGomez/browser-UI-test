@@ -25,7 +25,7 @@ class Logs {
         if (typeof newLog === 'object') {
             newLog = newLog.join('\n');
         }
-        if (typeof newLog !== 'string') {
+        if (typeof newLog !== 'string' || newLog.length === 0) {
             return;
         }
         this.append('[WARNING] ' + newLog.split('\n').join('\n[WARNING] '));

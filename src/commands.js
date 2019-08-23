@@ -383,6 +383,7 @@ function parseAssert(line) {
                 `if (page.$("${selector}") === null) { throw '"${selector}" not found'; }`,
             ],
             'wait': false,
+            'checkResult': true,
         };
     } else if (tuple[1].kind === 'number') {
         //
@@ -401,6 +402,7 @@ function parseAssert(line) {
                 `elements, found ' + ${varName}.length; }`,
             ],
             'wait': false,
+            'checkResult': true,
         };
     } else if (tuple[1].kind === 'json') {
         //
@@ -437,6 +439,7 @@ function parseAssert(line) {
                 'instructions': [],
                 'wait': false,
                 'warnings': warnings,
+                'checkResult': true,
             };
         }
         const varName = 'parseAssertElemJson';
@@ -450,6 +453,7 @@ function parseAssert(line) {
             ],
             'wait': false,
             'warnings': warnings,
+            'checkResult': true,
         };
     } else if (tuple[1].kind === 'string' && tuple.length === 2) {
         //
@@ -466,6 +470,7 @@ function parseAssert(line) {
                 `if (t !== "${value}") { throw '"' + t + '" !== "${value}"'; }`,
             ],
             'wait': false,
+            'checkResult': true,
         };
     } else if (tuple[1].kind === 'string') {
         //
@@ -494,6 +499,7 @@ function parseAssert(line) {
                 ` for attribute "${attributeName}"';\n}\n}, ${varName});`,
             ],
             'wait': false,
+            'checkResult': true,
         };
     }
     const kind = tuple[1].kind;
@@ -816,8 +822,19 @@ function parseContent(content, options) {
                 res.line = i + 1;
                 return res;
             }
+            if (res['warnings'] !== undefined) {
+                if (commands['warnings'] === undefined) {
+                    commands['warnings'] = [];
+                }
+                commands['warnings'].push.apply(commands['warnings'], res['warnings']);
+            }
             for (let y = 0; y < res['instructions'].length; ++y) {
-                commands['instructions'].push({'code': res['instructions'][y], 'original': line});
+                commands['instructions'].push({
+                    'code': res['instructions'][y],
+                    'wait': res['wait'],
+                    'checkResult': res['checkResult'],
+                    'original': line,
+                });
             }
         } else {
             // First, let's check if it's just a comment:
