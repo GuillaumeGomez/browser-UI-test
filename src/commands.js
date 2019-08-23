@@ -796,7 +796,7 @@ const NO_INTERACTION_COMMANDS = [
 
 function parseContent(content, options) {
     const lines = content.split(os.EOL);
-    const commands = {'instructions': [], 'warnings': []};
+    const commands = {'instructions': []};
     let res;
     let firstGotoParsed = false;
 
@@ -823,6 +823,9 @@ function parseContent(content, options) {
                 return res;
             }
             if (res['warnings'] !== undefined) {
+                if (commands['warnings'] === undefined) {
+                    commands['warnings'] = [];
+                }
                 commands['warnings'].push.apply(commands['warnings'], res['warnings']);
             }
             for (let y = 0; y < res['instructions'].length; ++y) {
