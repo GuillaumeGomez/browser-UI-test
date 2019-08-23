@@ -143,13 +143,15 @@ async function runCommand(loaded, logs, options, browser) {
         error_log = '';
         const commands = loaded['commands'];
         for (let x = 0; x < commands.length; ++x) {
+            let failed = false;
             debug_log.append(`EXECUTING "${commands[x]['code']}"`);
             try {
                 await loadContent(commands[x]['code'])(page, extras).catch(err => {
+                    failed = true;
                     const s_err = err.toString();
                     if (extras.expectedToFail !== true) {
                         const original = commands[x]['original'];
-                        error_log = `[ERROR] ${s_err}: for command "${original}"`;
+                        error_log = `[ERROR] ${s_err}: for command \`${original}\``;
                     } else {
                         // it's an expected failure so no need to log it
                         debug_log.append(`[EXPECTED FAILURE]: ${s_err}`);
@@ -158,13 +160,21 @@ async function runCommand(loaded, logs, options, browser) {
             } catch (error) { // parsing error
                 error_log = 'output:\n' + error + '\n';
                 if (options.debug === true) {
-                    error_log += `command "${x}" failed: ${commands[x]['code']}\n`;
+                    error_log += `command \`${commands[x]['original']}\` failed on ` +
+                        `\`${commands[x]['code']}\``;
                 }
             }
             if (error_log.length > 0) {
                 break;
             }
-            if (commands[x].wait !== false) {
+            if (failed === false
+                && commands[x]['checkResult'] === true
+                && extras.expectedToFail === true) {
+                error_log += `command \`${commands[x]['original']}\` was supposed to fail but ` +
+                    'succeeded';
+                break;
+            }
+            if (commands[x]['wait'] !== false) {
                 // We wait a bit between each command to be sure the browser can follow.
                 await page.waitFor(100);
             }
@@ -283,7 +293,16 @@ async function innerRunTests(logs, options) {
         logs.append('');
     }
     // A little sort on tests' name.
-    allFiles.sort((a, b) => path.basename(a) > path.basename(b));
+    allFiles.sort((a, b) => {
+        a = path.basename(a);
+        b = path.basename(b);
+        if (a > b) {
+            return 1;
+        } else if (a < b) {
+            return -1;
+        }
+        return 0;
+    });
 
     const loaded = [];
     for (let i = 0; i < allFiles.length; ++i) {
