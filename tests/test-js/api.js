@@ -10,6 +10,7 @@ function checkAssert(x, func) {
         {
             'instructions': ['if (page.$("a") === null) { throw \'"a" not found\'; }'],
             'wait': false,
+            'checkResult': true,
         });
     x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
     x.assert(func('("a", "b", )'), {'error': 'unexpected `,` after `"b"`'});
@@ -22,6 +23,7 @@ function checkAssert(x, func) {
                 'parseAssertElemStr.getProperty("textContent")).jsonValue();\nif (t !== "b") { ' +
                 'throw \'"\' + t + \'" !== "b"\'; }'],
             'wait': false,
+            'checkResult': true,
         });
     x.assert(func('("a", "b", "c")'),
         {
@@ -31,6 +33,7 @@ function checkAssert(x, func) {
                 '(e.getAttribute("b") !== "c") {\nthrow \'expected "c", found "\' + ' +
                 'e.getAttribute("b") + \'" for attribute "b"\';\n}\n}, parseAssertElemAttr);'],
             'wait': false,
+            'checkResult': true,
         });
     x.assert(func('("a", "\\"b", "c")'),
         {
@@ -41,6 +44,7 @@ function checkAssert(x, func) {
                 'e.getAttribute("\\\\"b") + \'" for attribute "\\\\"b"\';\n}\n}, ' +
                 'parseAssertElemAttr);'],
             'wait': false,
+            'checkResult': true,
         });
     x.assert(func('("a", 1, "c")'), {'error': 'unexpected argument after number of occurences'});
     x.assert(func('("a", 1 2)'), {'error': 'expected `,`, found `2`'});
@@ -51,6 +55,7 @@ function checkAssert(x, func) {
                 'let parseAssertElemInt = await page.$$("a");\nif (parseAssertElemInt.length !== ' +
                 '1) { throw \'expected 1 elements, found \' + parseAssertElemInt.length; }'],
             'wait': false,
+            'checkResult': true,
         });
     x.assert(func('("a", {)').error !== undefined); // JSON syntax error
     // x.assert(func('("a", {\'a\': 1})').error !== undefined); // JSON syntax error
@@ -64,6 +69,7 @@ function checkAssert(x, func) {
             '\'`\'; }\n}, parseAssertElemJson);',
         ],
         'wait': false,
+        'checkResult': true,
     });
 }
 
@@ -434,6 +440,7 @@ function checkParseContent(x, func) {
             'instructions': [
                 {
                     'code': 'arg.expectedToFail = true;',
+                    'wait': false,
                     'original': 'fail: true',
                 },
                 {
