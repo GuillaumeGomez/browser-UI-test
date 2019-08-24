@@ -217,14 +217,14 @@ async function runCommand(loaded, logs, options, browser) {
 
         const compare_s = options.generateImages === false ? 'COMPARISON' : 'GENERATION';
         debug_log.append(`=> [SCREENSHOT ${compare_s}]`);
-        const p = path.join(options.testFolderPath, loaded['file']);
+        const p = path.join(options.testFolder, loaded['file']);
         const newImage = `${p}-${options.runId}.png`;
         await elem.screenshot({
             'path': newImage,
             'fullPage': extras.takeScreenshot === true ? true : undefined,
         });
 
-        const originalImage = `${path.join(options.testFolderPath, loaded['file'])}.png`;
+        const originalImage = `${path.join(options.testFolder, loaded['file'])}.png`;
         if (fs.existsSync(originalImage) === false) {
             if (options.generateImages === false) {
                 logs.append('FAILED ("' + originalImage + '" not found, use "--generate-images" ' +
@@ -238,7 +238,7 @@ async function runCommand(loaded, logs, options, browser) {
             }
         } else if (comparePixels(PNG.load(newImage).imgData,
             PNG.load(originalImage).imgData) === false) {
-            const saved = save_failure(options.testFolderPath, options.failuresFolderPath,
+            const saved = save_failure(options.testFolder, options.failureFolder,
                 loaded['file'] + `-${options.runId}.png`,
                 loaded['file'] + '.png', options.runId);
             returnValue = Status.ScreenshotComparisonFailed;
@@ -276,13 +276,13 @@ async function innerRunTests(logs, options) {
     let total = 0;
     const allFiles = [];
 
-    if (options.testFolderPath.length > 0) {
-        if (!fs.existsSync(options.testFolderPath)
-            || !fs.lstatSync(options.testFolderPath).isDirectory()) {
-            throw new Error(`Folder \`${options.testFolderPath}\` not found`);
+    if (options.testFolder.length > 0) {
+        if (!fs.existsSync(options.testFolder)
+            || !fs.lstatSync(options.testFolder).isDirectory()) {
+            throw new Error(`Folder \`${options.testFolder}\` not found`);
         }
-        fs.readdirSync(options.testFolderPath).forEach(function(file) {
-            const fullPath = path.join(options.testFolderPath, file);
+        fs.readdirSync(options.testFolder).forEach(function(file) {
+            const fullPath = path.join(options.testFolder, file);
             if (file.endsWith('.goml') && fs.lstatSync(fullPath).isFile()) {
                 allFiles.push(path.resolve(fullPath));
             }
@@ -371,7 +371,7 @@ async function runTestCode(testName, content, options = new Options(), showLogs 
 
     const logs = new Logs(showLogs);
 
-    if (options.testFolderPath.length > 0) {
+    if (options.testFolder.length > 0) {
         logs.append('[WARNING] `--test-folder` option will be ignored.\n');
     }
 
@@ -414,9 +414,9 @@ async function runTest(testPath, options = new Options(), showLogs = true) {
 
     // To make the Options type validation happy.
     options.testFiles.push(testPath);
-    if (options.failuresFolderPath.length === 0 && options.noScreenshot === false) {
+    if (options.failureFolder.length === 0 && options.noScreenshot === false) {
         // Then we use the same folder as where the test is.
-        options.failuresFolderPath = path.dirname(testPath);
+        options.failureFolder = path.dirname(testPath);
     }
     options.validate();
 

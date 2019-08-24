@@ -24,9 +24,9 @@ class Options {
         this.runId = 'test';
         this.generateImages = false;
         this.headless = true;
-        this.testFolderPath = '';
+        this.testFolder = '';
         this.docPath = '/';
-        this.failuresFolderPath = '';
+        this.failureFolder = '';
         this.showText = false;
         this.debug = false;
         this.noScreenshot = false;
@@ -40,11 +40,11 @@ class Options {
                 if (it + 1 < args.length) {
                     this.runId = args[it + 1];
                     if (this.runId.indexOf('/') !== -1) {
-                        throw new Error('\'--run-id\' cannot contain \'/\' character!');
+                        throw new Error('`--run-id` cannot contain `/` character!');
                     }
                     it += 1;
                 } else {
-                    throw new Error('Missing id after \'--run-id\' option');
+                    throw new Error('Missing id after `--run-id` option');
                 }
             } else if (args[it] === '--generate-images') {
                 this.generateImages = true;
@@ -61,54 +61,56 @@ class Options {
                 return false;
             } else if (args[it] === '--test-folder') {
                 if (it + 1 < args.length) {
-                    this.testFolderPath = args[it + 1];
+                    this.testFolder = args[it + 1];
                     it += 1;
                 } else {
-                    throw new Error('Missing path after \'--test-folder\' option');
+                    throw new Error('Missing path after `--test-folder` option');
                 }
             } else if (args[it] === '--doc-path') {
                 if (it + 1 < args.length) {
                     this.docPath = utils.addSlash(args[it + 1]);
                     it += 1;
                 } else {
-                    throw new Error('Missing path after \'--doc-path\' option');
+                    throw new Error('Missing path after `--doc-path` option');
                 }
             } else if (args[it] === '--url') {
                 if (it + 1 < args.length) {
                     this.url = utils.addSlash(args[it + 1]);
                     it += 1;
                 } else {
-                    throw new Error('Missing URL after \'--url\' option');
+                    throw new Error('Missing URL after `--url` option');
                 }
             } else if (args[it] === '--failure-folder') {
                 if (it + 1 < args.length) {
-                    this.failuresFolderPath = utils.addSlash(args[it + 1]);
+                    this.failureFolder = utils.addSlash(args[it + 1]);
                     it += 1;
                 } else {
-                    throw new Error('Missing path after \'--failure-folder\' option');
+                    throw new Error('Missing path after `--failure-folder` option');
                 }
             } else if (args[it] === '--test-files') {
                 if (it + 1 >= args.length) {
-                    throw new Error('Expected at least one path for \'--test-files\' option');
+                    throw new Error('Expected at least one path for `--test-files` option');
                 }
                 for (it = it + 1; it < args.length; ++it) {
-                    this.testFiles.push(args[it]);
+                    if (this.testFiles.indexOf(args[it]) === -1) {
+                        this.testFiles.push(args[it]);
+                    }
                 }
             } else {
-                throw new Error(`Unknown option '${args[it]}'\n` +
-                    'Use \'--help\' if you want the list of the available commands');
+                throw new Error(`Unknown option \`${args[it]}\`\n` +
+                    'Use `--help` if you want the list of the available commands');
             }
         }
         return true;
     }
 
     validate() {
-        if (this.testFolderPath.length === 0 && this.testFiles.length === 0) {
-            throw new Error('You need to provide \'--test-folder\' option or at least one file ' +
-                'to test with \'--test-files\' option!');
-        } else if (this.failuresFolderPath.length === 0 && this.noScreenshot === false) {
-            throw new Error('You need to provide \'--failure-folder\' option if ' +
-                '\'--no-screenshot\' isn\'t used!');
+        if (this.testFolder.length === 0 && this.testFiles.length === 0) {
+            throw new Error('You need to provide `--test-folder` option or at least one file ' +
+                'to test with `--test-files` option!');
+        } else if (this.failureFolder.length === 0 && this.noScreenshot === false) {
+            throw new Error('You need to provide `--failure-folder` option if ' +
+                '`--no-screenshot` isn\'t used!');
         }
         for (let i = 0; i < this.testFiles.length; ++i) {
             if (this.testFiles[i].endsWith('.goml') === false) {
@@ -130,9 +132,9 @@ class Options {
         validateField('runId', 'string');
         validateField('generateImages', 'boolean');
         validateField('headless', 'boolean');
-        validateField('testFolderPath', 'string');
+        validateField('testFolder', 'string');
         validateField('docPath', 'string');
-        validateField('failuresFolderPath', 'string');
+        validateField('failureFolder', 'string');
         validateField('showText', 'boolean');
         validateField('debug', 'boolean');
         validateField('noScreenshot', 'boolean');

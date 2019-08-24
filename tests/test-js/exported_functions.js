@@ -1,4 +1,8 @@
 const process = require('process');
+
+const utils = require('../../src/utils.js');
+utils.print = function() {} // overwriting the print function to avoid the print
+
 const {runTestCode, runTest, runTests, Options} = require('../../src/index.js');
 const {Assert, plural, print} = require('./utils.js');
 
@@ -92,8 +96,9 @@ async function checkRunTestCode(x, func) {
 
 async function checkRunTests(x, func) {
     // empty options
-    await x.assertTry(func, [], 'You need to provide \'--test-folder\' option or at least one ' +
-        'file to test with \'--test-files\' option!');
+    await x.assertTry(func, [],
+        'You need to provide `--test-folder` option or at least one file to test with ' +
+        '`--test-files` option!');
 
     // invalid Options type
     await x.assertTry(func, [{'test': false}], 'Options must be an "Options" type!');
@@ -130,7 +135,143 @@ async function checkRunTests(x, func) {
     // await x.assertTry(func, [options], [null, 1]);
 }
 
+async function checkOptions(x) {
+    let options = new Options();
+
+    await x.assertTry(() => options.validate(), [],
+        'You need to provide `--test-folder` option or at least one file to test with ' +
+        '`--test-files` option!');
+
+    options.parseArguments(['--test-files', 'osef']);
+    await x.assertTry(() => options.validate(), [],
+        'You need to provide `--failure-folder` option if `--no-screenshot` isn\'t used!');
+
+    options.parseArguments(['--no-screenshot']);
+    await x.assertTry(() => options.validate(), [],
+        'Only `.goml` script files are allowed in the `--test-files` option, got `osef`');
+
+    await x.assertTry(() => options.parseArguments(['--run-id']), [],
+        'Missing id after `--run-id` option');
+    await x.assertTry(() => options.parseArguments(['--run-id', 'he/lo']), [],
+        '`--run-id` cannot contain `/` character!');
+    await x.assertTry(() => options.parseArguments(['--run-id', 'hello']), [], true);
+    x.assert(options.runId, 'hello');
+
+    await x.assertTry(() => options.parseArguments(['--test-folder']), [],
+        'Missing path after `--test-folder` option');
+    await x.assertTry(() => options.parseArguments(['--test-folder', 'folder']), [], true);
+    x.assert(options.testFolder, 'folder');
+
+    await x.assertTry(() => options.parseArguments(['--doc-path']), [],
+        'Missing path after `--doc-path` option');
+    await x.assertTry(() => options.parseArguments(['--doc-path', 'path']), [], true);
+    x.assert(options.docPath, 'path/');
+    await x.assertTry(() => options.parseArguments(['--doc-path', 'path/']), [], true);
+    x.assert(options.docPath, 'path/');
+
+    await x.assertTry(() => options.parseArguments(['--url']), [],
+        'Missing URL after `--url` option');
+    await x.assertTry(() => options.parseArguments(['--url', 'url']), [], true);
+    x.assert(options.url, 'url/');
+    await x.assertTry(() => options.parseArguments(['--url', 'url/']), [], true);
+    x.assert(options.url, 'url/');
+
+    await x.assertTry(() => options.parseArguments(['--failure-folder']), [],
+        'Missing path after `--failure-folder` option');
+    await x.assertTry(() => options.parseArguments(['--failure-folder', 'failure']), [], true);
+    x.assert(options.failureFolder, 'failure/');
+    await x.assertTry(() => options.parseArguments(['--failure-folder', 'failure/']), [], true);
+    x.assert(options.failureFolder, 'failure/');
+
+    options = new Options();
+    await x.assertTry(() => options.parseArguments(['--test-files']), [],
+        'Expected at least one path for `--test-files` option');
+    await x.assertTry(() => options.parseArguments(['--test-files', 'hello']), [], true);
+    x.assert(options.testFiles, ['hello']);
+    await x.assertTry(() => options.parseArguments(['--test-files', 'hello2', '--test-folder']), [],
+        true);
+    x.assert(options.testFiles, ['hello', 'hello2', '--test-folder']);
+    await x.assertTry(() => options.parseArguments(['--test-files', 'hello']), [], true);
+    x.assert(options.testFiles, ['hello', 'hello2', '--test-folder']);
+
+    await x.assertTry(() => options.parseArguments(['--doesnt-exist']), [],
+        'Unknown option `--doesnt-exist`\nUse `--help` if you want the list of the available ' +
+        'commands');
+    await x.assertTry(() => options.parseArguments(['a']), [],
+        'Unknown option `a`\nUse `--help` if you want the list of the available commands');
+
+    x.assert(options.parseArguments(['--help']), false);
+    x.assert(options.parseArguments(['-h']), false);
+
+    options = new Options();
+    x.assertTry(() => options.parseArguments(['--generate-images']), [], true);
+    x.assert(options.generateImages, true);
+    x.assertTry(() => options.parseArguments(['--no-headless']), [], true);
+    x.assert(options.headless, false);
+    x.assertTry(() => options.parseArguments(['--show-text']), [], true);
+    x.assert(options.showText, true);
+    x.assertTry(() => options.parseArguments(['--debug']), [], true);
+    x.assert(options.debug, true);
+    x.assertTry(() => options.parseArguments(['--no-screenshot']), [], true);
+    x.assert(options.noScreenshot, true);
+
+    options.runId = true;
+    x.assertTry(() => options.validateFields(), [],
+        '`Options.runId` field is supposed to be a string!');
+
+    options = new Options();
+    options.generateImages = '';
+    x.assertTry(() => options.validateFields(), [],
+        '`Options.generateImages` field is supposed to be a boolean!');
+
+    options = new Options();
+    options.headless = '';
+    x.assertTry(() => options.validateFields(), [],
+        '`Options.headless` field is supposed to be a boolean!');
+
+    options = new Options();
+    options.testFolder = 1;
+    x.assertTry(() => options.validateFields(), [],
+        '`Options.testFolder` field is supposed to be a string!');
+
+    options = new Options();
+    options.docPath = 1;
+    x.assertTry(() => options.validateFields(), [],
+        '`Options.docPath` field is supposed to be a string!');
+
+    options = new Options();
+    options.failureFolder = 1;
+    x.assertTry(() => options.validateFields(), [],
+        '`Options.failureFolder` field is supposed to be a string!');
+
+    options = new Options();
+    options.showText = '';
+    x.assertTry(() => options.validateFields(), [],
+        '`Options.showText` field is supposed to be a boolean!');
+
+    options = new Options();
+    options.debug = '';
+    x.assertTry(() => options.validateFields(), [],
+        '`Options.debug` field is supposed to be a boolean!');
+
+    options = new Options();
+    options.noScreenshot = '';
+    x.assertTry(() => options.validateFields(), [],
+        '`Options.noScreenshot` field is supposed to be a boolean!');
+
+    options = new Options();
+    options.url = true;
+    x.assertTry(() => options.validateFields(), [],
+        '`Options.url` field is supposed to be a string!');
+
+    options = new Options();
+    options.testFiles = '';
+    x.assertTry(() => options.validateFields(), [],
+        '`Options.files` field is supposed to be an array!');
+}
+
 const TO_CHECK = [
+    {'name': 'Options', 'func': checkOptions},
     {'name': 'runTest', 'func': checkRunTest, 'toCall': wrapRunTest},
     {'name': 'runTestCode', 'func': checkRunTestCode, 'toCall': wrapRunTestCode},
     {'name': 'runTests', 'func': checkRunTests, 'toCall': wrapRunTests},
