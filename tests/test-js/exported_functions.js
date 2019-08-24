@@ -37,6 +37,11 @@ async function checkRunTest(x, func) {
     options.parseArguments(['--doc-path', 'tests/html_files/']);
     await x.assertTry(func, ['./tests/scripts/fail.goml', options], ['fail... ok', 0]);
 
+    // check if test-folder option is ignored
+    options.parseArguments(['--doc-path', 'tests/html_files/', '--test-folder', 'yolo']);
+    await x.assertTry(func, ['./tests/scripts/fail.goml', options],
+        ['[WARNING] `--test-folder` option will be ignored.\n\nfail... ok', 0]);
+
     // with just one file through "--test-files" options (the extra file should be ignored)
     options = new Options();
     options.parseArguments(['--doc-path', 'tests/html_files/',
@@ -72,6 +77,12 @@ async function checkRunTestCode(x, func) {
     await x.assertTry(func, ['test',
         'fail: true\ngoto: file://{current-dir}/tests/scripts/basic.html\n' +
         'assert: ("#button", "Go somewhere else!")'], ['test... ok', 0]);
+
+    // check if test-folder option is ignored
+    const options = new Options();
+    options.parseArguments(['--doc-path', 'tests/html_files/', '--test-folder', 'yolo']);
+    await x.assertTry(func, ['test', 'fail: false', options],
+        ['[WARNING] `--test-folder` option will be ignored.\n\ntest... ok', 0]);
 
     // Check a working code
     await x.assertTry(func, ['test',
