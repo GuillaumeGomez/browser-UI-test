@@ -1,4 +1,4 @@
-const process = require('process');
+const getVariableValue = require('./utils.js').getVariableValue;
 
 function isWhiteSpace(c) {
     return c === ' ' || c === '\t';
@@ -342,12 +342,7 @@ class Parser {
     }
 
     getVariableValue(variableName) {
-        if (Object.prototype.hasOwnProperty.call(this.variables, variableName)) {
-            return this.variables[variableName];
-        } else if (Object.prototype.hasOwnProperty.call(process.env, variableName)) {
-            return process.env[variableName];
-        }
-        return null;
+        return getVariableValue(this.variables, variableName);
     }
 
     parseNumber(pushTo = null) {

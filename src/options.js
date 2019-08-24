@@ -3,20 +3,19 @@ const print = utils.print;
 
 function helper() {
     print('tester');
-    print('  --test-folder [PATH]    : Path of the folder where `.goml` script files are');
-    print('  --failure-folder [PATH] : Path of the folder where failed tests image will');
-    print('                            be placed');
-    print('  --test-files [PATHs]    : List of `.goml` files\' path to be run');
-    print('  --run-id [id]           : Id to be used for failed images extension (\'test\'');
-    print('                            by default)');
-    print('  --generate-images       : If provided, it\'ll generate missing test images');
-    print('  --doc-path [PATH]       : Doc path to be used on `goto` local paths');
-    print('  --url [URL]             : URL to be used on `goto` urls');
-    print('  --no-headless           : Disable headless mode');
-    print('  --show-text             : Disable text invisibility (be careful when using it!)');
-    print('  --debug                 : Display more information');
-    print('  --no-screenshot         : Disable screenshots at the end of the scripts by the end');
-    print('  --help | -h             : Show this text');
+    print('  --test-folder [PATH]     : Path of the folder where `.goml` script files are');
+    print('  --failure-folder [PATH]  : Path of the folder where failed tests image will');
+    print('                             be placed');
+    print('  --test-files [PATHs]     : List of `.goml` files\' path to be run');
+    print('  --run-id [id]            : Id to be used for failed images extension (\'test\'');
+    print('                             by default)');
+    print('  --variable [name] [value]: Variable to be used in scripts');
+    print('  --generate-images        : If provided, it\'ll generate missing test images');
+    print('  --no-headless            : Disable headless mode');
+    print('  --show-text              : Disable text invisibility (be careful when using it!)');
+    print('  --debug                  : Display more information');
+    print('  --no-screenshot          : Disable screenshots at the end of the scripts by the end');
+    print('  --help | -h              : Show this text');
 }
 
 class Options {
@@ -29,13 +28,12 @@ class Options {
         this.generateImages = false;
         this.headless = true;
         this.testFolder = '';
-        this.docPath = '/';
         this.failureFolder = '';
         this.showText = false;
         this.debug = false;
         this.noScreenshot = false;
-        this.url = '';
         this.testFiles = [];
+        this.variables = {};
     }
 
     parseArguments(args = []) {
@@ -70,26 +68,21 @@ class Options {
                 } else {
                     throw new Error('Missing path after `--test-folder` option');
                 }
-            } else if (args[it] === '--doc-path') {
-                if (it + 1 < args.length) {
-                    this.docPath = utils.addSlash(args[it + 1]);
-                    it += 1;
-                } else {
-                    throw new Error('Missing path after `--doc-path` option');
-                }
-            } else if (args[it] === '--url') {
-                if (it + 1 < args.length) {
-                    this.url = utils.addSlash(args[it + 1]);
-                    it += 1;
-                } else {
-                    throw new Error('Missing URL after `--url` option');
-                }
             } else if (args[it] === '--failure-folder') {
                 if (it + 1 < args.length) {
                     this.failureFolder = utils.addSlash(args[it + 1]);
                     it += 1;
                 } else {
                     throw new Error('Missing path after `--failure-folder` option');
+                }
+            } else if (args[it] === '--variable') {
+                if (it + 2 < args.length) {
+                    this.variables[args[it + 1]] = args[it + 2];
+                    it += 2;
+                } else if (it + 1 < args.length) {
+                    throw new Error('Missing variable value after `--variable` option');
+                } else {
+                    throw new Error('Missing variable name and value after `--variable` option');
                 }
             } else if (args[it] === '--test-files') {
                 if (it + 1 >= args.length) {
@@ -137,14 +130,16 @@ class Options {
         validateField('generateImages', 'boolean');
         validateField('headless', 'boolean');
         validateField('testFolder', 'string');
-        validateField('docPath', 'string');
         validateField('failureFolder', 'string');
         validateField('showText', 'boolean');
         validateField('debug', 'boolean');
         validateField('noScreenshot', 'boolean');
-        validateField('url', 'string');
         if (Array.isArray(this.testFiles) !== true) {
             throw new Error('`Options.files` field is supposed to be an array!');
+        }
+        // eslint-disable-next-line eqeqeq
+        if (this.variables.constructor != Object) {
+            throw new Error('`Options.variables` field is supposed to be a dictionary-like!');
         }
     }
 }

@@ -1,6 +1,11 @@
 const process = require('process');
 const parserFuncs = require('../../src/commands.js');
+const Options = require('../../src/options.js').Options;
 const {Assert, plural, print} = require('./utils.js');
+
+function wrapper(callback, arg, options = new Options()) {
+    return callback(arg, options);
+}
 
 function checkAssert(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
@@ -214,17 +219,20 @@ function checkGoTo(x, func) {
         'instructions': ['await page.goto("file:///a")'],
     });
     // `docPath` parameter always ends with '/'
-    x.assert(func('file://{doc-path}/a', {'docPath': 'foo/'}), {
+    x.assert(func('file://|doc-path|/a', {'variables': {'doc-path': 'foo'}}), {
         'instructions': ['await page.goto("file://foo/a")'],
     });
-    x.assert(func('{url}', {'url': 'http://foo'}), {
+    x.assert(func('|url|', {'variables': {'url': 'http://foo'}}), {
         'instructions': ['await page.goto("http://foo")'],
     });
-    x.assert(func('http://foo/{url}fa', {'url': 'tadam/'}), {
+    x.assert(func('http://foo/|url|fa', {'variables': {'url': 'tadam/'}}), {
         'instructions': ['await page.goto("http://foo/tadam/fa")'],
     });
-    x.assert(func('http://foo/{url}/fa', {'url': 'tadam/'}), {
+    x.assert(func('http://foo/|url|/fa', {'variables': {'url': 'tadam'}}), {
         'instructions': ['await page.goto("http://foo/tadam/fa")'],
+    });
+    x.assert(func('http://foo/|url|/fa'), {
+        'error': 'variable `null` not found in options nor environment',
     });
 }
 
@@ -453,25 +461,43 @@ function checkParseContent(x, func) {
 }
 
 const TO_CHECK = [
-    {'name': 'assert', 'func': checkAssert, 'toCall': parserFuncs.parseAssert},
-    {'name': 'attribute', 'func': checkAttribute, 'toCall': parserFuncs.parseAttribute},
-    {'name': 'click', 'func': checkClick, 'toCall': parserFuncs.parseClick},
-    {'name': 'css', 'func': checkCss, 'toCall': parserFuncs.parseCss},
-    {'name': 'fail', 'func': checkFail, 'toCall': parserFuncs.parseFail},
-    {'name': 'focus', 'func': checkFocus, 'toCall': parserFuncs.parseFocus},
-    {'name': 'goto', 'func': checkGoTo, 'toCall': parserFuncs.parseGoTo},
-    {'name': 'local-storage', 'func': checkLocalStorage, 'toCall': parserFuncs.parseLocalStorage},
-    {'name': 'move-cursor-to', 'func': checkMoveCursorTo, 'toCall': parserFuncs.parseMoveCursorTo},
-    {'name': 'reload', 'func': checkReload, 'toCall': parserFuncs.parseReload},
-    {'name': 'screenshot', 'func': checkScreenshot, 'toCall': parserFuncs.parseScreenshot},
-    {'name': 'scroll-to', 'func': checkScrollTo, 'toCall': parserFuncs.parseScrollTo},
-    {'name': 'show-text', 'func': checkShowText, 'toCall': parserFuncs.parseShowText},
-    {'name': 'size', 'func': checkSize, 'toCall': parserFuncs.parseSize},
-    {'name': 'text', 'func': checkText, 'toCall': parserFuncs.parseText},
-    {'name': 'wait-for', 'func': checkWaitFor, 'toCall': parserFuncs.parseWaitFor},
-    {'name': 'write', 'func': checkWrite, 'toCall': parserFuncs.parseWrite},
+    {'name': 'assert', 'func': checkAssert,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssert, e, o)},
+    {'name': 'attribute', 'func': checkAttribute,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAttribute, e, o)},
+    {'name': 'click', 'func': checkClick,
+        'toCall': (e, o) => wrapper(parserFuncs.parseClick, e, o)},
+    {'name': 'css', 'func': checkCss,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCss, e, o)},
+    {'name': 'fail', 'func': checkFail,
+        'toCall': (e, o) => wrapper(parserFuncs.parseFail, e, o)},
+    {'name': 'focus', 'func': checkFocus,
+        'toCall': (e, o) => wrapper(parserFuncs.parseFocus, e, o)},
+    {'name': 'goto', 'func': checkGoTo,
+        'toCall': (e, o) => wrapper(parserFuncs.parseGoTo, e, o)},
+    {'name': 'local-storage', 'func': checkLocalStorage,
+        'toCall': (e, o) => wrapper(parserFuncs.parseLocalStorage, e, o)},
+    {'name': 'move-cursor-to', 'func': checkMoveCursorTo,
+        'toCall': (e, o) => wrapper(parserFuncs.parseMoveCursorTo, e, o)},
+    {'name': 'reload', 'func': checkReload,
+        'toCall': (e, o) => wrapper(parserFuncs.parseReload, e, o)},
+    {'name': 'screenshot', 'func': checkScreenshot,
+        'toCall': (e, o) => wrapper(parserFuncs.parseScreenshot, e, o)},
+    {'name': 'scroll-to', 'func': checkScrollTo,
+        'toCall': (e, o) => wrapper(parserFuncs.parseScrollTo, e, o)},
+    {'name': 'show-text', 'func': checkShowText,
+        'toCall': (e, o) => wrapper(parserFuncs.parseShowText, e, o)},
+    {'name': 'size', 'func': checkSize,
+        'toCall': (e, o) => wrapper(parserFuncs.parseSize, e, o)},
+    {'name': 'text', 'func': checkText,
+        'toCall': (e, o) => wrapper(parserFuncs.parseText, e, o)},
+    {'name': 'wait-for', 'func': checkWaitFor,
+        'toCall': (e, o) => wrapper(parserFuncs.parseWaitFor, e, o)},
+    {'name': 'write', 'func': checkWrite,
+        'toCall': (e, o) => wrapper(parserFuncs.parseWrite, e, o)},
     // This one is a bit "on its own".
-    {'name': 'parseContent', 'func': checkParseContent, 'toCall': parserFuncs.parseContent},
+    {'name': 'parseContent', 'func': checkParseContent,
+        'toCall': (e, o) => wrapper(parserFuncs.parseContent, e, o)},
 ];
 
 function checkCommands() {

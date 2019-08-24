@@ -356,7 +356,7 @@ async function innerRunTests(logs, options) {
     return [logs.logs, failures];
 }
 
-async function runTestCode(testName, content, options = new Options(), showLogs = true) {
+async function runTestCode(testName, content, options = new Options(), showLogs = false) {
     if (typeof testName !== 'string' || typeof testName === 'undefined') {
         throw new Error('expected `runTestCode` first argument to be a string');
     } else if (typeof content !== 'string' || typeof content === 'undefined') {
@@ -401,7 +401,7 @@ async function runTestCode(testName, content, options = new Options(), showLogs 
     }
 }
 
-async function runTest(testPath, options = new Options(), showLogs = true) {
+async function runTest(testPath, options = new Options(), showLogs = false) {
     if (typeof testPath !== 'string' || typeof testPath === 'undefined') {
         throw new Error('expected `runTest` first argument to be a string');
     } else if (!options || options.validate === undefined) {
@@ -425,7 +425,7 @@ async function runTest(testPath, options = new Options(), showLogs = true) {
         showLogs);
 }
 
-async function runTests(options, showLogs = true) {
+async function runTests(options, showLogs = false) {
     if (!options || options.validate === undefined) {
         throw new Error('Options must be an "Options" type!');
     }
@@ -453,7 +453,7 @@ if (require.main === module) {
         print(err);
         process.exit(1);
     }
-    runTests(options, false).then(x => {
+    runTests(options, true).then(x => {
         const [_output, nb_failures] = x;
         process.exit(nb_failures);
     }).catch(err => {

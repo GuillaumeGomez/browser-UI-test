@@ -1,4 +1,5 @@
 const path = require('path');
+const process = require('process');
 
 function toJSON(value) {
     if (typeof value === 'object') {
@@ -20,8 +21,7 @@ function print(x, out) {
     if (typeof out !== 'undefined') {
         out(x);
     } else {
-        // eslint-disable-next-line
-        console.log(x);
+        process.stdout.write(`${x}\n`);
     }
 }
 

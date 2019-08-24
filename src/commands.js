@@ -16,25 +16,12 @@ function cleanCssSelector(s) {
     return cleanString(s).replace(/\\/g, '\\\\').trim();
 }
 
-function handlePathParameters(line, split, join) {
-    const parts = line.split(split);
-    if (parts.length > 1) {
-        for (let i = 1; i < parts.length; ++i) {
-            if (parts[i].charAt(0) === '/') { // to avoid having "//"
-                parts[i] = parts[i].substr(1);
-            }
-        }
-        line = parts.join(join);
-    }
-    return line;
-}
-
 // Possible inputs:
 //
 // * (X, Y)
 // * "CSS selector" (for example: "#elementID")
-function parseClick(line) {
-    const p = new Parser(line);
+function parseClick(line, options) {
+    const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
@@ -70,8 +57,8 @@ function parseClick(line) {
 //
 // * Number of milliseconds
 // * "CSS selector" (for example: "#elementID")
-function parseWaitFor(line) {
-    const p = new Parser(line);
+function parseWaitFor(line, options) {
+    const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
@@ -102,8 +89,8 @@ function parseWaitFor(line) {
 // Possible inputs:
 //
 // * "CSS selector" (for example: "#elementID")
-function parseFocus(line) {
-    const p = new Parser(line);
+function parseFocus(line, options) {
+    const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
@@ -125,8 +112,8 @@ function parseFocus(line) {
 //
 // * ("[CSS selector (for example: #elementID)]", "text")
 // * "text" (in here, it'll write into the current focused element)
-function parseWrite(line) {
-    const p = new Parser(line);
+function parseWrite(line, options) {
+    const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
@@ -170,8 +157,8 @@ function parseWrite(line) {
 //
 // * (X, Y)
 // * "CSS selector" (for example: "#elementID")
-function parseMoveCursorTo(line) {
-    const p = new Parser(line);
+function parseMoveCursorTo(line, options) {
+    const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
@@ -208,11 +195,6 @@ function parseMoveCursorTo(line) {
 // * relative path (example: ../struct.Path.html)
 // * full URL (for example: https://doc.rust-lang.org/std/struct.Path.html)
 // * local path (example: file://some-file.html)
-//   /!\ Please note for this one that you can use "{doc-path}" inside it if you want to use
-//       the "--doc-path" argument. For example: "file://{doc-path}/index.html"
-//   /!\ Please also note that you need to provide a full path to the web browser. You can add
-//       the full current path by using "{current-dir}". For example:
-//       "file://{current-dir}{doc-path}/index.html"
 function parseGoTo(input, options) {
     // This function doesn't use the parser so we still need to remove the comment part.
     const parts = input.split(COMMENT_START);
@@ -230,26 +212,20 @@ function parseGoTo(input, options) {
     } else {
         line = input;
     }
-    line = line.trim();
+    line = line.trim().split('|');
+    for (let i = 1; i < line.length; i += 2) {
+        line[i] = utils.getVariableValue(options.variables, line[i]);
+        if (line[i] === null) {
+            return {'error': `variable \`${line[i]}\` not found in options nor environment`};
+        }
+    }
+    line = line.join('');
+
     // We just check if it goes to an HTML file, not checking much though...
-    if (line.startsWith('http://') || line.startsWith('https://') || line.startsWith('www.')) {
-        line = handlePathParameters(line, '{url}',
-            typeof options !== 'undefined' ? options.url : '');
-        return {
-            'instructions': [
-                `await page.goto("${cleanString(line)}")`,
-            ],
-        };
-    } else if (line === '{url}') {
-        return {
-            'instructions': [
-                `await page.goto("${cleanString(options.url)}")`,
-            ],
-        };
-    } else if (line.startsWith('file://')) {
-        line = handlePathParameters(line, '{doc-path}',
-            typeof options !== 'undefined' ? options.docPath : '');
-        line = handlePathParameters(line, '{current-dir}', utils.getCurrentDir());
+    if (line.startsWith('http://') === true
+        || line.startsWith('https://') === true
+        || line.startsWith('www.') === true
+        || line.startsWith('file://') === true) {
         return {
             'instructions': [
                 `await page.goto("${cleanString(line)}")`,
@@ -277,15 +253,15 @@ function parseGoTo(input, options) {
 //
 // * (X, Y)
 // * "CSS selector" (for example: "#elementID")
-function parseScrollTo(line) {
-    return parseMoveCursorTo(line); // The page will scroll to the element
+function parseScrollTo(line, options) {
+    return parseMoveCursorTo(line, options); // The page will scroll to the element
 }
 
 // Possible inputs:
 //
 // * (width, height)
-function parseSize(line) {
-    const p = new Parser(line);
+function parseSize(line, options) {
+    const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
@@ -308,8 +284,8 @@ function parseSize(line) {
 // Possible inputs:
 //
 // * JSON object (for example: {"key": "value", "another key": "another value"})
-function parseLocalStorage(line) {
-    const p = new Parser(line);
+function parseLocalStorage(line, options) {
+    const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
@@ -356,8 +332,8 @@ function parseLocalStorage(line) {
 // * ("CSS selector", CSS elements [JSON object])
 // * ("CSS selector", text [STRING])
 // * ("CSS selector", attribute name [STRING], attribute value [STRING])
-function parseAssert(line) {
-    const p = new Parser(line);
+function parseAssert(line, options) {
+    const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
@@ -511,8 +487,8 @@ function parseAssert(line) {
 // Possible inputs:
 //
 // * ("CSS selector", "text")
-function parseText(line) {
-    const p = new Parser(line);
+function parseText(line, options) {
+    const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
@@ -538,8 +514,8 @@ function parseText(line) {
     };
 }
 
-function innerParseCssAttribute(line, argName, varName, callback) {
-    const p = new Parser(line);
+function innerParseCssAttribute(line, argName, varName, callback, options) {
+    const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
@@ -632,26 +608,26 @@ function innerParseCssAttribute(line, argName, varName, callback) {
 //
 // * ("CSS selector", "attribute name", "attribute value")
 // * ("CSS selector", [JSON object])
-function parseAttribute(line) {
+function parseAttribute(line, options) {
     return innerParseCssAttribute(line, 'attribute', 'parseAttributeElem',
-        (key, value) => `e.setAttribute("${key}","${value}");`);
+        (key, value) => `e.setAttribute("${key}","${value}");`, options);
 }
 
 // Possible inputs:
 //
 // * ("CSS selector", "CSS property name", "CSS property value")
 // * ("CSS selector", [JSON object])
-function parseCss(line) {
+function parseCss(line, options) {
     return innerParseCssAttribute(line, 'CSS property', 'parseCssElem',
-        (key, value) => `e.style["${key}"] = "${value}";`);
+        (key, value) => `e.style["${key}"] = "${value}";`, options);
 }
 
 // Possible inputs:
 //
 // * boolean value (`true` or `false`)
 // * CSS selector
-function parseScreenshot(line) {
-    const p = new Parser(line);
+function parseScreenshot(line, options) {
+    const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
@@ -687,8 +663,8 @@ function parseScreenshot(line) {
 // Possible inputs:
 //
 // * boolean value (`true` or `false`)
-function parseFail(line) {
-    const p = new Parser(line);
+function parseFail(line, options) {
+    const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
@@ -707,11 +683,11 @@ function parseFail(line) {
 //
 // * nothing
 // * number (of milliseconds before timeout)
-function parseReload(line) {
+function parseReload(line, options) {
     let timeout = 30000;
     const warnings = [];
 
-    const p = new Parser(line);
+    const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
@@ -742,8 +718,8 @@ function parseReload(line) {
 // Possible inputs:
 //
 // * boolean value (`true` or `false`)
-function parseShowText(line) {
-    const p = new Parser(line);
+function parseShowText(line, options) {
+    const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};

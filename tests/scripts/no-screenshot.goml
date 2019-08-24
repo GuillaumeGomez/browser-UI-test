@@ -1,2 +1,2 @@
 screenshot: false
-goto: file://{current-dir}/{doc-path}/basic.html
+goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
