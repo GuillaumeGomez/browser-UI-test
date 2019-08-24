@@ -33,22 +33,23 @@ async function checkRunTest(x, func) {
 
     // empty options
     const res = await func('./tests/scripts/fail.goml');
-    x.assert(res[0].startsWith('fail... FAILED\n[ERROR] Error: net::ERR_FILE_NOT_FOUND at file:/'));
+    x.assert(res[0],
+        'fail... FAILED\n[ERROR] line 2: variable `null` not found in options nor environment');
     x.assert(res[1], 1);
 
     // everything is supposed to work
     let options = new Options();
-    options.parseArguments(['--doc-path', 'tests/html_files/']);
+    options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files']);
     await x.assertTry(func, ['./tests/scripts/fail.goml', options], ['fail... ok', 0]);
 
     // check if test-folder option is ignored
-    options.parseArguments(['--doc-path', 'tests/html_files/', '--test-folder', 'yolo']);
+    options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files', '--test-folder', 'yolo']);
     await x.assertTry(func, ['./tests/scripts/fail.goml', options],
         ['[WARNING] `--test-folder` option will be ignored.\n\nfail... ok', 0]);
 
     // with just one file through "--test-files" options (the extra file should be ignored)
     options = new Options();
-    options.parseArguments(['--doc-path', 'tests/html_files/',
+    options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
         '--test-files', './tests/scripts/fail.goml']);
     await x.assertTry(func, ['./tests/scripts/fail.goml', options], ['fail... ok', 0]);
 }
@@ -84,7 +85,8 @@ async function checkRunTestCode(x, func) {
 
     // check if test-folder option is ignored
     const options = new Options();
-    options.parseArguments(['--doc-path', 'tests/html_files/', '--test-folder', 'yolo']);
+    options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
+        '--test-folder', 'yolo']);
     await x.assertTry(func, ['test', 'fail: false', options],
         ['[WARNING] `--test-folder` option will be ignored.\n\ntest... ok', 0]);
 
@@ -122,7 +124,7 @@ async function checkRunTests(x, func) {
 
     // with just one file through "--test-files" options
     options = new Options();
-    options.parseArguments(['--doc-path', 'tests/html_files/',
+    options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
         '--test-files', './tests/scripts/fail.goml']);
     await x.assertTry(func, [options],
         ['=> Starting doc-ui tests...\n\nfail... ok\n\n<= doc-ui tests done: 1 succeeded, 0 failed',
@@ -131,7 +133,7 @@ async function checkRunTests(x, func) {
     // with the usual folder full of examples
     // options = new Options();
     // options.parseArguments(['--test-folder', './tests/scripts',
-    //     '--doc-path', 'tests/html_files']);
+    //     '--variable', 'DOC_PATH', 'tests/html_files']);
     // await x.assertTry(func, [options], [null, 1]);
 }
 
@@ -161,20 +163,6 @@ async function checkOptions(x) {
         'Missing path after `--test-folder` option');
     await x.assertTry(() => options.parseArguments(['--test-folder', 'folder']), [], true);
     x.assert(options.testFolder, 'folder');
-
-    await x.assertTry(() => options.parseArguments(['--doc-path']), [],
-        'Missing path after `--doc-path` option');
-    await x.assertTry(() => options.parseArguments(['--doc-path', 'path']), [], true);
-    x.assert(options.docPath, 'path/');
-    await x.assertTry(() => options.parseArguments(['--doc-path', 'path/']), [], true);
-    x.assert(options.docPath, 'path/');
-
-    await x.assertTry(() => options.parseArguments(['--url']), [],
-        'Missing URL after `--url` option');
-    await x.assertTry(() => options.parseArguments(['--url', 'url']), [], true);
-    x.assert(options.url, 'url/');
-    await x.assertTry(() => options.parseArguments(['--url', 'url/']), [], true);
-    x.assert(options.url, 'url/');
 
     await x.assertTry(() => options.parseArguments(['--failure-folder']), [],
         'Missing path after `--failure-folder` option');
@@ -236,39 +224,34 @@ async function checkOptions(x) {
         '`Options.testFolder` field is supposed to be a string!');
 
     const options4 = new Options();
-    options4.docPath = 1;
+    options4.failureFolder = 1;
     await x.assertTry(() => options4.validateFields(), [],
-        '`Options.docPath` field is supposed to be a string!');
-
-    const options5 = new Options();
-    options5.failureFolder = 1;
-    await x.assertTry(() => options5.validateFields(), [],
         '`Options.failureFolder` field is supposed to be a string!');
 
-    const options6 = new Options();
-    options6.showText = '';
-    await x.assertTry(() => options6.validateFields(), [],
+    const options5 = new Options();
+    options5.showText = '';
+    await x.assertTry(() => options5.validateFields(), [],
         '`Options.showText` field is supposed to be a boolean!');
 
-    const options7 = new Options();
-    options7.debug = '';
-    await x.assertTry(() => options7.validateFields(), [],
+    const options6 = new Options();
+    options6.debug = '';
+    await x.assertTry(() => options6.validateFields(), [],
         '`Options.debug` field is supposed to be a boolean!');
 
-    const options8 = new Options();
-    options8.noScreenshot = '';
-    await x.assertTry(() => options8.validateFields(), [],
+    const options7 = new Options();
+    options7.noScreenshot = '';
+    await x.assertTry(() => options7.validateFields(), [],
         '`Options.noScreenshot` field is supposed to be a boolean!');
 
-    const options9 = new Options();
-    options9.url = true;
-    await x.assertTry(() => options9.validateFields(), [],
-        '`Options.url` field is supposed to be a string!');
-
-    const options10 = new Options();
-    options10.testFiles = '';
-    await x.assertTry(() => options10.validateFields(), [],
+    const options8 = new Options();
+    options8.testFiles = '';
+    await x.assertTry(() => options8.validateFields(), [],
         '`Options.files` field is supposed to be an array!');
+
+    const options9 = new Options();
+    options9.variables = '';
+    await x.assertTry(() => options9.validateFields(), [],
+        '`Options.variables` field is supposed to be a dictionary-like!');
 }
 
 const TO_CHECK = [
@@ -281,7 +264,7 @@ const TO_CHECK = [
 async function checkExportedFunctions() {
     const x = new Assert();
 
-    print('=> Starting EXPORTED FUNCTIONS tests...');
+    print('=> Starting EXPORTED ITEMS tests...');
     print('');
 
     for (let i = 0; i < TO_CHECK.length; ++i) {

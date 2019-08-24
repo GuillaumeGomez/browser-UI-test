@@ -12,10 +12,10 @@
     "homepage": "https://github.com/GuillaumeGomez/browser-UI-test",
     "main": "src/index.js",
     "scripts": {
-        "test": "node src/index.js --test-folder tests/scripts/ --failure-folder failures --doc-path tests/html_files/",
+        "test": "node src/index.js --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files",
         "api-test": "node tests/test-js/api.js",
         "parser-test": "node tests/test-js/parser.js",
-	"exported-test": "node tests/test-js/exported_functions.js",
+        "exported-test": "node tests/test-js/exported_items.js",
         "lint": "eslint src tests/test-js",
         "lint-fix": "eslint --fix src tests/test-js"
     },

@@ -14,7 +14,11 @@ function addSlash(s) {
 }
 
 function getCurrentDir() {
-    return addSlash(process.cwd());
+    let dir = process.cwd();
+    if (dir.endsWith('/') === true || dir.endsWith('\\') === true) {
+        dir = dir.substring(0, dir.length - 1);
+    }
+    return dir;
 }
 
 function readFile(filePath, encoding, callback) {
@@ -62,14 +66,26 @@ function add_log(output, level) {
     disp(output);
 }
 
+function getVariableValue(variables, variableName) {
+    if (variableName === 'CURRENT_DIR') {
+        return getCurrentDir();
+    } else if (Object.prototype.hasOwnProperty.call(variables, variableName)) {
+        return variables[variableName];
+    } else if (Object.prototype.hasOwnProperty.call(process.env, variableName)) {
+        return process.env[variableName];
+    }
+    return null;
+}
+
 module.exports = {
-    addSlash: addSlash,
-    getCurrentDir: getCurrentDir,
-    readFile: readFile,
-    writeToFile: writeToFile,
-    add_error: add_error,
-    add_warning: add_warning,
-    add_log: add_log,
-    writeObjectToFile: writeObjectToFile,
-    print: print,
+    'addSlash': addSlash,
+    'getCurrentDir': getCurrentDir,
+    'readFile': readFile,
+    'writeToFile': writeToFile,
+    'add_error': add_error,
+    'add_warning': add_warning,
+    'add_log': add_log,
+    'writeObjectToFile': writeObjectToFile,
+    'print': print,
+    'getVariableValue': getVariableValue,
 };

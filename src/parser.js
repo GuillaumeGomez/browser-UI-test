@@ -1,3 +1,5 @@
+const getVariableValue = require('./utils.js').getVariableValue;
+
 function isWhiteSpace(c) {
     return c === ' ' || c === '\t';
 }
@@ -12,6 +14,15 @@ function isNumber(c) {
 
 function isLetter(c) {
     return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
+}
+
+function matchInteger(s) {
+    for (let i = 0; i < s.length; ++i) {
+        if (isNumber(s.charAt(i)) === false) {
+            return false;
+        }
+    }
+    return true;
 }
 
 class Element {
@@ -98,12 +109,22 @@ class UnknownElement extends Element {
     }
 }
 
+class VariableElement extends Element {
+    constructor(value, startPos, endPos, error = null) {
+        super('variable', value, startPos, endPos, error);
+    }
+}
+
 class Parser {
-    constructor(text) {
+    constructor(text, variables) {
         this.text = text;
         this.pos = 0;
         this.elems = [];
         this.error = null;
+        if (typeof variables === 'undefined' || variables === null) {
+            variables = {};
+        }
+        this.variables = variables;
     }
 
     parse(endChar = null, pushTo = null, separator = null) {
@@ -156,6 +177,8 @@ class Parser {
                 checker(this, c, 'parseTuple');
             } else if (c === '/') {
                 this.parseComment(this, pushTo);
+            } else if (c === '|') {
+                checker(this, c, 'parseVariable');
             } else if (c === endChar) {
                 return prev;
             } else {
@@ -286,6 +309,42 @@ class Parser {
         this.push(e, pushTo);
     }
 
+    parseVariable(pushTo = null, forceString = false) {
+        const start = this.pos;
+
+        this.pos += 1;
+        while (this.pos < this.text.length) {
+            const c = this.text.charAt(this.pos);
+            if (c === '|') {
+                const variableName = this.text.substring(start + 1, this.pos);
+                const associatedValue = this.getVariableValue(variableName);
+                if (associatedValue === null) {
+                    this.pos = this.text.length + 1;
+                    this.push(new VariableElement(variableName, start, this.pos,
+                        `variable \`${variableName}\` not found in options nor environment`),
+                    pushTo);
+                    return;
+                }
+                if (forceString === false && matchInteger(associatedValue) === true) {
+                    this.push(new NumberElement(associatedValue, start, this.pos), pushTo);
+                } else {
+                    this.push(new StringElement(associatedValue, start, this.pos, associatedValue),
+                        pushTo);
+                }
+                return;
+            }
+            this.pos += 1;
+        }
+        const variableName = this.text.substring(start + 1, this.pos);
+        const e = new VariableElement(variableName, start, this.pos,
+            `expected \`|\` after the variable name \`${variableName}\``);
+        this.push(e, pushTo);
+    }
+
+    getVariableValue(variableName) {
+        return getVariableValue(this.variables, variableName);
+    }
+
     parseNumber(pushTo = null) {
         const start = this.pos;
 
@@ -328,6 +387,48 @@ class Parser {
                 errorHappened = true;
             }
         };
+        const checkForNumber = number => {
+            if (key === null) {
+                elems.push({'key': number});
+                const text = number.getText();
+                parseEnd(this, pushTo, `numbers cannot be used as keys (for \`${text}\`)`);
+            } else if (prevChar !== ':') {
+                elems.push({'key': key, 'value': number});
+                parseEnd(this, pushTo,
+                    `expected \`:\` after \`${key.getText()}\`, found \`${number.getText()}\``);
+            } else {
+                elems.push({'key': key, 'value': number});
+                prevChar = '';
+                key = null;
+            }
+        };
+        const checkForString = s => {
+            if (key === null) {
+                if (prevChar !== ',' && elems.length > 0) {
+                    const last = elems[elems.length - 1].value.getText();
+                    parseEnd(this, pushTo,
+                        `expected \`,\` after \`${last}\`, found \`${s.getText()}\``);
+                }
+                if (s.error !== null) {
+                    parseEnd(this, pushTo, s.error);
+                } else {
+                    key = s;
+                }
+            } else {
+                elems.push({'key': key, 'value': s});
+                if (prevChar !== ':') {
+                    const text = s.getText();
+                    parseEnd(this, pushTo,
+                        `expected \`:\` after \`${key.getText()}\`, found \`${text}\``);
+                } else {
+                    prevChar = '';
+                    if (s.error !== null) {
+                        parseEnd(this, pushTo, s.error);
+                    }
+                    key = null;
+                }
+            }
+        };
 
         this.pos += 1;
         // TODO: instead of using a kind of state machine, maybe make it work as step?
@@ -353,31 +454,7 @@ class Parser {
             } else if (isStringChar(c)) {
                 const tmp = [];
                 this.parseString(tmp);
-                if (key === null) {
-                    if (prevChar !== ',' && elems.length > 0) {
-                        const last = elems[elems.length - 1].value.getText();
-                        parseEnd(this, pushTo,
-                            `expected \`,\` after \`${last}\`, found \`${tmp[0].getText()}\``);
-                    }
-                    if (tmp[0].error !== null) {
-                        parseEnd(this, pushTo, tmp[0].error);
-                    } else {
-                        key = tmp[0];
-                    }
-                } else {
-                    elems.push({'key': key, 'value': tmp[0]});
-                    if (prevChar !== ':') {
-                        const text = tmp[0].getText();
-                        parseEnd(this, pushTo,
-                            `expected \`:\` after \`${key.getText()}\`, found \`${text}\``);
-                    } else {
-                        prevChar = '';
-                        if (tmp[0].error !== null) {
-                            parseEnd(this, pushTo, tmp[0].error);
-                        }
-                        key = null;
-                    }
-                }
+                checkForString(tmp[0]);
             } else if (c === ',') {
                 if (key !== null) {
                     elems.push({'key': key});
@@ -408,22 +485,26 @@ class Parser {
                 }
             } else if (isWhiteSpace(c)) {
                 // do nothing
+            } else if (c === '|') {
+                if (key === null && prevChar === '' && elems.length > 0) {
+                    const text = elems[elems.length - 1].value.getText();
+                    const last = prevChar === ',' ? ',' : text;
+                    parseEnd(this, pushTo, `unexpected \`|\` after \`${last}\``);
+                } else if (key !== null && prevChar === '') {
+                    parseEnd(this, pushTo, `expected \`:\` after \`${key}\`, found \`|\``);
+                } else {
+                    const tmp = [];
+                    this.parseVariable(tmp, key === null);
+                    if (tmp[0].kind === 'number') {
+                        checkForNumber(tmp[0]);
+                    } else {
+                        checkForString(tmp[0]);
+                    }
+                }
             } else if (isNumber(c)) {
                 const tmp = [];
                 this.parseNumber(tmp);
-                if (key === null) {
-                    elems.push({'key': tmp[0]});
-                    const text = tmp[0].getText();
-                    parseEnd(this, pushTo, `numbers cannot be used as keys (for \`${text}\`)`);
-                } else if (prevChar !== ':') {
-                    elems.push({'key': key, value: tmp[0]});
-                    parseEnd(this, pushTo,
-                        `expected \`:\` after \`${key.getText()}\`, found \`${tmp[0].getText()}\``);
-                } else {
-                    elems.push({'key': key, value: tmp[0]});
-                    prevChar = '';
-                    key = null;
-                }
+                checkForNumber(tmp[0]);
             } else if (c === '{') {
                 const tmp = [];
                 this.parseJson(tmp);

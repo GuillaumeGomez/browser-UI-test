@@ -1,5 +1,5 @@
 screenshot: false
-goto: file://{current-dir}/{doc-path}/basic.html
+goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
 assert: ("#button")
 assert: ("#button", "Go somewhere else!")
 assert: ("div", 1)

@@ -74,36 +74,53 @@ If you want to see all the available options, just run with the `-h` or `--help`
 
 The list of fields of the `Options` class is the following:
 
- * `testFolder`: path of the folder where `.goml` script files are
- * `failureFolder`: path of the folder where failed tests image will be placed
- * `testFiles`: list of `.goml` files' path to be run
- * `runId`: id to be used for failed images extension ('test' by default)
- * `generateImages`: if provided, it'll generate test images and won't run comparison tests
- * `docPath`: doc path to be used on `goto` local paths using `{doc-path}`
- * `url`: URL to be used on `goto` urls using `{url}`
- * `noHeadless`: disable headless mode
- * `showText`: disable text invisibility (be careful when using it!)
  * `debug`: display more information
+ * `failureFolder`: path of the folder where failed tests image will be placed
+ * `generateImages`: if provided, it'll generate test images and won't run comparison tests
+ * `noHeadless`: disable headless mode
  * `noScreenshot`: disable screenshots generation and comparison at the end of the scripts
+ * `testFiles`: list of `.goml` files' path to be run
+ * `testFolder`: path of the folder where `.goml` script files are
+ * `runId`: id to be used for failed images extension ('test' by default)
+ * `showText`: disable text invisibility (be careful when using it!)
+ * `variables`: variables to be used in the `.goml` scripts (more information about variables [below](#Variables))
 
 ### Running it directly
 
 You need to pass options through the command line but it's basically the same as doing it with code. Let's run it with the same options as presented above:
 
 ```bash
-$ node src/index.js --doc-path somewhere --test-folder some-other-place
+$ node src/index.js --test-folder some-other-place
 ```
 
 ## Font issues
 
 Unfortunately, font rendering differs depending on the computer **and** on the OS. To bypass this problem but still allow to have a global UI check, the text is invisible by default. If you are **sure** that you need to check with the text visible, you can use the option `--show-text`.
 
+## Variables
+
+In this framework, you can use variables defined through the `--variable` option or through your environment. For example, if you start your script with:
+
+```
+A_VARIABLE=12 node src/index.js --test-folder tests/scripts/ --variable DOC_PATH tests/html_files --variable ANOTHER_ONE 42
+```
+
+You will have three variables that you'll be able to use (since `A_VARIABLE` is available through your environment). Then, to use them in your scripts, you need to put their name between `|` characters:
+
+```
+text: ("#an-element", |A_VARIABLE|)
+```
+
+In here, it'll set "#an-element" element's text to "12".
+
+A small note: the variable `CURRENT_DIR` is always available (and contains the directory where the script has been started) and **cannot** be override! It is also guaranteed to never end with `/` or `\\`.
+
 ## Run tests
 
 If you want to run this repository's tests:
 
 ```bash
-$ node src/index.js --test-folder tests/scripts/ --failure-folder failures --doc-path tests/html_files/
+$ node src/index.js --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files
 ```
 
 If you want to test "internals", run:
