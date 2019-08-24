@@ -106,6 +106,17 @@ function checkTuple(x) {
     x.assert(p.elems[0].getValue()[0].getValue(), false);
 
 
+    p = new Parser('(false//)');
+    p.parse();
+    x.assert(p.error, 'expected `)` after `false`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].error, 'expected `)` after `false`');
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), false);
+
+
     p = new Parser('(false,true)');
     p.parse();
     x.assert(p.error, null);
@@ -121,6 +132,30 @@ function checkTuple(x) {
     x.assert(p.elems[0].getValue()[1].getValue(), true);
 
 
+    p = new Parser('(false,"s", (3, 12))');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].getValue().length, 3);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), false);
+    x.assert(p.elems[0].getValue()[1].error, null);
+    x.assert(p.elems[0].getValue()[1].kind, 'string');
+    x.assert(p.elems[0].getValue()[1].getValue(), 's');
+    x.assert(p.elems[0].getValue()[1].getText(), '"s"');
+    x.assert(p.elems[0].getValue()[2].error, null);
+    x.assert(p.elems[0].getValue()[2].kind, 'tuple');
+    x.assert(p.elems[0].getValue()[2].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[2].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[2].getValue()[0].kind, 'number');
+    x.assert(p.elems[0].getValue()[2].getValue()[0].getValue(), '3');
+    x.assert(p.elems[0].getValue()[2].getValue()[1].error, null);
+    x.assert(p.elems[0].getValue()[2].getValue()[1].kind, 'number');
+    x.assert(p.elems[0].getValue()[2].getValue()[1].getValue(), '12');
+
+
     p = new Parser('(false,"s",   {"a": "b"}, 3)');
     p.parse();
     x.assert(p.error, null);
@@ -134,6 +169,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].getValue()[1].error, null);
     x.assert(p.elems[0].getValue()[1].kind, 'string');
     x.assert(p.elems[0].getValue()[1].getValue(), 's');
+    x.assert(p.elems[0].getValue()[1].getText(), '"s"');
     x.assert(p.elems[0].getValue()[2].error, null);
     x.assert(p.elems[0].getValue()[2].kind, 'json');
     x.assert(p.elems[0].getValue()[2].getText(), '{"a": "b"}');
