@@ -371,6 +371,10 @@ async function runTestCode(testName, content, options = new Options(), showLogs 
 
     const logs = new Logs(showLogs);
 
+    if (options.testFolderPath.length > 0) {
+        logs.append('[WARNING] `--test-folder` option will be ignored.\n');
+    }
+
     try {
         const load = parseTest(path.normalize(testName), content, logs, options);
         if (load === null) {
