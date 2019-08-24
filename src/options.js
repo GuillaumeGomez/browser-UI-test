@@ -21,6 +21,10 @@ function helper() {
 
 class Options {
     constructor() {
+        this.clear();
+    }
+
+    clear() {
         this.runId = 'test';
         this.generateImages = false;
         this.headless = true;
