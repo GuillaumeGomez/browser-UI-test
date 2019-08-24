@@ -379,19 +379,36 @@ function checkJson(x) {
     x.assert(p.elems[0].getValue()[0].key.getText(), '1');
     x.assert(p.elems[0].getValue()[0].value === undefined);
 
+
     process.env['variable'] = '1';
+    process.env['variable value'] = 'a';
     p = new Parser('{|variable|: 2}');
     p.parse();
-    x.assert(p.error, 'numbers cannot be used as keys (for `1`)');
+    x.assert(p.error, null);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'numbers cannot be used as keys (for `1`)');
-    x.assert(p.elems[0].getText(), '{1');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getText(), '{|variable|: 2}');
     x.assert(p.elems[0].getValue().length, 1);
-    x.assert(p.elems[0].getValue()[0].key.kind, 'number');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
     x.assert(p.elems[0].getValue()[0].key.getText(), '1');
-    x.assert(p.elems[0].getValue()[0].value === undefined);
+    x.assert(p.elems[0].getValue()[0].value.kind, 'number');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), '2');
+
+    p = new Parser('{|variable value|: |variable|}');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getText(), '{|variable value|: |variable|}');
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), 'a');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'number');
+    x.assert(p.elems[0].getValue()[0].value.getValue(), '1');
     process.env['variable'] = undefined;
+    process.env['variable value'] = undefined;
 
 
     p = new Parser('{true: 1}');
@@ -593,11 +610,11 @@ function checkJson(x) {
 
     p = new Parser('{"x": 2,|"y": "a"}');
     p.parse();
-    x.assert(p.error, 'unexpected `|` after `,`');
+    x.assert(p.error, 'expected `|` after the variable name `"y": "a"}`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'unexpected `|` after `,`');
-    x.assert(p.elems[0].getText(), '{"x": 2,|');
+    x.assert(p.elems[0].error, 'expected `|` after the variable name `"y": "a"}`');
+    x.assert(p.elems[0].getText(), '{"x": 2,|"y": "a"}');
     x.assert(p.elems[0].getValue()[0].key.kind, 'string');
     x.assert(p.elems[0].getValue()[0].key.getText(), '"x"');
     x.assert(p.elems[0].getValue()[0].key.getValue(), 'x');

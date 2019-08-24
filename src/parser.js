@@ -309,7 +309,7 @@ class Parser {
         this.push(e, pushTo);
     }
 
-    parseVariable(pushTo = null) {
+    parseVariable(pushTo = null, forceString = false) {
         const start = this.pos;
 
         this.pos += 1;
@@ -322,11 +322,10 @@ class Parser {
                     this.pos = this.text.length + 1;
                     this.push(new VariableElement(variableName, start, this.pos,
                         `variable \`${variableName}\` not found in options nor environment`),
-                        pushTo);
+                    pushTo);
                     return;
                 }
-                let e;
-                if (matchInteger(associatedValue) === true) {
+                if (forceString === false && matchInteger(associatedValue) === true) {
                     this.push(new NumberElement(associatedValue, start, this.pos), pushTo);
                 } else {
                     this.push(new StringElement(associatedValue, start, this.pos, associatedValue),
@@ -500,7 +499,7 @@ class Parser {
                     parseEnd(this, pushTo, `expected \`:\` after \`${key}\`, found \`|\``);
                 } else {
                     const tmp = [];
-                    this.parseVariable(tmp);
+                    this.parseVariable(tmp, key === null);
                     if (tmp[0].kind === 'number') {
                         checkForNumber(tmp[0]);
                     } else {
