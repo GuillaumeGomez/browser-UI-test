@@ -1,7 +1,7 @@
 const process = require('process');
 
 const utils = require('../../src/utils.js');
-utils.print = function() {} // overwriting the print function to avoid the print
+utils.print = function() {}; // overwriting the print function to avoid the print
 
 const {runTestCode, runTest, runTests, Options} = require('../../src/index.js');
 const {Assert, plural, print} = require('./utils.js');
@@ -136,7 +136,7 @@ async function checkRunTests(x, func) {
 }
 
 async function checkOptions(x) {
-    let options = new Options();
+    const options = new Options();
 
     await x.assertTry(() => options.validate(), [],
         'You need to provide `--test-folder` option or at least one file to test with ' +
@@ -183,7 +183,7 @@ async function checkOptions(x) {
     await x.assertTry(() => options.parseArguments(['--failure-folder', 'failure/']), [], true);
     x.assert(options.failureFolder, 'failure/');
 
-    options = new Options();
+    options.clear();
     await x.assertTry(() => options.parseArguments(['--test-files']), [],
         'Expected at least one path for `--test-files` option');
     await x.assertTry(() => options.parseArguments(['--test-files', 'hello']), [], true);
@@ -203,70 +203,71 @@ async function checkOptions(x) {
     x.assert(options.parseArguments(['--help']), false);
     x.assert(options.parseArguments(['-h']), false);
 
-    options = new Options();
-    x.assertTry(() => options.parseArguments(['--generate-images']), [], true);
-    x.assert(options.generateImages, true);
-    x.assertTry(() => options.parseArguments(['--no-headless']), [], true);
-    x.assert(options.headless, false);
-    x.assertTry(() => options.parseArguments(['--show-text']), [], true);
-    x.assert(options.showText, true);
-    x.assertTry(() => options.parseArguments(['--debug']), [], true);
-    x.assert(options.debug, true);
-    x.assertTry(() => options.parseArguments(['--no-screenshot']), [], true);
-    x.assert(options.noScreenshot, true);
+    options.clear();
+    await x.assertTry(() => options.parseArguments(['--generate-images']), [], true);
+    await x.assert(options.generateImages, true);
+    await x.assertTry(() => options.parseArguments(['--no-headless']), [], true);
+    await x.assert(options.headless, false);
+    await x.assertTry(() => options.parseArguments(['--show-text']), [], true);
+    await x.assert(options.showText, true);
+    await x.assertTry(() => options.parseArguments(['--debug']), [], true);
+    await x.assert(options.debug, true);
+    await x.assertTry(() => options.parseArguments(['--no-screenshot']), [], true);
+    await x.assert(options.noScreenshot, true);
 
-    options.runId = true;
-    x.assertTry(() => options.validateFields(), [],
+    const options0 = new Options();
+    options0.runId = true;
+    await x.assertTry(() => options0.validateFields(), [],
         '`Options.runId` field is supposed to be a string!');
 
-    options = new Options();
-    options.generateImages = '';
-    x.assertTry(() => options.validateFields(), [],
+    const options1 = new Options();
+    options1.generateImages = '';
+    await x.assertTry(() => options1.validateFields(), [],
         '`Options.generateImages` field is supposed to be a boolean!');
 
-    options = new Options();
-    options.headless = '';
-    x.assertTry(() => options.validateFields(), [],
+    const options2 = new Options();
+    options2.headless = '';
+    await x.assertTry(() => options2.validateFields(), [],
         '`Options.headless` field is supposed to be a boolean!');
 
-    options = new Options();
-    options.testFolder = 1;
-    x.assertTry(() => options.validateFields(), [],
+    const options3 = new Options();
+    options3.testFolder = 1;
+    await x.assertTry(() => options3.validateFields(), [],
         '`Options.testFolder` field is supposed to be a string!');
 
-    options = new Options();
-    options.docPath = 1;
-    x.assertTry(() => options.validateFields(), [],
+    const options4 = new Options();
+    options4.docPath = 1;
+    await x.assertTry(() => options4.validateFields(), [],
         '`Options.docPath` field is supposed to be a string!');
 
-    options = new Options();
-    options.failureFolder = 1;
-    x.assertTry(() => options.validateFields(), [],
+    const options5 = new Options();
+    options5.failureFolder = 1;
+    await x.assertTry(() => options5.validateFields(), [],
         '`Options.failureFolder` field is supposed to be a string!');
 
-    options = new Options();
-    options.showText = '';
-    x.assertTry(() => options.validateFields(), [],
+    const options6 = new Options();
+    options6.showText = '';
+    await x.assertTry(() => options6.validateFields(), [],
         '`Options.showText` field is supposed to be a boolean!');
 
-    options = new Options();
-    options.debug = '';
-    x.assertTry(() => options.validateFields(), [],
+    const options7 = new Options();
+    options7.debug = '';
+    await x.assertTry(() => options7.validateFields(), [],
         '`Options.debug` field is supposed to be a boolean!');
 
-    options = new Options();
-    options.noScreenshot = '';
-    x.assertTry(() => options.validateFields(), [],
+    const options8 = new Options();
+    options8.noScreenshot = '';
+    await x.assertTry(() => options8.validateFields(), [],
         '`Options.noScreenshot` field is supposed to be a boolean!');
 
-    options = new Options();
-    options.url = true;
-    x.assertTry(() => options.validateFields(), [],
+    const options9 = new Options();
+    options9.url = true;
+    await x.assertTry(() => options9.validateFields(), [],
         '`Options.url` field is supposed to be a string!');
 
-    options = new Options();
-    options.testFiles = '';
-    x.assertTry(() => options.validateFields(), [],
+    const options10 = new Options();
+    options10.testFiles = '';
+    await x.assertTry(() => options10.validateFields(), [],
         '`Options.files` field is supposed to be an array!');
 }
 
