@@ -28,10 +28,9 @@ async function checkRunTest(x, func) {
     await x.assertTry(func, ['./tests/fail.goml'], 'No file found with path `./tests/fail.goml`');
 
     // empty options
-    await x.assertTry(func, ['./tests/scripts/fail.goml'],
-        ['fail... FAILED\n[ERROR] Error: net::ERR_FILE_NOT_FOUND at file:///media/imperio/rust/' +
-            'browser-UI-test//basic.html: for command `goto: file://{current-dir}/{doc-path}/' +
-            'basic.html`\n', 1]);
+    const res = await func('./tests/scripts/fail.goml');
+    x.assert(res[0].startsWith('fail... FAILED\n[ERROR] Error: net::ERR_FILE_NOT_FOUND at file:/'));
+    x.assert(res[1], 1);
 
     // everything is supposed to work
     let options = new Options();
