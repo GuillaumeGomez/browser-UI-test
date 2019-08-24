@@ -281,7 +281,7 @@ const TO_CHECK = [
 async function checkExportedFunctions() {
     const x = new Assert();
 
-    print('=> Starting EXPORTED FUNCTIONS tests...');
+    print('=> Starting EXPORTED ITEMS tests...');
     print('');
 
     for (let i = 0; i < TO_CHECK.length; ++i) {
