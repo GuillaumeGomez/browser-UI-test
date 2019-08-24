@@ -7,8 +7,9 @@ function toJSON(value) {
     return value;
 }
 
-function getStackInfo(stack) {
-    const parent = stack.split('at ')[2].trim();
+function getStackInfo(stack, level = 2) {
+    const parents = stack.split('at ');
+    const parent = parents[level >= parents.length ? parents.length - 1 : level].trim();
     const parts = parent.split(':');
     const line = parts[parts.length - 2];
     const file_name = path.basename(parts[0].split('(')[1]);
@@ -40,25 +41,39 @@ class Assert {
         this.currentTestSuite = null;
     }
 
-    assert(value1, value2) {
+    assert(value1, value2, pos) {
         this.ranTests += 1;
         this.totalRanTests += 1;
         if (typeof value2 !== 'undefined') {
             value1 = toJSON(value1);
             value2 = toJSON(value2);
             if (value1 !== value2) {
-                const pos = getStackInfo(new Error().stack);
+                if (typeof pos === 'undefined') {
+                    pos = getStackInfo(new Error().stack);
+                }
                 print(`[${pos.file}:${pos.line}] failed: \`${value1}\` != \`${value2}\``);
                 this.errors += 1;
                 this.totalErrors += 1;
                 return;
             }
         } else if (!value1) {
-            const pos = getStackInfo(new Error().stack);
+            if (typeof pos === 'undefined') {
+                pos = getStackInfo(new Error().stack);
+            }
             print(`[${pos.file}:${pos.line}] failed: \`${value1}\` is evalued to false`);
             this.errors += 1;
             this.totalErrors += 1;
             return;
+        }
+    }
+
+    async assertTry(callback, args, expectedValue) {
+        const pos = getStackInfo(new Error().stack, 2);
+        try {
+            const ret = await callback(...args);
+            return this.assert(ret, expectedValue, pos);
+        } catch (err) {
+            return this.assert(err.message, expectedValue, pos);
         }
     }
 

@@ -12,7 +12,7 @@ const path = require('path');
 const consts = require('./consts.js');
 
 
-// Make it into a class to provide some utility methods like 'isFailure'.
+// TODO: Make it into a class to provide some utility methods like 'isFailure'.
 const Status = {
     'Ok': 0,
     'Failure': 1,
@@ -71,12 +71,9 @@ function getGlobalStyle(showText) {
     return css;
 }
 
-function parseTest(testPath, logs, options) {
-    const fullPath = testPath;
-    const basename = path.basename(fullPath);
-    const testName = basename.substr(0, basename.length - 5);
+function parseTest(testName, content, logs, options) {
     try {
-        const commands = parser.parseContent(utils.readFile(fullPath), options);
+        const commands = parser.parseContent(content, options);
         if (Object.prototype.hasOwnProperty.call(commands, 'error')) {
             logs.append(testName + '... FAILED');
             logs.append(`[ERROR] line ${commands['line']}: ${commands['error']}`);
@@ -98,6 +95,14 @@ function parseTest(testPath, logs, options) {
         logs.append(`${err}\n${err.stack}`);
     }
     return null;
+}
+
+function parseTestFile(testPath, logs, options) {
+    const fullPath = testPath;
+    const basename = path.basename(fullPath);
+    const testName = basename.substr(0, basename.length - 5);
+
+    return parseTest(testName, utils.readFile(fullPath), logs, options);
 }
 
 async function runCommand(loaded, logs, options, browser) {
@@ -271,13 +276,18 @@ async function innerRunTests(logs, options) {
     let total = 0;
     const allFiles = [];
 
-    fs.readdirSync(options.testFolderPath).forEach(function(file) {
-        const fullPath = path.join(options.testFolderPath, file);
-        if (file.endsWith('.goml') && fs.lstatSync(fullPath).isFile()) {
-            allFiles.push(path.resolve(fullPath));
+    if (options.testFolderPath.length > 0) {
+        if (!fs.existsSync(options.testFolderPath)
+            || !fs.lstatSync(options.testFolderPath).isDirectory()) {
+            throw new Error(`Folder \`${options.testFolderPath}\` not found`);
         }
-    });
-    let needBlankLine = false;
+        fs.readdirSync(options.testFolderPath).forEach(function(file) {
+            const fullPath = path.join(options.testFolderPath, file);
+            if (file.endsWith('.goml') && fs.lstatSync(fullPath).isFile()) {
+                allFiles.push(path.resolve(fullPath));
+            }
+        });
+    }
     for (let i = 0; i < options.testFiles.length; ++i) {
         if (fs.existsSync(options.testFiles[i]) && fs.lstatSync(options.testFiles[i]).isFile()) {
             const fullPath = path.resolve(options.testFiles[i]);
@@ -285,13 +295,15 @@ async function innerRunTests(logs, options) {
                 allFiles.push(fullPath);
             }
         } else {
-            logs.append(`/!\\ Ignoring file "${options.testFiles[i]}".`);
-            needBlankLine = true;
+            throw new Error(`File \`${options.testFiles[i]}\` not found (passed with ` +
+                '`--test-files` option)');
         }
     }
-    if (needBlankLine === true) {
-        logs.append('');
+
+    if (allFiles.length === 0) {
+        throw new Error('No files found. Check your `--test-folder` and `--test-files` options');
     }
+
     // A little sort on tests' name.
     allFiles.sort((a, b) => {
         a = path.basename(a);
@@ -308,7 +320,7 @@ async function innerRunTests(logs, options) {
     for (let i = 0; i < allFiles.length; ++i) {
         total += 1;
 
-        const load = parseTest(allFiles[i], logs, options);
+        const load = parseTestFile(allFiles[i], logs, options);
         if (load === null) {
             failures += 1;
         } else {
@@ -337,30 +349,30 @@ async function innerRunTests(logs, options) {
     logs.append(
         '\n<= doc-ui tests done: ' + (total - failures) + ' succeeded, ' + failures + ' failed');
 
-    if (logs.saveLogs !== true) {
+    if (logs.showLogs === true) {
         logs.append('');
     }
 
     return [logs.logs, failures];
 }
 
-async function runTest(testPath, options = new Options(), saveLogs = true) {
-    if (!options || options.validate === undefined) {
-        throw 'Options must be an "Options" type!';
+async function runTestCode(testName, content, options = new Options(), showLogs = true) {
+    if (typeof testName !== 'string' || typeof testName === 'undefined') {
+        throw new Error('expected `runTestCode` first argument to be a string');
+    } else if (typeof content !== 'string' || typeof content === 'undefined') {
+        throw new Error('expected `runTestCode` second argument to be a string');
+    } else if (testName.length === 0) {
+        throw new Error('test name (first argument) cannot be empty');
+    } else if (!options || options.validate === undefined) {
+        throw new Error('Options must be an "Options" type!');
     }
-    // To make the Options type validation happy.
-    options.testFiles.push(testPath);
-    if (options.failuresFolderPath.length === 0 && options.noScreenshot === false) {
-        // Then we use the same folder as where the test is.
-        options.failuresFolderPath = path.dirname(testPath);
-    }
+    // "light" validation of the Options type.
+    options.validateFields();
 
-    options.validate();
-
-    const logs = new Logs(saveLogs);
+    const logs = new Logs(showLogs);
 
     try {
-        const load = parseTest(testPath, logs, options);
+        const load = parseTest(path.normalize(testName), content, logs, options);
         if (load === null) {
             return [logs.logs, 1];
         }
@@ -385,13 +397,37 @@ async function runTest(testPath, options = new Options(), saveLogs = true) {
     }
 }
 
-async function runTests(options, saveLogs = true) {
-    if (!options || options.validate === undefined) {
-        throw 'Options must be an "Options" type!';
+async function runTest(testPath, options = new Options(), showLogs = true) {
+    if (typeof testPath !== 'string' || typeof testPath === 'undefined') {
+        throw new Error('expected `runTest` first argument to be a string');
+    } else if (!options || options.validate === undefined) {
+        throw new Error('Options must be an "Options" type!');
+    } else if (!fs.existsSync(testPath) || !fs.lstatSync(testPath).isFile()) {
+        throw new Error(`No file found with path \`${testPath}\``);
+    } else if (!testPath.endsWith('.goml')) {
+        throw new Error(`Expected a \`.goml\` script, found ${path.basename(testPath)}`);
+    }
+
+    // To make the Options type validation happy.
+    options.testFiles.push(testPath);
+    if (options.failuresFolderPath.length === 0 && options.noScreenshot === false) {
+        // Then we use the same folder as where the test is.
+        options.failuresFolderPath = path.dirname(testPath);
     }
     options.validate();
 
-    const logs = new Logs(saveLogs);
+    const basename = path.basename(testPath);
+    return runTestCode(basename.substr(0, basename.length - 5), utils.readFile(testPath), options,
+        showLogs);
+}
+
+async function runTests(options, showLogs = true) {
+    if (!options || options.validate === undefined) {
+        throw new Error('Options must be an "Options" type!');
+    }
+    options.validate();
+
+    const logs = new Logs(showLogs);
 
     logs.append('=> Starting doc-ui tests...\n');
 
@@ -423,6 +459,7 @@ if (require.main === module) {
 } else {
     module.exports = {
         'runTest': runTest,
+        'runTestCode': runTestCode,
         'runTests': runTests,
         'Options': Options,
     };

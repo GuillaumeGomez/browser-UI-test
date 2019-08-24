@@ -1,19 +1,19 @@
 const process = require('process');
 
 class Logs {
-    constructor(saveLogs) {
-        this.saveLogs = saveLogs;
+    constructor(showLogs) {
+        this.showLogs = showLogs;
         this.logs = '';
     }
 
     append(newLog, noBackline) {
         if (this.logs.length === 0 || noBackline === true) {
-            if (this.saveLogs !== true) {
+            if (this.showLogs === true) {
                 process.stdout.write(`${newLog}`);
             }
             this.logs += newLog;
         } else {
-            if (this.saveLogs !== true) {
+            if (this.showLogs === true) {
                 process.stdout.write(`\n${newLog}`);
             }
             this.logs += `\n${newLog}`;

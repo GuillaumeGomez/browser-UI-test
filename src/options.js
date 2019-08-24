@@ -40,11 +40,11 @@ class Options {
                 if (it + 1 < args.length) {
                     this.runId = args[it + 1];
                     if (this.runId.indexOf('/') !== -1) {
-                        throw '\'--run-id\' cannot contain \'/\' character!';
+                        throw new Error('\'--run-id\' cannot contain \'/\' character!');
                     }
                     it += 1;
                 } else {
-                    throw 'Missing id after \'--run-id\' option';
+                    throw new Error('Missing id after \'--run-id\' option');
                 }
             } else if (args[it] === '--generate-images') {
                 this.generateImages = true;
@@ -64,39 +64,39 @@ class Options {
                     this.testFolderPath = args[it + 1];
                     it += 1;
                 } else {
-                    throw 'Missing path after \'--test-folder\' option';
+                    throw new Error('Missing path after \'--test-folder\' option');
                 }
             } else if (args[it] === '--doc-path') {
                 if (it + 1 < args.length) {
                     this.docPath = utils.addSlash(args[it + 1]);
                     it += 1;
                 } else {
-                    throw 'Missing path after \'--doc-path\' option';
+                    throw new Error('Missing path after \'--doc-path\' option');
                 }
             } else if (args[it] === '--url') {
                 if (it + 1 < args.length) {
                     this.url = utils.addSlash(args[it + 1]);
                     it += 1;
                 } else {
-                    throw 'Missing URL after \'--url\' option';
+                    throw new Error('Missing URL after \'--url\' option');
                 }
             } else if (args[it] === '--failure-folder') {
                 if (it + 1 < args.length) {
                     this.failuresFolderPath = utils.addSlash(args[it + 1]);
                     it += 1;
                 } else {
-                    throw 'Missing path after \'--failure-folder\' option';
+                    throw new Error('Missing path after \'--failure-folder\' option');
                 }
             } else if (args[it] === '--test-files') {
                 if (it + 1 >= args.length) {
-                    throw 'Expected at least one path for \'--test-files\' option';
+                    throw new Error('Expected at least one path for \'--test-files\' option');
                 }
                 for (it = it + 1; it < args.length; ++it) {
                     this.testFiles.push(args[it]);
                 }
             } else {
-                throw `Unknown option '${args[it]}'\n` +
-                        'Use \'--help\' if you want the list of the available commands';
+                throw new Error(`Unknown option '${args[it]}'\n` +
+                    'Use \'--help\' if you want the list of the available commands');
             }
         }
         return true;
@@ -104,23 +104,27 @@ class Options {
 
     validate() {
         if (this.testFolderPath.length === 0 && this.testFiles.length === 0) {
-            throw 'You need to provide \'--test-folder\' option or at least one file to test ' +
-                'with \'--test-files\' option!';
+            throw new Error('You need to provide \'--test-folder\' option or at least one file ' +
+                'to test with \'--test-files\' option!');
         } else if (this.failuresFolderPath.length === 0 && this.noScreenshot === false) {
-            throw 'You need to provide \'--failure-folder\' option if \'--no-screenshot\' isn\'t ' +
-                'used!';
+            throw new Error('You need to provide \'--failure-folder\' option if ' +
+                '\'--no-screenshot\' isn\'t used!');
         }
         for (let i = 0; i < this.testFiles.length; ++i) {
             if (this.testFiles[i].endsWith('.goml') === false) {
-                throw 'Only `.goml` script files are allowed in the `--test-files` option, ' +
-                    `got \`${this.testFiles[i]}\``;
+                throw new Error('Only `.goml` script files are allowed in the `--test-files` ' +
+                    `option, got \`${this.testFiles[i]}\``);
             }
         }
+        this.validateFields();
+    }
 
+    validateFields() {
         // Check if variables have the expected types (you never know...).
         const validateField = (fieldName, expectedType) => {
             if (typeof this[fieldName] !== expectedType) {
-                throw `\`Options.${fieldName}\` field is supposed to be a ${expectedType}!`;
+                throw new Error(`\`Options.${fieldName}\` field is supposed to be a ` +
+                    `${expectedType}!`);
             }
         };
         validateField('runId', 'string');
@@ -134,7 +138,7 @@ class Options {
         validateField('noScreenshot', 'boolean');
         validateField('url', 'string');
         if (Array.isArray(this.testFiles) !== true) {
-            throw '`Options.files` field is supposed to be an array!';
+            throw new Error('`Options.files` field is supposed to be an array!');
         }
     }
 }
