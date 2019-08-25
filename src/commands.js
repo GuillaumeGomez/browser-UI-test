@@ -12,8 +12,16 @@ function cleanString(s) {
     return s;
 }
 
-function cleanCssSelector(s) {
-    return cleanString(s).replace(/\\/g, '\\\\').trim();
+function cleanCssSelector(s, text = '') {
+    s = cleanString(s).replace(/\\/g, '\\\\').trim();
+    if (s.length === 0) {
+        return {
+            'error': `CSS selector ${text !== '' ? text + ' ' : ''}cannot be empty`,
+        };
+    }
+    return {
+        'value': s,
+    };
 }
 
 // Possible inputs:
@@ -29,12 +37,12 @@ function parseClick(line, options) {
         return {'error': 'expected a position or a CSS selector'};
     } else if (p.elems[0].kind === 'string') {
         const selector = cleanCssSelector(p.elems[0].getValue());
-        if (selector.length === 0) {
-            return {'error': 'CSS selector cannot be empty'};
+        if (selector.error !== undefined) {
+            return selector;
         }
         return {
             'instructions': [
-                `page.click("${selector}")`,
+                `page.click("${selector.value}")`,
             ],
         };
     } else if (p.elems[0].kind !== 'tuple') {
@@ -75,12 +83,12 @@ function parseWaitFor(line, options) {
         return {'error': 'expected an integer or a CSS selector'};
     }
     const selector = cleanCssSelector(p.elems[0].getValue());
-    if (selector.length === 0) {
-        return {'error': 'CSS selector cannot be empty'};
+    if (selector.error !== undefined) {
+        return selector;
     }
     return {
         'instructions': [
-            `await page.waitFor("${selector}")`,
+            `await page.waitFor("${selector.value}")`,
         ],
         'wait': false,
     };
@@ -98,12 +106,12 @@ function parseFocus(line, options) {
         return {'error': 'expected a CSS selector'};
     }
     const selector = cleanCssSelector(p.elems[0].getValue());
-    if (selector.length === 0) {
-        return {'error': 'CSS selector cannot be empty'};
+    if (selector.error !== undefined) {
+        return selector;
     }
     return {
         'instructions': [
-            `page.focus("${selector}")`,
+            `page.focus("${selector.value}")`,
         ],
     };
 }
@@ -142,12 +150,12 @@ function parseWrite(line, options) {
         return {'error': `expected a string as tuple second argument, found a ${tuple[1].kind}`};
     }
     const selector = cleanCssSelector(tuple[0].getValue());
-    if (selector.length === 0) {
-        return {'error': 'CSS selector cannot be empty'};
+    if (selector.error !== undefined) {
+        return selector;
     }
     return {
         'instructions': [
-            `page.focus("${selector}")`,
+            `page.focus("${selector.value}")`,
             `page.keyboard.type("${tuple[1].getValue()}")`,
         ],
     };
@@ -166,12 +174,12 @@ function parseMoveCursorTo(line, options) {
         return {'error': 'expected a position or a CSS selector'};
     } else if (p.elems[0].kind === 'string') {
         const selector = cleanCssSelector(p.elems[0].getValue());
-        if (selector.length === 0) {
-            return {'error': 'CSS selector cannot be empty'};
+        if (selector.error !== undefined) {
+            return selector;
         }
         return {
             'instructions': [
-                `page.hover("${selector}")`,
+                `page.hover("${selector.value}")`,
             ],
         };
     } else if (p.elems[0].kind !== 'tuple') {
@@ -346,10 +354,11 @@ function parseAssert(line, options) {
     } else if (tuple[0].kind !== 'string') {
         return {'error': `expected first argument to be a CSS selector, found a ${tuple[0].kind}`};
     }
-    const selector = cleanCssSelector(tuple[0].getValue());
-    if (selector.length === 0) {
-        return {'error': 'CSS selector cannot be empty'};
+    let selector = cleanCssSelector(tuple[0].getValue());
+    if (selector.error !== undefined) {
+        return selector;
     }
+    selector = selector.value;
     if (tuple.length === 1) {
         //
         // EXISTENCE CHECK
@@ -500,15 +509,15 @@ function parseText(line, options) {
         return {'error': 'expected `("CSS selector", "text")`'};
     }
     const selector = cleanCssSelector(tuple[0].getValue());
-    if (selector.length === 0) {
-        return {'error': 'CSS selector cannot be empty'};
+    if (selector.error !== undefined) {
+        return selector;
     }
     const value = cleanString(tuple[1].getValue());
     const varName = 'parseTextElem';
     return {
         'instructions': [
-            `let ${varName} = await page.$("${selector}");\n` +
-            `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
+            `let ${varName} = await page.$("${selector.value}");\n` +
+            `if (${varName} === null) { throw '"${selector.value}" not found'; }\n` +
             `await page.evaluate(e => { e.innerText = "${value}";}, ${varName});`,
         ],
     };
@@ -532,10 +541,11 @@ function innerParseCssAttribute(line, argName, varName, callback, options) {
                 '`("CSS selector", [JSON object])`',
         };
     }
-    const selector = cleanCssSelector(tuple[0].getValue());
-    if (selector.length === 0) {
-        return {'error': 'CSS selector (first argument) cannot be empty'};
+    let selector = cleanCssSelector(tuple[0].getValue(), '(first argument)');
+    if (selector.error !== undefined) {
+        return selector;
     }
+    selector = selector.value;
     if (tuple.length === 3) {
         if (tuple[1].kind !== 'string' || tuple[2].kind !== 'string') {
             return {
@@ -544,7 +554,7 @@ function innerParseCssAttribute(line, argName, varName, callback, options) {
             };
         }
         const attributeName = cleanString(tuple[1].getValue().trim());
-        if (selector.length === 0) {
+        if (attributeName.length === 0) {
             return {'error': 'attribute name (second argument) cannot be empty'};
         }
         const value = cleanString(tuple[2].getValue());
@@ -564,8 +574,8 @@ function innerParseCssAttribute(line, argName, varName, callback, options) {
     }
     if (tuple[1].kind !== 'json') {
         return {
-            'error': 'expected json as second argument (since there are only arguments), found ' +
-                `${tuple[1].kind}`,
+            'error': 'expected json as second argument (since there are only two arguments), ' +
+                `found ${tuple[1].kind}`,
         };
     }
     let code = '';
@@ -645,15 +655,15 @@ function parseScreenshot(line, options) {
     }
     const warnings = [];
     const selector = cleanCssSelector(p.elems[0].getValue());
-    if (selector.length === 0) {
-        return {'error': 'CSS selector cannot be empty'};
-    } else if (selector === 'true' || selector === 'false') {
+    if (selector.error !== undefined) {
+        return selector;
+    } else if (selector.value === 'true' || selector.value === 'false') {
         warnings.push(`\`${p.elems[0].getText()}\` is a string and will be used as CSS selector.` +
             ' If you want to set `true` or `false` value, remove quotes.');
     }
     return {
         'instructions': [
-            `arg.takeScreenshot = "${selector}";`,
+            `arg.takeScreenshot = "${selector.value}";`,
         ],
         'wait': false,
         'warnings': warnings.length > 0 ? warnings.join('\n') : undefined,
@@ -794,13 +804,16 @@ function parseDragAndDrop(line, options) {
         return ret;
     }
     const instructions = [];
-    const setupThings = (arg, varName, posName) => {
+    const setupThings = (arg, varName, posName, pos) => {
         let code = '';
         if (arg.kind === 'string') {
-            const selector = cleanCssSelector(arg.getValue());
+            const selector = cleanCssSelector(arg.getValue(), `(${pos} argument)`);
+            if (selector.error !== undefined) {
+                return selector;
+            }
             const box = `${varName}_box`;
-            code += `const ${varName} = await page.$("${selector}");\n` +
-                `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
+            code += `const ${varName} = await page.$("${selector.value}");\n` +
+                `if (${varName} === null) { throw '"${selector.value}" not found'; }\n` +
                 `const ${box} = await ${varName}.boundingBox();\n` +
                 `const ${posName} = [${box}.x + ${box}.width / 2, ${box}.y + ${box}.height / 2];\n`;
         } else {
@@ -809,10 +822,16 @@ function parseDragAndDrop(line, options) {
         }
         return `${code}await page.mouse.move(${posName}[0], ${posName}[1]);`;
     };
-    instructions.push(
-        setupThings(tuple[0], 'parseDragAndDropElem', 'start') + 'await page.mouse.down();');
-    instructions.push(
-        setupThings(tuple[1], 'parseDragAndDropElem2', 'end') + 'await page.mouse.up();');
+    ret = setupThings(tuple[0], 'parseDragAndDropElem', 'start', 'first');
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    instructions.push(ret + 'await page.mouse.down();');
+    ret = setupThings(tuple[1], 'parseDragAndDropElem2', 'end', 'second');
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    instructions.push(ret + 'await page.mouse.up();');
     return {
         'instructions': instructions,
     };
