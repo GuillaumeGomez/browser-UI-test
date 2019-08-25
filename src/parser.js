@@ -56,12 +56,17 @@ class CharElement extends Element {
 }
 
 class TupleElement extends Element {
-    constructor(value, startPos, endPos, error = null) {
+    constructor(value, startPos, endPos, fullText, error = null) {
         super('tuple', value, startPos, endPos, error);
+        this.fullText = fullText;
     }
 
     isRecursive() {
         return true;
+    }
+
+    getText() {
+        return this.fullText;
     }
 }
 
@@ -239,17 +244,18 @@ class Parser {
 
         this.pos += 1;
         const prev = this.parse(')', elems, ',');
+        const full = this.text.substring(start, this.pos + 1);
         if (elems.length > 0 && elems[elems.length - 1].error !== null) {
-            this.push(new TupleElement(elems, start, this.pos, elems[elems.length - 1].error),
+            this.push(new TupleElement(elems, start, this.pos, full, elems[elems.length - 1].error),
                 pushTo);
         } else if (prev !== '') {
             if (prev === ',') {
                 if (elems.length > 0) {
                     const el = elems[elems.length - 1].getText();
-                    this.push(new TupleElement(elems, start, this.pos,
+                    this.push(new TupleElement(elems, start, this.pos, full,
                         `unexpected \`,\` after \`${el}\``), pushTo);
                 } else {
-                    this.push(new TupleElement(elems, start, this.pos,
+                    this.push(new TupleElement(elems, start, this.pos, full,
                         'unexpected `,` after `(`'), pushTo);
                 }
                 this.pos = this.text.length;
@@ -257,30 +263,30 @@ class Parser {
                 const el = elems[elems.length - 1].getText();
                 const prevText = elems[elems.length - 2].getText();
                 const prevEl = typeof prev !== 'undefined' ? prev : prevText;
-                this.push(new TupleElement(elems, start, this.pos,
+                this.push(new TupleElement(elems, start, this.pos, full,
                     `unexpected \`${el}\` after \`${prevEl}\``), pushTo);
             } else {
                 const el = elems[elems.length - 1].getText();
                 // this case should never happen but just in case...
-                this.push(new TupleElement(elems, start, this.pos,
+                this.push(new TupleElement(elems, start, this.pos, full,
                     `unexpected \`${el}\` after \`(\``), pushTo);
             }
         } else if (this.pos >= this.text.length || this.text.charAt(this.pos) !== ')') {
             if (elems.length === 0) {
-                this.push(new TupleElement(elems, start, this.pos, 'expected `)` at the end'),
+                this.push(new TupleElement(elems, start, this.pos, full, 'expected `)` at the end'),
                     pushTo);
             } else {
-                this.push(new TupleElement(elems, start, this.pos,
+                this.push(new TupleElement(elems, start, this.pos, full,
                     `expected \`)\` after \`${elems[elems.length - 1].getText()}\``), pushTo);
             }
         } else if (elems.length === 0) {
-            this.push(new TupleElement(elems, start, this.pos,
+            this.push(new TupleElement(elems, start, this.pos, full,
                 'unexpected `()`: tuples need at least one argument'), pushTo);
         } else if (elems[elems.length - 1].error !== null) {
-            this.push(new TupleElement(elems, start, this.pos, elems[elems.length - 1].error),
+            this.push(new TupleElement(elems, start, this.pos, full, elems[elems.length - 1].error),
                 pushTo);
         } else {
-            this.push(new TupleElement(elems, start, this.pos), pushTo);
+            this.push(new TupleElement(elems, start, this.pos, full), pushTo);
         }
     }
 

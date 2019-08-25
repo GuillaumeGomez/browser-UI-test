@@ -54,6 +54,7 @@ function checkTuple(x) {
     x.assert(p.error, 'expected `,`, found `f`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].getText(), '(true false)');
     x.assert(p.elems[0].error, 'expected `,`, found `f`');
     x.assert(p.elems[0].getValue().length, 2);
     x.assert(p.elems[0].getValue()[0].error, null);
@@ -69,6 +70,7 @@ function checkTuple(x) {
     x.assert(p.error, 'unexpected `,` after `,`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].getText(), '(true,,true)');
     x.assert(p.elems[0].error, 'unexpected `,` after `,`');
     x.assert(p.elems[0].getValue().length, 2);
     x.assert(p.elems[0].getValue()[0].error, null);
@@ -84,6 +86,7 @@ function checkTuple(x) {
     x.assert(p.error, 'expected `,`, found `|`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].getText(), '(true|false)');
     x.assert(p.elems[0].error, 'expected `,`, found `|`');
     x.assert(p.elems[0].getValue().length, 2);
     x.assert(p.elems[0].getValue()[0].error, null);
@@ -99,6 +102,7 @@ function checkTuple(x) {
     x.assert(p.error, null);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].getText(), '(false)');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getValue().length, 1);
     x.assert(p.elems[0].getValue()[0].error, null);
@@ -112,6 +116,7 @@ function checkTuple(x) {
     x.assert(p.error, null);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].getText(), '(|variable|)');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getValue().length, 1);
     x.assert(p.elems[0].getValue()[0].error, null);
@@ -137,6 +142,7 @@ function checkTuple(x) {
     x.assert(p.error, null);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].getText(), '(false,true)');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getValue().length, 2);
     x.assert(p.elems[0].getValue()[0].error, null);
@@ -152,6 +158,7 @@ function checkTuple(x) {
     x.assert(p.error, null);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].getText(), '(false,"s", (3, 12))');
     x.assert(p.elems[0].getValue().length, 3);
     x.assert(p.elems[0].getValue()[0].error, null);
     x.assert(p.elems[0].getValue()[0].kind, 'bool');
@@ -176,6 +183,7 @@ function checkTuple(x) {
     x.assert(p.error, null);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].getText(), '(false,"s",   {"a": "b"}, 3)');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getValue().length, 4);
     x.assert(p.elems[0].getValue()[0].error, null);
