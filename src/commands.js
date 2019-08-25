@@ -794,10 +794,13 @@ function parseDragAndDrop(line, options) {
         return ret;
     }
     const instructions = [];
-    const setupThings = (arg, varName, posName) => {
+    const setupThings = (arg, varName, posName, pos) => {
         let code = '';
         if (arg.kind === 'string') {
             const selector = cleanCssSelector(arg.getValue());
+            if (selector.length === 0) {
+                return {'error': `CSS selector (${pos} argument) cannot be empty`};
+            }
             const box = `${varName}_box`;
             code += `const ${varName} = await page.$("${selector}");\n` +
                 `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
@@ -809,10 +812,16 @@ function parseDragAndDrop(line, options) {
         }
         return `${code}await page.mouse.move(${posName}[0], ${posName}[1]);`;
     };
-    instructions.push(
-        setupThings(tuple[0], 'parseDragAndDropElem', 'start') + 'await page.mouse.down();');
-    instructions.push(
-        setupThings(tuple[1], 'parseDragAndDropElem2', 'end') + 'await page.mouse.up();');
+    ret = setupThings(tuple[0], 'parseDragAndDropElem', 'start', 'first');
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    instructions.push(ret + 'await page.mouse.down();');
+    ret = setupThings(tuple[1], 'parseDragAndDropElem2', 'end', 'second');
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    instructions.push(ret + 'await page.mouse.up();');
     return {
         'instructions': instructions,
     };

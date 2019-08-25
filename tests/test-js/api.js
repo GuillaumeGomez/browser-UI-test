@@ -492,6 +492,8 @@ function checkDragAndDrop(x, func) {
     x.assert(func('((1,"a"),"a")'), {
         'error': 'expected a position with two numbers, found `(1,"a")`',
     });
+    x.assert(func('((1,2),"")'), {'error': 'CSS selector (second argument) cannot be empty'});
+    x.assert(func('("", (1,2))'), {'error': 'CSS selector (first argument) cannot be empty'});
     x.assert(func('((1,2),"a")'), {
         'instructions': [
             'const start = [1, 2];\nawait page.mouse.move(start[0], start[1]);await ' +
