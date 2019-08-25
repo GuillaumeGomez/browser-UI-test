@@ -90,7 +90,8 @@ function checkAttribute(x, func) {
     x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
     x.assert(func('("a", "b")'), {
-        'error': 'expected json as second argument (since there are only arguments), found string',
+        'error': 'expected json as second argument (since there are only two arguments), found ' +
+            'string',
     });
     x.assert(func('("a", "b", "c")'),
         {
@@ -131,8 +132,10 @@ function checkCss(x, func) {
     x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
     x.assert(func('("a", "b")'), {
-        'error': 'expected json as second argument (since there are only arguments), found string',
+        'error': 'expected json as second argument (since there are only two arguments), found ' +
+            'string',
     });
+    x.assert(func('("a", "", "c")'), {'error': 'attribute name (second argument) cannot be empty'});
     x.assert(func('("a", "b", "c")'),
         {
             'instructions': [
