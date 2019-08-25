@@ -460,6 +460,63 @@ function checkParseContent(x, func) {
     x.assert(func('// just a comment\na: b'), {'error': 'Unknown command "a"', 'line': 1});
 }
 
+function checkDragAndDrop(x, func) {
+    // check tuple argument
+    x.assert(func('true'), {
+        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
+            'selector',
+    });
+    x.assert(func('(true)'), {
+        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
+            'selector',
+    });
+    x.assert(func('(1,2)'), {
+        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
+            'selector, found `1`',
+    });
+    x.assert(func('(1,2,3)'), {
+        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
+            'selector',
+    });
+    x.assert(func('("a",2)'), {
+        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
+            'selector, found `2`',
+    });
+    x.assert(func('(1,"a")'), {
+        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
+            'selector, found `1`',
+    });
+    x.assert(func('((1,2,3),"a")'), {
+        'error': 'expected a position with two numbers, found `(1,2,3)`',
+    });
+    x.assert(func('((1,"a"),"a")'), {
+        'error': 'expected a position with two numbers, found `(1,"a")`',
+    });
+    x.assert(func('((1,2),"a")'), {
+        'instructions': [
+            'const start = [1, 2];\nawait page.mouse.move(start[0], start[1]);await ' +
+            'page.mouse.down();',
+            'const parseDragAndDropElem2 = await page.$("a");\nif (parseDragAndDropElem2 === ' +
+            'null) { throw \'"a" not found\'; }\nconst parseDragAndDropElem2_box = await ' +
+            'parseDragAndDropElem2.boundingBox();\nconst end = [parseDragAndDropElem2_box.x + ' +
+            'parseDragAndDropElem2_box.width / 2, parseDragAndDropElem2_box.y + ' +
+            'parseDragAndDropElem2_box.height / 2];\nawait page.mouse.move(end[0], end[1]);' +
+            'await page.mouse.up();',
+        ],
+    });
+    x.assert(func('("a", (1,2))'), {
+        'instructions': [
+            'const parseDragAndDropElem = await page.$("a");\nif (parseDragAndDropElem === ' +
+            'null) { throw \'"a" not found\'; }\nconst parseDragAndDropElem_box = await ' +
+            'parseDragAndDropElem.boundingBox();\nconst start = [parseDragAndDropElem_box.x + ' +
+            'parseDragAndDropElem_box.width / 2, parseDragAndDropElem_box.y + ' +
+            'parseDragAndDropElem_box.height / 2];\nawait page.mouse.move(start[0], start[1]);' +
+            'await page.mouse.down();',
+            'const end = [1, 2];\nawait page.mouse.move(end[0], end[1]);await page.mouse.up();',
+        ],
+    });
+}
+
 const TO_CHECK = [
     {'name': 'assert', 'func': checkAssert,
         'toCall': (e, o) => wrapper(parserFuncs.parseAssert, e, o)},
@@ -469,6 +526,8 @@ const TO_CHECK = [
         'toCall': (e, o) => wrapper(parserFuncs.parseClick, e, o)},
     {'name': 'css', 'func': checkCss,
         'toCall': (e, o) => wrapper(parserFuncs.parseCss, e, o)},
+    {'name': 'drag-and-drop', 'func': checkDragAndDrop,
+        'toCall': (e, o) => wrapper(parserFuncs.parseDragAndDrop, e, o)},
     {'name': 'fail', 'func': checkFail,
         'toCall': (e, o) => wrapper(parserFuncs.parseFail, e, o)},
     {'name': 'focus', 'func': checkFocus,

@@ -117,7 +117,7 @@ A small note: the variable `CURRENT_DIR` is always available (and contains the d
 
 ## Run tests
 
-If you want to run this repository's tests:
+If you want to run this repository's scripts tests:
 
 ```bash
 $ node src/index.js --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files
@@ -128,6 +128,7 @@ If you want to test "internals", run:
 ```bash
 $ npm run api-test
 $ npm run parser-test
+$ npm run exported-test
 ```
 
 ## `.goml` scripts
@@ -140,6 +141,7 @@ Here's the command list:
  * [`attribute`](#attribute)
  * [`click`](#click)
  * [`css`](#css)
+ * [`drag-and-drop`](#drag-and-drop)
  * [`fail`](#fail)
  * [`focus`](#focus)
  * [`goto`](#goto)
@@ -207,6 +209,17 @@ To set multiple styles at a time, you can use a JSON object:
 
 ```
 css: ("#button", {"background-color": "red", "border": "1px solid"})
+```
+
+#### drag-and-drop
+
+**drag-and-drop** command allows to move an element to another place (assuming it implements the necessary JS and is draggable). It expects a tuple of two elements. Each element can be a position or a CSS selector. Example:
+
+```
+drag-and-drop: ("#button", "#destination") // move "#button" to where "#destination" is
+drag-and-drop: ("#button", (10, 10)) // move "#button" to (10, 10)
+drag-and-drop: ((10, 10), "#button") // move the element at (10, 10) to where "#button" is
+drag-and-drop: ((10, 10), (20, 35)) // move the element at (10, 10) to (20, 35)
 ```
 
 #### fail

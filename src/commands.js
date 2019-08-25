@@ -745,11 +745,85 @@ function parseShowText(line, options) {
     };
 }
 
+// Possible inputs:
+//
+// * ((x, y), (x, y))
+// * ((x, y), "CSS selector")
+// * ("CSS selector", (x, y))
+// * ("CSS selector", "CSS selector")
+function parseDragAndDrop(line, options) {
+    const p = new Parser(line, options.variables);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
+        return {
+            'error': 'expected tuple with two elements being either a position `(x, y)` or a ' +
+                'CSS selector',
+        };
+    }
+    const tuple = p.elems[0].getValue();
+    if (tuple.length !== 2) {
+        return {
+            'error': 'expected tuple with two elements being either a position `(x, y)` or a ' +
+                'CSS selector',
+        };
+    }
+    const checkArg = arg => {
+        if (arg.kind !== 'tuple' && arg.kind !== 'string') {
+            return {
+                'error': 'expected tuple with two elements being either a position `(x, y)` or a ' +
+                    `CSS selector, found \`${arg.getText()}\``,
+            };
+        } else if (arg.kind === 'tuple') {
+            const values = arg.getValue();
+            if (values.length !== 2 || values[0].kind !== 'number' || values[1].kind !== 'number') {
+                return {
+                    'error': `expected a position with two numbers, found \`${arg.getText()}\``,
+                };
+            }
+        }
+        return {};
+    };
+    let ret = checkArg(tuple[0]);
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    ret = checkArg(tuple[1]);
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    const instructions = [];
+    const setupThings = (arg, varName, posName) => {
+        let code = '';
+        if (arg.kind === 'string') {
+            const selector = cleanCssSelector(arg.getValue());
+            const box = `${varName}_box`;
+            code += `const ${varName} = await page.$("${selector}");\n` +
+                `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
+                `const ${box} = await ${varName}.boundingBox();\n` +
+                `const ${posName} = [${box}.x + ${box}.width / 2, ${box}.y + ${box}.height / 2];\n`;
+        } else {
+            const elems = arg.getValue();
+            code += `const ${posName} = [${elems[0].getValue()}, ${elems[1].getValue()}];\n`;
+        }
+        return `${code}await page.mouse.move(${posName}[0], ${posName}[1]);`;
+    };
+    instructions.push(
+        setupThings(tuple[0], 'parseDragAndDropElem', 'start') + 'await page.mouse.down();');
+    instructions.push(
+        setupThings(tuple[1], 'parseDragAndDropElem2', 'end') + 'await page.mouse.up();');
+    return {
+        'instructions': instructions,
+    };
+}
+
 const ORDERS = {
     'assert': parseAssert,
     'attribute': parseAttribute,
     'click': parseClick,
     'css': parseCss,
+    'drag-and-drop': parseDragAndDrop,
     'fail': parseFail,
     'focus': parseFocus,
     'goto': parseGoTo,
@@ -831,6 +905,7 @@ module.exports = {
     'parseAttribute': parseAttribute,
     'parseClick': parseClick,
     'parseCss': parseCss,
+    'parseDragAndDrop': parseDragAndDrop,
     'parseFail': parseFail,
     'parseFocus': parseFocus,
     'parseGoTo': parseGoTo,
