@@ -13,6 +13,7 @@
     "main": "src/index.js",
     "scripts": {
         "test": "node src/index.js --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files",
+	"all-test": "node tests/test-js/all.js",
         "api-test": "node tests/test-js/api.js",
         "parser-test": "node tests/test-js/parser.js",
         "exported-test": "node tests/test-js/exported_items.js",

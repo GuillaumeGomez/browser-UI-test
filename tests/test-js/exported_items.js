@@ -261,9 +261,8 @@ const TO_CHECK = [
     {'name': 'runTests', 'func': checkRunTests, 'toCall': wrapRunTests},
 ];
 
-async function checkExportedFunctions() {
-    const x = new Assert();
-
+async function checkExportedItems(x = new Assert()) {
+    x.startTestSuite('exported items', false);
     print('=> Starting EXPORTED ITEMS tests...');
     print('');
 
@@ -279,17 +278,20 @@ async function checkExportedFunctions() {
     }
 
     print('');
-    print(`<= Ending ${x.totalRanTests} ${plural('test', x.totalRanTests)} with ` +
-        `${x.totalErrors} ${plural('error', x.totalErrors)}`);
+    print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
+        `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
 
-    return x.totalErrors;
+    const errors = x.getTotalErrors();
+    x.endTestSuite(false);
+    return errors;
 }
 
 if (require.main === module) {
-    checkExportedFunctions().then(nbErrors => {
+    checkExportedItems().then(nbErrors => {
         process.exit(nbErrors);
     });
 } else {
-    print('Cannot be used as module!', console.error);
-    process.exit(1);
+    module.exports = {
+        'check': checkExportedItems,
+    };
 }

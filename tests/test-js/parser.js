@@ -832,9 +832,8 @@ const TO_CHECK = [
     {'name': 'comment', 'func': checkComment},
 ];
 
-function checkCommands() {
-    const x = new Assert();
-
+async function checkParsers(x = new Assert()) {
+    x.startTestSuite('parser', false);
     print('=> Starting parser tests...');
     print('');
 
@@ -850,16 +849,20 @@ function checkCommands() {
     }
 
     print('');
-    print(`<= Ending ${x.totalRanTests} ${plural('test', x.totalRanTests)} with ` +
-        `${x.totalErrors} ${plural('error', x.totalErrors)}`);
+    print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
+        `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
 
-    return x.totalErrors;
+    const errors = x.getTotalErrors();
+    x.endTestSuite(false);
+    return errors;
 }
 
 if (require.main === module) {
-    const nbErrors = checkCommands();
-    process.exit(nbErrors);
+    checkParsers().then(nbErrors => {
+        process.exit(nbErrors);
+    });
 } else {
-    print('Cannot be used as module!', console.error);
-    process.exit(1);
+    module.exports = {
+        'check': checkParsers,
+    };
 }
