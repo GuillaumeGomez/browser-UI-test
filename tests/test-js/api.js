@@ -13,7 +13,7 @@ function checkAssert(x, func) {
     x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
     x.assert(func('("a")'),
         {
-            'instructions': ['if (page.$("a") === null) { throw \'"a" not found\'; }'],
+            'instructions': ['if ((await page.$("a")) === null) { throw \'"a" not found\'; }'],
             'wait': false,
             'checkResult': true,
         });
@@ -23,10 +23,9 @@ function checkAssert(x, func) {
     x.assert(func('("a", "b")'),
         {
             'instructions': [
-                'let parseAssertElemStr = await page.$("a");\nif (parseAssertElemStr === null) { ' +
-                'throw \'"a" not found\'; }\nlet t = await (await ' +
-                'parseAssertElemStr.getProperty("textContent")).jsonValue();\nif (t !== "b") { ' +
-                'throw \'"\' + t + \'" !== "b"\'; }'],
+                'let parseAssertElemStr = await page.$("a");\nif (parseAssertElemStr === null)' +
+                ' { throw \'"a" not found\'; }\nawait page.evaluate(e => {\nif (e.textContent !==' +
+                ' "b") {\nthrow \'"\' + e.textContent + \'" !== "b"\'; }\n}, parseAssertElemStr);'],
             'wait': false,
             'checkResult': true,
         });

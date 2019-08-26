@@ -1,4 +1,3 @@
-const puppeteer = require('puppeteer');
 const fs = require('fs');
 const PNG = require('png-js');
 const parser = require('./commands.js');
@@ -43,7 +42,7 @@ function save_failure(folderIn, failuresFolder, newImage, originalImage, runId) 
         try {
             fs.mkdirSync(failuresFolder + runId);
         } catch (err) {
-            add_warn(`Error while trying to make folder "${fullPath}": ${err}`);
+            add_warn(`Error while trying to make folder "${fullPath}": ${err.message}`);
             // Failed to create folder to save failures...
             return false;
         }
@@ -51,7 +50,7 @@ function save_failure(folderIn, failuresFolder, newImage, originalImage, runId) 
     try {
         fs.renameSync(path.join(folderIn, newImage), path.join(fullPath, newImage));
     } catch (err) {
-        add_warn(`Error while trying to move files: "${err}"`);
+        add_warn(`Error while trying to move files: "${err.message}"`);
         // failed to move files...
         return false;
     }
@@ -92,7 +91,7 @@ function parseTest(testName, content, logs, options) {
         };
     } catch (err) {
         logs.append(testName + '... FAILED (exception occured)');
-        logs.append(`${err}\n${err.stack}`);
+        logs.append(`${err.message}\n${err.stack}`);
     }
     return null;
 }
@@ -111,7 +110,7 @@ async function runCommand(loaded, logs, options, browser) {
 
     let notOk = false;
     let returnValue = Status.Ok;
-    const debug_log = new Debug(options.debug);
+    const debug_log = new Debug(options.debug, logs);
     const page = await browser.newPage();
     try {
         const extras = {
@@ -163,12 +162,13 @@ async function runCommand(loaded, logs, options, browser) {
                     }
                 });
             } catch (error) { // parsing error
-                error_log = 'output:\n' + error + '\n';
+                error_log = 'output:\n' + error.message + '\n';
                 if (options.debug === true) {
                     error_log += `command \`${commands[x]['original']}\` failed on ` +
                         `\`${commands[x]['code']}\``;
                 }
             }
+            debug_log.append('Done!');
             if (error_log.length > 0) {
                 break;
             }
@@ -188,7 +188,6 @@ async function runCommand(loaded, logs, options, browser) {
             logs.append('FAILED', true);
             logs.warn(loaded['warnings']);
             logs.append(error_log + '\n');
-            debug_log.show(logs);
             await page.close();
             return Status.Failure;
         }
@@ -199,7 +198,6 @@ async function runCommand(loaded, logs, options, browser) {
                 logs.append('ok', true);
                 debug_log.append('=> [NO SCREENSHOT COMPARISON]');
                 logs.warn(loaded['warnings']);
-                debug_log.show(logs);
                 await page.close();
                 return Status.Ok;
             }
@@ -209,7 +207,6 @@ async function runCommand(loaded, logs, options, browser) {
                 logs.append(`Cannot take screenshot: element \`${extras.takeScreenshot}\`` +
                     ' not found');
                 logs.warn(loaded['warnings']);
-                debug_log.show(logs);
                 await page.close();
                 return Status.MissingElementForScreenshot;
             }
@@ -259,7 +256,7 @@ async function runCommand(loaded, logs, options, browser) {
         }
     } catch (err) {
         logs.append('FAILED', true);
-        logs.append(loaded['file'] + ' output:\n' + err + '\n');
+        logs.append(loaded['file'] + ' output:\n' + err.message + '\n');
         notOk = true;
         returnValue = Status.ExecutionError;
     }
@@ -267,7 +264,6 @@ async function runCommand(loaded, logs, options, browser) {
     if (notOk === false) {
         logs.append('ok', true);
     }
-    debug_log.show(logs);
     return returnValue;
 }
 
@@ -280,6 +276,19 @@ function buildPuppeteerOptions(options) {
         puppeteer_options['args'].push(`--load-extension=${options.extensions[i]}`);
     }
     return puppeteer_options;
+}
+
+function loadPuppeteer(options) {
+    try {
+        if (options.browser === 'firefox') {
+            return require('puppeteer-firefox');
+        }
+    } catch (err) {
+        print(err.message);
+        throw new Error('If you want to use firefox, please install it first! Also, please ' +
+            'remember that it is experimental!');
+    }
+    return require('puppeteer');
 }
 
 async function innerRunTests(logs, options) {
@@ -344,6 +353,7 @@ async function innerRunTests(logs, options) {
         return [logs.logs, failures];
     }
 
+    const puppeteer = loadPuppeteer(options);
     const browser = await puppeteer.launch(buildPuppeteerOptions(options));
     for (let i = 0; i < loaded.length; ++i) {
         const ret = await runCommand(loaded[i], logs, options, browser);
@@ -388,6 +398,7 @@ async function runTestCode(testName, content, options = new Options(), showLogs 
             return [logs.logs, 1];
         }
 
+        const puppeteer = loadPuppeteer(options);
         const browser = await puppeteer.launch(buildPuppeteerOptions(options));
         const ret = await runCommand(load, logs, options, browser);
 
@@ -399,7 +410,8 @@ async function runTestCode(testName, content, options = new Options(), showLogs 
 
         return [logs.logs, 0];
     } catch (error) {
-        logs.append(`An exception occured: ${error}\n== STACKTRACE ==\n${new Error().stack}`);
+        logs.append(`An exception occured: ${error.message}\n== STACKTRACE ==\n` +
+            `${new Error().stack}`);
         return [logs.logs, 1];
     }
 }
@@ -441,26 +453,31 @@ async function runTests(options, showLogs = false) {
     try {
         return innerRunTests(logs, options);
     } catch (error) {
-        logs.append(`An exception occured: ${error}\n== STACKTRACE ==\n${new Error().stack}`);
+        logs.append(`An exception occured: ${error.message}\n== STACKTRACE ==\n` +
+            `${new Error().stack}`);
         return [logs.logs, 1];
     }
 }
 
 if (require.main === module) {
+    process.on('uncaughtException', function(err) {
+        print(err.message);
+        process.exit(1);
+    });
     const options = new Options();
     try {
         if (options.parseArguments(process.argv.slice(2)) === false) {
             process.exit(0);
         }
     } catch (err) {
-        print(err);
+        print(err.message);
         process.exit(1);
     }
     runTests(options, true).then(x => {
         const [_output, nb_failures] = x;
         process.exit(nb_failures);
     }).catch(err => {
-        print(err);
+        print(err.message);
         process.exit(1);
     });
 } else {

@@ -13,7 +13,7 @@
     "main": "src/index.js",
     "scripts": {
         "test": "node src/index.js --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files",
-	"all-test": "node tests/test-js/all.js",
+        "all-test": "node tests/test-js/all.js",
         "api-test": "node tests/test-js/api.js",
         "parser-test": "node tests/test-js/parser.js",
         "exported-test": "node tests/test-js/exported_items.js",
@@ -30,6 +30,9 @@
     "dependencies": {
         "png-js": "0.1.1",
         "puppeteer": "1.19"
+    },
+    "optionalDependencies": {
+        "puppeteer-firefox": "0.5"
     },
     "devDependencies": {
         "babel-eslint": "^10.0.2",
