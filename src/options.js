@@ -15,6 +15,7 @@ function helper() {
     print('  --show-text              : Disable text invisibility (be careful when using it!)');
     print('  --debug                  : Display more information');
     print('  --no-screenshot          : Disable screenshots at the end of the scripts by the end');
+    print('  --extension [PATH]       : Add an extension to load from the given path');
     print('  --help | -h              : Show this text');
 }
 
@@ -34,6 +35,7 @@ class Options {
         this.noScreenshot = false;
         this.testFiles = [];
         this.variables = {};
+        this.extensions = [];
     }
 
     parseArguments(args = []) {
@@ -93,6 +95,13 @@ class Options {
                         this.testFiles.push(args[it]);
                     }
                 }
+            } else if (args[it] === '--extension') {
+                if (it + 1 < args.length) {
+                    this.extensions(args[it + 1]);
+                    it += 1;
+                } else {
+                    throw new Error('Missing path after `--extension` option');
+                }
             } else {
                 throw new Error(`Unknown option \`${args[it]}\`\n` +
                     'Use `--help` if you want the list of the available commands');
@@ -140,6 +149,9 @@ class Options {
         // eslint-disable-next-line eqeqeq
         if (this.variables.constructor != Object) {
             throw new Error('`Options.variables` field is supposed to be a dictionary-like!');
+        }
+        if (Array.isArray(this.extensions) !== true) {
+            throw new Error('`Options.extensions` field is supposed to be an array!');
         }
     }
 }

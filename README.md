@@ -84,6 +84,7 @@ The list of fields of the `Options` class is the following:
  * `runId`: id to be used for failed images extension ('test' by default)
  * `showText`: disable text invisibility (be careful when using it!)
  * `variables`: variables to be used in the `.goml` scripts (more information about variables [below](#Variables))
+ * `extensions`: extensions to be loaded by the browser
 
 ### Running it directly
 
