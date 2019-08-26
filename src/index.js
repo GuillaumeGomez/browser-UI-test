@@ -271,6 +271,17 @@ async function runCommand(loaded, logs, options, browser) {
     return returnValue;
 }
 
+function buildPuppeteerOptions(options) {
+    const puppeteer_options = {'args': ['--font-render-hinting=none']};
+    if (options.headless === false) {
+        puppeteer_options['headless'] = false;
+    }
+    for (let i = 0; i < options.extensions.length; ++i) {
+        puppeteer_options['args'].push(`--load-extension=${options.extensions[i]}`);
+    }
+    return puppeteer_options;
+}
+
 async function innerRunTests(logs, options) {
     let failures = 0;
     let total = 0;
@@ -333,11 +344,7 @@ async function innerRunTests(logs, options) {
         return [logs.logs, failures];
     }
 
-    const puppeteer_options = {'args': ['--font-render-hinting=none']};
-    if (options.headless === false) {
-        puppeteer_options['headless'] = false;
-    }
-    const browser = await puppeteer.launch(puppeteer_options);
+    const browser = await puppeteer.launch(buildPuppeteerOptions(options));
     for (let i = 0; i < loaded.length; ++i) {
         const ret = await runCommand(loaded[i], logs, options, browser);
         if (ret !== Status.Ok) {
@@ -381,11 +388,7 @@ async function runTestCode(testName, content, options = new Options(), showLogs 
             return [logs.logs, 1];
         }
 
-        const puppeteer_options = {'args': ['--font-render-hinting=none']};
-        if (options.headless === false) {
-            puppeteer_options['headless'] = false;
-        }
-        const browser = await puppeteer.launch(puppeteer_options);
+        const browser = await puppeteer.launch(buildPuppeteerOptions(options));
         const ret = await runCommand(load, logs, options, browser);
 
         await browser.close();
