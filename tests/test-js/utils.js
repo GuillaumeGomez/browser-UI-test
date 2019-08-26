@@ -34,16 +34,14 @@ function plural(x, nb) {
 
 class Assert {
     constructor() {
-        this.totalRanTests = 0;
-        this.totalErrors = 0;
-        this.errors = 0;
-        this.ranTests = 0;
-        this.currentTestSuite = null;
+        this.testSuite = [];
     }
 
     assert(value1, value2, pos) {
-        this.ranTests += 1;
-        this.totalRanTests += 1;
+        if (this.testSuite.length > 0) {
+            this.testSuite[this.testSuite.length - 1].ranTests += 1;
+            this._incrField('totalRanTests', this.testSuite.length - 1);
+        }
         if (typeof value2 !== 'undefined') {
             value1 = toJSON(value1);
             value2 = toJSON(value2);
@@ -52,8 +50,10 @@ class Assert {
                     pos = getStackInfo(new Error().stack);
                 }
                 print(`[${pos.file}:${pos.line}] failed: \`${value1}\` != \`${value2}\``);
-                this.errors += 1;
-                this.totalErrors += 1;
+                if (this.testSuite.length > 0) {
+                    this.testSuite[this.testSuite.length - 1].errors += 1;
+                    this._incrField('totalErrors', this.testSuite.length - 1);
+                }
                 return;
             }
         } else if (!value1) {
@@ -61,9 +61,21 @@ class Assert {
                 pos = getStackInfo(new Error().stack);
             }
             print(`[${pos.file}:${pos.line}] failed: \`${value1}\` is evalued to false`);
-            this.errors += 1;
-            this.totalErrors += 1;
+            if (this.testSuite.length > 0) {
+                this.testSuite[this.testSuite.length - 1].errors += 1;
+                this._incrField('totalErrors', this.testSuite.length - 1);
+            }
             return;
+        }
+    }
+
+    _incrField(fieldName, pos) {
+        for (pos = pos >= this.testSuite.length ? this.testSuite.length - 1 : pos;
+            pos >= 0;
+            --pos) {
+            if (this.testSuite[pos][fieldName] !== undefined) {
+                this.testSuite[pos][fieldName] += 1;
+            }
         }
     }
 
@@ -78,32 +90,47 @@ class Assert {
     }
 
     startTestSuite(name, printMsg = true) {
-        if (this.currentTestSuite !== null) {
-            throw `The test suite "${this.currentTestSuite}" is already running, call ` +
-                '`endTestSuite` first';
-        }
-        this.currentTestSuite = name;
+        this.testSuite.push({
+            'name': name,
+            'errors': 0,
+            'ranTests': 0,
+            'totalRanTests': 0,
+            'totalErrors': 0,
+        });
         if (printMsg === true) {
-            print(`==> Checking "${this.currentTestSuite}"...`);
+            print(`${'='.repeat(this.testSuite.length)}> Checking "${name}"...`);
         }
     }
 
     endTestSuite(printMsg = true) {
-        if (this.currentTestSuite === null) {
-            throw 'No test suite is running, call `startTestSuite` first';
+        if (this.testSuite.length === 0) {
+            throw new Error('No test suite is running, call `startTestSuite` first');
         }
+        const {name, totalErrors, totalRanTests} = this.testSuite.pop();
         if (printMsg === true) {
-            print(`<== "${this.currentTestSuite}": ${this.errors} ${plural('error', this.errors)}` +
-                ` (in ${this.ranTests} ${plural('test', this.ranTests)})`);
+            print(`<${'='.repeat(this.testSuite.length + 1)} "${name}": ${totalErrors} ` +
+                `${plural('error', totalErrors)} (in ${totalRanTests} ` +
+                `${plural('test', totalRanTests)})`);
         }
-        this.currentTestSuite = null;
-        this.ranTests = 0;
-        this.errors = 0;
+    }
+
+    getTotalRanTests() {
+        if (this.testSuite.length === 0) {
+            return 0;
+        }
+        return this.testSuite[this.testSuite.length - 1].totalRanTests;
+    }
+
+    getTotalErrors() {
+        if (this.testSuite.length === 0) {
+            return 0;
+        }
+        return this.testSuite[this.testSuite.length - 1].totalErrors;
     }
 }
 
 module.exports = {
-    Assert: Assert,
-    plural: plural,
-    print: print,
+    'Assert': Assert,
+    'plural': plural,
+    'print': print,
 };

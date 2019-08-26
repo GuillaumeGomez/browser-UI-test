@@ -115,22 +115,6 @@ In here, it'll set "#an-element" element's text to "12".
 
 A small note: the variable `CURRENT_DIR` is always available (and contains the directory where the script has been started) and **cannot** be override! It is also guaranteed to never end with `/` or `\\`.
 
-## Run tests
-
-If you want to run this repository's scripts tests:
-
-```bash
-$ node src/index.js --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files
-```
-
-If you want to test "internals", run:
-
-```bash
-$ npm run api-test
-$ npm run parser-test
-$ npm run exported-test
-```
-
 ## `.goml` scripts
 
 Those scripts aim to be as quick to write and as small as possible. To do so, they provide a short list of commands. Please note that those scripts must **always** start with a [`goto`](#goto) command (non-interactional commands such as `screenshot` or `fail` can be use first as well).
@@ -385,4 +369,26 @@ You can add comments in the `.goml` scripts with `//`. Example:
 
 ```
 goto: https://somewhere.com // let's start somewhere!
+```
+
+## Run tests
+
+If you want to run this repository's scripts tests:
+
+```bash
+$ node src/index.js --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files
+```
+
+If you want to test "internals", run:
+
+```bash
+$ npm run all-test
+```
+
+If you want to run test suites separately:
+
+```bash
+$ npm run api-test
+$ npm run parser-test
+$ npm run exported-test
 ```

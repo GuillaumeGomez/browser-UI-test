@@ -564,9 +564,8 @@ const TO_CHECK = [
         'toCall': (e, o) => wrapper(parserFuncs.parseContent, e, o)},
 ];
 
-function checkCommands() {
-    const x = new Assert();
-
+async function checkCommands(x = new Assert()) {
+    x.startTestSuite('API', false);
     print('=> Starting API tests...');
     print('');
 
@@ -582,16 +581,20 @@ function checkCommands() {
     }
 
     print('');
-    print(`<= Ending ${x.totalRanTests} ${plural('test', x.totalRanTests)} with ` +
-        `${x.totalErrors} ${plural('error', x.totalErrors)}`);
+    print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
+        `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
 
-    return x.totalErrors;
+    const errors = x.getTotalErrors();
+    x.endTestSuite(false);
+    return errors;
 }
 
 if (require.main === module) {
-    const nbErrors = checkCommands();
-    process.exit(nbErrors);
+    checkCommands().then(nbErrors => {
+        process.exit(nbErrors);
+    });
 } else {
-    print('Cannot be used as module!', console.error);
-    process.exit(1);
+    module.exports = {
+        'check': checkCommands,
+    };
 }

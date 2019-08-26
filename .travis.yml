@@ -6,6 +6,4 @@ before_install:
 script:
   - npm run lint
   - npm test
-  - npm run api-test
-  - npm run parser-test
-  - npm run exported-test
+  - npm run all-test
