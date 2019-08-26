@@ -1,7 +1,11 @@
 const utils = require('./utils.js');
 const print = utils.print;
 
+const BROWSERS = ['chrome', 'firefox'];
+
 function helper() {
+    const browsers = BROWSERS.map(e => `"${e}"`).join(' or ');
+
     print('tester');
     print('  --test-folder [PATH]     : Path of the folder where `.goml` script files are');
     print('  --failure-folder [PATH]  : Path of the folder where failed tests image will');
@@ -16,6 +20,8 @@ function helper() {
     print('  --debug                  : Display more information');
     print('  --no-screenshot          : Disable screenshots at the end of the scripts by the end');
     print('  --extension [PATH]       : Add an extension to load from the given path');
+    print(`  --browser [BROWSER NAME] : Run tests on given browser (${browsers})`);
+    print('                             /!\\ Only chrome is stable!');
     print('  --help | -h              : Show this text');
 }
 
@@ -36,6 +42,7 @@ class Options {
         this.testFiles = [];
         this.variables = {};
         this.extensions = [];
+        this.browser = 'chrome';
     }
 
     parseArguments(args = []) {
@@ -102,6 +109,18 @@ class Options {
                 } else {
                     throw new Error('Missing path after `--extension` option');
                 }
+            } else if (args[it] === '--browser') {
+                if (it + 1 < args.length) {
+                    if (BROWSERS.indexOf(args[it + 1].trim()) === -1) {
+                        const browsers = BROWSERS.map(e => `"${e}"`).join(' or ');
+                        throw new Error(`\`--browser\` option only accepts ${browsers} as values,` +
+                            ` found \`${args[it + 1]}\``);
+                    }
+                    this.browser = args[it + 1].trim();
+                    it += 1;
+                } else {
+                    throw new Error('Missing browser name after `--browser` option');
+                }
             } else {
                 throw new Error(`Unknown option \`${args[it]}\`\n` +
                     'Use `--help` if you want the list of the available commands');
@@ -143,6 +162,7 @@ class Options {
         validateField('showText', 'boolean');
         validateField('debug', 'boolean');
         validateField('noScreenshot', 'boolean');
+        validateField('browser', 'string');
         if (Array.isArray(this.testFiles) !== true) {
             throw new Error('`Options.files` field is supposed to be an array!');
         }
@@ -152,6 +172,11 @@ class Options {
         }
         if (Array.isArray(this.extensions) !== true) {
             throw new Error('`Options.extensions` field is supposed to be an array!');
+        }
+        if (BROWSERS.indexOf(this.browser) === -1) {
+            const browsers = BROWSERS.map(e => `"${e}"`).join(' or ');
+            throw new Error(`\`Options.browser\` field only accepts ${browsers} as values, ` +
+                `found ${this.browser}`);
         }
     }
 }

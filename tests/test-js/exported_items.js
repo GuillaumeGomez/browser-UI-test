@@ -203,6 +203,15 @@ async function checkOptions(x) {
     await x.assertTry(() => options.parseArguments(['--no-screenshot']), [], true);
     await x.assert(options.noScreenshot, true);
 
+    await x.assertTry(() => options.parseArguments(['--browser']), [],
+        'Missing browser name after `--browser` option');
+    await x.assertTry(() => options.parseArguments(['--browser', 'opera']), [],
+        '`--browser` option only accepts "chrome" or "firefox" as values, found `opera`');
+    await x.assertTry(() => options.parseArguments(['--browser', 'firefox']), [], true);
+    await x.assert(options.browser, 'firefox');
+    await x.assertTry(() => options.parseArguments(['--browser', 'chrome  ']), [], true);
+    await x.assert(options.browser, 'chrome');
+
     const options0 = new Options();
     options0.runId = true;
     await x.assertTry(() => options0.validateFields(), [],
@@ -252,6 +261,11 @@ async function checkOptions(x) {
     options9.variables = '';
     await x.assertTry(() => options9.validateFields(), [],
         '`Options.variables` field is supposed to be a dictionary-like!');
+
+    const options10 = new Options();
+    options10.browser = 12;
+    await x.assertTry(() => options10.validateFields(), [],
+        '`Options.browser` field is supposed to be a string!');
 }
 
 const TO_CHECK = [

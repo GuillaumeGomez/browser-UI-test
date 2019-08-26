@@ -365,7 +365,7 @@ function parseAssert(line, options) {
         //
         return {
             'instructions': [
-                `if (page.$("${selector}") === null) { throw '"${selector}" not found'; }`,
+                `if ((await page.$("${selector}")) === null) { throw '"${selector}" not found'; }`,
             ],
             'wait': false,
             'checkResult': true,
@@ -450,9 +450,10 @@ function parseAssert(line, options) {
             'instructions': [
                 `let ${varName} = await page.$("${selector}");\n` +
                 `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
-                // TODO: maybe check differently depending on the tag kind?
-                `let t = await (await ${varName}.getProperty("textContent")).jsonValue();\n` +
-                `if (t !== "${value}") { throw '"' + t + '" !== "${value}"'; }`,
+                'await page.evaluate(e => {\n' +
+                `if (e.textContent !== "${value}") {\n` +
+                `throw '"' + e.textContent + '" !== "${value}"'; }\n` +
+                `}, ${varName});`,
             ],
             'wait': false,
             'checkResult': true,
