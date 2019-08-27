@@ -75,12 +75,13 @@ If you want to see all the available options, just run with the `-h` or `--help`
 The list of fields of the `Options` class is the following:
 
  * `debug`: display more information
- * `failureFolder`: path of the folder where failed tests image will be placed
+ * `testFolder`: path of the folder where `.goml` script files are
+ * `failureFolder`: path of the folder where failed tests image will be placed (`testFolder` value by default)
+ * `imageFolder`: path of the folder where screenshots are and where they are generated (`testFolder` value by default)
  * `generateImages`: if provided, it'll generate test images and won't run comparison tests
  * `noHeadless`: disable headless mode
  * `noScreenshot`: disable screenshots generation and comparison at the end of the scripts
  * `testFiles`: list of `.goml` files' path to be run
- * `testFolder`: path of the folder where `.goml` script files are
  * `runId`: id to be used for failed images extension ('test' by default)
  * `showText`: disable text invisibility (be careful when using it!)
  * `variables`: variables to be used in the `.goml` scripts (more information about variables [below](#Variables))

@@ -234,7 +234,7 @@ function checkGoTo(x, func) {
         'instructions': ['await page.goto("http://foo/tadam/fa")'],
     });
     x.assert(func('http://foo/|url|/fa'), {
-        'error': 'variable `null` not found in options nor environment',
+        'error': 'variable `url` not found in options nor environment',
     });
 }
 

@@ -4,7 +4,7 @@ const utils = require('../../src/utils.js');
 utils.print = function() {}; // overwriting the print function to avoid the print
 
 const {runTestCode, runTest, runTests, Options} = require('../../src/index.js');
-const {Assert, plural, print} = require('./utils.js');
+const {Assert, plural, print, removeFolder} = require('./utils.js');
 
 
 async function wrapRunTests(options = new Options()) {
@@ -34,7 +34,7 @@ async function checkRunTest(x, func) {
     // empty options
     const res = await func('./tests/scripts/fail.goml');
     x.assert(res[0],
-        'fail... FAILED\n[ERROR] line 2: variable `null` not found in options nor environment');
+        'fail... FAILED\n[ERROR] line 2: variable `DOC_PATH` not found in options nor environment');
     x.assert(res[1], 1);
 
     // everything is supposed to work
@@ -46,6 +46,7 @@ async function checkRunTest(x, func) {
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files', '--test-folder', 'yolo']);
     await x.assertTry(func, ['./tests/scripts/fail.goml', options],
         ['[WARNING] `--test-folder` option will be ignored.\n\nfail... ok', 0]);
+    removeFolder('yolo'); // The folder is generated because failure and image folders use it.
 
     // with just one file through "--test-files" options (the extra file should be ignored)
     options = new Options();
@@ -146,7 +147,8 @@ async function checkOptions(x) {
 
     options.parseArguments(['--test-files', 'osef']);
     await x.assertTry(() => options.validate(), [],
-        'You need to provide `--failure-folder` option if `--no-screenshot` isn\'t used!');
+        'You need to provide `--failure-folder` or `--test-folder` option if `--no-screenshot` ' +
+        'option isn\'t used!');
 
     options.parseArguments(['--no-screenshot']);
     await x.assertTry(() => options.validate(), [],
@@ -167,7 +169,7 @@ async function checkOptions(x) {
     await x.assertTry(() => options.parseArguments(['--failure-folder']), [],
         'Missing path after `--failure-folder` option');
     await x.assertTry(() => options.parseArguments(['--failure-folder', 'failure']), [], true);
-    x.assert(options.failureFolder, 'failure/');
+    x.assert(options.failureFolder, 'failure');
     await x.assertTry(() => options.parseArguments(['--failure-folder', 'failure/']), [], true);
     x.assert(options.failureFolder, 'failure/');
 
