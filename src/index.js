@@ -104,6 +104,25 @@ function parseTestFile(testPath, logs, options) {
     return parseTest(testName, utils.readFile(fullPath), logs, options);
 }
 
+function createFolderIfNeeded(path) {
+    if (fs.existsSync(path) === false) {
+        try {
+            fs.mkdirSync(path, { 'recursive': true });
+        } catch (err) {
+            print(`Cannot create folder \`${path}\`: ${err.message}`);
+            return false;
+        }
+    }
+    return true;
+}
+
+function checkFolders(options) {
+    if (createFolderIfNeeded(options.getFailureFolder()) === false) {
+        return false;
+    }
+    return createFolderIfNeeded(options.getImageFolder());
+}
+
 async function runCommand(loaded, logs, options, browser) {
     let error_log;
     logs.append(loaded['file'] + '... ');
@@ -214,14 +233,14 @@ async function runCommand(loaded, logs, options, browser) {
 
         const compare_s = options.generateImages === false ? 'COMPARISON' : 'GENERATION';
         debug_log.append(`=> [SCREENSHOT ${compare_s}]`);
-        const p = path.join(options.testFolder, loaded['file']);
+        const p = path.join(options.getImageFolder(), loaded['file']);
         const newImage = `${p}-${options.runId}.png`;
         await elem.screenshot({
             'path': newImage,
             'fullPage': extras.takeScreenshot === true ? true : undefined,
         });
 
-        const originalImage = `${path.join(options.testFolder, loaded['file'])}.png`;
+        const originalImage = `${path.join(options.getImageFolder(), loaded['file'])}.png`;
         if (fs.existsSync(originalImage) === false) {
             if (options.generateImages === false) {
                 logs.append('FAILED ("' + originalImage + '" not found, use "--generate-images" ' +
@@ -235,7 +254,7 @@ async function runCommand(loaded, logs, options, browser) {
             }
         } else if (comparePixels(PNG.load(newImage).imgData,
             PNG.load(originalImage).imgData) === false) {
-            const saved = save_failure(options.testFolder, options.failureFolder,
+            const saved = save_failure(options.getImageFolder(), options.getFailureFolder(),
                 loaded['file'] + `-${options.runId}.png`,
                 loaded['file'] + '.png', options.runId);
             returnValue = Status.ScreenshotComparisonFailed;
@@ -324,6 +343,16 @@ async function innerRunTests(logs, options) {
         throw new Error('No files found. Check your `--test-folder` and `--test-files` options');
     }
 
+    if (options.testFolder.length === 0
+        && options.getFailureFolder() === ''
+        && options.getImageFolder() === '') {
+        print('[WARNING] No failure or image folder set, taking first test file\'s folder');
+        options.testFolder = path.dirname(options.testFiles[0]);
+    }
+    if (checkFolders(options) === false) {
+        return ['', 1];
+    }
+
     // A little sort on tests' name.
     allFiles.sort((a, b) => {
         a = path.basename(a);
@@ -373,22 +402,10 @@ async function innerRunTests(logs, options) {
     return [logs.logs, failures];
 }
 
-async function runTestCode(testName, content, options = new Options(), showLogs = false) {
-    if (typeof testName !== 'string' || typeof testName === 'undefined') {
-        throw new Error('expected `runTestCode` first argument to be a string');
-    } else if (typeof content !== 'string' || typeof content === 'undefined') {
-        throw new Error('expected `runTestCode` second argument to be a string');
-    } else if (testName.length === 0) {
-        throw new Error('test name (first argument) cannot be empty');
-    } else if (!options || options.validate === undefined) {
-        throw new Error('Options must be an "Options" type!');
-    }
-    // "light" validation of the Options type.
-    options.validateFields();
-
+async function innerRunTestCode(testName, content, options, showLogs, checkTestFolder) {
     const logs = new Logs(showLogs);
 
-    if (options.testFolder.length > 0) {
+    if (checkTestFolder === true && options.testFolder.length > 0) {
         logs.append('[WARNING] `--test-folder` option will be ignored.\n');
     }
 
@@ -416,6 +433,22 @@ async function runTestCode(testName, content, options = new Options(), showLogs 
     }
 }
 
+async function runTestCode(testName, content, options = new Options(), showLogs = false) {
+    if (typeof testName !== 'string' || typeof testName === 'undefined') {
+        throw new Error('expected `runTestCode` first argument to be a string');
+    } else if (typeof content !== 'string' || typeof content === 'undefined') {
+        throw new Error('expected `runTestCode` second argument to be a string');
+    } else if (testName.length === 0) {
+        throw new Error('test name (first argument) cannot be empty');
+    } else if (!options || options.validate === undefined) {
+        throw new Error('Options must be an "Options" type!');
+    }
+    // "light" validation of the Options type.
+    options.validateFields();
+
+    return await innerRunTestCode(testName, content, options, showLogs, true);
+}
+
 async function runTest(testPath, options = new Options(), showLogs = false) {
     if (typeof testPath !== 'string' || typeof testPath === 'undefined') {
         throw new Error('expected `runTest` first argument to be a string');
@@ -429,15 +462,20 @@ async function runTest(testPath, options = new Options(), showLogs = false) {
 
     // To make the Options type validation happy.
     options.testFiles.push(testPath);
-    if (options.failureFolder.length === 0 && options.noScreenshot === false) {
-        // Then we use the same folder as where the test is.
-        options.failureFolder = path.dirname(testPath);
-    }
     options.validate();
 
+    const checkTestFolder = options.testFolder.length !== 0;
+    if (checkTestFolder === false) {
+        options.testFolder = path.dirname(testPath);
+    }
+
+    if (checkFolders(options) === false) {
+        return ['', 1];
+    }
+
     const basename = path.basename(testPath);
-    return runTestCode(basename.substr(0, basename.length - 5), utils.readFile(testPath), options,
-        showLogs);
+    return innerRunTestCode(basename.substr(0, basename.length - 5), utils.readFile(testPath),
+        options, showLogs, checkTestFolder);
 }
 
 async function runTests(options, showLogs = false) {

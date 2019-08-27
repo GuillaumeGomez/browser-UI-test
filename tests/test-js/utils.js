@@ -1,4 +1,5 @@
 const path = require('path');
+const fs = require('fs');
 const process = require('process');
 
 function toJSON(value) {
@@ -129,8 +130,23 @@ class Assert {
     }
 }
 
+function removeFolder(path) {
+    if (fs.existsSync(path)) {
+        fs.readdirSync(path).forEach(file => {
+            const curPath = path.join(path, file);
+            if (fs.lstatSync(curPath).isDirectory()) {
+                removeFolder(curPath);
+            } else {
+                fs.unlinkSync(curPath);
+            }
+        });
+        fs.rmdirSync(path);
+    }
+}
+
 module.exports = {
     'Assert': Assert,
     'plural': plural,
     'print': print,
+    'removeFolder': removeFolder,
 };

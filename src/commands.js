@@ -222,10 +222,11 @@ function parseGoTo(input, options) {
     }
     line = line.trim().split('|');
     for (let i = 1; i < line.length; i += 2) {
-        line[i] = utils.getVariableValue(options.variables, line[i]);
-        if (line[i] === null) {
+        const variable = utils.getVariableValue(options.variables, line[i]);
+        if (variable === null) {
             return {'error': `variable \`${line[i]}\` not found in options nor environment`};
         }
+        line[i] = variable;
     }
     line = line.join('');
 

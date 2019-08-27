@@ -8,8 +8,10 @@ function helper() {
 
     print('tester');
     print('  --test-folder [PATH]     : Path of the folder where `.goml` script files are');
+    print('  --image-folder [PATH]    : Path of the folder where screenshots will be put (same as');
+    print('                             `test-folder` if not provided)');
     print('  --failure-folder [PATH]  : Path of the folder where failed tests image will');
-    print('                             be placed');
+    print('                             be placed (same as `image-folder` if not provided)');
     print('  --test-files [PATHs]     : List of `.goml` files\' path to be run');
     print('  --run-id [id]            : Id to be used for failed images extension (\'test\'');
     print('                             by default)');
@@ -21,7 +23,7 @@ function helper() {
     print('  --no-screenshot          : Disable screenshots at the end of the scripts by the end');
     print('  --extension [PATH]       : Add an extension to load from the given path');
     print(`  --browser [BROWSER NAME] : Run tests on given browser (${browsers})`);
-    print('                             /!\\ Only chrome is stable!');
+    print('                             /!\\ Only testing on chrome is stable!');
     print('  --help | -h              : Show this text');
 }
 
@@ -36,6 +38,7 @@ class Options {
         this.headless = true;
         this.testFolder = '';
         this.failureFolder = '';
+        this.imageFolder = '';
         this.showText = false;
         this.debug = false;
         this.noScreenshot = false;
@@ -46,7 +49,22 @@ class Options {
     }
 
     parseArguments(args = []) {
-        for (let it = 0; it < args.length; ++it) {
+        let it = 0;
+        const addPath = () => {
+            if (it + 1 < args.length) {
+                const parts = args[it].substr(2).split('-');
+                for (let i = 1; i < parts.length; ++i) {
+                    parts[i] = parts[i].charAt(0).toUpperCase() + parts[i].substr(1);
+                }
+                const field = parts.join('');
+                this[field] = args[it + 1];
+                it += 1;
+            } else {
+                throw new Error(`Missing path after \`${args[it]}\` option`);
+            }
+        };
+
+        for (; it < args.length; ++it) {
             if (args[it] === '--run-id') {
                 if (it + 1 < args.length) {
                     this.runId = args[it + 1];
@@ -70,20 +88,9 @@ class Options {
             } else if (args[it] === '--help' || args[it] === '-h') {
                 helper();
                 return false;
-            } else if (args[it] === '--test-folder') {
-                if (it + 1 < args.length) {
-                    this.testFolder = args[it + 1];
-                    it += 1;
-                } else {
-                    throw new Error('Missing path after `--test-folder` option');
-                }
-            } else if (args[it] === '--failure-folder') {
-                if (it + 1 < args.length) {
-                    this.failureFolder = utils.addSlash(args[it + 1]);
-                    it += 1;
-                } else {
-                    throw new Error('Missing path after `--failure-folder` option');
-                }
+            } else if (['--test-folder', '--failure-folder', '--image-folder']
+                .indexOf(args[it]) !== -1) {
+                addPath(args[it]);
             } else if (args[it] === '--variable') {
                 if (it + 2 < args.length) {
                     this.variables[args[it + 1]] = args[it + 2];
@@ -104,7 +111,7 @@ class Options {
                 }
             } else if (args[it] === '--extension') {
                 if (it + 1 < args.length) {
-                    this.extensions(args[it + 1]);
+                    this.extensions.push(args[it + 1]);
                     it += 1;
                 } else {
                     throw new Error('Missing path after `--extension` option');
@@ -129,13 +136,23 @@ class Options {
         return true;
     }
 
+    getImageFolder() {
+        return this.imageFolder === '' ? this.testFolder : this.imageFolder;
+    }
+
+    getFailureFolder() {
+        return this.failureFolder === '' ? this.getImageFolder() : this.failureFolder;
+    }
+
     validate() {
         if (this.testFolder.length === 0 && this.testFiles.length === 0) {
             throw new Error('You need to provide `--test-folder` option or at least one file ' +
                 'to test with `--test-files` option!');
-        } else if (this.failureFolder.length === 0 && this.noScreenshot === false) {
-            throw new Error('You need to provide `--failure-folder` option if ' +
-                '`--no-screenshot` isn\'t used!');
+        } else if (this.failureFolder.length === 0
+            && this.noScreenshot === false
+            && this.testFolder.length === 0) {
+            throw new Error('You need to provide `--failure-folder` or `--test-folder` option if ' +
+                '`--no-screenshot` option isn\'t used!');
         }
         for (let i = 0; i < this.testFiles.length; ++i) {
             if (this.testFiles[i].endsWith('.goml') === false) {
@@ -163,6 +180,7 @@ class Options {
         validateField('debug', 'boolean');
         validateField('noScreenshot', 'boolean');
         validateField('browser', 'string');
+        validateField('imageFolder', 'string');
         if (Array.isArray(this.testFiles) !== true) {
             throw new Error('`Options.files` field is supposed to be an array!');
         }
