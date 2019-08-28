@@ -9,6 +9,7 @@ const process = require('process');
 const print = utils.print;
 const path = require('path');
 const consts = require('./consts.js');
+const {PuppeteerWrapper} = require('./puppeteer-wrapper.js');
 
 
 // TODO: Make it into a class to provide some utility methods like 'isFailure'.
@@ -130,7 +131,7 @@ async function runCommand(loaded, logs, options, browser) {
     let notOk = false;
     let returnValue = Status.Ok;
     const debug_log = new Debug(options.debug, logs);
-    const page = await browser.newPage();
+    const page = await browser.newPage(debug_log);
     try {
         const extras = {
             'takeScreenshot': options.noScreenshot === false,
@@ -286,28 +287,10 @@ async function runCommand(loaded, logs, options, browser) {
     return returnValue;
 }
 
-function buildPuppeteerOptions(options) {
-    const puppeteer_options = {'args': ['--font-render-hinting=none']};
-    if (options.headless === false) {
-        puppeteer_options['headless'] = false;
-    }
-    for (let i = 0; i < options.extensions.length; ++i) {
-        puppeteer_options['args'].push(`--load-extension=${options.extensions[i]}`);
-    }
-    return puppeteer_options;
-}
-
-function loadPuppeteer(options) {
-    try {
-        if (options.browser === 'firefox') {
-            return require('puppeteer-firefox');
-        }
-    } catch (err) {
-        print(err.message);
-        throw new Error('If you want to use firefox, please install it first! Also, please ' +
-            'remember that it is experimental!');
-    }
-    return require('puppeteer');
+async function loadPuppeteer(options) {
+    const puppeteer = new PuppeteerWrapper(options);
+    await puppeteer.init(options);
+    return puppeteer;
 }
 
 async function innerRunTests(logs, options) {
@@ -316,8 +299,7 @@ async function innerRunTests(logs, options) {
     const allFiles = [];
 
     if (options.testFolder.length > 0) {
-        if (!fs.existsSync(options.testFolder)
-            || !fs.lstatSync(options.testFolder).isDirectory()) {
+        if (!fs.existsSync(options.testFolder) || !fs.lstatSync(options.testFolder).isDirectory()) {
             throw new Error(`Folder \`${options.testFolder}\` not found`);
         }
         fs.readdirSync(options.testFolder).forEach(function(file) {
@@ -382,8 +364,7 @@ async function innerRunTests(logs, options) {
         return [logs.logs, failures];
     }
 
-    const puppeteer = loadPuppeteer(options);
-    const browser = await puppeteer.launch(buildPuppeteerOptions(options));
+    const browser = await loadPuppeteer(options);
     for (let i = 0; i < loaded.length; ++i) {
         const ret = await runCommand(loaded[i], logs, options, browser);
         if (ret !== Status.Ok) {
@@ -415,8 +396,7 @@ async function innerRunTestCode(testName, content, options, showLogs, checkTestF
             return [logs.logs, 1];
         }
 
-        const puppeteer = loadPuppeteer(options);
-        const browser = await puppeteer.launch(buildPuppeteerOptions(options));
+        const browser = await loadPuppeteer(options);
         const ret = await runCommand(load, logs, options, browser);
 
         await browser.close();
@@ -500,6 +480,7 @@ async function runTests(options, showLogs = false) {
 if (require.main === module) {
     process.on('uncaughtException', function(err) {
         print(err.message);
+        print(err.stack);
         process.exit(1);
     });
     const options = new Options();
@@ -509,6 +490,7 @@ if (require.main === module) {
         }
     } catch (err) {
         print(err.message);
+        print(err.stack);
         process.exit(1);
     }
     runTests(options, true).then(x => {
@@ -516,6 +498,7 @@ if (require.main === module) {
         process.exit(nb_failures);
     }).catch(err => {
         print(err.message);
+        print(err.stack);
         process.exit(1);
     });
 } else {

@@ -190,20 +190,44 @@ async function checkOptions(x) {
     await x.assertTry(() => options.parseArguments(['a']), [],
         'Unknown option `a`\nUse `--help` if you want the list of the available commands');
 
+    options.clear();
+    await x.assert(options.browser, 'chrome');
+    await x.assertTry(() => options.parseArguments(['--browser']), [],
+        'Missing browser name after `--browser` option');
+    await x.assertTry(() => options.parseArguments(['--browser', 'test']), [],
+        '`--browser` option only accepts "chrome" or "firefox" as values, found `test`');
+    await x.assertTry(() => options.parseArguments(['--browser', 'firefox']), [], true);
+    await x.assert(options.browser, 'firefox');
+
+    // different check in the validate
+    const opt = new Options();
+    opt.browser = 'test';
+    await x.assertTry(() => opt.parseArguments(['--test-folder', 'a']), [], true);
+    await x.assertTry(() => opt.validate(), [],
+        '`Options.browser` field only accepts "chrome" or "firefox" as values, found test');
+
     x.assert(options.parseArguments(['--help']), false);
     x.assert(options.parseArguments(['-h']), false);
 
     options.clear();
+    await x.assert(options.generateImages, false);
     await x.assertTry(() => options.parseArguments(['--generate-images']), [], true);
     await x.assert(options.generateImages, true);
+    await x.assert(options.headless, true);
     await x.assertTry(() => options.parseArguments(['--no-headless']), [], true);
     await x.assert(options.headless, false);
+    await x.assert(options.showText, false);
     await x.assertTry(() => options.parseArguments(['--show-text']), [], true);
     await x.assert(options.showText, true);
+    await x.assert(options.debug, false);
     await x.assertTry(() => options.parseArguments(['--debug']), [], true);
     await x.assert(options.debug, true);
+    await x.assert(options.noScreenshot, false);
     await x.assertTry(() => options.parseArguments(['--no-screenshot']), [], true);
     await x.assert(options.noScreenshot, true);
+    await x.assert(options.incognito, false);
+    await x.assertTry(() => options.parseArguments(['--incognito']), [], true);
+    await x.assert(options.incognito, true);
 
     await x.assertTry(() => options.parseArguments(['--browser']), [],
         'Missing browser name after `--browser` option');
@@ -268,6 +292,11 @@ async function checkOptions(x) {
     options10.browser = 12;
     await x.assertTry(() => options10.validateFields(), [],
         '`Options.browser` field is supposed to be a string!');
+
+    const options11 = new Options();
+    options11.incognito = '';
+    await x.assertTry(() => options11.validateFields(), [],
+        '`Options.incognito` field is supposed to be a boolean!');
 }
 
 const TO_CHECK = [

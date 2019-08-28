@@ -24,6 +24,7 @@ function helper() {
     print('  --extension [PATH]       : Add an extension to load from the given path');
     print(`  --browser [BROWSER NAME] : Run tests on given browser (${browsers})`);
     print('                             /!\\ Only testing on chrome is stable!');
+    print('  --incognito              : Enable incognito mode');
     print('  --help | -h              : Show this text');
 }
 
@@ -46,6 +47,7 @@ class Options {
         this.variables = {};
         this.extensions = [];
         this.browser = 'chrome';
+        this.incognito = false;
     }
 
     parseArguments(args = []) {
@@ -85,6 +87,8 @@ class Options {
                 this.debug = true;
             } else if (args[it] === '--no-screenshot') {
                 this.noScreenshot = true;
+            } else if (args[it] === '--incognito') {
+                this.incognito = true;
             } else if (args[it] === '--help' || args[it] === '-h') {
                 helper();
                 return false;
@@ -181,6 +185,7 @@ class Options {
         validateField('noScreenshot', 'boolean');
         validateField('browser', 'string');
         validateField('imageFolder', 'string');
+        validateField('incognito', 'boolean');
         if (Array.isArray(this.testFiles) !== true) {
             throw new Error('`Options.files` field is supposed to be an array!');
         }
