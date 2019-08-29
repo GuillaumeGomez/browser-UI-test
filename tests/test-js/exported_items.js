@@ -150,10 +150,12 @@ async function checkOptions(x) {
         'You need to provide `--failure-folder` or `--test-folder` option if `--no-screenshot` ' +
         'option isn\'t used!');
 
+    await x.assert(options.noScreenshot, false);
     options.parseArguments(['--no-screenshot']);
     await x.assertTry(() => options.validate(), [],
         'Only `.goml` script files are allowed in the `--test-files` option, got `osef`');
 
+    x.assert(options.runId, 'test');
     await x.assertTry(() => options.parseArguments(['--run-id']), [],
         'Missing id after `--run-id` option');
     await x.assertTry(() => options.parseArguments(['--run-id', 'he/lo']), [],
@@ -161,11 +163,13 @@ async function checkOptions(x) {
     await x.assertTry(() => options.parseArguments(['--run-id', 'hello']), [], true);
     x.assert(options.runId, 'hello');
 
+    x.assert(options.testFolder, '');
     await x.assertTry(() => options.parseArguments(['--test-folder']), [],
         'Missing path after `--test-folder` option');
     await x.assertTry(() => options.parseArguments(['--test-folder', 'folder']), [], true);
     x.assert(options.testFolder, 'folder');
 
+    x.assert(options.failureFolder, '');
     await x.assertTry(() => options.parseArguments(['--failure-folder']), [],
         'Missing path after `--failure-folder` option');
     await x.assertTry(() => options.parseArguments(['--failure-folder', 'failure']), [], true);
@@ -173,7 +177,16 @@ async function checkOptions(x) {
     await x.assertTry(() => options.parseArguments(['--failure-folder', 'failure/']), [], true);
     x.assert(options.failureFolder, 'failure/');
 
+    x.assert(options.emulate, '');
+    await x.assertTry(() => options.parseArguments(['--emulate']), [],
+        'Missing device name after `--emulate` option');
+    await x.assertTry(() => options.parseArguments(['--emulate', 'hoho']), [], true);
+    x.assert(options.emulate, 'hoho');
+    await x.assertTry(() => options.parseArguments(['--emulate', 'new one?']), [], true);
+    x.assert(options.emulate, 'new one?');
+
     options.clear();
+    x.assert(options.testFiles, []);
     await x.assertTry(() => options.parseArguments(['--test-files']), [],
         'Expected at least one path for `--test-files` option');
     await x.assertTry(() => options.parseArguments(['--test-files', 'hello']), [], true);
@@ -297,6 +310,11 @@ async function checkOptions(x) {
     options11.incognito = '';
     await x.assertTry(() => options11.validateFields(), [],
         '`Options.incognito` field is supposed to be a boolean!');
+
+    const options12 = new Options();
+    options12.emulate = 12;
+    await x.assertTry(() => options12.validateFields(), [],
+        '`Options.emulate` field is supposed to be a string!');
 }
 
 const TO_CHECK = [
