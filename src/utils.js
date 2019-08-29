@@ -1,6 +1,7 @@
 const fs = require('fs');
 const config = require('./config.js');
 const process = require('process');
+const {PuppeteerWrapper} = require('./puppeteer-wrapper.js');
 
 String.prototype.replaceAll = function(search, replace_with) {
     return this.split(search).join(replace_with);
@@ -33,7 +34,7 @@ function readFile(filePath, encoding, callback) {
 }
 
 function print(s, backline = true) {
-    if (typeof s === 'string' && s.length > 0) {
+    if (typeof s === 'string') {
         process.stdout.write(`${s}${backline === true ? '\n' : ''}`);
     }
 }
@@ -77,6 +78,16 @@ function getVariableValue(variables, variableName) {
     return null;
 }
 
+function loadPuppeteerWrapper(options) {
+    return new PuppeteerWrapper(options);
+}
+
+async function loadPuppeteer(options) {
+    const puppeteer = loadPuppeteerWrapper(options);
+    await puppeteer.init(options);
+    return puppeteer;
+}
+
 module.exports = {
     'addSlash': addSlash,
     'getCurrentDir': getCurrentDir,
@@ -88,4 +99,6 @@ module.exports = {
     'writeObjectToFile': writeObjectToFile,
     'print': print,
     'getVariableValue': getVariableValue,
+    'loadPuppeteer': loadPuppeteer,
+    'loadPuppeteerWrapper': loadPuppeteerWrapper,
 };

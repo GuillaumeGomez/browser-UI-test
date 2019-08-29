@@ -86,7 +86,7 @@ The list of fields of the `Options` class is the following:
  * `showText`: disable text invisibility (be careful when using it!)
  * `variables`: variables to be used in the `.goml` scripts (more information about variables [below](#Variables))
  * `extensions`: extensions to be loaded by the browser
- * `emulate`: name of the device you want to emulate (list of available devices is [here](https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js))
+ * `emulate`: name of the device you want to emulate (list of available devices is [here](https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js) or you can use `--show-devices` option)
 
 ### Running it directly
 

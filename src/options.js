@@ -6,7 +6,8 @@ const BROWSERS = ['chrome', 'firefox'];
 function helper() {
     const browsers = BROWSERS.map(e => `"${e}"`).join(' or ');
 
-    print('tester');
+    print('Available options:');
+    print('');
     print('  --test-folder [PATH]     : Path of the folder where `.goml` script files are');
     print('  --image-folder [PATH]    : Path of the folder where screenshots will be put (same as');
     print('                             `test-folder` if not provided)');
@@ -26,7 +27,18 @@ function helper() {
     print('                             /!\\ Only testing on chrome is stable!');
     print('  --incognito              : Enable incognito mode');
     print('  --emulate [DEVICE NAME]  : Emulate the given device');
+    print('  --show-devices           : Show list of available devices');
     print('  --help | -h              : Show this text');
+}
+
+function showDeviceList(options) {
+    const b = utils.loadPuppeteerWrapper(options);
+    print('List of available devices:');
+    print('');
+    const devices = b.puppeteer.devices;
+    for (let i = 0; i < devices.length; ++i) {
+        print(`"${devices[i].name}"`);
+    }
 }
 
 class Options {
@@ -53,6 +65,7 @@ class Options {
     }
 
     parseArguments(args = []) {
+        let showDevices = false;
         let it = 0;
         const addPath = () => {
             if (it + 1 < args.length) {
@@ -94,6 +107,8 @@ class Options {
             } else if (args[it] === '--help' || args[it] === '-h') {
                 helper();
                 return false;
+            } else if (args[it] === '--show-devices') {
+                showDevices = true;
             } else if (['--test-folder', '--failure-folder', '--image-folder']
                 .indexOf(args[it]) !== -1) {
                 addPath(args[it]);
@@ -145,6 +160,10 @@ class Options {
                 throw new Error(`Unknown option \`${args[it]}\`\n` +
                     'Use `--help` if you want the list of the available commands');
             }
+        }
+        if (showDevices === true) {
+            showDeviceList(this);
+            return false;
         }
         return true;
     }

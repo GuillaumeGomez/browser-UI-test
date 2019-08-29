@@ -9,7 +9,6 @@ const process = require('process');
 const print = utils.print;
 const path = require('path');
 const consts = require('./consts.js');
-const {PuppeteerWrapper} = require('./puppeteer-wrapper.js');
 
 
 // TODO: Make it into a class to provide some utility methods like 'isFailure'.
@@ -290,12 +289,6 @@ async function runCommand(loaded, logs, options, browser) {
     return returnValue;
 }
 
-async function loadPuppeteer(options) {
-    const puppeteer = new PuppeteerWrapper(options);
-    await puppeteer.init(options);
-    return puppeteer;
-}
-
 async function innerRunTests(logs, options) {
     let failures = 0;
     let total = 0;
@@ -367,7 +360,7 @@ async function innerRunTests(logs, options) {
         return [logs.logs, failures];
     }
 
-    const browser = await loadPuppeteer(options);
+    const browser = await utils.loadPuppeteer(options);
     for (let i = 0; i < loaded.length; ++i) {
         const ret = await runCommand(loaded[i], logs, options, browser);
         if (ret !== Status.Ok) {
@@ -399,7 +392,7 @@ async function innerRunTestCode(testName, content, options, showLogs, checkTestF
             return [logs.logs, 1];
         }
 
-        const browser = await loadPuppeteer(options);
+        const browser = await utils.loadPuppeteer(options);
         const ret = await runCommand(load, logs, options, browser);
 
         await browser.close();
