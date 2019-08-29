@@ -855,7 +855,8 @@ function parseEmulate(line, options) {
         'instructions': [
             `if (arg.puppeteer.devices["${device}"] === undefined) { throw 'Unknown device ` +
             `\`${device}\`. List of available devices can be found there: ` +
-            'https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js\'; }' +
+            'https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js or ' +
+            'you can use `--show-devices` option\'; }' +
             ` else { await page.emulate(arg.puppeteer.devices["${device}"]); }`,
         ],
     };

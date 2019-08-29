@@ -534,7 +534,8 @@ function checkEmulate(x, func) {
         'instructions': [
             'if (arg.puppeteer.devices["a"] === undefined) { throw \'Unknown device `a`. List of ' +
             'available devices can be found there: ' +
-            'https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js\'; } ' +
+            'https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js or ' +
+            'you can use `--show-devices` option\'; } ' +
             'else { await page.emulate(arg.puppeteer.devices["a"]); }',
         ]});
 }
