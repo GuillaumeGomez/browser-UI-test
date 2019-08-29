@@ -131,7 +131,9 @@ async function runCommand(loaded, logs, options, browser) {
     let notOk = false;
     let returnValue = Status.Ok;
     const debug_log = new Debug(options.debug, logs);
+
     const page = await browser.newPage(debug_log);
+    await browser.emulate(options, page, debug_log);
     try {
         const extras = {
             'takeScreenshot': options.noScreenshot === false,

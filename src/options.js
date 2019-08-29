@@ -25,6 +25,7 @@ function helper() {
     print(`  --browser [BROWSER NAME] : Run tests on given browser (${browsers})`);
     print('                             /!\\ Only testing on chrome is stable!');
     print('  --incognito              : Enable incognito mode');
+    print('  --emulate [DEVICE NAME]  : Emulate the given device');
     print('  --help | -h              : Show this text');
 }
 
@@ -48,6 +49,7 @@ class Options {
         this.extensions = [];
         this.browser = 'chrome';
         this.incognito = false;
+        this.emulate = '';
     }
 
     parseArguments(args = []) {
@@ -132,6 +134,13 @@ class Options {
                 } else {
                     throw new Error('Missing browser name after `--browser` option');
                 }
+            } else if (args[it] === '--emulate') {
+                if (it + 1 < args.length) {
+                    this.emulate = args[it + 1].trim();
+                    it += 1;
+                } else {
+                    throw new Error('Missing device name after `--emulate` option');
+                }
             } else {
                 throw new Error(`Unknown option \`${args[it]}\`\n` +
                     'Use `--help` if you want the list of the available commands');
@@ -186,6 +195,7 @@ class Options {
         validateField('browser', 'string');
         validateField('imageFolder', 'string');
         validateField('incognito', 'boolean');
+        validateField('emulate', 'string');
         if (Array.isArray(this.testFiles) !== true) {
             throw new Error('`Options.files` field is supposed to be an array!');
         }

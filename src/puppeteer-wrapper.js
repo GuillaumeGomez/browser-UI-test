@@ -39,7 +39,7 @@ class PuppeteerWrapper {
 
     async newPage(debug_log) {
         if (this.context) {
-            debug_log.append('Starting test in incognito mode');
+            debug_log.append('Starting test in incognito mode.');
             return await this.context.newPage();
         }
         return await this.browser.newPage();
@@ -51,6 +51,19 @@ class PuppeteerWrapper {
             this.context = null;
         }
         await this.browser.close();
+    }
+
+    async emulate(options, page, debug_log) {
+        if (options.emulate === '') {
+            return;
+        }
+        if (this.puppeteer.devices[options.emulate] === undefined) {
+            throw new Error(`Unknown device \`${options.emulate}\`. List of available devices ` +
+                'can be found there: ' +
+                'https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js');
+        }
+        debug_log.append(`Emulating "${options.emulate}" device.`);
+        await page.emulate(this.puppeteer.devices[options.emulate]);
     }
 }
 
