@@ -137,6 +137,7 @@ async function runCommand(loaded, logs, options, browser) {
             'takeScreenshot': options.noScreenshot === false,
             'expectedToFail': false,
             'showText': options.showText,
+            'puppeteer': browser.puppeteer,
         };
         await page.exposeFunction('BrowserUiStyleInserter', () => {
             return getGlobalStyle(extras.showText);

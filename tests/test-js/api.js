@@ -442,8 +442,9 @@ function checkParseContent(x, func) {
         });
     x.assert(func('focus: "#foo"'),
         {
-            'error': 'First command must be `goto` (`fail`, `screenshot` can be used before)!',
-            'line': 0,
+            'error': 'First command must be `goto` (`emulate` or `fail` or `screenshot` can be ' +
+                'used before)!',
+            'line': 1,
         });
     x.assert(func('fail: true\ngoto: file:///home'),
         {
@@ -460,6 +461,11 @@ function checkParseContent(x, func) {
             ],
         });
     x.assert(func('// just a comment\na: b'), {'error': 'Unknown command "a"', 'line': 1});
+    x.assert(func('goto: file:///home\nemulate: "test"'),
+        {
+            'error': 'Command emulate must be used before first goto!',
+            'line': 2,
+        });
 }
 
 function checkDragAndDrop(x, func) {
@@ -521,6 +527,18 @@ function checkDragAndDrop(x, func) {
     });
 }
 
+function checkEmulate(x, func) {
+    x.assert(func(''), {'error': 'expected string for "device name", found ``'});
+    x.assert(func('12'), {'error': 'expected string for "device name", found `12`'});
+    x.assert(func('"a"'), {
+        'instructions': [
+            'if (arg.puppeteer.devices["a"] === undefined) { throw \'Unknown device `a`. List of ' +
+            'available devices can be found there: ' +
+            'https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js\'; } ' +
+            'else { await page.emulate(arg.puppeteer.devices["a"]); }',
+        ]});
+}
+
 const TO_CHECK = [
     {'name': 'assert', 'func': checkAssert,
         'toCall': (e, o) => wrapper(parserFuncs.parseAssert, e, o)},
@@ -532,6 +550,8 @@ const TO_CHECK = [
         'toCall': (e, o) => wrapper(parserFuncs.parseCss, e, o)},
     {'name': 'drag-and-drop', 'func': checkDragAndDrop,
         'toCall': (e, o) => wrapper(parserFuncs.parseDragAndDrop, e, o)},
+    {'name': 'emulate', 'func': checkEmulate,
+        'toCall': (e, o) => wrapper(parserFuncs.parseEmulate, e, o)},
     {'name': 'fail', 'func': checkFail,
         'toCall': (e, o) => wrapper(parserFuncs.parseFail, e, o)},
     {'name': 'focus', 'func': checkFocus,

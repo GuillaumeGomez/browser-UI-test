@@ -839,12 +839,35 @@ function parseDragAndDrop(line, options) {
     };
 }
 
+// Possible inputs:
+//
+// * string
+function parseEmulate(line, options) {
+    const p = new Parser(line, options.variables);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'string') {
+        return {'error': `expected string for "device name", found \`${line}\``};
+    }
+    const device = cleanString(p.elems[0].getValue());
+    return {
+        'instructions': [
+            `if (arg.puppeteer.devices["${device}"] === undefined) { throw 'Unknown device ` +
+            `\`${device}\`. List of available devices can be found there: ` +
+            'https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js\'; }' +
+            ` else { await page.emulate(arg.puppeteer.devices["${device}"]); }`,
+        ],
+    };
+}
+
 const ORDERS = {
     'assert': parseAssert,
     'attribute': parseAttribute,
     'click': parseClick,
     'css': parseCss,
     'drag-and-drop': parseDragAndDrop,
+    'emulate': parseEmulate,
     'fail': parseFail,
     'focus': parseFocus,
     'goto': parseGoTo,
@@ -861,8 +884,13 @@ const ORDERS = {
 };
 
 const NO_INTERACTION_COMMANDS = [
+    'emulate',
     'fail',
     'screenshot',
+];
+
+const BEFORE_GOTO = [
+    'emulate',
 ];
 
 function parseContent(content, options) {
@@ -880,13 +908,18 @@ function parseContent(content, options) {
         if (Object.prototype.hasOwnProperty.call(ORDERS, order)) {
             if (firstGotoParsed === false) {
                 if (order !== 'goto' && NO_INTERACTION_COMMANDS.indexOf(order) === -1) {
-                    const cmds = NO_INTERACTION_COMMANDS.map(x => `\`${x}\``).join(', ');
+                    const cmds = NO_INTERACTION_COMMANDS.map(x => `\`${x}\``).join(' or ');
                     return {
                         'error': `First command must be \`goto\` (${cmds} can be used before)!`,
-                        'line': i,
+                        'line': i + 1,
                     };
                 }
                 firstGotoParsed = order === 'goto';
+            } else if (BEFORE_GOTO.indexOf(order) !== -1) {
+                return {
+                    'error': `Command ${order} must be used before first goto!`,
+                    'line': i + 1,
+                };
             }
             res = ORDERS[order](line.substr(order.length + 1).trim(), options);
             if (res.error !== undefined) {
@@ -927,6 +960,7 @@ module.exports = {
     'parseClick': parseClick,
     'parseCss': parseCss,
     'parseDragAndDrop': parseDragAndDrop,
+    'parseEmulate': parseEmulate,
     'parseFail': parseFail,
     'parseFocus': parseFocus,
     'parseGoTo': parseGoTo,
