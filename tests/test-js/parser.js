@@ -339,6 +339,8 @@ function checkNumber(x) {
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getValue(), '1');
+    x.assert(p.elems[0].isNegative, false);
+    x.assert(p.elems[0].isFloat, false);
 
 
     p = new Parser('     \t   23                 ');
@@ -348,6 +350,8 @@ function checkNumber(x) {
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getValue(), '23');
+    x.assert(p.elems[0].isNegative, false);
+    x.assert(p.elems[0].isFloat, false);
 
 
     p = new Parser('42,');
@@ -357,6 +361,8 @@ function checkNumber(x) {
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getValue(), '42');
+    x.assert(p.elems[0].isNegative, false);
+    x.assert(p.elems[0].isFloat, false);
     x.assert(p.elems[1].kind, 'char');
     x.assert(p.elems[1].error, 'expected nothing, found `,`');
     x.assert(p.elems[1].getValue(), ',');
@@ -364,14 +370,98 @@ function checkNumber(x) {
 
     p = new Parser('4.2');
     p.parse();
-    x.assert(p.error, 'expected nothing, found `.`');
-    x.assert(p.elems.length, 2);
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getValue(), '4');
-    x.assert(p.elems[1].kind, 'char');
-    x.assert(p.elems[1].error, 'expected nothing, found `.`');
-    x.assert(p.elems[1].getValue(), '.');
+    x.assert(p.elems[0].getValue(), '4.2');
+    x.assert(p.elems[0].isNegative, false);
+    x.assert(p.elems[0].isFloat, true);
+
+
+    p = new Parser('.2');
+    p.parse();
+    x.assert(p.error, 'unexpected `.` as first token');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'unknown');
+    x.assert(p.elems[0].getValue(), '.');
+    x.assert(p.elems[0].error, 'unexpected `.` as first token');
+
+
+    p = new Parser('0.1.2');
+    p.parse();
+    x.assert(p.error, 'unexpected `.` after `0.1`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, 'unexpected `.` after `0.1`');
+    x.assert(p.elems[0].getValue(), '0.1');
+    x.assert(p.elems[0].isNegative, false);
+    x.assert(p.elems[0].isFloat, true);
+
+
+    p = new Parser('-0.1');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), '-0.1');
+    x.assert(p.elems[0].isNegative, true);
+    x.assert(p.elems[0].isFloat, true);
+
+
+    p = new Parser('-12');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue(), '-12');
+    x.assert(p.elems[0].isNegative, true);
+    x.assert(p.elems[0].isFloat, false);
+
+
+    p = new Parser('-12.1');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems[0].getValue(), '-12.1');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].isNegative, true);
+    x.assert(p.elems[0].isFloat, true);
+
+
+    p = new Parser('-12.');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems[0].getValue(), '-12.');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].isNegative, true);
+    x.assert(p.elems[0].isFloat, true);
+
+
+    p = new Parser('--12');
+    p.parse();
+    x.assert(p.error, 'unexpected `-` after `-`');
+    x.assert(p.elems[0].getValue(), '-');
+    x.assert(p.elems[0].error, 'unexpected `-` after `-`');
+    x.assert(p.elems[0].isNegative, true);
+    x.assert(p.elems[0].isFloat, false);
+
+
+    p = new Parser('1-2');
+    p.parse();
+    x.assert(p.error, 'unexpected `-` after `1`');
+    x.assert(p.elems[0].getValue(), '1');
+    x.assert(p.elems[0].error, 'unexpected `-` after `1`');
+    x.assert(p.elems[0].isNegative, false);
+    x.assert(p.elems[0].isFloat, false);
+
+
+    p = new Parser('-0.2-');
+    p.parse();
+    x.assert(p.error, 'unexpected `-` after `-0.2`');
+    x.assert(p.elems[0].getValue(), '-0.2');
+    x.assert(p.elems[0].error, 'unexpected `-` after `-0.2`');
+    x.assert(p.elems[0].isNegative, true);
+    x.assert(p.elems[0].isFloat, true);
 }
 
 function checkJson(x) {
@@ -385,6 +475,32 @@ function checkJson(x) {
     x.assert(p.elems[0].getValue().length, 1);
     x.assert(p.elems[0].getValue()[0].key.kind, 'number');
     x.assert(p.elems[0].getValue()[0].key.getText(), '1');
+    x.assert(p.elems[0].getValue()[0].value === undefined);
+
+
+    p = new Parser('{-1: 2}');
+    p.parse();
+    x.assert(p.error, 'numbers cannot be used as keys (for `-1`)');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'numbers cannot be used as keys (for `-1`)');
+    x.assert(p.elems[0].getText(), '{-1');
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].key.kind, 'number');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '-1');
+    x.assert(p.elems[0].getValue()[0].value === undefined);
+
+
+    p = new Parser('{-1.2: 2}');
+    p.parse();
+    x.assert(p.error, 'numbers cannot be used as keys (for `-1.2`)');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'numbers cannot be used as keys (for `-1.2`)');
+    x.assert(p.elems[0].getText(), '{-1.2');
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].key.kind, 'number');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '-1.2');
     x.assert(p.elems[0].getValue()[0].value === undefined);
 
 

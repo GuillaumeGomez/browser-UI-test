@@ -9,7 +9,7 @@ function isStringChar(c) {
 }
 
 function isNumber(c) {
-    return c >= '0' && c <= '9';
+    return (c >= '0' && c <= '9') || c === '-';
 }
 
 function isLetter(c) {
@@ -17,12 +17,9 @@ function isLetter(c) {
 }
 
 function matchInteger(s) {
-    for (let i = 0; i < s.length; ++i) {
-        if (isNumber(s.charAt(i)) === false) {
-            return false;
-        }
-    }
-    return true;
+    const p = new Parser(s);
+    p.parse();
+    return p.error === null;
 }
 
 class Element {
@@ -84,6 +81,8 @@ class StringElement extends Element {
 class NumberElement extends Element {
     constructor(value, startPos, endPos, error = null) {
         super('number', value, startPos, endPos, error);
+        this.isFloat = value.indexOf('.') !== -1;
+        this.isNegative = value.startsWith('-');
     }
 }
 
@@ -353,11 +352,29 @@ class Parser {
 
     parseNumber(pushTo = null) {
         const start = this.pos;
+        let hasDot = false;
 
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
 
-            if (!isNumber(c)) {
+            if (c === '-') {
+                if (this.pos > start) { // The minus sign can only be present as first character.
+                    const nb = this.text.substring(start, this.pos);
+                    this.push(new NumberElement(nb, start, this.pos,
+                        `unexpected \`-\` after \`${nb}\``), pushTo);
+                    this.pos = this.text.length;
+                    return;
+                }
+            } else if (c === '.') {
+                if (hasDot === true) {
+                    const nb = this.text.substring(start, this.pos);
+                    this.push(new NumberElement(nb, start, this.pos,
+                        `unexpected \`.\` after \`${nb}\``), pushTo);
+                    this.pos = this.text.length;
+                    return;
+                }
+                hasDot = true;
+            } else if (isNumber(c) === false) {
                 const nb = this.text.substring(start, this.pos);
                 this.push(new NumberElement(nb, start, this.pos), pushTo);
                 this.pos -= 1;
