@@ -87,6 +87,7 @@ The list of fields of the `Options` class is the following:
  * `variables`: variables to be used in the `.goml` scripts (more information about variables [below](#Variables))
  * `extensions`: extensions to be loaded by the browser
  * `emulate`: name of the device you want to emulate (list of available devices is [here](https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js) or you can use `--show-devices` option)
+ * `timeout`: number of milliseconds that'll be used as default timeout for all commands interacting with the browser. Defaults to 30 seconds, cannot be less than 0, if 0, it means it'll wait undefinitely so use it carefully!
 
 ### Running it directly
 
@@ -141,6 +142,7 @@ Here's the command list:
  * [`show-text`](#show-text)
  * [`size`](#size)
  * [`text`](#text)
+ * [`timeout`](#timeout)
  * [`wait-for`](#wait-for)
  * [`write`](#write)
 

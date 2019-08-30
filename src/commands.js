@@ -872,7 +872,7 @@ function parseTimeout(line, options) {
     }
     return {
         'instructions': [
-            `page.setDefaultNavigationTimeout(${p.elems[0].getValue()})`,
+            `page.setDefaultTimeout(${p.elems[0].getValue()})`,
         ],
         'wait': false,
     };

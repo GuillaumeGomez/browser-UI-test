@@ -185,6 +185,16 @@ async function checkOptions(x) {
     await x.assertTry(() => options.parseArguments(['--emulate', 'new one?']), [], true);
     x.assert(options.emulate, 'new one?');
 
+    x.assert(options.timeout, 30000);
+    await x.assertTry(() => options.parseArguments(['--timeout']), [],
+        'Missing number of milliseconds after `--timeout` option');
+    await x.assertTry(() => options.parseArguments(['--timeout', 'hoho']), [],
+        '`--timeout` expected an integer, found `hoho`');
+    await x.assertTry(() => options.parseArguments(['--timeout', '-1']), [],
+        'Number of milliseconds for `timeout` cannot be < 0!');
+    await x.assertTry(() => options.parseArguments(['--timeout', '10']), [], true);
+    x.assert(options.timeout, 10);
+
     options.clear();
     x.assert(options.testFiles, []);
     await x.assertTry(() => options.parseArguments(['--test-files']), [],
@@ -315,6 +325,16 @@ async function checkOptions(x) {
     options12.emulate = 12;
     await x.assertTry(() => options12.validateFields(), [],
         '`Options.emulate` field is supposed to be a string!');
+
+    const options13 = new Options();
+    options13.timeout = 'a';
+    await x.assertTry(() => options13.validateFields(), [],
+        '`Options.timeout` field is supposed to be a number!');
+
+    const options14 = new Options();
+    options14.timeout = -1;
+    await x.assertTry(() => options14.validateFields(), [],
+        '`Options.timeout` field cannot be < 0');
 }
 
 const TO_CHECK = [

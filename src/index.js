@@ -131,7 +131,7 @@ async function runCommand(loaded, logs, options, browser) {
     let returnValue = Status.Ok;
     const debug_log = new Debug(options.debug, logs);
 
-    const page = await browser.newPage(debug_log);
+    const page = await browser.newPage(options, debug_log);
     await browser.emulate(options, page, debug_log);
     try {
         const extras = {
