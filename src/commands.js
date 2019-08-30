@@ -212,7 +212,7 @@ function parseMoveCursorTo(line, options) {
         return {'error': 'expected a position or a CSS selector'};
     }
     const tuple = p.elems[0].getValue();
-    const ret = checkIntegerTuple(tuple, p.elems[0].getText(), 'X position', 'Y position');
+    const ret = checkIntegerTuple(tuple, p.elems[0].getText(), 'X position', 'Y position', true);
     if (ret.error !== undefined) {
         return ret;
     }
@@ -407,7 +407,7 @@ function parseAssert(line, options) {
             return {'error': 'unexpected argument after number of occurences'};
         }
         const occurences = tuple[1].getValue();
-        const ret = checkInteger(occurences, 'occurences', true);
+        const ret = checkInteger(tuple[1], 'number of occurences', true);
         if (ret.error !== undefined) {
             return ret;
         }
@@ -746,7 +746,7 @@ function parseReload(line, options) {
             };
         }
         timeout = p.elems[0].getValue();
-        const ret = checkInteger(timeout, 'timeout', true);
+        const ret = checkInteger(p.elems[0], 'timeout', true);
         if (ret.error !== undefined) {
             return ret;
         }
@@ -825,7 +825,7 @@ function parseDragAndDrop(line, options) {
             };
         } else if (arg.kind === 'tuple') {
             const tuple = arg.getValue();
-            const ret = checkIntegerTuple(tuple, arg.getText(), 'X position', 'Y position');
+            const ret = checkIntegerTuple(tuple, arg.getText(), 'X position', 'Y position', true);
             if (ret.error !== undefined) {
                 return ret;
             }
