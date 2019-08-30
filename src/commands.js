@@ -862,6 +862,22 @@ function parseEmulate(line, options) {
     };
 }
 
+function parseTimeout(line, options) {
+    const p = new Parser(line, options.variables);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'number') {
+        return {'error': `expected integer for number of milliseconds, found \`${line}\``};
+    }
+    return {
+        'instructions': [
+            `page.setDefaultNavigationTimeout(${p.elems[0].getValue()})`,
+        ],
+        'wait': false,
+    };
+}
+
 const ORDERS = {
     'assert': parseAssert,
     'attribute': parseAttribute,
@@ -880,6 +896,7 @@ const ORDERS = {
     'show-text': parseShowText,
     'size': parseSize,
     'text': parseText,
+    'timeout': parseTimeout,
     'wait-for': parseWaitFor,
     'write': parseWrite,
 };
@@ -888,6 +905,7 @@ const NO_INTERACTION_COMMANDS = [
     'emulate',
     'fail',
     'screenshot',
+    'timeout',
 ];
 
 const BEFORE_GOTO = [
@@ -973,6 +991,7 @@ module.exports = {
     'parseShowText': parseShowText,
     'parseSize': parseSize,
     'parseText': parseText,
+    'parseTimeout': parseTimeout,
     'parseWaitFor': parseWaitFor,
     'parseWrite': parseWrite,
 };

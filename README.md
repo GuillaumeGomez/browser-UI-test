@@ -353,6 +353,15 @@ size: (700, 1000)
 text: ("#button", "hello")
 ```
 
+### timeout
+
+**timeout** command allows you to update the timeout of pages' operations. The value is in milliseconds. If you set it to `0`, it'll wait indefinitely (so use it cautiously!). The default value is 30 seconds. Example:
+
+```
+timeout: 20000 // set timeout to 20 seconds
+timeout: 0 // no more timeout, to be used cautiously!
+```
+
 #### wait-for
 
 **wait-for** command waits for a given duration or for an element to be created. It expects a CSS selector or a duration in milliseconds.
@@ -391,6 +400,12 @@ If you want to run this repository's scripts tests:
 
 ```bash
 $ node src/index.js --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files
+```
+
+Or more simply:
+
+```bash
+$ npm test
 ```
 
 If you want to test "internals", run:
