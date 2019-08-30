@@ -37,12 +37,16 @@ class PuppeteerWrapper {
         }
     }
 
-    async newPage(debug_log) {
+    async newPage(options, debug_log) {
+        let page;
         if (this.context) {
             debug_log.append('Starting test in incognito mode.');
-            return await this.context.newPage();
+            page = await this.context.newPage();
+        } else {
+            page = await this.browser.newPage();
         }
-        return await this.browser.newPage();
+        page.setDefaultTimeout(options.timeout);
+        return page;
     }
 
     async close() {

@@ -28,6 +28,7 @@ function helper() {
     print('  --incognito              : Enable incognito mode');
     print('  --emulate [DEVICE NAME]  : Emulate the given device');
     print('  --show-devices           : Show list of available devices');
+    print('  --timeout [MILLISECONDS] : Set default timeout for all tests');
     print('  --help | -h              : Show this text');
 }
 
@@ -62,6 +63,7 @@ class Options {
         this.browser = 'chrome';
         this.incognito = false;
         this.emulate = '';
+        this.timeout = 30000;
     }
 
     parseArguments(args = []) {
@@ -156,6 +158,20 @@ class Options {
                 } else {
                     throw new Error('Missing device name after `--emulate` option');
                 }
+            } else if (args[it] === '--timeout') {
+                if (it + 1 < args.length) {
+                    const milliseconds = parseInt(args[it + 1]);
+                    if (isNaN(milliseconds) === true) {
+                        throw new Error('`--timeout` expected an integer, found `' +
+                            `${args[it + 1]}\``);
+                    } else if (milliseconds < 0) {
+                        throw new Error('Number of milliseconds for `timeout` cannot be < 0!');
+                    }
+                    this.timeout = milliseconds;
+                    it += 1;
+                } else {
+                    throw new Error('Missing number of milliseconds after `--timeout` option');
+                }
             } else {
                 throw new Error(`Unknown option \`${args[it]}\`\n` +
                     'Use `--help` if you want the list of the available commands');
@@ -215,6 +231,7 @@ class Options {
         validateField('imageFolder', 'string');
         validateField('incognito', 'boolean');
         validateField('emulate', 'string');
+        validateField('timeout', 'number');
         if (Array.isArray(this.testFiles) !== true) {
             throw new Error('`Options.files` field is supposed to be an array!');
         }
@@ -229,6 +246,9 @@ class Options {
             const browsers = BROWSERS.map(e => `"${e}"`).join(' or ');
             throw new Error(`\`Options.browser\` field only accepts ${browsers} as values, ` +
                 `found ${this.browser}`);
+        }
+        if (this.timeout < 0) {
+            throw new Error('`Options.timeout` field cannot be < 0');
         }
     }
 }

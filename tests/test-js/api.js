@@ -543,9 +543,9 @@ function checkEmulate(x, func) {
 function checkTimeout(x, func) {
     x.assert(func(''), {'error': 'expected integer for number of milliseconds, found ``'});
     x.assert(func('"a"'), {'error': 'expected integer for number of milliseconds, found `"a"`'});
-    x.assert(func('12'), {'instructions': ['page.setDefaultNavigationTimeout(12)'], 'wait': false});
+    x.assert(func('12'), {'instructions': ['page.setDefaultTimeout(12)'], 'wait': false});
     // In case I add a check over no timeout some day...
-    x.assert(func('0'), {'instructions': ['page.setDefaultNavigationTimeout(0)'], 'wait': false});
+    x.assert(func('0'), {'instructions': ['page.setDefaultTimeout(0)'], 'wait': false});
 }
 
 const TO_CHECK = [
