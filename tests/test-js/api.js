@@ -50,6 +50,7 @@ function checkAssert(x, func) {
             'wait': false,
             'checkResult': true,
         });
+
     x.assert(func('("a", 1, "c")'), {'error': 'unexpected argument after number of occurences'});
     x.assert(func('("a", 1 2)'), {'error': 'expected `,`, found `2`'});
     x.assert(func('("a", 1 a)'), {'error': 'expected `,`, found `a`'});
@@ -61,6 +62,14 @@ function checkAssert(x, func) {
             'wait': false,
             'checkResult': true,
         });
+    x.assert(func('("a", -1)'), {'error': 'number of occurences cannot be negative: `-1`'});
+    x.assert(func('("a", -1.0)'), {
+        'error': 'expected integer for number of occurences, found float: `-1.0`',
+    });
+    x.assert(func('("a", 1.0)'), {
+        'error': 'expected integer for number of occurences, found float: `1.0`',
+    });
+
     x.assert(func('("a", {)').error !== undefined); // JSON syntax error
     // x.assert(func('("a", {\'a\': 1})').error !== undefined); // JSON syntax error
     x.assert(func('("a", {"a": 1)').error !== undefined); // JSON syntax error
@@ -167,13 +176,21 @@ function checkClick(x, func) {
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {'error': 'invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1)'), {
+        'error': 'invalid syntax: expected "([number], [number])", found `(1)`',
+    });
     x.assert(func('(1,)'), {'error': 'unexpected `,` after `1`'});
     x.assert(func('(1,2,)'), {'error': 'unexpected `,` after `2`'});
     x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
     x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
     x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
     x.assert(func('(1,2)'), {'instructions': ['page.mouse.click(1,2)']});
+    x.assert(func('(-1,2)'), {'instructions': ['page.mouse.click(-1,2)']});
+    x.assert(func('(-2,1)'), {'instructions': ['page.mouse.click(-2,1)']});
+    x.assert(func('(-1.0,2)'), {'error': 'expected integer for X position, found float: `-1.0`'});
+    x.assert(func('(1.0,2)'), {'error': 'expected integer for X position, found float: `1.0`'});
+    x.assert(func('(2,-1.0)'), {'error': 'expected integer for Y position, found float: `-1.0`'});
+    x.assert(func('(2,1.0)'), {'error': 'expected integer for Y position, found float: `1.0`'});
 
     // Check css selector
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
@@ -256,13 +273,21 @@ function checkMoveCursorTo(x, func) {
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {'error': 'invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1)'), {
+        'error': 'invalid syntax: expected "([number], [number])", found `(1)`',
+    });
     x.assert(func('(1,)'), {'error': 'unexpected `,` after `1`'});
     x.assert(func('(1,2,)'), {'error': 'unexpected `,` after `2`'});
     x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
     x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
     x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
     x.assert(func('(1,2)'), {'instructions': ['page.mouse.move(1,2)']});
+    x.assert(func('(-1,2)'), {'error': 'X position cannot be negative: `-1`'});
+    x.assert(func('(1,-2)'), {'error': 'Y position cannot be negative: `-2`'});
+    x.assert(func('(1.0,2)'), {'error': 'expected integer for X position, found float: `1.0`'});
+    x.assert(func('(-1.0,2)'), {'error': 'expected integer for X position, found float: `-1.0`'});
+    x.assert(func('(2,1.0)'), {'error': 'expected integer for Y position, found float: `1.0`'});
+    x.assert(func('(2,-1.0)'), {'error': 'expected integer for Y position, found float: `-1.0`'});
 
     // Check css selector
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
@@ -295,13 +320,21 @@ function checkScrollTo(x, func) {
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {'error': 'invalid syntax: expected "([number], [number])"...'});
+    x.assert(func('(1)'), {
+        'error': 'invalid syntax: expected "([number], [number])", found `(1)`',
+    });
     x.assert(func('(1,)'), {'error': 'unexpected `,` after `1`'});
     x.assert(func('(1,2,)'), {'error': 'unexpected `,` after `2`'});
     x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
     x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
     x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
     x.assert(func('(1,2)'), {'instructions': ['page.mouse.move(1,2)']});
+    x.assert(func('(-1,2)'), {'error': 'X position cannot be negative: `-1`'});
+    x.assert(func('(1,-2)'), {'error': 'Y position cannot be negative: `-2`'});
+    x.assert(func('(-1.0,2)'), {'error': 'expected integer for X position, found float: `-1.0`'});
+    x.assert(func('(1.0,2)'), {'error': 'expected integer for X position, found float: `1.0`'});
+    x.assert(func('(2,-1.0)'), {'error': 'expected integer for Y position, found float: `-1.0`'});
+    x.assert(func('(2,1.0)'), {'error': 'expected integer for Y position, found float: `1.0`'});
 
     // Check css selector
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
@@ -336,13 +369,21 @@ function checkSize(x, func) {
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {'error': 'expected `([number], [number])`'});
+    x.assert(func('(1)'), {
+        'error': 'invalid syntax: expected "([number], [number])", found `(1)`',
+    });
     x.assert(func('(1,)'), {'error': 'unexpected `,` after `1`'});
     x.assert(func('(1,2,)'), {'error': 'unexpected `,` after `2`'});
     x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
     x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
     x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
     x.assert(func('(1,2)'), {'instructions': ['page.setViewport({width: 1, height: 2})']});
+    x.assert(func('(-1,2)'), {'error': 'width cannot be negative: `-1`'});
+    x.assert(func('(1,-2)'), {'error': 'height cannot be negative: `-2`'});
+    x.assert(func('(1.0,2)'), {'error': 'expected integer for width, found float: `1.0`'});
+    x.assert(func('(-1.0,2)'), {'error': 'expected integer for width, found float: `-1.0`'});
+    x.assert(func('(1,2.0)'), {'error': 'expected integer for height, found float: `2.0`'});
+    x.assert(func('(1,-2.0)'), {'error': 'expected integer for height, found float: `-2.0`'});
 }
 
 function checkText(x, func) {
@@ -368,6 +409,13 @@ function checkWaitFor(x, func) {
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('1 2'), {'error': 'expected nothing, found `2`'});
     x.assert(func('1'), {'instructions': ['await page.waitFor(1)'], 'wait': false});
+    x.assert(func('-1'), {'error': 'number of milliseconds cannot be negative: `-1`'});
+    x.assert(func('-1.0'), {
+        'error': 'expected integer for number of milliseconds, found float: `-1.0`',
+    });
+    x.assert(func('1.0'), {
+        'error': 'expected integer for number of milliseconds, found float: `1.0`',
+    });
 
     // Check css selector
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
@@ -424,6 +472,9 @@ function checkReload(x, func) {
             'warnings': 'You passed 0 as timeout, it means the timeout has been disabled on ' +
                 'this reload',
         });
+    x.assert(func('-12'), {'error': 'timeout cannot be negative: `-12`'});
+    x.assert(func('-12.0'), {'error': 'expected integer for timeout, found float: `-12.0`'});
+    x.assert(func('12.0'), {'error': 'expected integer for timeout, found float: `12.0`'});
 }
 
 function checkParseContent(x, func) {
@@ -495,10 +546,10 @@ function checkDragAndDrop(x, func) {
             'selector, found `1`',
     });
     x.assert(func('((1,2,3),"a")'), {
-        'error': 'expected a position with two numbers, found `(1,2,3)`',
+        'error': 'invalid syntax: expected "([number], [number])", found `(1,2,3)`',
     });
     x.assert(func('((1,"a"),"a")'), {
-        'error': 'expected a position with two numbers, found `(1,"a")`',
+        'error': 'invalid syntax: expected "([number], [number])", found `(1,"a")`',
     });
     x.assert(func('((1,2),"")'), {'error': 'CSS selector (second argument) cannot be empty'});
     x.assert(func('("", (1,2))'), {'error': 'CSS selector (first argument) cannot be empty'});
@@ -525,6 +576,34 @@ function checkDragAndDrop(x, func) {
             'const end = [1, 2];\nawait page.mouse.move(end[0], end[1]);await page.mouse.up();',
         ],
     });
+    x.assert(func('((-1,2),"")'), {'error': 'X position cannot be negative: `-1`'});
+    x.assert(func('((1,-2),"")'), {'error': 'Y position cannot be negative: `-2`'});
+    x.assert(func('((1.0,2),"")'), {
+        'error': 'expected integer for X position, found float: `1.0`',
+    });
+    x.assert(func('((-1.0,2),"")'), {
+        'error': 'expected integer for X position, found float: `-1.0`',
+    });
+    x.assert(func('((1,2.0),"")'), {
+        'error': 'expected integer for Y position, found float: `2.0`',
+    });
+    x.assert(func('((1,-2.0),"")'), {
+        'error': 'expected integer for Y position, found float: `-2.0`',
+    });
+    x.assert(func('("a",(-1,2))'), {'error': 'X position cannot be negative: `-1`'});
+    x.assert(func('("a",(1,-2))'), {'error': 'Y position cannot be negative: `-2`'});
+    x.assert(func('("a",(1.0,2))'), {
+        'error': 'expected integer for X position, found float: `1.0`',
+    });
+    x.assert(func('("a",(-1.0,2))'), {
+        'error': 'expected integer for X position, found float: `-1.0`',
+    });
+    x.assert(func('("a",(1,2.0))'), {
+        'error': 'expected integer for Y position, found float: `2.0`',
+    });
+    x.assert(func('("a",(1,-2.0))'), {
+        'error': 'expected integer for Y position, found float: `-2.0`',
+    });
 }
 
 function checkEmulate(x, func) {
@@ -545,7 +624,22 @@ function checkTimeout(x, func) {
     x.assert(func('"a"'), {'error': 'expected integer for number of milliseconds, found `"a"`'});
     x.assert(func('12'), {'instructions': ['page.setDefaultTimeout(12)'], 'wait': false});
     // In case I add a check over no timeout some day...
-    x.assert(func('0'), {'instructions': ['page.setDefaultTimeout(0)'], 'wait': false});
+    x.assert(func('0'), {
+        'instructions': ['page.setDefaultTimeout(0)'],
+        'wait': false,
+        'warnings': [
+            'You passed 0 as timeout, it means the timeout has been disabled on this reload',
+        ],
+    });
+    x.assert(func('0.1'), {
+        'error': 'expected integer for number of milliseconds, found float: `0.1`',
+    });
+    x.assert(func('-0.1'), {
+        'error': 'expected integer for number of milliseconds, found float: `-0.1`',
+    });
+    x.assert(func('-1'), {
+        'error': 'number of milliseconds cannot be negative: `-1`',
+    });
 }
 
 const TO_CHECK = [

@@ -24,6 +24,27 @@ function cleanCssSelector(s, text = '') {
     };
 }
 
+function checkInteger(nb, text, negativeCheck = false) {
+    if (nb.isFloat === true) {
+        return {'error': `expected integer for ${text}, found float: \`${nb.getValue()}\``};
+    } else if (negativeCheck === true && nb.isNegative === true) {
+        return {'error': `${text} cannot be negative: \`${nb.getValue()}\``};
+    }
+    return {};
+}
+
+function checkIntegerTuple(tuple, fullText, text1, text2, negativeCheck = false) {
+    if (tuple.length !== 2 || tuple[0].kind !== 'number' || tuple[1].kind !== 'number') {
+        return {'error': `invalid syntax: expected "([number], [number])", found \`${fullText}\``};
+    }
+    let ret = checkInteger(tuple[0], text1, negativeCheck);
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    ret = checkInteger(tuple[1], text2, negativeCheck);
+    return ret;
+}
+
 // Possible inputs:
 //
 // * (X, Y)
@@ -49,8 +70,9 @@ function parseClick(line, options) {
         return {'error': 'expected a position or a CSS selector'};
     }
     const tuple = p.elems[0].getValue();
-    if (tuple.length !== 2 || tuple[0].kind !== 'number' || tuple[1].kind !== 'number') {
-        return {'error': 'invalid syntax: expected "([number], [number])"...'};
+    const ret = checkIntegerTuple(tuple, p.elems[0].getText(), 'X position', 'Y position');
+    if (ret.error !== undefined) {
+        return ret;
     }
     const x = tuple[0].getValue();
     const y = tuple[1].getValue();
@@ -73,6 +95,10 @@ function parseWaitFor(line, options) {
     } else if (p.elems.length !== 1) {
         return {'error': 'expected an integer or a CSS selector'};
     } else if (p.elems[0].kind === 'number') {
+        const ret = checkInteger(p.elems[0], 'number of milliseconds', true);
+        if (ret.error !== undefined) {
+            return ret;
+        }
         return {
             'instructions': [
                 `await page.waitFor(${p.elems[0].getValue()})`,
@@ -186,8 +212,9 @@ function parseMoveCursorTo(line, options) {
         return {'error': 'expected a position or a CSS selector'};
     }
     const tuple = p.elems[0].getValue();
-    if (tuple.length !== 2 || tuple[0].kind !== 'number' || tuple[1].kind !== 'number') {
-        return {'error': 'invalid syntax: expected "([number], [number])"...'};
+    const ret = checkIntegerTuple(tuple, p.elems[0].getText(), 'X position', 'Y position', true);
+    if (ret.error !== undefined) {
+        return ret;
     }
     const x = tuple[0].getValue();
     const y = tuple[1].getValue();
@@ -278,8 +305,9 @@ function parseSize(line, options) {
         return {'error': 'expected `([number], [number])`'};
     }
     const tuple = p.elems[0].getValue();
-    if (tuple.length !== 2 || tuple[0].kind !== 'number' || tuple[1].kind !== 'number') {
-        return {'error': 'expected `([number], [number])`'};
+    const ret = checkIntegerTuple(tuple, p.elems[0].getText(), 'width', 'height', true);
+    if (ret.error !== undefined) {
+        return ret;
     }
     const width = tuple[0].getValue();
     const height = tuple[1].getValue();
@@ -379,6 +407,10 @@ function parseAssert(line, options) {
             return {'error': 'unexpected argument after number of occurences'};
         }
         const occurences = tuple[1].getValue();
+        const ret = checkInteger(tuple[1], 'number of occurences', true);
+        if (ret.error !== undefined) {
+            return ret;
+        }
         const varName = 'parseAssertElemInt';
         return {
             'instructions': [
@@ -696,7 +728,7 @@ function parseFail(line, options) {
 // * nothing
 // * number (of milliseconds before timeout)
 function parseReload(line, options) {
-    let timeout = 30000;
+    let timeout = options.timeout;
     const warnings = [];
 
     const p = new Parser(line, options.variables);
@@ -714,7 +746,11 @@ function parseReload(line, options) {
             };
         }
         timeout = p.elems[0].getValue();
-        if (timeout === '0') {
+        const ret = checkInteger(p.elems[0], 'timeout', true);
+        if (ret.error !== undefined) {
+            return ret;
+        }
+        if (parseInt(timeout) === 0) {
             warnings.push('You passed 0 as timeout, it means the timeout has been disabled on ' +
                 'this reload');
         }
@@ -788,11 +824,10 @@ function parseDragAndDrop(line, options) {
                     `CSS selector, found \`${arg.getText()}\``,
             };
         } else if (arg.kind === 'tuple') {
-            const values = arg.getValue();
-            if (values.length !== 2 || values[0].kind !== 'number' || values[1].kind !== 'number') {
-                return {
-                    'error': `expected a position with two numbers, found \`${arg.getText()}\``,
-                };
+            const tuple = arg.getValue();
+            const ret = checkIntegerTuple(tuple, arg.getText(), 'X position', 'Y position', true);
+            if (ret.error !== undefined) {
+                return ret;
             }
         }
         return {};
@@ -862,7 +897,12 @@ function parseEmulate(line, options) {
     };
 }
 
+// Possible inputs:
+//
+// * number
 function parseTimeout(line, options) {
+    const warnings = [];
+
     const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
@@ -870,11 +910,20 @@ function parseTimeout(line, options) {
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'number') {
         return {'error': `expected integer for number of milliseconds, found \`${line}\``};
     }
+    const ret = checkInteger(p.elems[0], 'number of milliseconds', true);
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    if (parseInt(p.elems[0].getValue()) === 0) {
+        warnings.push('You passed 0 as timeout, it means the timeout has been disabled on ' +
+            'this reload');
+    }
     return {
         'instructions': [
             `page.setDefaultTimeout(${p.elems[0].getValue()})`,
         ],
         'wait': false,
+        'warnings': warnings.length > 0 ? warnings : undefined,
     };
 }
 

@@ -32,27 +32,28 @@ async function checkRunTest(x, func) {
     await x.assertTry(func, ['./tests/fail.goml'], 'No file found with path `./tests/fail.goml`');
 
     // empty options
-    const res = await func('./tests/scripts/fail.goml');
+    const res = await func('./tests/scripts/basic.goml');
     x.assert(res[0],
-        'fail... FAILED\n[ERROR] line 2: variable `DOC_PATH` not found in options nor environment');
+        'basic... FAILED\n[ERROR] line 1: variable `DOC_PATH` not found in options ' +
+        'nor environment');
     x.assert(res[1], 1);
 
     // everything is supposed to work
     let options = new Options();
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files']);
-    await x.assertTry(func, ['./tests/scripts/fail.goml', options], ['fail... ok', 0]);
+    await x.assertTry(func, ['./tests/scripts/basic.goml', options], ['basic... ok', 0]);
 
     // check if test-folder option is ignored
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files', '--test-folder', 'yolo']);
-    await x.assertTry(func, ['./tests/scripts/fail.goml', options],
-        ['[WARNING] `--test-folder` option will be ignored.\n\nfail... ok', 0]);
+    await x.assertTry(func, ['./tests/scripts/basic.goml', options],
+        ['[WARNING] `--test-folder` option will be ignored.\n\nbasic... ok', 0]);
     removeFolder('yolo'); // The folder is generated because failure and image folders use it.
 
     // with just one file through "--test-files" options (the extra file should be ignored)
     options = new Options();
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
-        '--test-files', './tests/scripts/fail.goml']);
-    await x.assertTry(func, ['./tests/scripts/fail.goml', options], ['fail... ok', 0]);
+        '--test-files', './tests/scripts/basic.goml']);
+    await x.assertTry(func, ['./tests/scripts/basic.goml', options], ['basic... ok', 0]);
 }
 
 async function checkRunTestCode(x, func) {
@@ -126,10 +127,10 @@ async function checkRunTests(x, func) {
     // with just one file through "--test-files" options
     options = new Options();
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
-        '--test-files', './tests/scripts/fail.goml']);
+        '--test-files', './tests/scripts/basic.goml']);
     await x.assertTry(func, [options],
-        ['=> Starting doc-ui tests...\n\nfail... ok\n\n<= doc-ui tests done: 1 succeeded, 0 failed',
-            0]);
+        ['=> Starting doc-ui tests...\n\nbasic... ok\n\n<= doc-ui tests done: 1 ' +
+         'succeeded, 0 failed', 0]);
 
     // with the usual folder full of examples
     // options = new Options();
