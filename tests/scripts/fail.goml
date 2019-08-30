@@ -5,4 +5,5 @@ text: ("#button", "hello")
 fail: true
 assert: ("#button", "Go somewhere else!")
 fail: false
+timeout: 0
 assert: ("#button", "hello")

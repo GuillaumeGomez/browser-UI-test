@@ -442,8 +442,8 @@ function checkParseContent(x, func) {
         });
     x.assert(func('focus: "#foo"'),
         {
-            'error': 'First command must be `goto` (`emulate` or `fail` or `screenshot` can be ' +
-                'used before)!',
+            'error': 'First command must be `goto` (`emulate` or `fail` or `screenshot` or ' +
+                '`timeout` can be used before)!',
             'line': 1,
         });
     x.assert(func('fail: true\ngoto: file:///home'),
@@ -540,6 +540,14 @@ function checkEmulate(x, func) {
         ]});
 }
 
+function checkTimeout(x, func) {
+    x.assert(func(''), {'error': 'expected integer for number of milliseconds, found ``'});
+    x.assert(func('"a"'), {'error': 'expected integer for number of milliseconds, found `"a"`'});
+    x.assert(func('12'), {'instructions': ['page.setDefaultNavigationTimeout(12)'], 'wait': false});
+    // In case I add a check over no timeout some day...
+    x.assert(func('0'), {'instructions': ['page.setDefaultNavigationTimeout(0)'], 'wait': false});
+}
+
 const TO_CHECK = [
     {'name': 'assert', 'func': checkAssert,
         'toCall': (e, o) => wrapper(parserFuncs.parseAssert, e, o)},
@@ -575,6 +583,8 @@ const TO_CHECK = [
         'toCall': (e, o) => wrapper(parserFuncs.parseSize, e, o)},
     {'name': 'text', 'func': checkText,
         'toCall': (e, o) => wrapper(parserFuncs.parseText, e, o)},
+    {'name': 'timeout', 'func': checkTimeout,
+        'toCall': (e, o) => wrapper(parserFuncs.parseTimeout, e, o)},
     {'name': 'wait-for', 'func': checkWaitFor,
         'toCall': (e, o) => wrapper(parserFuncs.parseWaitFor, e, o)},
     {'name': 'write', 'func': checkWrite,
