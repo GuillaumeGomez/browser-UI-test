@@ -129,6 +129,7 @@ Here's the command list:
  * [`click`](#click)
  * [`css`](#css)
  * [`drag-and-drop`](#drag-and-drop)
+ * [`emulate`](#emulate)
  * [`fail`](#fail)
  * [`focus`](#focus)
  * [`goto`](#goto)
@@ -208,6 +209,16 @@ drag-and-drop: ("#button", (10, 10)) // move "#button" to (10, 10)
 drag-and-drop: ((10, 10), "#button") // move the element at (10, 10) to where "#button" is
 drag-and-drop: ((10, 10), (20, 35)) // move the element at (10, 10) to (20, 35)
 ```
+
+#### emulate
+
+**emulate** command changes the display to look like the targetted device. **It can only be used before the first `goto` call!** Example:
+
+```
+emulate: "iPhone 8"
+```
+
+To see the list of available devices, either run this framework with `--show-devices` option or go [here](https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js).
 
 #### fail
 
