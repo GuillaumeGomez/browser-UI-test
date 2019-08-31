@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 const fs = require('fs');
 const PNG = require('png-js');
 const parser = require('./commands.js');
