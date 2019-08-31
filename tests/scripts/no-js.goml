@@ -1,0 +1,4 @@
+screenshot: false
+javascript: false
+goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
+assert: ("#no-js")

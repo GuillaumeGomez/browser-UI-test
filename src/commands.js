@@ -994,6 +994,24 @@ function parsePermissions(line, options) {
     };
 }
 
+// Possible inputs:
+//
+// * boolean value (`true` or `false`)
+function parseJavascript(line, options) {
+    const p = new Parser(line, options.variables);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'bool') {
+        return {'error': `expected \`true\` or \`false\` value, found \`${line}\``};
+    }
+    return {
+        'instructions': [
+            `await page.setJavaScriptEnabled(${p.elems[0].getValue()});`,
+        ],
+    };
+}
+
 const ORDERS = {
     'assert': parseAssert,
     'attribute': parseAttribute,
@@ -1005,6 +1023,7 @@ const ORDERS = {
     'focus': parseFocus,
     'geolocation': parseGeolocation,
     'goto': parseGoTo,
+    'javascript': parseJavascript,
     'local-storage': parseLocalStorage,
     'move-cursor-to': parseMoveCursorTo,
     'permissions': parsePermissions,
@@ -1022,6 +1041,7 @@ const ORDERS = {
 const NO_INTERACTION_COMMANDS = [
     'emulate',
     'fail',
+    'javascript',
     'screenshot',
     'timeout',
 ];
@@ -1102,6 +1122,7 @@ module.exports = {
     'parseFocus': parseFocus,
     'parseGeolocation': parseGeolocation,
     'parseGoTo': parseGoTo,
+    'parseJavascript': parseJavascript,
     'parseLocalStorage': parseLocalStorage,
     'parseMoveCursorTo': parseMoveCursorTo,
     'parsePermissions': parsePermissions,
