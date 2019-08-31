@@ -57,6 +57,14 @@ class PuppeteerWrapper {
         await this.browser.close();
     }
 
+    async overridePermissions(url, permissions) {
+        if (this.browser === null) {
+            return;
+        }
+        const context = this.browser.defaultBrowserContext();
+        await context.overridePermissions(url, permissions);
+    }
+
     async emulate(options, page, debug_log) {
         if (options.emulate === '') {
             return;

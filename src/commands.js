@@ -63,7 +63,7 @@ function parseClick(line, options) {
         }
         return {
             'instructions': [
-                `page.click("${selector.value}")`,
+                `await page.click("${selector.value}")`,
             ],
         };
     } else if (p.elems[0].kind !== 'tuple') {
@@ -78,7 +78,7 @@ function parseClick(line, options) {
     const y = tuple[1].getValue();
     return {
         'instructions': [
-            `page.mouse.click(${x},${y})`,
+            `await page.mouse.click(${x},${y})`,
         ],
     };
 }
@@ -137,7 +137,7 @@ function parseFocus(line, options) {
     }
     return {
         'instructions': [
-            `page.focus("${selector.value}")`,
+            `await page.focus("${selector.value}")`,
         ],
     };
 }
@@ -156,7 +156,7 @@ function parseWrite(line, options) {
     } else if (p.elems[0].kind === 'string') {
         return {
             'instructions': [
-                `page.keyboard.type("${cleanString(p.elems[0].getValue())}")`,
+                `await page.keyboard.type("${cleanString(p.elems[0].getValue())}")`,
             ],
         };
     } else if (p.elems[0].kind !== 'tuple') {
@@ -181,8 +181,8 @@ function parseWrite(line, options) {
     }
     return {
         'instructions': [
-            `page.focus("${selector.value}")`,
-            `page.keyboard.type("${tuple[1].getValue()}")`,
+            `await page.focus("${selector.value}")`,
+            `await page.keyboard.type("${tuple[1].getValue()}")`,
         ],
     };
 }
@@ -205,7 +205,7 @@ function parseMoveCursorTo(line, options) {
         }
         return {
             'instructions': [
-                `page.hover("${selector.value}")`,
+                `await page.hover("${selector.value}")`,
             ],
         };
     } else if (p.elems[0].kind !== 'tuple') {
@@ -220,7 +220,7 @@ function parseMoveCursorTo(line, options) {
     const y = tuple[1].getValue();
     return {
         'instructions': [
-            `page.mouse.move(${x},${y})`,
+            `await page.mouse.move(${x},${y})`,
         ],
     };
 }
@@ -257,6 +257,7 @@ function parseGoTo(input, options) {
     }
     line = line.join('');
 
+    const permissions = 'await arg.browser.overridePermissions(page.url(), arg.permissions);';
     // We just check if it goes to an HTML file, not checking much though...
     if (line.startsWith('http://') === true
         || line.startsWith('https://') === true
@@ -265,6 +266,7 @@ function parseGoTo(input, options) {
         return {
             'instructions': [
                 `await page.goto("${cleanString(line)}")`,
+                permissions,
             ],
         };
     } else if (line.startsWith('.')) {
@@ -272,6 +274,7 @@ function parseGoTo(input, options) {
             'instructions': [
                 'await page.goto(page.url().split("/").slice(0, -1).join("/") + ' +
                 `"/${cleanString(line)}")`,
+                permissions,
             ],
         };
     } else if (line.startsWith('/')) {
@@ -279,6 +282,7 @@ function parseGoTo(input, options) {
             'instructions': [
                 'await page.goto(page.url().split("/").slice(0, -1).join("/") + ' +
                 `"${cleanString(line)}")`,
+                permissions,
             ],
         };
     }
@@ -313,7 +317,7 @@ function parseSize(line, options) {
     const height = tuple[1].getValue();
     return {
         'instructions': [
-            `page.setViewport({width: ${width}, height: ${height}})`,
+            `await page.setViewport({width: ${width}, height: ${height}})`,
         ],
     };
 }
@@ -356,7 +360,7 @@ function parseLocalStorage(line, options) {
     }
     return {
         'instructions': [
-            `page.evaluate(() => { ${content.join('\n')} })`,
+            `await page.evaluate(() => { ${content.join('\n')} })`,
         ],
         'warnings': warnings,
     };
@@ -778,12 +782,12 @@ function parseShowText(line, options) {
     const instructions = [`arg.showText = ${p.elems[0].getValue()};`];
     // And then to make the expected changes to the DOM.
     if (p.elems[0].getValue() === true) {
-        instructions.push('page.evaluate(() => {' +
+        instructions.push('await page.evaluate(() => {' +
             `let tmp = document.getElementById('${consts.STYLE_HIDE_TEXT_ID}');` +
             'if (tmp) { tmp.remove(); }' +
             '});');
     } else {
-        instructions.push('page.evaluate(() => {' +
+        instructions.push('await page.evaluate(() => {' +
             `window.${consts.STYLE_ADDER_FUNCTION}('${consts.CSS_TEXT_HIDE}', ` +
             `'${consts.STYLE_HIDE_TEXT_ID}');` +
             '});');
@@ -927,6 +931,66 @@ function parseTimeout(line, options) {
     };
 }
 
+// Possible inputs:
+//
+// * (number, number)
+function parseGeolocate(line, options) {
+    const warnings = [];
+
+    const p = new Parser(line, options.variables);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
+        return {'error': `expected (longitude [number], latitude [number]), found \`${line}\``};
+    }
+    const tuple = p.elems[0].getValue();
+    if (tuple[0].kind !== 'number') {
+        return {
+            'error': 'expected number for longitude (first argument), ' +
+                `found \`${tuple[0].getValue()}\``,
+        };
+    } else if (tuple[1].kind !== 'number') {
+        return {
+            'error': 'expected number for latitude (second argument), ' +
+                `found \`${tuple[1].getValue()}\``,
+        };
+    }
+    return {
+        'instructions': `await page.setGeolocation(${tuple[0].getValue()}, ${tuple[1].getValue()});`,
+    };
+}
+
+// Possible inputs:
+//
+// * array of strings
+function parsePermissions(line, options) {
+    const p = new Parser(line, options.variables);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'array') {
+        return {'error': `expected an array of strings, found \`${line}\``};
+    }
+    const array = p.elems[0].getValue();
+    if (array.length > 0 && array[0].kind !== 'string') {
+        return {'error': `expected an array of strings, found \`${p.elems[0].getText()}\``};
+    };
+
+    for (let i = 0; i < array.length; ++i) {
+        if (consts.AVAILABLE_PERMISSIONS.indexOf(array[i].getValue()) === -1) {
+            return {'error': `\`${array[i].getValue()}\` is an unknown permission`};
+        }
+    }
+
+    return {
+        'instructions': [
+            `arg.permissions = ${p.elems[0].getText()};`,
+            'await arg.browser.overridePermissions(page.url(), arg.permissions);'
+        ],
+    };
+}
+
 const ORDERS = {
     'assert': parseAssert,
     'attribute': parseAttribute,
@@ -936,9 +1000,11 @@ const ORDERS = {
     'emulate': parseEmulate,
     'fail': parseFail,
     'focus': parseFocus,
+    'geolocate': parseGeolocate,
     'goto': parseGoTo,
     'local-storage': parseLocalStorage,
     'move-cursor-to': parseMoveCursorTo,
+    'permissions': parsePermissions,
     'reload': parseReload,
     'screenshot': parseScreenshot,
     'scroll-to': parseScrollTo,
@@ -1031,6 +1097,7 @@ module.exports = {
     'parseEmulate': parseEmulate,
     'parseFail': parseFail,
     'parseFocus': parseFocus,
+    'parseGeolocate': parseGeolocate,
     'parseGoTo': parseGoTo,
     'parseLocalStorage': parseLocalStorage,
     'parseMoveCursorTo': parseMoveCursorTo,
