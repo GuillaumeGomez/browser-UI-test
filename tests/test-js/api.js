@@ -128,6 +128,36 @@ function checkAttribute(x, func) {
     // TODO: add checks for more complex json objects
 }
 
+function checkClick(x, func) {
+    // Check position
+    x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
+    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {
+        'error': 'invalid syntax: expected "([number], [number])", found `(1)`',
+    });
+    x.assert(func('(1,)'), {'error': 'unexpected `,` after `1`'});
+    x.assert(func('(1,2,)'), {'error': 'unexpected `,` after `2`'});
+    x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
+    x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
+    x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
+    x.assert(func('(1,2)'), {'instructions': ['await page.mouse.click(1,2)']});
+    x.assert(func('(-1,2)'), {'instructions': ['await page.mouse.click(-1,2)']});
+    x.assert(func('(-2,1)'), {'instructions': ['await page.mouse.click(-2,1)']});
+    x.assert(func('(-1.0,2)'), {'error': 'expected integer for X position, found float: `-1.0`'});
+    x.assert(func('(1.0,2)'), {'error': 'expected integer for X position, found float: `1.0`'});
+    x.assert(func('(2,-1.0)'), {'error': 'expected integer for Y position, found float: `-1.0`'});
+    x.assert(func('(2,1.0)'), {'error': 'expected integer for Y position, found float: `1.0`'});
+
+    // Check css selector
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
+    x.assert(func('\'\''), {'error': 'CSS selector cannot be empty'});
+    x.assert(func('"a"'), {'instructions': ['await page.click("a")']});
+    x.assert(func('\'a\''), {'instructions': ['await page.click("a")']});
+    x.assert(func('\'"a\''), {'instructions': ['await page.click("\\\\"a")']});
+}
+
 function checkCss(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
@@ -171,34 +201,104 @@ function checkCss(x, func) {
     // TODO: add checks for more complex json objects
 }
 
-function checkClick(x, func) {
-    // Check position
-    x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(1)`',
+function checkDragAndDrop(x, func) {
+    // check tuple argument
+    x.assert(func('true'), {
+        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
+            'selector',
     });
-    x.assert(func('(1,)'), {'error': 'unexpected `,` after `1`'});
-    x.assert(func('(1,2,)'), {'error': 'unexpected `,` after `2`'});
-    x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
-    x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
-    x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
-    x.assert(func('(1,2)'), {'instructions': ['await page.mouse.click(1,2)']});
-    x.assert(func('(-1,2)'), {'instructions': ['await page.mouse.click(-1,2)']});
-    x.assert(func('(-2,1)'), {'instructions': ['await page.mouse.click(-2,1)']});
-    x.assert(func('(-1.0,2)'), {'error': 'expected integer for X position, found float: `-1.0`'});
-    x.assert(func('(1.0,2)'), {'error': 'expected integer for X position, found float: `1.0`'});
-    x.assert(func('(2,-1.0)'), {'error': 'expected integer for Y position, found float: `-1.0`'});
-    x.assert(func('(2,1.0)'), {'error': 'expected integer for Y position, found float: `1.0`'});
+    x.assert(func('(true)'), {
+        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
+            'selector',
+    });
+    x.assert(func('(1,2)'), {
+        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
+            'selector, found `1`',
+    });
+    x.assert(func('(1,2,3)'), {
+        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
+            'selector',
+    });
+    x.assert(func('("a",2)'), {
+        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
+            'selector, found `2`',
+    });
+    x.assert(func('(1,"a")'), {
+        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
+            'selector, found `1`',
+    });
+    x.assert(func('((1,2,3),"a")'), {
+        'error': 'invalid syntax: expected "([number], [number])", found `(1,2,3)`',
+    });
+    x.assert(func('((1,"a"),"a")'), {
+        'error': 'invalid syntax: expected "([number], [number])", found `(1,"a")`',
+    });
+    x.assert(func('((1,2),"")'), {'error': 'CSS selector (second argument) cannot be empty'});
+    x.assert(func('("", (1,2))'), {'error': 'CSS selector (first argument) cannot be empty'});
+    x.assert(func('((1,2),"a")'), {
+        'instructions': [
+            'const start = [1, 2];\nawait page.mouse.move(start[0], start[1]);await ' +
+            'page.mouse.down();',
+            'const parseDragAndDropElem2 = await page.$("a");\nif (parseDragAndDropElem2 === ' +
+            'null) { throw \'"a" not found\'; }\nconst parseDragAndDropElem2_box = await ' +
+            'parseDragAndDropElem2.boundingBox();\nconst end = [parseDragAndDropElem2_box.x + ' +
+            'parseDragAndDropElem2_box.width / 2, parseDragAndDropElem2_box.y + ' +
+            'parseDragAndDropElem2_box.height / 2];\nawait page.mouse.move(end[0], end[1]);' +
+            'await page.mouse.up();',
+        ],
+    });
+    x.assert(func('("a", (1,2))'), {
+        'instructions': [
+            'const parseDragAndDropElem = await page.$("a");\nif (parseDragAndDropElem === ' +
+            'null) { throw \'"a" not found\'; }\nconst parseDragAndDropElem_box = await ' +
+            'parseDragAndDropElem.boundingBox();\nconst start = [parseDragAndDropElem_box.x + ' +
+            'parseDragAndDropElem_box.width / 2, parseDragAndDropElem_box.y + ' +
+            'parseDragAndDropElem_box.height / 2];\nawait page.mouse.move(start[0], start[1]);' +
+            'await page.mouse.down();',
+            'const end = [1, 2];\nawait page.mouse.move(end[0], end[1]);await page.mouse.up();',
+        ],
+    });
+    x.assert(func('((-1,2),"")'), {'error': 'X position cannot be negative: `-1`'});
+    x.assert(func('((1,-2),"")'), {'error': 'Y position cannot be negative: `-2`'});
+    x.assert(func('((1.0,2),"")'), {
+        'error': 'expected integer for X position, found float: `1.0`',
+    });
+    x.assert(func('((-1.0,2),"")'), {
+        'error': 'expected integer for X position, found float: `-1.0`',
+    });
+    x.assert(func('((1,2.0),"")'), {
+        'error': 'expected integer for Y position, found float: `2.0`',
+    });
+    x.assert(func('((1,-2.0),"")'), {
+        'error': 'expected integer for Y position, found float: `-2.0`',
+    });
+    x.assert(func('("a",(-1,2))'), {'error': 'X position cannot be negative: `-1`'});
+    x.assert(func('("a",(1,-2))'), {'error': 'Y position cannot be negative: `-2`'});
+    x.assert(func('("a",(1.0,2))'), {
+        'error': 'expected integer for X position, found float: `1.0`',
+    });
+    x.assert(func('("a",(-1.0,2))'), {
+        'error': 'expected integer for X position, found float: `-1.0`',
+    });
+    x.assert(func('("a",(1,2.0))'), {
+        'error': 'expected integer for Y position, found float: `2.0`',
+    });
+    x.assert(func('("a",(1,-2.0))'), {
+        'error': 'expected integer for Y position, found float: `-2.0`',
+    });
+}
 
-    // Check css selector
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
-    x.assert(func('\'\''), {'error': 'CSS selector cannot be empty'});
-    x.assert(func('"a"'), {'instructions': ['await page.click("a")']});
-    x.assert(func('\'a\''), {'instructions': ['await page.click("a")']});
-    x.assert(func('\'"a\''), {'instructions': ['await page.click("\\\\"a")']});
+function checkEmulate(x, func) {
+    x.assert(func(''), {'error': 'expected string for "device name", found ``'});
+    x.assert(func('12'), {'error': 'expected string for "device name", found `12`'});
+    x.assert(func('"a"'), {
+        'instructions': [
+            'if (arg.puppeteer.devices["a"] === undefined) { throw \'Unknown device `a`. List of ' +
+            'available devices can be found there: ' +
+            'https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js or ' +
+            'you can use `--show-devices` option\'; } ' +
+            'else { await page.emulate(arg.puppeteer.devices["a"]); }',
+        ]});
 }
 
 function checkFail(x, func) {
@@ -217,6 +317,23 @@ function checkFocus(x, func) {
     x.assert(func('"a"'), {'instructions': ['await page.focus("a")']});
     x.assert(func('\'a\''), {'instructions': ['await page.focus("a")']});
     x.assert(func('\'"a\''), {'instructions': ['await page.focus("\\\\"a")']});
+}
+
+function checkGeolocation(x, func) {
+    x.assert(func(''), {'error': 'expected (longitude [number], latitude [number]), found ``'});
+    x.assert(func('"a"'), {
+        'error': 'expected (longitude [number], latitude [number]), found `"a"`',
+    });
+    x.assert(func('("a", "b")'), {
+        'error': 'expected number for longitude (first argument), found `a`',
+    });
+    x.assert(func('("12", 13)'), {
+        'error': 'expected number for longitude (first argument), found `12`',
+    });
+    x.assert(func('(12, "13")'), {
+        'error': 'expected number for latitude (second argument), found `13`',
+    });
+    x.assert(func('(12, 13)'), {'instructions': ['await page.setGeolocation(12, 13);']});
 }
 
 function checkGoTo(x, func) {
@@ -286,6 +403,16 @@ function checkGoTo(x, func) {
     });
 }
 
+function checkJavascript(x, func) {
+    x.assert(func(''), {'error': 'expected `true` or `false` value, found ``'});
+    x.assert(func('"a"'), {'error': 'expected `true` or `false` value, found `"a"`'});
+    x.assert(func('true'), {
+        'instructions': [
+            'await page.setJavaScriptEnabled(true);',
+        ],
+    });
+}
+
 function checkLocalStorage(x, func) {
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('{').error !== undefined); // JSON syntax error
@@ -327,6 +454,110 @@ function checkMoveCursorTo(x, func) {
     x.assert(func('"a"'), {'instructions': ['await page.hover("a")']});
     x.assert(func('\'a\''), {'instructions': ['await page.hover("a")']});
     x.assert(func('\'"a\''), {'instructions': ['await page.hover("\\\\"a")']});
+}
+
+function checkParseContent(x, func) {
+    x.assert(func(''), {'instructions': []});
+    x.assert(func('// just a comment'), {'instructions': []});
+    x.assert(func('  // just a comment'), {'instructions': []});
+    x.assert(func('a: '), {'error': 'Unknown command "a"', 'line': 0});
+    x.assert(func(':'), {'error': 'Unknown command ""', 'line': 0});
+
+    x.assert(func('goto: file:///home'), {
+        'instructions': [
+            {
+                'code': 'await page.goto("file:///home");',
+                'original': 'goto: file:///home',
+            },
+            {
+                'code': 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+                'original': 'goto: file:///home',
+            },
+        ],
+    });
+    x.assert(func('focus: "#foo"'),
+        {
+            'error': 'First command must be `goto` (`emulate` or `fail` or `javascript` or ' +
+                '`screenshot` or `timeout` can be used before)!',
+            'line': 1,
+        });
+    x.assert(func('fail: true\ngoto: file:///home'),
+        {
+            'instructions': [
+                {
+                    'code': 'arg.expectedToFail = true;',
+                    'wait': false,
+                    'original': 'fail: true',
+                },
+                {
+                    'code': 'await page.goto("file:///home");',
+                    'original': 'goto: file:///home',
+                },
+                {
+                    'code': 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+                    'original': 'goto: file:///home',
+                },
+            ],
+        });
+    x.assert(func('// just a comment\na: b'), {'error': 'Unknown command "a"', 'line': 1});
+    x.assert(func('goto: file:///home\nemulate: "test"'),
+        {
+            'error': 'Command emulate must be used before first goto!',
+            'line': 2,
+        });
+}
+
+function checkPermissions(x, func) {
+    x.assert(func(''), {'error': 'expected an array of strings, found ``'});
+    x.assert(func('"a"'), {'error': 'expected an array of strings, found `"a"`'});
+    x.assert(func('("a", "b")'), {'error': 'expected an array of strings, found `("a", "b")`'});
+    x.assert(func('["12", 13]'), {
+        'error': 'all array\'s elements must be of the same kind: expected array of `string`, ' +
+            'found `number` at position 1',
+    });
+    x.assert(func('[12, "13"]'), {
+        'error': 'all array\'s elements must be of the same kind: expected array of `number`, ' +
+            'found `string` at position 1',
+    });
+    x.assert(func('["12"]'), {
+        'error': '`12` is an unknown permission, you can see the list of available permissions ' +
+            'with the `--show-permissions` option',
+    });
+    x.assert(func('["camera", "push"]'), {
+        'instructions': [
+            'arg.permissions = ["camera", "push"];',
+            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+        ],
+    });
+}
+
+function checkReload(x, func) {
+    // check tuple argument
+    x.assert(func(''),
+        {
+            'instructions': [
+                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 30000});',
+            ],
+        });
+    x.assert(func('"a"'), {'error': 'expected either [integer] or no arguments, got string'});
+    x.assert(func('12'),
+        {
+            'instructions': [
+                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 12});',
+            ],
+        });
+    x.assert(func('12 24'), {'error': 'expected nothing, found `2`'});
+    x.assert(func('0'),
+        {
+            'instructions': [
+                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 0});',
+            ],
+            'warnings': 'You passed 0 as timeout, it means the timeout has been disabled on ' +
+                'this reload',
+        });
+    x.assert(func('-12'), {'error': 'timeout cannot be negative: `-12`'});
+    x.assert(func('-12.0'), {'error': 'expected integer for timeout, found float: `-12.0`'});
+    x.assert(func('12.0'), {'error': 'expected integer for timeout, found float: `12.0`'});
 }
 
 function checkScreenshot(x, func) {
@@ -435,6 +666,29 @@ function checkText(x, func) {
         });
 }
 
+function checkTimeout(x, func) {
+    x.assert(func(''), {'error': 'expected integer for number of milliseconds, found ``'});
+    x.assert(func('"a"'), {'error': 'expected integer for number of milliseconds, found `"a"`'});
+    x.assert(func('12'), {'instructions': ['page.setDefaultTimeout(12)'], 'wait': false});
+    // In case I add a check over no timeout some day...
+    x.assert(func('0'), {
+        'instructions': ['page.setDefaultTimeout(0)'],
+        'wait': false,
+        'warnings': [
+            'You passed 0 as timeout, it means the timeout has been disabled on this reload',
+        ],
+    });
+    x.assert(func('0.1'), {
+        'error': 'expected integer for number of milliseconds, found float: `0.1`',
+    });
+    x.assert(func('-0.1'), {
+        'error': 'expected integer for number of milliseconds, found float: `-0.1`',
+    });
+    x.assert(func('-1'), {
+        'error': 'number of milliseconds cannot be negative: `-1`',
+    });
+}
+
 function checkWaitFor(x, func) {
     // Check integer
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
@@ -482,260 +736,6 @@ function checkWrite(x, func) {
     x.assert(func('"a"'), {'instructions': ['await page.keyboard.type("a")']});
     x.assert(func('\'a\''), {'instructions': ['await page.keyboard.type("a")']});
     x.assert(func('\'"a\''), {'instructions': ['await page.keyboard.type("\\"a")']});
-}
-
-function checkReload(x, func) {
-    // check tuple argument
-    x.assert(func(''),
-        {
-            'instructions': [
-                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 30000});',
-            ],
-        });
-    x.assert(func('"a"'), {'error': 'expected either [integer] or no arguments, got string'});
-    x.assert(func('12'),
-        {
-            'instructions': [
-                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 12});',
-            ],
-        });
-    x.assert(func('12 24'), {'error': 'expected nothing, found `2`'});
-    x.assert(func('0'),
-        {
-            'instructions': [
-                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 0});',
-            ],
-            'warnings': 'You passed 0 as timeout, it means the timeout has been disabled on ' +
-                'this reload',
-        });
-    x.assert(func('-12'), {'error': 'timeout cannot be negative: `-12`'});
-    x.assert(func('-12.0'), {'error': 'expected integer for timeout, found float: `-12.0`'});
-    x.assert(func('12.0'), {'error': 'expected integer for timeout, found float: `12.0`'});
-}
-
-function checkParseContent(x, func) {
-    x.assert(func(''), {'instructions': []});
-    x.assert(func('// just a comment'), {'instructions': []});
-    x.assert(func('  // just a comment'), {'instructions': []});
-    x.assert(func('a: '), {'error': 'Unknown command "a"', 'line': 0});
-    x.assert(func(':'), {'error': 'Unknown command ""', 'line': 0});
-
-    x.assert(func('goto: file:///home'), {
-        'instructions': [
-            {
-                'code': 'await page.goto("file:///home");',
-                'original': 'goto: file:///home',
-            },
-            {
-                'code': 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-                'original': 'goto: file:///home',
-            },
-        ],
-    });
-    x.assert(func('focus: "#foo"'),
-        {
-            'error': 'First command must be `goto` (`emulate` or `fail` or `javascript` or ' +
-                '`screenshot` or `timeout` can be used before)!',
-            'line': 1,
-        });
-    x.assert(func('fail: true\ngoto: file:///home'),
-        {
-            'instructions': [
-                {
-                    'code': 'arg.expectedToFail = true;',
-                    'wait': false,
-                    'original': 'fail: true',
-                },
-                {
-                    'code': 'await page.goto("file:///home");',
-                    'original': 'goto: file:///home',
-                },
-                {
-                    'code': 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-                    'original': 'goto: file:///home',
-                },
-            ],
-        });
-    x.assert(func('// just a comment\na: b'), {'error': 'Unknown command "a"', 'line': 1});
-    x.assert(func('goto: file:///home\nemulate: "test"'),
-        {
-            'error': 'Command emulate must be used before first goto!',
-            'line': 2,
-        });
-}
-
-function checkDragAndDrop(x, func) {
-    // check tuple argument
-    x.assert(func('true'), {
-        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
-            'selector',
-    });
-    x.assert(func('(true)'), {
-        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
-            'selector',
-    });
-    x.assert(func('(1,2)'), {
-        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
-            'selector, found `1`',
-    });
-    x.assert(func('(1,2,3)'), {
-        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
-            'selector',
-    });
-    x.assert(func('("a",2)'), {
-        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
-            'selector, found `2`',
-    });
-    x.assert(func('(1,"a")'), {
-        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
-            'selector, found `1`',
-    });
-    x.assert(func('((1,2,3),"a")'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(1,2,3)`',
-    });
-    x.assert(func('((1,"a"),"a")'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(1,"a")`',
-    });
-    x.assert(func('((1,2),"")'), {'error': 'CSS selector (second argument) cannot be empty'});
-    x.assert(func('("", (1,2))'), {'error': 'CSS selector (first argument) cannot be empty'});
-    x.assert(func('((1,2),"a")'), {
-        'instructions': [
-            'const start = [1, 2];\nawait page.mouse.move(start[0], start[1]);await ' +
-            'page.mouse.down();',
-            'const parseDragAndDropElem2 = await page.$("a");\nif (parseDragAndDropElem2 === ' +
-            'null) { throw \'"a" not found\'; }\nconst parseDragAndDropElem2_box = await ' +
-            'parseDragAndDropElem2.boundingBox();\nconst end = [parseDragAndDropElem2_box.x + ' +
-            'parseDragAndDropElem2_box.width / 2, parseDragAndDropElem2_box.y + ' +
-            'parseDragAndDropElem2_box.height / 2];\nawait page.mouse.move(end[0], end[1]);' +
-            'await page.mouse.up();',
-        ],
-    });
-    x.assert(func('("a", (1,2))'), {
-        'instructions': [
-            'const parseDragAndDropElem = await page.$("a");\nif (parseDragAndDropElem === ' +
-            'null) { throw \'"a" not found\'; }\nconst parseDragAndDropElem_box = await ' +
-            'parseDragAndDropElem.boundingBox();\nconst start = [parseDragAndDropElem_box.x + ' +
-            'parseDragAndDropElem_box.width / 2, parseDragAndDropElem_box.y + ' +
-            'parseDragAndDropElem_box.height / 2];\nawait page.mouse.move(start[0], start[1]);' +
-            'await page.mouse.down();',
-            'const end = [1, 2];\nawait page.mouse.move(end[0], end[1]);await page.mouse.up();',
-        ],
-    });
-    x.assert(func('((-1,2),"")'), {'error': 'X position cannot be negative: `-1`'});
-    x.assert(func('((1,-2),"")'), {'error': 'Y position cannot be negative: `-2`'});
-    x.assert(func('((1.0,2),"")'), {
-        'error': 'expected integer for X position, found float: `1.0`',
-    });
-    x.assert(func('((-1.0,2),"")'), {
-        'error': 'expected integer for X position, found float: `-1.0`',
-    });
-    x.assert(func('((1,2.0),"")'), {
-        'error': 'expected integer for Y position, found float: `2.0`',
-    });
-    x.assert(func('((1,-2.0),"")'), {
-        'error': 'expected integer for Y position, found float: `-2.0`',
-    });
-    x.assert(func('("a",(-1,2))'), {'error': 'X position cannot be negative: `-1`'});
-    x.assert(func('("a",(1,-2))'), {'error': 'Y position cannot be negative: `-2`'});
-    x.assert(func('("a",(1.0,2))'), {
-        'error': 'expected integer for X position, found float: `1.0`',
-    });
-    x.assert(func('("a",(-1.0,2))'), {
-        'error': 'expected integer for X position, found float: `-1.0`',
-    });
-    x.assert(func('("a",(1,2.0))'), {
-        'error': 'expected integer for Y position, found float: `2.0`',
-    });
-    x.assert(func('("a",(1,-2.0))'), {
-        'error': 'expected integer for Y position, found float: `-2.0`',
-    });
-}
-
-function checkEmulate(x, func) {
-    x.assert(func(''), {'error': 'expected string for "device name", found ``'});
-    x.assert(func('12'), {'error': 'expected string for "device name", found `12`'});
-    x.assert(func('"a"'), {
-        'instructions': [
-            'if (arg.puppeteer.devices["a"] === undefined) { throw \'Unknown device `a`. List of ' +
-            'available devices can be found there: ' +
-            'https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js or ' +
-            'you can use `--show-devices` option\'; } ' +
-            'else { await page.emulate(arg.puppeteer.devices["a"]); }',
-        ]});
-}
-
-function checkTimeout(x, func) {
-    x.assert(func(''), {'error': 'expected integer for number of milliseconds, found ``'});
-    x.assert(func('"a"'), {'error': 'expected integer for number of milliseconds, found `"a"`'});
-    x.assert(func('12'), {'instructions': ['page.setDefaultTimeout(12)'], 'wait': false});
-    // In case I add a check over no timeout some day...
-    x.assert(func('0'), {
-        'instructions': ['page.setDefaultTimeout(0)'],
-        'wait': false,
-        'warnings': [
-            'You passed 0 as timeout, it means the timeout has been disabled on this reload',
-        ],
-    });
-    x.assert(func('0.1'), {
-        'error': 'expected integer for number of milliseconds, found float: `0.1`',
-    });
-    x.assert(func('-0.1'), {
-        'error': 'expected integer for number of milliseconds, found float: `-0.1`',
-    });
-    x.assert(func('-1'), {
-        'error': 'number of milliseconds cannot be negative: `-1`',
-    });
-}
-
-function checkGeolocation(x, func) {
-    x.assert(func(''), {'error': 'expected (longitude [number], latitude [number]), found ``'});
-    x.assert(func('"a"'), {
-        'error': 'expected (longitude [number], latitude [number]), found `"a"`',
-    });
-    x.assert(func('("a", "b")'), {
-        'error': 'expected number for longitude (first argument), found `a`',
-    });
-    x.assert(func('("12", 13)'), {
-        'error': 'expected number for longitude (first argument), found `12`',
-    });
-    x.assert(func('(12, "13")'), {
-        'error': 'expected number for latitude (second argument), found `13`',
-    });
-    x.assert(func('(12, 13)'), {'instructions': ['await page.setGeolocation(12, 13);']});
-}
-
-function checkPermissions(x, func) {
-    x.assert(func(''), {'error': 'expected an array of strings, found ``'});
-    x.assert(func('"a"'), {'error': 'expected an array of strings, found `"a"`'});
-    x.assert(func('("a", "b")'), {'error': 'expected an array of strings, found `("a", "b")`'});
-    x.assert(func('["12", 13]'), {
-        'error': 'all array\'s elements must be of the same kind: expected array of `string`, ' +
-            'found `number` at position 1',
-    });
-    x.assert(func('[12, "13"]'), {
-        'error': 'all array\'s elements must be of the same kind: expected array of `number`, ' +
-            'found `string` at position 1',
-    });
-    x.assert(func('["12"]'), {
-        'error': '`12` is an unknown permission, you can see the list of available permissions ' +
-            'with the `--show-permissions` option',
-    });
-    x.assert(func('["camera", "push"]'), {
-        'instructions': [
-            'arg.permissions = ["camera", "push"];',
-            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-        ],
-    });
-}
-
-function checkJavascript(x, func) {
-    x.assert(func(''), {'error': 'expected `true` or `false` value, found ``'});
-    x.assert(func('"a"'), {'error': 'expected `true` or `false` value, found `"a"`'});
-    x.assert(func('true'), {
-        'instructions': [
-            'await page.setJavaScriptEnabled(true);',
-        ],
-    });
 }
 
 const TO_CHECK = [
