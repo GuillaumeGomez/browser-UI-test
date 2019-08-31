@@ -89,11 +89,11 @@ The list of fields of the `Options` class is the following:
  * `noHeadless`: disable headless mode
  * `noScreenshot`: disable screenshots generation and comparison at the end of the scripts
  * `permissions`: List of permissions to enable (you can see the full list by running with `--show-permissions`)
+ * `runId`: id to be used for failed images extension ('test' by default)
+ * `showText`: disable text invisibility (be careful when using it!)
  * `testFiles`: list of `.goml` files' path to be run
  * `testFolder`: path of the folder where `.goml` script files are
  * `timeout`: number of milliseconds that'll be used as default timeout for all commands interacting with the browser. Defaults to 30 seconds, cannot be less than 0, if 0, it means it'll wait undefinitely so use it carefully!
- * `runId`: id to be used for failed images extension ('test' by default)
- * `showText`: disable text invisibility (be careful when using it!)
  * `variables`: variables to be used in the `.goml` scripts (more information about variables [below](#Variables))
 
 ### Running it directly
@@ -406,7 +406,7 @@ timeout: 0 // no more timeout, to be used cautiously!
 
 **wait-for** command waits for a given duration or for an element to be created. It expects a CSS selector or a duration in milliseconds.
 
-**/!\\** Be careful when using it: if the given selector never appears, the test will timeout after 30 seconds.
+**/!\\** Be careful when using it: if the given selector never appears, the test will timeout after 30 seconds by default (can be changed with the `timeout` command).
 
 Examples:
 
