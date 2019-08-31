@@ -1,7 +1,7 @@
 const process = require('process');
 
 const utils = require('../../src/utils.js');
-utils.print = function() {}; // overwriting the print function to avoid the print
+utils.print = function print() {}; // overwriting the print function to avoid the print
 
 const {runTestCode, runTest, runTests, Options} = require('../../src/index.js');
 const {Assert, plural, print, removeFolder} = require('./utils.js');
@@ -196,6 +196,14 @@ async function checkOptions(x) {
     await x.assertTry(() => options.parseArguments(['--timeout', '10']), [], true);
     x.assert(options.timeout, 10);
 
+    x.assert(options.permissions, []);
+    await x.assertTry(() => options.parseArguments(['--permission']), [],
+        'Missing permission name after `--permission` option');
+    await x.assertTry(() => options.parseArguments(['--permission', 'hoho']), [], true);
+    await x.assertTry(() => options.parseArguments(['--permission', 'hoho']), [], true);
+    await x.assertTry(() => options.parseArguments(['--permission', 'trololo']), [], true);
+    x.assert(options.permissions, ['hoho', 'trololo']);
+
     options.clear();
     x.assert(options.testFiles, []);
     await x.assertTry(() => options.parseArguments(['--test-files']), [],
@@ -222,6 +230,8 @@ async function checkOptions(x) {
         '`--browser` option only accepts "chrome" or "firefox" as values, found `test`');
     await x.assertTry(() => options.parseArguments(['--browser', 'firefox']), [], true);
     await x.assert(options.browser, 'firefox');
+    await x.assertTry(() => options.parseArguments(['--browser', 'chrome']), [], true);
+    await x.assert(options.browser, 'chrome');
 
     // different check in the validate
     const opt = new Options();
@@ -232,6 +242,8 @@ async function checkOptions(x) {
 
     x.assert(options.parseArguments(['--help']), false);
     x.assert(options.parseArguments(['-h']), false);
+    x.assert(options.parseArguments(['--show-devices']), false);
+    x.assert(options.parseArguments(['--show-permissions']), false);
 
     options.clear();
     await x.assert(options.generateImages, false);
@@ -305,7 +317,7 @@ async function checkOptions(x) {
     const options8 = new Options();
     options8.testFiles = '';
     await x.assertTry(() => options8.validateFields(), [],
-        '`Options.files` field is supposed to be an array!');
+        '`Options.testFiles` field is supposed to be an array!');
 
     const options9 = new Options();
     options9.variables = '';
@@ -336,6 +348,11 @@ async function checkOptions(x) {
     options14.timeout = -1;
     await x.assertTry(() => options14.validateFields(), [],
         '`Options.timeout` field cannot be < 0');
+
+    const options15 = new Options();
+    options15.permissions = 'la';
+    await x.assertTry(() => options15.validateFields(), [],
+        '`Options.permissions` field is supposed to be an array!');
 }
 
 const TO_CHECK = [

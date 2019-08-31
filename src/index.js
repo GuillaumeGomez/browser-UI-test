@@ -139,6 +139,8 @@ async function runCommand(loaded, logs, options, browser) {
             'expectedToFail': false,
             'showText': options.showText,
             'puppeteer': browser.puppeteer,
+            'browser': browser,
+            'permissions': options.permissions,
         };
         await page.exposeFunction('BrowserUiStyleInserter', () => {
             return getGlobalStyle(extras.showText);

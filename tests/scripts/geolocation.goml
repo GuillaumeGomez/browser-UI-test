@@ -1,0 +1,5 @@
+screenshot: false
+goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
+permissions: ['geolocation']
+geolocation: (6.4854, 43.214852)
+assert: ("#button", "Go somewhere else!")
