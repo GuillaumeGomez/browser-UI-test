@@ -39,18 +39,8 @@ function save_failure(folderIn, failuresFolder, newImage, originalImage, runId) 
         // We cannot save the failures...
         return false;
     }
-    const fullPath = path.join(failuresFolder, runId);
-    if (fs.existsSync(fullPath) === false) {
-        try {
-            fs.mkdirSync(failuresFolder + runId);
-        } catch (err) {
-            add_warn(`Error while trying to make folder "${fullPath}": ${err.message}`);
-            // Failed to create folder to save failures...
-            return false;
-        }
-    }
     try {
-        fs.renameSync(path.join(folderIn, newImage), path.join(fullPath, newImage));
+        fs.renameSync(path.join(folderIn, newImage), path.join(failuresFolder, newImage));
     } catch (err) {
         add_warn(`Error while trying to move files: "${err.message}"`);
         // failed to move files...
