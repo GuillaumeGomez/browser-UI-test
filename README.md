@@ -4,7 +4,7 @@ Small JS framework to easily provide UI screenshot-based tests.
 
 ## Description
 
-This framework provides the possibility to quickly check browser UI through small script files (with the `.goml` extension). Once the script is done, it takes a screenshot of the page and compares it to the expected one. If they're different, the test will fail.
+This framework provides the possibility to quickly check browser UI through small script files (with the `.goml` extension). By default, once the script is done running, it takes a screenshot of the page and compares it to the expected one. If they're different, the test will fail.
 
 ## Usage
 
@@ -461,3 +461,9 @@ $ npm run api-test
 $ npm run parser-test
 $ npm run exported-test
 ```
+
+## Donations
+
+If you appreciate my work and want to support me, you can do it here:
+
+[![Become a patron](https://c5.patreon.com/external/logo/become_a_patron_button.png)](https://www.patreon.com/GuillaumeGomez)
