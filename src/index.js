@@ -274,8 +274,8 @@ async function runCommand(loaded, logs, options, browser) {
                 logs.append(
                     `FAILED (images "${newImage}" and "${originalImage}" are different)`,
                     true);
-                notOk = true;
             }
+            notOk = true;
         } else {
             // If everything worked as expected, we can remove the generated image.
             fs.unlinkSync(newImage);
