@@ -136,6 +136,7 @@ Here's the command list:
  * [`focus`](#focus)
  * [`geolocation`](#geolocation)
  * [`goto`](#goto)
+ * [`javascript`](#javascript)
  * [`local-storage`](#local-storage)
  * [`move-cursor-to`](#move-cursor-to)
  * [`permissions`](#permissions)
@@ -294,6 +295,15 @@ You can of course use `{doc-path}` and `{current-dir}` at the same time:
 
 ```
 goto: file://{current-dir}/{doc-path}/file.html
+```
+
+#### javascript
+
+**javascript** command enables/disables the javascript. If you want to render the page without javascript, don't forget to disable it before the call to `goto`! Examples:
+
+```
+javascript: false // we disable it before using goto to have a page rendered without javascript
+goto: https://somewhere.com // rendering without javascript
 ```
 
 #### local-storage

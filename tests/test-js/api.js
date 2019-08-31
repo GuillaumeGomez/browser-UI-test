@@ -534,8 +534,8 @@ function checkParseContent(x, func) {
     });
     x.assert(func('focus: "#foo"'),
         {
-            'error': 'First command must be `goto` (`emulate` or `fail` or `screenshot` or ' +
-                '`timeout` can be used before)!',
+            'error': 'First command must be `goto` (`emulate` or `fail` or `javascript` or ' +
+                '`screenshot` or `timeout` can be used before)!',
             'line': 1,
         });
     x.assert(func('fail: true\ngoto: file:///home'),
@@ -728,6 +728,16 @@ function checkPermissions(x, func) {
     });
 }
 
+function checkJavascript(x, func) {
+    x.assert(func(''), {'error': 'expected `true` or `false` value, found ``'});
+    x.assert(func('"a"'), {'error': 'expected `true` or `false` value, found `"a"`'});
+    x.assert(func('true'), {
+        'instructions': [
+            'await page.setJavaScriptEnabled(true);',
+        ],
+    });
+}
+
 const TO_CHECK = [
     {
         'name': 'assert',
@@ -778,6 +788,11 @@ const TO_CHECK = [
         'name': 'goto',
         'func': checkGoTo,
         'toCall': (e, o) => wrapper(parserFuncs.parseGoTo, e, o),
+    },
+    {
+        'name': 'javascript',
+        'func': checkJavascript,
+        'toCall': (e, o) => wrapper(parserFuncs.parseJavascript, e, o),
     },
     {
         'name': 'local-storage',

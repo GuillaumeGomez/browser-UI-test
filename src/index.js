@@ -105,7 +105,7 @@ function parseTestFile(testPath, logs, options) {
 }
 
 function createFolderIfNeeded(path) {
-    if (fs.existsSync(path) === false) {
+    if (path !== '' && fs.existsSync(path) === false) {
         try {
             fs.mkdirSync(path, { 'recursive': true });
         } catch (err) {
