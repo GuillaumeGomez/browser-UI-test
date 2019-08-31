@@ -1,6 +1,6 @@
 {
     "name": "browser-ui-test",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "author": "Guillaume Gomez <guillaume1.gomez@gmail.com> (https://guillaume-gomez.fr)",
     "license": "MIT",
     "description": "Small JS framework to easily provide UI screenshot-based tests",
@@ -11,6 +11,9 @@
     ],
     "homepage": "https://github.com/GuillaumeGomez/browser-UI-test",
     "main": "src/index.js",
+    "bin": {
+        "browser-ui-test": "src/index.js"
+    },
     "scripts": {
         "test": "node src/index.js --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files",
         "all-test": "node tests/test-js/all.js",

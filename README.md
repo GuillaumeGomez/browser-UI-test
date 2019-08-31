@@ -16,6 +16,20 @@ text: ("#button", "hello") // set text of element #button
 assert: ("#button", "hello") // check if #button element's text has been set to "hello"
 ```
 
+### Using this framework as a binary
+
+If you installed it, you should have a script called "browser-ui-test". You can run it as follows:
+
+```bash
+$ browser-ui-test --test-files some-file.goml
+```
+
+To see the list of available options, use `-h` or `--help`:
+
+```bash
+$ browser-ui-test --help
+```
+
 ### Using this framework as a dependency
 
 You can do so by importing both `runTests` and `Options` from `index.js`. `Options` is a class where you can set the parameters you need/want. If you feel better providing "command-line args"-like parameters, you can use it as follows:
@@ -26,7 +40,7 @@ const {Options, runTests} = require('browser-ui-test');
 const options = new Options();
 try {
     // This is more convenient that setting fields one by one.
-    options.parseArguments(['--doc-path', 'somewhere', '--test-folder', 'some-other-place']);
+    options.parseArguments(['--no-screenshot', '--test-folder', 'some-other-place']);
 } catch (error) {
     console.error(`invalid argument: ${error}`);
     process.exit(1);
