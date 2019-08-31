@@ -9,29 +9,29 @@ function helper() {
 
     print('Available options:');
     print('');
-    print('  --test-folder [PATH]     : Path of the folder where `.goml` script files are');
-    print('  --image-folder [PATH]    : Path of the folder where screenshots will be put (same as');
-    print('                             `test-folder` if not provided)');
-    print('  --failure-folder [PATH]  : Path of the folder where failed tests image will');
-    print('                             be placed (same as `image-folder` if not provided)');
-    print('  --test-files [PATHs]     : List of `.goml` files\' path to be run');
-    print('  --run-id [id]            : Id to be used for failed images extension (\'test\'');
-    print('                             by default)');
-    print('  --variable [name] [value]: Variable to be used in scripts');
-    print('  --generate-images        : If provided, it\'ll generate missing test images');
-    print('  --no-headless            : Disable headless mode');
-    print('  --show-text              : Disable text invisibility (be careful when using it!)');
-    print('  --debug                  : Display more information');
-    print('  --no-screenshot          : Disable screenshots at the end of the scripts by the end');
-    print('  --extension [PATH]       : Add an extension to load from the given path');
     print(`  --browser [BROWSER NAME] : Run tests on given browser (${browsers})`);
     print('                             /!\\ Only testing on chrome is stable!');
-    print('  --incognito              : Enable incognito mode');
+    print('  --debug                  : Display more information');
     print('  --emulate [DEVICE NAME]  : Emulate the given device');
-    print('  --show-devices           : Show list of available devices');
-    print('  --show-permissions       : Show list of available permissions');
-    print('  --timeout [MILLISECONDS] : Set default timeout for all tests');
+    print('  --extension [PATH]       : Add an extension to load from the given path');
+    print('  --failure-folder [PATH]  : Path of the folder where failed tests image will');
+    print('                             be placed (same as `image-folder` if not provided)');
+    print('  --image-folder [PATH]    : Path of the folder where screenshots will be put (same as');
+    print('                             `test-folder` if not provided)');
+    print('  --incognito              : Enable incognito mode');
+    print('  --generate-images        : If provided, it\'ll generate missing test images');
+    print('  --no-headless            : Disable headless mode');
+    print('  --no-screenshot          : Disable screenshots at the end of the scripts by the end');
     print('  --permission [PERMISSION]: Add a permission to enable');
+    print('  --run-id [id]            : Id to be used for failed images extension (\'test\'');
+    print('                             by default)');
+    print('  --show-devices           : Show list of available devices');
+    print('  --show-text              : Disable text invisibility (be careful when using it!)');
+    print('  --show-permissions       : Show list of available permissions');
+    print('  --test-folder [PATH]     : Path of the folder where `.goml` script files are');
+    print('  --timeout [MILLISECONDS] : Set default timeout for all tests');
+    print('  --test-files [PATHs]     : List of `.goml` files\' path to be run');
+    print('  --variable [name] [value]: Variable to be used in scripts');
     print('  --help | -h              : Show this text');
 }
 

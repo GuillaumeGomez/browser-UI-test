@@ -8,7 +8,13 @@ This framework provides the possibility to quickly check browser UI through smal
 
 ## Usage
 
-You can either use this framework by using it as dependency or running it directly.
+You can either use this framework by using it as dependency or running it directly. In both cases you'll need to write some `.goml` scripts. It looks like this:
+
+```
+goto: https://somewhere.com // go to this url
+text: ("#button", "hello") // set text of element #button
+assert: ("#button", "hello") // check if #button element's text has been set to "hello"
+```
 
 ### Using this framework as a dependency
 
@@ -75,20 +81,20 @@ If you want to see all the available options, just run with the `-h` or `--help`
 The list of fields of the `Options` class is the following:
 
  * `debug`: display more information
- * `testFolder`: path of the folder where `.goml` script files are
+ * `emulate`: name of the device you want to emulate (list of available devices is [here](https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js) or you can use `--show-devices` option)
+ * `extensions`: extensions to be loaded by the browser
  * `failureFolder`: path of the folder where failed tests image will be placed (`testFolder` value by default)
- * `imageFolder`: path of the folder where screenshots are and where they are generated (`testFolder` value by default)
  * `generateImages`: if provided, it'll generate test images and won't run comparison tests
+ * `imageFolder`: path of the folder where screenshots are and where they are generated (`testFolder` value by default)
  * `noHeadless`: disable headless mode
  * `noScreenshot`: disable screenshots generation and comparison at the end of the scripts
+ * `permissions`: List of permissions to enable (you can see the full list by running with `--show-permissions`)
  * `testFiles`: list of `.goml` files' path to be run
+ * `testFolder`: path of the folder where `.goml` script files are
+ * `timeout`: number of milliseconds that'll be used as default timeout for all commands interacting with the browser. Defaults to 30 seconds, cannot be less than 0, if 0, it means it'll wait undefinitely so use it carefully!
  * `runId`: id to be used for failed images extension ('test' by default)
  * `showText`: disable text invisibility (be careful when using it!)
  * `variables`: variables to be used in the `.goml` scripts (more information about variables [below](#Variables))
- * `extensions`: extensions to be loaded by the browser
- * `emulate`: name of the device you want to emulate (list of available devices is [here](https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js) or you can use `--show-devices` option)
- * `timeout`: number of milliseconds that'll be used as default timeout for all commands interacting with the browser. Defaults to 30 seconds, cannot be less than 0, if 0, it means it'll wait undefinitely so use it carefully!
- * `permissions`: List of permissions to enable (you can see the full list by running with `--show-permissions`)
 
 ### Running it directly
 
