@@ -130,6 +130,7 @@ function checkTuple(x) {
     p.parse();
     x.assert(p.error, 'expected `)` after `false`');
     x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'tuple');
     x.assert(p.elems[0].error, 'expected `)` after `false`');
     x.assert(p.elems[0].getValue().length, 1);
     x.assert(p.elems[0].getValue()[0].error, null);
@@ -199,6 +200,237 @@ function checkTuple(x) {
     x.assert(p.elems[0].getValue()[3].error, null);
     x.assert(p.elems[0].getValue()[3].kind, 'number');
     x.assert(p.elems[0].getValue()[3].getValue(), '3');
+
+
+    p = new Parser('(false,[1, 2])');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].getText(), '(false,[1, 2])');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), false);
+    x.assert(p.elems[0].getValue()[1].error, null);
+    x.assert(p.elems[0].getValue()[1].kind, 'array');
+    x.assert(p.elems[0].getValue()[1].getText(), '[1, 2]');
+    x.assert(p.elems[0].getValue()[1].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[1].getValue()[0].kind, 'number');
+    x.assert(p.elems[0].getValue()[1].getValue()[0].getValue(), '1');
+    x.assert(p.elems[0].getValue()[1].getValue()[1].kind, 'number');
+    x.assert(p.elems[0].getValue()[1].getValue()[1].getValue(), '2');
+}
+
+function checkArray(x) {
+    let p = new Parser('[]');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue().length, 0);
+
+
+    p = new Parser('["hello",');
+    p.parse();
+    x.assert(p.error, 'unexpected `,` after `"hello"`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].isRecursive(), true);
+    x.assert(p.elems[0].error, 'unexpected `,` after `"hello"`');
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'string');
+
+
+    p = new Parser('["hello", 2]');
+    p.parse();
+    x.assert(p.error,
+        'all array\'s elements must be of the same kind: expected array of `string`, found ' +
+        '`number` at position 1');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].error,
+        'all array\'s elements must be of the same kind: expected array of `string`, found ' +
+        '`number` at position 1');
+    x.assert(p.elems[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'string');
+    x.assert(p.elems[0].getValue()[1].error, null);
+    x.assert(p.elems[0].getValue()[1].kind, 'number');
+
+
+    p = new Parser('[{"a": {"b": 3}, "c": "d"},]');
+    p.parse();
+    x.assert(p.error, 'unexpected `,` after `{"a": {"b": 3}, "c": "d"}`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].error, 'unexpected `,` after `{"a": {"b": 3}, "c": "d"}`');
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'json');
+
+
+    p = new Parser('[true false]');
+    p.parse();
+    x.assert(p.error, 'expected `,`, found `f`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].getText(), '[true false]');
+    x.assert(p.elems[0].error, 'expected `,`, found `f`');
+    x.assert(p.elems[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), true);
+    x.assert(p.elems[0].getValue()[1].error, 'expected `,`, found `f`');
+    x.assert(p.elems[0].getValue()[1].kind, 'char');
+    x.assert(p.elems[0].getValue()[1].getValue(), 'f');
+
+
+    p = new Parser('[true,,true]');
+    p.parse();
+    x.assert(p.error, 'unexpected `,` after `,`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].getText(), '[true,,true]');
+    x.assert(p.elems[0].error, 'unexpected `,` after `,`');
+    x.assert(p.elems[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), true);
+    x.assert(p.elems[0].getValue()[1].error, 'unexpected `,` after `,`');
+    x.assert(p.elems[0].getValue()[1].kind, 'char');
+    x.assert(p.elems[0].getValue()[1].getValue(), ',');
+
+
+    p = new Parser('[true|false]');
+    p.parse();
+    x.assert(p.error, 'expected `,`, found `|`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].getText(), '[true|false]');
+    x.assert(p.elems[0].error, 'expected `,`, found `|`');
+    x.assert(p.elems[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), true);
+    x.assert(p.elems[0].getValue()[1].error, 'expected `,`, found `|`');
+    x.assert(p.elems[0].getValue()[1].kind, 'char');
+    x.assert(p.elems[0].getValue()[1].getValue(), '|');
+
+
+    p = new Parser('[false]');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].getText(), '[false]');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), false);
+
+
+    process.env['variable'] = 'hello';
+    p = new Parser('[|variable|]');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].getText(), '[|variable|]');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'string');
+    x.assert(p.elems[0].getValue()[0].getValue(), 'hello');
+    x.assert(p.elems[0].getValue()[0].getText(), 'hello');
+    process.env['variable'] = undefined;
+
+
+    p = new Parser('[false//]');
+    p.parse();
+    x.assert(p.error, 'expected `]` after `false`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].error, 'expected `]` after `false`');
+    x.assert(p.elems[0].getValue().length, 1);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), false);
+
+
+    p = new Parser('[false,true]');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].getText(), '[false,true]');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'bool');
+    x.assert(p.elems[0].getValue()[0].getValue(), false);
+    x.assert(p.elems[0].getValue()[1].error, null);
+    x.assert(p.elems[0].getValue()[1].kind, 'bool');
+    x.assert(p.elems[0].getValue()[1].getValue(), true);
+
+
+    p = new Parser('[(3, 12), ("a", "b", "c")]');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].getText(), '[(3, 12), ("a", "b", "c")]');
+    x.assert(p.elems[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'tuple');
+    x.assert(p.elems[0].getValue()[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].getText(), '(3, 12)');
+    x.assert(p.elems[0].getValue()[0].getValue()[0].kind, 'number');
+    x.assert(p.elems[0].getValue()[0].getValue()[0].getValue(), '3');
+    x.assert(p.elems[0].getValue()[0].getValue()[1].kind, 'number');
+    x.assert(p.elems[0].getValue()[0].getValue()[1].getValue(), '12');
+    x.assert(p.elems[0].getValue()[1].error, null);
+    x.assert(p.elems[0].getValue()[1].kind, 'tuple');
+    x.assert(p.elems[0].getValue()[1].getText(), '("a", "b", "c")');
+    x.assert(p.elems[0].getValue()[1].getValue().length, 3);
+    x.assert(p.elems[0].getValue()[1].getValue()[0].kind, 'string');
+    x.assert(p.elems[0].getValue()[1].getValue()[0].getValue(), 'a');
+    x.assert(p.elems[0].getValue()[1].getValue()[0].getText(), '"a"');
+    x.assert(p.elems[0].getValue()[1].getValue()[1].getValue(), 'b');
+    x.assert(p.elems[0].getValue()[1].getValue()[1].getText(), '"b"');
+    x.assert(p.elems[0].getValue()[1].getValue()[2].getValue(), 'c');
+    x.assert(p.elems[0].getValue()[1].getValue()[2].getText(), '"c"');
+
+    p = new Parser('[[3, 12], ["a", "b", "c"]]');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].getText(), '[[3, 12], ["a", "b", "c"]]');
+    x.assert(p.elems[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].error, null);
+    x.assert(p.elems[0].getValue()[0].kind, 'array');
+    x.assert(p.elems[0].getValue()[0].getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].getText(), '[3, 12]');
+    x.assert(p.elems[0].getValue()[0].getValue()[0].kind, 'number');
+    x.assert(p.elems[0].getValue()[0].getValue()[0].getValue(), '3');
+    x.assert(p.elems[0].getValue()[0].getValue()[1].kind, 'number');
+    x.assert(p.elems[0].getValue()[0].getValue()[1].getValue(), '12');
+    x.assert(p.elems[0].getValue()[1].error, null);
+    x.assert(p.elems[0].getValue()[1].kind, 'array');
+    x.assert(p.elems[0].getValue()[1].getText(), '["a", "b", "c"]');
+    x.assert(p.elems[0].getValue()[1].getValue().length, 3);
+    x.assert(p.elems[0].getValue()[1].getValue()[0].kind, 'string');
+    x.assert(p.elems[0].getValue()[1].getValue()[0].getValue(), 'a');
+    x.assert(p.elems[0].getValue()[1].getValue()[0].getText(), '"a"');
+    x.assert(p.elems[0].getValue()[1].getValue()[1].getValue(), 'b');
+    x.assert(p.elems[0].getValue()[1].getValue()[1].getText(), '"b"');
+    x.assert(p.elems[0].getValue()[1].getValue()[2].getValue(), 'c');
+    x.assert(p.elems[0].getValue()[1].getValue()[2].getText(), '"c"');
 }
 
 function checkBool(x) {
@@ -565,6 +797,52 @@ function checkJson(x) {
     x.assert(p.elems[0].getText(), '{x:');
     x.assert(p.elems[0].getValue()[0].key.kind, 'unknown');
     x.assert(p.elems[0].getValue()[0].key.getText(), 'x');
+    x.assert(p.elems[0].getValue()[0].value === undefined);
+
+
+    p = new Parser('{"a": []}');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getText(), '{"a": []}');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"a"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'a');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'array');
+    x.assert(p.elems[0].getValue()[0].value.getText(), '[]');
+    x.assert(p.elems[0].getValue()[0].value.getValue().length, 0);
+
+
+    p = new Parser('{"a": [1, 2]}');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getText(), '{"a": [1, 2]}');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'string');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '"a"');
+    x.assert(p.elems[0].getValue()[0].key.getValue(), 'a');
+    x.assert(p.elems[0].getValue()[0].value.kind, 'array');
+    x.assert(p.elems[0].getValue()[0].value.getText(), '[1, 2]');
+    x.assert(p.elems[0].getValue()[0].value.getValue().length, 2);
+    x.assert(p.elems[0].getValue()[0].value.getValue()[0].kind, 'number');
+    x.assert(p.elems[0].getValue()[0].value.getValue()[0].getValue(), '1');
+    x.assert(p.elems[0].getValue()[0].value.getValue()[1].kind, 'number');
+    x.assert(p.elems[0].getValue()[0].value.getValue()[1].getValue(), '2');
+
+
+    p = new Parser('{[1, 2]: 1}');
+    p.parse();
+    x.assert(p.error, 'arrays cannot be used as keys');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, 'arrays cannot be used as keys');
+    x.assert(p.elems[0].getText(), '{[1, 2]');
+    x.assert(p.elems[0].getValue()[0].key.kind, 'array');
+    x.assert(p.elems[0].getValue()[0].key.getText(), '[1, 2]');
     x.assert(p.elems[0].getValue()[0].value === undefined);
 
 
@@ -941,6 +1219,7 @@ function checkComment(x) {
 
 const TO_CHECK = [
     {'name': 'tuple', 'func': checkTuple},
+    {'name': 'array', 'func': checkArray},
     {'name': 'bool', 'func': checkBool},
     {'name': 'string', 'func': checkString},
     {'name': 'number', 'func': checkNumber},

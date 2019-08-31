@@ -67,6 +67,21 @@ class TupleElement extends Element {
     }
 }
 
+class ArrayElement extends Element {
+    constructor(value, startPos, endPos, fullText, error = null) {
+        super('array', value, startPos, endPos, error);
+        this.fullText = fullText;
+    }
+
+    isRecursive() {
+        return true;
+    }
+
+    getText() {
+        return this.fullText;
+    }
+}
+
 class StringElement extends Element {
     constructor(value, startPos, endPos, fullText, error = null) {
         super('string', value, startPos, endPos, error);
@@ -179,6 +194,8 @@ class Parser {
                 checker(this, c, 'parseNumber');
             } else if (c === '(') {
                 checker(this, c, 'parseTuple');
+            } else if (c === '[') {
+                checker(this, c, 'parseArray');
             } else if (c === '/') {
                 this.parseComment(this, pushTo);
             } else if (c === '|') {
@@ -237,56 +254,86 @@ class Parser {
         }
     }
 
-    parseTuple(pushTo = null) {
+    parseList(startChar, endChar, constructor, pushTo = null) {
         const start = this.pos;
         const elems = [];
 
         this.pos += 1;
-        const prev = this.parse(')', elems, ',');
+        const prev = this.parse(endChar, elems, ',');
         const full = this.text.substring(start, this.pos + 1);
         if (elems.length > 0 && elems[elems.length - 1].error !== null) {
-            this.push(new TupleElement(elems, start, this.pos, full, elems[elems.length - 1].error),
+            this.push(new constructor(elems, start, this.pos, full, elems[elems.length - 1].error),
                 pushTo);
         } else if (prev !== '') {
             if (prev === ',') {
                 if (elems.length > 0) {
                     const el = elems[elems.length - 1].getText();
-                    this.push(new TupleElement(elems, start, this.pos, full,
+                    this.push(new constructor(elems, start, this.pos, full,
                         `unexpected \`,\` after \`${el}\``), pushTo);
                 } else {
-                    this.push(new TupleElement(elems, start, this.pos, full,
-                        'unexpected `,` after `(`'), pushTo);
+                    this.push(new constructor(elems, start, this.pos, full,
+                        `unexpected \`,\` after \`${startChar}\``), pushTo);
                 }
                 this.pos = this.text.length;
             } else if (elems.length > 1) { // we're at the end of the text
                 const el = elems[elems.length - 1].getText();
                 const prevText = elems[elems.length - 2].getText();
                 const prevEl = typeof prev !== 'undefined' ? prev : prevText;
-                this.push(new TupleElement(elems, start, this.pos, full,
+                this.push(new constructor(elems, start, this.pos, full,
                     `unexpected \`${el}\` after \`${prevEl}\``), pushTo);
             } else {
                 const el = elems[elems.length - 1].getText();
                 // this case should never happen but just in case...
-                this.push(new TupleElement(elems, start, this.pos, full,
-                    `unexpected \`${el}\` after \`(\``), pushTo);
+                this.push(new constructor(elems, start, this.pos, full,
+                    `unexpected \`${el}\` after \`${startChar}\``), pushTo);
             }
-        } else if (this.pos >= this.text.length || this.text.charAt(this.pos) !== ')') {
+        } else if (this.pos >= this.text.length || this.text.charAt(this.pos) !== endChar) {
             if (elems.length === 0) {
-                this.push(new TupleElement(elems, start, this.pos, full, 'expected `)` at the end'),
-                    pushTo);
+                this.push(new constructor(elems, start, this.pos, full,
+                    `expected \`${endChar}\` at the end`),
+                pushTo);
             } else {
-                this.push(new TupleElement(elems, start, this.pos, full,
-                    `expected \`)\` after \`${elems[elems.length - 1].getText()}\``), pushTo);
+                this.push(new constructor(elems, start, this.pos, full,
+                    `expected \`${endChar}\` after \`${elems[elems.length - 1].getText()}\``),
+                pushTo);
             }
-        } else if (elems.length === 0) {
-            this.push(new TupleElement(elems, start, this.pos, full,
-                'unexpected `()`: tuples need at least one argument'), pushTo);
-        } else if (elems[elems.length - 1].error !== null) {
-            this.push(new TupleElement(elems, start, this.pos, full, elems[elems.length - 1].error),
+        } else if (elems.length > 0 && elems[elems.length - 1].error !== null) {
+            this.push(new constructor(elems, start, this.pos, full, elems[elems.length - 1].error),
                 pushTo);
         } else {
-            this.push(new TupleElement(elems, start, this.pos, full), pushTo);
+            this.push(new constructor(elems, start, this.pos, full), pushTo);
         }
+    }
+
+    parseTuple(pushTo = null) {
+        const tmp = [];
+        this.parseList('(', ')', TupleElement, tmp);
+        if (tmp[0].error !== null) {
+            // nothing to do
+        } else if (tmp[0].getValue().length === 0) {
+            tmp[0].error = 'unexpected `()`: tuples need at least one argument';
+        }
+        this.push(tmp[0], pushTo);
+    }
+
+    parseArray(pushTo = null) {
+        const tmp = [];
+        this.parseList('[', ']', ArrayElement, tmp);
+        if (tmp[0].error !== null) {
+            // nothing to do
+        } else if (tmp[0].getValue().length > 1) {
+            const values = tmp[0].getValue();
+
+            for (let i = 1; i < values.length; ++i) {
+                if (values[i].kind !== values[0].kind) {
+                    tmp[0].error = 'all array\'s elements must be of the same kind: expected ' +
+                        `array of \`${values[0].kind}\`, found \`${values[i].kind}\` at position` +
+                        ` ${i}`;
+                    break;
+                }
+            }
+        }
+        this.push(tmp[0], pushTo);
     }
 
     parseString(pushTo = null) {
@@ -547,6 +594,26 @@ class Parser {
                     }
                     key = null;
                 }
+            } else if (c === '[') {
+                // TODO exact same code as JSON objects, maybe combine them?
+                const tmp = [];
+                this.parseArray(tmp);
+
+                if (key === null) {
+                    elems.push({'key': tmp[0]});
+                    parseEnd(this, pushTo, 'arrays cannot be used as keys');
+                } else if (prevChar !== ':') {
+                    elems.push({'key': key, 'value': tmp[0]});
+                    parseEnd(this, pushTo,
+                        `expected \`:\` after \`${key.getText()}\`, found \`${tmp[0].getText()}\``);
+                } else {
+                    prevChar = '';
+                    elems.push({'key': key, 'value': tmp[0]});
+                    if (tmp[0].error !== null) {
+                        parseEnd(this, pushTo, tmp[0].error);
+                    }
+                    key = null;
+                }
             } else {
                 const tmp = [];
                 this.parseBoolean(tmp);
@@ -600,13 +667,14 @@ class Parser {
 }
 
 module.exports = {
-    Parser: Parser,
-    Element: Element,
-    CharElement: CharElement,
-    TupleElement: TupleElement,
-    StringElement: StringElement,
-    NumberElement: NumberElement,
-    UnknownElement: UnknownElement,
-    JsonElement: JsonElement,
-    BoolElement: BoolElement,
+    'Parser': Parser,
+    'Element': Element,
+    'CharElement': CharElement,
+    'TupleElement': TupleElement,
+    'ArrayElement': TupleElement,
+    'StringElement': StringElement,
+    'NumberElement': NumberElement,
+    'UnknownElement': UnknownElement,
+    'JsonElement': JsonElement,
+    'BoolElement': BoolElement,
 };
