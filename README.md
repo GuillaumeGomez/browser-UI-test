@@ -88,6 +88,7 @@ The list of fields of the `Options` class is the following:
  * `extensions`: extensions to be loaded by the browser
  * `emulate`: name of the device you want to emulate (list of available devices is [here](https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js) or you can use `--show-devices` option)
  * `timeout`: number of milliseconds that'll be used as default timeout for all commands interacting with the browser. Defaults to 30 seconds, cannot be less than 0, if 0, it means it'll wait undefinitely so use it carefully!
+ * `permissions`: List of permissions to enable (you can see the full list by running with `--show-permissions`)
 
 ### Running it directly
 
@@ -133,9 +134,11 @@ Here's the command list:
  * [`emulate`](#emulate)
  * [`fail`](#fail)
  * [`focus`](#focus)
+ * [`geolocation`](#geolocation)
  * [`goto`](#goto)
  * [`local-storage`](#local-storage)
  * [`move-cursor-to`](#move-cursor-to)
+ * [`permissions`](#permissions)
  * [`reload`](#reload)
  * [`screenshot`](#screenshot)
  * [`scroll-to`](#scroll-to)
@@ -253,6 +256,16 @@ focus: ".element"
 focus: "#element"
 ```
 
+#### geolocation
+
+**geolocation** command allows you to set your position. Please note that you might need to enable the `geolocation` permission in order to make it work. It expects as argument `([longitude], [latitude])`. Examples:
+
+```
+permissions: ["geolocation"] // we enable the geolocation permission just in case...
+geolocation: (2.3635482, 48.8569108) // position of Paris
+geolocation: (144.9337482, -37.7879639) // position of Melbourne
+```
+
 #### goto
 
 **goto** command changes the current page to the given path/url. It expects a path (starting with `.` or `/`) or a URL. Examples:
@@ -299,6 +312,15 @@ local-storage: {"key": "value", "another key": "another value"}
 move-cursor-to: "#element"
 move-cursor-to: ".element"
 move-cursor-to: (10, 12)
+```
+
+#### permissions
+
+**permissions** command allows you to enable some of the browser's permissions. **All non-given permissions  will be disabled!** You can see the list of the permissions with the `--show-permissions` option. Examples:
+
+```
+permissions: ["geolocation"] // "geolocation" permission is enabled
+permissions: ["camera"] // "camera" permission is enabled and "geolocation" is disabled
 ```
 
 #### reload

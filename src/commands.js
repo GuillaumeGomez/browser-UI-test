@@ -265,7 +265,7 @@ function parseGoTo(input, options) {
         || line.startsWith('file://') === true) {
         return {
             'instructions': [
-                `await page.goto("${cleanString(line)}")`,
+                `await page.goto("${cleanString(line)}");`,
                 permissions,
             ],
         };
@@ -273,7 +273,7 @@ function parseGoTo(input, options) {
         return {
             'instructions': [
                 'await page.goto(page.url().split("/").slice(0, -1).join("/") + ' +
-                `"/${cleanString(line)}")`,
+                `"/${cleanString(line)}");`,
                 permissions,
             ],
         };
@@ -281,7 +281,7 @@ function parseGoTo(input, options) {
         return {
             'instructions': [
                 'await page.goto(page.url().split("/").slice(0, -1).join("/") + ' +
-                `"${cleanString(line)}")`,
+                `"${cleanString(line)}");`,
                 permissions,
             ],
         };
@@ -934,9 +934,7 @@ function parseTimeout(line, options) {
 // Possible inputs:
 //
 // * (number, number)
-function parseGeolocate(line, options) {
-    const warnings = [];
-
+function parseGeolocation(line, options) {
     const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
@@ -957,7 +955,9 @@ function parseGeolocate(line, options) {
         };
     }
     return {
-        'instructions': `await page.setGeolocation(${tuple[0].getValue()}, ${tuple[1].getValue()});`,
+        'instructions': [
+            `await page.setGeolocation(${tuple[0].getValue()}, ${tuple[1].getValue()});`,
+        ],
     };
 }
 
@@ -975,18 +975,21 @@ function parsePermissions(line, options) {
     const array = p.elems[0].getValue();
     if (array.length > 0 && array[0].kind !== 'string') {
         return {'error': `expected an array of strings, found \`${p.elems[0].getText()}\``};
-    };
+    }
 
     for (let i = 0; i < array.length; ++i) {
         if (consts.AVAILABLE_PERMISSIONS.indexOf(array[i].getValue()) === -1) {
-            return {'error': `\`${array[i].getValue()}\` is an unknown permission`};
+            return {
+                'error': `\`${array[i].getValue()}\` is an unknown permission, you can see the ` +
+                    'list of available permissions with the `--show-permissions` option',
+            };
         }
     }
 
     return {
         'instructions': [
             `arg.permissions = ${p.elems[0].getText()};`,
-            'await arg.browser.overridePermissions(page.url(), arg.permissions);'
+            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
         ],
     };
 }
@@ -1000,7 +1003,7 @@ const ORDERS = {
     'emulate': parseEmulate,
     'fail': parseFail,
     'focus': parseFocus,
-    'geolocate': parseGeolocate,
+    'geolocation': parseGeolocation,
     'goto': parseGoTo,
     'local-storage': parseLocalStorage,
     'move-cursor-to': parseMoveCursorTo,
@@ -1097,10 +1100,11 @@ module.exports = {
     'parseEmulate': parseEmulate,
     'parseFail': parseFail,
     'parseFocus': parseFocus,
-    'parseGeolocate': parseGeolocate,
+    'parseGeolocation': parseGeolocation,
     'parseGoTo': parseGoTo,
     'parseLocalStorage': parseLocalStorage,
     'parseMoveCursorTo': parseMoveCursorTo,
+    'parsePermissions': parsePermissions,
     'parseReload': parseReload,
     'parseScreenshot': parseScreenshot,
     'parseScrollTo': parseScrollTo,

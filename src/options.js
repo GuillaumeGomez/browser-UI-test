@@ -1,5 +1,6 @@
 const utils = require('./utils.js');
 const print = utils.print;
+const consts = require('./consts.js');
 
 const BROWSERS = ['chrome', 'firefox'];
 
@@ -28,7 +29,9 @@ function helper() {
     print('  --incognito              : Enable incognito mode');
     print('  --emulate [DEVICE NAME]  : Emulate the given device');
     print('  --show-devices           : Show list of available devices');
+    print('  --show-permissions       : Show list of available permissions');
     print('  --timeout [MILLISECONDS] : Set default timeout for all tests');
+    print('  --permission [PERMISSION]: Add a permission to enable');
     print('  --help | -h              : Show this text');
 }
 
@@ -39,6 +42,15 @@ function showDeviceList(options) {
     const devices = b.puppeteer.devices;
     for (let i = 0; i < devices.length; ++i) {
         print(`"${devices[i].name}"`);
+    }
+}
+
+function showPermissionsList() {
+    print('List of available permissions:');
+    print('');
+    const permissions = consts.AVAILABLE_PERMISSIONS;
+    for (let i = 0; i < permissions.length; ++i) {
+        print(`"${permissions[i]}"`);
     }
 }
 
@@ -64,10 +76,12 @@ class Options {
         this.incognito = false;
         this.emulate = '';
         this.timeout = 30000;
+        this.permissions = [];
     }
 
     parseArguments(args = []) {
         let showDevices = false;
+        let showPermissions = false;
         let it = 0;
         const addPath = () => {
             if (it + 1 < args.length) {
@@ -111,6 +125,8 @@ class Options {
                 return false;
             } else if (args[it] === '--show-devices') {
                 showDevices = true;
+            } else if (args[it] === '--show-permissions') {
+                showPermissions = true;
             } else if (['--test-folder', '--failure-folder', '--image-folder']
                 .indexOf(args[it]) !== -1) {
                 addPath(args[it]);
@@ -137,7 +153,7 @@ class Options {
                     this.extensions.push(args[it + 1]);
                     it += 1;
                 } else {
-                    throw new Error('Missing path after `--extension` option');
+                    throw new Error('Missing extension\'s path after `--extension` option');
                 }
             } else if (args[it] === '--browser') {
                 if (it + 1 < args.length) {
@@ -172,6 +188,15 @@ class Options {
                 } else {
                     throw new Error('Missing number of milliseconds after `--timeout` option');
                 }
+            } else if (args[it] === '--permission') {
+                if (it + 1 < args.length) {
+                    if (this.permissions.indexOf(args[it + 1]) === -1) {
+                        this.permissions.push(args[it + 1]);
+                    }
+                    it += 1;
+                } else {
+                    throw new Error('Missing permission name after `--permission` option');
+                }
             } else {
                 throw new Error(`Unknown option \`${args[it]}\`\n` +
                     'Use `--help` if you want the list of the available commands');
@@ -179,9 +204,11 @@ class Options {
         }
         if (showDevices === true) {
             showDeviceList(this);
-            return false;
         }
-        return true;
+        if (showPermissions === true) {
+            showPermissionsList();
+        }
+        return showDevices === false && showPermissions === false;
     }
 
     getImageFolder() {
@@ -214,7 +241,11 @@ class Options {
     validateFields() {
         // Check if variables have the expected types (you never know...).
         const validateField = (fieldName, expectedType) => {
-            if (typeof this[fieldName] !== expectedType) {
+            if (expectedType === 'array') {
+                if (Array.isArray(this[fieldName]) !== true) {
+                    throw new Error(`\`Options.${fieldName}\` field is supposed to be an array!`);
+                }
+            } else if (typeof this[fieldName] !== expectedType) {
                 throw new Error(`\`Options.${fieldName}\` field is supposed to be a ` +
                     `${expectedType}!`);
             }
@@ -232,15 +263,12 @@ class Options {
         validateField('incognito', 'boolean');
         validateField('emulate', 'string');
         validateField('timeout', 'number');
-        if (Array.isArray(this.testFiles) !== true) {
-            throw new Error('`Options.files` field is supposed to be an array!');
-        }
+        validateField('testFiles', 'array');
+        validateField('extensions', 'array');
+        validateField('permissions', 'array');
         // eslint-disable-next-line eqeqeq
         if (this.variables.constructor != Object) {
             throw new Error('`Options.variables` field is supposed to be a dictionary-like!');
-        }
-        if (Array.isArray(this.extensions) !== true) {
-            throw new Error('`Options.extensions` field is supposed to be an array!');
         }
         if (BROWSERS.indexOf(this.browser) === -1) {
             const browsers = BROWSERS.map(e => `"${e}"`).join(' or ');

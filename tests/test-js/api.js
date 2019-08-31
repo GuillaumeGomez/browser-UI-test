@@ -184,9 +184,9 @@ function checkClick(x, func) {
     x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
     x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
     x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
-    x.assert(func('(1,2)'), {'instructions': ['page.mouse.click(1,2)']});
-    x.assert(func('(-1,2)'), {'instructions': ['page.mouse.click(-1,2)']});
-    x.assert(func('(-2,1)'), {'instructions': ['page.mouse.click(-2,1)']});
+    x.assert(func('(1,2)'), {'instructions': ['await page.mouse.click(1,2)']});
+    x.assert(func('(-1,2)'), {'instructions': ['await page.mouse.click(-1,2)']});
+    x.assert(func('(-2,1)'), {'instructions': ['await page.mouse.click(-2,1)']});
     x.assert(func('(-1.0,2)'), {'error': 'expected integer for X position, found float: `-1.0`'});
     x.assert(func('(1.0,2)'), {'error': 'expected integer for X position, found float: `1.0`'});
     x.assert(func('(2,-1.0)'), {'error': 'expected integer for Y position, found float: `-1.0`'});
@@ -196,9 +196,9 @@ function checkClick(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
     x.assert(func('\'\''), {'error': 'CSS selector cannot be empty'});
-    x.assert(func('"a"'), {'instructions': ['page.click("a")']});
-    x.assert(func('\'a\''), {'instructions': ['page.click("a")']});
-    x.assert(func('\'"a\''), {'instructions': ['page.click("\\\\"a")']});
+    x.assert(func('"a"'), {'instructions': ['await page.click("a")']});
+    x.assert(func('\'a\''), {'instructions': ['await page.click("a")']});
+    x.assert(func('\'"a\''), {'instructions': ['await page.click("\\\\"a")']});
 }
 
 function checkFail(x, func) {
@@ -214,9 +214,9 @@ function checkFocus(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
     x.assert(func('\'\''), {'error': 'CSS selector cannot be empty'});
-    x.assert(func('"a"'), {'instructions': ['page.focus("a")']});
-    x.assert(func('\'a\''), {'instructions': ['page.focus("a")']});
-    x.assert(func('\'"a\''), {'instructions': ['page.focus("\\\\"a")']});
+    x.assert(func('"a"'), {'instructions': ['await page.focus("a")']});
+    x.assert(func('\'a\''), {'instructions': ['await page.focus("a")']});
+    x.assert(func('\'"a\''), {'instructions': ['await page.focus("\\\\"a")']});
 }
 
 function checkGoTo(x, func) {
@@ -226,29 +226,60 @@ function checkGoTo(x, func) {
         {'error': 'a relative path or a full URL was expected, found `http:/a`'});
     x.assert(func('https:/a'),
         {'error': 'a relative path or a full URL was expected, found `https:/a`'});
-    x.assert(func('https://a'), {'instructions': ['await page.goto("https://a")']});
-    x.assert(func('www.x'), {'instructions': ['await page.goto("www.x")']});
+    x.assert(func('https://a'), {
+        'instructions': [
+            'await page.goto("https://a");',
+            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+        ],
+    });
+    x.assert(func('www.x'), {
+        'instructions': [
+            'await page.goto("www.x");',
+            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+        ],
+    });
     x.assert(func('/a'), {
-        'instructions': ['await page.goto(page.url().split("/").slice(0, -1).join("/") + "/a")'],
+        'instructions': [
+            'await page.goto(page.url().split("/").slice(0, -1).join("/") + "/a");',
+            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+        ],
     });
     x.assert(func('./a'), {
-        'instructions': ['await page.goto(page.url().split("/").slice(0, -1).join("/") + "/./a")'],
+        'instructions': [
+            'await page.goto(page.url().split("/").slice(0, -1).join("/") + "/./a");',
+            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+        ],
     });
     x.assert(func('file:///a'), {
-        'instructions': ['await page.goto("file:///a")'],
+        'instructions': [
+            'await page.goto("file:///a");',
+            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+        ],
     });
     // `docPath` parameter always ends with '/'
     x.assert(func('file://|doc-path|/a', {'variables': {'doc-path': 'foo'}}), {
-        'instructions': ['await page.goto("file://foo/a")'],
+        'instructions': [
+            'await page.goto("file://foo/a");',
+            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+        ],
     });
     x.assert(func('|url|', {'variables': {'url': 'http://foo'}}), {
-        'instructions': ['await page.goto("http://foo")'],
+        'instructions': [
+            'await page.goto("http://foo");',
+            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+        ],
     });
     x.assert(func('http://foo/|url|fa', {'variables': {'url': 'tadam/'}}), {
-        'instructions': ['await page.goto("http://foo/tadam/fa")'],
+        'instructions': [
+            'await page.goto("http://foo/tadam/fa");',
+            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+        ],
     });
     x.assert(func('http://foo/|url|/fa', {'variables': {'url': 'tadam'}}), {
-        'instructions': ['await page.goto("http://foo/tadam/fa")'],
+        'instructions': [
+            'await page.goto("http://foo/tadam/fa");',
+            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+        ],
     });
     x.assert(func('http://foo/|url|/fa'), {
         'error': 'variable `url` not found in options nor environment',
@@ -259,12 +290,12 @@ function checkLocalStorage(x, func) {
     x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
     x.assert(func('{').error !== undefined); // JSON syntax error
     x.assert(func('{"a": 1}'), {
-        'instructions': ['page.evaluate(() => { localStorage.setItem("a", "1"); })'],
+        'instructions': ['await page.evaluate(() => { localStorage.setItem("a", "1"); })'],
     });
     x.assert(func('{"a": "1"}'),
-        {'instructions': ['page.evaluate(() => { localStorage.setItem("a", "1"); })']});
+        {'instructions': ['await page.evaluate(() => { localStorage.setItem("a", "1"); })']});
     x.assert(func('{"a": "1", "b": "2px"}'),
-        {'instructions': ['page.evaluate(() => { localStorage.setItem("a", "1");\n' +
+        {'instructions': ['await page.evaluate(() => { localStorage.setItem("a", "1");\n' +
             'localStorage.setItem("b", "2px"); })']});
 }
 
@@ -281,7 +312,7 @@ function checkMoveCursorTo(x, func) {
     x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
     x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
     x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
-    x.assert(func('(1,2)'), {'instructions': ['page.mouse.move(1,2)']});
+    x.assert(func('(1,2)'), {'instructions': ['await page.mouse.move(1,2)']});
     x.assert(func('(-1,2)'), {'error': 'X position cannot be negative: `-1`'});
     x.assert(func('(1,-2)'), {'error': 'Y position cannot be negative: `-2`'});
     x.assert(func('(1.0,2)'), {'error': 'expected integer for X position, found float: `1.0`'});
@@ -293,9 +324,9 @@ function checkMoveCursorTo(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
     x.assert(func('\'\''), {'error': 'CSS selector cannot be empty'});
-    x.assert(func('"a"'), {'instructions': ['page.hover("a")']});
-    x.assert(func('\'a\''), {'instructions': ['page.hover("a")']});
-    x.assert(func('\'"a\''), {'instructions': ['page.hover("\\\\"a")']});
+    x.assert(func('"a"'), {'instructions': ['await page.hover("a")']});
+    x.assert(func('\'a\''), {'instructions': ['await page.hover("a")']});
+    x.assert(func('\'"a\''), {'instructions': ['await page.hover("\\\\"a")']});
 }
 
 function checkScreenshot(x, func) {
@@ -328,7 +359,7 @@ function checkScrollTo(x, func) {
     x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
     x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
     x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
-    x.assert(func('(1,2)'), {'instructions': ['page.mouse.move(1,2)']});
+    x.assert(func('(1,2)'), {'instructions': ['await page.mouse.move(1,2)']});
     x.assert(func('(-1,2)'), {'error': 'X position cannot be negative: `-1`'});
     x.assert(func('(1,-2)'), {'error': 'Y position cannot be negative: `-2`'});
     x.assert(func('(-1.0,2)'), {'error': 'expected integer for X position, found float: `-1.0`'});
@@ -340,9 +371,9 @@ function checkScrollTo(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
     x.assert(func('\'\''), {'error': 'CSS selector cannot be empty'});
-    x.assert(func('"a"'), {'instructions': ['page.hover("a")']});
-    x.assert(func('\'a\''), {'instructions': ['page.hover("a")']});
-    x.assert(func('\'"a\''), {'instructions': ['page.hover("\\\\"a")']});
+    x.assert(func('"a"'), {'instructions': ['await page.hover("a")']});
+    x.assert(func('\'a\''), {'instructions': ['await page.hover("a")']});
+    x.assert(func('\'"a\''), {'instructions': ['await page.hover("\\\\"a")']});
 }
 
 function checkShowText(x, func) {
@@ -352,15 +383,15 @@ function checkShowText(x, func) {
     x.assert(func('false'), {
         'instructions': [
             'arg.showText = false;',
-            'page.evaluate(() => {window.browserUiCreateNewStyleElement(\'* { color: rgba(0,0,0,' +
-            '0) !important; }\', \'browser-ui-test-style-text-hide\');});',
+            'await page.evaluate(() => {window.browserUiCreateNewStyleElement(\'* { color: ' +
+            'rgba(0,0,0,0) !important; }\', \'browser-ui-test-style-text-hide\');});',
         ],
     });
     x.assert(func('true'), {
         'instructions': [
             'arg.showText = true;',
-            'page.evaluate(() => {let tmp = document.getElementById(\'browser-ui-test-style-text' +
-            '-hide\');if (tmp) { tmp.remove(); }});',
+            'await page.evaluate(() => {let tmp = document.getElementById(\'browser-ui-test-style' +
+            '-text-hide\');if (tmp) { tmp.remove(); }});',
         ],
     });
 }
@@ -377,7 +408,7 @@ function checkSize(x, func) {
     x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
     x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
     x.assert(func('(a,2)'), {'error': 'unexpected `a` as first token'});
-    x.assert(func('(1,2)'), {'instructions': ['page.setViewport({width: 1, height: 2})']});
+    x.assert(func('(1,2)'), {'instructions': ['await page.setViewport({width: 1, height: 2})']});
     x.assert(func('(-1,2)'), {'error': 'width cannot be negative: `-1`'});
     x.assert(func('(1,-2)'), {'error': 'height cannot be negative: `-2`'});
     x.assert(func('(1.0,2)'), {'error': 'expected integer for width, found float: `1.0`'});
@@ -437,15 +468,20 @@ function checkWrite(x, func) {
         {'error': 'invalid number of arguments in tuple, expected ([CSS selector], [string])'});
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
     x.assert(func('(\'\', "b")'), {'error': 'CSS selector cannot be empty'});
-    x.assert(func('("a", "b")'), {'instructions': ['page.focus("a")', 'page.keyboard.type("b")']});
+    x.assert(func('("a", "b")'), {
+        'instructions': [
+            'await page.focus("a")',
+            'await page.keyboard.type("b")',
+        ],
+    });
 
     // check string argument
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
-    x.assert(func('\'\''), {'instructions': ['page.keyboard.type("")']});
-    x.assert(func('"a"'), {'instructions': ['page.keyboard.type("a")']});
-    x.assert(func('\'a\''), {'instructions': ['page.keyboard.type("a")']});
-    x.assert(func('\'"a\''), {'instructions': ['page.keyboard.type("\\"a")']});
+    x.assert(func('\'\''), {'instructions': ['await page.keyboard.type("")']});
+    x.assert(func('"a"'), {'instructions': ['await page.keyboard.type("a")']});
+    x.assert(func('\'a\''), {'instructions': ['await page.keyboard.type("a")']});
+    x.assert(func('\'"a\''), {'instructions': ['await page.keyboard.type("\\"a")']});
 }
 
 function checkReload(x, func) {
@@ -484,13 +520,18 @@ function checkParseContent(x, func) {
     x.assert(func('a: '), {'error': 'Unknown command "a"', 'line': 0});
     x.assert(func(':'), {'error': 'Unknown command ""', 'line': 0});
 
-    x.assert(func('goto: file:///home'),
-        {
-            'instructions': [{
-                'code': 'await page.goto("file:///home")',
+    x.assert(func('goto: file:///home'), {
+        'instructions': [
+            {
+                'code': 'await page.goto("file:///home");',
                 'original': 'goto: file:///home',
-            }],
-        });
+            },
+            {
+                'code': 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+                'original': 'goto: file:///home',
+            },
+        ],
+    });
     x.assert(func('focus: "#foo"'),
         {
             'error': 'First command must be `goto` (`emulate` or `fail` or `screenshot` or ' +
@@ -506,7 +547,11 @@ function checkParseContent(x, func) {
                     'original': 'fail: true',
                 },
                 {
-                    'code': 'await page.goto("file:///home")',
+                    'code': 'await page.goto("file:///home");',
+                    'original': 'goto: file:///home',
+                },
+                {
+                    'code': 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
                     'original': 'goto: file:///home',
                 },
             ],
@@ -642,50 +687,164 @@ function checkTimeout(x, func) {
     });
 }
 
+function checkGeolocation(x, func) {
+    x.assert(func(''), {'error': 'expected (longitude [number], latitude [number]), found ``'});
+    x.assert(func('"a"'), {
+        'error': 'expected (longitude [number], latitude [number]), found `"a"`',
+    });
+    x.assert(func('("a", "b")'), {
+        'error': 'expected number for longitude (first argument), found `a`',
+    });
+    x.assert(func('("12", 13)'), {
+        'error': 'expected number for longitude (first argument), found `12`',
+    });
+    x.assert(func('(12, "13")'), {
+        'error': 'expected number for latitude (second argument), found `13`',
+    });
+    x.assert(func('(12, 13)'), {'instructions': ['await page.setGeolocation(12, 13);']});
+}
+
+function checkPermissions(x, func) {
+    x.assert(func(''), {'error': 'expected an array of strings, found ``'});
+    x.assert(func('"a"'), {'error': 'expected an array of strings, found `"a"`'});
+    x.assert(func('("a", "b")'), {'error': 'expected an array of strings, found `("a", "b")`'});
+    x.assert(func('["12", 13]'), {
+        'error': 'all array\'s elements must be of the same kind: expected array of `string`, ' +
+            'found `number` at position 1',
+    });
+    x.assert(func('[12, "13"]'), {
+        'error': 'all array\'s elements must be of the same kind: expected array of `number`, ' +
+            'found `string` at position 1',
+    });
+    x.assert(func('["12"]'), {
+        'error': '`12` is an unknown permission, you can see the list of available permissions ' +
+            'with the `--show-permissions` option',
+    });
+    x.assert(func('["camera", "push"]'), {
+        'instructions': [
+            'arg.permissions = ["camera", "push"];',
+            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+        ],
+    });
+}
+
 const TO_CHECK = [
-    {'name': 'assert', 'func': checkAssert,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssert, e, o)},
-    {'name': 'attribute', 'func': checkAttribute,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAttribute, e, o)},
-    {'name': 'click', 'func': checkClick,
-        'toCall': (e, o) => wrapper(parserFuncs.parseClick, e, o)},
-    {'name': 'css', 'func': checkCss,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCss, e, o)},
-    {'name': 'drag-and-drop', 'func': checkDragAndDrop,
-        'toCall': (e, o) => wrapper(parserFuncs.parseDragAndDrop, e, o)},
-    {'name': 'emulate', 'func': checkEmulate,
-        'toCall': (e, o) => wrapper(parserFuncs.parseEmulate, e, o)},
-    {'name': 'fail', 'func': checkFail,
-        'toCall': (e, o) => wrapper(parserFuncs.parseFail, e, o)},
-    {'name': 'focus', 'func': checkFocus,
-        'toCall': (e, o) => wrapper(parserFuncs.parseFocus, e, o)},
-    {'name': 'goto', 'func': checkGoTo,
-        'toCall': (e, o) => wrapper(parserFuncs.parseGoTo, e, o)},
-    {'name': 'local-storage', 'func': checkLocalStorage,
-        'toCall': (e, o) => wrapper(parserFuncs.parseLocalStorage, e, o)},
-    {'name': 'move-cursor-to', 'func': checkMoveCursorTo,
-        'toCall': (e, o) => wrapper(parserFuncs.parseMoveCursorTo, e, o)},
-    {'name': 'reload', 'func': checkReload,
-        'toCall': (e, o) => wrapper(parserFuncs.parseReload, e, o)},
-    {'name': 'screenshot', 'func': checkScreenshot,
-        'toCall': (e, o) => wrapper(parserFuncs.parseScreenshot, e, o)},
-    {'name': 'scroll-to', 'func': checkScrollTo,
-        'toCall': (e, o) => wrapper(parserFuncs.parseScrollTo, e, o)},
-    {'name': 'show-text', 'func': checkShowText,
-        'toCall': (e, o) => wrapper(parserFuncs.parseShowText, e, o)},
-    {'name': 'size', 'func': checkSize,
-        'toCall': (e, o) => wrapper(parserFuncs.parseSize, e, o)},
-    {'name': 'text', 'func': checkText,
-        'toCall': (e, o) => wrapper(parserFuncs.parseText, e, o)},
-    {'name': 'timeout', 'func': checkTimeout,
-        'toCall': (e, o) => wrapper(parserFuncs.parseTimeout, e, o)},
-    {'name': 'wait-for', 'func': checkWaitFor,
-        'toCall': (e, o) => wrapper(parserFuncs.parseWaitFor, e, o)},
-    {'name': 'write', 'func': checkWrite,
-        'toCall': (e, o) => wrapper(parserFuncs.parseWrite, e, o)},
+    {
+        'name': 'assert',
+        'func': checkAssert,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssert, e, o),
+    },
+    {
+        'name': 'attribute',
+        'func': checkAttribute,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAttribute, e, o),
+    },
+    {
+        'name': 'click',
+        'func': checkClick,
+        'toCall': (e, o) => wrapper(parserFuncs.parseClick, e, o),
+    },
+    {
+        'name': 'css',
+        'func': checkCss,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCss, e, o),
+    },
+    {
+        'name': 'drag-and-drop',
+        'func': checkDragAndDrop,
+        'toCall': (e, o) => wrapper(parserFuncs.parseDragAndDrop, e, o),
+    },
+    {
+        'name': 'emulate',
+        'func': checkEmulate,
+        'toCall': (e, o) => wrapper(parserFuncs.parseEmulate, e, o),
+    },
+    {
+        'name': 'fail',
+        'func': checkFail,
+        'toCall': (e, o) => wrapper(parserFuncs.parseFail, e, o),
+    },
+    {
+        'name': 'focus',
+        'func': checkFocus,
+        'toCall': (e, o) => wrapper(parserFuncs.parseFocus, e, o),
+    },
+    {
+        'name': 'geolocation',
+        'func': checkGeolocation,
+        'toCall': (e, o) => wrapper(parserFuncs.parseGeolocation, e, o),
+    },
+    {
+        'name': 'goto',
+        'func': checkGoTo,
+        'toCall': (e, o) => wrapper(parserFuncs.parseGoTo, e, o),
+    },
+    {
+        'name': 'local-storage',
+        'func': checkLocalStorage,
+        'toCall': (e, o) => wrapper(parserFuncs.parseLocalStorage, e, o),
+    },
+    {
+        'name': 'move-cursor-to',
+        'func': checkMoveCursorTo,
+        'toCall': (e, o) => wrapper(parserFuncs.parseMoveCursorTo, e, o),
+    },
+    {
+        'name': 'permissions',
+        'func': checkPermissions,
+        'toCall': (e, o) => wrapper(parserFuncs.parsePermissions, e, o),
+    },
+    {
+        'name': 'reload',
+        'func': checkReload,
+        'toCall': (e, o) => wrapper(parserFuncs.parseReload, e, o),
+    },
+    {
+        'name': 'screenshot',
+        'func': checkScreenshot,
+        'toCall': (e, o) => wrapper(parserFuncs.parseScreenshot, e, o),
+    },
+    {
+        'name': 'scroll-to',
+        'func': checkScrollTo,
+        'toCall': (e, o) => wrapper(parserFuncs.parseScrollTo, e, o),
+    },
+    {
+        'name': 'show-text',
+        'func': checkShowText,
+        'toCall': (e, o) => wrapper(parserFuncs.parseShowText, e, o),
+    },
+    {
+        'name': 'size',
+        'func': checkSize,
+        'toCall': (e, o) => wrapper(parserFuncs.parseSize, e, o),
+    },
+    {
+        'name': 'text',
+        'func': checkText,
+        'toCall': (e, o) => wrapper(parserFuncs.parseText, e, o),
+    },
+    {
+        'name': 'timeout',
+        'func': checkTimeout,
+        'toCall': (e, o) => wrapper(parserFuncs.parseTimeout, e, o),
+    },
+    {
+        'name': 'wait-for',
+        'func': checkWaitFor,
+        'toCall': (e, o) => wrapper(parserFuncs.parseWaitFor, e, o),
+    },
+    {
+        'name': 'write',
+        'func': checkWrite,
+        'toCall': (e, o) => wrapper(parserFuncs.parseWrite, e, o),
+    },
     // This one is a bit "on its own".
-    {'name': 'parseContent', 'func': checkParseContent,
-        'toCall': (e, o) => wrapper(parserFuncs.parseContent, e, o)},
+    {
+        'name': 'parseContent',
+        'func': checkParseContent,
+        'toCall': (e, o) => wrapper(parserFuncs.parseContent, e, o),
+    },
 ];
 
 async function checkCommands(x = new Assert()) {

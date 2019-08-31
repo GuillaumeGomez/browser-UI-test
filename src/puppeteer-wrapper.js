@@ -1,6 +1,3 @@
-const {print} = require('./utils.js');
-
-
 function buildPuppeteerOptions(options) {
     const puppeteer_options = {'args': ['--font-render-hinting=none']};
     if (options.headless === false) {
@@ -19,6 +16,7 @@ class PuppeteerWrapper {
                 this.puppeteer = require('puppeteer-firefox');
             }
         } catch (err) {
+            const {print} = require('./utils.js');
             print(err.message);
             throw new Error('If you want to use firefox, please install it first! Also, please ' +
                 'remember that it is experimental!');
