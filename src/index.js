@@ -34,23 +34,13 @@ function comparePixels(img1, img2) {
     return img1.equals(img2);
 }
 
-function save_failure(folderIn, failuresFolder, newImage, originalImage, runId) {
+function save_failure(folderIn, failuresFolder, newImage) {
     if (fs.existsSync(failuresFolder) === false) {
         // We cannot save the failures...
         return false;
     }
-    const fullPath = path.join(failuresFolder, runId);
-    if (fs.existsSync(fullPath) === false) {
-        try {
-            fs.mkdirSync(failuresFolder + runId);
-        } catch (err) {
-            add_warn(`Error while trying to make folder "${fullPath}": ${err.message}`);
-            // Failed to create folder to save failures...
-            return false;
-        }
-    }
     try {
-        fs.renameSync(path.join(folderIn, newImage), path.join(fullPath, newImage));
+        fs.renameSync(path.join(folderIn, newImage), path.join(failuresFolder, newImage));
     } catch (err) {
         add_warn(`Error while trying to move files: "${err.message}"`);
         // failed to move files...
@@ -262,8 +252,7 @@ async function runCommand(loaded, logs, options, browser) {
         } else if (comparePixels(PNG.load(newImage).imgData,
             PNG.load(originalImage).imgData) === false) {
             const saved = save_failure(options.getImageFolder(), options.getFailureFolder(),
-                loaded['file'] + `-${options.runId}.png`,
-                loaded['file'] + '.png', options.runId);
+                loaded['file'] + `-${options.runId}.png`);
             returnValue = Status.ScreenshotComparisonFailed;
             if (saved === true) {
                 logs.append(
@@ -490,7 +479,9 @@ if (require.main === module) {
         }
     } catch (err) {
         print(err.message);
-        print(err.stack);
+        if (options.debug === true) {
+            print(err.stack);
+        }
         process.exit(1);
     }
     runTests(options, true).then(x => {
@@ -498,7 +489,9 @@ if (require.main === module) {
         process.exit(nb_failures);
     }).catch(err => {
         print(err.message);
-        print(err.stack);
+        if (options.debug === true) {
+            print(err.stack);
+        }
         process.exit(1);
     });
 } else {

@@ -1,6 +1,6 @@
 {
     "name": "browser-ui-test",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "author": "Guillaume Gomez <guillaume1.gomez@gmail.com> (https://guillaume-gomez.fr)",
     "license": "MIT",
     "description": "Small JS framework to easily provide UI screenshot-based tests",
