@@ -11,6 +11,7 @@ const process = require('process');
 const print = utils.print;
 const path = require('path');
 const consts = require('./consts.js');
+const Module = require('module');
 
 
 // TODO: Make it into a class to provide some utility methods like 'isFailure'.
@@ -24,9 +25,11 @@ const Status = {
 };
 
 function loadContent(content) {
-    const Module = module.constructor;
-    const m = new Module();
-    m._compile(`async function f(page, arg){ ${content} } module.exports.f = f;`, 'tmp.js');
+    const filename = ''; // works fine as is...
+    const m = new Module(filename);
+    m.filename = filename; // because why not?
+    m.paths = Module._nodeModulePaths(path.dirname(filename)); // not sure if very useful...
+    m._compile(`async function f(page, arg){ ${content} } module.exports.f = f;`, filename);
     return m.exports.f;
 }
 
