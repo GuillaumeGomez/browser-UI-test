@@ -163,6 +163,7 @@ async function runCommand(loaded, logs, options, browser) {
                 });
             });
         });
+        await options.onPageCreatedCallback(page);
         error_log = '';
         const commands = loaded['commands'];
         for (let x = 0; x < commands.length; ++x) {

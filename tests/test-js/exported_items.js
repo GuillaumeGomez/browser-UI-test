@@ -353,6 +353,29 @@ async function checkOptions(x) {
     options15.permissions = 'la';
     await x.assertTry(() => options15.validateFields(), [],
         '`Options.permissions` field is supposed to be an array!');
+
+    const options16 = new Options();
+    options16.onPageCreatedCallback = 'la';
+    await x.assertTry(() => options16.validateFields(), [],
+        '`Options.onPageCreatedCallback` field is supposed to be an async function!');
+
+    const options17 = new Options();
+    options17.onPageCreatedCallback = () => {};
+    await x.assertTry(() => options17.validateFields(), [],
+        '`Options.onPageCreatedCallback` field is supposed to be an async function!');
+
+    const options18 = new Options();
+    options18.onPageCreatedCallback = function() {};
+    await x.assertTry(() => options18.validateFields(), [],
+        '`Options.onPageCreatedCallback` field is supposed to be an async function!');
+
+    const options19 = new Options();
+    options19.onPageCreatedCallback = async function() {};
+    await x.assert(() => options19.validateFields());
+
+    const options20 = new Options();
+    options20.onPageCreatedCallback = async() => {};
+    await x.assert(() => options20.validateFields());
 }
 
 const TO_CHECK = [
