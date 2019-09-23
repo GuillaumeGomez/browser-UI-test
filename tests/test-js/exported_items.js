@@ -357,17 +357,15 @@ async function checkOptions(x) {
     const options16 = new Options();
     options16.onPageCreatedCallback = 'la';
     await x.assertTry(() => options16.validateFields(), [],
-        '`Options.onPageCreatedCallback` field is supposed to be an async function!');
+        '`Options.onPageCreatedCallback` field is supposed to be a function!');
 
     const options17 = new Options();
     options17.onPageCreatedCallback = () => {};
-    await x.assertTry(() => options17.validateFields(), [],
-        '`Options.onPageCreatedCallback` field is supposed to be an async function!');
+    await x.assert(() => options17.validateFields());
 
     const options18 = new Options();
     options18.onPageCreatedCallback = function() {};
-    await x.assertTry(() => options18.validateFields(), [],
-        '`Options.onPageCreatedCallback` field is supposed to be an async function!');
+    await x.assert(() => options18.validateFields());
 
     const options19 = new Options();
     options19.onPageCreatedCallback = async function() {};
