@@ -241,23 +241,14 @@ class Options {
 
     validateFields() {
         // Check if variables have the expected types (you never know...).
-        const validateField = (fieldName, expectedType, msg) => {
+        const validateField = (fieldName, expectedType) => {
             if (expectedType === 'array') {
                 if (Array.isArray(this[fieldName]) !== true) {
                     throw new Error(`\`Options.${fieldName}\` field is supposed to be an array!`);
                 }
             } else if (typeof this[fieldName] !== expectedType) {
-                if (typeof msg !== 'undefined') {
-                    throw new Error(`\`Options.${fieldName}\` field is supposed to be ${msg}!`);
-                } else {
-                    throw new Error(`\`Options.${fieldName}\` field is supposed to be a ` +
-                        `${expectedType}!`);
-                }
-            }
-            if (expectedType === 'function') {
-                if (this[fieldName].constructor.name !== 'AsyncFunction') {
-                    throw new Error(`\`Options.${fieldName}\` field is supposed to be ${msg}!`);
-                }
+                throw new Error(`\`Options.${fieldName}\` field is supposed to be a ` +
+                    `${expectedType}!`);
             }
         };
         validateField('runId', 'string');
@@ -276,7 +267,7 @@ class Options {
         validateField('testFiles', 'array');
         validateField('extensions', 'array');
         validateField('permissions', 'array');
-        validateField('onPageCreatedCallback', 'function', 'an async function');
+        validateField('onPageCreatedCallback', 'function');
         // eslint-disable-next-line eqeqeq
         if (this.variables.constructor != Object) {
             throw new Error('`Options.variables` field is supposed to be a dictionary-like!');
