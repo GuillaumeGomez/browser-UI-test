@@ -82,7 +82,7 @@ async function checkRunTestCode(x, func) {
 
     // Check a failing code
     await x.assertTry(func, ['test',
-        'fail: true\ngoto: file://{current-dir}/tests/scripts/basic.html\n' +
+        'fail: true\ngoto: file://|CURRENT_DIR|/tests/scripts/basic.html\n' +
         'assert: ("#button", "Go somewhere else!")'], ['test... ok', 0]);
 
     // check if test-folder option is ignored
@@ -94,8 +94,31 @@ async function checkRunTestCode(x, func) {
 
     // Check a working code
     await x.assertTry(func, ['test',
-        'fail: true\ngoto: file://{current-dir}/tests/scripts/basic.html\n' +
-        'assert: ("#button", "tadam!")'], ['test... ok', 0]);
+        'goto: file://|CURRENT_DIR|/tests/html_files/basic.html\n' +
+        'assert: ("#button", "Go somewhere else!")'], ['test... ok', 0]);
+
+    // Check callback
+    const options2 = new Options();
+    options2.onPageCreatedCallback = async(page, test_name) => {
+        x.assert(test_name, 'hoho');
+        await page.setRequestInterception(true);
+        page.on('request', async request => {
+            if (!request.url().endsWith('basic.html')) {
+                request.headers['Content-Type'] = 'text/html; charset=utf-8';
+                await request.respond({
+                    'status': 200,
+                    'body': '<html><body><header>Basic test!</header></body></html>',
+                    'headers': request.headers,
+                });
+            } else {
+                request.continue();
+            }
+        }); // if we receive a request, we don't process it.
+    };
+    await x.assertTry(func, ['hoho',
+        'goto: file://|CURRENT_DIR|/tests/html_files/basic.html\n' +
+        'click: "#button"\n' +
+        'assert: ("body > header", "Basic test!")', options2], ['hoho... ok', 0]);
 }
 
 async function checkRunTests(x, func) {
