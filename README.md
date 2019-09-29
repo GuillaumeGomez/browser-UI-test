@@ -102,7 +102,7 @@ The list of fields of the `Options` class is the following:
  * `imageFolder`: path of the folder where screenshots are and where they are generated (`testFolder` value by default)
  * `noHeadless`: disable headless mode
  * `noScreenshot`: disable screenshots generation and comparison at the end of the scripts
- * `onPageCreatedCallback`: callback which is called when a new puppeteer page is created. **It needs to be an async function!**
+ * `onPageCreatedCallback`: callback which is called when a new puppeteer page is created. It provides the puppeteer `page` and the test name as arguments.
  * `permissions`: List of permissions to enable (you can see the full list by running with `--show-permissions`)
  * `runId`: id to be used for failed images extension ('test' by default)
  * `showText`: disable text invisibility (be careful when using it!)

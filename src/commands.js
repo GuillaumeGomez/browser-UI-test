@@ -1061,7 +1061,9 @@ function parseContent(content, options) {
         if (line.length === 0) {
             continue;
         }
-        const order = line.split(':')[0].toLowerCase();
+        let order = line.split(':')[0];
+        const orderLen = order.length;
+        order = order.trim().toLowerCase();
         if (Object.prototype.hasOwnProperty.call(ORDERS, order)) {
             if (firstGotoParsed === false) {
                 if (order !== 'goto' && NO_INTERACTION_COMMANDS.indexOf(order) === -1) {
@@ -1078,7 +1080,7 @@ function parseContent(content, options) {
                     'line': i + 1,
                 };
             }
-            res = ORDERS[order](line.substr(order.length + 1).trim(), options);
+            res = ORDERS[order](line.substr(orderLen + 1).trim(), options);
             if (res.error !== undefined) {
                 res.line = i + 1;
                 return res;
