@@ -5,5 +5,6 @@ before_install:
   - npm install -r
 script:
   - npm run lint
-  - npm test
   - npm run all-test
+  - docker build . -t browser-ui
+  - docker run -v "$PWD:/data" browser-ui --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files
