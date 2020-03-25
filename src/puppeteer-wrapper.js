@@ -8,7 +8,7 @@ function buildPuppeteerOptions(options) {
     }
     if (options.noSandbox === true) {
         // Highly unsafe! Only use it when you know what you're doing!
-        puppeteer_options['args'].push("--no-sandbox");
+        puppeteer_options['args'].push('--no-sandbox');
     }
     if (options.browser === 'chrome') {
         puppeteer_options['product'] = 'chrome';
@@ -19,7 +19,7 @@ function buildPuppeteerOptions(options) {
 }
 
 class PuppeteerWrapper {
-    constructor(options) {
+    constructor() {
         this.puppeteer = require('puppeteer');
         this.browser = null;
         this.context = null;
