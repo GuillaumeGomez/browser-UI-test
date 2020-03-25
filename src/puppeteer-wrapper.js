@@ -6,6 +6,10 @@ function buildPuppeteerOptions(options) {
     for (let i = 0; i < options.extensions.length; ++i) {
         puppeteer_options['args'].push(`--load-extension=${options.extensions[i]}`);
     }
+    if (options.noSandbox === true) {
+        // Highly unsafe! Only use it when you know what you're doing!
+        puppeteer_options['args'].push("--no-sandbox");
+    }
     if (options.browser === 'chrome') {
         puppeteer_options['product'] = 'chrome';
     } else {

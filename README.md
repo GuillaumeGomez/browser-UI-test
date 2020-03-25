@@ -30,6 +30,29 @@ To see the list of available options, use `-h` or `--help`:
 $ browser-ui-test --help
 ```
 
+### Using Docker
+
+This repository provides a `Dockerfile` in case you want to make your like easier when running tests. For example, the equivalent of running `npm run test` is:
+
+```bash
+# in case I am in the browser-UI-test folder
+$ docker build . -t browser-ui
+$ docker run -v "$PWD:/data" browser-ui --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files
+```
+
+Explanations for these commands! The first one build an image using the current folder and name it
+"browser-ui".
+
+The second one runs using what we built in the first command. The only important thing here is
+`-v "$PWD:/data"`. We tell docker to bind the current folder (`$PWD`) in the `/data` folder in the
+context of docker. If you want to bind another folder, just change the `$PWD` value. Please remember
+that you need to use absolute paths!
+
+Then we tell it to run the "browser-ui" image.
+
+For the rest, `--test-folder`, `--failure-folder` and `--variable` are `browser-UI-test` options.
+Please refer to the [Options][#Options] part of this README.
+
 ### Using this framework as a dependency
 
 You can do so by importing both `runTests` and `Options` from `index.js`. `Options` is a class where you can set the parameters you need/want. If you feel better providing "command-line args"-like parameters, you can use it as follows:

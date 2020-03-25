@@ -119,6 +119,8 @@ class Options {
                 this.debug = true;
             } else if (args[it] === '--no-screenshot') {
                 this.noScreenshot = true;
+            } else if (args[it] === '--no-sandbox') {
+                this.noSandbox = true;
             } else if (args[it] === '--incognito') {
                 this.incognito = true;
             } else if (args[it] === '--help' || args[it] === '-h') {
