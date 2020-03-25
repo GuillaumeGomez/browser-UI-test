@@ -259,9 +259,10 @@ async function runCommand(loaded, logs, options, browser) {
                 loaded['file'] + `-${options.runId}.png`);
             returnValue = Status.ScreenshotComparisonFailed;
             if (saved === true) {
+                const failedPath = path.join(
+                    options.getFailureFolder(), `${loaded['file']}-${options.runId}.png`);
                 logs.append(
-                    `FAILED (images "${loaded['file']}-${options.runId}.png" and ` +
-                    `"${loaded['file']}" are different)`,
+                    `FAILED (images "${failedPath}" and "${loaded['file']}" are different)`,
                     true);
             } else {
                 logs.append(
