@@ -6,24 +6,21 @@ function buildPuppeteerOptions(options) {
     for (let i = 0; i < options.extensions.length; ++i) {
         puppeteer_options['args'].push(`--load-extension=${options.extensions[i]}`);
     }
+    if (options.noSandbox === true) {
+        // Highly unsafe! Only use it when you know what you're doing!
+        puppeteer_options['args'].push('--no-sandbox');
+    }
+    if (options.browser === 'chrome') {
+        puppeteer_options['product'] = 'chrome';
+    } else {
+        puppeteer_options['product'] = 'firefox';
+    }
     return puppeteer_options;
 }
 
 class PuppeteerWrapper {
-    constructor(options) {
-        try {
-            if (options.browser === 'firefox') {
-                this.puppeteer = require('puppeteer-firefox');
-            }
-        } catch (err) {
-            const {print} = require('./utils.js');
-            print(err.message);
-            throw new Error('If you want to use firefox, please install it first! Also, please ' +
-                'remember that it is experimental!');
-        }
-        if (options.browser === 'chrome') {
-            this.puppeteer = require('puppeteer');
-        }
+    constructor() {
+        this.puppeteer = require('puppeteer');
         this.browser = null;
         this.context = null;
     }
