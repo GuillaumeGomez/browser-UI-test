@@ -9,10 +9,10 @@ before_install:
 script:
   - npm run lint
   - npm run all-test
-  - docker build . -t gomezguillaume/browser-ui-test
+  - docker build --label "org.label-schema.vcs-ref=$TRAVIS_COMMIT" -t gomezguillaume/browser-ui-test .
   - docker run -v "$PWD:/data" gomezguillaume/browser-ui-test --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files
   - if [ "$TRAVIS_PULL_REQUEST_BRANCH" == "" ] && [ "$TRAVIS_BRANCH" == "master" ]; then
-      docker push gomezguillaume/browser-ui-test:$TRAVIS_COMMIT && echo "pushed!";
+      docker push gomezguillaume/browser-ui-test && echo "pushed!";
     else
       echo "not pushed!";
     fi
