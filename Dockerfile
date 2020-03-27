@@ -1,7 +1,5 @@
 FROM node:10-slim
 
-WORKDIR /data
-
 RUN apt update \
     && apt install -y git curl apt-utils wget gnupg \
     && wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
@@ -11,7 +9,7 @@ RUN apt update \
       --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-COPY ./src ./browser-ui-test-src
+COPY ./src browser-ui-test-src
 COPY ./package*.json ./
 
 RUN npm install
