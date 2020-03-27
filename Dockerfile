@@ -14,6 +14,8 @@ RUN apt update \
 COPY ./src ./src
 COPY ./package*.json ./
 
+RUN npm install
+
 # never use the "--no-sandbox" outside of a container!
 ENTRYPOINT ["node", "src/index.js", "--no-sandbox"]
 # to be able to pass arguments to index.js
