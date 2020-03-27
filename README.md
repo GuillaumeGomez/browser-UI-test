@@ -53,6 +53,10 @@ Then we tell it to run the "browser-ui" image.
 For the rest, `--test-folder`, `--failure-folder` and `--variable` are `browser-UI-test` options.
 Please refer to the [Options][#Options] part of this README.
 
+#### Docker hub
+
+Important note: each merge on master pushes a new image on docker hub. You can find them [here](https://hub.docker.com/repository/docker/gomezguillaume/browser-ui-test/general).
+
 ### Using this framework as a dependency
 
 You can do so by importing both `runTests` and `Options` from `index.js`. `Options` is a class where you can set the parameters you need/want. If you feel better providing "command-line args"-like parameters, you can use it as follows:
