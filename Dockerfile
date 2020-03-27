@@ -11,12 +11,12 @@ RUN apt update \
       --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-COPY ./src ./src
+COPY ./src ./browser-ui-test-src
 COPY ./package*.json ./
 
 RUN npm install
 
 # never use the "--no-sandbox" outside of a container!
-ENTRYPOINT ["node", "src/index.js", "--no-sandbox"]
+ENTRYPOINT ["node", "./browser-ui-test-src/index.js", "--no-sandbox"]
 # to be able to pass arguments to index.js
 CMD []
