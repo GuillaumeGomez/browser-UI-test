@@ -11,7 +11,7 @@ script:
   - npm run all-test
   - docker build . -t browser-ui
   - docker run -v "$PWD:/data" browser-ui --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files
-  - if [ "$TRAVIS_RUST_VERSION" == "stable" ] && [ "$TRAVIS_PULL_REQUEST_BRANCH" == "" ] && [ "$TRAVIS_BRANCH" == "master" ]; then
+  - if [ "$TRAVIS_PULL_REQUEST_BRANCH" == "" ] && [ "$TRAVIS_BRANCH" == "master" ]; then
       docker push gomezguillaume/browser-ui-test:$TRAVIS_COMMIT;
       echo "pushed!";
     else
