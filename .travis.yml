@@ -7,11 +7,11 @@ before_install:
       echo "$DOCKER_TOKEN" | docker login -u "$DOCKER_USERNAME" --password-stdin;
     fi
 script:
-  - npm run lint
-  - npm run all-test
-  - docker build -t gomezguillaume/browser-ui-test .
-  - docker run -v "$PWD:/data" gomezguillaume/browser-ui-test --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files
-  - if [ "$TRAVIS_PULL_REQUEST_BRANCH" == "" ] && [ "$TRAVIS_BRANCH" == "master" ]; then
+  - npm run lint || (touch failed && false)
+  - npm run all-test || (touch failed && false)
+  - docker build -t gomezguillaume/browser-ui-test . || (touch failed && false)
+  - docker run -v "$PWD:/data" gomezguillaume/browser-ui-test --test-folder /data/tests/scripts/ --failure-folder /data/failures --variable DOC_PATH /data/tests/html_files || (touch failed && false)
+  - if [ ! -f failed ] && [ "$TRAVIS_PULL_REQUEST_BRANCH" == "" ] && [ "$TRAVIS_BRANCH" == "master" ]; then
       docker push gomezguillaume/browser-ui-test && echo "pushed!";
     else
       echo "not pushed!";
