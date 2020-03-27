@@ -37,7 +37,7 @@ This repository provides a `Dockerfile` in case you want to make your like easie
 ```bash
 # in case I am in the browser-UI-test folder
 $ docker build . -t browser-ui
-$ docker run -v "$PWD:/data" browser-ui --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files
+$ docker run -v "$PWD:/data" browser-ui --test-folder /data/tests/scripts/ --failure-folder /data/failures --variable DOC_PATH /data/tests/html_files
 ```
 
 Explanations for these commands! The first one build an image using the current folder and name it
@@ -51,7 +51,9 @@ that you need to use absolute paths!
 Then we tell it to run the "browser-ui" image.
 
 For the rest, `--test-folder`, `--failure-folder` and `--variable` are `browser-UI-test` options.
-Please refer to the [Options][#Options] part of this README.
+You'll note that I prepended them with "/data" because this is where we mounted the volume in the
+docker instance. To know what the options are for, please refer to the [Options][#Options] part of
+this README.
 
 #### Docker hub
 
