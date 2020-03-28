@@ -13,6 +13,7 @@ script:
   - docker run -v "$PWD:/data" gomezguillaume/browser-ui-test --test-folder /data/tests/scripts/ --failure-folder /data/failures --variable DOC_PATH /data/tests/html_files || (touch failed && false)
   - if [ ! -f failed ] && [ "$TRAVIS_PULL_REQUEST_BRANCH" == "" ] && [ "$TRAVIS_BRANCH" == "master" ]; then
       docker push gomezguillaume/browser-ui-test && echo "pushed!";
+      docker build -t gomezguillaume/browser-ui-test:`date '+%Y-%m-%d'` . && docker push gomezguillaume/browser-ui-test:`date '+%Y-%m-%d'` && echo "pushed tagged version as well";
     else
       echo "not pushed!";
     fi
