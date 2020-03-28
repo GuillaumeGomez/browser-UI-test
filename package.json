@@ -31,7 +31,7 @@
         "url": "https://github.com/GuillaumeGomez/browser-UI-test"
     },
     "dependencies": {
-        "png-js": "0.1.1",
+        "pngjs": "3.4.0",
         "puppeteer": "2.1.1"
     },
     "devDependencies": {
