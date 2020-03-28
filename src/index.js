@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
-const PNG = require('png-js');
+const PNG = require('pngjs').PNG;
 const parser = require('./commands.js');
 const utils = require('./utils.js');
 const Options = require('./options.js').Options;
@@ -33,8 +33,31 @@ function loadContent(content) {
     return m.exports.f;
 }
 
-function comparePixels(img1, img2) {
-    return img1.equals(img2);
+function comparePixels(img1, img2, debug_log) {
+    const a = PNG.sync.read(fs.readFileSync(img1));
+    const b = PNG.sync.read(fs.readFileSync(img2));
+
+    if (a.height !== b.height || a.width !== b.width) {
+        return false;
+    }
+
+    const aData = a.data;
+    const bData = b.data;
+
+    for (let i = 0; i < aData.length; i += 4) {
+        // We don't compare the alpha channel (which comes after the blue).
+        if (aData[i] !== bData[i] // red
+            || aData[i + 1] !== bData[i + 1] // green
+            || aData[i + 2] !== bData[i + 2] /* blue */ ) {
+            const x = i % (a.width * 4);
+            const y = (i - x) / (a.width * 4);
+            debug_log.append(`comparePixels FAILED at position (${x}, ${y}), colors: ` +
+                `[${aData[i]}, ${aData[i + 1]}, ${aData[i + 2]}] VS ` +
+                `[${bData[i]}, ${bData[i + 1]}, ${bData[i + 2]}]`);
+            return false;
+        }
+    }
+    return true;
 }
 
 function save_failure(folderIn, failuresFolder, newImage) {
@@ -253,8 +276,7 @@ async function runCommand(loaded, logs, options, browser) {
                 logs.append('generated', true);
                 notOk = true; // To avoid displaying 'ok' at the end.
             }
-        } else if (comparePixels(PNG.load(newImage).imgData,
-            PNG.load(originalImage).imgData) === false) {
+        } else if (comparePixels(newImage, originalImage, debug_log) === false) {
             const saved = save_failure(options.getImageFolder(), options.getFailureFolder(),
                 loaded['file'] + `-${options.runId}.png`);
             returnValue = Status.ScreenshotComparisonFailed;
