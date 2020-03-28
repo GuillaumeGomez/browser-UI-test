@@ -40,7 +40,7 @@ function print(s, backline = true) {
 }
 
 function writeToFile(filePath, content) {
-    fs.writeFileSync(filePath, content, { mode: 0o666, encoding: 'utf8' });
+    fs.writeFileSync(filePath, content, 'utf8');
 }
 
 function writeObjectToFile(filePath, object) {
