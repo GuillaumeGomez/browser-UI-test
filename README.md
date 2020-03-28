@@ -32,21 +32,34 @@ $ browser-ui-test --help
 
 ### Using Docker
 
-This repository provides a `Dockerfile` in case you want to make your like easier when running tests. For example, the equivalent of running `npm run test` is:
+This repository provides a `Dockerfile` in case you want to make your like easier when running
+tests. For example, the equivalent of running `npm run test` is:
 
 ```bash
 # in case I am in the browser-UI-test folder
 $ docker build . -t browser-ui
-$ docker run -v "$PWD:/data" browser-ui --test-folder /data/tests/scripts/ --failure-folder /data/failures --variable DOC_PATH /data/tests/html_files
+$ docker run \
+    -v "$PWD:/data" \
+    -u $(id -u ${USER}):$(id -g ${USER}) \
+    browser-ui \
+    # browser-ui-test options from this point
+    --test-folder /data/tests/scripts/ \
+    --failure-folder /data/failures \
+    --variable DOC_PATH /data/tests/html_files
 ```
 
-Explanations for these commands! The first one build an image using the current folder and name it
+Explanations for these commands! The first one builds an image using the current folder and names it
 "browser-ui".
 
-The second one runs using what we built in the first command. The only important thing here is
-`-v "$PWD:/data"`. We tell docker to bind the current folder (`$PWD`) in the `/data` folder in the
-context of docker. If you want to bind another folder, just change the `$PWD` value. Please remember
-that you need to use absolute paths!
+The second one runs using what we built in the first command. Two important things here are
+`-v "$PWD:/data"` and `-u $(id -u ${USER}):$(id -g ${USER})`.
+
+`-v "$PWD:/data"` is used to tell docker to bind the current folder (`$PWD`) in the `/data` folder
+in the context of docker. If you want to bind another folder, just change the `$PWD` value. Please
+remember that you need to use absolute paths!
+
+`-u $(id -u ${USER}):$(id -g ${USER})` is used to run the docker container as the current user so
+that the generated files aren't owned by `root` (which can quickly become annoying).
 
 Then we tell it to run the "browser-ui" image.
 
@@ -61,7 +74,9 @@ Important note: each merge on master pushes a new image on docker hub. You can f
 
 ### Using this framework as a dependency
 
-You can do so by importing both `runTests` and `Options` from `index.js`. `Options` is a class where you can set the parameters you need/want. If you feel better providing "command-line args"-like parameters, you can use it as follows:
+You can do so by importing both `runTests` and `Options` from `index.js`. `Options` is a class where
+you can set the parameters you need/want. If you feel better providing "command-line args"-like
+parameters, you can use it as follows:
 
 ```js
 const {Options, runTests} = require('browser-ui-test');
@@ -106,7 +121,8 @@ runTest('someFile.goml').then(x => {
 
 ### Exported elements
 
-Like said above, you can use this framework through code directly. Here is the list of available elements:
+Like said above, you can use this framework through code directly. Here is the list of available
+elements:
 
  * `runTest`: Function to run a specific test. Parameters:
    * testPath: String [MANDATORY]
@@ -119,7 +135,8 @@ Like said above, you can use this framework through code directly. Here is the l
 
 #### Options
 
-If you want to see all the available options, just run with the `-h` or `--help` options. If you want to build the `Options` object yourself, you might be interested by what follows.
+If you want to see all the available options, just run with the `-h` or `--help` options. If you
+want to build the `Options` object yourself, you might be interested by what follows.
 
 The list of fields of the `Options` class is the following:
 
@@ -150,11 +167,14 @@ $ node src/index.js --test-folder some-other-place
 
 ## Font issues
 
-Unfortunately, font rendering differs depending on the computer **and** on the OS. To bypass this problem but still allow to have a global UI check, the text is invisible by default. If you are **sure** that you need to check with the text visible, you can use the option `--show-text`.
+Unfortunately, font rendering differs depending on the computer **and** on the OS. To bypass this
+problem but still allow to have a global UI check, the text is invisible by default. If you are
+**sure** that you need to check with the text visible, you can use the option `--show-text`.
 
 ## Variables
 
-In this framework, you can use variables defined through the `--variable` option or through your environment. For example, if you start your script with:
+In this framework, you can use variables defined through the `--variable` option or through your
+environment. For example, if you start your script with:
 
 ```
 A_VARIABLE=12 node src/index.js --test-folder tests/scripts/ --variable DOC_PATH tests/html_files --variable ANOTHER_ONE 42
