@@ -517,8 +517,10 @@ function parseAssert(line, options) {
                 `let ${varName} = await page.$("${selector}");\n` +
                 `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
                 'await page.evaluate(e => {\n' +
-                `if (e.textContent !== "${value}") {\n` +
-                `throw '"' + e.textContent + '" !== "${value}"'; }\n` +
+                `if (e.tagName.toLowerCase() === "input") {\n`+
+                    `if (e.value !== "${value}") { throw '"' + e.value + '" !== "${value}"'; }\n` +
+                `} else if (e.textContent !== "${value}") {\n` +
+                    `throw '"' + e.textContent + '" !== "${value}"'; }\n` +
                 `}, ${varName});`,
             ],
             'wait': false,
