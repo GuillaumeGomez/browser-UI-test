@@ -16,6 +16,14 @@ text: ("#button", "hello") // set text of element #button
 assert: ("#button", "hello") // check if #button element's text has been set to "hello"
 ```
 
+### Trouble installing puppeteer?
+
+In case you can't install puppeteer "normally", you can give a try to `--unsafe-perm=true`:
+
+```bash
+$ npm install puppeteer --unsafe-perm=true
+```
+
 ### Using this framework as a binary
 
 If you installed it, you should have a script called "browser-ui-test". You can run it as follows:
