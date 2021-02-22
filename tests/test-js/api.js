@@ -23,9 +23,11 @@ function checkAssert(x, func) {
     x.assert(func('("a", "b")'),
         {
             'instructions': [
-                'let parseAssertElemStr = await page.$("a");\nif (parseAssertElemStr === null)' +
-                ' { throw \'"a" not found\'; }\nawait page.evaluate(e => {\nif (e.textContent !==' +
-                ' "b") {\nthrow \'"\' + e.textContent + \'" !== "b"\'; }\n}, parseAssertElemStr);'],
+                'let parseAssertElemStr = await page.$("a");\nif (parseAssertElemStr === null) { ' +
+                'throw \'"a" not found\'; }\nawait page.evaluate(e => {\nif (e.tagName.' +
+                'toLowerCase() === "input") {\nif (e.value !== "b") { throw \'"\' + e.value + \'"' +
+                ' !== "b"\'; }\n} else if (e.textContent !== "b") {\nthrow \'"\' + e.textContent ' +
+                '+ \'" !== "b"\'; }\n}, parseAssertElemStr);'],
             'wait': false,
             'checkResult': true,
         });
@@ -724,7 +726,7 @@ function checkWrite(x, func) {
                   'selector], [string]) or ([CSS selector], [integer])'});
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
     x.assert(func('(\'\', "b")'), {'error': 'CSS selector cannot be empty'});
-    x.assert(func('("a", "b")'), {'instructions': ['await page.type(\"a\", \"b\")']});
+    x.assert(func('("a", "b")'), {'instructions': ['await page.type("a", "b")']});
     x.assert(func('("a", 13.2)'), {'error': 'expected integer for keycode, found float: `13.2`'});
     x.assert(func('("a", -13.2)'), {'error': 'expected integer for keycode, found float: `-13.2`'});
     x.assert(func('("a", -13)'), {'error': 'keycode cannot be negative: `-13`'});
