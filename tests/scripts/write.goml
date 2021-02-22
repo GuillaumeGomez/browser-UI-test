@@ -1,0 +1,7 @@
+screenshot: false
+goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html // still the same...
+assert: ("#the-input", "")
+write: ("#the-input", "hello")
+assert: ("#the-input", "hello")
+write: ("#the-input", 71) // 71 is the letter 'g'
+assert: ("#the-input", "hellog")

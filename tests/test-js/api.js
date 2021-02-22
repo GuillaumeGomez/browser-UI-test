@@ -716,16 +716,22 @@ function checkWrite(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
     x.assert(func('("a")'),
-        {'error': 'invalid number of arguments in tuple, expected ([CSS selector], [string])'});
+        {'error': 'invalid number of arguments in tuple, expected [string] or [integer] or ([CSS ' +
+                  'selector], [string]) or ([CSS selector], [integer])'});
     x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
     x.assert(func('("a", "b", "c")'),
-        {'error': 'invalid number of arguments in tuple, expected ([CSS selector], [string])'});
+        {'error': 'invalid number of arguments in tuple, expected [string] or [integer] or ([CSS ' +
+                  'selector], [string]) or ([CSS selector], [integer])'});
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
     x.assert(func('(\'\', "b")'), {'error': 'CSS selector cannot be empty'});
-    x.assert(func('("a", "b")'), {
+    x.assert(func('("a", "b")'), {'instructions': ['await page.type(\"a\", \"b\")']});
+    x.assert(func('("a", 13.2)'), {'error': 'expected integer for keycode, found float: `13.2`'});
+    x.assert(func('("a", -13.2)'), {'error': 'expected integer for keycode, found float: `-13.2`'});
+    x.assert(func('("a", -13)'), {'error': 'keycode cannot be negative: `-13`'});
+    x.assert(func('("a", 13)'), {
         'instructions': [
             'await page.focus("a")',
-            'await page.keyboard.type("b")',
+            'await page.keyboard.press(String.fromCharCode(13))',
         ],
     });
 
@@ -736,6 +742,12 @@ function checkWrite(x, func) {
     x.assert(func('"a"'), {'instructions': ['await page.keyboard.type("a")']});
     x.assert(func('\'a\''), {'instructions': ['await page.keyboard.type("a")']});
     x.assert(func('\'"a\''), {'instructions': ['await page.keyboard.type("\\"a")']});
+
+    // check integer argument
+    x.assert(func('13.2'), {'error': 'expected integer for keycode, found float: `13.2`'});
+    x.assert(func('-13.2'), {'error': 'expected integer for keycode, found float: `-13.2`'});
+    x.assert(func('-13'), {'error': 'keycode cannot be negative: `-13`'});
+    x.assert(func('13'), {'instructions': ['await page.keyboard.press(String.fromCharCode(13))']});
 }
 
 const TO_CHECK = [
