@@ -218,6 +218,7 @@ Here's the command list:
  * [`local-storage`](#local-storage)
  * [`move-cursor-to`](#move-cursor-to)
  * [`permissions`](#permissions)
+ * [`press-key`](#press-key)
  * [`reload`](#reload)
  * [`screenshot`](#screenshot)
  * [`scroll-to`](#scroll-to)
@@ -409,6 +410,20 @@ move-cursor-to: (10, 12)
 ```
 permissions: ["geolocation"] // "geolocation" permission is enabled
 permissions: ["camera"] // "camera" permission is enabled and "geolocation" is disabled
+```
+
+#### press-key
+
+**press-key** command sends a key event (both **keydown** and **keyup** events). It expects a tuple of `(keycode, delay)` or simply `keycode`. `keycode` is either a string or an integer. `delay` is the time to wait between **keydown** and **keyup** in milliseconds (if not specified, it is 0).
+
+The key codes (both strings and integers) can be found [here](https://github.com/puppeteer/puppeteer/blob/v1.14.0/lib/USKeyboardLayout.js).
+
+Examples:
+
+```
+press-key: 'Escape'
+press-key: 27 // Same but with an integer
+press-key: ('Escape', 1000) // The keyup event will be send after 1000 ms.
 ```
 
 #### reload

@@ -533,6 +533,57 @@ function checkPermissions(x, func) {
     });
 }
 
+function checkPressKey(x, func) {
+    // check tuple argument
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
+    x.assert(func('("a")'),
+        {'error': 'invalid number of arguments in tuple, expected [string] or [integer] or ' +
+                  '([string], [integer]) or ([integer], [integer])'});
+    x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
+    x.assert(func('("a", "b", "c")'),
+        {'error': 'invalid number of arguments in tuple, expected [string] or [integer] or ' +
+                  '([string], [integer]) or ([integer], [integer])'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('(\'\', "b")'),
+        {'error': 'expected an integer as tuple second argument, found a string'});
+    x.assert(func('("a", "b")'),
+        {'error': 'expected an integer as tuple second argument, found a string'});
+    x.assert(func('("", 13)'), {'error': 'key cannot be empty'});
+    x.assert(func('("a", 13.2)'), {'error': 'expected integer for delay, found float: `13.2`'});
+    x.assert(func('("a", -13.2)'), {'error': 'expected integer for delay, found float: `-13.2`'});
+    x.assert(func('("a", -13)'), {'error': 'delay cannot be negative: `-13`'});
+    x.assert(func('("a", 13)'), {
+        'instructions': [
+            'await page.keyboard.press("a", 13)',
+        ],
+    });
+    x.assert(func('(13, "a")'),
+        {'error': 'expected an integer as tuple second argument, found a string'});
+    x.assert(func('(-13, 13)'), {'error': 'keycode cannot be negative: `-13`'});
+    x.assert(func('(-13.2, 13)'), {'error': 'expected integer for keycode, found float: `-13.2`'});
+    x.assert(func('(13.2, 13)'), {'error': 'expected integer for keycode, found float: `13.2`'});
+    x.assert(func('(13, 13)'), {
+        'instructions': [
+            'await page.keyboard.press(String.fromCharCode(13), 13)',
+        ],
+    });
+
+    // check string argument
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
+    x.assert(func('\'\''), {'error': 'key cannot be empty'});
+    x.assert(func('"a"'), {'instructions': ['await page.keyboard.press("a")']});
+    x.assert(func('\'a\''), {'instructions': ['await page.keyboard.press("a")']});
+    x.assert(func('\'"a\''), {'instructions': ['await page.keyboard.press("\\"a")']});
+
+    // check integer argument
+    x.assert(func('13.2'), {'error': 'expected integer for keycode, found float: `13.2`'});
+    x.assert(func('-13.2'), {'error': 'expected integer for keycode, found float: `-13.2`'});
+    x.assert(func('-13'), {'error': 'keycode cannot be negative: `-13`'});
+    x.assert(func('13'), {'instructions': ['await page.keyboard.press(String.fromCharCode(13))']});
+}
+
 function checkReload(x, func) {
     // check tuple argument
     x.assert(func(''),
@@ -822,6 +873,11 @@ const TO_CHECK = [
         'name': 'permissions',
         'func': checkPermissions,
         'toCall': (e, o) => wrapper(parserFuncs.parsePermissions, e, o),
+    },
+    {
+        'name': 'press-key',
+        'func': checkPressKey,
+        'toCall': (e, o) => wrapper(parserFuncs.parsePressKey, e, o),
     },
     {
         'name': 'reload',

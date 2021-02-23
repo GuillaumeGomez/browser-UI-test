@@ -200,7 +200,7 @@ function parseWrite(line, options) {
     if (tuple[1].kind === 'string') {
         return {
             'instructions': [
-                `await page.type("${selector.value}", "${tuple[1].getValue()}")`,
+                `await page.type("${selector.value}", "${cleanString(tuple[1].getValue())}")`,
             ],
         };
     }
@@ -212,6 +212,91 @@ function parseWrite(line, options) {
         'instructions': [
             `await page.focus("${selector.value}")`,
             `await page.keyboard.press(String.fromCharCode(${tuple[1].getValue()}))`,
+        ],
+    };
+}
+
+
+// Possible inputs:
+//
+// * ("key", delay)
+// * (keycode, delay)
+// * "key"
+// * keycode
+//
+// The key codes (both strings and integers) can be found here:
+// https://github.com/puppeteer/puppeteer/blob/v1.14.0/lib/USKeyboardLayout.js
+function parsePressKey(line, options) {
+    const err = 'expected [string] or [integer] or ([string], [integer]) or ([integer], [integer])';
+    const p = new Parser(line, options.variables);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1) {
+        return {'error': err};
+    } else if (p.elems[0].kind === 'string') {
+        const s = cleanString(p.elems[0].getValue());
+        if (s.length === 0) {
+            return {'error': 'key cannot be empty'};
+        }
+        return {
+            'instructions': [
+                `await page.keyboard.press("${s}")`,
+            ],
+        };
+    } else if (p.elems[0].kind === 'number') {
+        const ret = checkInteger(p.elems[0], 'keycode', true);
+        if (ret.error !== undefined) {
+            return ret;
+        }
+        return {
+            'instructions': [
+                'await page.keyboard.press(String.fromCharCode' +
+                `(${cleanString(p.elems[0].getValue())}))`,
+            ],
+        };
+    } else if (p.elems[0].kind !== 'tuple') {
+        return {'error': err};
+    }
+    const tuple = p.elems[0].getValue();
+    if (tuple.length !== 2) {
+        return {
+            'error': 'invalid number of arguments in tuple, ' + err,
+        };
+    } else if (tuple[0].kind !== 'string' && tuple[0].kind !== 'number') {
+        return {
+            'error':
+            `expected a string or an integer as tuple first argument, found a ${tuple[0].kind}`,
+        };
+    } else if (tuple[1].kind !== 'number') {
+        return {
+            'error':
+            `expected an integer as tuple second argument, found a ${tuple[1].kind}`,
+        };
+    }
+    const ret = checkInteger(tuple[1], 'delay', true);
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    const delay = `, ${tuple[1].getValue()}`;
+    if (tuple[0].kind === 'string') {
+        const s = cleanString(tuple[0].getValue());
+        if (s.length === 0) {
+            return {'error': 'key cannot be empty'};
+        }
+        return {
+            'instructions': [
+                `await page.keyboard.press("${s}"${delay})`,
+            ],
+        };
+    }
+    const ret2 = checkInteger(tuple[0], 'keycode', true);
+    if (ret2.error !== undefined) {
+        return ret2;
+    }
+    return {
+        'instructions': [
+            `await page.keyboard.press(String.fromCharCode(${tuple[1].getValue()})${delay})`,
         ],
     };
 }
@@ -1058,6 +1143,7 @@ const ORDERS = {
     'local-storage': parseLocalStorage,
     'move-cursor-to': parseMoveCursorTo,
     'permissions': parsePermissions,
+    'press-key': parsePressKey,
     'reload': parseReload,
     'screenshot': parseScreenshot,
     'scroll-to': parseScrollTo,
@@ -1158,6 +1244,7 @@ module.exports = {
     'parseJavascript': parseJavascript,
     'parseLocalStorage': parseLocalStorage,
     'parseMoveCursorTo': parseMoveCursorTo,
+    'parsePressKey': parsePressKey,
     'parsePermissions': parsePermissions,
     'parseReload': parseReload,
     'parseScreenshot': parseScreenshot,
