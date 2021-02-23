@@ -1,0 +1,11 @@
+screenshot: false
+goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html // still the same...
+assert: ("#the-input", "")
+write: ("#the-input", "hello")
+assert: ("#the-input", "hello")
+press-key: "KeyA"
+assert: ("#the-input", "helloa")
+assert: ("#the-input:focus")
+press-key: "Tab"
+fail: true
+assert: ("#the-input:focus") // We want to ensure that the input isn't focused anymore
