@@ -494,8 +494,11 @@ wait-for: 1000
 
 ```
 write: (".element", "text")
+write: (".element", 13) // this is the keycode for "enter"
 write: ("#element", "text")
+write: ("#element", 13) // this is the keycode for "enter"
 write: "text"
+write: 13 // this is the keycode for "enter"
 ```
 
 ### Comments?

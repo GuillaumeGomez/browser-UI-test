@@ -145,44 +145,73 @@ function parseFocus(line, options) {
 // Possible inputs:
 //
 // * ("[CSS selector (for example: #elementID)]", "text")
+// * ("[CSS selector (for example: #elementID)]", keycode)
 // * "text" (in here, it'll write into the current focused element)
+// * keycode (in here, it'll write the given keycode into the current focused element)
 function parseWrite(line, options) {
+    const err = 'expected [string] or [integer] or ([CSS selector], [string]) or ([CSS selector]' +
+                ', [integer])';
     const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
     } else if (p.elems.length !== 1) {
-        return {'error': 'expected [string] or ([CSS selector], [string])'};
+        return { 'error': err };
     } else if (p.elems[0].kind === 'string') {
         return {
             'instructions': [
                 `await page.keyboard.type("${cleanString(p.elems[0].getValue())}")`,
             ],
         };
+    } else if (p.elems[0].kind === 'number') {
+        const ret = checkInteger(p.elems[0], 'keycode', true);
+        if (ret.error !== undefined) {
+            return ret;
+        }
+        return {
+            'instructions': [
+                'await page.keyboard.press(String.fromCharCode' +
+                `(${cleanString(p.elems[0].getValue())}))`,
+            ],
+        };
     } else if (p.elems[0].kind !== 'tuple') {
-        return {'error': 'expected [string] or ([CSS selector], [string])'};
+        return {'error': err};
     }
     const tuple = p.elems[0].getValue();
     if (tuple.length !== 2) {
         return {
-            'error': 'invalid number of arguments in tuple, expected ([CSS selector], [string])',
+            'error': 'invalid number of arguments in tuple, ' + err,
         };
     } else if (tuple[0].kind !== 'string') {
         return {
             'error':
             `expected a CSS selector as tuple first argument, found a ${tuple[0].kind}`,
         };
-    } else if (tuple[1].kind !== 'string') {
-        return {'error': `expected a string as tuple second argument, found a ${tuple[1].kind}`};
+    } else if (tuple[1].kind !== 'string' && tuple[1].kind !== 'number') {
+        return {
+            'error':
+            `expected a string or an integer as tuple second argument, found a ${tuple[1].kind}`,
+        };
     }
     const selector = cleanCssSelector(tuple[0].getValue());
     if (selector.error !== undefined) {
         return selector;
     }
+    if (tuple[1].kind === 'string') {
+        return {
+            'instructions': [
+                `await page.type("${selector.value}", "${tuple[1].getValue()}")`,
+            ],
+        };
+    }
+    const ret = checkInteger(tuple[1], 'keycode', true);
+    if (ret.error !== undefined) {
+        return ret;
+    }
     return {
         'instructions': [
             `await page.focus("${selector.value}")`,
-            `await page.keyboard.type("${tuple[1].getValue()}")`,
+            `await page.keyboard.press(String.fromCharCode(${tuple[1].getValue()}))`,
         ],
     };
 }
@@ -488,8 +517,10 @@ function parseAssert(line, options) {
                 `let ${varName} = await page.$("${selector}");\n` +
                 `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
                 'await page.evaluate(e => {\n' +
-                `if (e.textContent !== "${value}") {\n` +
-                `throw '"' + e.textContent + '" !== "${value}"'; }\n` +
+                'if (e.tagName.toLowerCase() === "input") {\n' +
+                    `if (e.value !== "${value}") { throw '"' + e.value + '" !== "${value}"'; }\n` +
+                `} else if (e.textContent !== "${value}") {\n` +
+                    `throw '"' + e.textContent + '" !== "${value}"'; }\n` +
                 `}, ${varName});`,
             ],
             'wait': false,
