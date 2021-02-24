@@ -1,6 +1,7 @@
 screenshot: false
 goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
 assert: ("#button")
+assert: "#button" // strictly equivalent to the previous line
  	assert  : ("#button", "Go somewhere else!")
 assert: ("div", 1)
 assert: ("#button", {"padding": "5px"})
