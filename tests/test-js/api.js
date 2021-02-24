@@ -9,8 +9,20 @@ function wrapper(callback, arg, options = new Options()) {
 
 function checkAssert(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('1'),
+        {'error':
+         'expected a tuple or a string, read the documentation to see the accepted inputs'});
+    x.assert(func('1.1'),
+        {'error':
+         'expected a tuple or a string, read the documentation to see the accepted inputs'});
     x.assert(func('(a, "b")'), {'error': 'unexpected `a` as first token'});
     x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
+    x.assert(func('"a"'),
+        {
+            'instructions': ['if ((await page.$("a")) === null) { throw \'"a" not found\'; }'],
+            'wait': false,
+            'checkResult': true,
+        });
     x.assert(func('("a")'),
         {
             'instructions': ['if ((await page.$("a")) === null) { throw \'"a" not found\'; }'],

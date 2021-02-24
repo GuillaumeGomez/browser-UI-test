@@ -235,7 +235,8 @@ Here's the command list:
 
 ```
 // will check that "#id > .class" exists
-assert: ("#id > .class")
+assert: "#id > .class"
+assert: ("#id > .class") // strictly equivalent
 // will check that first "#id > .class" has text "hello"
 assert: ("#id > .class", "hello")
 // will check that there are 2 "#id > .class"

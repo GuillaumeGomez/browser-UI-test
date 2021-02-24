@@ -480,44 +480,61 @@ function parseLocalStorage(line, options) {
     };
 }
 
+function assertHandleSelectorInput(value) {
+    let selector = cleanCssSelector(value);
+    if (selector.error !== undefined) {
+        return selector;
+    }
+    selector = selector.value;
+    //
+    // EXISTENCE CHECK
+    //
+    return {
+        'instructions': [
+            `if ((await page.$("${selector}")) === null) { throw '"${selector}" not found'; }`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    };
+}
+
 // Possible inputs:
 //
+// * "CSS selector"
 // * ("CSS selector")
 // * ("CSS selector", number of occurences [integer])
 // * ("CSS selector", CSS elements [JSON object])
 // * ("CSS selector", text [STRING])
 // * ("CSS selector", attribute name [STRING], attribute value [STRING])
 function parseAssert(line, options) {
+    const err = 'expected a tuple or a string, read the documentation to see the accepted inputs';
     const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
-    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
-        return {'error': 'expected a tuple, read the documentation to see the accepted inputs'};
+    } else if (p.elems.length !== 1) {
+        return {'error': err};
+    } else if (p.elems[0].kind === 'string') {
+        return assertHandleSelectorInput(p.elems[0].getValue());
+    } else if (p.elems[0].kind !== 'tuple') {
+        return {'error': err};
     }
     const tuple = p.elems[0].getValue();
     if (tuple.length < 1 || tuple.length > 3) {
-        return {'error': 'expected a tuple, read the documentation to see the accepted inputs'};
+        return {'error': 'invalid number of values in the tuple, read the documentation to see ' +
+                         'the accepted inputs'};
     } else if (tuple[0].kind !== 'string') {
         return {'error': `expected first argument to be a CSS selector, found a ${tuple[0].kind}`};
+    }
+    if (tuple.length === 1) {
+        return assertHandleSelectorInput(tuple[0].getValue());
     }
     let selector = cleanCssSelector(tuple[0].getValue());
     if (selector.error !== undefined) {
         return selector;
     }
     selector = selector.value;
-    if (tuple.length === 1) {
-        //
-        // EXISTENCE CHECK
-        //
-        return {
-            'instructions': [
-                `if ((await page.$("${selector}")) === null) { throw '"${selector}" not found'; }`,
-            ],
-            'wait': false,
-            'checkResult': true,
-        };
-    } else if (tuple[1].kind === 'number') {
+    if (tuple[1].kind === 'number') {
         //
         // NUMBER OF OCCURENCES CHECK
         //
