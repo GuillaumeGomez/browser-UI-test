@@ -80,6 +80,12 @@ this README.
 
 Important note: each merge on master pushes a new image on docker hub. You can find them [here](https://hub.docker.com/repository/docker/gomezguillaume/browser-ui-test/general).
 
+There are three kind of docker images:
+
+ 1. Latest master branch update
+ 2. By date
+ 3. By (npm) version
+
 ### Using this framework as a dependency
 
 You can do so by importing both `runTests` and `Options` from `index.js`. `Options` is a class where
@@ -268,6 +274,8 @@ assert: ("#id > .class", { "color": "blue" })
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
 assert: ("#id > .class", "attribute-name", "attribute-value")
 ```
+
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
 
 #### attribute
 

@@ -35,11 +35,25 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_HUB_USERNAME }}
           password: ${{ secrets.DOCKER_HUB_ACCESS_TOKEN }}
-      - name: Build docker image (without date)
+      - name: Build docker image (without date nor version)
         run: docker build -t gomezguillaume/browser-ui-test .
       - name: Build docker image (with date)
         run: docker build -t gomezguillaume/browser-ui-test:`date '+%Y-%m-%d'` .
-      - name: Publish new versions
+      - name: Check if docker image is needed with version
+        run: |
+          echo "package_version=`grep '"version":' package.json | cut -d ':' -f 2 | cut -d '"' -f 2``" >> $GITHUB_ENV
+          if docker manifest inspect gomezguillaume/browser-ui-test:${{env.package_version}}; then
+            echo "push_version=false" >> $GITHUB_ENV
+          else
+            echo "push_version=true" >> $GITHUB_ENV
+          fi
+      - name: Build docker image (with version)
+        if: ${{ env.push_version == 'true' }}
+        run: docker build -t gomezguillaume/browser-ui-test:${{env.package_version}} .
+      - name: Publish new docker images (normal and date)
         run: |
           docker push gomezguillaume/browser-ui-test
           docker push gomezguillaume/browser-ui-test:`date '+%Y-%m-%d'`
+      - name: Publish new docker image (with version)
+        if: ${{ env.push_version == 'true' }}
+        run: docker push gomezguillaume/browser-ui-test:${{env.package_version}}
