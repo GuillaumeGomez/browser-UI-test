@@ -205,6 +205,7 @@ Those scripts aim to be as quick to write and as small as possible. To do so, th
 Here's the command list:
 
  * [`assert`](#assert)
+ * [`assert-false`](#assert-false)
  * [`attribute`](#attribute)
  * [`click`](#click)
  * [`css`](#css)
@@ -244,6 +245,27 @@ assert: ("#id > .class", 2)
 // will check that "#id > .class" has blue color
 assert: ("#id > .class", { "color": "blue" })
 // will check that "#id > .class" has an attribute called "attribute-name" with value "attribute-value"
+assert: ("#id > .class", "attribute-name", "attribute-value")
+```
+
+#### assert-false
+
+**assert-false** command checks if the condition is false, otherwise fail. It's mostly doing the opposite of `assert`. Four different functionalities are available:
+
+```
+// will check that "#id > .class" doesn't exists
+assert: "#id > .class"
+assert: ("#id > .class") // strictly equivalent
+// will check that first "#id > .class" doesn't have text "hello"
+// IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
+assert: ("#id > .class", "hello")
+// will check that there are not 2 "#id > .class"
+assert: ("#id > .class", 2)
+// will check that "#id > .class" doesn't have blue color
+// IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
+assert: ("#id > .class", { "color": "blue" })
+// will check that "#id > .class" doesn't have an attribute called "attribute-name" with value "attribute-value"
+// IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
 assert: ("#id > .class", "attribute-name", "attribute-value")
 ```
 
