@@ -275,6 +275,8 @@ assert: ("#id > .class", { "color": "blue" })
 assert: ("#id > .class", "attribute-name", "attribute-value")
 ```
 
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+
 #### attribute
 
 **attribute** command allows to update an element's attribute. Example:
