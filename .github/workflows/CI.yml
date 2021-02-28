@@ -41,7 +41,7 @@ jobs:
         run: docker build -t gomezguillaume/browser-ui-test:`date '+%Y-%m-%d'` .
       - name: Check if docker image is needed with version
         run: |
-          echo "package_version=`grep '"version":' package.json | cut -d ':' -f 2 | cut -d '"' -f 2``" >> $GITHUB_ENV
+          echo package_version=`grep '"version":' package.json | cut -d ':' -f 2 | cut -d '"' -f 2` >> $GITHUB_ENV
           if docker manifest inspect gomezguillaume/browser-ui-test:${{env.package_version}}; then
             echo "push_version=false" >> $GITHUB_ENV
           else
