@@ -80,6 +80,12 @@ this README.
 
 Important note: each merge on master pushes a new image on docker hub. You can find them [here](https://hub.docker.com/repository/docker/gomezguillaume/browser-ui-test/general).
 
+There are three kind of docker images:
+
+ 1. Latest master branch update
+ 2. By date
+ 3. By (npm) version
+
 ### Using this framework as a dependency
 
 You can do so by importing both `runTests` and `Options` from `index.js`. `Options` is a class where
