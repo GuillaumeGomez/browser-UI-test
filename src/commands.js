@@ -480,7 +480,7 @@ function parseLocalStorage(line, options) {
     };
 }
 
-function assertHandleSelectorInput(value) {
+function assertHandleSelectorInput(value, insertBefore, insertAfter) {
     let selector = cleanCssSelector(value);
     if (selector.error !== undefined) {
         return selector;
@@ -491,22 +491,15 @@ function assertHandleSelectorInput(value) {
     //
     return {
         'instructions': [
-            `if ((await page.$("${selector}")) === null) { throw '"${selector}" not found'; }`,
+            `${insertBefore}if ((await page.$("${selector}")) === null) { ` +
+            `throw '"${selector}" not found'; }${insertAfter}`,
         ],
         'wait': false,
         'checkResult': true,
     };
 }
 
-// Possible inputs:
-//
-// * "CSS selector"
-// * ("CSS selector")
-// * ("CSS selector", number of occurences [integer])
-// * ("CSS selector", CSS elements [JSON object])
-// * ("CSS selector", text [STRING])
-// * ("CSS selector", attribute name [STRING], attribute value [STRING])
-function parseAssert(line, options) {
+function parseAssertInner(line, options, insertBefore, insertAfter) {
     const err = 'expected a tuple or a string, read the documentation to see the accepted inputs';
     const p = new Parser(line, options.variables);
     p.parse();
@@ -515,7 +508,7 @@ function parseAssert(line, options) {
     } else if (p.elems.length !== 1) {
         return {'error': err};
     } else if (p.elems[0].kind === 'string') {
-        return assertHandleSelectorInput(p.elems[0].getValue());
+        return assertHandleSelectorInput(p.elems[0].getValue(), insertBefore, insertAfter);
     } else if (p.elems[0].kind !== 'tuple') {
         return {'error': err};
     }
@@ -527,7 +520,7 @@ function parseAssert(line, options) {
         return {'error': `expected first argument to be a CSS selector, found a ${tuple[0].kind}`};
     }
     if (tuple.length === 1) {
-        return assertHandleSelectorInput(tuple[0].getValue());
+        return assertHandleSelectorInput(tuple[0].getValue(), insertBefore, insertAfter);
     }
     let selector = cleanCssSelector(tuple[0].getValue());
     if (selector.error !== undefined) {
@@ -551,8 +544,8 @@ function parseAssert(line, options) {
             'instructions': [
                 `let ${varName} = await page.$$("${selector}");\n` +
                 // TODO: maybe check differently depending on the tag kind?
-                `if (${varName}.length !== ${occurences}) { throw 'expected ${occurences} ` +
-                `elements, found ' + ${varName}.length; }`,
+                `${insertBefore}if (${varName}.length !== ${occurences}) { throw 'expected ` +
+                `${occurences} elements, found ' + ${varName}.length; }${insertAfter}`,
             ],
             'wait': false,
             'checkResult': true,
@@ -600,9 +593,9 @@ function parseAssert(line, options) {
             'instructions': [
                 `let ${varName} = await page.$("${selector}");\n` +
                 `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
-                'await page.evaluate(e => {' +
+                `${insertBefore}await page.evaluate(e => {` +
                 `let assertComputedStyle = getComputedStyle(e);\n${code}` +
-                `}, ${varName});`,
+                `}, ${varName});${insertAfter}`,
             ],
             'wait': false,
             'warnings': warnings,
@@ -618,12 +611,12 @@ function parseAssert(line, options) {
             'instructions': [
                 `let ${varName} = await page.$("${selector}");\n` +
                 `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
-                'await page.evaluate(e => {\n' +
+                `${insertBefore}await page.evaluate(e => {\n` +
                 'if (e.tagName.toLowerCase() === "input") {\n' +
                     `if (e.value !== "${value}") { throw '"' + e.value + '" !== "${value}"'; }\n` +
                 `} else if (e.textContent !== "${value}") {\n` +
                     `throw '"' + e.textContent + '" !== "${value}"'; }\n` +
-                `}, ${varName});`,
+                `}, ${varName});${insertAfter}`,
             ],
             'wait': false,
             'checkResult': true,
@@ -649,10 +642,10 @@ function parseAssert(line, options) {
             'instructions': [
                 `let ${varName} = await page.$("${selector}");\n` +
                 `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
-                'await page.evaluate(e => {\n' +
+                `${insertBefore}await page.evaluate(e => {\n` +
                 `if (e.getAttribute("${attributeName}") !== "${value}") {\n` +
                 `throw 'expected "${value}", found "' + e.getAttribute("${attributeName}") + '"` +
-                ` for attribute "${attributeName}"';\n}\n}, ${varName});`,
+                ` for attribute "${attributeName}"';\n}\n}, ${varName});${insertAfter}`,
             ],
             'wait': false,
             'checkResult': true,
@@ -662,6 +655,34 @@ function parseAssert(line, options) {
     return {
         'error': `expected "string" or "json" or "number" as second argument, found a ${kind}`,
     };
+}
+
+// Possible inputs:
+//
+// * "CSS selector"
+// * ("CSS selector")
+// * ("CSS selector", number of occurences [integer])
+// * ("CSS selector", CSS elements [JSON object])
+// * ("CSS selector", text [STRING])
+// * ("CSS selector", attribute name [STRING], attribute value [STRING])
+function parseAssert(line, options) {
+    return parseAssertInner(line, options, '', '');
+}
+
+// Possible inputs:
+//
+// * "CSS selector"
+// * ("CSS selector")
+// * ("CSS selector", number of occurences [integer])
+// * ("CSS selector", CSS elements [JSON object])
+// * ("CSS selector", text [STRING])
+// * ("CSS selector", attribute name [STRING], attribute value [STRING])
+function parseAssertFalse(line, options) {
+    return parseAssertInner(
+        line,
+        options,
+        'try {\n',
+        '\n} catch(e) { return; } throw "assert didn\'t fail";');
 }
 
 // Possible inputs:
@@ -1147,6 +1168,7 @@ function parseJavascript(line, options) {
 
 const ORDERS = {
     'assert': parseAssert,
+    'assert-false': parseAssertFalse,
     'attribute': parseAttribute,
     'click': parseClick,
     'css': parseCss,
@@ -1249,6 +1271,7 @@ module.exports = {
 
     // Those functions shouldn't be used directly!
     'parseAssert': parseAssert,
+    'parseAssertFalse': parseAssertFalse,
     'parseAttribute': parseAttribute,
     'parseClick': parseClick,
     'parseCss': parseCss,
