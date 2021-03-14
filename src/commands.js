@@ -685,6 +685,169 @@ function parseAssertFalse(line, options) {
         '\n} catch(e) { return; } throw "assert didn\'t fail";');
 }
 
+function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
+    const err = 'expected a tuple, read the documentation to see the accepted inputs';
+    const p = new Parser(line, options.variables);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
+        return {'error': err};
+    }
+    const tuple = p.elems[0].getValue();
+    if (tuple.length < 2 || tuple.length > 3) {
+        return {'error': 'invalid number of values in the tuple, read the documentation to see ' +
+                         'the accepted inputs'};
+    } else if (tuple[0].kind !== 'string') {
+        return {'error': `expected first argument to be a CSS selector, found a ${tuple[0].kind}`};
+    } else if (tuple[1].kind !== 'string') {
+        return {'error': `expected second argument to be a CSS selector, found a ${tuple[0].kind}`};
+    }
+    let selector1 = cleanCssSelector(tuple[0].getValue());
+    if (selector1.error !== undefined) {
+        return selector1;
+    }
+    selector1 = selector1.value;
+    let selector2 = cleanCssSelector(tuple[1].getValue());
+    if (selector2.error !== undefined) {
+        return selector2;
+    }
+    selector2 = selector2.value;
+
+    const varName = 'parseCompareElements';
+    const selectors = `let ${varName}1 = await page.$("${selector1}");\n` +
+        `if (${varName}1 === null) { throw '"${selector1}" not found'; }\n` +
+        `let ${varName}2 = await page.$("${selector2}");\n` +
+        `if (${varName}2 === null) { throw '"${selector2}" not found'; }\n`;
+
+    if (tuple.length === 2) {
+        return {
+            'instructions': [
+                selectors +
+                `${insertBefore}await page.evaluate((e1, e2) => {\n` +
+                'let e1value;\n' +
+                'if (e1.tagName.toLowerCase() === "input") {\n' +
+                    'e1value = e1.value;\n' +
+                '} else {\n' +
+                    'e1value = e1.textContent;\n' +
+                '}\n' +
+                'if (e2.tagName.toLowerCase() === "input") {\n' +
+                    'if (e2.value !== e1value) {\n' +
+                        'throw \'"\' + e1value + \'" !== "\' + e2.value + \'"\';\n' +
+                    '}\n' +
+                '} else if (e2.textContent !== e1value) {\n' +
+                    'throw \'"\' + e1value + \'" !== "\' + e2.textContent + \'"\';\n' +
+                '}\n' +
+                `}, ${varName}1, ${varName}2);${insertAfter}`,
+            ],
+            'wait': false,
+            'checkResult': true,
+        };
+    } else if (tuple[2].kind === 'string') {
+        const attr = cleanString(tuple[2].getValue());
+        return {
+            'instructions': [
+                selectors +
+                `${insertBefore}await page.evaluate((e1, e2) => {\n` +
+                `if (e1.getAttribute("${attr}") !== e2.getAttribute("${attr}")) {\n` +
+                    `throw "[${attr}]: " + e1.getAttribute("${attr}") + " !== " + ` +
+                    `e2.getAttribute("${attr}");\n` +
+                '}\n' +
+                `}, ${varName}1, ${varName}2);${insertAfter}`,
+            ]
+        };
+    } else if (tuple[2].kind === 'tuple') {
+        const sub_tuple = tuple[2].getValue();
+        let x = false;
+        let y = false;
+        let code = '';
+        for (let i = 0; i < sub_tuple.length && !x && !y; ++i) {
+            if (sub_tuple[i].kind !== 'string') {
+                return { 'error': `\`${tuple[2].getString()}\` should only contain strings` };
+            }
+            let value = sub_tuple[i].getValue();
+            if (value === "x") {
+                if (!x) {
+                    code += 'let x1 = e1.getBoundingClientRect().left;\n' +
+                        'let x2 = e2.getBoundingClientRect().left;\n' +
+                        'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n'
+                }
+                x = true;
+            } else if (value === "y") {
+                if (!y) {
+                    code += 'let y1 = e1.getBoundingClientRect().top;\n' +
+                        'let y2 = e2.getBoundingClientRect().top;\n' +
+                        'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n'
+                }
+                y = true;
+            } else {
+                return {
+                    'error': `\`${tuple[2].getString()}\` only accepted values are "x" and "y"`,
+                };
+            }
+        }
+        return {
+            'instructions': [
+                selectors +
+                `${insertBefore}await page.evaluate((e1, e2) => {\n` +
+                `${code}\n}, ${varName}1, ${varName}2);${insertAfter}`,
+            ]
+        };
+    } else if (tuple[2].kind !== 'array') {
+        return {'error': 'expected an array or a string as third argument, found ' +
+        `"${tuple[2].kind}"`};
+    }
+    const array = tuple[2].getValue();
+    if (array.length > 0 && array[0].kind !== 'string') {
+        return {'error': `expected an array of strings, found \`${tuple[2].getText()}\``};
+    }
+    let code = '';
+    for (let i = 0; i < array.length; ++i) {
+        let css_property = cleanString(array[i].getValue());
+        code += `let style1_1 = e1.style["${css_property}"];\n` +
+            `let style1_2 = computed_style1["${css_property}"];\n` +
+            `let style2_1 = e2.style["${css_property}"];\n` +
+            `let style2_2 = computed_style2["${css_property}"];\n` +
+            'if (style1_1 != style2_1 && style1_1 != style2_2 && ' +
+            'style1_2 != style2_1 && style1_2 != style2_2) {\n' +
+            `throw 'CSS property \`${css_property}\` did not match: ' + ` +
+            `style1_2 + ' != ' + style2_2; }\n`;
+    }
+    return {
+        'instructions': [
+            selectors +
+            `${insertBefore}await page.evaluate((e1, e2) => {` +
+            `let computed_style1 = getComputedStyle(e1);\n` +
+            `let computed_style2 = getComputedStyle(e2);\n${code}` +
+            `}, ${varName}1, ${varName}2);${insertAfter}`,
+        ]
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector 1", "CSS selector 2")
+// * ("CSS selector 1", "CSS selector 2", "attribute")
+// * ("CSS selector 1", "CSS selector 2", ["CSS properties"])
+// * ("CSS selector 1", "CSS selector 2", ("x"|"y"))
+function parseCompareElements(line, options) {
+    return parseCompareElementsInner(line, options, '', '');
+}
+
+// Possible inputs:
+//
+// * ("CSS selector 1", "CSS selector 2")
+// * ("CSS selector 1", "CSS selector 2", "attribute")
+// * ("CSS selector 1", "CSS selector 2", ["CSS properties"])
+// * ("CSS selector 1", "CSS selector 2", ("x"|"y"))
+function parseCompareElementsFalse(line, options) {
+    return parseCompareElementsInner(
+        line,
+        options,
+        'try {\n',
+        '\n} catch(e) { return; } throw "assert didn\'t fail";');
+}
+
 // Possible inputs:
 //
 // * ("CSS selector", "text")
@@ -1171,6 +1334,8 @@ const ORDERS = {
     'assert-false': parseAssertFalse,
     'attribute': parseAttribute,
     'click': parseClick,
+    'compare-elements': parseCompareElements,
+    'compare-elements-false': parseCompareElementsFalse,
     'css': parseCss,
     'drag-and-drop': parseDragAndDrop,
     'emulate': parseEmulate,
@@ -1274,6 +1439,8 @@ module.exports = {
     'parseAssertFalse': parseAssertFalse,
     'parseAttribute': parseAttribute,
     'parseClick': parseClick,
+    'parseCompareElements': parseCompareElements,
+    'parseCompareElementsFalse': parseCompareElementsFalse,
     'parseCss': parseCss,
     'parseDragAndDrop': parseDragAndDrop,
     'parseEmulate': parseEmulate,

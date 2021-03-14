@@ -1,0 +1,45 @@
+<html>
+	<head>
+		<title>Other page</title>
+		<style type="text/css">
+body {
+	margin: 0;
+	background-color: #eee;
+}
+header {
+	background-color: #111;
+	width: 100%;
+	text-align: center;
+	font-size: 1.3em;
+	color: #fff;
+}
+.content {
+	text-align: center;
+}
+.content > .right {
+	width: 50%;
+	position: absolute;
+	right: 0;
+}
+.content > .left {
+	width: 50%;
+	position: absolute;
+	left: 0;
+}
+		</style>
+	</head>
+	<body>
+		<header>Another page!</header>
+		<div class="content">
+			<div class="right" data-whatever="a">
+				<p style="margin:2px;">Some text</p>
+				<div>Some text2</div>
+			</div>
+			<div class="left" data-whatever="a">
+				<p style="margin:2px;">Some text</p>
+				<span style="height:1px;display:block;"></span>
+				<div>Some text2</div>
+			</div>
+		</div>
+	</body>
+</html>

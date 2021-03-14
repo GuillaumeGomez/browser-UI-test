@@ -1,0 +1,15 @@
+screenshot: false
+goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+compare-elements: (".content>.right>p", ".content>.left>p")
+compare-elements: (".content>.right>p", ".content>.right>p", ("x", "y"))
+compare-elements: (".content>.right", ".content>.left", "data-whatever")
+compare-elements: (".content>.right>p", ".content>.left>p", ["margin"])
+compare-elements-false: (".content>.right>p", ".content>.left")
+compare-elements-false: (".content>.right>div", ".content>.left>div", ("x", "y"))
+compare-elements-false: (".content>.right", ".content>.left>p", "data-whatever")
+compare-elements-false: (".content>.right>p", ".content>.left", ["margin"])
+fail: true // check that the command fails if the comparison succeeds
+compare-elements-false: (".content>.right>p", ".content>.left>p")
+compare-elements-false: (".content>.right>div", ".content>.right>div", ("x", "y"))
+compare-elements-false: (".content>.right", ".content>.right", "data-whatever")
+compare-elements-false: (".content>.right>p", ".content>.right>p", ["margin"])
