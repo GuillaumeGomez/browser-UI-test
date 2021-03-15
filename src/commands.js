@@ -767,19 +767,19 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
             if (sub_tuple[i].kind !== 'string') {
                 return { 'error': `\`${tuple[2].getText()}\` should only contain strings` };
             }
-            let value = sub_tuple[i].getValue();
-            if (value === "x") {
+            const value = sub_tuple[i].getValue();
+            if (value === 'x') {
                 if (!x) {
                     code += 'let x1 = e1.getBoundingClientRect().left;\n' +
                         'let x2 = e2.getBoundingClientRect().left;\n' +
-                        'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n'
+                        'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n';
                 }
                 x = true;
-            } else if (value === "y") {
+            } else if (value === 'y') {
                 if (!y) {
                     code += 'let y1 = e1.getBoundingClientRect().top;\n' +
                         'let y2 = e2.getBoundingClientRect().top;\n' +
-                        'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n'
+                        'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n';
                 }
                 y = true;
             } else {
@@ -808,7 +808,7 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
     }
     let code = '';
     for (let i = 0; i < array.length; ++i) {
-        let css_property = cleanString(array[i].getValue());
+        const css_property = cleanString(array[i].getValue());
         code += `let style1_1 = e1.style["${css_property}"];\n` +
             `let style1_2 = computed_style1["${css_property}"];\n` +
             `let style2_1 = e2.style["${css_property}"];\n` +
@@ -816,13 +816,13 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
             'if (style1_1 != style2_1 && style1_1 != style2_2 && ' +
             'style1_2 != style2_1 && style1_2 != style2_2) {\n' +
             `throw 'CSS property \`${css_property}\` did not match: ' + ` +
-            `style1_2 + ' != ' + style2_2; }\n`;
+            'style1_2 + \' != \' + style2_2; }\n';
     }
     return {
         'instructions': [
             selectors +
             `${insertBefore}await page.evaluate((e1, e2) => {` +
-            `let computed_style1 = getComputedStyle(e1);\n` +
+            'let computed_style1 = getComputedStyle(e1);\n' +
             `let computed_style2 = getComputedStyle(e2);\n${code}` +
             `}, ${varName}1, ${varName}2);${insertAfter}`,
         ],

@@ -328,7 +328,7 @@ function checkCompareElementsInner(x, func, before, after) {
         {'error': 'expected first argument to be a CSS selector, found a tuple'},
     );
     x.assert(
-        func("('a', 'a', 'b', 'c')"),
+        func('("a", "a", "b", "c")'),
         {'error': 'invalid number of values in the tuple, read the documentation to see the ' +
             'accepted inputs'},
     );
@@ -379,10 +379,10 @@ function checkCompareElementsInner(x, func, before, after) {
                 '$("b");\nif (parseCompareElements2 === null) { throw \'"b" not found\'; }\n' +
                 before +
                 'await page.evaluate((e1, e2) => {\nlet x1 = e1.getBoundingClientRect().left;\n' +
-                'let x2 = e2.getBoundingClientRect().left;\nif (x1 !== x2) { throw \"different X ' +
-                'values: \" + x1 + \" != \" + x2; }\nlet y1 = e1.getBoundingClientRect().top;\n' +
-                'let y2 = e2.getBoundingClientRect().top;\nif (y1 !== y2) { throw \"different Y ' +
-                'values: \" + y1 + \" != \" + y2; }\n\n}, parseCompareElements1, ' +
+                'let x2 = e2.getBoundingClientRect().left;\nif (x1 !== x2) { throw "different X ' +
+                'values: " + x1 + " != " + x2; }\nlet y1 = e1.getBoundingClientRect().top;\n' +
+                'let y2 = e2.getBoundingClientRect().top;\nif (y1 !== y2) { throw "different Y ' +
+                'values: " + y1 + " != " + y2; }\n\n}, parseCompareElements1, ' +
                 'parseCompareElements2);' + after,
             ],
             'wait': false,
@@ -417,8 +417,8 @@ function checkCompareElementsInner(x, func, before, after) {
                 before +
                 'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
                 'let computed_style2 = getComputedStyle(e2);\nlet style1_1 = ' +
-                'e1.style[\"margin\"];\nlet style1_2 = computed_style1["margin"];\nlet style2_1 ' +
-                '= e2.style[\"margin\"];\nlet style2_2 = computed_style2["margin"];\nif (style1_1' +
+                'e1.style["margin"];\nlet style1_2 = computed_style1["margin"];\nlet style2_1 ' +
+                '= e2.style["margin"];\nlet style2_2 = computed_style2["margin"];\nif (style1_1' +
                 ' != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 && style1_2 != ' +
                 'style2_2) {\nthrow \'CSS property `margin` did not match: \' + style1_2 + \' ' +
                 '!= \' + style2_2; }\n}, parseCompareElements1, parseCompareElements2);' + after,

@@ -34,7 +34,7 @@ function plural(x, nb) {
 }
 
 function printDiff(i, value) {
-    let s = "=> ";
+    let s = '=> ';
     for (let count = 0; count < 34 && i < value.length; ++count) {
         s += value[i];
         i += 1;
@@ -67,7 +67,7 @@ class Assert {
                         if (i < 0) {
                             i = 0;
                         }
-                        print("|||||> Error happened around there:");
+                        print('|||||> Error happened around there:');
                         printDiff(i, value1);
                         printDiff(i, value2);
                         break;
