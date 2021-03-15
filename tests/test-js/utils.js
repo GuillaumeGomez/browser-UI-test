@@ -33,6 +33,15 @@ function plural(x, nb) {
     return x;
 }
 
+function printDiff(i, value) {
+    let s = "=> ";
+    for (let count = 0; count < 34 && i < value.length; ++count) {
+        s += value[i];
+        i += 1;
+    }
+    print(s);
+}
+
 class Assert {
     constructor() {
         this.testSuite = [];
@@ -50,7 +59,20 @@ class Assert {
                 if (typeof pos === 'undefined') {
                     pos = getStackInfo(new Error().stack);
                 }
-                print(`[${pos.file}:${pos.line}] failed: \`${value1}\` != \`${value2}\``);
+                print(`[${pos.file}:${pos.line}] failed:`);
+                print(`EXPECTED: \`${value1}\`\n===============\n   FOUND: \`${value2}\``);
+                for (let i = 0; i < value1.length && i < value2.length; ++i) {
+                    if (value1[i] !== value2[i]) {
+                        i -= 8;
+                        if (i < 0) {
+                            i = 0;
+                        }
+                        print("|||||> Error happened around there:");
+                        printDiff(i, value1);
+                        printDiff(i, value2);
+                        break;
+                    }
+                }
                 if (this.testSuite.length > 0) {
                     this.testSuite[this.testSuite.length - 1].errors += 1;
                     this._incrField('totalErrors', this.testSuite.length - 1);

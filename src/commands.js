@@ -701,7 +701,7 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
     } else if (tuple[0].kind !== 'string') {
         return {'error': `expected first argument to be a CSS selector, found a ${tuple[0].kind}`};
     } else if (tuple[1].kind !== 'string') {
-        return {'error': `expected second argument to be a CSS selector, found a ${tuple[0].kind}`};
+        return {'error': `expected second argument to be a CSS selector, found a ${tuple[1].kind}`};
     }
     let selector1 = cleanCssSelector(tuple[0].getValue());
     if (selector1.error !== undefined) {
@@ -754,16 +754,18 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
                     `e2.getAttribute("${attr}");\n` +
                 '}\n' +
                 `}, ${varName}1, ${varName}2);${insertAfter}`,
-            ]
+            ],
+            'wait': false,
+            'checkResult': true,
         };
     } else if (tuple[2].kind === 'tuple') {
         const sub_tuple = tuple[2].getValue();
         let x = false;
         let y = false;
         let code = '';
-        for (let i = 0; i < sub_tuple.length && !x && !y; ++i) {
+        for (let i = 0; i < sub_tuple.length && (!x || !y); ++i) {
             if (sub_tuple[i].kind !== 'string') {
-                return { 'error': `\`${tuple[2].getString()}\` should only contain strings` };
+                return { 'error': `\`${tuple[2].getText()}\` should only contain strings` };
             }
             let value = sub_tuple[i].getValue();
             if (value === "x") {
@@ -782,7 +784,8 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
                 y = true;
             } else {
                 return {
-                    'error': `\`${tuple[2].getString()}\` only accepted values are "x" and "y"`,
+                    'error': 'Only accepted values are "x" and "y", found `' +
+                        `${sub_tuple[i].getValue()}\` (in \`${tuple[2].getText()}\``,
                 };
             }
         }
@@ -791,10 +794,12 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
                 selectors +
                 `${insertBefore}await page.evaluate((e1, e2) => {\n` +
                 `${code}\n}, ${varName}1, ${varName}2);${insertAfter}`,
-            ]
+            ],
+            'wait': false,
+            'checkResult': true,
         };
     } else if (tuple[2].kind !== 'array') {
-        return {'error': 'expected an array or a string as third argument, found ' +
+        return {'error': 'expected an array, a string or a tuple as third argument, found ' +
         `"${tuple[2].kind}"`};
     }
     const array = tuple[2].getValue();
@@ -820,7 +825,9 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
             `let computed_style1 = getComputedStyle(e1);\n` +
             `let computed_style2 = getComputedStyle(e2);\n${code}` +
             `}, ${varName}1, ${varName}2);${insertAfter}`,
-        ]
+        ],
+        'wait': false,
+        'checkResult': true,
     };
 }
 
