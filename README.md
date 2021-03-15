@@ -80,11 +80,11 @@ this README.
 
 Important note: each merge on master pushes a new image on docker hub. You can find them [here](https://hub.docker.com/repository/docker/gomezguillaume/browser-ui-test/general).
 
-There are three kind of docker images:
+There are three kinds of docker images:
 
- 1. Latest master branch update
- 2. By date
- 3. By (npm) version
+ 1. By (npm) version
+ 2. Latest master branch update
+ 3. By date
 
 ### Using this framework as a dependency
 
@@ -214,6 +214,8 @@ Here's the command list:
  * [`assert-false`](#assert-false)
  * [`attribute`](#attribute)
  * [`click`](#click)
+ * [`compare-elements`](#compare-elements)
+ * [`compare-elements-false`](#compare-elements-false)
  * [`css`](#css)
  * [`drag-and-drop`](#drag-and-drop)
  * [`emulate`](#emulate)
@@ -254,9 +256,11 @@ assert: ("#id > .class", { "color": "blue" })
 assert: ("#id > .class", "attribute-name", "attribute-value")
 ```
 
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements) command.
+
 #### assert-false
 
-**assert-false** command checks if the condition is false, otherwise fail. It's mostly doing the opposite of `assert`. Four different functionalities are available:
+**assert-false** command checks if the condition is false, otherwise fail. It's mostly doing the opposite of [`assert`](#assert). Four different functionalities are available:
 
 ```
 // will check that "#id > .class" doesn't exists
@@ -274,6 +278,8 @@ assert: ("#id > .class", { "color": "blue" })
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
 assert: ("#id > .class", "attribute-name", "attribute-value")
 ```
+
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-false) command.
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
 
@@ -300,6 +306,44 @@ click: ".element"
 click: "#element > a"
 click: (10, 12)
 ```
+
+#### compare-elements
+
+**compare-elements** command allows you to compare two DOM elements. Examples:
+
+```
+// To compare the text of two elements:
+compare-elements: ("element1", "element2")
+// To compare an attribute's value of two elements:
+compare-elements: ("element1", "element2", "attribute")
+// To compare CSS properties' value of two elements:
+compare-elements: ("element1", "element2", ["CSS property1", "CSS property2", ...])
+// To compare the absolute X/Y position of two elements:
+compare-elements: ("element1", "element2", ("x"))
+compare-elements: ("element1", "element2", ("y"))
+compare-elements: ("element1", "element2", ("x", "y"))
+compare-elements: ("element1", "element2", ("y", "x"))
+```
+
+#### compare-elements-false
+
+**compare-elements-false** command allows you to compare two DOM elements (and check they're not equal!). It's mostly doing the opposite of [`compare-elements`](#compare-elements). Examples:
+
+```
+// To compare the text of two elements:
+compare-elements-false: ("element1", "element2")
+// To compare an attribute's value of two elements:
+compare-elements-false: ("element1", "element2", "attribute")
+// To compare CSS properties' value of two elements:
+compare-elements-false: ("element1", "element2", ["CSS property1", "CSS property2", ...])
+// To compare the absolute X/Y position of two elements:
+compare-elements-false: ("element1", "element2", ("x"))
+compare-elements-false: ("element1", "element2", ("y"))
+compare-elements-false: ("element1", "element2", ("x", "y"))
+compare-elements-false: ("element1", "element2", ("y", "x"))
+```
+
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
 
 #### css
 
