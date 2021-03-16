@@ -296,6 +296,152 @@ function checkClick(x, func) {
     x.assert(func('\'"a\''), {'instructions': ['await page.click("\\\\"a")']});
 }
 
+function checkCompareElementsInner(x, func, before, after) {
+    x.assert(
+        func('"a"'),
+        {'error': 'expected a tuple, read the documentation to see the accepted inputs'},
+    );
+    x.assert(
+        func('1'),
+        {'error': 'expected a tuple, read the documentation to see the accepted inputs'},
+    );
+    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(
+        func('[]'),
+        {'error': 'expected a tuple, read the documentation to see the accepted inputs'},
+    );
+    x.assert(
+        func('("a")'),
+        {'error': 'invalid number of values in the tuple, read the documentation to see ' +
+            'the accepted inputs'},
+    );
+    x.assert(
+        func('("a", 1)'),
+        {'error': 'expected second argument to be a CSS selector, found a number'},
+    );
+    x.assert(
+        func('(1, "a")'),
+        {'error': 'expected first argument to be a CSS selector, found a number'},
+    );
+    x.assert(
+        func('((), "a")'),
+        {'error': 'expected first argument to be a CSS selector, found a tuple'},
+    );
+    x.assert(
+        func('("a", "a", "b", "c")'),
+        {'error': 'invalid number of values in the tuple, read the documentation to see the ' +
+            'accepted inputs'},
+    );
+    x.assert(
+        func('("a", "b", 1)'),
+        {'error': 'expected an array, a string or a tuple as third argument, found "number"'},
+    );
+    x.assert(
+        func('("a", "b", ())'),
+        {'error': 'unexpected `()`: tuples need at least one argument'},
+    );
+    x.assert(
+        func('("a", "b", (1))'),
+        {'error': '`(1)` should only contain strings'},
+    );
+    x.assert(
+        func('("a", "b", ("x", "yo"))'),
+        {'error': 'Only accepted values are "x" and "y", found `yo` (in `("x", "yo")`'},
+    );
+
+    x.assert(
+        func('("a", "b")'),
+        {
+            'instructions': [
+                'let parseCompareElements1 = await page.$("a");\nif ' +
+                '(parseCompareElements1 === null) { throw \'"a" not found\'; }\nlet ' +
+                'parseCompareElements2 = await page.$("b");\nif (parseCompareElements2 === null) ' +
+                '{ throw \'"b" not found\'; }\n' +
+                before +
+                'await page.evaluate((e1, e2) => {\nlet e1value;\n' +
+                'if (e1.tagName.toLowerCase() === "input") {\ne1value = e1.value;\n} else {\n' +
+                'e1value = e1.textContent;\n}\nif (e2.tagName.toLowerCase() === "input") {\nif ' +
+                '(e2.value !== e1value) {\nthrow \'"\' + e1value + \'" !== "\' + e2.value + \'"\'' +
+                ';\n}\n} else if (e2.textContent !== e1value) {\nthrow \'"\' + e1value + \'" !== ' +
+                '"\' + e2.textContent + \'"\';\n}\n}, parseCompareElements1, ' +
+                'parseCompareElements2);' + after,
+            ],
+            'wait': false,
+            'checkResult': true,
+        },
+    );
+    x.assert(
+        func('("a", "b", ("x", "y"))'),
+        {
+            'instructions': [
+                'let parseCompareElements1 = await page.$("a");\nif (parseCompareElements1 === ' +
+                'null) { throw \'"a" not found\'; }\nlet parseCompareElements2 = await page.' +
+                '$("b");\nif (parseCompareElements2 === null) { throw \'"b" not found\'; }\n' +
+                before +
+                'await page.evaluate((e1, e2) => {\nlet x1 = e1.getBoundingClientRect().left;\n' +
+                'let x2 = e2.getBoundingClientRect().left;\nif (x1 !== x2) { throw "different X ' +
+                'values: " + x1 + " != " + x2; }\nlet y1 = e1.getBoundingClientRect().top;\n' +
+                'let y2 = e2.getBoundingClientRect().top;\nif (y1 !== y2) { throw "different Y ' +
+                'values: " + y1 + " != " + y2; }\n\n}, parseCompareElements1, ' +
+                'parseCompareElements2);' + after,
+            ],
+            'wait': false,
+            'checkResult': true,
+        },
+    );
+    x.assert(
+        func('("a", "b", \'"data-whatever\')'),
+        {
+            'instructions': [
+                'let parseCompareElements1 = await page.$("a");\nif (parseCompareElements1 === ' +
+                'null) { throw \'"a" not found\'; }\nlet parseCompareElements2 = await ' +
+                'page.$("b");\nif (parseCompareElements2 === null) { throw \'"b" not found\'; }\n' +
+                before +
+                'await page.evaluate((e1, e2) => {\nif (e1.getAttribute("\\"data-whatever") ' +
+                '!== e2.getAttribute("\\"data-whatever")) {\nthrow "[\\"data-whatever]: " + ' +
+                'e1.getAttribute("\\"data-whatever") + " !== " + ' +
+                'e2.getAttribute("\\"data-whatever");\n}\n}, parseCompareElements1, ' +
+                'parseCompareElements2);' + after,
+            ],
+            'wait': false,
+            'checkResult': true,
+        },
+    );
+    x.assert(
+        func('("a", "b", ["margin"])'),
+        {
+            'instructions': [
+                'let parseCompareElements1 = await page.$("a");\nif (parseCompareElements1 === ' +
+                'null) { throw \'"a" not found\'; }\nlet parseCompareElements2 = await ' +
+                'page.$("b");\nif (parseCompareElements2 === null) { throw \'"b" not found\'; }\n' +
+                before +
+                'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
+                'let computed_style2 = getComputedStyle(e2);\nlet style1_1 = ' +
+                'e1.style["margin"];\nlet style1_2 = computed_style1["margin"];\nlet style2_1 ' +
+                '= e2.style["margin"];\nlet style2_2 = computed_style2["margin"];\nif (style1_1' +
+                ' != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 && style1_2 != ' +
+                'style2_2) {\nthrow \'CSS property `margin` did not match: \' + style1_2 + \' ' +
+                '!= \' + style2_2; }\n}, parseCompareElements1, parseCompareElements2);' + after,
+            ],
+            'wait': false,
+            'checkResult': true,
+        },
+    );
+}
+
+function checkCompareElements(x, func) {
+    checkCompareElementsInner(x, func, '', '');
+}
+
+function checkCompareElementsFalse(x, func) {
+    checkCompareElementsInner(
+        x,
+        func,
+        'try {\n',
+        '\n} catch(e) { return; } throw "assert didn\'t fail";',
+    );
+}
+
 function checkCss(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
@@ -959,6 +1105,16 @@ const TO_CHECK = [
         'name': 'click',
         'func': checkClick,
         'toCall': (e, o) => wrapper(parserFuncs.parseClick, e, o),
+    },
+    {
+        'name': 'compare-elements',
+        'func': checkCompareElements,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElements, e, o),
+    },
+    {
+        'name': 'compare-elements-false',
+        'func': checkCompareElementsFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsFalse, e, o),
     },
     {
         'name': 'css',
