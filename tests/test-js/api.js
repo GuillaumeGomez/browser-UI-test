@@ -752,10 +752,12 @@ function checkParseContent(x, func) {
             {
                 'code': 'await page.goto("file:///home");',
                 'original': 'goto: file:///home',
+                'line_number': 1,
             },
             {
                 'code': 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
                 'original': 'goto: file:///home',
+                'line_number': 1,
             },
         ],
     });
@@ -772,14 +774,17 @@ function checkParseContent(x, func) {
                     'code': 'arg.expectedToFail = true;',
                     'wait': false,
                     'original': 'fail: true',
+                    'line_number': 1,
                 },
                 {
                     'code': 'await page.goto("file:///home");',
                     'original': 'goto: file:///home',
+                    'line_number': 2,
                 },
                 {
                     'code': 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
                     'original': 'goto: file:///home',
+                    'line_number': 2,
                 },
             ],
         });

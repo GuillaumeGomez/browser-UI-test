@@ -191,24 +191,27 @@ async function runCommand(loaded, logs, options, browser) {
         const commands = loaded['commands'];
         for (let x = 0; x < commands.length; ++x) {
             let failed = false;
-            debug_log.append(`EXECUTING "${commands[x]['code']}"`);
+            const command = commands[x];
+            const line_number = command['line_number'];
+            debug_log.append(`EXECUTING (line ${line_number}) "${command['code']}"`);
             try {
-                await loadContent(commands[x]['code'])(page, extras).catch(err => {
+                await loadContent(command['code'])(page, extras).catch(err => {
                     failed = true;
                     const s_err = err.toString();
                     if (extras.expectedToFail !== true) {
-                        const original = commands[x]['original'];
-                        error_log = `[ERROR] ${s_err}: for command \`${original}\``;
+                        const original = command['original'];
+                        error_log = `[ERROR] (line ${line_number}) ${s_err}: for ` +
+                            `command \`${original}\``;
                     } else {
                         // it's an expected failure so no need to log it
-                        debug_log.append(`[EXPECTED FAILURE]: ${s_err}`);
+                        debug_log.append(`[EXPECTED FAILURE] (line ${line_number}): ${s_err}`);
                     }
                 });
             } catch (error) { // parsing error
-                error_log = 'output:\n' + error.message + '\n';
+                error_log = `(line ${line_number}) output:\n${error.message}\n`;
                 if (options.debug === true) {
-                    error_log += `command \`${commands[x]['original']}\` failed on ` +
-                        `\`${commands[x]['code']}\``;
+                    error_log += `command \`${command['original']}\` failed on ` +
+                        `\`${command['code']}\``;
                 }
             }
             debug_log.append('Done!');
@@ -216,13 +219,13 @@ async function runCommand(loaded, logs, options, browser) {
                 break;
             }
             if (failed === false
-                && commands[x]['checkResult'] === true
+                && command['checkResult'] === true
                 && extras.expectedToFail === true) {
-                error_log += `command \`${commands[x]['original']}\` was supposed to fail but ` +
-                    'succeeded';
+                error_log += `(line ${line_number}) command \`${command['original']}\` was ` +
+                    'supposed to fail but succeeded';
                 break;
             }
-            if (commands[x]['wait'] !== false) {
+            if (command['wait'] !== false) {
                 // We wait a bit between each command to be sure the browser can follow.
                 await page.waitFor(100);
             }

@@ -1,0 +1,3 @@
+screenshot: false
+goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+compare-elements-false: (".content>.right>p", ".content>.left", ["color"])

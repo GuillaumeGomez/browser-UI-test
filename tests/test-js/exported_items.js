@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const process = require('process');
 
 const utils = require('../../src/utils.js');
@@ -399,11 +401,43 @@ async function checkOptions(x) {
     await x.assert(() => options20.validateFields());
 }
 
+// This test ensures that the outputs looks as expected.
+async function compareOutput(x, func) {
+    const filesToTest = [];
+    const testFolder = 'tests/ui-tests';
+    fs.readdirSync(testFolder).forEach(file => {
+        const curPath = path.join(testFolder, file);
+        if (fs.lstatSync(curPath).isDirectory() || !curPath.endsWith('.goml')) {
+            return;
+        }
+        filesToTest.push(curPath.toString());
+    });
+    for (let i = 0; i < filesToTest.length; ++i) {
+        const file = filesToTest[i];
+        const outputFile = file.replace('.goml', '.output');
+        let output;
+
+        try {
+            output = fs.readFileSync(outputFile, 'utf8');
+        } catch (_) {
+            x.addError(`Cannot open file \`${outputFile}\``);
+            continue;
+        }
+
+        const options = new Options();
+        options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
+            '--test-files', file]);
+
+        await x.assertTry(func, [options], [output, 1]);
+    }
+}
+
 const TO_CHECK = [
     {'name': 'Options', 'func': checkOptions},
     {'name': 'runTest', 'func': checkRunTest, 'toCall': wrapRunTest},
     {'name': 'runTestCode', 'func': checkRunTestCode, 'toCall': wrapRunTestCode},
     {'name': 'runTests', 'func': checkRunTests, 'toCall': wrapRunTests},
+    {'name': 'compareOutput', 'func': compareOutput, 'toCall': wrapRunTests},
 ];
 
 async function checkExportedItems(x = new Assert()) {

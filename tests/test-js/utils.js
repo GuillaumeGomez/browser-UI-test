@@ -48,10 +48,7 @@ class Assert {
     }
 
     assert(value1, value2, pos) {
-        if (this.testSuite.length > 0) {
-            this.testSuite[this.testSuite.length - 1].ranTests += 1;
-            this._incrField('totalRanTests', this.testSuite.length - 1);
-        }
+        this._addTest();
         if (typeof value2 !== 'undefined') {
             value1 = toJSON(value1);
             value2 = toJSON(value2);
@@ -73,10 +70,7 @@ class Assert {
                         break;
                     }
                 }
-                if (this.testSuite.length > 0) {
-                    this.testSuite[this.testSuite.length - 1].errors += 1;
-                    this._incrField('totalErrors', this.testSuite.length - 1);
-                }
+                this._incrError();
                 return;
             }
         } else if (!value1) {
@@ -84,11 +78,21 @@ class Assert {
                 pos = getStackInfo(new Error().stack);
             }
             print(`[${pos.file}:${pos.line}] failed: \`${value1}\` is evalued to false`);
-            if (this.testSuite.length > 0) {
-                this.testSuite[this.testSuite.length - 1].errors += 1;
-                this._incrField('totalErrors', this.testSuite.length - 1);
-            }
+            this._incrError();
             return;
+        }
+    }
+
+    addError(message) {
+        this._addTest();
+        print(`An error occurred: ${message}`);
+        this._incrError();
+    }
+
+    _addTest() {
+        if (this.testSuite.length > 0) {
+            this.testSuite[this.testSuite.length - 1].ranTests += 1;
+            this._incrField('totalRanTests', this.testSuite.length - 1);
         }
     }
 
@@ -99,6 +103,13 @@ class Assert {
             if (this.testSuite[pos][fieldName] !== undefined) {
                 this.testSuite[pos][fieldName] += 1;
             }
+        }
+    }
+
+    _incrError() {
+        if (this.testSuite.length > 0) {
+            this.testSuite[this.testSuite.length - 1].errors += 1;
+            this._incrField('totalErrors', this.testSuite.length - 1);
         }
     }
 

@@ -1,0 +1,7 @@
+=> Starting doc-ui tests...
+
+line-number... FAILED
+[ERROR] (line 3) assert didn't fail: for command `compare-elements-false: (".content>.right>p", ".content>.left", ["color"])`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed

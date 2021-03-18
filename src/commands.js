@@ -1425,6 +1425,7 @@ function parseContent(content, options) {
                     'wait': res['wait'],
                     'checkResult': res['checkResult'],
                     'original': line,
+                    'line_number': i + 1,
                 });
             }
         } else {
