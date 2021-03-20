@@ -1035,6 +1035,29 @@ function parseScreenshot(line, options) {
 // Possible inputs:
 //
 // * boolean value (`true` or `false`)
+function parseDebug(line, options) {
+    const p = new Parser(line, options.variables);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'bool') {
+        return {'error': `expected \`true\` or \`false\` value, found \`${line}\``};
+    }
+    return {
+        'instructions': [
+            'if (arg && arg.debug_log && arg.debug_log.setDebugEnabled) {\n' +
+            `arg.debug_log.setDebugEnabled(${p.elems[0].getValue()});\n` +
+            '} else {\n' +
+            'throw "`debug` command needs an object with a `debug_log` field of `Debug` type!";\n' +
+            '}',
+        ],
+        'wait': false,
+    };
+}
+
+// Possible inputs:
+//
+// * boolean value (`true` or `false`)
 function parseFail(line, options) {
     const p = new Parser(line, options.variables);
     p.parse();
@@ -1344,6 +1367,7 @@ const ORDERS = {
     'compare-elements': parseCompareElements,
     'compare-elements-false': parseCompareElementsFalse,
     'css': parseCss,
+    'debug': parseDebug,
     'drag-and-drop': parseDragAndDrop,
     'emulate': parseEmulate,
     'fail': parseFail,
@@ -1366,7 +1390,9 @@ const ORDERS = {
     'write': parseWrite,
 };
 
+// Commands which do not run JS commands but change the behavior of the commands following.
 const NO_INTERACTION_COMMANDS = [
+    'debug',
     'emulate',
     'fail',
     'javascript',
@@ -1374,6 +1400,7 @@ const NO_INTERACTION_COMMANDS = [
     'timeout',
 ];
 
+// Commands which can only be used before the first `goto` command.
 const BEFORE_GOTO = [
     'emulate',
 ];
@@ -1395,9 +1422,11 @@ function parseContent(content, options) {
         if (Object.prototype.hasOwnProperty.call(ORDERS, order)) {
             if (firstGotoParsed === false) {
                 if (order !== 'goto' && NO_INTERACTION_COMMANDS.indexOf(order) === -1) {
-                    const cmds = NO_INTERACTION_COMMANDS.map(x => `\`${x}\``).join(' or ');
+                    const cmds = NO_INTERACTION_COMMANDS.map(x => `\`${x}\``);
+                    const last = cmds.pop();
+                    const text = cmds.join(', ') + ` or ${last}`;
                     return {
-                        'error': `First command must be \`goto\` (${cmds} can be used before)!`,
+                        'error': `First command must be \`goto\` (${text} can be used before)!`,
                         'line': i + 1,
                     };
                 }
@@ -1450,6 +1479,7 @@ module.exports = {
     'parseCompareElements': parseCompareElements,
     'parseCompareElementsFalse': parseCompareElementsFalse,
     'parseCss': parseCss,
+    'parseDebug': parseDebug,
     'parseDragAndDrop': parseDragAndDrop,
     'parseEmulate': parseEmulate,
     'parseFail': parseFail,

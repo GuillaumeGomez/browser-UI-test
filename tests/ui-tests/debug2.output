@@ -1,0 +1,19 @@
+=> Starting doc-ui tests...
+
+debug2... 
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 2) "arg.takeScreenshot = false;"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 3) "await page.goto("file://$CURRENT_DIR/tests/html_files/elements.html");"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 3) "await arg.browser.overridePermissions(page.url(), arg.permissions);"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 4) "if (arg && arg.debug_log && arg.debug_log.setDebugEnabled) {
+arg.debug_log.setDebugEnabled(false);
+} else {
+throw "`debug` command needs an object with a `debug_log` field of `Debug` type!";
+}"FAILED
+[ERROR] (line 5) assert didn't fail: for command `compare-elements-false: (".content>.right>p", ".content>.left", ["color"])`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed

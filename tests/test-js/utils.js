@@ -47,7 +47,8 @@ class Assert {
         this.testSuite = [];
     }
 
-    assert(value1, value2, pos) {
+    // `extraInfo` is used as an additional message in case the test fails.
+    assert(value1, value2, pos, extraInfo) {
         this._addTest();
         if (typeof value2 !== 'undefined') {
             value1 = toJSON(value1);
@@ -56,7 +57,11 @@ class Assert {
                 if (typeof pos === 'undefined') {
                     pos = getStackInfo(new Error().stack);
                 }
-                print(`[${pos.file}:${pos.line}] failed:`);
+                if (typeof extraInfo === 'undefined') {
+                    print(`[${pos.file}:${pos.line}] failed:`);
+                } else {
+                    print(`[${pos.file}:${pos.line}] failed (in ${extraInfo}):`);
+                }
                 print(`EXPECTED: \`${value1}\`\n===============\n   FOUND: \`${value2}\``);
                 for (let i = 0; i < value1.length && i < value2.length; ++i) {
                     if (value1[i] !== value2[i]) {
@@ -113,13 +118,14 @@ class Assert {
         }
     }
 
-    async assertTry(callback, args, expectedValue) {
+    // `extraInfo` is used as an additional message in case the test fails.
+    async assertTry(callback, args, expectedValue, extraInfo) {
         const pos = getStackInfo(new Error().stack, 2);
         try {
             const ret = await callback(...args);
-            return this.assert(ret, expectedValue, pos);
+            return this.assert(ret, expectedValue, pos, extraInfo);
         } catch (err) {
-            return this.assert(err.message, expectedValue, pos);
+            return this.assert(err.message, expectedValue, pos, extraInfo);
         }
     }
 

@@ -217,6 +217,7 @@ Here's the command list:
  * [`compare-elements`](#compare-elements)
  * [`compare-elements-false`](#compare-elements-false)
  * [`css`](#css)
+ * [`debug`](#debug)
  * [`drag-and-drop`](#drag-and-drop)
  * [`emulate`](#emulate)
  * [`fail`](#fail)
@@ -357,6 +358,15 @@ To set multiple styles at a time, you can use a JSON object:
 
 ```
 css: ("#button", {"background-color": "red", "border": "1px solid"})
+```
+
+#### debug
+
+**debug** command enables/disables the debug logging. Example:
+
+```
+debug: false // disabling debug in case it was enabled
+debug: true // enabling it again
 ```
 
 #### drag-and-drop

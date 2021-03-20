@@ -1,0 +1,30 @@
+=> Starting doc-ui tests...
+
+debug... 
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 2) "arg.takeScreenshot = false;"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 3) "await page.goto("file://$CURRENT_DIR/tests/html_files/elements.html");"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 3) "await arg.browser.overridePermissions(page.url(), arg.permissions);"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 4) "let parseCompareElements1 = await page.$(".content>.right>p");
+if (parseCompareElements1 === null) { throw '".content>.right>p" not found'; }
+let parseCompareElements2 = await page.$(".content>.left");
+if (parseCompareElements2 === null) { throw '".content>.left" not found'; }
+try {
+await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);
+let computed_style2 = getComputedStyle(e2);
+let style1_1 = e1.style["color"];
+let style1_2 = computed_style1["color"];
+let style2_1 = e2.style["color"];
+let style2_2 = computed_style2["color"];
+if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 && style1_2 != style2_2) {
+throw 'CSS property `color` did not match: ' + style1_2 + ' != ' + style2_2; }
+}, parseCompareElements1, parseCompareElements2);
+} catch(e) { return; } throw "assert didn't fail";"
+[DEBUG] Done!FAILED
+[ERROR] (line 4) assert didn't fail: for command `compare-elements-false: (".content>.right>p", ".content>.left", ["color"])`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed
