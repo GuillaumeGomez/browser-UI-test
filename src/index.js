@@ -159,6 +159,7 @@ async function runCommand(loaded, logs, options, browser) {
             'puppeteer': browser.puppeteer,
             'browser': browser,
             'permissions': options.permissions,
+            'debug_log': debug_log,
         };
         await page.exposeFunction('BrowserUiStyleInserter', () => {
             return getGlobalStyle(extras.showText);

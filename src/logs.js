@@ -34,8 +34,18 @@ class Logs {
 
 class Debug {
     constructor(debug_enabled, logger) {
-        this.debug_enabled = debug_enabled;
+        // This is to ensure that `debug_enabled` is always a boolean.
+        this.debug_enabled = debug_enabled === true;
         this.logger = logger;
+    }
+
+    setDebugEnabled(v) {
+        // This is to ensure that `debug_enabled` is always a boolean.
+        this.debug_enabled = v === true;
+    }
+
+    isEnabled() {
+        return this.debug_enabled;
     }
 
     append(newLog) {

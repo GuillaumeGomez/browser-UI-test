@@ -3,7 +3,10 @@ const parserFuncs = require('../../src/commands.js');
 const Options = require('../../src/options.js').Options;
 const {Assert, plural, print} = require('./utils.js');
 
-function wrapper(callback, arg, options = new Options()) {
+function wrapper(callback, arg, options) {
+    if (typeof options === 'undefined') {
+        options = new Options();
+    }
     return callback(arg, options);
 }
 
@@ -485,6 +488,30 @@ function checkCss(x, func) {
     // TODO: add checks for more complex json objects
 }
 
+function checkDebug(x, func) {
+    x.assert(func('hello'), {'error': 'unexpected `hello` as first token'});
+    x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
+    x.assert(func('tru'), {'error': 'unexpected `tru` as first token'});
+    x.assert(func('false'), {
+        'instructions': [
+            'if (arg && arg.debug_log && arg.debug_log.setDebugEnabled) {\n' +
+            'arg.debug_log.setDebugEnabled(false);\n' +
+            '} else {\n' +
+            'throw "`debug` command needs an object with a `debug_log` field of `Debug` type!";\n}',
+        ],
+        'wait': false,
+    });
+    x.assert(func('true'), {
+        'instructions': [
+            'if (arg && arg.debug_log && arg.debug_log.setDebugEnabled) {\n' +
+            'arg.debug_log.setDebugEnabled(true);\n' +
+            '} else {\n' +
+            'throw "`debug` command needs an object with a `debug_log` field of `Debug` type!";\n}',
+        ],
+        'wait': false,
+    });
+}
+
 function checkDragAndDrop(x, func) {
     // check tuple argument
     x.assert(func('true'), {
@@ -763,7 +790,7 @@ function checkParseContent(x, func) {
     });
     x.assert(func('focus: "#foo"'),
         {
-            'error': 'First command must be `goto` (`emulate` or `fail` or `javascript` or ' +
+            'error': 'First command must be `goto` (`debug`, `emulate`, `fail`, `javascript`, ' +
                 '`screenshot` or `timeout` can be used before)!',
             'line': 1,
         });
@@ -1125,6 +1152,11 @@ const TO_CHECK = [
         'name': 'css',
         'func': checkCss,
         'toCall': (e, o) => wrapper(parserFuncs.parseCss, e, o),
+    },
+    {
+        'name': 'debug',
+        'func': checkDebug,
+        'toCall': (e, o) => wrapper(parserFuncs.parseDebug, e, o),
     },
     {
         'name': 'drag-and-drop',
