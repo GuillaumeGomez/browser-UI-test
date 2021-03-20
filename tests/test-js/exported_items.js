@@ -428,7 +428,12 @@ async function compareOutput(x, func) {
         options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
             '--test-files', file]);
 
-        await x.assertTry(func, [options], [output, 1]);
+        await x.assertTry(
+            func,
+            [options],
+            [output.replaceAll('$CURRENT_DIR', utils.getCurrentDir()), 1],
+            file,
+        );
     }
 }
 

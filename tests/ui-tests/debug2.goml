@@ -1,0 +1,5 @@
+debug: true
+screenshot: false
+goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+debug: false
+compare-elements-false: (".content>.right>p", ".content>.left", ["color"])
