@@ -22,6 +22,34 @@ function matchInteger(s) {
     return p.error === null;
 }
 
+function cleanString(s) {
+    if (s.replace !== undefined) {
+        return s.replace(/"/g, '\\"').replace(/'/g, '\\\'');
+    }
+    return s;
+}
+
+function cleanCssSelector(s, text = '') {
+    s = cleanString(s).replace(/\\/g, '\\\\').trim();
+    if (s.length === 0) {
+        return {
+            'error': `CSS selector ${text !== '' ? text + ' ' : ''}cannot be empty`,
+        };
+    }
+    return {
+        'value': s,
+    };
+}
+
+function checkInteger(nb, text, negativeCheck = false) {
+    if (nb.isFloat === true) {
+        return {'error': `expected integer for ${text}, found float: \`${nb.getText()}\``};
+    } else if (negativeCheck === true && nb.isNegative === true) {
+        return {'error': `${text} cannot be negative: \`${nb.getText()}\``};
+    }
+    return {'value': nb.getRaw()};
+}
+
 class Element {
     constructor(kind, value, startPos, endPos, error = null) {
         this.kind = kind;
@@ -31,19 +59,36 @@ class Element {
         this.error = error;
     }
 
-    getValue() {
+    getStringValue(trim) {
+        let v = this.value;
+        if (trim === true) {
+            v = v.trim();
+        }
+        return cleanString(v);
+    }
+
+    getIntegerValue(text, negativeCheck = false) {
+        return checkInteger(this, text, negativeCheck);
+    }
+
+    getRaw() {
         return this.value;
     }
 
-    // This method is useful for string which returns the text with double quotes
-    getText() {
-        return this.value;
+    getCssValue(text = '') {
+        return cleanCssSelector(this.value, text);
     }
 
     isRecursive() {
         // Only Tuple and JSON elements are "recursive" (meaning they can contain sub-levels).
         return false;
     }
+
+    // Mostly there for debug, limit its usage as much as possible!
+    getText() {
+        return this.value;
+    }
+
 }
 
 class CharElement extends Element {
@@ -310,7 +355,7 @@ class Parser {
         this.parseList('(', ')', TupleElement, tmp);
         if (tmp[0].error !== null) {
             // nothing to do
-        } else if (tmp[0].getValue().length === 0) {
+        } else if (tmp[0].getRaw().length === 0) {
             tmp[0].error = 'unexpected `()`: tuples need at least one argument';
         }
         this.push(tmp[0], pushTo);
@@ -321,14 +366,14 @@ class Parser {
         this.parseList('[', ']', ArrayElement, tmp);
         if (tmp[0].error !== null) {
             // nothing to do
-        } else if (tmp[0].getValue().length > 1) {
-            const values = tmp[0].getValue();
+        } else if (tmp[0].getRaw().length > 1) {
+            const values = tmp[0].getRaw();
 
             for (let i = 1; i < values.length; ++i) {
                 if (values[i].kind !== values[0].kind) {
                     tmp[0].error = 'all array\'s elements must be of the same kind: expected ' +
-                        `array of \`${values[0].kind}\`, found \`${values[i].kind}\` at position` +
-                        ` ${i}`;
+                        `array of \`${values[0].kind}\` (because the first element is of this ` +
+                        `kind), found \`${values[i].kind}\` at position ${i}`;
                     break;
                 }
             }
@@ -677,4 +722,5 @@ module.exports = {
     'UnknownElement': UnknownElement,
     'JsonElement': JsonElement,
     'BoolElement': BoolElement,
+    'cleanString': cleanString,
 };

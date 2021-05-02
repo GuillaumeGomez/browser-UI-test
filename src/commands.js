@@ -1,48 +1,27 @@
 const os = require('os');
 const utils = require('./utils.js');
-const Parser = require('./parser.js').Parser;
+const {Parser, cleanString} = require('./parser.js');
 const consts = require('./consts.js');
 
 const COMMENT_START = '//';
 
-function cleanString(s) {
-    if (s.replace !== undefined) {
-        return s.replace(/"/g, '\\"').replace(/'/g, '\\\'');
-    }
-    return s;
-}
-
-function cleanCssSelector(s, text = '') {
-    s = cleanString(s).replace(/\\/g, '\\\\').trim();
-    if (s.length === 0) {
+function checkIntegerTuple(tuple, text1, text2, negativeCheck = false) {
+    const value = tuple.getRaw();
+    if (value.length !== 2 || value[0].kind !== 'number' || value[1].kind !== 'number') {
         return {
-            'error': `CSS selector ${text !== '' ? text + ' ' : ''}cannot be empty`,
+            'error': 'invalid syntax: expected "([number], [number])", ' +
+                `found \`${tuple.getText()}\``,
         };
     }
-    return {
-        'value': s,
-    };
-}
-
-function checkInteger(nb, text, negativeCheck = false) {
-    if (nb.isFloat === true) {
-        return {'error': `expected integer for ${text}, found float: \`${nb.getValue()}\``};
-    } else if (negativeCheck === true && nb.isNegative === true) {
-        return {'error': `${text} cannot be negative: \`${nb.getValue()}\``};
-    }
-    return {};
-}
-
-function checkIntegerTuple(tuple, fullText, text1, text2, negativeCheck = false) {
-    if (tuple.length !== 2 || tuple[0].kind !== 'number' || tuple[1].kind !== 'number') {
-        return {'error': `invalid syntax: expected "([number], [number])", found \`${fullText}\``};
-    }
-    let ret = checkInteger(tuple[0], text1, negativeCheck);
+    const ret = value[0].getIntegerValue(text1, negativeCheck);
     if (ret.error !== undefined) {
         return ret;
     }
-    ret = checkInteger(tuple[1], text2, negativeCheck);
-    return ret;
+    const ret2 = value[1].getIntegerValue(text2, negativeCheck);
+    if (ret2.error !== undefined) {
+        return ret2;
+    }
+    return {'value': [ret.value, ret2.value]};
 }
 
 // Possible inputs:
@@ -57,7 +36,7 @@ function parseClick(line, options) {
     } else if (p.elems.length !== 1) {
         return {'error': 'expected a position or a CSS selector'};
     } else if (p.elems[0].kind === 'string') {
-        const selector = cleanCssSelector(p.elems[0].getValue());
+        const selector = p.elems[0].getCssValue();
         if (selector.error !== undefined) {
             return selector;
         }
@@ -69,13 +48,11 @@ function parseClick(line, options) {
     } else if (p.elems[0].kind !== 'tuple') {
         return {'error': 'expected a position or a CSS selector'};
     }
-    const tuple = p.elems[0].getValue();
-    const ret = checkIntegerTuple(tuple, p.elems[0].getText(), 'X position', 'Y position');
+    const ret = checkIntegerTuple(p.elems[0], 'X position', 'Y position');
     if (ret.error !== undefined) {
         return ret;
     }
-    const x = tuple[0].getValue();
-    const y = tuple[1].getValue();
+    const [x, y] = ret.value;
     return {
         'instructions': [
             `await page.mouse.click(${x},${y})`,
@@ -95,20 +72,20 @@ function parseWaitFor(line, options) {
     } else if (p.elems.length !== 1) {
         return {'error': 'expected an integer or a CSS selector'};
     } else if (p.elems[0].kind === 'number') {
-        const ret = checkInteger(p.elems[0], 'number of milliseconds', true);
+        const ret = p.elems[0].getIntegerValue('number of milliseconds', true);
         if (ret.error !== undefined) {
             return ret;
         }
         return {
             'instructions': [
-                `await page.waitFor(${p.elems[0].getValue()})`,
+                `await page.waitFor(${ret.value})`,
             ],
             'wait': false,
         };
     } else if (p.elems[0].kind !== 'string') {
         return {'error': 'expected an integer or a CSS selector'};
     }
-    const selector = cleanCssSelector(p.elems[0].getValue());
+    const selector = p.elems[0].getCssValue();
     if (selector.error !== undefined) {
         return selector;
     }
@@ -131,7 +108,7 @@ function parseFocus(line, options) {
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'string') {
         return {'error': 'expected a CSS selector'};
     }
-    const selector = cleanCssSelector(p.elems[0].getValue());
+    const selector = p.elems[0].getCssValue();
     if (selector.error !== undefined) {
         return selector;
     }
@@ -160,24 +137,24 @@ function parseWrite(line, options) {
     } else if (p.elems[0].kind === 'string') {
         return {
             'instructions': [
-                `await page.keyboard.type("${cleanString(p.elems[0].getValue())}")`,
+                `await page.keyboard.type("${p.elems[0].getStringValue()}")`,
             ],
         };
     } else if (p.elems[0].kind === 'number') {
-        const ret = checkInteger(p.elems[0], 'keycode', true);
+        const ret = p.elems[0].getIntegerValue('keycode', true);
         if (ret.error !== undefined) {
             return ret;
         }
         return {
             'instructions': [
                 'await page.keyboard.press(String.fromCharCode' +
-                `(${cleanString(p.elems[0].getValue())}))`,
+                `(${ret.value}))`,
             ],
         };
     } else if (p.elems[0].kind !== 'tuple') {
         return {'error': err};
     }
-    const tuple = p.elems[0].getValue();
+    const tuple = p.elems[0].getRaw();
     if (tuple.length !== 2) {
         return {
             'error': 'invalid number of arguments in tuple, ' + err,
@@ -193,25 +170,25 @@ function parseWrite(line, options) {
             `expected a string or an integer as tuple second argument, found a ${tuple[1].kind}`,
         };
     }
-    const selector = cleanCssSelector(tuple[0].getValue());
+    const selector = tuple[0].getCssValue();
     if (selector.error !== undefined) {
         return selector;
     }
     if (tuple[1].kind === 'string') {
         return {
             'instructions': [
-                `await page.type("${selector.value}", "${cleanString(tuple[1].getValue())}")`,
+                `await page.type("${selector.value}", "${tuple[1].getStringValue()}")`,
             ],
         };
     }
-    const ret = checkInteger(tuple[1], 'keycode', true);
+    const ret = tuple[1].getIntegerValue('keycode', true);
     if (ret.error !== undefined) {
         return ret;
     }
     return {
         'instructions': [
             `await page.focus("${selector.value}")`,
-            `await page.keyboard.press(String.fromCharCode(${tuple[1].getValue()}))`,
+            `await page.keyboard.press(String.fromCharCode(${ret.value}))`,
         ],
     };
 }
@@ -235,7 +212,7 @@ function parsePressKey(line, options) {
     } else if (p.elems.length !== 1) {
         return {'error': err};
     } else if (p.elems[0].kind === 'string') {
-        const s = cleanString(p.elems[0].getValue());
+        const s = p.elems[0].getStringValue();
         if (s.length === 0) {
             return {'error': 'key cannot be empty'};
         }
@@ -245,20 +222,20 @@ function parsePressKey(line, options) {
             ],
         };
     } else if (p.elems[0].kind === 'number') {
-        const ret = checkInteger(p.elems[0], 'keycode', true);
+        const ret = p.elems[0].getIntegerValue('keycode', true);
         if (ret.error !== undefined) {
             return ret;
         }
         return {
             'instructions': [
                 'await page.keyboard.press(String.fromCharCode' +
-                `(${cleanString(p.elems[0].getValue())}))`,
+                `(${ret.value}))`,
             ],
         };
     } else if (p.elems[0].kind !== 'tuple') {
         return {'error': err};
     }
-    const tuple = p.elems[0].getValue();
+    const tuple = p.elems[0].getRaw();
     if (tuple.length !== 2) {
         return {
             'error': 'invalid number of arguments in tuple, ' + err,
@@ -274,13 +251,16 @@ function parsePressKey(line, options) {
             `expected an integer as tuple second argument, found a ${tuple[1].kind}`,
         };
     }
-    const ret = checkInteger(tuple[1], 'delay', true);
+    // First we get the delay value.
+    const ret = tuple[1].getIntegerValue('delay', true);
     if (ret.error !== undefined) {
         return ret;
     }
-    const delay = `, ${tuple[1].getValue()}`;
+    const delay = `, ${ret.value}`;
+
+    // Then we get the keycode.
     if (tuple[0].kind === 'string') {
-        const s = cleanString(tuple[0].getValue());
+        const s = tuple[0].getStringValue();
         if (s.length === 0) {
             return {'error': 'key cannot be empty'};
         }
@@ -290,13 +270,13 @@ function parsePressKey(line, options) {
             ],
         };
     }
-    const ret2 = checkInteger(tuple[0], 'keycode', true);
+    const ret2 = tuple[0].getIntegerValue('keycode', true);
     if (ret2.error !== undefined) {
         return ret2;
     }
     return {
         'instructions': [
-            `await page.keyboard.press(String.fromCharCode(${tuple[1].getValue()})${delay})`,
+            `await page.keyboard.press(String.fromCharCode(${ret2.value})${delay})`,
         ],
     };
 }
@@ -313,7 +293,7 @@ function parseMoveCursorTo(line, options) {
     } else if (p.elems.length !== 1) {
         return {'error': 'expected a position or a CSS selector'};
     } else if (p.elems[0].kind === 'string') {
-        const selector = cleanCssSelector(p.elems[0].getValue());
+        const selector = p.elems[0].getCssValue();
         if (selector.error !== undefined) {
             return selector;
         }
@@ -325,13 +305,11 @@ function parseMoveCursorTo(line, options) {
     } else if (p.elems[0].kind !== 'tuple') {
         return {'error': 'expected a position or a CSS selector'};
     }
-    const tuple = p.elems[0].getValue();
-    const ret = checkIntegerTuple(tuple, p.elems[0].getText(), 'X position', 'Y position', true);
+    const ret = checkIntegerTuple(p.elems[0], 'X position', 'Y position', true);
     if (ret.error !== undefined) {
         return ret;
     }
-    const x = tuple[0].getValue();
-    const y = tuple[1].getValue();
+    const [x, y] = ret.value;
     return {
         'instructions': [
             `await page.mouse.move(${x},${y})`,
@@ -422,13 +400,11 @@ function parseSize(line, options) {
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
         return {'error': 'expected `([number], [number])`'};
     }
-    const tuple = p.elems[0].getValue();
-    const ret = checkIntegerTuple(tuple, p.elems[0].getText(), 'width', 'height', true);
+    const ret = checkIntegerTuple(p.elems[0], 'width', 'height', true);
     if (ret.error !== undefined) {
         return ret;
     }
-    const width = tuple[0].getValue();
-    const height = tuple[1].getValue();
+    const [width, height] = ret.value;
     return {
         'instructions': [
             `await page.setViewport({width: ${width}, height: ${height}})`,
@@ -447,7 +423,7 @@ function parseLocalStorage(line, options) {
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'json') {
         return {'error': 'expected json'};
     }
-    const json = p.elems[0].getValue();
+    const json = p.elems[0].getRaw();
     const content = [];
     let warnings = [];
 
@@ -455,14 +431,14 @@ function parseLocalStorage(line, options) {
         const entry = json[i];
 
         if (entry['value'] === undefined) {
-            warnings.push(`No value for key \`${entry['key'].getValue()}\``);
+            warnings.push(`No value for key \`${entry['key'].getText()}\``);
             continue;
         } else if (entry['key'].isRecursive() === true) {
-            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
+            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getText()}\``);
             continue;
         }
-        const key_s = cleanString(entry['key'].getValue());
-        const value_s = cleanString(entry['value'].getValue());
+        const key_s = entry['key'].getStringValue();
+        const value_s = entry['value'].getStringValue();
         content.push(`localStorage.setItem("${key_s}", "${value_s}");`);
     }
     warnings = warnings.length > 0 ? warnings : undefined;
@@ -480,8 +456,7 @@ function parseLocalStorage(line, options) {
     };
 }
 
-function assertHandleSelectorInput(value, insertBefore, insertAfter) {
-    let selector = cleanCssSelector(value);
+function assertHandleSelectorInput(selector, insertBefore, insertAfter) {
     if (selector.error !== undefined) {
         return selector;
     }
@@ -508,11 +483,11 @@ function parseAssertInner(line, options, insertBefore, insertAfter) {
     } else if (p.elems.length !== 1) {
         return {'error': err};
     } else if (p.elems[0].kind === 'string') {
-        return assertHandleSelectorInput(p.elems[0].getValue(), insertBefore, insertAfter);
+        return assertHandleSelectorInput(p.elems[0].getCssValue(), insertBefore, insertAfter);
     } else if (p.elems[0].kind !== 'tuple') {
         return {'error': err};
     }
-    const tuple = p.elems[0].getValue();
+    const tuple = p.elems[0].getRaw();
     if (tuple.length < 1 || tuple.length > 3) {
         return {'error': 'invalid number of values in the tuple, read the documentation to see ' +
                          'the accepted inputs'};
@@ -520,9 +495,9 @@ function parseAssertInner(line, options, insertBefore, insertAfter) {
         return {'error': `expected first argument to be a CSS selector, found a ${tuple[0].kind}`};
     }
     if (tuple.length === 1) {
-        return assertHandleSelectorInput(tuple[0].getValue(), insertBefore, insertAfter);
+        return assertHandleSelectorInput(tuple[0].getCssValue(), insertBefore, insertAfter);
     }
-    let selector = cleanCssSelector(tuple[0].getValue());
+    let selector = tuple[0].getCssValue();
     if (selector.error !== undefined) {
         return selector;
     }
@@ -534,18 +509,17 @@ function parseAssertInner(line, options, insertBefore, insertAfter) {
         if (tuple.length !== 2) {
             return {'error': 'unexpected argument after number of occurences'};
         }
-        const occurences = tuple[1].getValue();
-        const ret = checkInteger(tuple[1], 'number of occurences', true);
-        if (ret.error !== undefined) {
-            return ret;
+        const occurences = tuple[1].getIntegerValue('number of occurences', true);
+        if (occurences.error !== undefined) {
+            return occurences;
         }
         const varName = 'parseAssertElemInt';
         return {
             'instructions': [
                 `let ${varName} = await page.$$("${selector}");\n` +
                 // TODO: maybe check differently depending on the tag kind?
-                `${insertBefore}if (${varName}.length !== ${occurences}) { throw 'expected ` +
-                `${occurences} elements, found ' + ${varName}.length; }${insertAfter}`,
+                `${insertBefore}if (${varName}.length !== ${occurences.value}) { throw 'expected ` +
+                `${occurences.value} elements, found ' + ${varName}.length; }${insertAfter}`,
             ],
             'wait': false,
             'checkResult': true,
@@ -559,20 +533,20 @@ function parseAssertInner(line, options, insertBefore, insertAfter) {
         }
         let code = '';
         let warnings = [];
-        const json = tuple[1].getValue();
+        const json = tuple[1].getRaw();
 
         for (let i = 0; i < json.length; ++i) {
             const entry = json[i];
 
             if (entry['value'] === undefined) {
-                warnings.push(`No value for key \`${entry['key'].getValue()}\``);
+                warnings.push(`No value for key \`${entry['key'].getText()}\``);
                 continue;
             } else if (entry['key'].isRecursive() === true) {
-                warnings.push(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
+                warnings.push(`Ignoring recursive entry with key \`${entry['key'].getText()}\``);
                 continue;
             }
-            const key_s = cleanString(entry['key'].getValue());
-            const value_s = cleanString(entry['value'].getValue());
+            const key_s = entry['key'].getStringValue();
+            const value_s = entry['value'].getStringValue();
             // TODO: check how to compare CSS property
             code += `if (e.style["${key_s}"] != "${value_s}" && ` +
                 `assertComputedStyle["${key_s}"] != "${value_s}") { ` +
@@ -605,7 +579,7 @@ function parseAssertInner(line, options, insertBefore, insertAfter) {
         //
         // TEXT CONTENT CHECK
         //
-        const value = cleanString(tuple[1].getValue());
+        const value = tuple[1].getStringValue();
         const varName = 'parseAssertElemStr';
         return {
             'instructions': [
@@ -632,11 +606,11 @@ function parseAssertInner(line, options, insertBefore, insertAfter) {
                     `a ${kind}`,
             };
         }
-        const attributeName = cleanString(tuple[1].getValue().trim());
+        const attributeName = tuple[1].getStringValue(true);
         if (attributeName.length === 0) {
             return {'error': 'attribute name (second argument) cannot be empty'};
         }
-        const value = cleanString(tuple[2].getValue());
+        const value = tuple[2].getStringValue();
         const varName = 'parseAssertElemAttr';
         return {
             'instructions': [
@@ -694,7 +668,7 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
         return {'error': err};
     }
-    const tuple = p.elems[0].getValue();
+    const tuple = p.elems[0].getRaw();
     if (tuple.length < 2 || tuple.length > 3) {
         return {'error': 'invalid number of values in the tuple, read the documentation to see ' +
                          'the accepted inputs'};
@@ -703,12 +677,12 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
     } else if (tuple[1].kind !== 'string') {
         return {'error': `expected second argument to be a CSS selector, found a ${tuple[1].kind}`};
     }
-    let selector1 = cleanCssSelector(tuple[0].getValue());
+    let selector1 = tuple[0].getCssValue();
     if (selector1.error !== undefined) {
         return selector1;
     }
     selector1 = selector1.value;
-    let selector2 = cleanCssSelector(tuple[1].getValue());
+    let selector2 = tuple[1].getCssValue();
     if (selector2.error !== undefined) {
         return selector2;
     }
@@ -744,7 +718,7 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
             'checkResult': true,
         };
     } else if (tuple[2].kind === 'string') {
-        const attr = cleanString(tuple[2].getValue());
+        const attr = tuple[2].getStringValue();
         return {
             'instructions': [
                 selectors +
@@ -759,7 +733,7 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
             'checkResult': true,
         };
     } else if (tuple[2].kind === 'tuple') {
-        const sub_tuple = tuple[2].getValue();
+        const sub_tuple = tuple[2].getRaw();
         let x = false;
         let y = false;
         let code = '';
@@ -767,7 +741,7 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
             if (sub_tuple[i].kind !== 'string') {
                 return { 'error': `\`${tuple[2].getText()}\` should only contain strings` };
             }
-            const value = sub_tuple[i].getValue();
+            const value = sub_tuple[i].getRaw();
             if (value === 'x') {
                 if (!x) {
                     code += 'let x1 = e1.getBoundingClientRect().left;\n' +
@@ -785,7 +759,7 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
             } else {
                 return {
                     'error': 'Only accepted values are "x" and "y", found `' +
-                        `${sub_tuple[i].getValue()}\` (in \`${tuple[2].getText()}\``,
+                        `${sub_tuple[i].getText()}\` (in \`${tuple[2].getText()}\``,
                 };
             }
         }
@@ -802,13 +776,13 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
         return {'error': 'expected an array, a string or a tuple as third argument, found ' +
         `"${tuple[2].kind}"`};
     }
-    const array = tuple[2].getValue();
+    const array = tuple[2].getRaw();
     if (array.length > 0 && array[0].kind !== 'string') {
         return {'error': `expected an array of strings, found \`${tuple[2].getText()}\``};
     }
     let code = '';
     for (let i = 0; i < array.length; ++i) {
-        const css_property = cleanString(array[i].getValue());
+        const css_property = array[i].getStringValue();
         code += `let style1_1 = e1.style["${css_property}"];\n` +
             `let style1_2 = computed_style1["${css_property}"];\n` +
             `let style2_1 = e2.style["${css_property}"];\n` +
@@ -866,15 +840,15 @@ function parseText(line, options) {
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
         return {'error': 'expected `("CSS selector", "text")`'};
     }
-    const tuple = p.elems[0].getValue();
+    const tuple = p.elems[0].getRaw();
     if (tuple.length !== 2 || tuple[0].kind !== 'string' || tuple[1].kind !== 'string') {
         return {'error': 'expected `("CSS selector", "text")`'};
     }
-    const selector = cleanCssSelector(tuple[0].getValue());
+    const selector = tuple[0].getCssValue();
     if (selector.error !== undefined) {
         return selector;
     }
-    const value = cleanString(tuple[1].getValue());
+    const value = tuple[1].getStringValue();
     const varName = 'parseTextElem';
     return {
         'instructions': [
@@ -896,14 +870,14 @@ function innerParseCssAttribute(line, argName, varName, callback, options) {
                 '`("CSS selector", [JSON object])`',
         };
     }
-    const tuple = p.elems[0].getValue();
+    const tuple = p.elems[0].getRaw();
     if (tuple[0].kind !== 'string') {
         return {
             'error': `expected \`("CSS selector", "${argName} name", "${argName} value")\` or ` +
                 '`("CSS selector", [JSON object])`',
         };
     }
-    let selector = cleanCssSelector(tuple[0].getValue(), '(first argument)');
+    let selector = tuple[0].getCssValue('(first argument)');
     if (selector.error !== undefined) {
         return selector;
     }
@@ -915,11 +889,11 @@ function innerParseCssAttribute(line, argName, varName, callback, options) {
                     'and third arguments)',
             };
         }
-        const attributeName = cleanString(tuple[1].getValue().trim());
+        const attributeName = tuple[1].getStringValue(true);
         if (attributeName.length === 0) {
             return {'error': 'attribute name (second argument) cannot be empty'};
         }
-        const value = cleanString(tuple[2].getValue());
+        const value = tuple[2].getStringValue();
         return {
             'instructions': [
                 `let ${varName} = await page.$("${selector}");\n` +
@@ -942,21 +916,21 @@ function innerParseCssAttribute(line, argName, varName, callback, options) {
     }
     let code = '';
     let warnings = [];
-    const json = tuple[1].getValue();
+    const json = tuple[1].getRaw();
     varName += 'Json';
 
     for (let i = 0; i < json.length; ++i) {
         const entry = json[i];
 
         if (entry['value'] === undefined) {
-            warnings.push(`No value for key \`${entry['key'].getValue()}\``);
+            warnings.push(`No value for key \`${entry['key'].getText()}\``);
             continue;
         } else if (entry['key'].isRecursive() === true) {
-            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getValue()}\``);
+            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getText()}\``);
             continue;
         }
-        const key_s = cleanString(entry['key'].getValue());
-        const value_s = cleanString(entry['value'].getValue());
+        const key_s = entry['key'].getStringValue();
+        const value_s = entry['value'].getStringValue();
         code += `await page.evaluate(e => { ${callback(key_s, value_s)} }, ${varName});\n`;
     }
     warnings = warnings.length > 0 ? warnings : undefined;
@@ -1010,13 +984,13 @@ function parseScreenshot(line, options) {
     } else if (p.elems[0].kind === 'bool') {
         return {
             'instructions': [
-                `arg.takeScreenshot = ${p.elems[0].getValue()};`,
+                `arg.takeScreenshot = ${p.elems[0].getRaw()};`,
             ],
             'wait': false,
         };
     }
     const warnings = [];
-    const selector = cleanCssSelector(p.elems[0].getValue());
+    const selector = p.elems[0].getCssValue();
     if (selector.error !== undefined) {
         return selector;
     } else if (selector.value === 'true' || selector.value === 'false') {
@@ -1046,7 +1020,7 @@ function parseDebug(line, options) {
     return {
         'instructions': [
             'if (arg && arg.debug_log && arg.debug_log.setDebugEnabled) {\n' +
-            `arg.debug_log.setDebugEnabled(${p.elems[0].getValue()});\n` +
+            `arg.debug_log.setDebugEnabled(${p.elems[0].getRaw()});\n` +
             '} else {\n' +
             'throw "`debug` command needs an object with a `debug_log` field of `Debug` type!";\n' +
             '}',
@@ -1068,7 +1042,7 @@ function parseFail(line, options) {
     }
     return {
         'instructions': [
-            `arg.expectedToFail = ${p.elems[0].getValue()};`,
+            `arg.expectedToFail = ${p.elems[0].getRaw()};`,
         ],
         'wait': false,
     };
@@ -1096,11 +1070,11 @@ function parseReload(line, options) {
                 'error': `expected either [integer] or no arguments, got ${p.elems[0].kind}`,
             };
         }
-        timeout = p.elems[0].getValue();
-        const ret = checkInteger(p.elems[0], 'timeout', true);
+        const ret = p.elems[0].getIntegerValue('timeout', true);
         if (ret.error !== undefined) {
             return ret;
         }
+        timeout = ret.value;
         if (parseInt(timeout) === 0) {
             warnings.push('You passed 0 as timeout, it means the timeout has been disabled on ' +
                 'this reload');
@@ -1126,9 +1100,9 @@ function parseShowText(line, options) {
         return {'error': `expected \`true\` or \`false\` value, found \`${line}\``};
     }
     // We need the value to be updated first.
-    const instructions = [`arg.showText = ${p.elems[0].getValue()};`];
+    const instructions = [`arg.showText = ${p.elems[0].getRaw()};`];
     // And then to make the expected changes to the DOM.
-    if (p.elems[0].getValue() === true) {
+    if (p.elems[0].getRaw() === true) {
         instructions.push('await page.evaluate(() => {' +
             `let tmp = document.getElementById('${consts.STYLE_HIDE_TEXT_ID}');` +
             'if (tmp) { tmp.remove(); }' +
@@ -1161,7 +1135,7 @@ function parseDragAndDrop(line, options) {
                 'CSS selector',
         };
     }
-    const tuple = p.elems[0].getValue();
+    const tuple = p.elems[0].getRaw();
     if (tuple.length !== 2) {
         return {
             'error': 'expected tuple with two elements being either a position `(x, y)` or a ' +
@@ -1175,8 +1149,7 @@ function parseDragAndDrop(line, options) {
                     `CSS selector, found \`${arg.getText()}\``,
             };
         } else if (arg.kind === 'tuple') {
-            const tuple = arg.getValue();
-            const ret = checkIntegerTuple(tuple, arg.getText(), 'X position', 'Y position', true);
+            const ret = checkIntegerTuple(arg, 'X position', 'Y position', true);
             if (ret.error !== undefined) {
                 return ret;
             }
@@ -1195,7 +1168,7 @@ function parseDragAndDrop(line, options) {
     const setupThings = (arg, varName, posName, pos) => {
         let code = '';
         if (arg.kind === 'string') {
-            const selector = cleanCssSelector(arg.getValue(), `(${pos} argument)`);
+            const selector = arg.getCssValue(`(${pos} argument)`);
             if (selector.error !== undefined) {
                 return selector;
             }
@@ -1205,8 +1178,8 @@ function parseDragAndDrop(line, options) {
                 `const ${box} = await ${varName}.boundingBox();\n` +
                 `const ${posName} = [${box}.x + ${box}.width / 2, ${box}.y + ${box}.height / 2];\n`;
         } else {
-            const elems = arg.getValue();
-            code += `const ${posName} = [${elems[0].getValue()}, ${elems[1].getValue()}];\n`;
+            const elems = arg.getRaw();
+            code += `const ${posName} = [${elems[0].getRaw()}, ${elems[1].getRaw()}];\n`;
         }
         return `${code}await page.mouse.move(${posName}[0], ${posName}[1]);`;
     };
@@ -1236,7 +1209,7 @@ function parseEmulate(line, options) {
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'string') {
         return {'error': `expected string for "device name", found \`${line}\``};
     }
-    const device = cleanString(p.elems[0].getValue());
+    const device = p.elems[0].getStringValue();
     return {
         'instructions': [
             `if (arg.puppeteer.devices["${device}"] === undefined) { throw 'Unknown device ` +
@@ -1261,17 +1234,17 @@ function parseTimeout(line, options) {
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'number') {
         return {'error': `expected integer for number of milliseconds, found \`${line}\``};
     }
-    const ret = checkInteger(p.elems[0], 'number of milliseconds', true);
+    const ret = p.elems[0].getIntegerValue('number of milliseconds', true);
     if (ret.error !== undefined) {
         return ret;
     }
-    if (parseInt(p.elems[0].getValue()) === 0) {
+    if (parseInt(ret.value) === 0) {
         warnings.push('You passed 0 as timeout, it means the timeout has been disabled on ' +
             'this reload');
     }
     return {
         'instructions': [
-            `page.setDefaultTimeout(${p.elems[0].getValue()})`,
+            `page.setDefaultTimeout(${ret.value})`,
         ],
         'wait': false,
         'warnings': warnings.length > 0 ? warnings : undefined,
@@ -1289,21 +1262,21 @@ function parseGeolocation(line, options) {
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
         return {'error': `expected (longitude [number], latitude [number]), found \`${line}\``};
     }
-    const tuple = p.elems[0].getValue();
+    const tuple = p.elems[0].getRaw();
     if (tuple[0].kind !== 'number') {
         return {
             'error': 'expected number for longitude (first argument), ' +
-                `found \`${tuple[0].getValue()}\``,
+                `found \`${tuple[0].getText()}\``,
         };
     } else if (tuple[1].kind !== 'number') {
         return {
             'error': 'expected number for latitude (second argument), ' +
-                `found \`${tuple[1].getValue()}\``,
+                `found \`${tuple[1].getText()}\``,
         };
     }
     return {
         'instructions': [
-            `await page.setGeolocation(${tuple[0].getValue()}, ${tuple[1].getValue()});`,
+            `await page.setGeolocation(${tuple[0].getRaw()}, ${tuple[1].getRaw()});`,
         ],
     };
 }
@@ -1319,15 +1292,15 @@ function parsePermissions(line, options) {
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'array') {
         return {'error': `expected an array of strings, found \`${line}\``};
     }
-    const array = p.elems[0].getValue();
+    const array = p.elems[0].getRaw();
     if (array.length > 0 && array[0].kind !== 'string') {
         return {'error': `expected an array of strings, found \`${p.elems[0].getText()}\``};
     }
 
     for (let i = 0; i < array.length; ++i) {
-        if (consts.AVAILABLE_PERMISSIONS.indexOf(array[i].getValue()) === -1) {
+        if (consts.AVAILABLE_PERMISSIONS.indexOf(array[i].getRaw()) === -1) {
             return {
-                'error': `\`${array[i].getValue()}\` is an unknown permission, you can see the ` +
+                'error': `\`${array[i].getText()}\` is an unknown permission, you can see the ` +
                     'list of available permissions with the `--show-permissions` option',
             };
         }
@@ -1354,7 +1327,7 @@ function parseJavascript(line, options) {
     }
     return {
         'instructions': [
-            `await page.setJavaScriptEnabled(${p.elems[0].getValue()});`,
+            `await page.setJavaScriptEnabled(${p.elems[0].getRaw()});`,
         ],
     };
 }
