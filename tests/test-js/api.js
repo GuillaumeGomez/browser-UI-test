@@ -35,6 +35,18 @@ function checkAssert(x, func) {
     x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
     x.assert(func('("a", "b", )'), {'error': 'unexpected `,` after `"b"`'});
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", "\'b")'),
+        {
+            'instructions': [
+                'let parseAssertElemStr = await page.$("a");\nif (parseAssertElemStr === null) { ' +
+                'throw \'"a" not found\'; }\nawait page.evaluate(e => {\nif (e.tagName.' +
+                'toLowerCase() === "input") {\nif (e.value !== "\\\'b") { ' +
+                'throw \'"\' + e.value + \'" !== "\\\'b"\'; }\n} ' +
+                'else if (e.textContent !== "\\\'b") {\nthrow \'"\' + e.textContent ' +
+                '+ \'" !== "\\\'b"\'; }\n}, parseAssertElemStr);'],
+            'wait': false,
+            'checkResult': true,
+        });
     x.assert(func('("a", "b")'),
         {
             'instructions': [
@@ -136,6 +148,23 @@ function checkAssertFalse(x, func) {
     x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
     x.assert(func('("a", "b", )'), {'error': 'unexpected `,` after `"b"`'});
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", "\'b")'),
+        {
+            'instructions': [
+                'let parseAssertElemStr = await page.$("a");\n' +
+                'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
+                'try {\n' +
+                'await page.evaluate(e => {\n' +
+                'if (e.tagName.toLowerCase() === "input") {\n' +
+                'if (e.value !== "\\\'b") { throw \'"\' + e.value + \'" !== "\\\'b"\'; }\n' +
+                '} else if (e.textContent !== "\\\'b") {\n' +
+                'throw \'"\' + e.textContent + \'" !== "\\\'b"\'; }\n' +
+                '}, parseAssertElemStr);\n' +
+                '} catch(e) { return; } throw "assert didn\'t fail";',
+            ],
+            'wait': false,
+            'checkResult': true,
+        });
     x.assert(func('("a", "b")'),
         {
             'instructions': [

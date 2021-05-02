@@ -605,7 +605,7 @@ function parseAssertInner(line, options, insertBefore, insertAfter) {
         //
         // TEXT CONTENT CHECK
         //
-        const value = tuple[1].getValue();
+        const value = cleanString(tuple[1].getValue());
         const varName = 'parseAssertElemStr';
         return {
             'instructions': [
