@@ -378,7 +378,7 @@ function checkCompareElementsInner(x, func, before, after) {
     );
     x.assert(
         func('("a", "b", ("x", "yo"))'),
-        {'error': 'Only accepted values are "x" and "y", found `yo` (in `("x", "yo")`'},
+        {'error': 'Only accepted values are "x" and "y", found `"yo"` (in `("x", "yo")`'},
     );
 
     x.assert(
@@ -665,13 +665,13 @@ function checkGeolocation(x, func) {
         'error': 'expected (longitude [number], latitude [number]), found `"a"`',
     });
     x.assert(func('("a", "b")'), {
-        'error': 'expected number for longitude (first argument), found `a`',
+        'error': 'expected number for longitude (first argument), found `"a"`',
     });
     x.assert(func('("12", 13)'), {
-        'error': 'expected number for longitude (first argument), found `12`',
+        'error': 'expected number for longitude (first argument), found `"12"`',
     });
     x.assert(func('(12, "13")'), {
-        'error': 'expected number for latitude (second argument), found `13`',
+        'error': 'expected number for latitude (second argument), found `"13"`',
     });
     x.assert(func('(12, 13)'), {'instructions': ['await page.setGeolocation(12, 13);']});
 }
@@ -857,15 +857,15 @@ function checkPermissions(x, func) {
     x.assert(func('"a"'), {'error': 'expected an array of strings, found `"a"`'});
     x.assert(func('("a", "b")'), {'error': 'expected an array of strings, found `("a", "b")`'});
     x.assert(func('["12", 13]'), {
-        'error': 'all array\'s elements must be of the same kind: expected array of `string`, ' +
-            'found `number` at position 1',
+        'error': 'all array\'s elements must be of the same kind: expected array of `string` ' +
+            '(because the first element is of this kind), found `number` at position 1',
     });
     x.assert(func('[12, "13"]'), {
-        'error': 'all array\'s elements must be of the same kind: expected array of `number`, ' +
-            'found `string` at position 1',
+        'error': 'all array\'s elements must be of the same kind: expected array of `number` ' +
+            '(because the first element is of this kind), found `string` at position 1',
     });
     x.assert(func('["12"]'), {
-        'error': '`12` is an unknown permission, you can see the list of available permissions ' +
+        'error': '`"12"` is an unknown permission, you can see the list of available permissions ' +
             'with the `--show-permissions` option',
     });
     x.assert(func('["camera", "push"]'), {
