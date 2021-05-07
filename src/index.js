@@ -460,22 +460,25 @@ async function runTest(testPath, options = new Options(), showLogs = false) {
         throw new Error(`Expected a \`.goml\` script, found ${path.basename(testPath)}`);
     }
 
-    // To make the Options type validation happy.
-    options.testFiles.push(testPath);
-    options.validate();
+    // We need to clone the `options` variable to prevent modifying it in the caller!
+    const optionsCopy = options.clone();
 
-    const checkTestFolder = options.testFolder.length !== 0;
+    // To make the Options type validation happy.
+    optionsCopy.testFiles.push(testPath);
+    optionsCopy.validate();
+
+    const checkTestFolder = optionsCopy.testFolder.length !== 0;
     if (checkTestFolder === false) {
-        options.testFolder = path.dirname(testPath);
+        optionsCopy.testFolder = path.dirname(testPath);
     }
 
-    if (checkFolders(options) === false) {
+    if (checkFolders(optionsCopy) === false) {
         return ['', 1];
     }
 
     const basename = path.basename(testPath);
     return innerRunTestCode(basename.substr(0, basename.length - 5), utils.readFile(testPath),
-        options, showLogs, checkTestFolder);
+        optionsCopy, showLogs, checkTestFolder);
 }
 
 async function runTests(options, showLogs = false) {

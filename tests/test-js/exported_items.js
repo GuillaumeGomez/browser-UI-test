@@ -43,7 +43,14 @@ async function checkRunTest(x, func) {
     // everything is supposed to work
     let options = new Options();
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files']);
+
+    // We need to check that our `options` variable isn't modified by the `runTest` function.
+    await x.assert(options.testFiles, []);
+    await x.assert(options.testFolder, '');
     await x.assertTry(func, ['./tests/scripts/basic.goml', options], ['basic... ok', 0]);
+    // We need to check that our `options` variable isn't modified by the `runTest` function.
+    await x.assert(options.testFiles, []);
+    await x.assert(options.testFolder, '');
 
     // check if test-folder option is ignored
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files', '--test-folder', 'yolo']);
