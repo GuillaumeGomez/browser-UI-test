@@ -80,6 +80,31 @@ class Options {
         this.onPageCreatedCallback = async function() {};
     }
 
+    clone() {
+        const copy = new Options();
+
+        // The VERY boring part.
+        copy.runId = this.runId.slice();
+        copy.generateImages = this.generateImages;
+        copy.headless = this.headless;
+        copy.testFolder = this.testFolder.slice();
+        copy.failureFolder = this.failureFolder.slice();
+        copy.imageFolder = this.imageFolder.slice();
+        copy.showText = this.showText;
+        copy.debug = this.debug;
+        copy.noScreenshot = this.noScreenshot;
+        copy.testFiles = JSON.parse(JSON.stringify(this.testFiles));
+        copy.variables = JSON.parse(JSON.stringify(this.variables));
+        copy.extensions = JSON.parse(JSON.stringify(this.extensions));
+        copy.browser = this.browser.slice();
+        copy.incognito = this.incognito;
+        copy.emulate = this.emulate.slice();
+        copy.timeout = this.timeout;
+        copy.permissions = JSON.parse(JSON.stringify(this.permissions));
+        copy.onPageCreatedCallback = this.onPageCreatedCallback;
+        return copy;
+    }
+
     parseArguments(args = []) {
         let showDevices = false;
         let showPermissions = false;
