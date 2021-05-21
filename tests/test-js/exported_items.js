@@ -463,7 +463,7 @@ async function checkExportedItems(x = new Assert()) {
             await TO_CHECK[i].func(x, TO_CHECK[i].toCall);
             x.endTestSuite();
         } catch (err) {
-            x.endTestSuite(false);
+            x.endTestSuite(false, true);
             print(`<== "${TO_CHECK[i].name}" failed: ${err}\n${err.stack}`);
         }
     }
@@ -479,7 +479,7 @@ async function checkExportedItems(x = new Assert()) {
 
 if (require.main === module) {
     checkExportedItems().then(nbErrors => {
-        process.exit(nbErrors);
+        process.exit(nbErrors !== 0 ? 1 : 0);
     });
 } else {
     module.exports = {

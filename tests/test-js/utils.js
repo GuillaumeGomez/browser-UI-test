@@ -142,7 +142,7 @@ class Assert {
         }
     }
 
-    endTestSuite(printMsg = true) {
+    endTestSuite(printMsg = true, errorOccurred = false) {
         if (this.testSuite.length === 0) {
             throw new Error('No test suite is running, call `startTestSuite` first');
         }
@@ -151,6 +151,9 @@ class Assert {
             print(`<${'='.repeat(this.testSuite.length + 1)} "${name}": ${totalErrors} ` +
                 `${plural('error', totalErrors)} (in ${totalRanTests} ` +
                 `${plural('test', totalRanTests)})`);
+        }
+        if (errorOccurred === true) {
+            this._incrError();
         }
     }
 

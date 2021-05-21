@@ -76,7 +76,19 @@ class Element {
     }
 
     getCssValue(text = '') {
-        return cleanCssSelector(this.value, text);
+        const css = cleanCssSelector(this.value, text);
+        if (css.error !== undefined) {
+            return css;
+        }
+        const index = css.value.search(/[A-Za-z\])]::[A-Za-z][A-Za-z0-9_]*$/);
+        if (index !== -1) {
+            return {
+                'value': css.value.slice(0, index + 1),
+                'pseudo': css.value.slice(index + 1),
+            };
+        }
+        css['pseudo'] = null;
+        return css;
     }
 
     isRecursive() {
