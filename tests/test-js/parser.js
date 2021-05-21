@@ -1238,7 +1238,7 @@ async function checkParsers(x = new Assert()) {
             TO_CHECK[i].func(x);
             x.endTestSuite();
         } catch (err) {
-            x.endTestSuite(false);
+            x.endTestSuite(false, true);
             print(`<== "${TO_CHECK[i].name}" failed: ${err}\n${err.stack}`);
         }
     }
@@ -1254,7 +1254,7 @@ async function checkParsers(x = new Assert()) {
 
 if (require.main === module) {
     checkParsers().then(nbErrors => {
-        process.exit(nbErrors);
+        process.exit(nbErrors !== 0 ? 1 : 0);
     });
 } else {
     module.exports = {

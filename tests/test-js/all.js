@@ -22,15 +22,22 @@ async function runAllTests() {
         }
     });
     files.sort();
+    let tmp;
     for (let i = 0; i < files.length; ++i) {
         try {
-            const tmp = require(files[i]);
+            tmp = require(files[i]);
             if (tmp['check'] === undefined) {
                 continue;
             }
-            await tmp['check'](x);
         } catch (err) {
             print(`failed to load \`${files[i]}\`, ignoring it...`);
+        }
+
+        try {
+            await tmp['check'](x);
+        } catch (err) {
+            x._incrError();
+            print(`<== \`${files[i]}\` failed: ${err}\n${err.stack}`);
         }
         print('');
     }
@@ -46,7 +53,7 @@ async function runAllTests() {
 
 if (require.main === module) {
     runAllTests().then(nbErrors => {
-        process.exit(nbErrors);
+        process.exit(nbErrors !== 0 ? 1 : 0);
     });
 } else {
     print('Cannot be used as module!', console.error);
