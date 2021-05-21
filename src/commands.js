@@ -497,40 +497,22 @@ function parseAssertInner(line, options, insertBefore, insertAfter) {
     if (tuple.length === 1) {
         return assertHandleSelectorInput(tuple[0].getCssValue(), insertBefore, insertAfter);
     }
-    let selector = tuple[0].getCssValue();
-    if (selector.error !== undefined) {
-        return selector;
-    }
-    selector = selector.value;
-    if (tuple[1].kind === 'number') {
-        //
-        // NUMBER OF OCCURENCES CHECK
-        //
-        if (tuple.length !== 2) {
-            return {'error': 'unexpected argument after number of occurences'};
-        }
-        const occurences = tuple[1].getIntegerValue('number of occurences', true);
-        if (occurences.error !== undefined) {
-            return occurences;
-        }
-        const varName = 'parseAssertElemInt';
-        return {
-            'instructions': [
-                `let ${varName} = await page.$$("${selector}");\n` +
-                // TODO: maybe check differently depending on the tag kind?
-                `${insertBefore}if (${varName}.length !== ${occurences.value}) { throw 'expected ` +
-                `${occurences.value} elements, found ' + ${varName}.length; }${insertAfter}`,
-            ],
-            'wait': false,
-            'checkResult': true,
-        };
-    } else if (tuple[1].kind === 'json') {
+
+    if (tuple[1].kind === 'json') {
         //
         // CSS PROPERTIES CHECK
         //
         if (tuple.length !== 2) {
             return {'error': 'unexpected argument after CSS properties'};
         }
+
+        let selector = tuple[0].getCssValue();
+        if (selector.error !== undefined) {
+            return selector;
+        }
+        const pseudo = selector.pseudo !== null ? `, "${selector.pseudo}"` : '';
+        selector = selector.value;
+
         let code = '';
         let warnings = [];
         const json = tuple[1].getRaw();
@@ -568,11 +550,40 @@ function parseAssertInner(line, options, insertBefore, insertAfter) {
                 `let ${varName} = await page.$("${selector}");\n` +
                 `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
                 `${insertBefore}await page.evaluate(e => {` +
-                `let assertComputedStyle = getComputedStyle(e);\n${code}` +
+                `let assertComputedStyle = getComputedStyle(e${pseudo});\n${code}` +
                 `}, ${varName});${insertAfter}`,
             ],
             'wait': false,
             'warnings': warnings,
+            'checkResult': true,
+        };
+    }
+
+    let selector = tuple[0].getCssValue();
+    if (selector.error !== undefined) {
+        return selector;
+    }
+    selector = selector.value;
+    if (tuple[1].kind === 'number') {
+        //
+        // NUMBER OF OCCURENCES CHECK
+        //
+        if (tuple.length !== 2) {
+            return {'error': 'unexpected argument after number of occurences'};
+        }
+        const occurences = tuple[1].getIntegerValue('number of occurences', true);
+        if (occurences.error !== undefined) {
+            return occurences;
+        }
+        const varName = 'parseAssertElemInt';
+        return {
+            'instructions': [
+                `let ${varName} = await page.$$("${selector}");\n` +
+                // TODO: maybe check differently depending on the tag kind?
+                `${insertBefore}if (${varName}.length !== ${occurences.value}) { throw 'expected ` +
+                `${occurences.value} elements, found ' + ${varName}.length; }${insertAfter}`,
+            ],
+            'wait': false,
             'checkResult': true,
         };
     } else if (tuple[1].kind === 'string' && tuple.length === 2) {
@@ -681,11 +692,13 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
     if (selector1.error !== undefined) {
         return selector1;
     }
+    const pseudo1 = selector1.pseudo !== null ? `, "${selector1.pseudo}"` : '';
     selector1 = selector1.value;
     let selector2 = tuple[1].getCssValue();
     if (selector2.error !== undefined) {
         return selector2;
     }
+    const pseudo2 = selector2.pseudo !== null ? `, "${selector2.pseudo}"` : '';
     selector2 = selector2.value;
 
     const varName = 'parseCompareElements';
@@ -776,6 +789,7 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
         return {'error': 'expected an array, a string or a tuple as third argument, found ' +
         `"${tuple[2].kind}"`};
     }
+
     const array = tuple[2].getRaw();
     if (array.length > 0 && array[0].kind !== 'string') {
         return {'error': `expected an array of strings, found \`${tuple[2].getText()}\``};
@@ -796,8 +810,8 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
         'instructions': [
             selectors +
             `${insertBefore}await page.evaluate((e1, e2) => {` +
-            'let computed_style1 = getComputedStyle(e1);\n' +
-            `let computed_style2 = getComputedStyle(e2);\n${code}` +
+            `let computed_style1 = getComputedStyle(e1${pseudo1});\n` +
+            `let computed_style2 = getComputedStyle(e2${pseudo2});\n${code}` +
             `}, ${varName}1, ${varName}2);${insertAfter}`,
         ],
         'wait': false,
