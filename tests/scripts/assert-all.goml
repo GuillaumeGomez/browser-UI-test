@@ -1,0 +1,21 @@
+screenshot: false
+goto: file://|CURRENT_DIR|/|DOC_PATH|/similar-ones.html
+assert-all: (".simili")
+assert-all-false: (".simili-non-existent")
+assert-all: (".simili", 4)
+assert-all: (".simili-non-existent", 0)
+assert-all-false: (".simili", 5)
+assert-all: (".simili", "a")
+fail: true
+assert-all: (".non-simili", "a")
+// If any of the items has "a" as text, then it fails.
+assert-all-false: (".simili", "a")
+fail: false
+assert-all-false: (".simili", "c")
+assert-all: (".simili", {"text-align": "center"})
+fail: true
+assert-all: (".simili", {"padding-left": "2px"})
+// If any of the items has "text-align: center", then it fails.
+assert-all-false: (".simili", {"text-align": "center"})
+fail: false
+assert-all-false: (".simili", {"height": "1000px"})
