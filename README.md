@@ -212,6 +212,8 @@ Here's the command list:
 
  * [`assert`](#assert)
  * [`assert-false`](#assert-false)
+ * [`assert-all`](#assert-all)
+ * [`assert-all-false`](#assert-all-false)
  * [`attribute`](#attribute)
  * [`click`](#click)
  * [`compare-elements`](#compare-elements)
@@ -265,19 +267,73 @@ Please note that if you want to compare DOM elements, you should take a look at 
 
 ```
 // will check that "#id > .class" doesn't exists
-assert: "#id > .class"
-assert: ("#id > .class") // strictly equivalent
+assert-false: "#id > .class"
+assert-false: ("#id > .class") // strictly equivalent
 // will check that first "#id > .class" doesn't have text "hello"
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
-assert: ("#id > .class", "hello")
+assert-false: ("#id > .class", "hello")
 // will check that there are not 2 "#id > .class"
-assert: ("#id > .class", 2)
+assert-false: ("#id > .class", 2)
 // will check that "#id > .class" doesn't have blue color
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
-assert: ("#id > .class", { "color": "blue" })
+assert-false: ("#id > .class", { "color": "blue" })
 // will check that "#id > .class" doesn't have an attribute called "attribute-name" with value "attribute-value"
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
-assert: ("#id > .class", "attribute-name", "attribute-value")
+assert-false: ("#id > .class", "attribute-name", "attribute-value")
+```
+
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-false) command.
+
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+
+#### assert-all
+
+**assert-all** command does the same as [`assert`](#assert) except that it does it on ALL elements matching the CSS selector. Four different functionalities are available:
+
+```
+// will check that "#id > .class" exists
+assert-all: "#id > .class"
+assert-all: ("#id > .class") // strictly equivalent
+// will check that first "#id > .class" has text "hello"
+assert-all: ("#id > .class", "hello")
+// will check that there are 2 "#id > .class"
+assert-all: ("#id > .class", 2)
+// will check that "#id > .class" has blue color
+assert-all: ("#id > .class", { "color": "blue" })
+// will check that "#id > .class" has an attribute called "attribute-name" with value "attribute-value"
+assert-all: ("#id > .class", "attribute-name", "attribute-value")
+```
+
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements) command.
+
+#### assert-all-false
+
+**assert-all-false** command does the same as [`assert-false`](#assert-false) except that it does it on ALL elements matching the CSS selector. If any of the elements is not failing, it'll fail. You can go around that limitation using `fail: true` and run the same condition with both [`assert-all`](#assert-all) and `assert-all-false` (there is a small example below). Four different functionalities are available:
+
+```
+// will check that "#id > .class" doesn't exists
+assert-all-false: "#id > .class"
+assert-all-false: ("#id > .class") // strictly equivalent
+// will check that first "#id > .class" doesn't have text "hello"
+// IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
+assert-all-false: ("#id > .class", "hello")
+// will check that there are not 2 "#id > .class"
+assert-all-false: ("#id > .class", 2)
+// will check that "#id > .class" doesn't have blue color
+// IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
+assert-all-false: ("#id > .class", { "color": "blue" })
+// will check that "#id > .class" doesn't have an attribute called "attribute-name" with value "attribute-value"
+// IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
+assert-all-false: ("#id > .class", "attribute-name", "attribute-value")
+
+// In case you want to check that at least one element matches the condition, you
+// can do as follow:
+fail: true
+// Checks that not all elements have "hello".
+assert-all: ("#id > .class", "hello")
+// Check that at least one element has "hello".
+assert-all-false: ("#id > .class", "hello")
+fail: false
 ```
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-false) command.
