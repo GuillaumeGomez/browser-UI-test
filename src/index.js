@@ -248,7 +248,18 @@ async function runCommand(loaded, logs, options, browser) {
                 await page.close();
                 return Status.Ok;
             }
-            elem = await page.$(extras.takeScreenshot);
+            if (extras.takeScreenshot.startsWith('//')) {
+                // This is an XPath.
+                elem = await page.$x(extras.takeScreenshot);
+                if (elem.length === 0) {
+                    elem = null;
+                } else {
+                    elem = elem[0];
+                }
+            } else {
+                // This is a CSS selector.
+                elem = await page.$(extras.takeScreenshot);
+            }
             if (elem === null) {
                 logs.append('FAILED', true);
                 logs.append(`Cannot take screenshot: element \`${extras.takeScreenshot}\`` +

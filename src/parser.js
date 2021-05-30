@@ -59,6 +59,23 @@ class Element {
         this.error = error;
     }
 
+    getSelector(text = '') {
+        const s = this.getStringValue(true);
+        if (s.startsWith('//')) {
+            return {
+                'value': s,
+                'isXPath': true,
+            };
+        } else if (s.startsWith('/')) {
+            return {
+                'error': 'XPath must start with `//`',
+            };
+        }
+        const css = this.getCssValue(text);
+        css.isXPath = false;
+        return css;
+    }
+
     getStringValue(trim) {
         let v = this.value;
         if (trim === true) {

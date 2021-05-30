@@ -1,0 +1,39 @@
+screenshot: false
+goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
+focus: "//*[@id='the-input']"
+assert: "#the-input:focus"
+write: ("//*[@id='the-input']", "hello")
+assert: ("//*[@id='the-input']", "hello")
+fail: true
+assert-false: ("//*[@id='the-input']", "hello")
+fail: false
+assert-all: ("//*[@id='the-input']", "hello")
+fail: true
+assert-all-false: ("//*[@id='the-input']", "hello")
+fail: false
+assert-all-false: ("//*[@id='the-input']", "ai")
+attribute: ("//div[@class='content']", "an-attribute", "hello")
+assert: ("//div[@class='content']", "an-attribute", "hello")
+assert: ("//*[@id='button']", {"border-radius": "5px"})
+css: ("//*[@id='button']", "border-radius", "50%")
+assert: ("//*[@id='button']", {"border-radius": "50%"})
+assert-false: ("//*[@id='button']", "new text")
+text: ("//*[@id='button']", "new text")
+assert: ("//*[@id='button']", "new text")
+click: "//a[@id='button']"
+assert: ("//header", "Another page!")
+
+goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+compare-elements: ("//*[@class='content']/*[@class='right']/p", "//*[@class='content']/*[@class='left']/p")
+compare-elements: ("//*[@class='content']/*[@class='right']/p", "//*[@class='content']/*[@class='right']/p", ("x", "y"))
+compare-elements: ("//*[@class='content']/*[@class='right']", "//*[@class='content']/*[@class='left']", "data-whatever")
+compare-elements-false: ("//*[@class='content']/*[@class='right']/p", "//*[@class='content']/*[@class='left']")
+compare-elements-false: ("//*[@class='content']/*[@class='right']/div", "//*[@class='content']/*[@class='left']/div", ("x", "y"))
+compare-elements-false: ("//*[@class='content']/*[@class='right']", "//*[@class='content']/*[@class='left']/p", "data-whatever")
+compare-elements-false: ("//*[@class='content']/*[@class='right']/p", "//*[@class='content']/*[@class='left']", ["margin"])
+
+goto: file://|CURRENT_DIR|/|DOC_PATH|/other_page.html
+drag-and-drop: ("//*[@id='drag']", (10, 10))
+assert: ("//*[@id='drag']", {"top": "10px", "left": "10px"})
+drag-and-drop: ((11, 11), (12, 12))
+assert: ("//*[@id='drag']", {"top": "12px", "left": "12px"})
