@@ -16,6 +16,8 @@ text: ("#button", "hello") // set text of element #button
 assert: ("#button", "hello") // check if #button element's text has been set to "hello"
 ```
 
+The list of the commands is available [below](#goml-scripts).
+
 ### Trouble installing puppeteer?
 
 In case you can't install puppeteer "normally", you can give a try to `--unsafe-perm=true`:
@@ -243,18 +245,24 @@ Here's the command list:
 
 #### assert
 
-**assert** command checks if the condition is true, otherwise fail. Four different functionalities are available:
+**assert** command checks if the condition is true, otherwise fail. Examples:
 
 ```
+// To be noted: all following examples can use XPath instead of CSS selector.
+
 // will check that "#id > .class" exists
 assert: "#id > .class"
 assert: ("#id > .class") // strictly equivalent
+
 // will check that first "#id > .class" has text "hello"
 assert: ("#id > .class", "hello")
+
 // will check that there are 2 "#id > .class"
 assert: ("#id > .class", 2)
+
 // will check that "#id > .class" has blue color
 assert: ("#id > .class", { "color": "blue" })
+
 // will check that "#id > .class" has an attribute called "attribute-name" with value "attribute-value"
 assert: ("#id > .class", "attribute-name", "attribute-value")
 ```
@@ -263,21 +271,28 @@ Please note that if you want to compare DOM elements, you should take a look at 
 
 #### assert-false
 
-**assert-false** command checks if the condition is false, otherwise fail. It's mostly doing the opposite of [`assert`](#assert). Four different functionalities are available:
+**assert-false** command checks if the condition is false, otherwise fail. It's mostly doing the opposite of [`assert`](#assert). Examples:
 
 ```
+// To be noted: all following examples can use XPath instead of CSS selector.
+
 // will check that "#id > .class" doesn't exists
 assert-false: "#id > .class"
 assert-false: ("#id > .class") // strictly equivalent
+
 // will check that first "#id > .class" doesn't have text "hello"
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
 assert-false: ("#id > .class", "hello")
+
 // will check that there are not 2 "#id > .class"
 assert-false: ("#id > .class", 2)
+
 // will check that "#id > .class" doesn't have blue color
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
 assert-false: ("#id > .class", { "color": "blue" })
+
 // will check that "#id > .class" doesn't have an attribute called "attribute-name" with value "attribute-value"
+
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
 assert-false: ("#id > .class", "attribute-name", "attribute-value")
 ```
@@ -288,18 +303,24 @@ Another thing to be noted: if you don't care wether the selector exists or not e
 
 #### assert-all
 
-**assert-all** command does the same as [`assert`](#assert) except that it does it on ALL elements matching the CSS selector. Four different functionalities are available:
+**assert-all** command does the same as [`assert`](#assert) except that it does it on ALL elements matching the CSS selector or the XPath. Examples:
 
 ```
+// To be noted: all following examples can use XPath instead of CSS selector.
+
 // will check that "#id > .class" exists
 assert-all: "#id > .class"
 assert-all: ("#id > .class") // strictly equivalent
+
 // will check that first "#id > .class" has text "hello"
 assert-all: ("#id > .class", "hello")
+
 // will check that there are 2 "#id > .class"
 assert-all: ("#id > .class", 2)
+
 // will check that "#id > .class" has blue color
 assert-all: ("#id > .class", { "color": "blue" })
+
 // will check that "#id > .class" has an attribute called "attribute-name" with value "attribute-value"
 assert-all: ("#id > .class", "attribute-name", "attribute-value")
 ```
@@ -308,20 +329,26 @@ Please note that if you want to compare DOM elements, you should take a look at 
 
 #### assert-all-false
 
-**assert-all-false** command does the same as [`assert-false`](#assert-false) except that it does it on ALL elements matching the CSS selector. If any of the elements is not failing, it'll fail. You can go around that limitation using `fail: true` and run the same condition with both [`assert-all`](#assert-all) and `assert-all-false` (there is a small example below). Four different functionalities are available:
+**assert-all-false** command does the same as [`assert-false`](#assert-false) except that it does it on ALL elements matching the CSS selector. If any of the elements is not failing, it'll fail. You can go around that limitation using `fail: true` and run the same condition with both [`assert-all`](#assert-all) and `assert-all-false` (there is a small example below). Examples:
 
 ```
+// To be noted: all following examples can use XPath instead of CSS selector.
+
 // will check that "#id > .class" doesn't exists
 assert-all-false: "#id > .class"
 assert-all-false: ("#id > .class") // strictly equivalent
+
 // will check that first "#id > .class" doesn't have text "hello"
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
 assert-all-false: ("#id > .class", "hello")
+
 // will check that there are not 2 "#id > .class"
 assert-all-false: ("#id > .class", 2)
+
 // will check that "#id > .class" doesn't have blue color
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
 assert-all-false: ("#id > .class", { "color": "blue" })
+
 // will check that "#id > .class" doesn't have an attribute called "attribute-name" with value "attribute-value"
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
 assert-all-false: ("#id > .class", "attribute-name", "attribute-value")
@@ -346,21 +373,31 @@ Another thing to be noted: if you don't care wether the selector exists or not e
 
 ```
 attribute: ("#button", "attribute-name", "attribute-value")
+// Same but with a XPath:
+attribute: ("//*[@id='button']", "attribute-name", "attribute-value")
 ```
 
 To set multiple attributes at a time, you can use a JSON object:
 
 ```
 attribute: ("#button", {"attribute name": "attribute value", "another": "x"})
+// Same but with a XPath:
+attribute: ("//*[@id='button']", {"attribute name": "attribute value", "another": "x"})
 ```
 
 #### click
 
-**click** command send a click event on an element or at the specified position. It expects a CSS selector or a position. Examples:
+**click** command send a click event on an element or at the specified position. It expects a CSS selector or an XPath or a position. Examples:
 
 ```
 click: ".element"
+// Same but with an XPath:
+click: "//*[@class='element']"
+
 click: "#element > a"
+// Same but with an XPath:
+click: "//*[@id='element']/a"
+
 click: (10, 12)
 ```
 
@@ -369,12 +406,17 @@ click: (10, 12)
 **compare-elements** command allows you to compare two DOM elements. Examples:
 
 ```
+// To be noted: all following examples can use XPath instead of CSS selector.
+
 // To compare the text of two elements:
 compare-elements: ("element1", "element2")
+
 // To compare an attribute's value of two elements:
 compare-elements: ("element1", "element2", "attribute")
+
 // To compare CSS properties' value of two elements:
 compare-elements: ("element1", "element2", ["CSS property1", "CSS property2", ...])
+
 // To compare the absolute X/Y position of two elements:
 compare-elements: ("element1", "element2", ("x"))
 compare-elements: ("element1", "element2", ("y"))
@@ -387,12 +429,17 @@ compare-elements: ("element1", "element2", ("y", "x"))
 **compare-elements-false** command allows you to compare two DOM elements (and check they're not equal!). It's mostly doing the opposite of [`compare-elements`](#compare-elements). Examples:
 
 ```
+// To be noted: all following examples can use XPath instead of CSS selector.
+
 // To compare the text of two elements:
 compare-elements-false: ("element1", "element2")
+
 // To compare an attribute's value of two elements:
 compare-elements-false: ("element1", "element2", "attribute")
+
 // To compare CSS properties' value of two elements:
 compare-elements-false: ("element1", "element2", ["CSS property1", "CSS property2", ...])
+
 // To compare the absolute X/Y position of two elements:
 compare-elements-false: ("element1", "element2", ("x"))
 compare-elements-false: ("element1", "element2", ("y"))
@@ -408,12 +455,16 @@ Another thing to be noted: if you don't care wether the selector exists or not e
 
 ```
 css: ("#button", "background-color", "red")
+// Same but with an XPath:
+css: ("//*[@id='button']", "background-color", "red")
 ```
 
 To set multiple styles at a time, you can use a JSON object:
 
 ```
 css: ("#button", {"background-color": "red", "border": "1px solid"})
+// Same but with an XPath:
+css: ("//*[@id='button']", {"background-color": "red", "border": "1px solid"})
 ```
 
 #### debug
@@ -427,11 +478,11 @@ debug: true // enabling it again
 
 #### drag-and-drop
 
-**drag-and-drop** command allows to move an element to another place (assuming it implements the necessary JS and is draggable). It expects a tuple of two elements. Each element can be a position or a CSS selector. Example:
+**drag-and-drop** command allows to move an element to another place (assuming it implements the necessary JS and is draggable). It expects a tuple of two elements. Each element can be a position or a CSS selector or an XPath. Example:
 
 ```
 drag-and-drop: ("#button", "#destination") // move "#button" to where "#destination" is
-drag-and-drop: ("#button", (10, 10)) // move "#button" to (10, 10)
+drag-and-drop: ("//*[@id='button']", (10, 10)) // move "//*[@id='button']" to (10, 10)
 drag-and-drop: ((10, 10), "#button") // move the element at (10, 10) to where "#button" is
 drag-and-drop: ((10, 10), (20, 35)) // move the element at (10, 10) to (20, 35)
 ```
@@ -470,11 +521,16 @@ assert: ("#elem", "not hello")
 
 #### focus
 
-**focus** command focuses (who would have guessed?) on a given element. It expects a CSS selector. Examples:
+**focus** command focuses (who would have guessed?) on a given element. It expects a CSS selector or an XPath. Examples:
 
 ```
 focus: ".element"
+// Same but with an XPath:
+focus: "//*[@class='element']"
+
 focus: "#element"
+// Same but with an XPath:
+focus: "//*[@id='element']"
 ```
 
 #### geolocation
@@ -540,7 +596,13 @@ local-storage: {"key": "value", "another key": "another value"}
 
 ```
 move-cursor-to: "#element"
+// Same but with an XPath:
+move-cursor-to: "//*[@id='element']"
+
 move-cursor-to: ".element"
+// Same but with an XPath:
+move-cursor-to: "//*[@class='element']"
+
 move-cursor-to: (10, 12)
 ```
 
@@ -579,12 +641,20 @@ reload: 0 // disable timeout, be careful when using it!
 
 #### screenshot
 
-**screenshot** command enables/disables the screenshot at the end of the script (and therefore its comparison). It expects a boolean value or a CSS selector. Example:
+**screenshot** command enables/disables the screenshot at the end of the script (and therefore its comparison). It expects a boolean value or a CSS selector or an XPath. Example:
 
 ```
-screenshot: false // disable screenshot comparison at the end of the script
-screenshot: "#test" // will take a screenshot of the specified element and compare it at the end
-screenshot: true // back to "normal", full page screenshot and comparison
+// Disable screenshot comparison at the end of the script:
+screenshot: false
+
+// Will take a screenshot of the specified element and compare it at the end:
+screenshot: "#test"
+
+// Same as the previous example but with an XPath:
+screenshot: "//*[@id='test']"
+
+// Back to "normal", full page screenshot and comparison:
+screenshot: true
 ```
 
 #### scroll-to
@@ -593,7 +663,13 @@ screenshot: true // back to "normal", full page screenshot and comparison
 
 ```
 scroll-to: "#element"
+// Same but with an XPath:
+scroll-to: "//*[@id='element']"
+
 scroll-to: ".element"
+// Same but with an XPath:
+scroll-to: "//*[@class='element']"
+
 scroll-to: (10, 12)
 ```
 
@@ -619,6 +695,8 @@ size: (700, 1000)
 
 ```
 text: ("#button", "hello")
+// Same but with an XPath:
+text: ("//*[@id='button']", "hello")
 ```
 
 ### timeout
@@ -632,27 +710,36 @@ timeout: 0 // no more timeout, to be used cautiously!
 
 #### wait-for
 
-**wait-for** command waits for a given duration or for an element to be created. It expects a CSS selector or a duration in milliseconds.
+**wait-for** command waits for a given duration or for an element to be created. It expects a CSS selector or an XPath or a duration in milliseconds.
 
 **/!\\** Be careful when using it: if the given selector never appears, the test will timeout after 30 seconds by default (can be changed with the `timeout` command).
 
 Examples:
 
 ```
-wait-for: ".element"
-wait-for: "#element > a"
 wait-for: 1000
+
+wait-for: ".element"
+// Same with an XPath:
+wait-for: "//*[@class='element']"
+
+wait-for: "#element > a"
+// Same with an XPath:
+wait-for: "//*[@id='element']/a"
 ```
 
 #### write
 
-**write** command sends keyboard inputs on given element. If no element is provided, it'll write into the currently focused element. It expects a string and/or a CSS selector. The string has to be surrounded by quotes (either `'` or `"`). Examples:
+**write** command sends keyboard inputs on given element. If no element is provided, it'll write into the currently focused element. Examples:
 
 ```
+// It'll write into the given element if it exists:
 write: (".element", "text")
-write: (".element", 13) // this is the keycode for "enter"
-write: ("#element", "text")
+write: ("//*[@class='element']", "text")
 write: ("#element", 13) // this is the keycode for "enter"
+write: ("//*[@id='element']", 13) // this is the keycode for "enter"
+
+// It'll write into the currently focused element.
 write: "text"
 write: 13 // this is the keycode for "enter"
 ```

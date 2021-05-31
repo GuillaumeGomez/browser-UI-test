@@ -5,6 +5,24 @@ const consts = require('./consts.js');
 
 const COMMENT_START = '//';
 
+function getAndSetElements(selector, varName, checkAllElements) {
+    let code;
+    if (selector.isXPath) {
+        code = `let ${varName} = await page.$x("${selector.value}");\n` +
+        `if (${varName}.length === 0) { throw 'XPath "${selector.value}" not found'; }\n`;
+        if (!checkAllElements) {
+            code += `${varName} = ${varName}[0];\n`;
+        }
+    } else if (!checkAllElements) {
+        code = `let ${varName} = await page.$("${selector.value}");\n` +
+        `if (${varName} === null) { throw '"${selector.value}" not found'; }\n`;
+    } else {
+        code = `let ${varName} = await page.$$("${selector.value}");\n` +
+        `if (${varName}.length === 0) { throw '"${selector.value}" not found'; }\n`;
+    }
+    return code;
+}
+
 function checkIntegerTuple(tuple, text1, text2, negativeCheck = false) {
     const value = tuple.getRaw();
     if (value.length !== 2 || value[0].kind !== 'number' || value[1].kind !== 'number') {
@@ -28,25 +46,35 @@ function checkIntegerTuple(tuple, text1, text2, negativeCheck = false) {
 //
 // * (X, Y)
 // * "CSS selector" (for example: "#elementID")
+// * "XPath" (for example: "//*[@id='elementID']")
 function parseClick(line, options) {
     const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
     } else if (p.elems.length !== 1) {
-        return {'error': 'expected a position or a CSS selector'};
+        return {'error': 'expected a position or a CSS selector or an XPath'};
     } else if (p.elems[0].kind === 'string') {
-        const selector = p.elems[0].getCssValue();
+        const selector = p.elems[0].getSelector();
         if (selector.error !== undefined) {
             return selector;
         }
+        if (selector.isXPath) {
+            const varName = 'parseClickVar';
+            return {
+                'instructions': [
+                    getAndSetElements(selector, varName, false) +
+                    `await ${varName}.click();`,
+                ],
+            };
+        }
         return {
             'instructions': [
-                `await page.click("${selector.value}")`,
+                `await page.click("${selector.value}");`,
             ],
         };
     } else if (p.elems[0].kind !== 'tuple') {
-        return {'error': 'expected a position or a CSS selector'};
+        return {'error': 'expected a position or a CSS selector or an XPath'};
     }
     const ret = checkIntegerTuple(p.elems[0], 'X position', 'Y position');
     if (ret.error !== undefined) {
@@ -55,7 +83,7 @@ function parseClick(line, options) {
     const [x, y] = ret.value;
     return {
         'instructions': [
-            `await page.mouse.click(${x},${y})`,
+            `await page.mouse.click(${x},${y});`,
         ],
     };
 }
@@ -64,13 +92,14 @@ function parseClick(line, options) {
 //
 // * Number of milliseconds
 // * "CSS selector" (for example: "#elementID")
+// * "XPath" (for example: "//a")
 function parseWaitFor(line, options) {
     const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
     } else if (p.elems.length !== 1) {
-        return {'error': 'expected an integer or a CSS selector'};
+        return {'error': 'expected an integer or a CSS selector or an XPath'};
     } else if (p.elems[0].kind === 'number') {
         const ret = p.elems[0].getIntegerValue('number of milliseconds', true);
         if (ret.error !== undefined) {
@@ -83,16 +112,24 @@ function parseWaitFor(line, options) {
             'wait': false,
         };
     } else if (p.elems[0].kind !== 'string') {
-        return {'error': 'expected an integer or a CSS selector'};
+        return {'error': 'expected an integer or a CSS selector or an XPath'};
     }
-    const selector = p.elems[0].getCssValue();
+    const selector = p.elems[0].getSelector();
     if (selector.error !== undefined) {
         return selector;
     }
-    return {
-        'instructions': [
+    let instructions;
+    if (selector.isXPath) {
+        instructions = [
+            `await page.waitForXPath("${selector.value}")`,
+        ];
+    } else {
+        instructions = [
             `await page.waitFor("${selector.value}")`,
-        ],
+        ];
+    }
+    return {
+        'instructions': instructions,
         'wait': false,
     };
 }
@@ -100,34 +137,44 @@ function parseWaitFor(line, options) {
 // Possible inputs:
 //
 // * "CSS selector" (for example: "#elementID")
+// * "XPath" (for example: "//*[@id='elementID']")
 function parseFocus(line, options) {
     const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'string') {
-        return {'error': 'expected a CSS selector'};
+        return {'error': 'expected a CSS selector or an XPath'};
     }
-    const selector = p.elems[0].getCssValue();
+    const selector = p.elems[0].getSelector();
     if (selector.error !== undefined) {
         return selector;
     }
+    if (selector.isXPath) {
+        const varName = 'parseFocusVar';
+        return {
+            'instructions': [
+                getAndSetElements(selector, varName, false) +
+                `await ${varName}.focus();`,
+            ],
+        };
+    }
     return {
         'instructions': [
-            `await page.focus("${selector.value}")`,
+            `await page.focus("${selector.value}");`,
         ],
     };
 }
 
 // Possible inputs:
 //
-// * ("[CSS selector (for example: #elementID)]", "text")
-// * ("[CSS selector (for example: #elementID)]", keycode)
+// * ("CSS selector" or "XPath", "text")
+// * ("CSS selector" or "XPath", keycode)
 // * "text" (in here, it'll write into the current focused element)
 // * keycode (in here, it'll write the given keycode into the current focused element)
 function parseWrite(line, options) {
-    const err = 'expected [string] or [integer] or ([CSS selector], [string]) or ([CSS selector]' +
-                ', [integer])';
+    const err = 'expected "string" or integer or ("CSS selector" or "XPath", "string") or ' +
+        '("CSS selector" or "XPath", integer)';
     const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
@@ -137,7 +184,7 @@ function parseWrite(line, options) {
     } else if (p.elems[0].kind === 'string') {
         return {
             'instructions': [
-                `await page.keyboard.type("${p.elems[0].getStringValue()}")`,
+                `await page.keyboard.type("${p.elems[0].getStringValue()}");`,
             ],
         };
     } else if (p.elems[0].kind === 'number') {
@@ -147,8 +194,7 @@ function parseWrite(line, options) {
         }
         return {
             'instructions': [
-                'await page.keyboard.press(String.fromCharCode' +
-                `(${ret.value}))`,
+                `await page.keyboard.press(String.fromCharCode(${ret.value}));`,
             ],
         };
     } else if (p.elems[0].kind !== 'tuple') {
@@ -161,23 +207,32 @@ function parseWrite(line, options) {
         };
     } else if (tuple[0].kind !== 'string') {
         return {
-            'error':
-            `expected a CSS selector as tuple first argument, found a ${tuple[0].kind}`,
+            'error': 'expected a CSS selector or an XPath as tuple first argument, found ' +
+                `a ${tuple[0].kind}`,
         };
     } else if (tuple[1].kind !== 'string' && tuple[1].kind !== 'number') {
         return {
-            'error':
-            `expected a string or an integer as tuple second argument, found a ${tuple[1].kind}`,
+            'error': 'expected a string or an integer as tuple second argument, found ' +
+                `a ${tuple[1].kind}`,
         };
     }
-    const selector = tuple[0].getCssValue();
+    const selector = tuple[0].getSelector();
     if (selector.error !== undefined) {
         return selector;
     }
+    const varName = 'parseWriteVar';
     if (tuple[1].kind === 'string') {
+        if (selector.isXPath) {
+            return {
+                'instructions': [
+                    getAndSetElements(selector, varName, false) +
+                    `await ${varName}.type("${tuple[1].getStringValue()}");`,
+                ],
+            };
+        }
         return {
             'instructions': [
-                `await page.type("${selector.value}", "${tuple[1].getStringValue()}")`,
+                `await page.type("${selector.value}", "${tuple[1].getStringValue()}");`,
             ],
         };
     }
@@ -185,10 +240,19 @@ function parseWrite(line, options) {
     if (ret.error !== undefined) {
         return ret;
     }
+    if (selector.isXPath) {
+        return {
+            'instructions': [
+                getAndSetElements(selector, varName, false) +
+                `${varName}.focus();`,
+                `await page.keyboard.press(String.fromCharCode(${ret.value}));`,
+            ],
+        };
+    }
     return {
         'instructions': [
-            `await page.focus("${selector.value}")`,
-            `await page.keyboard.press(String.fromCharCode(${ret.value}))`,
+            `await page.focus("${selector.value}");`,
+            `await page.keyboard.press(String.fromCharCode(${ret.value}));`,
         ],
     };
 }
@@ -285,25 +349,35 @@ function parsePressKey(line, options) {
 //
 // * (X, Y)
 // * "CSS selector" (for example: "#elementID")
+// * "XPath" (for example: "//*[@id='elementID']")
 function parseMoveCursorTo(line, options) {
     const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
     } else if (p.elems.length !== 1) {
-        return {'error': 'expected a position or a CSS selector'};
+        return {'error': 'expected a position or a CSS selector or an XPath'};
     } else if (p.elems[0].kind === 'string') {
-        const selector = p.elems[0].getCssValue();
+        const selector = p.elems[0].getSelector();
         if (selector.error !== undefined) {
             return selector;
         }
+        if (selector.isXPath) {
+            const varName = 'parseMoveCursorToVar';
+            return {
+                'instructions': [
+                    getAndSetElements(selector, varName, false) +
+                    `await ${varName}.hover();`,
+                ],
+            };
+        }
         return {
             'instructions': [
-                `await page.hover("${selector.value}")`,
+                `await page.hover("${selector.value}");`,
             ],
         };
     } else if (p.elems[0].kind !== 'tuple') {
-        return {'error': 'expected a position or a CSS selector'};
+        return {'error': 'expected a position or a CSS selector or an XPath'};
     }
     const ret = checkIntegerTuple(p.elems[0], 'X position', 'Y position', true);
     if (ret.error !== undefined) {
@@ -312,7 +386,7 @@ function parseMoveCursorTo(line, options) {
     const [x, y] = ret.value;
     return {
         'instructions': [
-            `await page.mouse.move(${x},${y})`,
+            `await page.mouse.move(${x},${y});`,
         ],
     };
 }
@@ -385,6 +459,7 @@ function parseGoTo(input, options) {
 //
 // * (X, Y)
 // * "CSS selector" (for example: "#elementID")
+// * "XPath" (for example: "//*[@id='elementID']")
 function parseScrollTo(line, options) {
     return parseMoveCursorTo(line, options); // The page will scroll to the element
 }
@@ -460,15 +535,25 @@ function assertHandleSelectorInput(selector, insertBefore, insertAfter) {
     if (selector.error !== undefined) {
         return selector;
     }
-    selector = selector.value;
+    // Since there is no loop here...
+    insertAfter = insertAfter.replace(' continue;', ' return;');
     //
     // EXISTENCE CHECK
     //
+    let instructions;
+    if (selector.isXPath) {
+        instructions = [
+            `${insertBefore}if ((await page.$x("${selector.value}")).length === 0) { ` +
+            `throw 'XPath "${selector.value}" not found'; }${insertAfter}`,
+        ];
+    } else {
+        instructions = [
+            `${insertBefore}if ((await page.$("${selector.value}")) === null) { ` +
+            `throw '"${selector.value}" not found'; }${insertAfter}`,
+        ];
+    }
     return {
-        'instructions': [
-            `${insertBefore}if ((await page.$("${selector}")) === null) { ` +
-            `throw '"${selector}" not found'; }${insertAfter}`,
-        ],
+        'instructions': instructions,
         'wait': false,
         'checkResult': true,
     };
@@ -483,19 +568,22 @@ function parseAssertInner(line, options, insertBefore, insertAfter, checkAllElem
     } else if (p.elems.length !== 1) {
         return {'error': err};
     } else if (p.elems[0].kind === 'string') {
-        return assertHandleSelectorInput(p.elems[0].getCssValue(), insertBefore, insertAfter);
+        return assertHandleSelectorInput(p.elems[0].getSelector(), insertBefore, insertAfter);
     } else if (p.elems[0].kind !== 'tuple') {
         return {'error': err};
     }
     const tuple = p.elems[0].getRaw();
     if (tuple.length < 1 || tuple.length > 3) {
         return {'error': 'invalid number of values in the tuple, read the documentation to see ' +
-                         'the accepted inputs'};
+                    'the accepted inputs'};
     } else if (tuple[0].kind !== 'string') {
-        return {'error': `expected first argument to be a CSS selector, found a ${tuple[0].kind}`};
+        return {
+            'error': 'expected first argument to be a CSS selector or an XPath, ' +
+                `found a ${tuple[0].kind}`,
+        };
     }
     if (tuple.length === 1) {
-        return assertHandleSelectorInput(tuple[0].getCssValue(), insertBefore, insertAfter);
+        return assertHandleSelectorInput(tuple[0].getSelector(), insertBefore, insertAfter);
     }
 
     if (tuple[1].kind === 'json') {
@@ -506,12 +594,13 @@ function parseAssertInner(line, options, insertBefore, insertAfter, checkAllElem
             return {'error': 'unexpected argument after CSS properties'};
         }
 
-        let selector = tuple[0].getCssValue();
+        const selector = tuple[0].getSelector();
         if (selector.error !== undefined) {
             return selector;
         }
-        const pseudo = selector.pseudo !== null ? `, "${selector.pseudo}"` : '';
-        selector = selector.value;
+        const xpath = selector.isXPath ? 'XPath ' : '';
+        const pseudo = !selector.isXPath && selector.pseudo !== null ?
+            `, "${selector.pseudo}"` : '';
 
         let code = '';
         let warnings = [];
@@ -532,8 +621,8 @@ function parseAssertInner(line, options, insertBefore, insertAfter, checkAllElem
             // TODO: check how to compare CSS property
             code += `if (e.style["${key_s}"] != "${value_s}" && ` +
                 `assertComputedStyle["${key_s}"] != "${value_s}") { ` +
-                `throw 'expected \`${value_s}\` for key \`${key_s}\` for \`${selector}\`, ` +
-                `found \`' + assertComputedStyle["${key_s}"] + '\`'; }\n`;
+                `throw 'expected \`${value_s}\` for key \`${key_s}\` for ${xpath}` +
+                `\`${selector.value}\`, found \`' + assertComputedStyle["${key_s}"] + '\`'; }\n`;
         }
         warnings = warnings.length > 0 ? warnings : undefined;
         if (code.length === 0) {
@@ -548,16 +637,14 @@ function parseAssertInner(line, options, insertBefore, insertAfter, checkAllElem
         let instructions;
         if (!checkAllElements) {
             instructions = [
-                `let ${varName} = await page.$("${selector}");\n` +
-                `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
+                getAndSetElements(selector, varName, checkAllElements) +
                 `${insertBefore}await page.evaluate(e => {` +
                 `let assertComputedStyle = getComputedStyle(e${pseudo});\n${code}` +
                 `}, ${varName});${insertAfter}`,
             ];
         } else {
             instructions = [
-                `let ${varName} = await page.$$("${selector}");\n` +
-                `if (${varName}.length === 0) { throw '"${selector}" not found'; }\n` +
+                getAndSetElements(selector, varName, checkAllElements) +
                 `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
                     `${insertBefore}await page.evaluate(e => {\n` +
                     `let assertComputedStyle = getComputedStyle(e${pseudo});\n${code}` +
@@ -573,11 +660,10 @@ function parseAssertInner(line, options, insertBefore, insertAfter, checkAllElem
         };
     }
 
-    let selector = tuple[0].getCssValue();
+    const selector = tuple[0].getSelector();
     if (selector.error !== undefined) {
         return selector;
     }
-    selector = selector.value;
     if (tuple[1].kind === 'number') {
         //
         // NUMBER OF OCCURENCES CHECK
@@ -590,9 +676,17 @@ function parseAssertInner(line, options, insertBefore, insertAfter, checkAllElem
             return occurences;
         }
         const varName = 'parseAssertElemInt';
+        let start;
+        if (selector.isXPath) {
+            start = `let ${varName} = await page.$x("${selector.value}");\n`;
+        } else {
+            start = `let ${varName} = await page.$$("${selector.value}");\n`;
+        }
+        // Since there is no loop here...
+        insertAfter = insertAfter.replace(' continue;', ' return;');
         return {
             'instructions': [
-                `let ${varName} = await page.$$("${selector}");\n` +
+                start +
                 // TODO: maybe check differently depending on the tag kind?
                 `${insertBefore}if (${varName}.length !== ${occurences.value}) { throw 'expected ` +
                 `${occurences.value} elements, found ' + ${varName}.length; }${insertAfter}`,
@@ -609,8 +703,7 @@ function parseAssertInner(line, options, insertBefore, insertAfter, checkAllElem
         let instructions;
         if (!checkAllElements) {
             instructions = [
-                `let ${varName} = await page.$("${selector}");\n` +
-                `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
+                getAndSetElements(selector, varName, checkAllElements) +
                 `${insertBefore}await page.evaluate(e => {\n` +
                 'if (e.tagName.toLowerCase() === "input") {\n' +
                     `if (e.value !== "${value}") { throw '"' + e.value + '" !== "${value}"'; }\n` +
@@ -620,8 +713,7 @@ function parseAssertInner(line, options, insertBefore, insertAfter, checkAllElem
             ];
         } else {
             instructions = [
-                `let ${varName} = await page.$$("${selector}");\n` +
-                `if (${varName}.length === 0) { throw '"${selector}" not found'; }\n` +
+                getAndSetElements(selector, varName, checkAllElements) +
                 `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
                     `${insertBefore}await page.evaluate(e => {\n` +
                     'if (e.tagName.toLowerCase() === "input") {\n' +
@@ -658,8 +750,7 @@ function parseAssertInner(line, options, insertBefore, insertAfter, checkAllElem
         let instructions;
         if (!checkAllElements) {
             instructions = [
-                `let ${varName} = await page.$("${selector}");\n` +
-                `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
+                getAndSetElements(selector, varName, checkAllElements) +
                 `${insertBefore}await page.evaluate(e => {\n` +
                 `if (e.getAttribute("${attributeName}") !== "${value}") {\n` +
                 `throw 'expected "${value}", found "' + e.getAttribute("${attributeName}") + '"` +
@@ -667,8 +758,7 @@ function parseAssertInner(line, options, insertBefore, insertAfter, checkAllElem
             ];
         } else {
             instructions = [
-                `let ${varName} = await page.$$("${selector}");\n` +
-                `if (${varName}.length === 0) { throw '"${selector}" not found'; }\n` +
+                getAndSetElements(selector, varName, checkAllElements) +
                 `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
                     `${insertBefore}await page.evaluate(e => {\n` +
                     `if (e.getAttribute("${attributeName}") !== "${value}") {\n` +
@@ -692,11 +782,17 @@ function parseAssertInner(line, options, insertBefore, insertAfter, checkAllElem
 // Possible inputs:
 //
 // * "CSS selector"
+// * "XPath"
 // * ("CSS selector")
+// * ("XPath")
 // * ("CSS selector", number of occurences [integer])
+// * ("XPath", number of occurences [integer])
 // * ("CSS selector", CSS elements [JSON object])
+// * ("XPath", CSS elements [JSON object])
 // * ("CSS selector", text [STRING])
+// * ("XPath", text [STRING])
 // * ("CSS selector", attribute name [STRING], attribute value [STRING])
+// * ("XPath", attribute name [STRING], attribute value [STRING])
 function parseAssert(line, options) {
     return parseAssertInner(line, options, '', '', false);
 }
@@ -704,11 +800,17 @@ function parseAssert(line, options) {
 // Possible inputs:
 //
 // * "CSS selector"
+// * "XPath"
 // * ("CSS selector")
+// * ("XPath")
 // * ("CSS selector", number of occurences [integer])
+// * ("XPath", number of occurences [integer])
 // * ("CSS selector", CSS elements [JSON object])
+// * ("XPath", CSS elements [JSON object])
 // * ("CSS selector", text [STRING])
+// * ("XPath", text [STRING])
 // * ("CSS selector", attribute name [STRING], attribute value [STRING])
+// * ("XPath", attribute name [STRING], attribute value [STRING])
 function parseAssertFalse(line, options) {
     return parseAssertInner(
         line,
@@ -721,11 +823,17 @@ function parseAssertFalse(line, options) {
 // Possible inputs:
 //
 // * "CSS selector"
+// * "XPath"
 // * ("CSS selector")
+// * ("XPath")
 // * ("CSS selector", number of occurences [integer])
+// * ("XPath", number of occurences [integer])
 // * ("CSS selector", CSS elements [JSON object])
+// * ("XPath", CSS elements [JSON object])
 // * ("CSS selector", text [STRING])
+// * ("XPath", text [STRING])
 // * ("CSS selector", attribute name [STRING], attribute value [STRING])
+// * ("XPath", attribute name [STRING], attribute value [STRING])
 function parseAssertAll(line, options) {
     return parseAssertInner(line, options, '', '', true);
 }
@@ -733,17 +841,23 @@ function parseAssertAll(line, options) {
 // Possible inputs:
 //
 // * "CSS selector"
+// * "XPath"
 // * ("CSS selector")
+// * ("XPath")
 // * ("CSS selector", number of occurences [integer])
+// * ("XPath", number of occurences [integer])
 // * ("CSS selector", CSS elements [JSON object])
+// * ("XPath", CSS elements [JSON object])
 // * ("CSS selector", text [STRING])
+// * ("XPath", text [STRING])
 // * ("CSS selector", attribute name [STRING], attribute value [STRING])
+// * ("XPath", attribute name [STRING], attribute value [STRING])
 function parseAssertAllFalse(line, options) {
     return parseAssertInner(
         line,
         options,
         'try {\n',
-        '\n} catch(e) { return; } throw "assert didn\'t fail";',
+        '\n} catch(e) { continue; } throw "assert didn\'t fail";',
         true);
 }
 
@@ -761,28 +875,31 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
         return {'error': 'invalid number of values in the tuple, read the documentation to see ' +
                          'the accepted inputs'};
     } else if (tuple[0].kind !== 'string') {
-        return {'error': `expected first argument to be a CSS selector, found a ${tuple[0].kind}`};
+        return {
+            'error': 'expected first argument to be a CSS selector or an XPath, ' +
+                `found a ${tuple[0].kind}`,
+        };
     } else if (tuple[1].kind !== 'string') {
-        return {'error': `expected second argument to be a CSS selector, found a ${tuple[1].kind}`};
+        return {
+            'error': 'expected second argument to be a CSS selector or an XPath, ' +
+                `found a ${tuple[1].kind}`};
     }
-    let selector1 = tuple[0].getCssValue();
+    const selector1 = tuple[0].getSelector();
     if (selector1.error !== undefined) {
         return selector1;
     }
-    const pseudo1 = selector1.pseudo !== null ? `, "${selector1.pseudo}"` : '';
-    selector1 = selector1.value;
-    let selector2 = tuple[1].getCssValue();
+    const pseudo1 = !selector1.isXPath && selector1.pseudo !== null ?
+        `, "${selector1.pseudo}"` : '';
+    const selector2 = tuple[1].getSelector();
     if (selector2.error !== undefined) {
         return selector2;
     }
-    const pseudo2 = selector2.pseudo !== null ? `, "${selector2.pseudo}"` : '';
-    selector2 = selector2.value;
+    const pseudo2 = !selector2.isXPath && selector2.pseudo !== null ?
+        `, "${selector2.pseudo}"` : '';
 
     const varName = 'parseCompareElements';
-    const selectors = `let ${varName}1 = await page.$("${selector1}");\n` +
-        `if (${varName}1 === null) { throw '"${selector1}" not found'; }\n` +
-        `let ${varName}2 = await page.$("${selector2}");\n` +
-        `if (${varName}2 === null) { throw '"${selector2}" not found'; }\n`;
+    const selectors = getAndSetElements(selector1, varName + '1', false) +
+        getAndSetElements(selector2, varName + '2', false);
 
     if (tuple.length === 2) {
         return {
@@ -898,20 +1015,20 @@ function parseCompareElementsInner(line, options, insertBefore, insertAfter) {
 
 // Possible inputs:
 //
-// * ("CSS selector 1", "CSS selector 2")
-// * ("CSS selector 1", "CSS selector 2", "attribute")
-// * ("CSS selector 1", "CSS selector 2", ["CSS properties"])
-// * ("CSS selector 1", "CSS selector 2", ("x"|"y"))
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2")
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", "attribute")
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ["CSS properties"])
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ("x"|"y"))
 function parseCompareElements(line, options) {
     return parseCompareElementsInner(line, options, '', '');
 }
 
 // Possible inputs:
 //
-// * ("CSS selector 1", "CSS selector 2")
-// * ("CSS selector 1", "CSS selector 2", "attribute")
-// * ("CSS selector 1", "CSS selector 2", ["CSS properties"])
-// * ("CSS selector 1", "CSS selector 2", ("x"|"y"))
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2")
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", "attribute")
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ["CSS properties"])
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ("x"|"y"))
 function parseCompareElementsFalse(line, options) {
     return parseCompareElementsInner(
         line,
@@ -923,19 +1040,20 @@ function parseCompareElementsFalse(line, options) {
 // Possible inputs:
 //
 // * ("CSS selector", "text")
+// * ("XPath", "text")
 function parseText(line, options) {
     const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
-        return {'error': 'expected `("CSS selector", "text")`'};
+        return {'error': 'expected `("CSS selector" or "XPath", "text")`'};
     }
     const tuple = p.elems[0].getRaw();
     if (tuple.length !== 2 || tuple[0].kind !== 'string' || tuple[1].kind !== 'string') {
-        return {'error': 'expected `("CSS selector", "text")`'};
+        return {'error': 'expected `("CSS selector" or "XPath", "text")`'};
     }
-    const selector = tuple[0].getCssValue();
+    const selector = tuple[0].getSelector();
     if (selector.error !== undefined) {
         return selector;
     }
@@ -943,8 +1061,7 @@ function parseText(line, options) {
     const varName = 'parseTextElem';
     return {
         'instructions': [
-            `let ${varName} = await page.$("${selector.value}");\n` +
-            `if (${varName} === null) { throw '"${selector.value}" not found'; }\n` +
+            getAndSetElements(selector, varName, false) +
             `await page.evaluate(e => { e.innerText = "${value}";}, ${varName});`,
         ],
     };
@@ -957,22 +1074,21 @@ function innerParseCssAttribute(line, argName, varName, callback, options) {
         return {'error': p.error};
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
         return {
-            'error': `expected \`("CSS selector", "${argName} name", "${argName} value")\` or ` +
-                '`("CSS selector", [JSON object])`',
+            'error': `expected \`("CSS selector" or "XPath", "${argName} name", ` +
+                `"${argName} value")\` or \`("CSS selector" or "XPath", [JSON object])\``,
         };
     }
     const tuple = p.elems[0].getRaw();
     if (tuple[0].kind !== 'string') {
         return {
-            'error': `expected \`("CSS selector", "${argName} name", "${argName} value")\` or ` +
-                '`("CSS selector", [JSON object])`',
+            'error': `expected \`("CSS selector" or "XPath", "${argName} name", "${argName} ` +
+                'value")` or `("CSS selector" or "XPath", [JSON object])`',
         };
     }
-    let selector = tuple[0].getCssValue('(first argument)');
+    const selector = tuple[0].getSelector('(first argument)');
     if (selector.error !== undefined) {
         return selector;
     }
-    selector = selector.value;
     if (tuple.length === 3) {
         if (tuple[1].kind !== 'string' || tuple[2].kind !== 'string') {
             return {
@@ -987,16 +1103,15 @@ function innerParseCssAttribute(line, argName, varName, callback, options) {
         const value = tuple[2].getStringValue();
         return {
             'instructions': [
-                `let ${varName} = await page.$("${selector}");\n` +
-                `if (${varName} === null) { throw '"${selector}" not found'; }\n` +
+                getAndSetElements(selector, varName, false) +
                 `await page.evaluate(e => { ${callback(attributeName, value)} }, ` +
                 `${varName});`,
             ],
         };
     } else if (tuple.length !== 2) {
         return {
-            'error': `expected \`("CSS selector", "${argName} name", "${argName} value")\` or ` +
-                '`("CSS selector", [JSON object])`',
+            'error': `expected \`("CSS selector" or "XPath", "${argName} name", "${argName} ` +
+                'value")` or `("CSS selector" or "XPath", [JSON object])`',
         };
     }
     if (tuple[1].kind !== 'json') {
@@ -1022,7 +1137,10 @@ function innerParseCssAttribute(line, argName, varName, callback, options) {
         }
         const key_s = entry['key'].getStringValue();
         const value_s = entry['value'].getStringValue();
-        code += `await page.evaluate(e => { ${callback(key_s, value_s)} }, ${varName});\n`;
+        if (code.length !== 0) {
+            code += '\n';
+        }
+        code += `await page.evaluate(e => { ${callback(key_s, value_s)} }, ${varName});`;
     }
     warnings = warnings.length > 0 ? warnings : undefined;
     if (code.length === 0) {
@@ -1034,8 +1152,8 @@ function innerParseCssAttribute(line, argName, varName, callback, options) {
     }
     return {
         'instructions': [
-            `let ${varName} = await page.$("${selector}");\n` +
-            `if (${varName} === null) { throw '"${selector}" not found'; }\n${code}`,
+            getAndSetElements(selector, varName, false) +
+            code,
         ],
         'warnings': warnings,
     };
@@ -1044,7 +1162,9 @@ function innerParseCssAttribute(line, argName, varName, callback, options) {
 // Possible inputs:
 //
 // * ("CSS selector", "attribute name", "attribute value")
+// * ("XPath", "attribute name", "attribute value")
 // * ("CSS selector", [JSON object])
+// * ("XPath", [JSON object])
 function parseAttribute(line, options) {
     return innerParseCssAttribute(line, 'attribute', 'parseAttributeElem',
         (key, value) => `e.setAttribute("${key}","${value}");`, options);
@@ -1053,7 +1173,9 @@ function parseAttribute(line, options) {
 // Possible inputs:
 //
 // * ("CSS selector", "CSS property name", "CSS property value")
+// * ("XPath", "CSS property name", "CSS property value")
 // * ("CSS selector", [JSON object])
+// * ("XPath", [JSON object])
 function parseCss(line, options) {
     return innerParseCssAttribute(line, 'CSS property', 'parseCssElem',
         (key, value) => `e.style["${key}"] = "${value}";`, options);
@@ -1062,16 +1184,17 @@ function parseCss(line, options) {
 // Possible inputs:
 //
 // * boolean value (`true` or `false`)
-// * CSS selector
+// * "CSS selector"
+// * "XPath"
 function parseScreenshot(line, options) {
     const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
         return {'error': p.error};
     } else if (p.elems.length !== 1) {
-        return {'error': 'expected boolean or CSS selector, found nothing'};
+        return {'error': 'expected boolean or CSS selector or XPath, found nothing'};
     } else if (p.elems[0].kind !== 'bool' && p.elems[0].kind !== 'string') {
-        return {'error': `expected boolean or CSS selector, found \`${line}\``};
+        return {'error': `expected boolean or CSS selector or XPath, found \`${line}\``};
     } else if (p.elems[0].kind === 'bool') {
         return {
             'instructions': [
@@ -1081,7 +1204,7 @@ function parseScreenshot(line, options) {
         };
     }
     const warnings = [];
-    const selector = p.elems[0].getCssValue();
+    const selector = p.elems[0].getSelector();
     if (selector.error !== undefined) {
         return selector;
     } else if (selector.value === 'true' || selector.value === 'false') {
@@ -1214,7 +1337,8 @@ function parseShowText(line, options) {
 // * ((x, y), (x, y))
 // * ((x, y), "CSS selector")
 // * ("CSS selector", (x, y))
-// * ("CSS selector", "CSS selector")
+// * ("XPath", (x, y))
+// * ("CSS selector" or "XPath", "CSS selector" or "XPath")
 function parseDragAndDrop(line, options) {
     const p = new Parser(line, options.variables);
     p.parse();
@@ -1223,21 +1347,21 @@ function parseDragAndDrop(line, options) {
     } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
         return {
             'error': 'expected tuple with two elements being either a position `(x, y)` or a ' +
-                'CSS selector',
+                'CSS selector or an XPath',
         };
     }
     const tuple = p.elems[0].getRaw();
     if (tuple.length !== 2) {
         return {
             'error': 'expected tuple with two elements being either a position `(x, y)` or a ' +
-                'CSS selector',
+                'CSS selector or an XPath',
         };
     }
     const checkArg = arg => {
         if (arg.kind !== 'tuple' && arg.kind !== 'string') {
             return {
                 'error': 'expected tuple with two elements being either a position `(x, y)` or a ' +
-                    `CSS selector, found \`${arg.getText()}\``,
+                    `CSS selector or an XPath, found \`${arg.getText()}\``,
             };
         } else if (arg.kind === 'tuple') {
             const ret = checkIntegerTuple(arg, 'X position', 'Y position', true);
@@ -1259,13 +1383,12 @@ function parseDragAndDrop(line, options) {
     const setupThings = (arg, varName, posName, pos) => {
         let code = '';
         if (arg.kind === 'string') {
-            const selector = arg.getCssValue(`(${pos} argument)`);
+            const selector = arg.getSelector(`(${pos} argument)`);
             if (selector.error !== undefined) {
                 return selector;
             }
             const box = `${varName}_box`;
-            code += `const ${varName} = await page.$("${selector.value}");\n` +
-                `if (${varName} === null) { throw '"${selector.value}" not found'; }\n` +
+            code += getAndSetElements(selector, varName, false) +
                 `const ${box} = await ${varName}.boundingBox();\n` +
                 `const ${posName} = [${box}.x + ${box}.width / 2, ${box}.y + ${box}.height / 2];\n`;
         } else {
@@ -1278,12 +1401,12 @@ function parseDragAndDrop(line, options) {
     if (ret.error !== undefined) {
         return ret;
     }
-    instructions.push(ret + 'await page.mouse.down();');
+    instructions.push(ret + '\nawait page.mouse.down();');
     ret = setupThings(tuple[1], 'parseDragAndDropElem2', 'end', 'second');
     if (ret.error !== undefined) {
         return ret;
     }
-    instructions.push(ret + 'await page.mouse.up();');
+    instructions.push(ret + '\nawait page.mouse.up();');
     return {
         'instructions': instructions,
     };
