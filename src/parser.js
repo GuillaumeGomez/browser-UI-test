@@ -13,7 +13,7 @@ function isNumber(c) {
 }
 
 function isLetter(c) {
-    return c.toLowerCase() != c.toUpperCase();
+    return c.toLowerCase() !== c.toUpperCase();
 }
 
 function matchInteger(s) {

@@ -440,7 +440,7 @@ function checkIdent(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'bool');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), "false");
+    x.assert(p.elems[0].getRaw(), 'false');
 
     p = new Parser('true');
     p.parse();
@@ -448,7 +448,7 @@ function checkIdent(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'bool');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), "true");
+    x.assert(p.elems[0].getRaw(), 'true');
 
     p = new Parser('aloha');
     p.parse();
@@ -456,7 +456,7 @@ function checkIdent(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'ident');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), "aloha");
+    x.assert(p.elems[0].getRaw(), 'aloha');
 
 
     p = new Parser('     \t   false                 ');
@@ -465,7 +465,7 @@ function checkIdent(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'bool');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), "false");
+    x.assert(p.elems[0].getRaw(), 'false');
 
     p = new Parser('     \t   aloha                 ');
     p.parse();
@@ -473,7 +473,7 @@ function checkIdent(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'ident');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), "aloha");
+    x.assert(p.elems[0].getRaw(), 'aloha');
 
 
     p = new Parser('true,');
@@ -482,7 +482,7 @@ function checkIdent(x) {
     x.assert(p.elems.length, 2);
     x.assert(p.elems[0].kind, 'bool');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), "true");
+    x.assert(p.elems[0].getRaw(), 'true');
     x.assert(p.elems[1].kind, 'char');
     x.assert(p.elems[1].error, 'expected nothing, found `,`');
     x.assert(p.elems[1].getRaw(), ',');
@@ -493,7 +493,7 @@ function checkIdent(x) {
     x.assert(p.elems.length, 2);
     x.assert(p.elems[0].kind, 'ident');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), "aloha");
+    x.assert(p.elems[0].getRaw(), 'aloha');
     x.assert(p.elems[1].kind, 'char');
     x.assert(p.elems[1].error, 'expected nothing, found `,`');
     x.assert(p.elems[1].getRaw(), ',');
