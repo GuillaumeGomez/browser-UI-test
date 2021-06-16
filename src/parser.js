@@ -13,13 +13,16 @@ function isNumber(c) {
 }
 
 function isLetter(c) {
-    return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z';
+    return c.toLowerCase() != c.toUpperCase();
 }
 
 function matchInteger(s) {
-    const p = new Parser(s);
-    p.parse();
-    return p.error === null;
+    for (let i = s.length - 1; i >= 0; --i) {
+        if (!isNumber(s.charAt(i))) {
+            return false;
+        }
+    }
+    return true;
 }
 
 function cleanString(s) {
@@ -117,7 +120,6 @@ class Element {
     getText() {
         return this.value;
     }
-
 }
 
 class CharElement extends Element {
@@ -167,6 +169,13 @@ class StringElement extends Element {
     }
 }
 
+class IdentElement extends Element {
+    constructor(value, startPos, endPos, fullText, error = null) {
+        const kind = value === 'true' || value === 'false' ? 'bool' : 'ident';
+        super(kind, value, startPos, endPos, error);
+    }
+}
+
 class NumberElement extends Element {
     constructor(value, startPos, endPos, error = null) {
         super('number', value, startPos, endPos, error);
@@ -187,12 +196,6 @@ class JsonElement extends Element {
 
     isRecursive() {
         return true;
-    }
-}
-
-class BoolElement extends Element {
-    constructor(value, startPos, endPos, error = null) {
-        super('bool', value, startPos, endPos, error);
     }
 }
 
@@ -277,7 +280,7 @@ class Parser {
             } else if (c === endChar) {
                 return prev;
             } else {
-                checker(this, c, 'parseBoolean');
+                checker(this, c, 'parseIdent');
                 const elems = pushTo !== null ? pushTo : this.elems;
                 const el = elems[elems.length - 1];
                 if (el.kind === 'unknown') {
@@ -303,28 +306,6 @@ class Parser {
             this.pos = this.text.length;
         } else {
             this.push(new UnknownElement('/', start, this.pos), pushTo);
-        }
-    }
-
-    parseBoolean(pushTo = null) {
-        const start = this.pos;
-        while (this.pos < this.text.length) {
-            const c = this.text.charAt(this.pos);
-
-            if (!isNumber(c) && !isLetter(c)) {
-                break;
-            }
-            this.pos += 1;
-        }
-        let token = this.text.substring(start, this.pos);
-        if (token === 'true' || token === 'false') {
-            this.push(new BoolElement(token === 'true', start, this.pos), pushTo);
-            this.pos -= 1; // we need to go back to the last "good" character
-        } else {
-            if (token.length === 0) {
-                token = this.text.charAt(start);
-            }
-            this.push(new UnknownElement(token, start, this.pos), pushTo);
         }
     }
 
@@ -433,6 +414,25 @@ class Parser {
         const e = new StringElement(value, start, this.pos, full,
             `expected \`${endChar}\` at the end of the string`);
         this.push(e, pushTo);
+    }
+
+    parseIdent(pushTo = null) {
+        const start = this.pos;
+        while (this.pos < this.text.length) {
+            const c = this.text.charAt(this.pos);
+            // Check if it is a latin letter.
+            if (!isLetter(c)) {
+                break;
+            }
+            this.pos += 1;
+        }
+        const ident = this.text.substring(start, this.pos);
+        if (ident.length !== 0) {
+            this.push(new IdentElement(ident, start, this.pos), pushTo);
+            this.pos -= 1; // Need to go back to last "good" letter.
+        } else {
+            this.push(new UnknownElement(this.text.charAt(start), start, this.pos), pushTo);
+        }
     }
 
     parseVariable(pushTo = null, forceString = false) {
@@ -690,7 +690,7 @@ class Parser {
                 }
             } else {
                 const tmp = [];
-                this.parseBoolean(tmp);
+                this.parseIdent(tmp);
                 const el = tmp[0];
                 if (el.kind === 'unknown') {
                     const token = el.getText();
@@ -714,7 +714,7 @@ class Parser {
                     }
                 } else if (key === null) {
                     elems.push({'key': el});
-                    parseEnd(this, pushTo, 'booleans cannot be used as keys');
+                    parseEnd(this, pushTo, 'booleans and idents cannot be used as keys');
                 } else if (prevChar !== ':') {
                     elems.push({'key': key, 'value': el});
                     parseEnd(this, pushTo,
@@ -746,10 +746,10 @@ module.exports = {
     'CharElement': CharElement,
     'TupleElement': TupleElement,
     'ArrayElement': TupleElement,
+    'IdentElement': IdentElement,
     'StringElement': StringElement,
     'NumberElement': NumberElement,
     'UnknownElement': UnknownElement,
     'JsonElement': JsonElement,
-    'BoolElement': BoolElement,
     'cleanString': cleanString,
 };
