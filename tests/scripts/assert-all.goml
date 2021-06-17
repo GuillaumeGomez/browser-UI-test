@@ -1,21 +1,21 @@
 screenshot: false
 goto: file://|CURRENT_DIR|/|DOC_PATH|/similar-ones.html
-assert-all: (".simili")
-assert-all-false: (".simili-non-existent")
-assert-all: (".simili", 4)
-assert-all: (".simili-non-existent", 0)
-assert-all-false: (".simili", 5)
-assert-all: (".simili", "a")
+assert: (".simili")
+assert-false: (".simili-non-existent")
+assert-count: (".simili", 4)
+assert-count: (".simili-non-existent", 0)
+assert-count-false: (".simili", 5)
+assert-text: (".simili", "a", ALL)
 fail: true
-assert-all: (".non-simili", "a")
+assert-text: (".non-simili", "a", ALL)
 // If any of the items has "a" as text, then it fails.
-assert-all-false: (".simili", "a")
+assert-text-false: (".simili", "a", ALL)
 fail: false
-assert-all-false: (".simili", "c")
-assert-all: (".simili", {"text-align": "center"})
+assert-text-false: (".simili", "c", ALL)
+assert-css: (".simili", {"text-align": "center"}, ALL)
 fail: true
-assert-all: (".simili", {"padding-left": "2px"})
+assert-css: (".simili", {"padding-left": "2px"}, ALL)
 // If any of the items has "text-align: center", then it fails.
-assert-all-false: (".simili", {"text-align": "center"})
+assert-css-false: (".simili", {"text-align": "center"}, ALL)
 fail: false
-assert-all-false: (".simili", {"height": "1000px"})
+assert-css-false: (".simili", {"height": "1000px"}, ALL)

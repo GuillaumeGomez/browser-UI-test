@@ -1,9 +1,9 @@
 screenshot: false
 goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
-assert: ("#button", "Go somewhere else!")
+assert-text: ("#button", "Go somewhere else!")
 text: ("#button", "hello")
 fail: true
-assert: ("#button", "Go somewhere else!")
+assert-text: ("#button", "Go somewhere else!")
 fail: false
 timeout: 0
-assert: ("#button", "hello")
+assert-text: ("#button", "hello")

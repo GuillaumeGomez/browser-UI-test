@@ -1,7 +1,7 @@
 screenshot: false
 goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
-assert: ("#button", "Go somewhere else!")
+assert-text: ("#button", "Go somewhere else!")
 text: ("#button", "hello")
-assert: ("#button", "hello")
+assert-text: ("#button", "hello")
 reload:
-assert: ("#button", "Go somewhere else!")
+assert-text: ("#button", "Go somewhere else!")

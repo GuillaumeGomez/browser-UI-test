@@ -120,6 +120,11 @@ class Element {
     getText() {
         return this.value;
     }
+
+    // Used for error messages.
+    getArticleKind() {
+        return (this.kind === 'ident' ? 'an ' : 'a ') + this.kind;
+    }
 }
 
 class CharElement extends Element {

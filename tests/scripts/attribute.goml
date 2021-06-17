@@ -1,7 +1,7 @@
 screenshot: false
 goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
-assert: ("#button", "id", "button")
+assert-attr: ("#button", {"id": "button"})
 attribute: ("#button", "id", "another-id")
 assert: ("#another-id")
 attribute: ("#another-id", {"id": "yet-another-id", "test": "lol"})
-assert: ("#yet-another-id", "test", "lol")
+assert-attr: ("#yet-another-id", {"test": "lol"})

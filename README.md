@@ -214,8 +214,14 @@ Here's the command list:
 
  * [`assert`](#assert)
  * [`assert-false`](#assert-false)
- * [`assert-all`](#assert-all)
- * [`assert-all-false`](#assert-all-false)
+ * [`assert-attr`](#assert-attr)
+ * [`assert-attr-false`](#assert-attr-false)
+ * [`assert-count`](#assert-count)
+ * [`assert-count-false`](#assert-count-false)
+ * [`assert-css`](#assert-css)
+ * [`assert-css-false`](#assert-css-false)
+ * [`assert-css`](#assert-text)
+ * [`assert-css-false`](#assert-text-false)
  * [`attribute`](#attribute)
  * [`click`](#click)
  * [`compare-elements`](#compare-elements)
@@ -245,7 +251,7 @@ Here's the command list:
 
 #### assert
 
-**assert** command checks if the condition is true, otherwise fail. Examples:
+**assert** command checks that the element exists, otherwise fail. Examples:
 
 ```
 // To be noted: all following examples can use XPath instead of CSS selector.
@@ -253,25 +259,11 @@ Here's the command list:
 // will check that "#id > .class" exists
 assert: "#id > .class"
 assert: ("#id > .class") // strictly equivalent
-
-// will check that first "#id > .class" has text "hello"
-assert: ("#id > .class", "hello")
-
-// will check that there are 2 "#id > .class"
-assert: ("#id > .class", 2)
-
-// will check that "#id > .class" has blue color
-assert: ("#id > .class", { "color": "blue" })
-
-// will check that "#id > .class" has an attribute called "attribute-name" with value "attribute-value"
-assert: ("#id > .class", "attribute-name", "attribute-value")
 ```
-
-Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements) command.
 
 #### assert-false
 
-**assert-false** command checks if the condition is false, otherwise fail. It's mostly doing the opposite of [`assert`](#assert). Examples:
+**assert-false** command checks that the element doesn't exist, otherwise fail. It's mostly doing the opposite of [`assert`](#assert). Examples:
 
 ```
 // To be noted: all following examples can use XPath instead of CSS selector.
@@ -279,88 +271,121 @@ Please note that if you want to compare DOM elements, you should take a look at 
 // will check that "#id > .class" doesn't exists
 assert-false: "#id > .class"
 assert-false: ("#id > .class") // strictly equivalent
+```
 
-// will check that first "#id > .class" doesn't have text "hello"
+#### assert-attr
+
+**assert-attr** command checks that the given attribute(s) of the element(s) have the expected value. Examples:
+
+```
+assert-attr: ("#id > .class", {"attribute-name": "attribute-value"})
+assert-attr: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"})
+
+// If you to check all elements matching this selector/XPath, use `ALL`:
+assert-attr: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
+assert-attr: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
+```
+
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements) command.
+
+#### assert-attr-false
+
+**assert-attr-false** command checks that the given attribute(s) of the element(s) don't have the given value. Examples:
+
+```
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
-assert-false: ("#id > .class", "hello")
+assert-attr-false: ("#id > .class", {"attribute-name": "attribute-value"})
+assert-attr-false: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"})
 
-// will check that there are not 2 "#id > .class"
-assert-false: ("#id > .class", 2)
-
-// will check that "#id > .class" doesn't have blue color
-// IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
-assert-false: ("#id > .class", { "color": "blue" })
-
-// will check that "#id > .class" doesn't have an attribute called "attribute-name" with value "attribute-value"
-
-// IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
-assert-false: ("#id > .class", "attribute-name", "attribute-value")
+// If you to check all elements matching this selector/XPath, use `ALL`:
+assert-attr-false: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
+assert-attr-false: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
 ```
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-false) command.
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
 
-#### assert-all
+#### assert-count
 
-**assert-all** command does the same as [`assert`](#assert) except that it does it on ALL elements matching the CSS selector or the XPath. Examples:
+**assert-count** command checks that there are exactly the number of occurrences of the provided selector/XPath. Examples:
 
 ```
-// To be noted: all following examples can use XPath instead of CSS selector.
-
-// will check that "#id > .class" exists
-assert-all: "#id > .class"
-assert-all: ("#id > .class") // strictly equivalent
-
-// will check that first "#id > .class" has text "hello"
-assert-all: ("#id > .class", "hello")
-
 // will check that there are 2 "#id > .class"
-assert-all: ("#id > .class", 2)
+assert-count: ("#id > .class", 2)
+assert-count: ("//*[@id='id']/*[@class='class']", 2)
+```
 
-// will check that "#id > .class" has blue color
-assert-all: ("#id > .class", { "color": "blue" })
+#### assert-count-false
 
-// will check that "#id > .class" has an attribute called "attribute-name" with value "attribute-value"
-assert-all: ("#id > .class", "attribute-name", "attribute-value")
+**assert-count-false** command checks that there are not the number of occurrences of the provided selector/XPath. Examples:
+
+```
+// will check that there are not 2 "#id > .class"
+assert-count-false: ("#id > .class", 2)
+assert-count-false: ("//*[@id='id']/*[@class='class']", 2)
+```
+
+#### assert-css
+
+**assert-css** command checks that the CSS properties of the element(s) have the expected value. Examples:
+
+```
+assert-css: ("#id > .class", { "color": "blue" })
+assert-css: ("//*[@id='id']/*[@class='class']", { "color": "blue", "height": "10px" })
+
+// If you to check all elements matching this selector/XPath, use `ALL`:
+assert-css: ("#id > .class", { "color": "blue" }, ALL)
+assert-css: ("//*[@id='id']/*[@class='class']", { "color": "blue", "height": "10px" }, ALL)
 ```
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements) command.
 
-#### assert-all-false
+#### assert-css-false
 
-**assert-all-false** command does the same as [`assert-false`](#assert-false) except that it does it on ALL elements matching the CSS selector. If any of the elements is not failing, it'll fail. You can go around that limitation using `fail: true` and run the same condition with both [`assert-all`](#assert-all) and `assert-all-false` (there is a small example below). Examples:
+**assert-css-false** command checks that the CSS properties of the element(s) don't have the provided value. Examples:
 
 ```
-// To be noted: all following examples can use XPath instead of CSS selector.
-
-// will check that "#id > .class" doesn't exists
-assert-all-false: "#id > .class"
-assert-all-false: ("#id > .class") // strictly equivalent
-
-// will check that first "#id > .class" doesn't have text "hello"
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
-assert-all-false: ("#id > .class", "hello")
+assert-css-false: ("#id > .class", { "color": "blue" })
+assert-css-false: ("//*[@id='id']/*[@class='class']", { "color": "blue", "height": "10px" })
 
-// will check that there are not 2 "#id > .class"
-assert-all-false: ("#id > .class", 2)
+// If you to check all elements matching this selector/XPath, use `ALL`:
+assert-css-false: ("#id > .class", { "color": "blue" }, ALL)
+assert-css-false: ("//*[@id='id']/*[@class='class']", { "color": "blue", "height": "10px" }, ALL)
+```
 
-// will check that "#id > .class" doesn't have blue color
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-false) command.
+
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+
+#### assert-text
+
+**assert-text** command checks that the element(s) have the expected text. Examples:
+
+```
+assert-text: ("#id > .class", "hello")
+assert-text: ("//*[@id='id']/*[@class='class']", "hello")
+
+// If you to check all elements matching this selector/XPath, use `ALL`:
+assert-text: ("#id > .class", "hello", ALL)
+assert-text: ("//*[@id='id']/*[@class='class']", "hello", ALL)
+```
+
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements) command.
+
+#### assert-text-false
+
+**assert-text-false** command checks that the element(s) don't have the provided text. Examples:
+
+```
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
-assert-all-false: ("#id > .class", { "color": "blue" })
+assert-text-false: ("#id > .class", "hello")
+assert-text-false: ("//*[@id='id']/*[@class='class']", "hello")
 
-// will check that "#id > .class" doesn't have an attribute called "attribute-name" with value "attribute-value"
-// IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
-assert-all-false: ("#id > .class", "attribute-name", "attribute-value")
-
-// In case you want to check that at least one element matches the condition, you
-// can do as follow:
-fail: true
-// Checks that not all elements have "hello".
-assert-all: ("#id > .class", "hello")
-// Check that at least one element has "hello".
-assert-all-false: ("#id > .class", "hello")
-fail: false
+// If you to check all elements matching this selector/XPath, use `ALL`:
+assert-text-false: ("#id > .class", "hello", ALL)
+assert-text-false: ("//*[@id='id']/*[@class='class']", "hello", ALL)
 ```
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-false) command.
