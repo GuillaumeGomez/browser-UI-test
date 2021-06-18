@@ -6,6 +6,20 @@ Small JS framework to easily provide UI screenshot-based tests.
 
 This framework provides the possibility to quickly check browser UI through small script files (with the `.goml` extension). By default, once the script is done running, it takes a screenshot of the page and compares it to the expected one. If they're different, the test will fail.
 
+## Quick links
+
+This is a big README, so to make you go through it faster:
+
+ * [Usage](#usage)
+ * [Using this framework as a binary](#using-this-framework-as-a-binary)
+ * [Using this framework as a dependency](#using-this-framework-as-a-dependency)
+ * [Exported elements](#exported-elements)
+ * [Running it directly](#running-it-directly)
+ * [Command list](#goml-scripts)
+ * [Code comments](#comments)
+ * [Run tests](#run-tests)
+ * [Donations](#donations)
+
 ## Usage
 
 You can either use this framework by using it as dependency or running it directly. In both cases you'll need to write some `.goml` scripts. It looks like this:
