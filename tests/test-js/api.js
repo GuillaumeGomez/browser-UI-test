@@ -1591,202 +1591,184 @@ function checkClick(x, func) {
     });
 }
 
-function checkCompareElementsInner(x, func, before, after) {
-    x.assert(
-        func('"a"'),
-        {'error': 'expected a tuple, read the documentation to see the accepted inputs'},
-    );
-    x.assert(
-        func('1'),
-        {'error': 'expected a tuple, read the documentation to see the accepted inputs'},
-    );
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
-    x.assert(
-        func('[]'),
-        {'error': 'expected a tuple, read the documentation to see the accepted inputs'},
-    );
-    x.assert(
-        func('("a")'),
-        {'error': 'invalid number of values in the tuple, read the documentation to see ' +
-            'the accepted inputs'},
-    );
-    x.assert(
-        func('("a", 1)'),
-        {'error': 'expected second argument to be a CSS selector or an XPath, found a number'},
-    );
-    x.assert(
-        func('(1, "a")'),
-        {'error': 'expected first argument to be a CSS selector or an XPath, found a number'},
-    );
-    x.assert(
-        func('((), "a")'),
-        {'error': 'expected first argument to be a CSS selector or an XPath, found a tuple'},
-    );
-    x.assert(
-        func('("a", "a", "b", "c")'),
-        {'error': 'invalid number of values in the tuple, read the documentation to see the ' +
-            'accepted inputs'},
-    );
-    x.assert(
-        func('("a", "b", 1)'),
-        {'error': 'expected an array, a string or a tuple as third argument, found "number"'},
-    );
+function checkCompareElementsAttrInner(x, func, before, after) {
     x.assert(
         func('("a", "b", ())'),
         {'error': 'unexpected `()`: tuples need at least one argument'},
     );
     x.assert(
         func('("a", "b", (1))'),
-        {'error': '`(1)` should only contain strings'},
+        {'error': 'expected third argument to be an array of string, found a string'},
     );
     x.assert(
         func('("a", "b", ("x", "yo"))'),
-        {'error': 'Only accepted values are "x" and "y", found `"yo"` (in `("x", "yo")`'},
+        {'error': 'expected third argument to be an array of string, found a string'},
     );
+    x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
+    x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
+    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
+    x.assert(func('("a")'), {'error': 'expected 3 elements in the tuple, found 1 element'});
+    x.assert(func('("a", 1)'),
+        {'error': 'expected 3 elements in the tuple, found 2 elements'},
+    );
+    x.assert(func('("a", "a", "b", "c")'), {
+        'error': 'expected 3 elements in the tuple, found 4 elements',
+    });
+    x.assert(func('("a", "b", 1)'), {
+        'error': 'expected third argument to be an array of string, found a string',
+    });
 
-    x.assert(
-        func('("a", "b")'),
-        {
-            'instructions': [
-                'let parseCompareElements1 = await page.$("a");\nif ' +
-                '(parseCompareElements1 === null) { throw \'"a" not found\'; }\nlet ' +
-                'parseCompareElements2 = await page.$("b");\nif (parseCompareElements2 === null) ' +
-                '{ throw \'"b" not found\'; }\n' +
-                before +
-                'await page.evaluate((e1, e2) => {\nlet e1value;\n' +
-                'if (e1.tagName.toLowerCase() === "input") {\ne1value = e1.value;\n} else {\n' +
-                'e1value = e1.textContent;\n}\nif (e2.tagName.toLowerCase() === "input") {\nif ' +
-                '(e2.value !== e1value) {\nthrow \'"\' + e1value + \'" !== "\' + e2.value + \'"\'' +
-                ';\n}\n} else if (e2.textContent !== e1value) {\nthrow \'"\' + e1value + \'" !== ' +
-                '"\' + e2.textContent + \'"\';\n}\n}, parseCompareElements1, ' +
-                'parseCompareElements2);' + after,
-            ],
-            'wait': false,
-            'checkResult': true,
-        },
-    );
-    x.assert(
-        func('("a", "b", ("x", "y"))'),
-        {
-            'instructions': [
-                'let parseCompareElements1 = await page.$("a");\nif (parseCompareElements1 === ' +
-                'null) { throw \'"a" not found\'; }\nlet parseCompareElements2 = await page.' +
-                '$("b");\nif (parseCompareElements2 === null) { throw \'"b" not found\'; }\n' +
-                before +
-                'await page.evaluate((e1, e2) => {\nlet x1 = e1.getBoundingClientRect().left;\n' +
-                'let x2 = e2.getBoundingClientRect().left;\nif (x1 !== x2) { throw "different X ' +
-                'values: " + x1 + " != " + x2; }\nlet y1 = e1.getBoundingClientRect().top;\n' +
-                'let y2 = e2.getBoundingClientRect().top;\nif (y1 !== y2) { throw "different Y ' +
-                'values: " + y1 + " != " + y2; }\n\n}, parseCompareElements1, ' +
-                'parseCompareElements2);' + after,
-            ],
-            'wait': false,
-            'checkResult': true,
-        },
-    );
-    x.assert(
-        func('("a", "b", \'"data-whatever\')'),
-        {
-            'instructions': [
-                'let parseCompareElements1 = await page.$("a");\nif (parseCompareElements1 === ' +
-                'null) { throw \'"a" not found\'; }\nlet parseCompareElements2 = await ' +
-                'page.$("b");\nif (parseCompareElements2 === null) { throw \'"b" not found\'; }\n' +
-                before +
-                'await page.evaluate((e1, e2) => {\nif (e1.getAttribute("\\"data-whatever") ' +
-                '!== e2.getAttribute("\\"data-whatever")) {\nthrow "[\\"data-whatever]: " + ' +
-                'e1.getAttribute("\\"data-whatever") + " !== " + ' +
-                'e2.getAttribute("\\"data-whatever");\n}\n}, parseCompareElements1, ' +
-                'parseCompareElements2);' + after,
-            ],
-            'wait': false,
-            'checkResult': true,
-        },
-    );
-    x.assert(
-        func('("a", "b", ["margin"])'),
-        {
-            'instructions': [
-                'let parseCompareElements1 = await page.$("a");\nif (parseCompareElements1 === ' +
-                'null) { throw \'"a" not found\'; }\nlet parseCompareElements2 = await ' +
-                'page.$("b");\nif (parseCompareElements2 === null) { throw \'"b" not found\'; }\n' +
-                before +
-                'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
-                'let computed_style2 = getComputedStyle(e2);\nlet style1_1 = ' +
-                'e1.style["margin"];\nlet style1_2 = computed_style1["margin"];\nlet style2_1 ' +
-                '= e2.style["margin"];\nlet style2_2 = computed_style2["margin"];\nif (style1_1' +
-                ' != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 && style1_2 != ' +
-                'style2_2) {\nthrow \'CSS property `margin` did not match: \' + style1_2 + \' ' +
-                '!= \' + style2_2; }\n}, parseCompareElements1, parseCompareElements2);' + after,
-            ],
-            'wait': false,
-            'checkResult': true,
-        },
-    );
+    x.assert(func('("a", "b", [\'"data-whatever\'])'), {
+        'instructions': [
+            'let parseCompareElementsAttr1 = await page.$("a");\n' +
+            'if (parseCompareElementsAttr1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsAttr2 = await page.$("b");\n' +
+            'if (parseCompareElementsAttr2 === null) { throw \'"b" not found\'; }\n' +
+            before +
+            'await page.evaluate((e1, e2) => {\n' +
+            'if (e1.getAttribute("\\"data-whatever") !== e2.getAttribute("\\"data-whatever")) {\n' +
+            'throw "[\\"data-whatever]: " + e1.getAttribute("\\"data-whatever") + " !== " + ' +
+            'e2.getAttribute("\\"data-whatever");\n' +
+            '}\n' +
+            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);' + after,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
 
     // XPath
-    x.assert(func('("/a", "b", \'"data-whatever\')'), {'error': 'XPath must start with `//`'});
-    x.assert(func('("//a", "b", \'"data-whatever\')'), {
+    x.assert(func('("/a", "b", [\'"data-whatever\'])'), {'error': 'XPath must start with `//`'});
+    x.assert(func('("//a", "b", [\'"data-whatever\'])'), {
         'instructions': [
-            'let parseCompareElements1 = await page.$x("//a");\n' +
-            'if (parseCompareElements1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElements1 = parseCompareElements1[0];\n' +
-            'let parseCompareElements2 = await page.$("b");\n' +
-            'if (parseCompareElements2 === null) { throw \'"b" not found\'; }\n' +
+            'let parseCompareElementsAttr1 = await page.$x("//a");\n' +
+            'if (parseCompareElementsAttr1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseCompareElementsAttr1 = parseCompareElementsAttr1[0];\n' +
+            'let parseCompareElementsAttr2 = await page.$("b");\n' +
+            'if (parseCompareElementsAttr2 === null) { throw \'"b" not found\'; }\n' +
             before +
             'await page.evaluate((e1, e2) => {\n' +
             'if (e1.getAttribute("\\"data-whatever") !== e2.getAttribute("\\"data-whatever")) {\n' +
             'throw "[\\"data-whatever]: " + e1.getAttribute("\\"data-whatever") + " !== " + ' +
             'e2.getAttribute("\\"data-whatever");\n' +
             '}\n' +
-            '}, parseCompareElements1, parseCompareElements2);' + after,
+            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);' + after,
         ],
         'wait': false,
         'checkResult': true,
     });
-    x.assert(func('("a", "//b", \'"data-whatever\')'), {
+    x.assert(func('("a", "//b", [\'"data-whatever\'])'), {
         'instructions': [
-            'let parseCompareElements1 = await page.$("a");\n' +
-            'if (parseCompareElements1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElements2 = await page.$x("//b");\n' +
-            'if (parseCompareElements2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElements2 = parseCompareElements2[0];\n' +
+            'let parseCompareElementsAttr1 = await page.$("a");\n' +
+            'if (parseCompareElementsAttr1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsAttr2 = await page.$x("//b");\n' +
+            'if (parseCompareElementsAttr2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
+            'parseCompareElementsAttr2 = parseCompareElementsAttr2[0];\n' +
             before +
             'await page.evaluate((e1, e2) => {\n' +
             'if (e1.getAttribute("\\"data-whatever") !== e2.getAttribute("\\"data-whatever")) {\n' +
             'throw "[\\"data-whatever]: " + e1.getAttribute("\\"data-whatever") + " !== " + ' +
             'e2.getAttribute("\\"data-whatever");\n' +
             '}\n' +
-            '}, parseCompareElements1, parseCompareElements2);' + after,
+            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);' + after,
         ],
         'wait': false,
         'checkResult': true,
     });
-    x.assert(func('("//a", "//b", \'"data-whatever\')'), {
+    x.assert(func('("//a", "//b", [\'"data-whatever\'])'), {
         'instructions': [
-            'let parseCompareElements1 = await page.$x("//a");\n' +
-            'if (parseCompareElements1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElements1 = parseCompareElements1[0];\n' +
-            'let parseCompareElements2 = await page.$x("//b");\n' +
-            'if (parseCompareElements2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElements2 = parseCompareElements2[0];\n' +
+            'let parseCompareElementsAttr1 = await page.$x("//a");\n' +
+            'if (parseCompareElementsAttr1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseCompareElementsAttr1 = parseCompareElementsAttr1[0];\n' +
+            'let parseCompareElementsAttr2 = await page.$x("//b");\n' +
+            'if (parseCompareElementsAttr2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
+            'parseCompareElementsAttr2 = parseCompareElementsAttr2[0];\n' +
             before +
             'await page.evaluate((e1, e2) => {\n' +
             'if (e1.getAttribute("\\"data-whatever") !== e2.getAttribute("\\"data-whatever")) {\n' +
             'throw "[\\"data-whatever]: " + e1.getAttribute("\\"data-whatever") + " !== " + ' +
             'e2.getAttribute("\\"data-whatever");\n' +
             '}\n' +
-            '}, parseCompareElements1, parseCompareElements2);' + after,
+            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);' + after,
         ],
         'wait': false,
         'checkResult': true,
     });
+}
+
+function checkCompareElementsAttr(x, func) {
+    checkCompareElementsAttrInner(x, func, '', '');
+}
+
+function checkCompareElementsAttrFalse(x, func) {
+    checkCompareElementsAttrInner(
+        x,
+        func,
+        'try {\n',
+        '\n} catch(e) { return; } throw "assert didn\'t fail";',
+    );
+}
+
+function checkCompareElementsCssInner(x, func, before, after) {
+    x.assert(
+        func('("a", "b", ())'),
+        {'error': 'unexpected `()`: tuples need at least one argument'},
+    );
+    x.assert(
+        func('("a", "b", (1))'),
+        {'error': 'expected third argument to be an array of string, found a tuple'},
+    );
+    x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
+    x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
+    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
+    x.assert(func('("a")'), {'error': 'expected 3 elements in the tuple, found 1 element'});
+    x.assert(func('("a", 1, [])'),
+        {'error': 'expected second argument to be a CSS selector or an XPath, found a number'},
+    );
+    x.assert(func('(1, "a", [])'),
+        {'error': 'expected first argument to be a CSS selector or an XPath, found a number'},
+    );
+    x.assert(func('((), "a", [])'),
+        {'error': 'expected first argument to be a CSS selector or an XPath, found a tuple'},
+    );
+    x.assert(func('("a", "a", "b", "c")'), {
+        'error': 'expected 3 elements in the tuple, found 4 elements',
+    });
+    x.assert(func('("a", "b", 1)'), {
+        'error': 'expected third argument to be an array of string, found a number',
+    });
+
+    x.assert(func('("a", "b", ["margin"])'), {
+        'instructions': [
+            'let parseCompareElementsCss1 = await page.$("a");\n' +
+            'if (parseCompareElementsCss1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsCss2 = await page.$("b");\n' +
+            'if (parseCompareElementsCss2 === null) { throw \'"b" not found\'; }\n' +
+            before +
+            'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
+            'let computed_style2 = getComputedStyle(e2);\n' +
+            'let style1_1 = e1.style["margin"];\n' +
+            'let style1_2 = computed_style1["margin"];\n' +
+            'let style2_1 = e2.style["margin"];\n' +
+            'let style2_2 = computed_style2["margin"];\n' +
+            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 && ' +
+            'style1_2 != style2_2) {\n' +
+            'throw \'CSS property `margin` did not match: \' + style1_2 + \' != \' + style2_2; }' +
+            '\n}, parseCompareElementsCss1, parseCompareElementsCss2);' + after,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // Xpath
     x.assert(func('("//a", "b", ["margin"])'), {
         'instructions': [
-            'let parseCompareElements1 = await page.$x("//a");\n' +
-            'if (parseCompareElements1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElements1 = parseCompareElements1[0];\n' +
-            'let parseCompareElements2 = await page.$("b");\n' +
-            'if (parseCompareElements2 === null) { throw \'"b" not found\'; }\n' +
+            'let parseCompareElementsCss1 = await page.$x("//a");\n' +
+            'if (parseCompareElementsCss1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseCompareElementsCss1 = parseCompareElementsCss1[0];\n' +
+            'let parseCompareElementsCss2 = await page.$("b");\n' +
+            'if (parseCompareElementsCss2 === null) { throw \'"b" not found\'; }\n' +
             before +
             'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
             'let computed_style2 = getComputedStyle(e2);\n' +
@@ -1798,18 +1780,18 @@ function checkCompareElementsInner(x, func, before, after) {
             'style1_2 != style2_2) {\n' +
             'throw \'CSS property `margin` did not match: \' + style1_2 + \' ' +
             '!= \' + style2_2; }\n' +
-            '}, parseCompareElements1, parseCompareElements2);' + after,
+            '}, parseCompareElementsCss1, parseCompareElementsCss2);' + after,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", "//b", ["margin"])'), {
         'instructions': [
-            'let parseCompareElements1 = await page.$("a");\n' +
-            'if (parseCompareElements1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElements2 = await page.$x("//b");\n' +
-            'if (parseCompareElements2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElements2 = parseCompareElements2[0];\n' +
+            'let parseCompareElementsCss1 = await page.$("a");\n' +
+            'if (parseCompareElementsCss1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsCss2 = await page.$x("//b");\n' +
+            'if (parseCompareElementsCss2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
+            'parseCompareElementsCss2 = parseCompareElementsCss2[0];\n' +
             before +
             'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
             'let computed_style2 = getComputedStyle(e2);\n' +
@@ -1821,19 +1803,19 @@ function checkCompareElementsInner(x, func, before, after) {
             'style1_2 != style2_2) {\n' +
             'throw \'CSS property `margin` did not match: \' + style1_2 + \' ' +
             '!= \' + style2_2; }\n' +
-            '}, parseCompareElements1, parseCompareElements2);' + after,
+            '}, parseCompareElementsCss1, parseCompareElementsCss2);' + after,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("//a", "//b", ["margin"])'), {
         'instructions': [
-            'let parseCompareElements1 = await page.$x("//a");\n' +
-            'if (parseCompareElements1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElements1 = parseCompareElements1[0];\n' +
-            'let parseCompareElements2 = await page.$x("//b");\n' +
-            'if (parseCompareElements2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElements2 = parseCompareElements2[0];\n' +
+            'let parseCompareElementsCss1 = await page.$x("//a");\n' +
+            'if (parseCompareElementsCss1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseCompareElementsCss1 = parseCompareElementsCss1[0];\n' +
+            'let parseCompareElementsCss2 = await page.$x("//b");\n' +
+            'if (parseCompareElementsCss2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
+            'parseCompareElementsCss2 = parseCompareElementsCss2[0];\n' +
             before +
             'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
             'let computed_style2 = getComputedStyle(e2);\n' +
@@ -1845,19 +1827,344 @@ function checkCompareElementsInner(x, func, before, after) {
             'style1_2 != style2_2) {\n' +
             'throw \'CSS property `margin` did not match: \' + style1_2 + \' ' +
             '!= \' + style2_2; }\n' +
-            '}, parseCompareElements1, parseCompareElements2);' + after,
+            '}, parseCompareElementsCss1, parseCompareElementsCss2);' + after,
         ],
         'wait': false,
         'checkResult': true,
     });
 }
 
-function checkCompareElements(x, func) {
-    checkCompareElementsInner(x, func, '', '');
+function checkCompareElementsCss(x, func) {
+    checkCompareElementsCssInner(x, func, '', '');
 }
 
-function checkCompareElementsFalse(x, func) {
-    checkCompareElementsInner(
+function checkCompareElementsCssFalse(x, func) {
+    checkCompareElementsCssInner(
+        x,
+        func,
+        'try {\n',
+        '\n} catch(e) { return; } throw "assert didn\'t fail";',
+    );
+}
+
+function checkCompareElementsPosInner(x, func, before, after) {
+    x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
+    x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
+    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
+    x.assert(func('("a")'), {'error': 'expected 3 elements in the tuple, found 1 element'});
+    x.assert(func('("a", 1)'),
+        {'error': 'expected 3 elements in the tuple, found 2 elements'},
+    );
+    x.assert(func('(1, "a", ("a"))'),
+        {'error': 'expected first argument to be a CSS selector or an XPath, found a number'},
+    );
+    x.assert(func('((), "a", ("a"))'),
+        {'error': 'expected first argument to be a CSS selector or an XPath, found a tuple'},
+    );
+    x.assert(func('("a", "a", "b", "c")'), {
+        'error': 'expected 3 elements in the tuple, found 4 elements',
+    });
+    x.assert(func('("a", "b", 1)'), {
+        'error': 'expected third argument to be a tuple, found a number',
+    });
+    x.assert(
+        func('("a", "b", ())'),
+        {'error': 'unexpected `()`: tuples need at least one argument'},
+    );
+    x.assert(
+        func('("a", "b", (1))'),
+        {'error': 'expected an array of strings, found `(1)`'},
+    );
+    x.assert(
+        func('("a", "b", ("x", "yo"))'),
+        {'error': 'Only accepted values are "x" and "y", found `"yo"` (in `("x", "yo")`'},
+    );
+
+    x.assert(func('("a", "b", ("x"))'), {
+        'instructions': [
+            'let parseCompareElementsPos1 = await page.$("a");\n' +
+            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPos2 = await page.$("b");\n' +
+            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
+            before +
+            'await page.evaluate((e1, e2) => {\n' +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);' + after,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", ("y"))'), {
+        'instructions': [
+            'let parseCompareElementsPos1 = await page.$("a");\n' +
+            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPos2 = await page.$("b");\n' +
+            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
+            before +
+            'await page.evaluate((e1, e2) => {\n' +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);' + after,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", ("x", "y"))'), {
+        'instructions': [
+            'let parseCompareElementsPos1 = await page.$("a");\n' +
+            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPos2 = await page.$("b");\n' +
+            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
+            before +
+            'await page.evaluate((e1, e2) => {\n' +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);' + after,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", ("y", "x"))'), {
+        'instructions': [
+            'let parseCompareElementsPos1 = await page.$("a");\n' +
+            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPos2 = await page.$("b");\n' +
+            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
+            before +
+            'await page.evaluate((e1, e2) => {\n' +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);' + after,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // XPath
+    x.assert(func('("//a", "b", ("y", "x"))'), {
+        'instructions': [
+            'let parseCompareElementsPos1 = await page.$x("//a");\n' +
+            'if (parseCompareElementsPos1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseCompareElementsPos1 = parseCompareElementsPos1[0];\n' +
+            'let parseCompareElementsPos2 = await page.$("b");\n' +
+            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
+            before +
+            'await page.evaluate((e1, e2) => {\n' +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);' + after,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "//b", ("y", "x"))'), {
+        'instructions': [
+            'let parseCompareElementsPos1 = await page.$("a");\n' +
+            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPos2 = await page.$x("//b");\n' +
+            'if (parseCompareElementsPos2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
+            'parseCompareElementsPos2 = parseCompareElementsPos2[0];\n' +
+            before +
+            'await page.evaluate((e1, e2) => {\n' +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);' + after,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("//a", "//b", ("y", "x"))'), {
+        'instructions': [
+            'let parseCompareElementsPos1 = await page.$x("//a");\n' +
+            'if (parseCompareElementsPos1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseCompareElementsPos1 = parseCompareElementsPos1[0];\n' +
+            'let parseCompareElementsPos2 = await page.$x("//b");\n' +
+            'if (parseCompareElementsPos2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
+            'parseCompareElementsPos2 = parseCompareElementsPos2[0];\n' +
+            before +
+            'await page.evaluate((e1, e2) => {\n' +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);' + after,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+}
+
+function checkCompareElementsPos(x, func) {
+    checkCompareElementsPosInner(x, func, '', '');
+}
+
+function checkCompareElementsPosFalse(x, func) {
+    checkCompareElementsPosInner(
+        x,
+        func,
+        'try {\n',
+        '\n} catch(e) { return; } throw "assert didn\'t fail";',
+    );
+}
+
+function checkCompareElementsTextInner(x, func, before, after) {
+    x.assert(func('"a"'), {'error': 'expected a tuple of CSS selector/XPath, found `"a"`'});
+    x.assert(func('1'), {'error': 'expected a tuple of CSS selector/XPath, found `1`'});
+    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('[]'), {'error': 'expected a tuple of CSS selector/XPath, found `[]`'});
+    x.assert(func('("a")'), {'error': 'expected 2 CSS selectors/XPathes, found 1 element'});
+    x.assert(func('("a", 1)'),
+        {'error': 'expected second argument to be a CSS selector or an XPath, found a number'},
+    );
+    x.assert(func('(1, "a")'),
+        {'error': 'expected first argument to be a CSS selector or an XPath, found a number'},
+    );
+    x.assert(func('((), "a")'),
+        {'error': 'expected first argument to be a CSS selector or an XPath, found a tuple'},
+    );
+    x.assert(func('("a", "a", "b", "c")'), {
+        'error': 'expected 2 CSS selectors/XPathes, found 4 elements',
+    });
+    x.assert(func('("a", "b", 1)'), {
+        'error': 'expected 2 CSS selectors/XPathes, found 3 elements',
+    });
+
+    x.assert(func('("a", "b")'), {
+        'instructions': [
+            'let parseCompareElementsText1 = await page.$("a");\n' +
+            'if (parseCompareElementsText1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsText2 = await page.$("b");\n' +
+            'if (parseCompareElementsText2 === null) { throw \'"b" not found\'; }\n' +
+            before +
+            'await page.evaluate((e1, e2) => {\n' +
+            'let e1value;\n' +
+            'if (e1.tagName.toLowerCase() === "input") {\n' +
+            'e1value = e1.value;\n' +
+            '} else {\n' +
+            'e1value = e1.textContent;\n' +
+            '}\n' +
+            'if (e2.tagName.toLowerCase() === "input") {\n' +
+            'if (e2.value !== e1value) {\n' +
+            'throw \'"\' + e1value + \'" !== "\' + e2.value + \'"\';\n' +
+            '}\n' +
+            '} else if (e2.textContent !== e1value) {\n' +
+            'throw \'"\' + e1value + \'" !== "\' + e2.textContent + \'"\';\n' +
+            '}\n}, parseCompareElementsText1, parseCompareElementsText2);' + after,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // XPath
+    x.assert(func('("//a", "b")'), {
+        'instructions': [
+            'let parseCompareElementsText1 = await page.$x("//a");\n' +
+            'if (parseCompareElementsText1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseCompareElementsText1 = parseCompareElementsText1[0];\n' +
+            'let parseCompareElementsText2 = await page.$("b");\n' +
+            'if (parseCompareElementsText2 === null) { throw \'"b" not found\'; }\n' +
+            before +
+            'await page.evaluate((e1, e2) => {\n' +
+            'let e1value;\n' +
+            'if (e1.tagName.toLowerCase() === "input") {\n' +
+            'e1value = e1.value;\n' +
+            '} else {\n' +
+            'e1value = e1.textContent;\n' +
+            '}\n' +
+            'if (e2.tagName.toLowerCase() === "input") {\n' +
+            'if (e2.value !== e1value) {\n' +
+            'throw \'"\' + e1value + \'" !== "\' + e2.value + \'"\';\n' +
+            '}\n' +
+            '} else if (e2.textContent !== e1value) {\n' +
+            'throw \'"\' + e1value + \'" !== "\' + e2.textContent + \'"\';\n' +
+            '}\n}, parseCompareElementsText1, parseCompareElementsText2);' + after,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "//b")'), {
+        'instructions': [
+            'let parseCompareElementsText1 = await page.$("a");\n' +
+            'if (parseCompareElementsText1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsText2 = await page.$x("//b");\n' +
+            'if (parseCompareElementsText2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
+            'parseCompareElementsText2 = parseCompareElementsText2[0];\n' +
+            before +
+            'await page.evaluate((e1, e2) => {\n' +
+            'let e1value;\n' +
+            'if (e1.tagName.toLowerCase() === "input") {\n' +
+            'e1value = e1.value;\n' +
+            '} else {\n' +
+            'e1value = e1.textContent;\n' +
+            '}\n' +
+            'if (e2.tagName.toLowerCase() === "input") {\n' +
+            'if (e2.value !== e1value) {\n' +
+            'throw \'"\' + e1value + \'" !== "\' + e2.value + \'"\';\n' +
+            '}\n' +
+            '} else if (e2.textContent !== e1value) {\n' +
+            'throw \'"\' + e1value + \'" !== "\' + e2.textContent + \'"\';\n' +
+            '}\n}, parseCompareElementsText1, parseCompareElementsText2);' + after,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("//a", "//b")'), {
+        'instructions': [
+            'let parseCompareElementsText1 = await page.$x("//a");\n' +
+            'if (parseCompareElementsText1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseCompareElementsText1 = parseCompareElementsText1[0];\n' +
+            'let parseCompareElementsText2 = await page.$x("//b");\n' +
+            'if (parseCompareElementsText2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
+            'parseCompareElementsText2 = parseCompareElementsText2[0];\n' +
+            before +
+            'await page.evaluate((e1, e2) => {\n' +
+            'let e1value;\n' +
+            'if (e1.tagName.toLowerCase() === "input") {\n' +
+            'e1value = e1.value;\n' +
+            '} else {\n' +
+            'e1value = e1.textContent;\n' +
+            '}\n' +
+            'if (e2.tagName.toLowerCase() === "input") {\n' +
+            'if (e2.value !== e1value) {\n' +
+            'throw \'"\' + e1value + \'" !== "\' + e2.value + \'"\';\n' +
+            '}\n' +
+            '} else if (e2.textContent !== e1value) {\n' +
+            'throw \'"\' + e1value + \'" !== "\' + e2.textContent + \'"\';\n' +
+            '}\n}, parseCompareElementsText1, parseCompareElementsText2);' + after,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+}
+
+function checkCompareElementsText(x, func) {
+    checkCompareElementsTextInner(x, func, '', '');
+}
+
+function checkCompareElementsTextFalse(x, func) {
+    checkCompareElementsTextInner(
         x,
         func,
         'try {\n',
@@ -2820,14 +3127,44 @@ const TO_CHECK = [
         'toCall': (e, o) => wrapper(parserFuncs.parseClick, e, o),
     },
     {
-        'name': 'compare-elements',
-        'func': checkCompareElements,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElements, e, o),
+        'name': 'compare-elements-attr',
+        'func': checkCompareElementsAttr,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsAttr, e, o),
     },
     {
-        'name': 'compare-elements-false',
-        'func': checkCompareElementsFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsFalse, e, o),
+        'name': 'compare-elements-attr-false',
+        'func': checkCompareElementsAttrFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsAttrFalse, e, o),
+    },
+    {
+        'name': 'compare-elements-css',
+        'func': checkCompareElementsCss,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsCss, e, o),
+    },
+    {
+        'name': 'compare-elements-css-false',
+        'func': checkCompareElementsCssFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsCssFalse, e, o),
+    },
+    {
+        'name': 'compare-elements-pos',
+        'func': checkCompareElementsPos,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsPos, e, o),
+    },
+    {
+        'name': 'compare-elements-pos-false',
+        'func': checkCompareElementsPosFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsPosFalse, e, o),
+    },
+    {
+        'name': 'compare-elements-text',
+        'func': checkCompareElementsText,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsText, e, o),
+    },
+    {
+        'name': 'compare-elements-text-false',
+        'func': checkCompareElementsTextFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsTextFalse, e, o),
     },
     {
         'name': 'css',

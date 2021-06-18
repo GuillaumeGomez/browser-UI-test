@@ -1,7 +1,7 @@
 => Starting doc-ui tests...
 
 line-number2... FAILED
-(line 4) command `compare-elements: (".content>.right>p", ".content>.left", ["color"])` was supposed to fail but succeeded
+(line 4) command `compare-elements-css: (".content>.right>p", ".content>.left", ["color"])` was supposed to fail but succeeded
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed
