@@ -1,4 +1,4 @@
 screenshot: false
 goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
 fail: true
-compare-elements: (".content>.right>p", ".content>.left", ["color"])
+compare-elements-css: (".content>.right>p", ".content>.left", ["color"])

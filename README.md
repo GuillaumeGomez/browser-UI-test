@@ -238,8 +238,14 @@ Here's the command list:
  * [`assert-css-false`](#assert-text-false)
  * [`attribute`](#attribute)
  * [`click`](#click)
- * [`compare-elements`](#compare-elements)
- * [`compare-elements-false`](#compare-elements-false)
+ * [`compare-elements-attr`](#compare-elements-attr)
+ * [`compare-elements-attr-false`](#compare-elements-attr-false)
+ * [`compare-elements-css`](#compare-elements-css)
+ * [`compare-elements-css-false`](#compare-elements-css-false)
+ * [`compare-elements-pos`](#compare-elements-pos)
+ * [`compare-elements-pos-false`](#compare-elements-pos-false)
+ * [`compare-elements-text`](#compare-elements-text)
+ * [`compare-elements-text-false`](#compare-elements-text-false)
  * [`css`](#css)
  * [`debug`](#debug)
  * [`drag-and-drop`](#drag-and-drop)
@@ -440,50 +446,100 @@ click: "//*[@id='element']/a"
 click: (10, 12)
 ```
 
-#### compare-elements
+#### compare-elements-attr
 
-**compare-elements** command allows you to compare two DOM elements. Examples:
-
-```
-// To be noted: all following examples can use XPath instead of CSS selector.
-
-// To compare the text of two elements:
-compare-elements: ("element1", "element2")
-
-// To compare an attribute's value of two elements:
-compare-elements: ("element1", "element2", "attribute")
-
-// To compare CSS properties' value of two elements:
-compare-elements: ("element1", "element2", ["CSS property1", "CSS property2", ...])
-
-// To compare the absolute X/Y position of two elements:
-compare-elements: ("element1", "element2", ("x"))
-compare-elements: ("element1", "element2", ("y"))
-compare-elements: ("element1", "element2", ("x", "y"))
-compare-elements: ("element1", "element2", ("y", "x"))
-```
-
-#### compare-elements-false
-
-**compare-elements-false** command allows you to compare two DOM elements (and check they're not equal!). It's mostly doing the opposite of [`compare-elements`](#compare-elements). Examples:
+**compare-elements-attr** command allows you to compare two DOM elements' attributes are equal. Examples:
 
 ```
-// To be noted: all following examples can use XPath instead of CSS selector.
+compare-elements-attr: ("element1", "element2", ["attribute1", "attributeX", ...])
+compare-elements-attr: ("//element1", "element2", ["attribute1", "attributeX", ...])
+```
 
-// To compare the text of two elements:
-compare-elements-false: ("element1", "element2")
+#### compare-elements-attr-false
 
-// To compare an attribute's value of two elements:
-compare-elements-false: ("element1", "element2", "attribute")
+**compare-elements-attr-false** command allows you to check that two DOM elements' attributes are different. Examples:
 
-// To compare CSS properties' value of two elements:
-compare-elements-false: ("element1", "element2", ["CSS property1", "CSS property2", ...])
+```
+// IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
+compare-elements-attr-false: ("element1", "element2", ["attribute1", "attributeX", ...])
+compare-elements-attr-false: ("//element1", "element2", ["attribute1", "attributeX", ...])
+```
 
-// To compare the absolute X/Y position of two elements:
-compare-elements-false: ("element1", "element2", ("x"))
-compare-elements-false: ("element1", "element2", ("y"))
-compare-elements-false: ("element1", "element2", ("x", "y"))
-compare-elements-false: ("element1", "element2", ("y", "x"))
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+
+#### compare-elements-css
+
+**compare-elements-css** command allows you to check that two DOM elements' CSS properties are equal. Examples:
+
+```
+compare-elements-css: ("element1", "//element2", ["CSS property1", "CSS property2", ...])
+compare-elements-css: ("//element1", "element2", ["CSS property1", "CSS property2", ...])
+```
+
+#### compare-elements-css-false
+
+**compare-elements-css-false** command allows you to check that two DOM elements' CSS properties are different. Examples:
+
+```
+// IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
+compare-elements-css-false: ("element1", "//element2", ["CSS property1", "CSS property2", ...])
+compare-elements-css-false: ("//element1", "element2", ["CSS property1", "CSS property2", ...])
+```
+
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+
+#### compare-elements-pos
+
+**compare-elements-pos** command allows you to check that two DOM elements' CSS X/Y positions are equal. Examples:
+
+```
+// Compare the X position.
+compare-elements-pos: ("//element1", "element2", ("x"))
+// Compare the Y position.
+compare-elements-pos: ("element1", "//element2", ("y"))
+// Compare the X and Y positions.
+compare-elements-pos: ("//element1", "//element2", ("x", "y"))
+// Compare the Y and X positions.
+compare-elements-pos: ("element1", "element2", ("y", "x"))
+```
+
+#### compare-elements-pos-false
+
+**compare-elements-pos-false** command allows you to check that two DOM elements' CSS X/Y positions are different. Examples:
+
+```
+// IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
+
+// Compare the X position.
+compare-elements-pos-false: ("//element1", "element2", ("x"))
+// Compare the Y position.
+compare-elements-pos-false: ("element1", "//element2", ("y"))
+// Compare the X and Y positions.
+compare-elements-pos-false: ("//element1", "//element2", ("x", "y"))
+// Compare the Y and X positions.
+compare-elements-pos-false: ("element1", "element2", ("y", "x"))
+```
+
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+
+#### compare-elements-text
+
+**compare-elements-text** command allows you to compare two DOM elements' text content. Examples:
+
+```
+compare-elements-text: ("element1", "element2")
+compare-elements-text: ("//element1", "element2")
+```
+
+#### compare-elements-text-false
+
+**compare-elements-text-false** command allows you to compare two DOM elements (and check they're not equal!). Examples:
+
+```
+// IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
+
+compare-elements-text-false: ("//element1", "element2")
+compare-elements-text-false: ("element1", "//element2")
 ```
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
