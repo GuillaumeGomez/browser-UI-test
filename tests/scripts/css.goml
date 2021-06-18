@@ -1,4 +1,4 @@
 goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
-assert: ("#button", {"border-radius": "5px"})
+assert-css: ("#button", {"border-radius": "5px"})
 css: ("#button", "border-radius", "50%")
-assert: ("#button", {"border-radius": "50%"})
+assert-css: ("#button", {"border-radius": "50%"})

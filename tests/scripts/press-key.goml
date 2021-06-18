@@ -1,10 +1,10 @@
 screenshot: false
 goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html // still the same...
-assert: ("#the-input", "")
+assert-text: ("#the-input", "")
 write: ("#the-input", "hello")
-assert: ("#the-input", "hello")
+assert-text: ("#the-input", "hello")
 press-key: "KeyA"
-assert: ("#the-input", "helloa")
+assert-text: ("#the-input", "helloa")
 assert: ("#the-input:focus")
 press-key: "Tab"
 fail: true

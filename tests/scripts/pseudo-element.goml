@@ -1,5 +1,5 @@
 screenshot: false
 goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
 focus: "#the-input"
-assert: ("#the-input:focus", {"height": "10px"})
-assert: (".content > .left::after", {"content": '"whatever"'})
+assert-css: ("#the-input:focus", {"height": "10px"})
+assert-css: (".content > .left::after", {"content": '"whatever"'})

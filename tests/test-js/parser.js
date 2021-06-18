@@ -59,7 +59,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), true);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
     x.assert(p.elems[0].getRaw()[1].error, 'expected `,`, found `f`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
     x.assert(p.elems[0].getRaw()[1].getRaw(), 'f');
@@ -75,7 +75,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), true);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
     x.assert(p.elems[0].getRaw()[1].error, 'unexpected `,` after `,`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
     x.assert(p.elems[0].getRaw()[1].getRaw(), ',');
@@ -91,7 +91,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), true);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
     x.assert(p.elems[0].getRaw()[1].error, 'expected `,`, found `|`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
     x.assert(p.elems[0].getRaw()[1].getRaw(), '|');
@@ -107,7 +107,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), false);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
 
 
     process.env['variable'] = 'hello';
@@ -135,7 +135,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), false);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
 
 
     p = new Parser('(false,true)');
@@ -148,10 +148,10 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), false);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
     x.assert(p.elems[0].getRaw()[1].error, null);
     x.assert(p.elems[0].getRaw()[1].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[1].getRaw(), true);
+    x.assert(p.elems[0].getRaw()[1].getRaw(), 'true');
 
 
     p = new Parser('(false,"s", (3, 12))');
@@ -163,7 +163,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw().length, 3);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), false);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
     x.assert(p.elems[0].getRaw()[1].error, null);
     x.assert(p.elems[0].getRaw()[1].kind, 'string');
     x.assert(p.elems[0].getRaw()[1].getRaw(), 's');
@@ -189,7 +189,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw().length, 4);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), false);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
     x.assert(p.elems[0].getRaw()[1].error, null);
     x.assert(p.elems[0].getRaw()[1].kind, 'string');
     x.assert(p.elems[0].getRaw()[1].getRaw(), 's');
@@ -212,7 +212,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), false);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
     x.assert(p.elems[0].getRaw()[1].error, null);
     x.assert(p.elems[0].getRaw()[1].kind, 'array');
     x.assert(p.elems[0].getRaw()[1].getText(), '[1, 2]');
@@ -283,7 +283,7 @@ function checkArray(x) {
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), true);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
     x.assert(p.elems[0].getRaw()[1].error, 'expected `,`, found `f`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
     x.assert(p.elems[0].getRaw()[1].getRaw(), 'f');
@@ -299,7 +299,7 @@ function checkArray(x) {
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), true);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
     x.assert(p.elems[0].getRaw()[1].error, 'unexpected `,` after `,`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
     x.assert(p.elems[0].getRaw()[1].getRaw(), ',');
@@ -315,7 +315,7 @@ function checkArray(x) {
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), true);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
     x.assert(p.elems[0].getRaw()[1].error, 'expected `,`, found `|`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
     x.assert(p.elems[0].getRaw()[1].getRaw(), '|');
@@ -331,7 +331,7 @@ function checkArray(x) {
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), false);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
 
 
     process.env['variable'] = 'hello';
@@ -359,7 +359,7 @@ function checkArray(x) {
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), false);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
 
 
     p = new Parser('[false,true]');
@@ -372,10 +372,10 @@ function checkArray(x) {
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].getRaw(), false);
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
     x.assert(p.elems[0].getRaw()[1].error, null);
     x.assert(p.elems[0].getRaw()[1].kind, 'bool');
-    x.assert(p.elems[0].getRaw()[1].getRaw(), true);
+    x.assert(p.elems[0].getRaw()[1].getRaw(), 'true');
 
 
     p = new Parser('[(3, 12), ("a", "b", "c")]');
@@ -433,15 +433,14 @@ function checkArray(x) {
     x.assert(p.elems[0].getRaw()[1].getRaw()[2].getText(), '"c"');
 }
 
-function checkBool(x) {
+function checkIdent(x) {
     let p = new Parser('false');
     p.parse();
     x.assert(p.error, null);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'bool');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), false);
-
+    x.assert(p.elems[0].getRaw(), 'false');
 
     p = new Parser('true');
     p.parse();
@@ -449,7 +448,15 @@ function checkBool(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'bool');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), true);
+    x.assert(p.elems[0].getRaw(), 'true');
+
+    p = new Parser('aloha');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'ident');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'aloha');
 
 
     p = new Parser('     \t   false                 ');
@@ -458,7 +465,15 @@ function checkBool(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'bool');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), false);
+    x.assert(p.elems[0].getRaw(), 'false');
+
+    p = new Parser('     \t   aloha                 ');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'ident');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'aloha');
 
 
     p = new Parser('true,');
@@ -467,19 +482,21 @@ function checkBool(x) {
     x.assert(p.elems.length, 2);
     x.assert(p.elems[0].kind, 'bool');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), true);
+    x.assert(p.elems[0].getRaw(), 'true');
     x.assert(p.elems[1].kind, 'char');
     x.assert(p.elems[1].error, 'expected nothing, found `,`');
     x.assert(p.elems[1].getRaw(), ',');
 
-
-    p = new Parser('tre');
+    p = new Parser('aloha,');
     p.parse();
-    x.assert(p.error, 'unexpected `tre` as first token');
-    x.assert(p.elems.length, 1);
-    x.assert(p.elems[0].kind, 'unknown');
-    x.assert(p.elems[0].error, 'unexpected `tre` as first token');
-    x.assert(p.elems[0].getRaw(), 'tre');
+    x.assert(p.error, 'expected nothing, found `,`');
+    x.assert(p.elems.length, 2);
+    x.assert(p.elems[0].kind, 'ident');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'aloha');
+    x.assert(p.elems[1].kind, 'char');
+    x.assert(p.elems[1].error, 'expected nothing, found `,`');
+    x.assert(p.elems[1].getRaw(), ',');
 }
 
 function checkString(x) {
@@ -769,10 +786,10 @@ function checkJson(x) {
 
     p = new Parser('{true: 1}');
     p.parse();
-    x.assert(p.error, 'booleans cannot be used as keys');
+    x.assert(p.error, 'booleans and idents cannot be used as keys');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'booleans cannot be used as keys');
+    x.assert(p.elems[0].error, 'booleans and idents cannot be used as keys');
     x.assert(p.elems[0].getText(), '{true');
 
 
@@ -788,15 +805,15 @@ function checkJson(x) {
     x.assert(p.elems[0].getRaw()[0].value === undefined);
 
 
-    p = new Parser('{x: 1}');
+    p = new Parser('{.1: 1}');
     p.parse();
-    x.assert(p.error, 'unexpected `x` after `{`');
+    x.assert(p.error, 'unexpected `.` after `{`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'unexpected `x` after `{`');
-    x.assert(p.elems[0].getText(), '{x:');
+    x.assert(p.elems[0].error, 'unexpected `.` after `{`');
+    x.assert(p.elems[0].getText(), '{.');
     x.assert(p.elems[0].getRaw()[0].key.kind, 'unknown');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), 'x');
+    x.assert(p.elems[0].getRaw()[0].key.getText(), '.');
     x.assert(p.elems[0].getRaw()[0].value === undefined);
 
 
@@ -846,18 +863,18 @@ function checkJson(x) {
     x.assert(p.elems[0].getRaw()[0].value === undefined);
 
 
-    p = new Parser('{"x": y}');
+    p = new Parser('{"x": .}');
     p.parse();
-    x.assert(p.error, 'invalid value `y` for key `"x"`');
+    x.assert(p.error, 'invalid value `.` for key `"x"`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'invalid value `y` for key `"x"`');
-    x.assert(p.elems[0].getText(), '{"x": y}');
+    x.assert(p.elems[0].error, 'invalid value `.` for key `"x"`');
+    x.assert(p.elems[0].getText(), '{"x": .');
     x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
     x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
     x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
     x.assert(p.elems[0].getRaw()[0].value.kind, 'unknown');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw(), 'y');
+    x.assert(p.elems[0].getRaw()[0].value.getRaw(), '.');
 
 
     p = new Parser('{"x": 1,}');
@@ -874,18 +891,18 @@ function checkJson(x) {
     x.assert(p.elems[0].getRaw()[0].value.getRaw(), '1');
 
 
-    p = new Parser('{"x": y,}');
+    p = new Parser('{"x": .,}');
     p.parse();
-    x.assert(p.error, 'invalid value `y` for key `"x"`');
+    x.assert(p.error, 'invalid value `.` for key `"x"`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'invalid value `y` for key `"x"`');
-    x.assert(p.elems[0].getText(), '{"x": y,');
+    x.assert(p.elems[0].error, 'invalid value `.` for key `"x"`');
+    x.assert(p.elems[0].getText(), '{"x": .');
     x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
     x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
     x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
     x.assert(p.elems[0].getRaw()[0].value.kind, 'unknown');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw(), 'y');
+    x.assert(p.elems[0].getRaw()[0].value.getRaw(), '.');
 
 
     p = new Parser('{"x": }');
@@ -1054,7 +1071,7 @@ function checkJson(x) {
     x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
     x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
     x.assert(p.elems[0].getRaw()[0].value.kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw(), true);
+    x.assert(p.elems[0].getRaw()[0].value.getRaw(), 'true');
 
 
     p = new Parser('{"x": "a", "y": true, "z": 56}');
@@ -1077,7 +1094,7 @@ function checkJson(x) {
     x.assert(p.elems[0].getRaw()[1].key.getText(), '"y"');
     x.assert(p.elems[0].getRaw()[1].key.getRaw(), 'y');
     x.assert(p.elems[0].getRaw()[1].value.kind, 'bool');
-    x.assert(p.elems[0].getRaw()[1].value.getRaw(), true);
+    x.assert(p.elems[0].getRaw()[1].value.getRaw(), 'true');
     x.assert(p.elems[0].getRaw()[1].value.isRecursive(), false);
     x.assert(p.elems[0].getRaw()[2].key.kind, 'string');
     x.assert(p.elems[0].getRaw()[2].key.getText(), '"z"');
@@ -1141,7 +1158,7 @@ function checkJson(x) {
     x.assert(subsubsub[1].key.getText(), '"done"');
     x.assert(subsubsub[1].key.getRaw(), 'done');
     x.assert(subsubsub[1].value.kind, 'bool');
-    x.assert(subsubsub[1].value.getRaw(), false);
+    x.assert(subsubsub[1].value.getRaw(), 'false');
 
     // welcome to level 4... json god?
     const subsubsubsub = subsubsub[0].value.getRaw();
@@ -1220,7 +1237,7 @@ function checkComment(x) {
 const TO_CHECK = [
     {'name': 'tuple', 'func': checkTuple},
     {'name': 'array', 'func': checkArray},
-    {'name': 'bool', 'func': checkBool},
+    {'name': 'ident', 'func': checkIdent},
     {'name': 'string', 'func': checkString},
     {'name': 'number', 'func': checkNumber},
     {'name': 'json', 'func': checkJson},
