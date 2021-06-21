@@ -1898,13 +1898,16 @@ function checkCompareElementsAttributeInner(x, func, before, after) {
             'if (parseCompareElementsAttr1 === null) { throw \'"a" not found\'; }\n' +
             'let parseCompareElementsAttr2 = await page.$("b");\n' +
             'if (parseCompareElementsAttr2 === null) { throw \'"b" not found\'; }\n' +
-            before +
             'await page.evaluate((e1, e2) => {\n' +
-            'if (e1.getAttribute("\\"data-whatever") !== e2.getAttribute("\\"data-whatever")) {\n' +
-            'throw "[\\"data-whatever]: " + e1.getAttribute("\\"data-whatever") + " !== " + ' +
-            'e2.getAttribute("\\"data-whatever");\n' +
+            'const attributes = ["\\"data-whatever"];\n' +
+            'for (let i = 0; i < attributes.length; ++i) {\n' +
+            'const attr = attributes[i];\n' +
+            before +
+            'if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n' +
+            'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
+            '}' + after + '\n' +
             '}\n' +
-            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);' + after,
+            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);',
         ],
         'wait': false,
         'checkResult': true,
@@ -1919,13 +1922,16 @@ function checkCompareElementsAttributeInner(x, func, before, after) {
             'parseCompareElementsAttr1 = parseCompareElementsAttr1[0];\n' +
             'let parseCompareElementsAttr2 = await page.$("b");\n' +
             'if (parseCompareElementsAttr2 === null) { throw \'"b" not found\'; }\n' +
-            before +
             'await page.evaluate((e1, e2) => {\n' +
-            'if (e1.getAttribute("\\"data-whatever") !== e2.getAttribute("\\"data-whatever")) {\n' +
-            'throw "[\\"data-whatever]: " + e1.getAttribute("\\"data-whatever") + " !== " + ' +
-            'e2.getAttribute("\\"data-whatever");\n' +
+            'const attributes = ["\\"data-whatever"];\n' +
+            'for (let i = 0; i < attributes.length; ++i) {\n' +
+            'const attr = attributes[i];\n' +
+            before +
+            'if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n' +
+            'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
+            '}' + after + '\n' +
             '}\n' +
-            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);' + after,
+            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);',
         ],
         'wait': false,
         'checkResult': true,
@@ -1937,13 +1943,16 @@ function checkCompareElementsAttributeInner(x, func, before, after) {
             'let parseCompareElementsAttr2 = await page.$x("//b");\n' +
             'if (parseCompareElementsAttr2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
             'parseCompareElementsAttr2 = parseCompareElementsAttr2[0];\n' +
-            before +
             'await page.evaluate((e1, e2) => {\n' +
-            'if (e1.getAttribute("\\"data-whatever") !== e2.getAttribute("\\"data-whatever")) {\n' +
-            'throw "[\\"data-whatever]: " + e1.getAttribute("\\"data-whatever") + " !== " + ' +
-            'e2.getAttribute("\\"data-whatever");\n' +
+            'const attributes = ["\\"data-whatever"];\n' +
+            'for (let i = 0; i < attributes.length; ++i) {\n' +
+            'const attr = attributes[i];\n' +
+            before +
+            'if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n' +
+            'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
+            '}' + after + '\n' +
             '}\n' +
-            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);' + after,
+            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);',
         ],
         'wait': false,
         'checkResult': true,
@@ -1956,13 +1965,16 @@ function checkCompareElementsAttributeInner(x, func, before, after) {
             'let parseCompareElementsAttr2 = await page.$x("//b");\n' +
             'if (parseCompareElementsAttr2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
             'parseCompareElementsAttr2 = parseCompareElementsAttr2[0];\n' +
-            before +
             'await page.evaluate((e1, e2) => {\n' +
-            'if (e1.getAttribute("\\"data-whatever") !== e2.getAttribute("\\"data-whatever")) {\n' +
-            'throw "[\\"data-whatever]: " + e1.getAttribute("\\"data-whatever") + " !== " + ' +
-            'e2.getAttribute("\\"data-whatever");\n' +
+            'const attributes = ["\\"data-whatever"];\n' +
+            'for (let i = 0; i < attributes.length; ++i) {\n' +
+            'const attr = attributes[i];\n' +
+            before +
+            'if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n' +
+            'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
+            '}' + after + '\n' +
             '}\n' +
-            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);' + after,
+            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);',
         ],
         'wait': false,
         'checkResult': true,
@@ -1978,7 +1990,7 @@ function checkCompareElementsAttributeFalse(x, func) {
         x,
         func,
         'try {\n',
-        '\n} catch(e) { return; } throw "assert didn\'t fail";',
+        '\n} catch(e) { continue; } throw "assert didn\'t fail";',
     );
 }
 
@@ -2018,17 +2030,22 @@ function checkCompareElementsCssInner(x, func, before, after) {
             'if (parseCompareElementsCss1 === null) { throw \'"a" not found\'; }\n' +
             'let parseCompareElementsCss2 = await page.$("b");\n' +
             'if (parseCompareElementsCss2 === null) { throw \'"b" not found\'; }\n' +
-            before +
             'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
             'let computed_style2 = getComputedStyle(e2);\n' +
-            'let style1_1 = e1.style["margin"];\n' +
-            'let style1_2 = computed_style1["margin"];\n' +
-            'let style2_1 = e2.style["margin"];\n' +
-            'let style2_2 = computed_style2["margin"];\n' +
-            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 && ' +
-            'style1_2 != style2_2) {\n' +
-            'throw \'CSS property `margin` did not match: \' + style1_2 + \' != \' + style2_2; }' +
-            '\n}, parseCompareElementsCss1, parseCompareElementsCss2);' + after,
+            'const properties = ["margin"];\n' +
+            'for (let i = 0; i < properties.length; ++i) {\n' +
+            'const css_property = properties[i];\n' +
+            before +
+            'let style1_1 = e1.style[css_property];\n' +
+            'let style1_2 = computed_style1[css_property];\n' +
+            'let style2_1 = e2.style[css_property];\n' +
+            'let style2_2 = computed_style2[css_property];\n' +
+            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 ' +
+            '&& style1_2 != style2_2) {\n' +
+            'throw \'CSS property `\' + css_property + \'` did not match: \' + style1_2 + \' ' +
+            '!= \' + style2_2; }' + after + '\n' +
+            '}\n' +
+            '}, parseCompareElementsCss1, parseCompareElementsCss2);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2042,18 +2059,22 @@ function checkCompareElementsCssInner(x, func, before, after) {
             'parseCompareElementsCss1 = parseCompareElementsCss1[0];\n' +
             'let parseCompareElementsCss2 = await page.$("b");\n' +
             'if (parseCompareElementsCss2 === null) { throw \'"b" not found\'; }\n' +
-            before +
             'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
             'let computed_style2 = getComputedStyle(e2);\n' +
-            'let style1_1 = e1.style["margin"];\n' +
-            'let style1_2 = computed_style1["margin"];\n' +
-            'let style2_1 = e2.style["margin"];\n' +
-            'let style2_2 = computed_style2["margin"];\n' +
-            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 && ' +
-            'style1_2 != style2_2) {\n' +
-            'throw \'CSS property `margin` did not match: \' + style1_2 + \' ' +
-            '!= \' + style2_2; }\n' +
-            '}, parseCompareElementsCss1, parseCompareElementsCss2);' + after,
+            'const properties = ["margin"];\n' +
+            'for (let i = 0; i < properties.length; ++i) {\n' +
+            'const css_property = properties[i];\n' +
+            before +
+            'let style1_1 = e1.style[css_property];\n' +
+            'let style1_2 = computed_style1[css_property];\n' +
+            'let style2_1 = e2.style[css_property];\n' +
+            'let style2_2 = computed_style2[css_property];\n' +
+            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 ' +
+            '&& style1_2 != style2_2) {\n' +
+            'throw \'CSS property `\' + css_property + \'` did not match: \' + style1_2 + \' ' +
+            '!= \' + style2_2; }' + after + '\n' +
+            '}\n' +
+            '}, parseCompareElementsCss1, parseCompareElementsCss2);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2065,18 +2086,22 @@ function checkCompareElementsCssInner(x, func, before, after) {
             'let parseCompareElementsCss2 = await page.$x("//b");\n' +
             'if (parseCompareElementsCss2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
             'parseCompareElementsCss2 = parseCompareElementsCss2[0];\n' +
-            before +
             'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
             'let computed_style2 = getComputedStyle(e2);\n' +
-            'let style1_1 = e1.style["margin"];\n' +
-            'let style1_2 = computed_style1["margin"];\n' +
-            'let style2_1 = e2.style["margin"];\n' +
-            'let style2_2 = computed_style2["margin"];\n' +
-            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 && ' +
-            'style1_2 != style2_2) {\n' +
-            'throw \'CSS property `margin` did not match: \' + style1_2 + \' ' +
-            '!= \' + style2_2; }\n' +
-            '}, parseCompareElementsCss1, parseCompareElementsCss2);' + after,
+            'const properties = ["margin"];\n' +
+            'for (let i = 0; i < properties.length; ++i) {\n' +
+            'const css_property = properties[i];\n' +
+            before +
+            'let style1_1 = e1.style[css_property];\n' +
+            'let style1_2 = computed_style1[css_property];\n' +
+            'let style2_1 = e2.style[css_property];\n' +
+            'let style2_2 = computed_style2[css_property];\n' +
+            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 ' +
+            '&& style1_2 != style2_2) {\n' +
+            'throw \'CSS property `\' + css_property + \'` did not match: \' + style1_2 + \' ' +
+            '!= \' + style2_2; }' + after + '\n' +
+            '}\n' +
+            '}, parseCompareElementsCss1, parseCompareElementsCss2);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2089,18 +2114,22 @@ function checkCompareElementsCssInner(x, func, before, after) {
             'let parseCompareElementsCss2 = await page.$x("//b");\n' +
             'if (parseCompareElementsCss2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
             'parseCompareElementsCss2 = parseCompareElementsCss2[0];\n' +
-            before +
             'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
             'let computed_style2 = getComputedStyle(e2);\n' +
-            'let style1_1 = e1.style["margin"];\n' +
-            'let style1_2 = computed_style1["margin"];\n' +
-            'let style2_1 = e2.style["margin"];\n' +
-            'let style2_2 = computed_style2["margin"];\n' +
-            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 && ' +
-            'style1_2 != style2_2) {\n' +
-            'throw \'CSS property `margin` did not match: \' + style1_2 + \' ' +
-            '!= \' + style2_2; }\n' +
-            '}, parseCompareElementsCss1, parseCompareElementsCss2);' + after,
+            'const properties = ["margin"];\n' +
+            'for (let i = 0; i < properties.length; ++i) {\n' +
+            'const css_property = properties[i];\n' +
+            before +
+            'let style1_1 = e1.style[css_property];\n' +
+            'let style1_2 = computed_style1[css_property];\n' +
+            'let style2_1 = e2.style[css_property];\n' +
+            'let style2_2 = computed_style2[css_property];\n' +
+            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 ' +
+            '&& style1_2 != style2_2) {\n' +
+            'throw \'CSS property `\' + css_property + \'` did not match: \' + style1_2 + \' ' +
+            '!= \' + style2_2; }' + after + '\n' +
+            '}\n' +
+            '}, parseCompareElementsCss1, parseCompareElementsCss2);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2116,7 +2145,7 @@ function checkCompareElementsCssFalse(x, func) {
         x,
         func,
         'try {\n',
-        '\n} catch(e) { return; } throw "assert didn\'t fail";',
+        '\n} catch(e) { continue; } throw "assert didn\'t fail";',
     );
 }
 
@@ -2347,7 +2376,7 @@ function checkCompareElementsPropertyInner(x, func, before, after) {
             '}, property);\n' +
             'await parseCompareElementsProp2.evaluateHandle((e, v, p) => {\n' +
             'if (v !== String(e[p])) {\n' +
-            'throw property + ": `" + v + "` !== `" + String(e[property]) + "`";\n' +
+            'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
             '}\n' +
             '}, value, property);\n' +
             after +
@@ -2374,7 +2403,7 @@ function checkCompareElementsPropertyInner(x, func, before, after) {
             '}, property);\n' +
             'await parseCompareElementsProp2.evaluateHandle((e, v, p) => {\n' +
             'if (v !== String(e[p])) {\n' +
-            'throw property + ": `" + v + "` !== `" + String(e[property]) + "`";\n' +
+            'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
             '}\n' +
             '}, value, property);\n' +
             after +
@@ -2399,7 +2428,7 @@ function checkCompareElementsPropertyInner(x, func, before, after) {
             '}, property);\n' +
             'await parseCompareElementsProp2.evaluateHandle((e, v, p) => {\n' +
             'if (v !== String(e[p])) {\n' +
-            'throw property + ": `" + v + "` !== `" + String(e[property]) + "`";\n' +
+            'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
             '}\n' +
             '}, value, property);\n' +
             after +
@@ -2425,7 +2454,7 @@ function checkCompareElementsPropertyInner(x, func, before, after) {
             '}, property);\n' +
             'await parseCompareElementsProp2.evaluateHandle((e, v, p) => {\n' +
             'if (v !== String(e[p])) {\n' +
-            'throw property + ": `" + v + "` !== `" + String(e[property]) + "`";\n' +
+            'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
             '}\n' +
             '}, value, property);\n' +
             after +
