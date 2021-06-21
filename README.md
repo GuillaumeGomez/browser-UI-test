@@ -228,8 +228,8 @@ Here's the command list:
 
  * [`assert`](#assert)
  * [`assert-false`](#assert-false)
- * [`assert-attr`](#assert-attr)
- * [`assert-attr-false`](#assert-attr-false)
+ * [`assert-attribute`](#assert-attribute)
+ * [`assert-attribute-false`](#assert-attribute-false)
  * [`assert-count`](#assert-count)
  * [`assert-count-false`](#assert-count-false)
  * [`assert-css`](#assert-css)
@@ -240,12 +240,12 @@ Here's the command list:
  * [`assert-text-false`](#assert-text-false)
  * [`attribute`](#attribute)
  * [`click`](#click)
- * [`compare-elements-attr`](#compare-elements-attr)
- * [`compare-elements-attr-false`](#compare-elements-attr-false)
+ * [`compare-elements-attribute`](#compare-elements-attribute)
+ * [`compare-elements-attribute-false`](#compare-elements-attribute-false)
  * [`compare-elements-css`](#compare-elements-css)
  * [`compare-elements-css-false`](#compare-elements-css-false)
- * [`compare-elements-pos`](#compare-elements-pos)
- * [`compare-elements-pos-false`](#compare-elements-pos-false)
+ * [`compare-elements-position`](#compare-elements-position)
+ * [`compare-elements-position-false`](#compare-elements-position-false)
  * [`compare-elements-property`](#compare-elements-property)
  * [`compare-elements-property-false`](#compare-elements-property-false)
  * [`compare-elements-text`](#compare-elements-text)
@@ -297,36 +297,36 @@ assert-false: "#id > .class"
 assert-false: ("#id > .class") // strictly equivalent
 ```
 
-#### assert-attr
+#### assert-attribute
 
-**assert-attr** command checks that the given attribute(s) of the element(s) have the expected value. Examples:
+**assert-attribute** command checks that the given attribute(s) of the element(s) have the expected value. Examples:
 
 ```
-assert-attr: ("#id > .class", {"attribute-name": "attribute-value"})
-assert-attr: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"})
+assert-attribute: ("#id > .class", {"attribute-name": "attribute-value"})
+assert-attribute: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"})
 
 // If you to check all elements matching this selector/XPath, use `ALL`:
-assert-attr: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
-assert-attr: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
+assert-attribute: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
+assert-attribute: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
 ```
 
-Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements-attr) command.
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements-attribute) command.
 
-#### assert-attr-false
+#### assert-attribute-false
 
-**assert-attr-false** command checks that the given attribute(s) of the element(s) don't have the given value. Examples:
+**assert-attribute-false** command checks that the given attribute(s) of the element(s) don't have the given value. Examples:
 
 ```
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
-assert-attr-false: ("#id > .class", {"attribute-name": "attribute-value"})
-assert-attr-false: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"})
+assert-attribute-false: ("#id > .class", {"attribute-name": "attribute-value"})
+assert-attribute-false: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"})
 
 // If you to check all elements matching this selector/XPath, use `ALL`:
-assert-attr-false: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
-assert-attr-false: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
+assert-attribute-false: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
+assert-attribute-false: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
 ```
 
-Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-attr-false) command.
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-attribute-false) command.
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
 
@@ -483,23 +483,23 @@ click: "//*[@id='element']/a"
 click: (10, 12)
 ```
 
-#### compare-elements-attr
+#### compare-elements-attribute
 
-**compare-elements-attr** command allows you to compare two DOM elements' attributes are equal. Examples:
+**compare-elements-attribute** command allows you to compare two DOM elements' attributes are equal. Examples:
 
 ```
-compare-elements-attr: ("element1", "element2", ["attribute1", "attributeX", ...])
-compare-elements-attr: ("//element1", "element2", ["attribute1", "attributeX", ...])
+compare-elements-attribute: ("element1", "element2", ["attribute1", "attributeX", ...])
+compare-elements-attribute: ("//element1", "element2", ["attribute1", "attributeX", ...])
 ```
 
-#### compare-elements-attr-false
+#### compare-elements-attribute-false
 
-**compare-elements-attr-false** command allows you to check that two DOM elements' attributes are different. Examples:
+**compare-elements-attribute-false** command allows you to check that two DOM elements' attributes are different. Examples:
 
 ```
 // IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
-compare-elements-attr-false: ("element1", "element2", ["attribute1", "attributeX", ...])
-compare-elements-attr-false: ("//element1", "element2", ["attribute1", "attributeX", ...])
+compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX", ...])
+compare-elements-attribute-false: ("//element1", "element2", ["attribute1", "attributeX", ...])
 ```
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
@@ -525,36 +525,36 @@ compare-elements-css-false: ("//element1", "element2", ["CSS property1", "CSS pr
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
 
-#### compare-elements-pos
+#### compare-elements-position
 
-**compare-elements-pos** command allows you to check that two DOM elements' CSS X/Y positions are equal. Examples:
+**compare-elements-position** command allows you to check that two DOM elements' CSS X/Y positions are equal. Examples:
 
 ```
 // Compare the X position.
-compare-elements-pos: ("//element1", "element2", ("x"))
+compare-elements-position: ("//element1", "element2", ("x"))
 // Compare the Y position.
-compare-elements-pos: ("element1", "//element2", ("y"))
+compare-elements-position: ("element1", "//element2", ("y"))
 // Compare the X and Y positions.
-compare-elements-pos: ("//element1", "//element2", ("x", "y"))
+compare-elements-position: ("//element1", "//element2", ("x", "y"))
 // Compare the Y and X positions.
-compare-elements-pos: ("element1", "element2", ("y", "x"))
+compare-elements-position: ("element1", "element2", ("y", "x"))
 ```
 
-#### compare-elements-pos-false
+#### compare-elements-position-false
 
-**compare-elements-pos-false** command allows you to check that two DOM elements' CSS X/Y positions are different. Examples:
+**compare-elements-position-false** command allows you to check that two DOM elements' CSS X/Y positions are different. Examples:
 
 ```
 // IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
 
 // Compare the X position.
-compare-elements-pos-false: ("//element1", "element2", ("x"))
+compare-elements-position-false: ("//element1", "element2", ("x"))
 // Compare the Y position.
-compare-elements-pos-false: ("element1", "//element2", ("y"))
+compare-elements-position-false: ("element1", "//element2", ("y"))
 // Compare the X and Y positions.
-compare-elements-pos-false: ("//element1", "//element2", ("x", "y"))
+compare-elements-position-false: ("//element1", "//element2", ("x", "y"))
 // Compare the Y and X positions.
-compare-elements-pos-false: ("element1", "element2", ("y", "x"))
+compare-elements-position-false: ("element1", "element2", ("y", "x"))
 ```
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.

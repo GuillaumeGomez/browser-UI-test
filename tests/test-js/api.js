@@ -92,7 +92,7 @@ function checkAssertFalse(x, func) {
         });
 }
 
-function checkAssertAttr(x, func) {
+function checkAssertAttribute(x, func) {
     x.assert(func('("a", "b", )'), {'error': 'unexpected `,` after `"b"`'});
     x.assert(func('("a", "b")'), {
         'error': 'expected JSON dictionary as second argument, found `"b"`',
@@ -235,7 +235,7 @@ function checkAssertAttr(x, func) {
     });
 }
 
-function checkAssertAttrFalse(x, func) {
+function checkAssertAttributeFalse(x, func) {
     x.assert(func('("a", {)'), {'error': 'unexpected `)` after `{`'});
     x.assert(func('("a", "b")'), {
         'error': 'expected JSON dictionary as second argument, found `"b"`',
@@ -1864,7 +1864,7 @@ function checkClick(x, func) {
     });
 }
 
-function checkCompareElementsAttrInner(x, func, before, after) {
+function checkCompareElementsAttributeInner(x, func, before, after) {
     x.assert(
         func('("a", "b", ())'),
         {'error': 'unexpected `()`: tuples need at least one argument'},
@@ -1969,12 +1969,12 @@ function checkCompareElementsAttrInner(x, func, before, after) {
     });
 }
 
-function checkCompareElementsAttr(x, func) {
-    checkCompareElementsAttrInner(x, func, '', '');
+function checkCompareElementsAttribute(x, func) {
+    checkCompareElementsAttributeInner(x, func, '', '');
 }
 
-function checkCompareElementsAttrFalse(x, func) {
-    checkCompareElementsAttrInner(
+function checkCompareElementsAttributeFalse(x, func) {
+    checkCompareElementsAttributeInner(
         x,
         func,
         'try {\n',
@@ -2120,7 +2120,7 @@ function checkCompareElementsCssFalse(x, func) {
     );
 }
 
-function checkCompareElementsPosInner(x, func, before, after) {
+function checkCompareElementsPositionInner(x, func, before, after) {
     x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
     x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
@@ -2289,12 +2289,12 @@ function checkCompareElementsPosInner(x, func, before, after) {
     });
 }
 
-function checkCompareElementsPos(x, func) {
-    checkCompareElementsPosInner(x, func, '', '');
+function checkCompareElementsPosition(x, func) {
+    checkCompareElementsPositionInner(x, func, '', '');
 }
 
-function checkCompareElementsPosFalse(x, func) {
-    checkCompareElementsPosInner(
+function checkCompareElementsPositionFalse(x, func) {
+    checkCompareElementsPositionInner(
         x,
         func,
         'try {\n',
@@ -3497,14 +3497,14 @@ const TO_CHECK = [
         'toCall': (e, o) => wrapper(parserFuncs.parseAssertFalse, e, o),
     },
     {
-        'name': 'assert-attr',
-        'func': checkAssertAttr,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertAttr, e, o),
+        'name': 'assert-attribute',
+        'func': checkAssertAttribute,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssertAttribute, e, o),
     },
     {
-        'name': 'assert-attr-false',
-        'func': checkAssertAttrFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertAttrFalse, e, o),
+        'name': 'assert-attribute-false',
+        'func': checkAssertAttributeFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssertAttributeFalse, e, o),
     },
     {
         'name': 'assert-css',
@@ -3557,14 +3557,14 @@ const TO_CHECK = [
         'toCall': (e, o) => wrapper(parserFuncs.parseClick, e, o),
     },
     {
-        'name': 'compare-elements-attr',
-        'func': checkCompareElementsAttr,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsAttr, e, o),
+        'name': 'compare-elements-attribute',
+        'func': checkCompareElementsAttribute,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsAttribute, e, o),
     },
     {
-        'name': 'compare-elements-attr-false',
-        'func': checkCompareElementsAttrFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsAttrFalse, e, o),
+        'name': 'compare-elements-attribute-false',
+        'func': checkCompareElementsAttributeFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsAttributeFalse, e, o),
     },
     {
         'name': 'compare-elements-css',
@@ -3577,14 +3577,14 @@ const TO_CHECK = [
         'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsCssFalse, e, o),
     },
     {
-        'name': 'compare-elements-pos',
-        'func': checkCompareElementsPos,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsPos, e, o),
+        'name': 'compare-elements-position',
+        'func': checkCompareElementsPosition,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsPosition, e, o),
     },
     {
-        'name': 'compare-elements-pos-false',
-        'func': checkCompareElementsPosFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsPosFalse, e, o),
+        'name': 'compare-elements-position-false',
+        'func': checkCompareElementsPositionFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsPositionFalse, e, o),
     },
     {
         'name': 'compare-elements-property',

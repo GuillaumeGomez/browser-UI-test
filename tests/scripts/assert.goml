@@ -6,5 +6,5 @@ assert: "#button" // strictly equivalent to the previous line
 css: (".content", "display", "none")
 assert-count: ("div", 1)
 assert-css: ("#button", {"padding": "5px"})
-assert-attr: ("#button", {"href": "./other_page.html"})
+assert-attribute: ("#button", {"href": "./other_page.html"})
 assert-property: ("#button", {"offsetParent": "null"})
