@@ -1270,7 +1270,7 @@ function parseCompareElementsAttributeInner(line, options, assertFalse) {
         return {'error': `expected an array of strings, found \`${tuple[2].getText()}\``};
     }
 
-    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
+    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
 
     const selector1 = tuple[0].getSelector();
     if (selector1.error !== undefined) {
@@ -1284,22 +1284,28 @@ function parseCompareElementsAttributeInner(line, options, assertFalse) {
     const selectors = getAndSetElements(selector1, varName + '1', false) +
         getAndSetElements(selector2, varName + '2', false);
 
-    let code = '';
+    let arr = '';
     for (let i = 0; i < array.length; ++i) {
-        const attr = array[i].getStringValue();
-
-        code += `if (e1.getAttribute("${attr}") !== e2.getAttribute("${attr}")) {\n` +
-            `throw "[${attr}]: " + e1.getAttribute("${attr}") + " !== " + ` +
-                `e2.getAttribute("${attr}");\n`;
+        if (i > 0) {
+            arr += ',';
+        }
+        arr += `"${array[i].getStringValue()}"`;
     }
+
+    const code = `const attributes = [${arr}];\n` +
+    'for (let i = 0; i < attributes.length; ++i) {\n' +
+    'const attr = attributes[i];\n' +
+    `${insertBefore}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n` +
+        'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
+    `}${insertAfter}\n` +
+    '}\n';
 
     return {
         'instructions': [
             selectors +
-            `${insertBefore}await page.evaluate((e1, e2) => {\n` +
+            'await page.evaluate((e1, e2) => {\n' +
             code +
-            '}\n' +
-            `}, ${varName}1, ${varName}2);${insertAfter}`,
+            `}, ${varName}1, ${varName}2);`,
         ],
         'wait': false,
         'checkResult': true,
@@ -1358,7 +1364,7 @@ function parseCompareElementsCssInner(line, options, assertFalse) {
         return {'error': `expected an array of strings, found \`${tuple[2].getText()}\``};
     }
 
-    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
+    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
 
     const selector1 = tuple[0].getSelector();
     if (selector1.error !== undefined) {
@@ -1378,25 +1384,35 @@ function parseCompareElementsCssInner(line, options, assertFalse) {
     const selectors = getAndSetElements(selector1, varName + '1', false) +
         getAndSetElements(selector2, varName + '2', false);
 
-    let code = '';
+    let arr = '';
     for (let i = 0; i < array.length; ++i) {
-        const css_property = array[i].getStringValue();
-        code += `let style1_1 = e1.style["${css_property}"];\n` +
-            `let style1_2 = computed_style1["${css_property}"];\n` +
-            `let style2_1 = e2.style["${css_property}"];\n` +
-            `let style2_2 = computed_style2["${css_property}"];\n` +
+        if (i > 0) {
+            arr += ',';
+        }
+        arr += `"${array[i].getStringValue()}"`;
+    }
+
+    const code = `const properties = [${arr}];\n` +
+    'for (let i = 0; i < properties.length; ++i) {\n' +
+        'const css_property = properties[i];\n' +
+        `${insertBefore}let style1_1 = e1.style[css_property];\n` +
+            'let style1_2 = computed_style1[css_property];\n' +
+            'let style2_1 = e2.style[css_property];\n' +
+            'let style2_2 = computed_style2[css_property];\n' +
             'if (style1_1 != style2_1 && style1_1 != style2_2 && ' +
             'style1_2 != style2_1 && style1_2 != style2_2) {\n' +
-            `throw 'CSS property \`${css_property}\` did not match: ' + ` +
-            'style1_2 + \' != \' + style2_2; }\n';
-    }
+            'throw \'CSS property `\' + css_property + \'` did not match: \' + ' +
+            `style1_2 + ' != ' + style2_2; }${insertAfter}\n` +
+    '}\n';
+
     return {
         'instructions': [
             selectors +
-            `${insertBefore}await page.evaluate((e1, e2) => {` +
+            'await page.evaluate((e1, e2) => {' +
             `let computed_style1 = getComputedStyle(e1${pseudo1});\n` +
-            `let computed_style2 = getComputedStyle(e2${pseudo2});\n${code}` +
-            `}, ${varName}1, ${varName}2);${insertAfter}`,
+            `let computed_style2 = getComputedStyle(e2${pseudo2});\n` +
+            code +
+            `}, ${varName}1, ${varName}2);`,
         ],
         'wait': false,
         'checkResult': true,
@@ -1478,7 +1494,7 @@ function parseCompareElementsPropertyInner(line, options, assertFalse) {
         '}, property);\n' +
         `await ${varName}2.evaluateHandle((e, v, p) => {\n` +
             'if (v !== String(e[p])) {\n' +
-            'throw property + ": `" + v + "` !== `" + String(e[property]) + "`";\n' +
+            'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
             '}\n' +
         `}, value, property);${insertAfter}\n` +
     '}';
