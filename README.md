@@ -244,6 +244,8 @@ Here's the command list:
  * [`compare-elements-css-false`](#compare-elements-css-false)
  * [`compare-elements-pos`](#compare-elements-pos)
  * [`compare-elements-pos-false`](#compare-elements-pos-false)
+ * [`compare-elements-property`](#compare-elements-property)
+ * [`compare-elements-property-false`](#compare-elements-property-false)
  * [`compare-elements-text`](#compare-elements-text)
  * [`compare-elements-text-false`](#compare-elements-text-false)
  * [`css`](#css)
@@ -518,6 +520,27 @@ compare-elements-pos-false: ("element1", "//element2", ("y"))
 compare-elements-pos-false: ("//element1", "//element2", ("x", "y"))
 // Compare the Y and X positions.
 compare-elements-pos-false: ("element1", "element2", ("y", "x"))
+```
+
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+
+#### compare-elements-property
+
+**compare-elements-property** command allows you to check that two DOM elements' CSS properties are equal. Examples:
+
+```
+compare-elements-property: ("element1", "//element2", ["CSS property1", "CSS property2", ...])
+compare-elements-property: ("//element1", "element2", ["CSS property1", "CSS property2", ...])
+```
+
+#### compare-elements-property-false
+
+**compare-elements-property-false** command allows you to check that two DOM elements' CSS properties are different. Examples:
+
+```
+// IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
+compare-elements-property-false: ("element1", "//element2", ["CSS property1", "CSS property2", ...])
+compare-elements-property-false: ("//element1", "element2", ["CSS property1", "CSS property2", ...])
 ```
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
