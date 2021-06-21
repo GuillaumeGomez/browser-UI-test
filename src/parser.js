@@ -27,7 +27,19 @@ function matchInteger(s) {
 
 function cleanString(s) {
     if (s.replace !== undefined) {
-        return s.replace(/"/g, '\\"').replace(/'/g, '\\\'');
+        let parts = s.split('"');
+        for (let i = parts.length - 2; i >= 0; --i) {
+            if (!parts[i].endsWith('\\')) {
+                parts[i] += '\\';
+            }
+        }
+        parts = parts.join('"').split('\'');
+        for (let i = parts.length - 2; i >= 0; --i) {
+            if (!parts[i].endsWith('\\')) {
+                parts[i] += '\\';
+            }
+        }
+        return parts.join('\'');
     }
     return s;
 }
@@ -123,7 +135,7 @@ class Element {
 
     // Used for error messages.
     getArticleKind() {
-        return (this.kind === 'ident' ? 'an ' : 'a ') + this.kind;
+        return (['array', 'ident'].indexOf(this.kind) !== -1 ? 'an ' : 'a ') + this.kind;
     }
 }
 

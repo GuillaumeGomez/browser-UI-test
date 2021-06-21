@@ -234,6 +234,8 @@ Here's the command list:
  * [`assert-count-false`](#assert-count-false)
  * [`assert-css`](#assert-css)
  * [`assert-css-false`](#assert-css-false)
+ * [`assert-property`](#assert-property)
+ * [`assert-property-false`](#assert-property-false)
  * [`assert-text`](#assert-text)
  * [`assert-text-false`](#assert-text-false)
  * [`attribute`](#attribute)
@@ -308,7 +310,7 @@ assert-attr: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
 assert-attr: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
 ```
 
-Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements) command.
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements-attr) command.
 
 #### assert-attr-false
 
@@ -324,7 +326,7 @@ assert-attr-false: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
 assert-attr-false: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
 ```
 
-Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-false) command.
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-attr-false) command.
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
 
@@ -361,7 +363,7 @@ assert-css: ("#id > .class", { "color": "blue" }, ALL)
 assert-css: ("//*[@id='id']/*[@class='class']", { "color": "blue", "height": "10px" }, ALL)
 ```
 
-Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements) command.
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements-css) command.
 
 #### assert-css-false
 
@@ -377,7 +379,40 @@ assert-css-false: ("#id > .class", { "color": "blue" }, ALL)
 assert-css-false: ("//*[@id='id']/*[@class='class']", { "color": "blue", "height": "10px" }, ALL)
 ```
 
-Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-false) command.
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-css-false) command.
+
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+
+#### assert-property
+
+**assert-property** command checks that the DOM properties of the element(s) have the expected value. Examples:
+
+```
+assert-property: ("#id > .class", { "offsetParent": "null" })
+assert-property: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" })
+
+// If you to check all elements matching this selector/XPath, use `ALL`:
+assert-property: ("#id > .class", { "offsetParent": "null" }, ALL)
+assert-property: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" }, ALL)
+```
+
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements-property) command.
+
+#### assert-property-false
+
+**assert-property-false** command checks that the CSS properties of the element(s) don't have the provided value. Examples:
+
+```
+// IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
+assert-property-false: ("#id > .class", { "offsetParent": "null" })
+assert-property-false: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" })
+
+// If you to check all elements matching this selector/XPath, use `ALL`:
+assert-property-false: ("#id > .class", { "offsetParent": "null" }, ALL)
+assert-property-false: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" }, ALL)
+```
+
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-property-false) command.
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
 
@@ -394,7 +429,7 @@ assert-text: ("#id > .class", "hello", ALL)
 assert-text: ("//*[@id='id']/*[@class='class']", "hello", ALL)
 ```
 
-Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements) command.
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements-text) command.
 
 #### assert-text-false
 
@@ -410,7 +445,7 @@ assert-text-false: ("#id > .class", "hello", ALL)
 assert-text-false: ("//*[@id='id']/*[@class='class']", "hello", ALL)
 ```
 
-Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-false) command.
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-text-false) command.
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
 
