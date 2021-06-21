@@ -818,7 +818,7 @@ function parseAssertPropertyFalse(line, options) {
     return parseAssertPropertyInner(line, options, true);
 }
 
-function parseAssertAttrInner(line, options, assertFalse) {
+function parseAssertAttributeInner(line, options, assertFalse) {
     const selector = getAssertSelector(line, options);
     if (selector.error !== undefined) {
         return selector;
@@ -896,8 +896,8 @@ throw 'expected \`' + ${varValue} + '\` for attribute \`' + ${varKey} + '\` for 
 // * ("XPath", {"css property": "value"})
 // * ("CSS", {"css property": "value"}, ALL)
 // * ("XPath", {"css property": "value"}, ALL)
-function parseAssertAttr(line, options) {
-    return parseAssertAttrInner(line, options, false);
+function parseAssertAttribute(line, options) {
+    return parseAssertAttributeInner(line, options, false);
 }
 
 // Possible inputs:
@@ -906,8 +906,8 @@ function parseAssertAttr(line, options) {
 // * ("XPath", {"css property": "value"})
 // * ("CSS", {"css property": "value"}, ALL)
 // * ("XPath", {"css property": "value"}, ALL)
-function parseAssertAttrFalse(line, options) {
-    return parseAssertAttrInner(line, options, true);
+function parseAssertAttributeFalse(line, options) {
+    return parseAssertAttributeInner(line, options, true);
 }
 
 function parseAssertCountInner(line, options, assertFalse) {
@@ -1232,7 +1232,7 @@ function parseCompareElementsTextFalse(line, options) {
     return parseCompareElementsTextInner(line, options, true);
 }
 
-function parseCompareElementsAttrInner(line, options, assertFalse) {
+function parseCompareElementsAttributeInner(line, options, assertFalse) {
     const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
@@ -1309,15 +1309,15 @@ function parseCompareElementsAttrInner(line, options, assertFalse) {
 // Possible inputs:
 //
 // * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2, ["attr"])
-function parseCompareElementsAttr(line, options) {
-    return parseCompareElementsAttrInner(line, options, false);
+function parseCompareElementsAttribute(line, options) {
+    return parseCompareElementsAttributeInner(line, options, false);
 }
 
 // Possible inputs:
 //
 // * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ["attr"])
-function parseCompareElementsAttrFalse(line, options) {
-    return parseCompareElementsAttrInner(line, options, true);
+function parseCompareElementsAttributeFalse(line, options) {
+    return parseCompareElementsAttributeInner(line, options, true);
 }
 
 function parseCompareElementsCssInner(line, options, assertFalse) {
@@ -1505,7 +1505,7 @@ function parseCompareElementsPropertyFalse(line, options) {
     return parseCompareElementsPropertyInner(line, options, true);
 }
 
-function parseCompareElementsPosInner(line, options, assertFalse) {
+function parseCompareElementsPositionInner(line, options, assertFalse) {
     const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
@@ -1600,15 +1600,15 @@ function parseCompareElementsPosInner(line, options, assertFalse) {
 // Possible inputs:
 //
 // * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ("x"|"y"))
-function parseCompareElementsPos(line, options) {
-    return parseCompareElementsPosInner(line, options, false);
+function parseCompareElementsPosition(line, options) {
+    return parseCompareElementsPositionInner(line, options, false);
 }
 
 // Possible inputs:
 //
 // * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ("x"|"y"))
-function parseCompareElementsPosFalse(line, options) {
-    return parseCompareElementsPosInner(line, options, true);
+function parseCompareElementsPositionFalse(line, options) {
+    return parseCompareElementsPositionInner(line, options, true);
 }
 
 // Possible inputs:
@@ -2124,8 +2124,8 @@ function parseJavascript(line, options) {
 const ORDERS = {
     'assert': parseAssert,
     'assert-false': parseAssertFalse,
-    'assert-attr': parseAssertAttr,
-    'assert-attr-false': parseAssertAttrFalse,
+    'assert-attribute': parseAssertAttribute,
+    'assert-attribute-false': parseAssertAttributeFalse,
     'assert-count': parseAssertCount,
     'assert-count-false': parseAssertCountFalse,
     'assert-css': parseAssertCss,
@@ -2136,12 +2136,12 @@ const ORDERS = {
     'assert-text-false': parseAssertTextFalse,
     'attribute': parseAttribute,
     'click': parseClick,
-    'compare-elements-attr': parseCompareElementsAttr,
-    'compare-elements-attr-false': parseCompareElementsAttrFalse,
+    'compare-elements-attribute': parseCompareElementsAttribute,
+    'compare-elements-attribute-false': parseCompareElementsAttributeFalse,
     'compare-elements-css': parseCompareElementsCss,
     'compare-elements-css-false': parseCompareElementsCssFalse,
-    'compare-elements-pos': parseCompareElementsPos,
-    'compare-elements-pos-false': parseCompareElementsPosFalse,
+    'compare-elements-position': parseCompareElementsPosition,
+    'compare-elements-position-false': parseCompareElementsPositionFalse,
     'compare-elements-property': parseCompareElementsProperty,
     'compare-elements-property-false': parseCompareElementsPropertyFalse,
     'compare-elements-text': parseCompareElementsText,
