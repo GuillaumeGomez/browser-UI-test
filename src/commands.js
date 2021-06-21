@@ -42,6 +42,49 @@ function checkIntegerTuple(tuple, text1, text2, negativeCheck = false) {
     return {'value': [ret.value, ret2.value]};
 }
 
+function validateJson(json, allowedValueTypes, keyName) {
+    const entries = {};
+    const warnings = [];
+
+    for (let i = 0; i < json.length; ++i) {
+        const entry = json[i];
+
+        if (entry['value'] === undefined) {
+            warnings.push(`No value for key \`${entry['key'].getText()}\``);
+            continue;
+        } else if (allowedValueTypes.indexOf(entry['value'].kind) === -1) {
+            let allowed = '';
+            for (i = 0; i < allowedValueTypes.length - 1; ++i) {
+                if (allowed.length !== 0) {
+                    allowed += ', ';
+                }
+                allowed += allowedValueTypes[i];
+            }
+            if (allowed.length !== 0) {
+                allowed += ' and ';
+            }
+            allowed += allowedValueTypes[allowedValueTypes.length - 1];
+            const article = allowedValueTypes.length > 1 ? 'are' : 'is';
+            return {
+                'error': `only ${allowed} ${article} allowed, found \`` +
+                    `${entry['value'].getText()}\` (${entry['value'].getArticleKind()})`,
+            };
+        }
+        const key_s = entry['key'].getRaw();
+        if (Object.prototype.hasOwnProperty.call(entries, key_s)) {
+            return {
+                'error': `${keyName} \`${key_s}\` is duplicated`,
+            };
+        }
+        const value_s = entry['value'].getRaw();
+        entries[key_s] = value_s;
+    }
+    return {
+        'values': entries,
+        'warnings': warnings.length > 0 ? warnings : undefined,
+    };
+}
+
 // Possible inputs:
 //
 // * (X, Y)
@@ -604,36 +647,16 @@ function parseAssertCssInner(line, options, assertFalse) {
     const pseudo = !selector.isXPath && selector.pseudo !== null ?
         `, "${selector.pseudo}"` : '';
 
-    let code = '';
-    let warnings = [];
     const json = selector.tuple[1].getRaw();
-    const entries = {};
+    const entries = validateJson(json, ['string', 'number'], 'CSS property');
 
-    for (let i = 0; i < json.length; ++i) {
-        const entry = json[i];
-
-        if (entry['value'] === undefined) {
-            warnings.push(`No value for key \`${entry['key'].getText()}\``);
-            continue;
-        } else if (entry['key'].isRecursive() === true) {
-            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getText()}\``);
-            continue;
-        }
-        const key_s = entry['key'].getStringValue();
-        const value_s = entry['value'].getStringValue();
-        if (Object.prototype.hasOwnProperty.call(entries, key_s)) {
-            return {
-                'error': `key \`${key_s}\` is duplicated`,
-            };
-        }
-        entries[key_s] = value_s;
-    }
-    warnings = warnings.length > 0 ? warnings : undefined;
-    if (entries.length === 0) {
+    if (entries.error !== undefined) {
+        return entries;
+    } else if (entries.values.length === 0) {
         return {
             'instructions': [],
             'wait': false,
-            'warnings': warnings,
+            'warnings': entries.warnings,
             'checkResult': true,
         };
     }
@@ -643,13 +666,13 @@ function parseAssertCssInner(line, options, assertFalse) {
     const varValue = varName + 'Value';
     // JSON.stringify produces a problematic output so instead we use this.
     let d = '';
-    for (const [k, v] of Object.entries(entries)) {
+    for (const [k, v] of Object.entries(entries.values)) {
         if (d.length > 0) {
             d += ',';
         }
         d += `"${k}":"${v}"`;
     }
-    code = `const ${varDict} = {${d}};
+    const code = `const ${varDict} = {${d}};
 for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
 ${insertBefore}if (e.style[${varKey}] != ${varValue} && \
 assertComputedStyle[${varKey}] != ${varValue}) {
@@ -679,7 +702,7 @@ throw 'expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\` for ${xpat
     return {
         'instructions': instructions,
         'wait': false,
-        'warnings': warnings,
+        'warnings': entries.warnings,
         'checkResult': true,
     };
 }
@@ -704,6 +727,97 @@ function parseAssertCssFalse(line, options) {
     return parseAssertCssInner(line, options, true);
 }
 
+function parseAssertPropertyInner(line, options, assertFalse) {
+    const selector = getAssertSelector(line, options);
+    if (selector.error !== undefined) {
+        return selector;
+    }
+    const checkAllElements = selector.checkAllElements;
+    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
+
+    const xpath = selector.isXPath ? 'XPath ' : 'selector ';
+
+    const json = selector.tuple[1].getRaw();
+    const entries = validateJson(json, ['string', 'number'], 'property');
+    if (entries.error !== undefined) {
+        return entries;
+    }
+
+    if (entries.values.length === 0) {
+        return {
+            'instructions': [],
+            'wait': false,
+            'warnings': entries.warnings,
+            'checkResult': true,
+        };
+    }
+    const varName = 'parseAssertElemProp';
+    const varDict = varName + 'Dict';
+    const varKey = varName + 'Key';
+    const varValue = varName + 'Value';
+    // JSON.stringify produces a problematic output so instead we use this.
+    let d = '';
+    for (const [k, v] of Object.entries(entries.values)) {
+        if (d.length > 0) {
+            d += ',';
+        }
+        d += `"${k}":"${v}"`;
+    }
+    const code = `const ${varDict} = {${d}};
+for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+${insertBefore}\
+if (e[${varKey}] === undefined || String(e[${varKey}]) != ${varValue}) {
+throw 'expected \`' + ${varValue} + '\` for property \`' + ${varKey} + '\` for ${xpath}\
+\`${selector.value}\`, found \`' + e[${varKey}] + '\`';
+}${insertAfter}
+}\n`;
+
+    let instructions;
+    if (!checkAllElements) {
+        instructions = [
+            getAndSetElements(selector, varName, checkAllElements) +
+            `await ${varName}.evaluateHandle(e => {\n` +
+                `${code}` +
+            '});',
+        ];
+    } else {
+        instructions = [
+            getAndSetElements(selector, varName, checkAllElements) +
+            `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
+                `await ${varName}[i].evaluateHandle(e => {\n` +
+                    `${code}` +
+                '});\n' +
+            '}',
+        ];
+    }
+    return {
+        'instructions': instructions,
+        'wait': false,
+        'warnings': entries.warnings,
+        'checkResult': true,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS", {"DOM property": "value"})
+// * ("XPath", {"DOM property": "value"})
+// * ("CSS", {"DOM property": "value"}, ALL)
+// * ("XPath", {"DOM property": "value"}, ALL)
+function parseAssertProperty(line, options) {
+    return parseAssertPropertyInner(line, options, false);
+}
+
+// Possible inputs:
+//
+// * ("CSS", {"DOM property": "value"})
+// * ("XPath", {"DOM property": "value"})
+// * ("CSS", {"DOM property": "value"}, ALL)
+// * ("XPath", {"DOM property": "value"}, ALL)
+function parseAssertPropertyFalse(line, options) {
+    return parseAssertPropertyInner(line, options, true);
+}
+
 function parseAssertAttrInner(line, options, assertFalse) {
     const selector = getAssertSelector(line, options);
     if (selector.error !== undefined) {
@@ -714,36 +828,16 @@ function parseAssertAttrInner(line, options, assertFalse) {
 
     const xpath = selector.isXPath ? 'XPath ' : 'selector ';
 
-    let code = '';
-    let warnings = [];
     const json = selector.tuple[1].getRaw();
-    const entries = {};
+    const entries = validateJson(json, ['string', 'number'], 'attribute');
 
-    for (let i = 0; i < json.length; ++i) {
-        const entry = json[i];
-
-        if (entry['value'] === undefined) {
-            warnings.push(`No value for key \`${entry['key'].getText()}\``);
-            continue;
-        } else if (entry['key'].isRecursive() === true) {
-            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getText()}\``);
-            continue;
-        }
-        const attributeName = entry['key'].getRaw();
-        const value = entry['value'].getRaw();
-        if (Object.prototype.hasOwnProperty.call(entries, attributeName)) {
-            return {
-                'error': `attribute \`${attributeName}\` is duplicated`,
-            };
-        }
-        entries[attributeName] = value;
-    }
-    warnings = warnings.length > 0 ? warnings : undefined;
-    if (entries.length === 0) {
+    if (entries.error !== undefined) {
+        return entries;
+    } else if (entries.values.length === 0) {
         return {
             'instructions': [],
             'wait': false,
-            'warnings': warnings,
+            'warnings': entries.warnings,
             'checkResult': true,
         };
     }
@@ -755,14 +849,14 @@ function parseAssertAttrInner(line, options, assertFalse) {
 
     // JSON.stringify produces a problematic output so instead we use this.
     let d = '';
-    for (const [k, v] of Object.entries(entries)) {
+    for (const [k, v] of Object.entries(entries.values)) {
         if (d.length > 0) {
             d += ',';
         }
         d += `"${k}":"${v}"`;
     }
 
-    code = `const ${varDict} = {${d}};
+    const code = `const ${varDict} = {${d}};
 for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
 ${insertBefore}if (e.getAttribute(${varKey}) !== ${varValue}) {
 throw 'expected \`' + ${varValue} + '\` for attribute \`' + ${varKey} + '\` for ${xpath}\
@@ -791,7 +885,7 @@ throw 'expected \`' + ${varValue} + '\` for attribute \`' + ${varKey} + '\` for 
     return {
         'instructions': instructions,
         'wait': false,
-        'warnings': warnings,
+        'warnings': entries.warnings,
         'checkResult': true,
     };
 }
@@ -1948,6 +2042,8 @@ const ORDERS = {
     'assert-count-false': parseAssertCountFalse,
     'assert-css': parseAssertCss,
     'assert-css-false': parseAssertCssFalse,
+    'assert-property': parseAssertProperty,
+    'assert-property-false': parseAssertPropertyFalse,
     'assert-text': parseAssertText,
     'assert-text-false': parseAssertTextFalse,
     'attribute': parseAttribute,

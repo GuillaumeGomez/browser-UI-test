@@ -123,7 +123,7 @@ class Element {
 
     // Used for error messages.
     getArticleKind() {
-        return (this.kind === 'ident' ? 'an ' : 'a ') + this.kind;
+        return (['array', 'ident'].indexOf(this.kind) !== -1 ? 'an ' : 'a ') + this.kind;
     }
 }
 
