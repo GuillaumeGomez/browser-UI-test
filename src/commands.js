@@ -1323,6 +1323,94 @@ function parseCompareElementsCssFalse(line, options) {
     return parseCompareElementsCssInner(line, options, true);
 }
 
+function parseCompareElementsPropertyInner(line, options, assertFalse) {
+    const p = new Parser(line, options.variables);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
+        return {
+            'error': `expected a tuple, found \`${p.elems[0].getText()}\``,
+        };
+    }
+    const tuple = p.elems[0].getRaw();
+    if (tuple.length !== 3) {
+        let err = `expected 3 elements in the tuple, found ${tuple.length} element`;
+        if (tuple.length > 1) {
+            err += 's';
+        }
+        return {'error': err};
+    } else if (tuple[0].kind !== 'string') {
+        return {
+            'error': 'expected first argument to be a CSS selector or an XPath, ' +
+                `found ${tuple[0].getArticleKind()}`,
+        };
+    } else if (tuple[1].kind !== 'string') {
+        return {
+            'error': 'expected second argument to be a CSS selector or an XPath, ' +
+                `found ${tuple[1].getArticleKind()}`,
+        };
+    } else if (tuple[2].kind !== 'array') {
+        return {
+            'error': 'expected third argument to be an array of string, ' +
+                `found ${tuple[2].getArticleKind()}`,
+        };
+    }
+    const array = tuple[2].getRaw();
+    if (array.length > 0 && array[0].kind !== 'string') {
+        return {'error': `expected an array of strings, found \`${tuple[2].getText()}\``};
+    }
+
+    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
+
+    const selector1 = tuple[0].getSelector();
+    if (selector1.error !== undefined) {
+        return selector1;
+    }
+    const selector2 = tuple[1].getSelector();
+    if (selector2.error !== undefined) {
+        return selector2;
+    }
+
+    const varName = 'parseCompareElementsProp';
+    const selectors = getAndSetElements(selector1, varName + '1', false) +
+        getAndSetElements(selector2, varName + '2', false);
+
+    const code = `const ${varName}s = ${tuple[2].getText()};\n` +
+    `for (let i = 0; i < ${varName}s.length; ++i) {\n` +
+        `const property = ${varName}s[i];\n` +
+        `${insertBefore}const value = await ${varName}1.evaluateHandle((e, p) => {\n` +
+            'return String(e[p]);\n' +
+        '}, property);\n' +
+        `await ${varName}2.evaluateHandle((e, v, p) => {\n` +
+            'if (v !== String(e[p])) {\n' +
+            'throw property + ": `" + v + "` !== `" + String(e[property]) + "`";\n' +
+            '}\n' +
+        `}, value, property);${insertAfter}\n` +
+    '}';
+    return {
+        'instructions': [
+            selectors + code,
+        ],
+        'wait': false,
+        'checkResult': true,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2, ["CSS properties"])
+function parseCompareElementsProperty(line, options) {
+    return parseCompareElementsPropertyInner(line, options, false);
+}
+
+// Possible inputs:
+//
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ["CSS properties"])
+function parseCompareElementsPropertyFalse(line, options) {
+    return parseCompareElementsPropertyInner(line, options, true);
+}
+
 function parseCompareElementsPosInner(line, options, assertFalse) {
     const p = new Parser(line, options.variables);
     p.parse();
@@ -1958,6 +2046,8 @@ const ORDERS = {
     'compare-elements-css-false': parseCompareElementsCssFalse,
     'compare-elements-pos': parseCompareElementsPos,
     'compare-elements-pos-false': parseCompareElementsPosFalse,
+    'compare-elements-property': parseCompareElementsProperty,
+    'compare-elements-property-false': parseCompareElementsPropertyFalse,
     'compare-elements-text': parseCompareElementsText,
     'compare-elements-text-false': parseCompareElementsTextFalse,
     'css': parseCss,
