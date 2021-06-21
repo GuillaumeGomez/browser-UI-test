@@ -1770,7 +1770,7 @@ function checkAttribute(x, func) {
             'let parseAttributeElem = await page.$("a");\n' +
             'if (parseAttributeElem === null) { throw \'"a" not found\'; }\n' +
             'await page.evaluate(e => {\n' +
-            'e.setAttribute("\\\\"b","c");\n' +
+            'e.setAttribute("\\"b","c");\n' +
             '}, parseAttributeElem);',
         ],
     });
@@ -2476,7 +2476,7 @@ function checkCss(x, func) {
             'let parseCssElem = await page.$("a");\n' +
             'if (parseCssElem === null) { throw \'"a" not found\'; }\n' +
             'await page.evaluate(e => {\n' +
-            'e.style["\\\\"b"] = "c";\n' +
+            'e.style["\\"b"] = "c";\n' +
             '}, parseCssElem);',
         ],
     });

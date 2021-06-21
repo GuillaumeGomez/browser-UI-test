@@ -70,13 +70,13 @@ function validateJson(json, allowedValueTypes, keyName) {
                     `${entry['value'].getText()}\` (${entry['value'].getArticleKind()})`,
             };
         }
-        const key_s = entry['key'].getRaw();
+        const key_s = entry['key'].getStringValue();
         if (Object.prototype.hasOwnProperty.call(entries, key_s)) {
             return {
                 'error': `${keyName} \`${key_s}\` is duplicated`,
             };
         }
-        const value_s = entry['value'].getRaw();
+        const value_s = entry['value'].getStringValue();
         entries[key_s] = value_s;
     }
     return {

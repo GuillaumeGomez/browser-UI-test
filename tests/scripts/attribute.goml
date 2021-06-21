@@ -5,3 +5,11 @@ attribute: ("#button", "id", "another-id")
 assert: ("#another-id")
 attribute: ("#another-id", {"id": "yet-another-id", "test": "lol"})
 assert-attr: ("#yet-another-id", {"test": "lol"})
+fail: true
+attribute: ("#yet-another-id", {"\"a": "'b", "c": "d"})
+assert-attr: ("#yet-another-id", {"\a": "'b", "c": "d", "\"e": "'2"})
+attribute: ("#yet-another-id", "\"e", "'2")
+assert-attr: ("#yet-another-id", {"\"e": "'2"})
+fail: false
+attribute: ("#yet-another-id", "e", "'2")
+assert-attr: ("#yet-another-id", {"e": "'2"})
