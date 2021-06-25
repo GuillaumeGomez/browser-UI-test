@@ -1584,9 +1584,12 @@ function parseCompareElementsPositionInner(line, options, assertFalse, assertNea
         if (value === 'x') {
             if (!x) {
                 if (assertNear) {
+                    let delta_x = 1;
                     code += 'let x1 = e1.getBoundingClientRect().left;\n' +
                         'let x2 = e2.getBoundingClientRect().left;\n' +
-                        'if (Math.abs(x1 - x2) < 1) { throw "different X values: " + x1 + " != " + x2; }\n';
+                        'let delta = Math.abs(x1 - x2);\n' +
+                        'if (delta < ' + delty_x + ') {' +
+                        'throw "delta X values too large: " + x1 + " - " + x2 + " = " + delta; }\n';
                 } else {
                     code += 'let x1 = e1.getBoundingClientRect().left;\n' +
                         'let x2 = e2.getBoundingClientRect().left;\n' +
@@ -1597,9 +1600,12 @@ function parseCompareElementsPositionInner(line, options, assertFalse, assertNea
         } else if (value === 'y') {
             if (!y) {
                 if (assertNear) {
+                    let delta_y = 1;
                     code += 'let y1 = e1.getBoundingClientRect().top;\n' +
                         'let y2 = e2.getBoundingClientRect().top;\n' +
-                        'if (Math.abs(y1 - y2) < 1) { throw "different Y values: " + y1 + " != " + y2; }\n';
+                        'let delta = Math.abs(y1 - y2);\n' +
+                        'if (delta < ' + delta_y + ') {' +
+                        'throw "delta Y values too large: " + y1 + " - " + y2 + " = " + delta; }\n';
                 } else {
                     code += 'let y1 = e1.getBoundingClientRect().top;\n' +
                         'let y2 = e2.getBoundingClientRect().top;\n' +
@@ -2184,6 +2190,8 @@ const ORDERS = {
     'compare-elements-css-false': parseCompareElementsCssFalse,
     'compare-elements-position': parseCompareElementsPosition,
     'compare-elements-position-false': parseCompareElementsPositionFalse,
+    'compare-elements-position-near': parseCompareElementsPositionNear,
+    'compare-elements-position-near-false': parseCompareElementsPositionNearFalse,
     'compare-elements-property': parseCompareElementsProperty,
     'compare-elements-property-false': parseCompareElementsPropertyFalse,
     'compare-elements-text': parseCompareElementsText,
