@@ -246,6 +246,8 @@ Here's the command list:
  * [`compare-elements-css-false`](#compare-elements-css-false)
  * [`compare-elements-position`](#compare-elements-position)
  * [`compare-elements-position-false`](#compare-elements-position-false)
+ * [`compare-elements-position-near`](#compare-elements-position-near)
+ * [`compare-elements-position-near-false`](#compare-elements-position-near-false)
  * [`compare-elements-property`](#compare-elements-property)
  * [`compare-elements-property-false`](#compare-elements-property-false)
  * [`compare-elements-text`](#compare-elements-text)
@@ -557,7 +559,39 @@ compare-elements-position-false: ("//element1", "//element2", ("x", "y"))
 compare-elements-position-false: ("element1", "element2", ("y", "x"))
 ```
 
+#### compare-elements-position-near
+
+**compare-elements-position** command allows you to check that two DOM elements' CSS X/Y positions are **within 1px**. Examples:
+
+```
+// Compare the X position.
+compare-elements-position-near: ("//element1", "element2", ("x"))
+// Compare the Y position.
+compare-elements-position-near: ("element1", "//element2", ("y"))
+// Compare the X and Y positions.
+compare-elements-position-near: ("//element1", "//element2", ("x", "y"))
+// Compare the Y and X positions.
+compare-elements-position-near: ("element1", "element2", ("y", "x"))
+```
+
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+
+#### compare-elements-position-false
+
+**compare-elements-position-false** command allows you to check that two DOM elements' CSS X/Y positions differ by more than 1px. Examples:
+
+```
+// IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
+
+// Compare the X position.
+compare-elements-position-near-false: ("//element1", "element2", ("x"))
+// Compare the Y position.
+compare-elements-position-near-false: ("element1", "//element2", ("y"))
+// Compare the X and Y positions.
+compare-elements-position-near-false: ("//element1", "//element2", ("x", "y"))
+// Compare the Y and X positions.
+compare-elements-position-near-false: ("element1", "element2", ("y", "x"))
+```
 
 #### compare-elements-property
 
