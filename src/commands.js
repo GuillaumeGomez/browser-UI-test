@@ -1521,7 +1521,7 @@ function parseCompareElementsPropertyFalse(line, options) {
     return parseCompareElementsPropertyInner(line, options, true);
 }
 
-function parseCompareElementsPositionInner(line, options, assertFalse) {
+function parseCompareElementsPositionInner(line, options, assertFalse, assertNear) {
     const p = new Parser(line, options.variables);
     p.parse();
     if (p.error !== null) {
@@ -1583,16 +1583,28 @@ function parseCompareElementsPositionInner(line, options, assertFalse) {
         const value = sub_tuple[i].getRaw();
         if (value === 'x') {
             if (!x) {
-                code += 'let x1 = e1.getBoundingClientRect().left;\n' +
-                    'let x2 = e2.getBoundingClientRect().left;\n' +
-                    'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n';
+                if (assertNear) {
+                    code += 'let x1 = e1.getBoundingClientRect().left;\n' +
+                        'let x2 = e2.getBoundingClientRect().left;\n' +
+                        'if (Math.abs(x1 - x2) < 1) { throw "different X values: " + x1 + " != " + x2; }\n';
+                } else {
+                    code += 'let x1 = e1.getBoundingClientRect().left;\n' +
+                        'let x2 = e2.getBoundingClientRect().left;\n' +
+                        'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n';
+                }
             }
             x = true;
         } else if (value === 'y') {
             if (!y) {
-                code += 'let y1 = e1.getBoundingClientRect().top;\n' +
-                    'let y2 = e2.getBoundingClientRect().top;\n' +
-                    'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n';
+                if (assertNear) {
+                    code += 'let y1 = e1.getBoundingClientRect().top;\n' +
+                        'let y2 = e2.getBoundingClientRect().top;\n' +
+                        'if (Math.abs(y1 - y2) < 1) { throw "different Y values: " + y1 + " != " + y2; }\n';
+                } else {
+                    code += 'let y1 = e1.getBoundingClientRect().top;\n' +
+                        'let y2 = e2.getBoundingClientRect().top;\n' +
+                        'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n';
+                }
             }
             y = true;
         } else {
@@ -1617,14 +1629,28 @@ function parseCompareElementsPositionInner(line, options, assertFalse) {
 //
 // * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ("x"|"y"))
 function parseCompareElementsPosition(line, options) {
-    return parseCompareElementsPositionInner(line, options, false);
+    return parseCompareElementsPositionInner(line, options, false, false);
 }
 
 // Possible inputs:
 //
 // * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ("x"|"y"))
 function parseCompareElementsPositionFalse(line, options) {
-    return parseCompareElementsPositionInner(line, options, true);
+    return parseCompareElementsPositionInner(line, options, true, false);
+}
+
+// Possible inputs:
+//
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ["CSS properties"])
+function parseCompareElementsPositionNear(line, options) {
+    return parseCompareElementsPropertyInner(line, options, false, true);
+}
+
+// Possible inputs:
+//
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ["CSS properties"])
+function parseCompareElementsPositionNearFalse(line, options) {
+    return parseCompareElementsPropertyInner(line, options, true, true);
 }
 
 // Possible inputs:
