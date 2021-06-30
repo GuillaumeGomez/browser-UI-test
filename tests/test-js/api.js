@@ -2182,6 +2182,14 @@ function checkCompareElementsPositionInner(x, func, before, after) {
         func('("a", "b", ("x", "yo"))'),
         {'error': 'Only accepted values are "x" and "y", found `"yo"` (in `("x", "yo")`'},
     );
+    x.assert(
+        func('("a", "b", ("x", "y", "x"))'),
+        {'error': 'Duplicated "x" value in `("x", "y", "x")`'},
+    );
+    x.assert(
+        func('("a", "b", ("x", "y", "y"))'),
+        {'error': 'Duplicated "y" value in `("x", "y", "y")`'},
+    );
 
     x.assert(func('("a", "b", ("x"))'), {
         'instructions': [
@@ -2189,12 +2197,16 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
             'let parseCompareElementsPos2 = await page.$("b");\n' +
             'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkX(e1, e2) {\n' +
             before +
-            'await page.evaluate((e1, e2) => {\n' +
             'let x1 = e1.getBoundingClientRect().left;\n' +
             'let x2 = e2.getBoundingClientRect().left;\n' +
             'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);' + after,
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2205,12 +2217,16 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
             'let parseCompareElementsPos2 = await page.$("b");\n' +
             'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkY(e1, e2) {\n' +
             before +
-            'await page.evaluate((e1, e2) => {\n' +
             'let y1 = e1.getBoundingClientRect().top;\n' +
             'let y2 = e2.getBoundingClientRect().top;\n' +
             'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);' + after,
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2221,15 +2237,24 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
             'let parseCompareElementsPos2 = await page.$("b");\n' +
             'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkX(e1, e2) {\n' +
             before +
-            'await page.evaluate((e1, e2) => {\n' +
             'let x1 = e1.getBoundingClientRect().left;\n' +
             'let x2 = e2.getBoundingClientRect().left;\n' +
             'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            'function checkY(e1, e2) {\n' +
+            before +
             'let y1 = e1.getBoundingClientRect().top;\n' +
             'let y2 = e2.getBoundingClientRect().top;\n' +
             'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);' + after,
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2240,15 +2265,24 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
             'let parseCompareElementsPos2 = await page.$("b");\n' +
             'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkY(e1, e2) {\n' +
             before +
-            'await page.evaluate((e1, e2) => {\n' +
             'let y1 = e1.getBoundingClientRect().top;\n' +
             'let y2 = e2.getBoundingClientRect().top;\n' +
             'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
             'let x1 = e1.getBoundingClientRect().left;\n' +
             'let x2 = e2.getBoundingClientRect().left;\n' +
             'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);' + after,
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2262,15 +2296,24 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'parseCompareElementsPos1 = parseCompareElementsPos1[0];\n' +
             'let parseCompareElementsPos2 = await page.$("b");\n' +
             'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkY(e1, e2) {\n' +
             before +
-            'await page.evaluate((e1, e2) => {\n' +
             'let y1 = e1.getBoundingClientRect().top;\n' +
             'let y2 = e2.getBoundingClientRect().top;\n' +
             'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
             'let x1 = e1.getBoundingClientRect().left;\n' +
             'let x2 = e2.getBoundingClientRect().left;\n' +
             'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);' + after,
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2282,15 +2325,24 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'let parseCompareElementsPos2 = await page.$x("//b");\n' +
             'if (parseCompareElementsPos2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
             'parseCompareElementsPos2 = parseCompareElementsPos2[0];\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkY(e1, e2) {\n' +
             before +
-            'await page.evaluate((e1, e2) => {\n' +
             'let y1 = e1.getBoundingClientRect().top;\n' +
             'let y2 = e2.getBoundingClientRect().top;\n' +
             'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
             'let x1 = e1.getBoundingClientRect().left;\n' +
             'let x2 = e2.getBoundingClientRect().left;\n' +
             'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);' + after,
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2303,15 +2355,24 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'let parseCompareElementsPos2 = await page.$x("//b");\n' +
             'if (parseCompareElementsPos2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
             'parseCompareElementsPos2 = parseCompareElementsPos2[0];\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkY(e1, e2) {\n' +
             before +
-            'await page.evaluate((e1, e2) => {\n' +
             'let y1 = e1.getBoundingClientRect().top;\n' +
             'let y2 = e2.getBoundingClientRect().top;\n' +
             'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
             'let x1 = e1.getBoundingClientRect().left;\n' +
             'let x2 = e2.getBoundingClientRect().left;\n' +
             'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);' + after,
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
         ],
         'wait': false,
         'checkResult': true,

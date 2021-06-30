@@ -1576,24 +1576,40 @@ function parseCompareElementsPositionInner(line, options, assertFalse) {
     let x = false;
     let y = false;
     let code = '';
-    for (let i = 0; i < sub_tuple.length && (!x || !y); ++i) {
+    for (let i = 0; i < sub_tuple.length; ++i) {
         if (sub_tuple[i].kind !== 'string') {
             return { 'error': `\`${tuple[2].getText()}\` should only contain strings` };
         }
         const value = sub_tuple[i].getRaw();
         if (value === 'x') {
-            if (!x) {
-                code += 'let x1 = e1.getBoundingClientRect().left;\n' +
-                    'let x2 = e2.getBoundingClientRect().left;\n' +
-                    'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n';
+            if (x) {
+                return {
+                    'error': `Duplicated "x" value in \`${tuple[2].getText()}\``,
+                };
             }
+            code += 'function checkX(e1, e2) {\n' +
+                insertBefore +
+                'let x1 = e1.getBoundingClientRect().left;\n' +
+                'let x2 = e2.getBoundingClientRect().left;\n' +
+                'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
+                insertAfter +
+                '}\n' +
+                'checkX(elem1, elem2);\n';
             x = true;
         } else if (value === 'y') {
-            if (!y) {
-                code += 'let y1 = e1.getBoundingClientRect().top;\n' +
-                    'let y2 = e2.getBoundingClientRect().top;\n' +
-                    'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n';
+            if (y) {
+                return {
+                    'error': `Duplicated "y" value in \`${tuple[2].getText()}\``,
+                };
             }
+            code += 'function checkY(e1, e2) {\n' +
+                insertBefore +
+                'let y1 = e1.getBoundingClientRect().top;\n' +
+                'let y2 = e2.getBoundingClientRect().top;\n' +
+                'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
+                insertAfter +
+                '}\n' +
+                'checkY(elem1, elem2);\n';
             y = true;
         } else {
             return {
@@ -1605,8 +1621,8 @@ function parseCompareElementsPositionInner(line, options, assertFalse) {
     return {
         'instructions': [
             selectors +
-            `${insertBefore}await page.evaluate((e1, e2) => {\n` +
-            `${code}}, ${varName}1, ${varName}2);${insertAfter}`,
+            'await page.evaluate((elem1, elem2) => {\n' +
+            `${code}}, ${varName}1, ${varName}2);`,
         ],
         'wait': false,
         'checkResult': true,
