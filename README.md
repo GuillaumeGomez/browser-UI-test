@@ -246,6 +246,8 @@ Here's the command list:
  * [`compare-elements-css-false`](#compare-elements-css-false)
  * [`compare-elements-position`](#compare-elements-position)
  * [`compare-elements-position-false`](#compare-elements-position-false)
+ * [`compare-elements-position-near`](#compare-elements-position-near)
+ * [`compare-elements-position-near-false`](#compare-elements-position-near-false)
  * [`compare-elements-property`](#compare-elements-property)
  * [`compare-elements-property-false`](#compare-elements-property-false)
  * [`compare-elements-text`](#compare-elements-text)
@@ -527,7 +529,7 @@ Another thing to be noted: if you don't care wether the selector exists or not e
 
 #### compare-elements-position
 
-**compare-elements-position** command allows you to check that two DOM elements' CSS X/Y positions are equal. Examples:
+**compare-elements-position** command allows you to check that two DOM elements' X/Y positions are equal. Examples:
 
 ```
 // Compare the X position.
@@ -542,7 +544,7 @@ compare-elements-position: ("element1", "element2", ("y", "x"))
 
 #### compare-elements-position-false
 
-**compare-elements-position-false** command allows you to check that two DOM elements' CSS X/Y positions are different. Examples:
+**compare-elements-position-false** command allows you to check that two DOM elements' X/Y positions are different. Examples:
 
 ```
 // IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
@@ -555,6 +557,38 @@ compare-elements-position-false: ("element1", "//element2", ("y"))
 compare-elements-position-false: ("//element1", "//element2", ("x", "y"))
 // Compare the Y and X positions.
 compare-elements-position-false: ("element1", "element2", ("y", "x"))
+```
+
+#### compare-elements-position-near
+
+**compare-elements-position-near** command allows you to check that two DOM elements' X/Y positions are within the given pixel range. Examples:
+
+```
+// Compare the X position.
+compare-elements-position-near: ("//element1", "element2", {"x": 1}))
+// Compare the Y position.
+compare-elements-position-near: ("element1", "//element2", {"y": 1})
+// Compare both X and Y positions.
+compare-elements-position-near: ("//element1", "//element2", {"x": 4, "y": 2})
+// Compare both Y and X positions.
+compare-elements-position-near: ("element1", "element2", {"y": 3, "x": 1})
+```
+
+#### compare-elements-position-near-false
+
+**compare-elements-position-near-false** command allows you to check that two DOM elements' X/Y positions differ by more than the given pixel range. Examples:
+
+```
+// IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
+
+// Compare the X position.
+compare-elements-position-near-false: ("//element1", "element2", {"x": 1}))
+// Compare the Y position.
+compare-elements-position-near-false: ("element1", "//element2", {"y": 1})
+// Compare both X and Y positions.
+compare-elements-position-near-false: ("//element1", "//element2", {"x": 4, "y": 2})
+// Compare both Y and X positions.
+compare-elements-position-near-false: ("element1", "element2", {"y": 3, "x": 1})
 ```
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.

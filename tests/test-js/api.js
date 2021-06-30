@@ -2331,6 +2331,355 @@ function checkCompareElementsPositionFalse(x, func) {
     );
 }
 
+function checkCompareElementsPositionNearInner(x, func, before, after) {
+    x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
+    x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
+    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
+    x.assert(func('("a")'), {'error': 'expected 3 elements in the tuple, found 1 element'});
+    x.assert(func('("a", 1)'),
+        {'error': 'expected 3 elements in the tuple, found 2 elements'},
+    );
+    x.assert(func('(1, "a", ("a"))'),
+        {'error': 'expected first argument to be a CSS selector or an XPath, found a number'},
+    );
+    x.assert(func('((), "a", ("a"))'),
+        {'error': 'expected first argument to be a CSS selector or an XPath, found a tuple'},
+    );
+    x.assert(func('("a", "a", "b", "c")'), {
+        'error': 'expected 3 elements in the tuple, found 4 elements',
+    });
+    x.assert(func('("a", "b", 1)'), {
+        'error': 'expected third argument to be a JSON dict, found a number',
+    });
+    x.assert(
+        func('("a", "b", ())'),
+        {'error': 'unexpected `()`: tuples need at least one argument'},
+    );
+    x.assert(
+        func('("a", "b", (1))'),
+        {'error': 'expected third argument to be a JSON dict, found a tuple'},
+    );
+    x.assert(
+        func('("a", "b", {"x": 1, "yo": 2})'),
+        {'error': 'Only accepted keys are "x" and "y", found `yo` (in `{"x": 1, "yo": 2}`'},
+    );
+    x.assert(
+        func('("a", "b", {"x": 1, "x": 2})'),
+        {'error': 'JSON dict key `x` is duplicated'},
+    );
+    x.assert(
+        func('("a", "b", {"x": "a", "y": 2})'),
+        {'error': 'only number is allowed, found `"a"` (a string)'},
+    );
+    x.assert(
+        func('("a", "b", {"x": -1})'),
+        {'error': 'Delta cannot be negative (in `"x": -1`)'},
+    );
+    x.assert(
+        func('("a", "b", {"y": -1})'),
+        {'error': 'Delta cannot be negative (in `"y": -1`)'},
+    );
+
+    x.assert(func('("a", "b", {})'), {
+        'instructions': [
+            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
+            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
+            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", {"x": 1})'), {
+        'instructions': [
+            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
+            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
+            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'let delta = Math.abs(x1 - x2);\n' +
+            'if (delta > 1) {\n' +
+            'throw "delta X values too large: " + delta + " > 1";\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", {"y": 1})'), {
+        'instructions': [
+            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
+            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
+            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkY(e1, e2) {\n' +
+            before +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'let delta = Math.abs(y1 - y2);\n' +
+            'if (delta > 1) {\n' +
+            'throw "delta Y values too large: " + delta + " > 1";\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", {"x": 1, "y": 2})'), {
+        'instructions': [
+            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
+            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
+            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'let delta = Math.abs(x1 - x2);\n' +
+            'if (delta > 1) {\n' +
+            'throw "delta X values too large: " + delta + " > 1";\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            'function checkY(e1, e2) {\n' +
+            before +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'let delta = Math.abs(y1 - y2);\n' +
+            'if (delta > 2) {\n' +
+            'throw "delta Y values too large: " + delta + " > 2";\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", {"y": 2, "x": 1})'), {
+        'instructions': [
+            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
+            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
+            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkY(e1, e2) {\n' +
+            before +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'let delta = Math.abs(y1 - y2);\n' +
+            'if (delta > 2) {\n' +
+            'throw "delta Y values too large: " + delta + " > 2";\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'let delta = Math.abs(x1 - x2);\n' +
+            'if (delta > 1) {\n' +
+            'throw "delta X values too large: " + delta + " > 1";\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // warnings
+    x.assert(func('("a", "b", {"x": 0})'), {
+        'instructions': [
+            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
+            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
+            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'let delta = Math.abs(x1 - x2);\n' +
+            'if (delta > 0) {\n' +
+            'throw "delta X values too large: " + delta + " > 0";\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+        'warnings': ['Delta is 0 for "X", maybe try to use `compare-elements-position` instead?'],
+    });
+    x.assert(func('("a", "b", {"y": 0})'), {
+        'instructions': [
+            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
+            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
+            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkY(e1, e2) {\n' +
+            before +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'let delta = Math.abs(y1 - y2);\n' +
+            'if (delta > 0) {\n' +
+            'throw "delta Y values too large: " + delta + " > 0";\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+        'warnings': ['Delta is 0 for "Y", maybe try to use `compare-elements-position` instead?'],
+    });
+
+    // XPath
+    x.assert(func('("//a", "b", {"y": 2, "x": 1})'), {
+        'instructions': [
+            'let parseCompareElementsPosNear1 = await page.$x("//a");\n' +
+            'if (parseCompareElementsPosNear1.length === 0) { throw \'XPath "//a" not found\'; }\n'
+            + 'parseCompareElementsPosNear1 = parseCompareElementsPosNear1[0];\n' +
+            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
+            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkY(e1, e2) {\n' +
+            before +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'let delta = Math.abs(y1 - y2);\n' +
+            'if (delta > 2) {\n' +
+            'throw "delta Y values too large: " + delta + " > 2";\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'let delta = Math.abs(x1 - x2);\n' +
+            'if (delta > 1) {\n' +
+            'throw "delta X values too large: " + delta + " > 1";\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "//b", {"y": 2, "x": 1})'), {
+        'instructions': [
+            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
+            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPosNear2 = await page.$x("//b");\n' +
+            'if (parseCompareElementsPosNear2.length === 0) { throw \'XPath "//b" not found\'; }\n'
+            + 'parseCompareElementsPosNear2 = parseCompareElementsPosNear2[0];\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkY(e1, e2) {\n' +
+            before +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'let delta = Math.abs(y1 - y2);\n' +
+            'if (delta > 2) {\n' +
+            'throw "delta Y values too large: " + delta + " > 2";\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'let delta = Math.abs(x1 - x2);\n' +
+            'if (delta > 1) {\n' +
+            'throw "delta X values too large: " + delta + " > 1";\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("//a", "//b", {"y": 2, "x": 1})'), {
+        'instructions': [
+            'let parseCompareElementsPosNear1 = await page.$x("//a");\n' +
+            'if (parseCompareElementsPosNear1.length === 0) { throw \'XPath "//a" not found\'; }\n'
+            + 'parseCompareElementsPosNear1 = parseCompareElementsPosNear1[0];\n' +
+            'let parseCompareElementsPosNear2 = await page.$x("//b");\n' +
+            'if (parseCompareElementsPosNear2.length === 0) { throw \'XPath "//b" not found\'; }\n'
+            + 'parseCompareElementsPosNear2 = parseCompareElementsPosNear2[0];\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkY(e1, e2) {\n' +
+            before +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'let delta = Math.abs(y1 - y2);\n' +
+            'if (delta > 2) {\n' +
+            'throw "delta Y values too large: " + delta + " > 2";\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'let delta = Math.abs(x1 - x2);\n' +
+            'if (delta > 1) {\n' +
+            'throw "delta X values too large: " + delta + " > 1";\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+}
+
+function checkCompareElementsPositionNear(x, func) {
+    checkCompareElementsPositionNearInner(x, func, '', '');
+}
+
+function checkCompareElementsPositionNearFalse(x, func) {
+    checkCompareElementsPositionNearInner(
+        x,
+        func,
+        'try {\n',
+        '\n} catch(e) { return; } throw "assert didn\'t fail";',
+    );
+}
+
 function checkCompareElementsPropertyInner(x, func, before, after) {
     x.assert(
         func('("a", "b", ())'),
@@ -3614,6 +3963,16 @@ const TO_CHECK = [
         'name': 'compare-elements-position-false',
         'func': checkCompareElementsPositionFalse,
         'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsPositionFalse, e, o),
+    },
+    {
+        'name': 'compare-elements-position-near',
+        'func': checkCompareElementsPositionNear,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsPositionNear, e, o),
+    },
+    {
+        'name': 'compare-elements-position-near-false',
+        'func': checkCompareElementsPositionNearFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsPositionNearFalse, e, o),
     },
     {
         'name': 'compare-elements-property',

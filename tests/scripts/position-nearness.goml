@@ -1,0 +1,7 @@
+screenshot: false
+goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+fail: true
+compare-elements-position-near-false: (".content>.right>div", ".content>.right>div", {"x": 100, "y": 1})
+fail: false
+compare-elements-position-near-false: (".content>.right>div", ".content>.left>div", {"x": 1})
+compare-elements-position-near: (".content>.right>div", ".content>.right>div", {"x": 1, "y": 1})
