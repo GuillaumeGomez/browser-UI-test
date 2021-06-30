@@ -1627,6 +1627,144 @@ function parseCompareElementsPositionFalse(line, options) {
     return parseCompareElementsPositionInner(line, options, true);
 }
 
+function parseCompareElementsPositionNearInner(line, options, assertFalse) {
+    const p = new Parser(line, options.variables);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    } else if (p.elems.length !== 1 || p.elems[0].kind !== 'tuple') {
+        return {
+            'error': `expected a tuple, found \`${p.elems[0].getText()}\``,
+        };
+    }
+    const tuple = p.elems[0].getRaw();
+    if (tuple.length !== 3) {
+        let err = `expected 3 elements in the tuple, found ${tuple.length} element`;
+        if (tuple.length > 1) {
+            err += 's';
+        }
+        return {'error': err};
+    } else if (tuple[0].kind !== 'string') {
+        return {
+            'error': 'expected first argument to be a CSS selector or an XPath, ' +
+                `found ${tuple[0].getArticleKind()}`,
+        };
+    } else if (tuple[1].kind !== 'string') {
+        return {
+            'error': 'expected second argument to be a CSS selector or an XPath, ' +
+                `found ${tuple[1].getArticleKind()}`,
+        };
+    } else if (tuple[2].kind !== 'json') {
+        return {
+            'error': 'expected third argument to be a JSON dict, found ' +
+                tuple[2].getArticleKind(),
+        };
+    }
+
+    const json = tuple[2].getRaw();
+    const entries = validateJson(json, ['number'], 'JSON dict key');
+
+    if (entries.error !== undefined) {
+        return entries;
+    } else if (entries.values.length === 0) {
+        return {
+            'instructions': [],
+            'wait': false,
+            'warnings': entries.warnings,
+            'checkResult': true,
+        };
+    }
+
+    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
+
+    const selector1 = tuple[0].getSelector();
+    if (selector1.error !== undefined) {
+        return selector1;
+    }
+    const selector2 = tuple[1].getSelector();
+    if (selector2.error !== undefined) {
+        return selector2;
+    }
+    const varName = 'parseCompareElementsPosNear';
+    const selectors = getAndSetElements(selector1, varName + '1', false) +
+        getAndSetElements(selector2, varName + '2', false);
+
+    const warnings = [];
+    let code = '';
+    for (const [key, value] of Object.entries(entries.values)) {
+        if (key === 'x') {
+            if (value < 0) {
+                return {
+                    'error': `Delta cannot be negative (in \`"x": ${value}\`)`,
+                };
+            } else if (value === '0') {
+                warnings.push(
+                    'Delta is 0 for "X", maybe try to use `compare-elements-position` instead?');
+            }
+            code += 'function checkX(e1, e2) {\n' +
+                insertBefore +
+                'let x1 = e1.getBoundingClientRect().left;\n' +
+                'let x2 = e2.getBoundingClientRect().left;\n' +
+                'let delta = Math.abs(x1 - x2);\n' +
+                `if (delta > ${value}) {\n` +
+                `throw "delta X values too large: " + delta + " > ${value}";\n` +
+                '}\n' +
+                insertAfter +
+                '}\n' +
+                'checkX(elem1, elem2);\n';
+        } else if (key === 'y') {
+            if (value < 0) {
+                return {
+                    'error': `Delta cannot be negative (in \`"y": ${value}\`)`,
+                };
+            } else if (value === '0') {
+                warnings.push(
+                    'Delta is 0 for "Y", maybe try to use `compare-elements-position` instead?');
+            }
+            code += 'function checkY(e1, e2) {\n' +
+                insertBefore +
+                'let y1 = e1.getBoundingClientRect().top;\n' +
+                'let y2 = e2.getBoundingClientRect().top;\n' +
+                'let delta = Math.abs(y1 - y2);\n' +
+                `if (delta > ${value}) {\n` +
+                `throw "delta Y values too large: " + delta + " > ${value}";\n` +
+                '}\n' +
+                insertAfter +
+                '}\n' +
+                'checkY(elem1, elem2);\n';
+        } else {
+            return {
+                'error': 'Only accepted keys are "x" and "y", found `' +
+                    `${key}\` (in \`${tuple[2].getText()}\``,
+            };
+        }
+    }
+    return {
+        'instructions': [
+            selectors +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            `${code}}, ${varName}1, ${varName}2);`,
+        ],
+        'wait': false,
+        'checkResult': true,
+        'warnings': warnings.length > 0 ? warnings : undefined,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", {"x"|"y": number}))
+function parseCompareElementsPositionNear(line, options) {
+    return parseCompareElementsPositionNearInner(line, options, false);
+}
+
+// Possible inputs:
+//
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", {"x"|"y": number})
+function parseCompareElementsPositionNearFalse(line, options) {
+    return parseCompareElementsPositionNearInner(line, options, true);
+}
+
 // Possible inputs:
 //
 // * ("CSS selector", "text")
@@ -2158,6 +2296,8 @@ const ORDERS = {
     'compare-elements-css-false': parseCompareElementsCssFalse,
     'compare-elements-position': parseCompareElementsPosition,
     'compare-elements-position-false': parseCompareElementsPositionFalse,
+    'compare-elements-position-near': parseCompareElementsPositionNear,
+    'compare-elements-position-near-false': parseCompareElementsPositionNearFalse,
     'compare-elements-property': parseCompareElementsProperty,
     'compare-elements-property-false': parseCompareElementsPropertyFalse,
     'compare-elements-text': parseCompareElementsText,
