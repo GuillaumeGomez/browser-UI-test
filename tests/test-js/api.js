@@ -710,6 +710,9 @@ function checkAssertCss(x, func) {
         'error': 'expected identifier `ALL` as third argument or nothing, found `ALLO`',
     });
     x.assert(func('("a", {"b": "c", "b": "d"})'), {'error': 'CSS property `b` is duplicated'});
+    x.assert(func('("a", {"b": ""})'), {
+        'error': 'Empty values are not allowed: `b` has an empty value',
+    });
 
     x.assert(func('("a", {"a": 1})'), {
         'instructions': [

@@ -667,6 +667,11 @@ function parseAssertCssInner(line, options, assertFalse) {
     // JSON.stringify produces a problematic output so instead we use this.
     let d = '';
     for (const [k, v] of Object.entries(entries.values)) {
+        if (v.length === 0) {
+            return {
+                'error': `Empty values are not allowed: \`${k}\` has an empty value`,
+            };
+        }
         if (d.length > 0) {
             d += ',';
         }
