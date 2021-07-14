@@ -10,43 +10,7 @@ function wrapper(callback, arg, options) {
     return callback(arg, options);
 }
 
-function checkAssert(x, func) {
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('1'),
-        {'error': 'expected a tuple, a CSS selector or an XPath, found `1`'});
-    x.assert(func('1.1'),
-        {'error':
-         'expected a tuple, a CSS selector or an XPath, found `1.1`'});
-    x.assert(func('"a"'),
-        {
-            'instructions': ['if ((await page.$("a")) === null) { throw \'"a" not found\'; }'],
-            'wait': false,
-            'checkResult': true,
-        });
-    x.assert(func('("a", 2)'), {
-        'error': 'expected only a CSS selector or an XPath in the tuple, found 2 elements',
-    });
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
-    x.assert(func('("a")'),
-        {
-            'instructions': ['if ((await page.$("a")) === null) { throw \'"a" not found\'; }'],
-            'wait': false,
-            'checkResult': true,
-        });
-
-    // XPath
-    x.assert(func('"/a"'), {'error': 'XPath must start with `//`'});
-    x.assert(func('"//a"'),
-        {
-            'instructions': [
-                'if ((await page.$x("//a")).length === 0) { throw \'XPath "//a" not found\'; }',
-            ],
-            'wait': false,
-            'checkResult': true,
-        });
-}
-
-function checkAssertFalse(x, func) {
+function checkAssertInner(x, func, before, after) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('1'), {'error': 'expected a tuple, a CSS selector or an XPath, found `1`'});
     x.assert(func('1.1'), {'error': 'expected a tuple, a CSS selector or an XPath, found `1.1`'});
@@ -57,12 +21,13 @@ function checkAssertFalse(x, func) {
         'error': 'expected only a CSS selector or an XPath in the tuple, found 2 elements',
     });
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+
     x.assert(func('"a"'),
         {
             'instructions': [
-                'try {\n' +
-                'if ((await page.$("a")) === null) { throw \'"a" not found\'; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";',
+                before +
+                'if ((await page.$("a")) === null) { throw \'"a" not found\'; }' +
+                after,
             ],
             'wait': false,
             'checkResult': true,
@@ -70,9 +35,9 @@ function checkAssertFalse(x, func) {
     x.assert(func('("a")'),
         {
             'instructions': [
-                'try {\n' +
-                'if ((await page.$("a")) === null) { throw \'"a" not found\'; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";',
+                before +
+                'if ((await page.$("a")) === null) { throw \'"a" not found\'; }' +
+                after,
             ],
             'wait': false,
             'checkResult': true,
@@ -83,13 +48,21 @@ function checkAssertFalse(x, func) {
     x.assert(func('"//a"'),
         {
             'instructions': [
-                'try {\n' +
-                'if ((await page.$x("//a")).length === 0) { throw \'XPath "//a" not found\'; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";',
+                before +
+                'if ((await page.$x("//a")).length === 0) { throw \'XPath "//a" not found\'; }' +
+                after,
             ],
             'wait': false,
             'checkResult': true,
         });
+}
+
+function checkAssert(x, func) {
+    checkAssertInner(x, func, '', '');
+}
+
+function checkAssertFalse(x, func) {
+    checkAssertInner(x, func, 'try {\n', '\n} catch(e) { return; } throw "assert didn\'t fail";');
 }
 
 function checkAssertAttributeInner(x, func, before, after) {
