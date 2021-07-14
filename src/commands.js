@@ -963,8 +963,9 @@ function parseAssertCountInner(line, options, assertFalse) {
         'instructions': [
             start +
             // TODO: maybe check differently depending on the tag kind?
-            `${insertBefore}if (${varName}.length !== ${occurences.value}) { throw 'expected ` +
-            `${occurences.value} elements, found ' + ${varName}.length; }${insertAfter}`,
+            `${insertBefore}if (${varName}.length !== ${occurences.value}) {\n` +
+            `throw 'expected ${occurences.value} elements, found ' + ${varName}.length;\n` +
+            `}${insertAfter}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -1053,7 +1054,7 @@ function parseAssertTextInner(line, options, assertFalse) {
                     `!== "${value}"'; }\n` +
                 `} else if (e.textContent !== "${value}") {\n` +
                     `throw '"' + e.textContent + '" !== "${value}"'; }\n` +
-                `}, ${varName}[i]);${insertAfter}\n` +
+                `}, ${varName}[i]);${insertAfter}` +
             '}',
         ];
     }

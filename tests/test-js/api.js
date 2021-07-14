@@ -10,43 +10,7 @@ function wrapper(callback, arg, options) {
     return callback(arg, options);
 }
 
-function checkAssert(x, func) {
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('1'),
-        {'error': 'expected a tuple, a CSS selector or an XPath, found `1`'});
-    x.assert(func('1.1'),
-        {'error':
-         'expected a tuple, a CSS selector or an XPath, found `1.1`'});
-    x.assert(func('"a"'),
-        {
-            'instructions': ['if ((await page.$("a")) === null) { throw \'"a" not found\'; }'],
-            'wait': false,
-            'checkResult': true,
-        });
-    x.assert(func('("a", 2)'), {
-        'error': 'expected only a CSS selector or an XPath in the tuple, found 2 elements',
-    });
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
-    x.assert(func('("a")'),
-        {
-            'instructions': ['if ((await page.$("a")) === null) { throw \'"a" not found\'; }'],
-            'wait': false,
-            'checkResult': true,
-        });
-
-    // XPath
-    x.assert(func('"/a"'), {'error': 'XPath must start with `//`'});
-    x.assert(func('"//a"'),
-        {
-            'instructions': [
-                'if ((await page.$x("//a")).length === 0) { throw \'XPath "//a" not found\'; }',
-            ],
-            'wait': false,
-            'checkResult': true,
-        });
-}
-
-function checkAssertFalse(x, func) {
+function checkAssertInner(x, func, before, after) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('1'), {'error': 'expected a tuple, a CSS selector or an XPath, found `1`'});
     x.assert(func('1.1'), {'error': 'expected a tuple, a CSS selector or an XPath, found `1.1`'});
@@ -57,12 +21,13 @@ function checkAssertFalse(x, func) {
         'error': 'expected only a CSS selector or an XPath in the tuple, found 2 elements',
     });
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+
     x.assert(func('"a"'),
         {
             'instructions': [
-                'try {\n' +
-                'if ((await page.$("a")) === null) { throw \'"a" not found\'; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";',
+                before +
+                'if ((await page.$("a")) === null) { throw \'"a" not found\'; }' +
+                after,
             ],
             'wait': false,
             'checkResult': true,
@@ -70,9 +35,9 @@ function checkAssertFalse(x, func) {
     x.assert(func('("a")'),
         {
             'instructions': [
-                'try {\n' +
-                'if ((await page.$("a")) === null) { throw \'"a" not found\'; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";',
+                before +
+                'if ((await page.$("a")) === null) { throw \'"a" not found\'; }' +
+                after,
             ],
             'wait': false,
             'checkResult': true,
@@ -83,16 +48,24 @@ function checkAssertFalse(x, func) {
     x.assert(func('"//a"'),
         {
             'instructions': [
-                'try {\n' +
-                'if ((await page.$x("//a")).length === 0) { throw \'XPath "//a" not found\'; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";',
+                before +
+                'if ((await page.$x("//a")).length === 0) { throw \'XPath "//a" not found\'; }' +
+                after,
             ],
             'wait': false,
             'checkResult': true,
         });
 }
 
-function checkAssertAttribute(x, func) {
+function checkAssert(x, func) {
+    checkAssertInner(x, func, '', '');
+}
+
+function checkAssertFalse(x, func) {
+    checkAssertInner(x, func, 'try {\n', '\n} catch(e) { return; } throw "assert didn\'t fail";');
+}
+
+function checkAssertAttributeInner(x, func, before, after) {
     x.assert(func('("a", "b", )'), {'error': 'unexpected `,` after `"b"`'});
     x.assert(func('("a", "b")'), {
         'error': 'expected JSON dictionary as second argument, found `"b"`',
@@ -110,145 +83,6 @@ function checkAssertAttribute(x, func) {
     });
     x.assert(func('("a", {"b": "c", "b": "d"})'), {'error': 'attribute `b` is duplicated'});
 
-    x.assert(func('("a", {"b": "c"})'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$("a");\n' +
-            'if (parseAssertElemAttr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
-            '}\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"b": "c"}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$$("a");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
-            '}\n' +
-            '}\n' +
-            '}, parseAssertElemAttr[i]);\n' +
-            '}',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"\\"b": "c"})'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$("a");\n' +
-            'if (parseAssertElemAttr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
-            '}\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"\\"b": "c"}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$$("a");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
-            '}\n' +
-            '}\n' +
-            '}, parseAssertElemAttr[i]);\n' +
-            '}',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-
-    // XPath
-    x.assert(func('("//a", {"b": "c"})'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$x("//a");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseAssertElemAttr = parseAssertElemAttr[0];\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for XPath `//a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
-            '}\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"b": "c"}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$x("//a");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for XPath `//a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
-            '}\n' +
-            '}\n' +
-            '}, parseAssertElemAttr[i]);\n' +
-            '}',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-}
-
-function checkAssertAttributeFalse(x, func) {
-    x.assert(func('("a", {)'), {'error': 'unexpected `)` after `{`'});
-    x.assert(func('("a", "b")'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
-    });
-    x.assert(func('("a", {"a": 1)'), {'error': 'unexpected `)` after `1`'});
-    x.assert(func('("a::after", {"a": 1}, all)'), {
-        'error': 'expected identifier `ALL` as third argument or nothing, found `all`',
-    });
-    x.assert(func('("a::after", {"a": 1}, ALLO)'), {
-        'error': 'expected identifier `ALL` as third argument or nothing, found `ALLO`',
-    });
-    x.assert(func('("a", {"b": "c", "b": "d"})'), {'error': 'attribute `b` is duplicated'});
-
     x.assert(func('("a", {"a": 1})'), {
         'instructions': [
             'let parseAssertElemAttr = await page.$("a");\n' +
@@ -257,13 +91,13 @@ function checkAssertAttributeFalse(x, func) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
             'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
             'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
             'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
             'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -279,13 +113,13 @@ function checkAssertAttributeFalse(x, func) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
             'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
             'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
             'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
             'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -303,13 +137,13 @@ function checkAssertAttributeFalse(x, func) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
             'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
             'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
             'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
             'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -325,13 +159,13 @@ function checkAssertAttributeFalse(x, func) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
             'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
             'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
             'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
             'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -347,13 +181,13 @@ function checkAssertAttributeFalse(x, func) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
             'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
             'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
             'parseAssertElemAttrAttribute + \'` for selector `b:after`, found `\' + ' +
             'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -369,13 +203,13 @@ function checkAssertAttributeFalse(x, func) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
             'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
             'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
             'parseAssertElemAttrAttribute + \'` for selector `b:after`, found `\' + ' +
             'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -391,13 +225,13 @@ function checkAssertAttributeFalse(x, func) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
             'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
             'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
             'parseAssertElemAttrAttribute + \'` for selector `a ::after`, found `\' + ' +
             'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -413,13 +247,13 @@ function checkAssertAttributeFalse(x, func) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
             'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
             'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
             'parseAssertElemAttrAttribute + \'` for selector `a ::after`, found `\' + ' +
             'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -436,13 +270,13 @@ function checkAssertAttributeFalse(x, func) {
             'const parseAssertElemAttrDict = {"b":"c","d":"e"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
             'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
             'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
             'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
             'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -458,13 +292,13 @@ function checkAssertAttributeFalse(x, func) {
             'const parseAssertElemAttrDict = {"b":"c","d":"e"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
             'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
             'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
             'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
             'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -480,13 +314,13 @@ function checkAssertAttributeFalse(x, func) {
             'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
             'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
             'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
             'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
             'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -502,13 +336,13 @@ function checkAssertAttributeFalse(x, func) {
             'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
             'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
             'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
             'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
             'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -527,13 +361,13 @@ function checkAssertAttributeFalse(x, func) {
             'const parseAssertElemAttrDict = {"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
             'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
             'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
             'parseAssertElemAttrAttribute + \'` for XPath `//a`, found `\' + ' +
             'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -549,13 +383,13 @@ function checkAssertAttributeFalse(x, func) {
             'const parseAssertElemAttrDict = {"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
             'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
             'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
             'parseAssertElemAttrAttribute + \'` for XPath `//a`, found `\' + ' +
             'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -565,18 +399,23 @@ function checkAssertAttributeFalse(x, func) {
     });
 }
 
-function checkAssertCount(x, func) {
+function checkAssertAttribute(x, func) {
+    checkAssertAttributeInner(x, func, '', '');
+}
+
+function checkAssertAttributeFalse(x, func) {
+    checkAssertAttributeInner(
+        x,
+        func,
+        'try {\n',
+        '} catch(e) { continue; } throw "assert didn\'t fail";\n',
+    );
+}
+
+function checkAssertCountInner(x, func, before, after) {
     x.assert(func('("a", 1, "c")'), {'error': 'unexpected argument after number of occurences'});
     x.assert(func('("a", 1 2)'), {'error': 'expected `,`, found `2`'});
     x.assert(func('("a", 1 a)'), {'error': 'expected `,`, found `a`'});
-    x.assert(func('("a", 1)'),
-        {
-            'instructions': [
-                'let parseAssertElemInt = await page.$$("a");\nif (parseAssertElemInt.length !== ' +
-                '1) { throw \'expected 1 elements, found \' + parseAssertElemInt.length; }'],
-            'wait': false,
-            'checkResult': true,
-        });
     x.assert(func('("a", -1)'), {'error': 'number of occurences cannot be negative: `-1`'});
     x.assert(func('("a", -1.0)'), {
         'error': 'expected integer for number of occurences, found float: `-1.0`',
@@ -585,12 +424,31 @@ function checkAssertCount(x, func) {
         'error': 'expected integer for number of occurences, found float: `1.0`',
     });
 
+    x.assert(func('("a", 1)'),
+        {
+            'instructions': [
+                'let parseAssertElemInt = await page.$$("a");\n' +
+                before +
+                'if (parseAssertElemInt.length !== 1) {\n' +
+                'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+                '}' +
+                after,
+            ],
+            'wait': false,
+            'checkResult': true,
+        });
+
     // Check the handling of pseudo elements
     x.assert(func('("a::after", 1)'),
         {
             'instructions': [
-                'let parseAssertElemInt = await page.$$("a");\nif (parseAssertElemInt.length !== ' +
-                '1) { throw \'expected 1 elements, found \' + parseAssertElemInt.length; }'],
+                'let parseAssertElemInt = await page.$$("a");\n' +
+                before +
+                'if (parseAssertElemInt.length !== 1) {\n' +
+                'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+                '}' +
+                after,
+            ],
             'wait': false,
             'checkResult': true,
         });
@@ -598,8 +456,12 @@ function checkAssertCount(x, func) {
         {
             'instructions': [
                 'let parseAssertElemInt = await page.$$("a:focus");\n' +
-                'if (parseAssertElemInt.length !== 1) { ' +
-                'throw \'expected 1 elements, found \' + parseAssertElemInt.length; }'],
+                before +
+                'if (parseAssertElemInt.length !== 1) {\n' +
+                'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+                '}' +
+                after,
+            ],
             'wait': false,
             'checkResult': true,
         });
@@ -607,8 +469,12 @@ function checkAssertCount(x, func) {
         {
             'instructions': [
                 'let parseAssertElemInt = await page.$$("a :focus");\n' +
-                'if (parseAssertElemInt.length !== 1) { ' +
-                'throw \'expected 1 elements, found \' + parseAssertElemInt.length; }'],
+                before +
+                'if (parseAssertElemInt.length !== 1) {\n' +
+                'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+                '}' +
+                after,
+            ],
             'wait': false,
             'checkResult': true,
         });
@@ -616,84 +482,31 @@ function checkAssertCount(x, func) {
         {
             'instructions': [
                 'let parseAssertElemInt = await page.$$("a ::after");\n' +
-                'if (parseAssertElemInt.length !== 1) { throw \'expected 1 elements, found \' + ' +
-                'parseAssertElemInt.length; }'],
+                before +
+                'if (parseAssertElemInt.length !== 1) {\n' +
+                'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+                '}' +
+                after,
+            ],
             'wait': false,
             'checkResult': true,
         });
+}
+
+function checkAssertCount(x, func) {
+    checkAssertCountInner(x, func, '', '');
 }
 
 function checkAssertCountFalse(x, func) {
-    x.assert(func('("a", 1, "c")'), {'error': 'unexpected argument after number of occurences'});
-    x.assert(func('("a", 1 2)'), {'error': 'expected `,`, found `2`'});
-    x.assert(func('("a", 1 a)'), {'error': 'expected `,`, found `a`'});
-    x.assert(func('("a", 1)'),
-        {
-            'instructions': [
-                'let parseAssertElemInt = await page.$$("a");\n' +
-                'try {\n' +
-                'if (parseAssertElemInt.length !== 1) { throw \'expected 1 elements, found \' + ' +
-                'parseAssertElemInt.length; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";'],
-            'wait': false,
-            'checkResult': true,
-        });
-    x.assert(func('("a", -1)'), {'error': 'number of occurences cannot be negative: `-1`'});
-    x.assert(func('("a", -1.0)'), {
-        'error': 'expected integer for number of occurences, found float: `-1.0`',
-    });
-    x.assert(func('("a", 1.0)'), {
-        'error': 'expected integer for number of occurences, found float: `1.0`',
-    });
-
-    // Check the handling of pseudo elements
-    x.assert(func('("a::after", 1)'),
-        {
-            'instructions': [
-                'let parseAssertElemInt = await page.$$("a");\n' +
-                'try {\n' +
-                'if (parseAssertElemInt.length !== 1) { throw \'expected 1 elements, found \' + ' +
-                'parseAssertElemInt.length; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";'],
-            'wait': false,
-            'checkResult': true,
-        });
-    x.assert(func('("a:hover", 1)'),
-        {
-            'instructions': [
-                'let parseAssertElemInt = await page.$$("a:hover");\n' +
-                'try {\n' +
-                'if (parseAssertElemInt.length !== 1) { throw \'expected 1 elements, found \' + ' +
-                'parseAssertElemInt.length; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";'],
-            'wait': false,
-            'checkResult': true,
-        });
-    x.assert(func('("a :after", 1)'),
-        {
-            'instructions': [
-                'let parseAssertElemInt = await page.$$("a :after");\n' +
-                'try {\n' +
-                'if (parseAssertElemInt.length !== 1) { throw \'expected 1 elements, found \' + ' +
-                'parseAssertElemInt.length; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";'],
-            'wait': false,
-            'checkResult': true,
-        });
-    x.assert(func('("a ::after", 1)'),
-        {
-            'instructions': [
-                'let parseAssertElemInt = await page.$$("a ::after");\n' +
-                'try {\n' +
-                'if (parseAssertElemInt.length !== 1) { throw \'expected 1 elements, found \' + ' +
-                'parseAssertElemInt.length; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";'],
-            'wait': false,
-            'checkResult': true,
-        });
+    checkAssertCountInner(
+        x,
+        func,
+        'try {\n',
+        '\n} catch(e) { return; } throw "assert didn\'t fail";',
+    );
 }
 
-function checkAssertCss(x, func) {
+function checkAssertCssInner(x, func, before, after) {
     x.assert(func('("a", "b", )'), {'error': 'unexpected `,` after `"b"`'});
     x.assert(func('("a", "b")'), {
         'error': 'expected JSON dictionary as second argument, found `"b"`',
@@ -723,12 +536,14 @@ function checkAssertCss(x, func) {
             'const parseAssertElemCssDict = {"a":"1"};\n' +
             'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
             'Object.entries(parseAssertElemCssDict)) {\n' +
+            before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
             '}\n' +
+            after +
             '}\n' +
             '}, parseAssertElemCss);',
         ],
@@ -745,12 +560,14 @@ function checkAssertCss(x, func) {
             'const parseAssertElemCssDict = {"a":"1"};\n' +
             'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
             'Object.entries(parseAssertElemCssDict)) {\n' +
+            before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
             '}\n' +
+            after +
             '}\n' +
             '}, parseAssertElemCss[i]);\n' +
             '}',
@@ -769,12 +586,14 @@ function checkAssertCss(x, func) {
             'const parseAssertElemCssDict = {"a":"1"};\n' +
             'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
             'Object.entries(parseAssertElemCssDict)) {\n' +
+            before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
             '}\n' +
+            after +
             '}\n' +
             '}, parseAssertElemCss);',
         ],
@@ -791,12 +610,14 @@ function checkAssertCss(x, func) {
             'const parseAssertElemCssDict = {"a":"1"};\n' +
             'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
             'Object.entries(parseAssertElemCssDict)) {\n' +
+            before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
             '}\n' +
+            after +
             '}\n' +
             '}, parseAssertElemCss[i]);\n' +
             '}',
@@ -813,12 +634,14 @@ function checkAssertCss(x, func) {
             'const parseAssertElemCssDict = {"a":"1"};\n' +
             'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
             'Object.entries(parseAssertElemCssDict)) {\n' +
+            before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a:focus`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
             '}\n' +
+            after +
             '}\n' +
             '}, parseAssertElemCss);',
         ],
@@ -835,12 +658,14 @@ function checkAssertCss(x, func) {
             'const parseAssertElemCssDict = {"a":"1"};\n' +
             'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
             'Object.entries(parseAssertElemCssDict)) {\n' +
+            before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a:focus`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
             '}\n' +
+            after +
             '}\n' +
             '}, parseAssertElemCss[i]);\n' +
             '}',
@@ -857,12 +682,14 @@ function checkAssertCss(x, func) {
             'const parseAssertElemCssDict = {"a":"1"};\n' +
             'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
             'Object.entries(parseAssertElemCssDict)) {\n' +
+            before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a ::after`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
             '}\n' +
+            after +
             '}\n' +
             '}, parseAssertElemCss);',
         ],
@@ -879,12 +706,14 @@ function checkAssertCss(x, func) {
             'const parseAssertElemCssDict = {"a":"1"};\n' +
             'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
             'Object.entries(parseAssertElemCssDict)) {\n' +
+            before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a ::after`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
             '}\n' +
+            after +
             '}\n' +
             '}, parseAssertElemCss[i]);\n' +
             '}',
@@ -904,12 +733,14 @@ function checkAssertCss(x, func) {
             'const parseAssertElemCssDict = {"a":"1"};\n' +
             'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
             'Object.entries(parseAssertElemCssDict)) {\n' +
+            before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
             '}\n' +
+            after +
             '}\n' +
             '}, parseAssertElemCss);',
         ],
@@ -926,276 +757,14 @@ function checkAssertCss(x, func) {
             'const parseAssertElemCssDict = {"a":"1"};\n' +
             'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
             'Object.entries(parseAssertElemCssDict)) {\n' +
+            before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
             '}\n' +
-            '}\n' +
-            '}, parseAssertElemCss[i]);\n' +
-            '}',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-}
-
-function checkAssertCssFalse(x, func) {
-    x.assert(func('("a", "b", )'), {'error': 'unexpected `,` after `"b"`'});
-    x.assert(func('("a", "b")'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
-    });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
-    x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,`, found `"`'});
-    x.assert(func('("a", "b", "c")'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
-    });
-    x.assert(func('("a::after", {"a": 1}, all)'), {
-        'error': 'expected identifier `ALL` as third argument or nothing, found `all`',
-    });
-    x.assert(func('("a::after", {"a": 1}, ALLO)'), {
-        'error': 'expected identifier `ALL` as third argument or nothing, found `ALLO`',
-    });
-    x.assert(func('("a", {"b": "c", "b": "d"})'), {'error': 'CSS property `b` is duplicated'});
-
-    x.assert(func('("a", {"a": 1})'), {
-        'instructions': [
-            'let parseAssertElemCss = await page.$("a");\n' +
-            'if (parseAssertElemCss === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'let assertComputedStyle = getComputedStyle(e);\n' +
-            'const parseAssertElemCssDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
-            'Object.entries(parseAssertElemCssDict)) {\n' +
-            'try {\n' +
-            'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
-            'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
-            'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
-            'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
-            'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
-            '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
-            '}\n' +
-            '}, parseAssertElemCss);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"a": 1}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemCss = await page.$$("a");\n' +
-            'if (parseAssertElemCss.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'let assertComputedStyle = getComputedStyle(e);\n' +
-            'const parseAssertElemCssDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
-            'Object.entries(parseAssertElemCssDict)) {\n' +
-            'try {\n' +
-            'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
-            'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
-            'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
-            'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
-            'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
-            '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
-            '}\n' +
-            '}, parseAssertElemCss[i]);\n' +
-            '}',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-
-    x.assert(func('("a::after", {"a": 1})'), {
-        'instructions': [
-            'let parseAssertElemCss = await page.$("a");\n' +
-            'if (parseAssertElemCss === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'let assertComputedStyle = getComputedStyle(e, "::after");\n' +
-            'const parseAssertElemCssDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
-            'Object.entries(parseAssertElemCssDict)) {\n' +
-            'try {\n' +
-            'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
-            'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
-            'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
-            'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
-            'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
-            '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
-            '}\n' +
-            '}, parseAssertElemCss);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a::after", {"a": 1}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemCss = await page.$$("a");\n' +
-            'if (parseAssertElemCss.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'let assertComputedStyle = getComputedStyle(e, "::after");\n' +
-            'const parseAssertElemCssDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
-            'Object.entries(parseAssertElemCssDict)) {\n' +
-            'try {\n' +
-            'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
-            'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
-            'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
-            'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
-            'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
-            '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
-            '}\n' +
-            '}, parseAssertElemCss[i]);\n' +
-            '}',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("b:after", {"a": 1})'), {
-        'instructions': [
-            'let parseAssertElemCss = await page.$("b:after");\n' +
-            'if (parseAssertElemCss === null) { throw \'"b:after" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'let assertComputedStyle = getComputedStyle(e);\n' +
-            'const parseAssertElemCssDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
-            'Object.entries(parseAssertElemCssDict)) {\n' +
-            'try {\n' +
-            'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
-            'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
-            'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
-            'parseAssertElemCssKey + \'` for selector `b:after`, found `\' + ' +
-            'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
-            '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
-            '}\n' +
-            '}, parseAssertElemCss);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("b:after", {"a": 1}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemCss = await page.$$("b:after");\n' +
-            'if (parseAssertElemCss.length === 0) { throw \'"b:after" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'let assertComputedStyle = getComputedStyle(e);\n' +
-            'const parseAssertElemCssDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
-            'Object.entries(parseAssertElemCssDict)) {\n' +
-            'try {\n' +
-            'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
-            'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
-            'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
-            'parseAssertElemCssKey + \'` for selector `b:after`, found `\' + ' +
-            'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
-            '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
-            '}\n' +
-            '}, parseAssertElemCss[i]);\n' +
-            '}',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a ::after", {"a": 1})'), {
-        'instructions': [
-            'let parseAssertElemCss = await page.$("a ::after");\n' +
-            'if (parseAssertElemCss === null) { throw \'"a ::after" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'let assertComputedStyle = getComputedStyle(e);\n' +
-            'const parseAssertElemCssDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
-            'Object.entries(parseAssertElemCssDict)) {\n' +
-            'try {\n' +
-            'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
-            'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
-            'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
-            'parseAssertElemCssKey + \'` for selector `a ::after`, found `\' + ' +
-            'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
-            '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
-            '}\n' +
-            '}, parseAssertElemCss);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a ::after", {"a": 1}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemCss = await page.$$("a ::after");\n' +
-            'if (parseAssertElemCss.length === 0) { throw \'"a ::after" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'let assertComputedStyle = getComputedStyle(e);\n' +
-            'const parseAssertElemCssDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
-            'Object.entries(parseAssertElemCssDict)) {\n' +
-            'try {\n' +
-            'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
-            'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
-            'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
-            'parseAssertElemCssKey + \'` for selector `a ::after`, found `\' + ' +
-            'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
-            '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
-            '}\n' +
-            '}, parseAssertElemCss[i]);\n' +
-            '}',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-
-    // XPath
-    x.assert(func('("//a", {"a": 1})'), {
-        'instructions': [
-            'let parseAssertElemCss = await page.$x("//a");\n' +
-            'if (parseAssertElemCss.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseAssertElemCss = parseAssertElemCss[0];\n' +
-            'await page.evaluate(e => {\n' +
-            'let assertComputedStyle = getComputedStyle(e);\n' +
-            'const parseAssertElemCssDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
-            'Object.entries(parseAssertElemCssDict)) {\n' +
-            'try {\n' +
-            'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
-            'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
-            'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
-            'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
-            'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
-            '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
-            '}\n' +
-            '}, parseAssertElemCss);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"a": 1}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemCss = await page.$x("//a");\n' +
-            'if (parseAssertElemCss.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'let assertComputedStyle = getComputedStyle(e);\n' +
-            'const parseAssertElemCssDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
-            'Object.entries(parseAssertElemCssDict)) {\n' +
-            'try {\n' +
-            'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
-            'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
-            'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
-            'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
-            'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
-            '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemCss[i]);\n' +
             '}',
@@ -1213,14 +782,14 @@ function checkAssertCssFalse(x, func) {
             'const parseAssertElemCssDict = {"a":"1","b":"2"};\n' +
             'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
             'Object.entries(parseAssertElemCssDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemCss);',
         ],
@@ -1237,14 +806,14 @@ function checkAssertCssFalse(x, func) {
             'const parseAssertElemCssDict = {"a":"1","b":"2"};\n' +
             'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
             'Object.entries(parseAssertElemCssDict)) {\n' +
-            'try {\n' +
+            before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
             '}\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            after +
             '}\n' +
             '}, parseAssertElemCss[i]);\n' +
             '}',
@@ -1252,6 +821,18 @@ function checkAssertCssFalse(x, func) {
         'wait': false,
         'checkResult': true,
     });
+}
+
+function checkAssertCss(x, func) {
+    checkAssertCssInner(x, func, '', '');
+}
+
+function checkAssertCssFalse(x, func) {
+    checkAssertCssInner(
+        x,
+        func,
+        'try {\n',
+        '} catch(e) { continue; } throw "assert didn\'t fail";\n');
 }
 
 function checkAssertPropertyInner(x, func, before, after) {
@@ -1527,107 +1108,7 @@ function checkAssertPropertyFalse(x, func) {
         '} catch(e) { continue; } throw "assert didn\'t fail";\n');
 }
 
-function checkAssertText(x, func) {
-    x.assert(func('(a, "b")'), {
-        'error': 'expected first argument to be a CSS selector or an XPath, found an ident',
-    });
-    x.assert(func('("a", "b"'), {'error': 'expected `)` after `"b"`'});
-    x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
-
-    x.assert(func('("a", "\'b")'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$("a");\n' +
-            'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-            'if (e.value !== "\\\'b") { throw \'"\' + e.value + \'" !== "\\\'b"\'; }\n' +
-            '} else if (e.textContent !== "\\\'b") {\n' +
-            'throw \'"\' + e.textContent + \'" !== "\\\'b"\'; }\n' +
-            '}, parseAssertElemStr);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "\'b", ALL)'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$$("a");\n' +
-            'if (parseAssertElemStr.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-            'if (e.value !== "\\\'b") { throw \'"\' + e.value + \'" !== "\\\'b"\'; }\n' +
-            '} else if (e.textContent !== "\\\'b") {\n' +
-            'throw \'"\' + e.textContent + \'" !== "\\\'b"\'; }\n' +
-            '}, parseAssertElemStr[i]);\n' +
-            '}'],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b")'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$("a");\n' +
-            'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-            'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
-            '} else if (e.textContent !== "b") {\n' +
-            'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
-            '}, parseAssertElemStr);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", ALL)'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$$("a");\n' +
-            'if (parseAssertElemStr.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-            'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
-            '} else if (e.textContent !== "b") {\n' +
-            'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
-            '}, parseAssertElemStr[i]);\n' +
-            '}'],
-        'wait': false,
-        'checkResult': true,
-    });
-
-    // XPath
-    x.assert(func('("//a", "b")'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$x("//a");\n' +
-            'if (parseAssertElemStr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseAssertElemStr = parseAssertElemStr[0];\n' +
-            'await page.evaluate(e => {\n' +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-            'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
-            '} else if (e.textContent !== "b") {\n' +
-            'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
-            '}, parseAssertElemStr);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", "b", ALL)'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$x("//a");\n' +
-            'if (parseAssertElemStr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-            'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
-            '} else if (e.textContent !== "b") {\n' +
-            'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
-            '}, parseAssertElemStr[i]);\n' +
-            '}',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-}
-
-function checkAssertTextFalse(x, func) {
+function checkAssertTextInner(x, func, before, after, afterAllElements) {
     x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
     x.assert(func('("a", "b", )'), {'error': 'unexpected `,` after `"b"`'});
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
@@ -1636,14 +1117,14 @@ function checkAssertTextFalse(x, func) {
         'instructions': [
             'let parseAssertElemStr = await page.$("a");\n' +
             'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            'try {\n' +
+            before +
             'await page.evaluate(e => {\n' +
             'if (e.tagName.toLowerCase() === "input") {\n' +
             'if (e.value !== "\\\'b") { throw \'"\' + e.value + \'" !== "\\\'b"\'; }\n' +
             '} else if (e.textContent !== "\\\'b") {\n' +
             'throw \'"\' + e.textContent + \'" !== "\\\'b"\'; }\n' +
-            '}, parseAssertElemStr);\n' +
-            '} catch(e) { return; } throw "assert didn\'t fail";',
+            '}, parseAssertElemStr);' +
+            after,
         ],
         'wait': false,
         'checkResult': true,
@@ -1653,14 +1134,14 @@ function checkAssertTextFalse(x, func) {
             'let parseAssertElemStr = await page.$$("a");\n' +
             'if (parseAssertElemStr.length === 0) { throw \'"a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            'try {\n' +
+            before +
             'await page.evaluate(e => {\n' +
             'if (e.tagName.toLowerCase() === "input") {\n' +
             'if (e.value !== "\\\'b") { throw \'"\' + e.value + \'" !== "\\\'b"\'; }\n' +
             '} else if (e.textContent !== "\\\'b") {\n' +
             'throw \'"\' + e.textContent + \'" !== "\\\'b"\'; }\n' +
-            '}, parseAssertElemStr[i]);\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            '}, parseAssertElemStr[i]);' +
+            afterAllElements +
             '}',
         ],
         'wait': false,
@@ -1670,14 +1151,14 @@ function checkAssertTextFalse(x, func) {
         'instructions': [
             'let parseAssertElemStr = await page.$("a");\n' +
             'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            'try {\n' +
+            before +
             'await page.evaluate(e => {\n' +
             'if (e.tagName.toLowerCase() === "input") {\n' +
             'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
             '} else if (e.textContent !== "b") {\n' +
             'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
-            '}, parseAssertElemStr);\n' +
-            '} catch(e) { return; } throw "assert didn\'t fail";',
+            '}, parseAssertElemStr);' +
+            after,
         ],
         'wait': false,
         'checkResult': true,
@@ -1687,14 +1168,14 @@ function checkAssertTextFalse(x, func) {
             'let parseAssertElemStr = await page.$$("a");\n' +
             'if (parseAssertElemStr.length === 0) { throw \'"a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            'try {\n' +
+            before +
             'await page.evaluate(e => {\n' +
             'if (e.tagName.toLowerCase() === "input") {\n' +
             'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
             '} else if (e.textContent !== "b") {\n' +
             'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
-            '}, parseAssertElemStr[i]);\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            '}, parseAssertElemStr[i]);' +
+            afterAllElements +
             '}',
         ],
         'wait': false,
@@ -1707,14 +1188,14 @@ function checkAssertTextFalse(x, func) {
             'let parseAssertElemStr = await page.$x("//a");\n' +
             'if (parseAssertElemStr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
             'parseAssertElemStr = parseAssertElemStr[0];\n' +
-            'try {\n' +
+            before +
             'await page.evaluate(e => {\n' +
             'if (e.tagName.toLowerCase() === "input") {\n' +
             'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
             '} else if (e.textContent !== "b") {\n' +
             'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
-            '}, parseAssertElemStr);\n' +
-            '} catch(e) { return; } throw "assert didn\'t fail";',
+            '}, parseAssertElemStr);' +
+            after,
         ],
         'wait': false,
         'checkResult': true,
@@ -1724,19 +1205,33 @@ function checkAssertTextFalse(x, func) {
             'let parseAssertElemStr = await page.$x("//a");\n' +
             'if (parseAssertElemStr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            'try {\n' +
+            before +
             'await page.evaluate(e => {\n' +
             'if (e.tagName.toLowerCase() === "input") {\n' +
             'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
             '} else if (e.textContent !== "b") {\n' +
             'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
-            '}, parseAssertElemStr[i]);\n' +
-            '} catch(e) { continue; } throw "assert didn\'t fail";\n' +
+            '}, parseAssertElemStr[i]);' +
+            afterAllElements +
             '}',
         ],
         'wait': false,
         'checkResult': true,
     });
+}
+
+function checkAssertText(x, func) {
+    checkAssertTextInner(x, func, '', '', '');
+}
+
+function checkAssertTextFalse(x, func) {
+    checkAssertTextInner(
+        x,
+        func,
+        'try {\n',
+        '\n} catch(e) { return; } throw "assert didn\'t fail";',
+        '\n} catch(e) { continue; } throw "assert didn\'t fail";',
+    );
 }
 
 function checkAttribute(x, func) {
