@@ -1054,7 +1054,7 @@ function parseAssertTextInner(line, options, assertFalse) {
                     `!== "${value}"'; }\n` +
                 `} else if (e.textContent !== "${value}") {\n` +
                     `throw '"' + e.textContent + '" !== "${value}"'; }\n` +
-                `}, ${varName}[i]);${insertAfter}\n` +
+                `}, ${varName}[i]);${insertAfter}` +
             '}',
         ];
     }
