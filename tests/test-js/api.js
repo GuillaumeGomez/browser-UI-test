@@ -565,18 +565,10 @@ function checkAssertAttributeFalse(x, func) {
     });
 }
 
-function checkAssertCount(x, func) {
+function checkAssertCountInner(x, func, before, after) {
     x.assert(func('("a", 1, "c")'), {'error': 'unexpected argument after number of occurences'});
     x.assert(func('("a", 1 2)'), {'error': 'expected `,`, found `2`'});
     x.assert(func('("a", 1 a)'), {'error': 'expected `,`, found `a`'});
-    x.assert(func('("a", 1)'),
-        {
-            'instructions': [
-                'let parseAssertElemInt = await page.$$("a");\nif (parseAssertElemInt.length !== ' +
-                '1) { throw \'expected 1 elements, found \' + parseAssertElemInt.length; }'],
-            'wait': false,
-            'checkResult': true,
-        });
     x.assert(func('("a", -1)'), {'error': 'number of occurences cannot be negative: `-1`'});
     x.assert(func('("a", -1.0)'), {
         'error': 'expected integer for number of occurences, found float: `-1.0`',
@@ -585,12 +577,31 @@ function checkAssertCount(x, func) {
         'error': 'expected integer for number of occurences, found float: `1.0`',
     });
 
+    x.assert(func('("a", 1)'),
+        {
+            'instructions': [
+                'let parseAssertElemInt = await page.$$("a");\n' +
+                before +
+                'if (parseAssertElemInt.length !== 1) {\n' +
+                'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+                '}' +
+                after,
+            ],
+            'wait': false,
+            'checkResult': true,
+        });
+
     // Check the handling of pseudo elements
     x.assert(func('("a::after", 1)'),
         {
             'instructions': [
-                'let parseAssertElemInt = await page.$$("a");\nif (parseAssertElemInt.length !== ' +
-                '1) { throw \'expected 1 elements, found \' + parseAssertElemInt.length; }'],
+                'let parseAssertElemInt = await page.$$("a");\n' +
+                before +
+                'if (parseAssertElemInt.length !== 1) {\n' +
+                'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+                '}' +
+                after,
+            ],
             'wait': false,
             'checkResult': true,
         });
@@ -598,8 +609,12 @@ function checkAssertCount(x, func) {
         {
             'instructions': [
                 'let parseAssertElemInt = await page.$$("a:focus");\n' +
-                'if (parseAssertElemInt.length !== 1) { ' +
-                'throw \'expected 1 elements, found \' + parseAssertElemInt.length; }'],
+                before +
+                'if (parseAssertElemInt.length !== 1) {\n' +
+                'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+                '}' +
+                after,
+            ],
             'wait': false,
             'checkResult': true,
         });
@@ -607,8 +622,12 @@ function checkAssertCount(x, func) {
         {
             'instructions': [
                 'let parseAssertElemInt = await page.$$("a :focus");\n' +
-                'if (parseAssertElemInt.length !== 1) { ' +
-                'throw \'expected 1 elements, found \' + parseAssertElemInt.length; }'],
+                before +
+                'if (parseAssertElemInt.length !== 1) {\n' +
+                'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+                '}' +
+                after,
+            ],
             'wait': false,
             'checkResult': true,
         });
@@ -616,81 +635,28 @@ function checkAssertCount(x, func) {
         {
             'instructions': [
                 'let parseAssertElemInt = await page.$$("a ::after");\n' +
-                'if (parseAssertElemInt.length !== 1) { throw \'expected 1 elements, found \' + ' +
-                'parseAssertElemInt.length; }'],
+                before +
+                'if (parseAssertElemInt.length !== 1) {\n' +
+                'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+                '}' +
+                after,
+            ],
             'wait': false,
             'checkResult': true,
         });
 }
 
-function checkAssertCountFalse(x, func) {
-    x.assert(func('("a", 1, "c")'), {'error': 'unexpected argument after number of occurences'});
-    x.assert(func('("a", 1 2)'), {'error': 'expected `,`, found `2`'});
-    x.assert(func('("a", 1 a)'), {'error': 'expected `,`, found `a`'});
-    x.assert(func('("a", 1)'),
-        {
-            'instructions': [
-                'let parseAssertElemInt = await page.$$("a");\n' +
-                'try {\n' +
-                'if (parseAssertElemInt.length !== 1) { throw \'expected 1 elements, found \' + ' +
-                'parseAssertElemInt.length; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";'],
-            'wait': false,
-            'checkResult': true,
-        });
-    x.assert(func('("a", -1)'), {'error': 'number of occurences cannot be negative: `-1`'});
-    x.assert(func('("a", -1.0)'), {
-        'error': 'expected integer for number of occurences, found float: `-1.0`',
-    });
-    x.assert(func('("a", 1.0)'), {
-        'error': 'expected integer for number of occurences, found float: `1.0`',
-    });
+function checkAssertCount(x, func) {
+    checkAssertCountInner(x, func, '', '');
+}
 
-    // Check the handling of pseudo elements
-    x.assert(func('("a::after", 1)'),
-        {
-            'instructions': [
-                'let parseAssertElemInt = await page.$$("a");\n' +
-                'try {\n' +
-                'if (parseAssertElemInt.length !== 1) { throw \'expected 1 elements, found \' + ' +
-                'parseAssertElemInt.length; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";'],
-            'wait': false,
-            'checkResult': true,
-        });
-    x.assert(func('("a:hover", 1)'),
-        {
-            'instructions': [
-                'let parseAssertElemInt = await page.$$("a:hover");\n' +
-                'try {\n' +
-                'if (parseAssertElemInt.length !== 1) { throw \'expected 1 elements, found \' + ' +
-                'parseAssertElemInt.length; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";'],
-            'wait': false,
-            'checkResult': true,
-        });
-    x.assert(func('("a :after", 1)'),
-        {
-            'instructions': [
-                'let parseAssertElemInt = await page.$$("a :after");\n' +
-                'try {\n' +
-                'if (parseAssertElemInt.length !== 1) { throw \'expected 1 elements, found \' + ' +
-                'parseAssertElemInt.length; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";'],
-            'wait': false,
-            'checkResult': true,
-        });
-    x.assert(func('("a ::after", 1)'),
-        {
-            'instructions': [
-                'let parseAssertElemInt = await page.$$("a ::after");\n' +
-                'try {\n' +
-                'if (parseAssertElemInt.length !== 1) { throw \'expected 1 elements, found \' + ' +
-                'parseAssertElemInt.length; }\n' +
-                '} catch(e) { return; } throw "assert didn\'t fail";'],
-            'wait': false,
-            'checkResult': true,
-        });
+function checkAssertCountFalse(x, func) {
+    checkAssertCountInner(
+        x,
+        func,
+        'try {\n',
+        '\n} catch(e) { return; } throw "assert didn\'t fail";',
+    );
 }
 
 function checkAssertCssInner(x, func, before, after) {

@@ -963,8 +963,9 @@ function parseAssertCountInner(line, options, assertFalse) {
         'instructions': [
             start +
             // TODO: maybe check differently depending on the tag kind?
-            `${insertBefore}if (${varName}.length !== ${occurences.value}) { throw 'expected ` +
-            `${occurences.value} elements, found ' + ${varName}.length; }${insertAfter}`,
+            `${insertBefore}if (${varName}.length !== ${occurences.value}) {\n` +
+            `throw 'expected ${occurences.value} elements, found ' + ${varName}.length;\n` +
+            `}${insertAfter}`,
         ],
         'wait': false,
         'checkResult': true,
