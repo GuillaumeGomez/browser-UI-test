@@ -552,7 +552,7 @@ class Parser {
             if (key === null) {
                 elems.push({'key': number});
                 const text = number.getText();
-                parseEnd(this, pushTo, `numbers cannot be used as keys (for \`${text}\`)`);
+                parseEnd(this, pushTo, `\`${text}\`: numbers cannot be used as keys`);
             } else if (prevChar !== ':') {
                 elems.push({'key': key, 'value': number});
                 parseEnd(this, pushTo,
@@ -672,7 +672,8 @@ class Parser {
 
                 if (key === null) {
                     elems.push({'key': tmp[0]});
-                    parseEnd(this, pushTo, 'JSON objects cannot be used as keys');
+                    parseEnd(this, pushTo,
+                        `\`${tmp[0].getText()}\`: JSON objects cannot be used as keys`);
                 } else if (prevChar !== ':') {
                     elems.push({'key': key, 'value': tmp[0]});
                     parseEnd(this, pushTo,
@@ -692,7 +693,8 @@ class Parser {
 
                 if (key === null) {
                     elems.push({'key': tmp[0]});
-                    parseEnd(this, pushTo, 'arrays cannot be used as keys');
+                    parseEnd(this, pushTo,
+                        `\`${tmp[0].getText()}\`: arrays cannot be used as keys`);
                 } else if (prevChar !== ':') {
                     elems.push({'key': key, 'value': tmp[0]});
                     parseEnd(this, pushTo,
@@ -731,7 +733,8 @@ class Parser {
                     }
                 } else if (key === null) {
                     elems.push({'key': el});
-                    parseEnd(this, pushTo, 'booleans and idents cannot be used as keys');
+                    parseEnd(this, pushTo,
+                        `\`${el.getText()}\`: booleans and idents cannot be used as keys`);
                 } else if (prevChar !== ':') {
                     elems.push({'key': key, 'value': el});
                     parseEnd(this, pushTo,
