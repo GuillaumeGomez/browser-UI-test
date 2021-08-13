@@ -716,10 +716,10 @@ function checkNumber(x) {
 function checkJson(x) {
     let p = new Parser('{1: 2}');
     p.parse();
-    x.assert(p.error, 'numbers cannot be used as keys (for `1`)');
+    x.assert(p.error, '`1`: numbers cannot be used as keys');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'numbers cannot be used as keys (for `1`)');
+    x.assert(p.elems[0].error, '`1`: numbers cannot be used as keys');
     x.assert(p.elems[0].getText(), '{1');
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].key.kind, 'number');
@@ -729,10 +729,10 @@ function checkJson(x) {
 
     p = new Parser('{-1: 2}');
     p.parse();
-    x.assert(p.error, 'numbers cannot be used as keys (for `-1`)');
+    x.assert(p.error, '`-1`: numbers cannot be used as keys');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'numbers cannot be used as keys (for `-1`)');
+    x.assert(p.elems[0].error, '`-1`: numbers cannot be used as keys');
     x.assert(p.elems[0].getText(), '{-1');
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].key.kind, 'number');
@@ -742,10 +742,10 @@ function checkJson(x) {
 
     p = new Parser('{-1.2: 2}');
     p.parse();
-    x.assert(p.error, 'numbers cannot be used as keys (for `-1.2`)');
+    x.assert(p.error, '`-1.2`: numbers cannot be used as keys');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'numbers cannot be used as keys (for `-1.2`)');
+    x.assert(p.elems[0].error, '`-1.2`: numbers cannot be used as keys');
     x.assert(p.elems[0].getText(), '{-1.2');
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].key.kind, 'number');
@@ -786,19 +786,19 @@ function checkJson(x) {
 
     p = new Parser('{true: 1}');
     p.parse();
-    x.assert(p.error, 'booleans and idents cannot be used as keys');
+    x.assert(p.error, '`true`: booleans and idents cannot be used as keys');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'booleans and idents cannot be used as keys');
+    x.assert(p.elems[0].error, '`true`: booleans and idents cannot be used as keys');
     x.assert(p.elems[0].getText(), '{true');
 
 
     p = new Parser('{{"a": 2}: 1}');
     p.parse();
-    x.assert(p.error, 'JSON objects cannot be used as keys');
+    x.assert(p.error, '`{"a": 2}`: JSON objects cannot be used as keys');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'JSON objects cannot be used as keys');
+    x.assert(p.elems[0].error, '`{"a": 2}`: JSON objects cannot be used as keys');
     x.assert(p.elems[0].getText(), '{{"a": 2}');
     x.assert(p.elems[0].getRaw()[0].key.kind, 'json');
     x.assert(p.elems[0].getRaw()[0].key.getText(), '{"a": 2}');
@@ -853,10 +853,10 @@ function checkJson(x) {
 
     p = new Parser('{[1, 2]: 1}');
     p.parse();
-    x.assert(p.error, 'arrays cannot be used as keys');
+    x.assert(p.error, '`[1, 2]`: arrays cannot be used as keys');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'arrays cannot be used as keys');
+    x.assert(p.elems[0].error, '`[1, 2]`: arrays cannot be used as keys');
     x.assert(p.elems[0].getText(), '{[1, 2]');
     x.assert(p.elems[0].getRaw()[0].key.kind, 'array');
     x.assert(p.elems[0].getRaw()[0].key.getText(), '[1, 2]');
