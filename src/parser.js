@@ -1,7 +1,9 @@
 const getVariableValue = require('./utils.js').getVariableValue;
 
+const COMMENT_START = '//';
+
 function isWhiteSpace(c) {
-    return c === ' ' || c === '\t';
+    return c === ' ' || c === '\t' || c === '\r' || c === '\n';
 }
 
 function isStringChar(c) {
@@ -66,12 +68,17 @@ function checkInteger(nb, text, negativeCheck = false) {
 }
 
 class Element {
-    constructor(kind, value, startPos, endPos, error = null) {
+    constructor(kind, value, startPos, endPos, line, error = null) {
         this.kind = kind;
         this.value = value;
         this.startPos = startPos;
         this.endPos = endPos;
         this.error = error;
+        this.line = line;
+        if (typeof line !== 'number') {
+            throw new Error(
+                `Element constructed with a line which is not a number but \`${typeof line}\``);
+        }
     }
 
     getSelector(text = '') {
@@ -140,14 +147,14 @@ class Element {
 }
 
 class CharElement extends Element {
-    constructor(value, startPos, error = null) {
-        super('char', value, startPos, startPos, error);
+    constructor(value, startPos, line, error = null) {
+        super('char', value, startPos, startPos, line, error);
     }
 }
 
 class TupleElement extends Element {
-    constructor(value, startPos, endPos, fullText, error = null) {
-        super('tuple', value, startPos, endPos, error);
+    constructor(value, startPos, endPos, fullText, line, error = null) {
+        super('tuple', value, startPos, endPos, line, error);
         this.fullText = fullText;
     }
 
@@ -161,8 +168,8 @@ class TupleElement extends Element {
 }
 
 class ArrayElement extends Element {
-    constructor(value, startPos, endPos, fullText, error = null) {
-        super('array', value, startPos, endPos, error);
+    constructor(value, startPos, endPos, fullText, line, error = null) {
+        super('array', value, startPos, endPos, line, error);
         this.fullText = fullText;
     }
 
@@ -176,8 +183,8 @@ class ArrayElement extends Element {
 }
 
 class StringElement extends Element {
-    constructor(value, startPos, endPos, fullText, error = null) {
-        super('string', value, startPos, endPos, error);
+    constructor(value, startPos, endPos, fullText, line, error = null) {
+        super('string', value, startPos, endPos, line, error);
         this.fullText = fullText;
     }
 
@@ -187,23 +194,23 @@ class StringElement extends Element {
 }
 
 class IdentElement extends Element {
-    constructor(value, startPos, endPos, fullText, error = null) {
+    constructor(value, startPos, endPos, line, error = null) {
         const kind = value === 'true' || value === 'false' ? 'bool' : 'ident';
-        super(kind, value, startPos, endPos, error);
+        super(kind, value, startPos, endPos, line, error);
     }
 }
 
 class NumberElement extends Element {
-    constructor(value, startPos, endPos, error = null) {
-        super('number', value, startPos, endPos, error);
+    constructor(value, startPos, endPos, line, error = null) {
+        super('number', value, startPos, endPos, line, error);
         this.isFloat = value.indexOf('.') !== -1;
         this.isNegative = value.startsWith('-');
     }
 }
 
 class JsonElement extends Element {
-    constructor(value, startPos, endPos, fullText, error = null) {
-        super('json', value, startPos, endPos, error);
+    constructor(value, startPos, endPos, fullText, line, error = null) {
+        super('json', value, startPos, endPos, line, error);
         this.fullText = fullText;
     }
 
@@ -217,14 +224,14 @@ class JsonElement extends Element {
 }
 
 class UnknownElement extends Element {
-    constructor(value, startPos, endPos, error = null) {
-        super('unknown', value, startPos, endPos, error);
+    constructor(value, startPos, endPos, line, error = null) {
+        super('unknown', value, startPos, endPos, line, error);
     }
 }
 
 class VariableElement extends Element {
-    constructor(value, startPos, endPos, error = null) {
-        super('variable', value, startPos, endPos, error);
+    constructor(value, startPos, endPos, line, error = null) {
+        super('variable', value, startPos, endPos, line, error);
     }
 }
 
@@ -238,16 +245,179 @@ class Parser {
             variables = {};
         }
         this.variables = variables;
+        // For humans, the first line isn't 0 but 1.
+        this.currentLine = 1;
+        this.command = null;
+        this.argsStart = 0;
+        this.argsEnd = 0;
     }
 
-    parse(endChar = null, pushTo = null, separator = null) {
+    getRawArgs() {
+        if (this.argsEnd - this.argsStart > 100) {
+            return this.text.slice(this.argsStart, this.argsStart + 100) + '…';
+        }
+        return this.text.slice(this.argsStart, this.argsEnd);
+    }
+
+    getOriginalCommand() {
+        return this.text.slice(this.commandStart, this.argsEnd);
+    }
+
+    parseNextCommand() {
+        this.elems = [];
+        this.error = null;
+        // First, we skip all unneeded characters...
+        this.skipWhiteSpaceCharacters();
+        this.commandStart = this.pos;
+        this.command = this.extractNextCommandName();
+        if (this.command === null || this.error !== null) {
+            return false;
+        }
+        // Now that we have the command, let's get its arguments!
+        if (this.command.getRaw().toLowerCase() === 'goto') {
+            // The 'goto' command is a special case. We need to parse it differently...
+            this.parseGoTo();
+        } else {
+            this.parse();
+        }
+        return this.error === null;
+    }
+
+    skipWhiteSpaceCharacters() {
+        while (this.pos < this.text.length && isWhiteSpace(this.text.charAt(this.pos))) {
+            this.increasePos(false);
+        }
+    }
+
+    extractNextCommandName() {
+        let command = null;
+
+        while (this.pos < this.text.length && command === null) {
+            const c = this.text.charAt(this.pos);
+            const tmp = [];
+
+            if (c === '/') {
+                this.parseComment(tmp);
+                if (tmp.length !== 0) {
+                    this.error = 'Unexpected `/` when parsing command';
+                    return null;
+                }
+            } else if (isWhiteSpace(c)) {
+                // Do nothing.
+            } else if (isLetter(c)) {
+                this.parseIdent(tmp, ['-']);
+                command = tmp.pop();
+            } else {
+                this.error = `Unexpected \`${c}\` when parsing command`;
+                return null;
+            }
+            this.increasePos();
+        }
+
+        if (command === null && this.pos >= this.text.length) {
+            return null;
+        }
+
+        let stop = false;
+        // Now we have the command ident, let's reach the `:` before moving on!
+        while (this.pos < this.text.length && !stop) {
+            const c = this.text.charAt(this.pos);
+
+            if (c === '/') {
+                // No need to check anything, if there is a comment, it means it'll be on two lines,
+                // which isn't allowed.
+                this.error = 'Unexpected `/` when parsing command ' +
+                    `(after \`${command.getRaw()}\`)`;
+                return null;
+            } else if (c === '\n') {
+                this.error = 'Backlines are not allowed between command identifier and `:`';
+                return null;
+            } else if (isWhiteSpace(c)) {
+                // Do nothing...
+            } else if (c === ':') {
+                stop = true;
+            } else {
+                this.error = `Unexpected \`${c}\` when parsing command ` +
+                    `(after \`${command.getRaw()}\`)`;
+                return null;
+            }
+            this.increasePos();
+        }
+        if (!stop) {
+            this.error = `Missing \`:\` after command identifier (after \`${command.getRaw()}\`)`;
+            return null;
+        }
+        return command;
+    }
+
+    increasePos(increaseIfNothing = true) {
+        const start = this.pos;
+        while (this.pos < this.text.length && isWhiteSpace(this.text.charAt(this.pos))) {
+            if (this.text.charAt(this.pos) === '\n') {
+                this.currentLine += 1;
+            }
+            this.pos += 1;
+        }
+        if (increaseIfNothing === true && start === this.pos) {
+            this.pos += 1;
+        }
+    }
+
+    // This whole function exists because the `goto` command parsing is special.
+    parseGoTo() {
+        // Since it's not using the common parser system, we have to get rid of the useless
+        // characters first...
+        this.skipWhiteSpaceCharacters();
+        // Now that we found the first non-whitespace character, time to get the rest!
+        this.argsStart = this.pos;
+        const startLine = this.currentLine;
+        while (this.pos < this.text.length && this.text.charAt(this.pos) !== '\n') {
+            // Exceptionally, we don't use `increasePos()` here!
+            this.pos += 1;
+        }
+        this.argsEnd = this.pos;
+        const input = this.text.slice(this.argsStart, this.pos);
+        // This function doesn't use the parser so we still need to remove the comment part...
+        const parts = input.split(COMMENT_START);
+        let line = '';
+        if (parts.length > 1) {
+            for (let i = 0; i < parts.length; ++i) {
+                if (parts[i].endsWith(':')) {
+                    line += `${parts[i]}//`;
+                    if (i + 1 < parts.length) {
+                        i += 1;
+                        line += parts[i];
+                    }
+                }
+            }
+        } else {
+            line = input;
+        }
+        line = line.trim().split('|');
+        for (let i = 1; i < line.length; i += 2) {
+            const variable = getVariableValue(this.variables, line[i]);
+            if (variable === null) {
+                this.error = `variable \`${line[i]}\` not found in options nor environment`;
+                return;
+            }
+            line[i] = variable;
+        }
+        line = line.join('');
+        this.elems.push(new UnknownElement(line, this.argsStart, this.argsEnd, startLine));
+    }
+
+    parse(endChar = '\n', pushTo = null, separator = null) {
+        if (pushTo === null) {
+            this.argsStart = this.pos;
+        }
         let prev = '';
 
         const checker = (t, c, toCall) => {
             const elems = pushTo !== null ? pushTo : t.elems;
             if (elems.length > 0 && prev !== separator) {
                 const msg = separator === null ? 'nothing' : `\`${separator}\``;
-                const e = new CharElement(c, t.pos, `expected ${msg}, found \`${c}\``);
+                const e = new CharElement(
+                    c, t.pos, this.currentLine, `expected ${msg}, found \`${c}\``);
                 t.push(e, pushTo);
                 t.pos = t.text.length;
             } else {
@@ -259,7 +429,9 @@ class Parser {
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
 
-            if (isStringChar(c)) {
+            if (c === endChar) {
+                break;
+            } else if (isStringChar(c)) {
                 checker(this, c, 'parseString');
             } else if (c === '{') {
                 checker(this, c, 'parseJson');
@@ -268,17 +440,17 @@ class Parser {
             } else if (c === separator) {
                 const elems = pushTo !== null ? pushTo : this.elems;
                 if (elems.length === 0) {
-                    this.push(new CharElement(separator, this.pos,
+                    this.push(new CharElement(separator, this.pos, this.currentLine,
                         `unexpected \`${separator}\` as first element`), pushTo);
                     this.pos = this.text.length;
                 } else if (prev === separator) {
-                    this.push(new CharElement(separator, this.pos,
+                    this.push(new CharElement(separator, this.pos, this.currentLine,
                         `unexpected \`${separator}\` after \`${separator}\``), pushTo);
                     this.pos = this.text.length;
                 } else if (elems[elems.length - 1].kind === 'char') {
                     // TODO: not sure if this block is useful...
                     const prevElem = elems[elems.length - 1].text;
-                    this.push(new CharElement(separator, this.pos,
+                    this.push(new CharElement(separator, this.pos, this.currentLine,
                         `unexpected \`${separator}\` after \`${prevElem}\``), pushTo);
                     this.pos = this.text.length;
                 } else {
@@ -291,11 +463,11 @@ class Parser {
             } else if (c === '[') {
                 checker(this, c, 'parseArray');
             } else if (c === '/') {
-                this.parseComment(this, pushTo);
+                this.parseComment(pushTo);
+                // We want to keep the backline in case this is the end char.
+                continue;
             } else if (c === '|') {
                 checker(this, c, 'parseVariable');
-            } else if (c === endChar) {
-                return prev;
             } else {
                 checker(this, c, 'parseIdent');
                 const elems = pushTo !== null ? pushTo : this.elems;
@@ -312,7 +484,10 @@ class Parser {
                     this.pos = this.text.length;
                 }
             }
-            this.pos += 1;
+            this.increasePos();
+        }
+        if (pushTo === null) {
+            this.argsEnd = this.pos;
         }
         return prev;
     }
@@ -320,9 +495,11 @@ class Parser {
     parseComment(pushTo = null) {
         const start = this.pos;
         if (this.text.charAt(this.pos + 1) === '/') {
-            this.pos = this.text.length;
+            while (this.pos < this.text.length && this.text.charAt(this.pos) !== '\n') {
+                this.pos += 1;
+            }
         } else {
-            this.push(new UnknownElement('/', start, this.pos), pushTo);
+            this.push(new UnknownElement('/', start, this.pos, this.currentLine), pushTo);
         }
     }
 
@@ -330,20 +507,29 @@ class Parser {
         const start = this.pos;
         const elems = [];
 
-        this.pos += 1;
+        this.increasePos();
         const prev = this.parse(endChar, elems, ',');
         const full = this.text.substring(start, this.pos + 1);
         if (elems.length > 0 && elems[elems.length - 1].error !== null) {
-            this.push(new constructor(elems, start, this.pos, full, elems[elems.length - 1].error),
-                pushTo);
+            this.push(
+                new constructor(
+                    elems,
+                    start,
+                    this.pos,
+                    full,
+                    this.currentLine,
+                    elems[elems.length - 1].error,
+                ),
+                pushTo,
+            );
         } else if (prev !== '') {
             if (prev === ',') {
                 if (elems.length > 0) {
                     const el = elems[elems.length - 1].getText();
-                    this.push(new constructor(elems, start, this.pos, full,
+                    this.push(new constructor(elems, start, this.pos, full, this.currentLine,
                         `unexpected \`,\` after \`${el}\``), pushTo);
                 } else {
-                    this.push(new constructor(elems, start, this.pos, full,
+                    this.push(new constructor(elems, start, this.pos, full, this.currentLine,
                         `unexpected \`,\` after \`${startChar}\``), pushTo);
                 }
                 this.pos = this.text.length;
@@ -351,29 +537,38 @@ class Parser {
                 const el = elems[elems.length - 1].getText();
                 const prevText = elems[elems.length - 2].getText();
                 const prevEl = typeof prev !== 'undefined' ? prev : prevText;
-                this.push(new constructor(elems, start, this.pos, full,
+                this.push(new constructor(elems, start, this.pos, full, this.currentLine,
                     `unexpected \`${el}\` after \`${prevEl}\``), pushTo);
             } else {
                 const el = elems[elems.length - 1].getText();
                 // this case should never happen but just in case...
-                this.push(new constructor(elems, start, this.pos, full,
+                this.push(new constructor(elems, start, this.pos, full, this.currentLine,
                     `unexpected \`${el}\` after \`${startChar}\``), pushTo);
             }
         } else if (this.pos >= this.text.length || this.text.charAt(this.pos) !== endChar) {
             if (elems.length === 0) {
-                this.push(new constructor(elems, start, this.pos, full,
+                this.push(new constructor(elems, start, this.pos, full, this.currentLine,
                     `expected \`${endChar}\` at the end`),
                 pushTo);
             } else {
-                this.push(new constructor(elems, start, this.pos, full,
+                this.push(new constructor(elems, start, this.pos, full, this.currentLine,
                     `expected \`${endChar}\` after \`${elems[elems.length - 1].getText()}\``),
                 pushTo);
             }
         } else if (elems.length > 0 && elems[elems.length - 1].error !== null) {
-            this.push(new constructor(elems, start, this.pos, full, elems[elems.length - 1].error),
-                pushTo);
+            this.push(
+                new constructor(
+                    elems,
+                    start,
+                    this.pos,
+                    full,
+                    this.currentLine,
+                    elems[elems.length - 1].error,
+                ),
+                pushTo,
+            );
         } else {
-            this.push(new constructor(elems, start, this.pos, full), pushTo);
+            this.push(new constructor(elems, start, this.pos, full, this.currentLine), pushTo);
         }
     }
 
@@ -412,50 +607,58 @@ class Parser {
         const start = this.pos;
         const endChar = this.text.charAt(this.pos);
 
-        this.pos += 1;
+        this.increasePos();
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
             if (c === endChar) {
                 const value = this.text.substring(start + 1, this.pos);
                 const full = this.text.substring(start, this.pos + 1);
-                const e = new StringElement(value, start, this.pos, full);
+                const e = new StringElement(value, start, this.pos, full, this.currentLine);
                 this.push(e, pushTo);
                 return;
             } else if (c === '\\') {
                 this.pos += 1;
             }
-            this.pos += 1;
+            this.increasePos();
         }
         const value = this.text.substring(start + 1, this.pos);
         const full = this.text.substring(start, this.pos);
-        const e = new StringElement(value, start, this.pos, full,
+        const e = new StringElement(value, start, this.pos, full, this.currentLine,
             `expected \`${endChar}\` at the end of the string`);
         this.push(e, pushTo);
     }
 
-    parseIdent(pushTo = null) {
+    parseIdent(pushTo = null, specialChars = null) {
+        if (specialChars === null) {
+            specialChars = [];
+        } else if (!Array.isArray(specialChars)) {
+            throw new Error('`specialChars` variable should be an array!');
+        }
         const start = this.pos;
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
             // Check if it is a latin letter.
-            if (!isLetter(c)) {
+            if (!isLetter(c) && specialChars.indexOf(c) === -1) {
                 break;
             }
-            this.pos += 1;
+            this.increasePos();
         }
         const ident = this.text.substring(start, this.pos);
         if (ident.length !== 0) {
-            this.push(new IdentElement(ident, start, this.pos), pushTo);
+            this.push(new IdentElement(ident, start, this.pos, this.currentLine), pushTo);
             this.pos -= 1; // Need to go back to last "good" letter.
         } else {
-            this.push(new UnknownElement(this.text.charAt(start), start, this.pos), pushTo);
+            this.push(
+                new UnknownElement(this.text.charAt(start), start, this.pos, this.currentLine),
+                pushTo,
+            );
         }
     }
 
     parseVariable(pushTo = null, forceString = false) {
         const start = this.pos;
 
-        this.pos += 1;
+        this.increasePos();
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
             if (c === '|') {
@@ -469,17 +672,28 @@ class Parser {
                     return;
                 }
                 if (forceString === false && matchInteger(associatedValue) === true) {
-                    this.push(new NumberElement(associatedValue, start, this.pos), pushTo);
+                    this.push(
+                        new NumberElement(associatedValue, start, this.pos, this.currentLine),
+                        pushTo,
+                    );
                 } else {
-                    this.push(new StringElement(associatedValue, start, this.pos, associatedValue),
-                        pushTo);
+                    this.push(
+                        new StringElement(
+                            associatedValue,
+                            start,
+                            this.pos,
+                            associatedValue,
+                            this.currentLine,
+                        ),
+                        pushTo,
+                    );
                 }
                 return;
             }
-            this.pos += 1;
+            this.increasePos();
         }
         const variableName = this.text.substring(start + 1, this.pos);
-        const e = new VariableElement(variableName, start, this.pos,
+        const e = new VariableElement(variableName, start, this.pos, this.currentLine,
             `expected \`|\` after the variable name \`${variableName}\``);
         this.push(e, pushTo);
     }
@@ -498,7 +712,7 @@ class Parser {
             if (c === '-') {
                 if (this.pos > start) { // The minus sign can only be present as first character.
                     const nb = this.text.substring(start, this.pos);
-                    this.push(new NumberElement(nb, start, this.pos,
+                    this.push(new NumberElement(nb, start, this.pos, this.currentLine,
                         `unexpected \`-\` after \`${nb}\``), pushTo);
                     this.pos = this.text.length;
                     return;
@@ -506,7 +720,7 @@ class Parser {
             } else if (c === '.') {
                 if (hasDot === true) {
                     const nb = this.text.substring(start, this.pos);
-                    this.push(new NumberElement(nb, start, this.pos,
+                    this.push(new NumberElement(nb, start, this.pos, this.currentLine,
                         `unexpected \`.\` after \`${nb}\``), pushTo);
                     this.pos = this.text.length;
                     return;
@@ -514,13 +728,14 @@ class Parser {
                 hasDot = true;
             } else if (isNumber(c) === false) {
                 const nb = this.text.substring(start, this.pos);
-                this.push(new NumberElement(nb, start, this.pos), pushTo);
+                this.push(new NumberElement(nb, start, this.pos, this.currentLine), pushTo);
                 this.pos -= 1;
                 return;
             }
-            this.pos += 1;
+            this.increasePos();
         }
-        this.push(new NumberElement(this.text.substring(start, this.pos), start, this.pos), pushTo);
+        const nb = this.text.substring(start, this.pos);
+        this.push(new NumberElement(nb, start, this.pos, this.currentLine), pushTo);
     }
 
     push(e, pushTo = null) {
@@ -542,7 +757,8 @@ class Parser {
         let errorHappened = false;
         const parseEnd = (obj, pushTo, err) => {
             const fullText = obj.text.substring(start, obj.pos + 1);
-            obj.push(new JsonElement(elems, start, obj.pos, fullText, err), pushTo);
+            obj.push(
+                new JsonElement(elems, start, obj.pos, fullText, this.currentLine, err), pushTo);
             if (typeof err !== 'undefined') {
                 obj.pos = obj.text.length;
                 errorHappened = true;
@@ -591,7 +807,7 @@ class Parser {
             }
         };
 
-        this.pos += 1;
+        this.increasePos();
         // TODO: instead of using a kind of state machine, maybe make it work as step?
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
@@ -745,7 +961,7 @@ class Parser {
                     key = null;
                 }
             }
-            this.pos += 1;
+            this.increasePos();
         }
         if (errorHappened === true) {
             // do nothing

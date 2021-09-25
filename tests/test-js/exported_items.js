@@ -87,7 +87,7 @@ async function checkRunTestCode(x, func) {
 
     // what about some js?
     await x.assertTry(func, ['test', 'let x = true;'],
-        ['test... FAILED\n[ERROR] line 0: Unknown command "let x = true;"', 1]);
+        ['test... FAILED\n[ERROR] line 1: Unexpected `x` when parsing command (after `let`)', 1]);
 
     // Check a failing code
     await x.assertTry(func, ['test',

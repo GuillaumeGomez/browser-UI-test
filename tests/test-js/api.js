@@ -1,9 +1,36 @@
 const process = require('process');
 const parserFuncs = require('../../src/commands.js');
+const {Parser} = require('../../src/parser.js');
 const Options = require('../../src/options.js').Options;
 const {Assert, plural, print} = require('./utils.js');
 
 function wrapper(callback, arg, options) {
+    if (typeof options === 'undefined') {
+        options = new Options();
+    }
+
+    const p = new Parser(arg, options.variables);
+    p.parse();
+    if (p.error !== null) {
+        return {'error': p.error};
+    }
+    return callback(p, options);
+}
+
+function wrapperGoTo(callback, arg, options) {
+    if (typeof options === 'undefined') {
+        options = new Options();
+    }
+
+    const p = new Parser(arg, options.variables);
+    p.parseGoTo();
+    if (p.error !== null) {
+        return {'error': p.error};
+    }
+    return callback(p, options);
+}
+
+function wrapperParseContent(callback, arg, options) {
     if (typeof options === 'undefined') {
         options = new Options();
     }
@@ -55,6 +82,11 @@ function checkAssertInner(x, func, before, after) {
             'wait': false,
             'checkResult': true,
         });
+
+    // Multiline
+    x.assert(func('\n"/a"'), {
+        'error': 'expected a tuple, a CSS selector or an XPath, found nothing',
+    });
 }
 
 function checkAssert(x, func) {
@@ -397,6 +429,34 @@ function checkAssertAttributeInner(x, func, before, after) {
         'wait': false,
         'checkResult': true,
     });
+
+    // Multiline
+    x.assert(func('("a::after", \n {"a": 1}, \n ALLO)'), {
+        'error': 'expected identifier `ALL` as third argument or nothing, found `ALLO`',
+    });
+    x.assert(func('("//a",\n    \n{"b": "c"}, \n ALL)'), {
+        'instructions': [
+            'let parseAssertElemAttr = await page.$x("//a");\n' +
+            'if (parseAssertElemAttr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {\n' +
+            'await page.evaluate(e => {\n' +
+            'const parseAssertElemAttrDict = {"b":"c"};\n' +
+            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
+            'Object.entries(parseAssertElemAttrDict)) {\n' +
+            before +
+            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
+            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
+            'parseAssertElemAttrAttribute + \'` for XPath `//a`, found `\' + ' +
+            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            '}, parseAssertElemAttr[i]);\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
 }
 
 function checkAssertAttribute(x, func) {
@@ -479,6 +539,22 @@ function checkAssertCountInner(x, func, before, after) {
             'checkResult': true,
         });
     x.assert(func('("a ::after", 1)'),
+        {
+            'instructions': [
+                'let parseAssertElemInt = await page.$$("a ::after");\n' +
+                before +
+                'if (parseAssertElemInt.length !== 1) {\n' +
+                'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+                '}' +
+                after,
+            ],
+            'wait': false,
+            'checkResult': true,
+        });
+
+    // Multiline
+    x.assert(func('("a", \n-1)'), {'error': 'number of occurences cannot be negative: `-1`'});
+    x.assert(func('("a ::after"\n,\n 1)'),
         {
             'instructions': [
                 'let parseAssertElemInt = await page.$$("a ::after");\n' +
@@ -821,6 +897,34 @@ function checkAssertCssInner(x, func, before, after) {
         'wait': false,
         'checkResult': true,
     });
+
+    // Multiline
+    x.assert(func('("a", {"b": \n"c"\n, "b": "d"})'), {'error': 'CSS property `b` is duplicated'});
+    x.assert(func('("//a"\n, \n{"a": \n1, \n"b": \n2}\n, \nALL)'), {
+        'instructions': [
+            'let parseAssertElemCss = await page.$x("//a");\n' +
+            'if (parseAssertElemCss.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {\n' +
+            'await page.evaluate(e => {\n' +
+            'let assertComputedStyle = getComputedStyle(e);\n' +
+            'const parseAssertElemCssDict = {"a":"1","b":"2"};\n' +
+            'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
+            'Object.entries(parseAssertElemCssDict)) {\n' +
+            before +
+            'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
+            'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            '}, parseAssertElemCss[i]);\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
 }
 
 function checkAssertCss(x, func) {
@@ -1094,6 +1198,35 @@ function checkAssertPropertyInner(x, func, before, after) {
         'wait': false,
         'checkResult': true,
     });
+
+    // Multiline
+    x.assert(func('("a", \n{"b"\n:\n []})'), {
+        'error': 'only string and number are allowed, found `[]` (an array)',
+    });
+    x.assert(func('("//a"\n, \n{"a": \n1},\n ALL)'), {
+        'instructions': [
+            'let parseAssertElemProp = await page.$x("//a");\n' +
+            'if (parseAssertElemProp.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {\n' +
+            'await parseAssertElemProp[i].evaluateHandle(e => {\n' +
+            'const parseAssertElemPropDict = {"a":"1"};\n' +
+            'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
+            'Object.entries(parseAssertElemPropDict)) {\n' +
+            before +
+            'if (e[parseAssertElemPropKey] === undefined || ' +
+            'String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
+            'throw \'expected `\' + parseAssertElemPropValue + \'` for property `\' + ' +
+            'parseAssertElemPropKey + \'` for XPath `//a`, found `\' + ' +
+            'e[parseAssertElemPropKey] + \'`\';\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            '});\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
 }
 
 function checkAssertProperty(x, func) {
@@ -1112,6 +1245,11 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
     x.assert(func('("a", )'), {'error': 'unexpected `,` after `"a"`'});
     x.assert(func('("a", "b", )'), {'error': 'unexpected `,` after `"b"`'});
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", 2)'), {'error': 'expected second argument to be a string, found `2`'});
+    x.assert(func('("a")'), {
+        'error': 'invalid number of values in the tuple, read the documentation to see the ' +
+            'accepted inputs',
+    });
 
     x.assert(func('("a", "\'b")'), {
         'instructions': [
@@ -1218,6 +1356,27 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
         'wait': false,
         'checkResult': true,
     });
+
+    // Multiline
+    x.assert(func('("a", \n2\n)'), {'error': 'expected second argument to be a string, found `2`'});
+    x.assert(func('("//a"\n, \n"b",\n ALL)'), {
+        'instructions': [
+            'let parseAssertElemStr = await page.$x("//a");\n' +
+            'if (parseAssertElemStr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
+            before +
+            'await page.evaluate(e => {\n' +
+            'if (e.tagName.toLowerCase() === "input") {\n' +
+            'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
+            '} else if (e.textContent !== "b") {\n' +
+            'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
+            '}, parseAssertElemStr[i]);' +
+            afterAllElements +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
 }
 
 function checkAssertText(x, func) {
@@ -1296,7 +1455,6 @@ function checkAttribute(x, func) {
 
     // XPath
     x.assert(func('("/a", "b", "c")'), { 'error': 'XPath must start with `//`' });
-
     x.assert(func('("//a", "b", "c")'), {
         'instructions': [
             'let parseAttributeElem = await page.$x("//a");\n' +
@@ -1317,11 +1475,29 @@ function checkAttribute(x, func) {
             '}, parseAttributeElemJson);',
         ],
     });
+
+    // Multiline
+    x.assert(func('("a"\n,\n "b\n"\n)'), {
+        'error': 'expected json as second argument (since there are only two arguments), found ' +
+            'a string',
+    });
+    x.assert(func('("//a"\n,\n {"b":\n "c"})'), {
+        'instructions': [
+            'let parseAttributeElemJson = await page.$x("//a");\n' +
+            'if (parseAttributeElemJson.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseAttributeElemJson = parseAttributeElemJson[0];\n' +
+            'await page.evaluate(e => {\n' +
+            'e.setAttribute("b","c");\n' +
+            '}, parseAttributeElemJson);',
+        ],
+    });
 }
 
 function checkClick(x, func) {
     // Check position
-    x.assert(func('hello'), {'error': 'expected a position or a CSS selector or an XPath'});
+    x.assert(func('hello'), {
+        'error': 'expected a position or a CSS selector or an XPath, found `hello`',
+    });
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
     x.assert(func('(1)'), {
@@ -1360,6 +1536,12 @@ function checkClick(x, func) {
             'await parseClickVar.click();',
         ],
     });
+
+    // Multiline
+    x.assert(func('(a\n,\n2)'), {
+        'error': 'invalid syntax: expected "([number], [number])", found `(a\n,\n2)`',
+    });
+    x.assert(func('(\n-2\n,\n1)'), {'instructions': ['await page.mouse.click(-2,1);']});
 }
 
 function checkCompareElementsAttributeInner(x, func, before, after) {
@@ -1456,6 +1638,33 @@ function checkCompareElementsAttributeInner(x, func, before, after) {
         'checkResult': true,
     });
     x.assert(func('("//a", "//b", [\'"data-whatever\'])'), {
+        'instructions': [
+            'let parseCompareElementsAttr1 = await page.$x("//a");\n' +
+            'if (parseCompareElementsAttr1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseCompareElementsAttr1 = parseCompareElementsAttr1[0];\n' +
+            'let parseCompareElementsAttr2 = await page.$x("//b");\n' +
+            'if (parseCompareElementsAttr2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
+            'parseCompareElementsAttr2 = parseCompareElementsAttr2[0];\n' +
+            'await page.evaluate((e1, e2) => {\n' +
+            'const attributes = ["\\"data-whatever"];\n' +
+            'for (let i = 0; i < attributes.length; ++i) {\n' +
+            'const attr = attributes[i];\n' +
+            before +
+            'if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n' +
+            'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
+            '}' + after + '\n' +
+            '}\n' +
+            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // Multiline
+    x.assert(func('("a"\n,\n "b", 1)'), {
+        'error': 'expected third argument to be an array of string, found a string',
+    });
+    x.assert(func('("//a"\n,\n "//b", [\'"data-whatever\'])'), {
         'instructions': [
             'let parseCompareElementsAttr1 = await page.$x("//a");\n' +
             'if (parseCompareElementsAttr1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
@@ -1605,6 +1814,39 @@ function checkCompareElementsCssInner(x, func, before, after) {
         'checkResult': true,
     });
     x.assert(func('("//a", "//b", ["margin"])'), {
+        'instructions': [
+            'let parseCompareElementsCss1 = await page.$x("//a");\n' +
+            'if (parseCompareElementsCss1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseCompareElementsCss1 = parseCompareElementsCss1[0];\n' +
+            'let parseCompareElementsCss2 = await page.$x("//b");\n' +
+            'if (parseCompareElementsCss2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
+            'parseCompareElementsCss2 = parseCompareElementsCss2[0];\n' +
+            'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
+            'let computed_style2 = getComputedStyle(e2);\n' +
+            'const properties = ["margin"];\n' +
+            'for (let i = 0; i < properties.length; ++i) {\n' +
+            'const css_property = properties[i];\n' +
+            before +
+            'let style1_1 = e1.style[css_property];\n' +
+            'let style1_2 = computed_style1[css_property];\n' +
+            'let style2_1 = e2.style[css_property];\n' +
+            'let style2_2 = computed_style2[css_property];\n' +
+            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 ' +
+            '&& style1_2 != style2_2) {\n' +
+            'throw \'CSS property `\' + css_property + \'` did not match: \' + style1_2 + \' ' +
+            '!= \' + style2_2; }' + after + '\n' +
+            '}\n' +
+            '}, parseCompareElementsCss1, parseCompareElementsCss2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // Multiline
+    x.assert(func('("a"\n, \n"b", 1)'), {
+        'error': 'expected third argument to be an array of string, found a number',
+    });
+    x.assert(func('("//a"\n,\n "//b",\n [\n"margin"])'), {
         'instructions': [
             'let parseCompareElementsCss1 = await page.$x("//a");\n' +
             'if (parseCompareElementsCss1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
@@ -1862,6 +2104,33 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             after +
             '}\n' +
             'checkY(elem1, elem2);\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // Multiline
+    x.assert(
+        func('("a", \n"b", \n("x",\n "y", "y"))'),
+        {'error': 'Duplicated "y" value in `("x",\n "y", "y")`'},
+    );
+
+    x.assert(func('("a",\n "b", (\n"x"))'), {
+        'instructions': [
+            'let parseCompareElementsPos1 = await page.$("a");\n' +
+            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPos2 = await page.$("b");\n' +
+            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
             'function checkX(e1, e2) {\n' +
             before +
             'let x1 = e1.getBoundingClientRect().left;\n' +
@@ -2224,6 +2493,24 @@ function checkCompareElementsPositionNearInner(x, func, before, after) {
         'wait': false,
         'checkResult': true,
     });
+
+    // Multiline
+    x.assert(
+        func('("a", \n"b", {\n"y":\n -1})'),
+        {'error': 'Delta cannot be negative (in `"y": -1`)'},
+    );
+    x.assert(func('("a", \n"b",\n {\n})'), {
+        'instructions': [
+            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
+            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
+            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
 }
 
 function checkCompareElementsPositionNear(x, func) {
@@ -2354,6 +2641,35 @@ function checkCompareElementsPropertyInner(x, func, before, after) {
             'if (parseCompareElementsProp2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
             'parseCompareElementsProp2 = parseCompareElementsProp2[0];\n' +
             'const parseCompareElementsProps = ["margin"];\n' +
+            'for (let i = 0; i < parseCompareElementsProps.length; ++i) {\n' +
+            'const property = parseCompareElementsProps[i];\n' +
+            before +
+            'const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {\n' +
+            'return String(e[p]);\n' +
+            '}, property);\n' +
+            'await parseCompareElementsProp2.evaluateHandle((e, v, p) => {\n' +
+            'if (v !== String(e[p])) {\n' +
+            'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
+            '}\n' +
+            '}, value, property);\n' +
+            after +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // Multiline
+    x.assert(func('("a"\n, "b", \n1)'), {
+        'error': 'expected third argument to be an array of string, found a number',
+    });
+    x.assert(func('("a",\n "b",\n [\n"margin"])'), {
+        'instructions': [
+            'let parseCompareElementsProp1 = await page.$("a");\n' +
+            'if (parseCompareElementsProp1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsProp2 = await page.$("b");\n' +
+            'if (parseCompareElementsProp2 === null) { throw \'"b" not found\'; }\n' +
+            'const parseCompareElementsProps = [\n"margin"];\n' +
             'for (let i = 0; i < parseCompareElementsProps.length; ++i) {\n' +
             'const property = parseCompareElementsProps[i];\n' +
             before +
@@ -2514,6 +2830,36 @@ function checkCompareElementsTextInner(x, func, before, after) {
         'wait': false,
         'checkResult': true,
     });
+
+    // Multiline
+    x.assert(func('("a"\n,\n "b", 1)'), {
+        'error': 'expected 2 CSS selectors/XPathes, found 3 elements',
+    });
+    x.assert(func('("a"\n, \n"b")'), {
+        'instructions': [
+            'let parseCompareElementsText1 = await page.$("a");\n' +
+            'if (parseCompareElementsText1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsText2 = await page.$("b");\n' +
+            'if (parseCompareElementsText2 === null) { throw \'"b" not found\'; }\n' +
+            before +
+            'await page.evaluate((e1, e2) => {\n' +
+            'let e1value;\n' +
+            'if (e1.tagName.toLowerCase() === "input") {\n' +
+            'e1value = e1.value;\n' +
+            '} else {\n' +
+            'e1value = e1.textContent;\n' +
+            '}\n' +
+            'if (e2.tagName.toLowerCase() === "input") {\n' +
+            'if (e2.value !== e1value) {\n' +
+            'throw \'"\' + e1value + \'" !== "\' + e2.value + \'"\';\n' +
+            '}\n' +
+            '} else if (e2.textContent !== e1value) {\n' +
+            'throw \'"\' + e1value + \'" !== "\' + e2.textContent + \'"\';\n' +
+            '}\n}, parseCompareElementsText1, parseCompareElementsText2);' + after,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
 }
 
 function checkCompareElementsText(x, func) {
@@ -2546,6 +2892,7 @@ function checkCss(x, func) {
             'a string',
     });
     x.assert(func('("a", "", "c")'), {'error': 'attribute name (second argument) cannot be empty'});
+
     x.assert(func('("a", "b", "c")'), {
         'instructions': [
             'let parseCssElem = await page.$("a");\n' +
@@ -2608,6 +2955,20 @@ function checkCss(x, func) {
             '}, parseCssElemJson);',
         ],
     });
+
+    // Multiline
+    x.assert(func('("a", \n""\n, "c")'), {
+        'error': 'attribute name (second argument) cannot be empty',
+    });
+    x.assert(func('("a", \n"b", \n"c")'), {
+        'instructions': [
+            'let parseCssElem = await page.$("a");\n' +
+            'if (parseCssElem === null) { throw \'"a" not found\'; }\n' +
+            'await page.evaluate(e => {\n' +
+            'e.style["b"] = "c";\n' +
+            '}, parseCssElem);',
+        ],
+    });
 }
 
 function checkDebug(x, func) {
@@ -2638,7 +2999,7 @@ function checkDragAndDrop(x, func) {
     // check tuple argument
     x.assert(func('true'), {
         'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
-            'selector or an XPath',
+            'selector or an XPath, found `true`',
     });
     x.assert(func('(true)'), {
         'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
@@ -2702,6 +3063,7 @@ function checkDragAndDrop(x, func) {
     x.assert(func('("a",(1,-2.0))'), {
         'error': 'expected integer for Y position, found float: `-2.0`',
     });
+
     x.assert(func('((1,2),"a")'), {
         'instructions': [
             'const start = [1, 2];\n' +
@@ -2805,10 +3167,29 @@ function checkDragAndDrop(x, func) {
         ],
     });
 
+    // Multiline
+    x.assert(func('("a",\n(1,\n-2.0))'), {
+        'error': 'expected integer for Y position, found float: `-2.0`',
+    });
+    x.assert(func('((1\n,2),\n"a")'), {
+        'instructions': [
+            'const start = [1, 2];\n' +
+            'await page.mouse.move(start[0], start[1]);\n' +
+            'await page.mouse.down();',
+            'let parseDragAndDropElem2 = await page.$("a");\n' +
+            'if (parseDragAndDropElem2 === null) { throw \'"a" not found\'; }\n' +
+            'const parseDragAndDropElem2_box = await parseDragAndDropElem2.boundingBox();\n' +
+            'const end = [parseDragAndDropElem2_box.x + ' +
+            'parseDragAndDropElem2_box.width / 2, parseDragAndDropElem2_box.y + ' +
+            'parseDragAndDropElem2_box.height / 2];\n' +
+            'await page.mouse.move(end[0], end[1]);\n' +
+            'await page.mouse.up();',
+        ],
+    });
 }
 
 function checkEmulate(x, func) {
-    x.assert(func(''), {'error': 'expected string for "device name", found ``'});
+    x.assert(func(''), {'error': 'expected string for "device name", found nothing'});
     x.assert(func('12'), {'error': 'expected string for "device name", found `12`'});
     x.assert(func('"a"'), {
         'instructions': [
@@ -2829,7 +3210,7 @@ function checkFail(x, func) {
 }
 
 function checkFocus(x, func) {
-    x.assert(func('a'), {'error': 'expected a CSS selector or an XPath'});
+    x.assert(func('a'), {'error': 'expected a CSS selector or an XPath, found `a`'});
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
     x.assert(func('\'\''), {
@@ -2853,7 +3234,9 @@ function checkFocus(x, func) {
 }
 
 function checkGeolocation(x, func) {
-    x.assert(func(''), {'error': 'expected (longitude [number], latitude [number]), found ``'});
+    x.assert(func(''), {
+        'error': 'expected (longitude [number], latitude [number]), found nothing',
+    });
     x.assert(func('"a"'), {
         'error': 'expected (longitude [number], latitude [number]), found `"a"`',
     });
@@ -2866,7 +3249,14 @@ function checkGeolocation(x, func) {
     x.assert(func('(12, "13")'), {
         'error': 'expected number for latitude (second argument), found `"13"`',
     });
+
     x.assert(func('(12, 13)'), {'instructions': ['await page.setGeolocation(12, 13);']});
+
+    // Multiline
+    x.assert(func('(12\n,\n "13")'), {
+        'error': 'expected number for latitude (second argument), found `"13"`',
+    });
+    x.assert(func('(12\n,\n 13)'), {'instructions': ['await page.setGeolocation(12, 13);']});
 }
 
 function checkGoTo(x, func) {
@@ -2937,7 +3327,7 @@ function checkGoTo(x, func) {
 }
 
 function checkJavascript(x, func) {
-    x.assert(func(''), {'error': 'expected `true` or `false` value, found ``'});
+    x.assert(func(''), {'error': 'expected `true` or `false` value, found nothing'});
     x.assert(func('"a"'), {'error': 'expected `true` or `false` value, found `"a"`'});
     x.assert(func('true'), {
         'instructions': [
@@ -2947,8 +3337,9 @@ function checkJavascript(x, func) {
 }
 
 function checkLocalStorage(x, func) {
-    x.assert(func('hello'), {'error': 'expected JSON'});
+    x.assert(func('hello'), {'error': 'expected JSON, found `hello`'});
     x.assert(func('{').error !== undefined); // JSON syntax error
+
     x.assert(func('{"a": 1}'), {
         'instructions': ['await page.evaluate(() => { localStorage.setItem("a", "1"); })'],
     });
@@ -2957,11 +3348,17 @@ function checkLocalStorage(x, func) {
     x.assert(func('{"a": "1", "b": "2px"}'),
         {'instructions': ['await page.evaluate(() => { localStorage.setItem("a", "1");\n' +
             'localStorage.setItem("b", "2px"); })']});
+
+    // Multiline
+    x.assert(func('{"a"\n: \n"1"}'),
+        {'instructions': ['await page.evaluate(() => { localStorage.setItem("a", "1"); })']});
 }
 
 function checkMoveCursorTo(x, func) {
     // Check position
-    x.assert(func('hello'), {'error': 'expected a position or a CSS selector or an XPath'});
+    x.assert(func('hello'), {
+        'error': 'expected a position or a CSS selector or an XPath, found `hello`',
+    });
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
     x.assert(func('(1)'), {
@@ -2980,6 +3377,7 @@ function checkMoveCursorTo(x, func) {
     x.assert(func('(-1.0,2)'), {'error': 'expected integer for X position, found float: `-1.0`'});
     x.assert(func('(2,1.0)'), {'error': 'expected integer for Y position, found float: `1.0`'});
     x.assert(func('(2,-1.0)'), {'error': 'expected integer for Y position, found float: `-1.0`'});
+
     x.assert(func('(1,2)'), {'instructions': ['await page.mouse.move(1,2);']});
 
     // Check css selector
@@ -3003,14 +3401,18 @@ function checkMoveCursorTo(x, func) {
             'await parseMoveCursorToVar.hover();',
         ],
     });
+
+    // Multiline
+    x.assert(func('(\n-1\n,2)'), {'error': 'X position cannot be negative: `-1`'});
+    x.assert(func('(1\n,\n2)'), {'instructions': ['await page.mouse.move(1,2);']});
 }
 
 function checkParseContent(x, func) {
     x.assert(func(''), {'instructions': []});
     x.assert(func('// just a comment'), {'instructions': []});
     x.assert(func('  // just a comment'), {'instructions': []});
-    x.assert(func('a: '), {'error': 'Unknown command "a"', 'line': 0});
-    x.assert(func(':'), {'error': 'Unknown command ""', 'line': 0});
+    x.assert(func('a: '), {'error': 'Unknown command "a"', 'line': 1});
+    x.assert(func(':'), {'error': 'Unexpected `:` when parsing command', 'line': 1});
 
     x.assert(func('goto: file:///home'), {
         'instructions': [
@@ -3053,16 +3455,75 @@ function checkParseContent(x, func) {
                 },
             ],
         });
-    x.assert(func('// just a comment\na: b'), {'error': 'Unknown command "a"', 'line': 1});
+    x.assert(func('goto: file:///home\nreload:\ngoto: file:///home'),
+        {
+            'instructions': [
+                {
+                    'code': 'await page.goto("file:///home");',
+                    'original': 'goto: file:///home',
+                    'line_number': 1,
+                },
+                {
+                    'code': 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+                    'original': 'goto: file:///home',
+                    'line_number': 1,
+                },
+                {
+                    'code': 'await page.reload({\'waitUntil\': \'domcontentloaded\',' +
+                        ' \'timeout\': 30000});',
+                    'original': 'reload:',
+                    'line_number': 2,
+                },
+                {
+                    'code': 'await page.goto("file:///home");',
+                    'original': 'goto: file:///home',
+                    'line_number': 3,
+                },
+                {
+                    'code': 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+                    'original': 'goto: file:///home',
+                    'line_number': 3,
+                },
+            ],
+        });
+    x.assert(func('// just a comment\na: b'), {'error': 'Unknown command "a"', 'line': 2});
     x.assert(func('goto: file:///home\nemulate: "test"'),
         {
             'error': 'Command emulate must be used before first goto!',
             'line': 2,
         });
+    x.assert(func('goto: file:///home\nassert-text: ("a", "b")'), {
+        'instructions': [
+            {
+                'code': 'await page.goto("file:///home");',
+                'original': 'goto: file:///home',
+                'line_number': 1,
+            },
+            {
+                'code': 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+                'original': 'goto: file:///home',
+                'line_number': 1,
+            },
+            {
+                'code': 'let parseAssertElemStr = await page.$("a");\n' +
+                    'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
+                    'await page.evaluate(e => {\n' +
+                    'if (e.tagName.toLowerCase() === "input") {\n' +
+                    'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
+                    '} else if (e.textContent !== "b") {\n' +
+                    'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
+                    '}, parseAssertElemStr);',
+                'wait': false,
+                'checkResult': true,
+                'original': 'assert-text: ("a", "b")',
+                'line_number': 2,
+            },
+        ],
+    });
 }
 
 function checkPermissions(x, func) {
-    x.assert(func(''), {'error': 'expected an array of strings, found ``'});
+    x.assert(func(''), {'error': 'expected an array of strings, found nothing'});
     x.assert(func('"a"'), {'error': 'expected an array of strings, found `"a"`'});
     x.assert(func('("a", "b")'), {'error': 'expected an array of strings, found `("a", "b")`'});
     x.assert(func('["12", 13]'), {
@@ -3077,9 +3538,22 @@ function checkPermissions(x, func) {
         'error': '`"12"` is an unknown permission, you can see the list of available permissions ' +
             'with the `--show-permissions` option',
     });
+
     x.assert(func('["camera", "push"]'), {
         'instructions': [
             'arg.permissions = ["camera", "push"];',
+            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+        ],
+    });
+
+    // Multiline
+    x.assert(func('[\n"12"\n]'), {
+        'error': '`"12"` is an unknown permission, you can see the list of available permissions ' +
+            'with the `--show-permissions` option',
+    });
+    x.assert(func('[\n"camera"\n, "push"]'), {
+        'instructions': [
+            'arg.permissions = [\n"camera"\n, "push"];',
             'await arg.browser.overridePermissions(page.url(), arg.permissions);',
         ],
     });
@@ -3134,6 +3608,14 @@ function checkPressKey(x, func) {
     x.assert(func('-13.2'), {'error': 'expected integer for keycode, found float: `-13.2`'});
     x.assert(func('-13'), {'error': 'keycode cannot be negative: `-13`'});
     x.assert(func('13'), {'instructions': ['await page.keyboard.press(String.fromCharCode(13))']});
+
+    // Multiline
+    x.assert(func('(\n"a", \n-13)'), {'error': 'delay cannot be negative: `-13`'});
+    x.assert(func('(\n13\n, 13)'), {
+        'instructions': [
+            'await page.keyboard.press(String.fromCharCode(13), 13)',
+        ],
+    });
 }
 
 function checkReload(x, func) {
@@ -3191,7 +3673,9 @@ function checkScreenshot(x, func) {
 
 function checkScrollTo(x, func) {
     // Check position
-    x.assert(func('hello'), {'error': 'expected a position or a CSS selector or an XPath'});
+    x.assert(func('hello'), {
+        'error': 'expected a position or a CSS selector or an XPath, found `hello`',
+    });
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
     x.assert(func('(1)'), {
@@ -3233,6 +3717,12 @@ function checkScrollTo(x, func) {
             'await parseMoveCursorToVar.hover();',
         ],
     });
+
+    // Multiline
+    x.assert(func('(a,\n2\n)'), {
+        'error': 'invalid syntax: expected "([number], [number])", found `(a,\n2\n)`',
+    });
+    x.assert(func('(1\n,\n2)'), {'instructions': ['await page.mouse.move(1,2);']});
 }
 
 function checkShowText(x, func) {
@@ -3260,7 +3750,8 @@ function checkShowText(x, func) {
 }
 
 function checkSize(x, func) {
-    x.assert(func('hello'), {'error': 'expected `([number], [number])`'});
+    x.assert(func(''), {'error': 'expected `([number], [number])`, found nothing'});
+    x.assert(func('hello'), {'error': 'expected `([number], [number])`, found `hello`'});
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
     x.assert(func('(1)'), {
@@ -3273,13 +3764,17 @@ function checkSize(x, func) {
     x.assert(func('(a,2)'), {
         'error': 'invalid syntax: expected "([number], [number])", found `(a,2)`',
     });
-    x.assert(func('(1,2)'), {'instructions': ['await page.setViewport({width: 1, height: 2})']});
     x.assert(func('(-1,2)'), {'error': 'width cannot be negative: `-1`'});
     x.assert(func('(1,-2)'), {'error': 'height cannot be negative: `-2`'});
     x.assert(func('(1.0,2)'), {'error': 'expected integer for width, found float: `1.0`'});
     x.assert(func('(-1.0,2)'), {'error': 'expected integer for width, found float: `-1.0`'});
     x.assert(func('(1,2.0)'), {'error': 'expected integer for height, found float: `2.0`'});
     x.assert(func('(1,-2.0)'), {'error': 'expected integer for height, found float: `-2.0`'});
+    x.assert(func('(1,2)'), {'instructions': ['await page.setViewport({width: 1, height: 2})']});
+
+    // Multiline
+    x.assert(func('(1,\n-2.0)'), {'error': 'expected integer for height, found float: `-2.0`'});
+    x.assert(func('(1\n,2)'), {'instructions': ['await page.setViewport({width: 1, height: 2})']});
 }
 
 function checkText(x, func) {
@@ -3293,18 +3788,30 @@ function checkText(x, func) {
         'error': 'CSS selector cannot be empty',
         'isXPath': false,
     });
+
     x.assert(func('("a", "b")'),
         {
             'instructions': [
-                'let parseTextElem = await page.$("a");\nif (parseTextElem === null) ' +
-                '{ throw \'"a" not found\'; }\nawait page.evaluate(e => { e.innerText = "b";}, ' +
-                'parseTextElem);',
+                'let parseTextElem = await page.$("a");\n' +
+                'if (parseTextElem === null) { throw \'"a" not found\'; }\n' +
+                'await page.evaluate(e => { e.innerText = "b";}, parseTextElem);',
+            ],
+        });
+
+    // Multiline
+    x.assert(func('("a"\n)'), {'error': 'expected `("CSS selector" or "XPath", "text")`'});
+    x.assert(func('("a"\n,\n "b")'),
+        {
+            'instructions': [
+                'let parseTextElem = await page.$("a");\n' +
+                'if (parseTextElem === null) { throw \'"a" not found\'; }\n' +
+                'await page.evaluate(e => { e.innerText = "b";}, parseTextElem);',
             ],
         });
 }
 
 function checkTimeout(x, func) {
-    x.assert(func(''), {'error': 'expected integer for number of milliseconds, found ``'});
+    x.assert(func(''), {'error': 'expected integer for number of milliseconds, found nothing'});
     x.assert(func('"a"'), {'error': 'expected integer for number of milliseconds, found `"a"`'});
     x.assert(func('12'), {'instructions': ['page.setDefaultTimeout(12)'], 'wait': false});
     // In case I add a check over no timeout some day...
@@ -3328,7 +3835,12 @@ function checkTimeout(x, func) {
 
 function checkWaitFor(x, func) {
     // Check integer
-    x.assert(func('hello'), {'error': 'expected an integer or a CSS selector or an XPath'});
+    x.assert(func(''), {
+        'error': 'expected an integer or a CSS selector or an XPath, found nothing',
+    });
+    x.assert(func('hello'), {
+        'error': 'expected an integer or a CSS selector or an XPath, found `hello`',
+    });
     x.assert(func('1 2'), {'error': 'expected nothing, found `2`'});
     x.assert(func('1'), {'instructions': ['await page.waitFor(1)'], 'wait': false});
     x.assert(func('-1'), {'error': 'number of milliseconds cannot be negative: `-1`'});
@@ -3412,6 +3924,18 @@ function checkWrite(x, func) {
         ],
     });
     x.assert(func('("//a", 13)'), {
+        'instructions': [
+            'let parseWriteVar = await page.$x("//a");\n' +
+            'if (parseWriteVar.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseWriteVar = parseWriteVar[0];\n' +
+            'parseWriteVar.focus();',
+            'await page.keyboard.press(String.fromCharCode(13));',
+        ],
+    });
+
+    // Multiline
+    x.assert(func('("a", \n13.2)'), {'error': 'expected integer for keycode, found float: `13.2`'});
+    x.assert(func('(\n"//a", \n13)'), {
         'instructions': [
             'let parseWriteVar = await page.$x("//a");\n' +
             'if (parseWriteVar.length === 0) { throw \'XPath "//a" not found\'; }\n' +
@@ -3591,7 +4115,7 @@ const TO_CHECK = [
     {
         'name': 'goto',
         'func': checkGoTo,
-        'toCall': (e, o) => wrapper(parserFuncs.parseGoTo, e, o),
+        'toCall': (e, o) => wrapperGoTo(parserFuncs.parseGoTo, e, o),
     },
     {
         'name': 'javascript',
@@ -3667,7 +4191,7 @@ const TO_CHECK = [
     {
         'name': 'parseContent',
         'func': checkParseContent,
-        'toCall': (e, o) => wrapper(parserFuncs.parseContent, e, o),
+        'toCall': (e, o) => wrapperParseContent(parserFuncs.parseContent, e, o),
     },
 ];
 
