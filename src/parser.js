@@ -299,7 +299,7 @@ class Parser {
             if (c === '/') {
                 this.parseComment(tmp);
                 if (tmp.length !== 0) {
-                    this.error = 'unexpected `/` when parsing command';
+                    this.error = 'Unexpected `/` when parsing command';
                     return null;
                 }
             } else if (isWhiteSpace(c)) {
@@ -308,7 +308,7 @@ class Parser {
                 this.parseIdent(tmp, ['-']);
                 command = tmp.pop();
             } else {
-                this.error = `unexpected \`${c}\` when parsing command`;
+                this.error = `Unexpected \`${c}\` when parsing command`;
                 return null;
             }
             this.increasePos();
@@ -326,23 +326,25 @@ class Parser {
             if (c === '/') {
                 // No need to check anything, if there is a comment, it means it'll be on two lines,
                 // which isn't allowed.
-                this.error = 'unexpected `/` when parsing command';
+                this.error = 'Unexpected `/` when parsing command ' +
+                    `(after \`${command.getRaw()}\`)`;
                 return null;
             } else if (c === '\n') {
-                this.error = 'backlines are not allowed after command identifier';
+                this.error = 'Backlines are not allowed between command identifier and `:`';
                 return null;
             } else if (isWhiteSpace(c)) {
                 // Do nothing...
             } else if (c === ':') {
                 stop = true;
             } else {
-                this.error = `unexpected \`${c}\` when parsing command`;
+                this.error = `Unexpected \`${c}\` when parsing command ` +
+                    `(after \`${command.getRaw()}\`)`;
                 return null;
             }
             this.increasePos();
         }
         if (!stop) {
-            this.error = 'missing `:` after command identifier';
+            this.error = `Missing \`:\` after command identifier (after \`${command.getRaw()}\`)`;
             return null;
         }
         return command;
