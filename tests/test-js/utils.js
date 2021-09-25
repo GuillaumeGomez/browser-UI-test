@@ -62,7 +62,7 @@ class Assert {
                 } else {
                     print(`[${pos.file}:${pos.line}] failed (in ${extraInfo}):`);
                 }
-                print(`EXPECTED: \`${value1}\`\n===============\n   FOUND: \`${value2}\``);
+                print(`EXPECTED: \`${value2}\`\n===============\n   FOUND: \`${value1}\``);
                 for (let i = 0; i < value1.length && i < value2.length; ++i) {
                     if (value1[i] !== value2[i]) {
                         i -= 8;
@@ -70,8 +70,8 @@ class Assert {
                             i = 0;
                         }
                         print('|||||> Error happened around there:');
-                        printDiff(i, value1);
                         printDiff(i, value2);
+                        printDiff(i, value1);
                         break;
                     }
                 }
