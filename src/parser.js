@@ -285,7 +285,7 @@ class Parser {
 
     skipWhiteSpaceCharacters() {
         while (this.pos < this.text.length && isWhiteSpace(this.text.charAt(this.pos))) {
-            this.increatePos(false);
+            this.increasePos(false);
         }
     }
 
@@ -305,13 +305,13 @@ class Parser {
             } else if (isWhiteSpace(c)) {
                 // Do nothing.
             } else if (isLetter(c)) {
-                this.parseIdent(tmp);
+                this.parseIdent(tmp, ['-']);
                 command = tmp.pop();
             } else {
                 this.error = `unexpected \`${c}\` when parsing command`;
                 return null;
             }
-            this.increatePos();
+            this.increasePos();
         }
 
         if (command === null && this.pos >= this.text.length) {
@@ -339,7 +339,7 @@ class Parser {
                 this.error = `unexpected \`${c}\` when parsing command`;
                 return null;
             }
-            this.increatePos();
+            this.increasePos();
         }
         if (!stop) {
             this.error = 'missing `:` after command identifier';
@@ -348,7 +348,7 @@ class Parser {
         return command;
     }
 
-    increatePos(increaseIfNothing = true) {
+    increasePos(increaseIfNothing = true) {
         const start = this.pos;
         while (this.pos < this.text.length && isWhiteSpace(this.text.charAt(this.pos))) {
             if (this.text.charAt(this.pos) === '\n') {
@@ -370,7 +370,7 @@ class Parser {
         this.argsStart = this.pos;
         const startLine = this.currentLine;
         while (this.pos < this.text.length && this.text.charAt(this.pos) !== '\n') {
-            // Exceptionally, we don't use `increasePos()` here!`
+            // Exceptionally, we don't use `increasePos()` here!
             this.pos += 1;
         }
         this.argsEnd = this.pos;
@@ -378,7 +378,6 @@ class Parser {
         // This function doesn't use the parser so we still need to remove the comment part...
         const parts = input.split(COMMENT_START);
         let line = '';
-        this.increatePos();
         if (parts.length > 1) {
             for (let i = 0; i < parts.length; ++i) {
                 if (parts[i].endsWith(':')) {
@@ -483,7 +482,7 @@ class Parser {
                     this.pos = this.text.length;
                 }
             }
-            this.increatePos();
+            this.increasePos();
         }
         if (pushTo === null) {
             this.argsEnd = this.pos;
@@ -506,7 +505,7 @@ class Parser {
         const start = this.pos;
         const elems = [];
 
-        this.increatePos();
+        this.increasePos();
         const prev = this.parse(endChar, elems, ',');
         const full = this.text.substring(start, this.pos + 1);
         if (elems.length > 0 && elems[elems.length - 1].error !== null) {
@@ -606,7 +605,7 @@ class Parser {
         const start = this.pos;
         const endChar = this.text.charAt(this.pos);
 
-        this.increatePos();
+        this.increasePos();
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
             if (c === endChar) {
@@ -618,7 +617,7 @@ class Parser {
             } else if (c === '\\') {
                 this.pos += 1;
             }
-            this.increatePos();
+            this.increasePos();
         }
         const value = this.text.substring(start + 1, this.pos);
         const full = this.text.substring(start, this.pos);
@@ -627,15 +626,20 @@ class Parser {
         this.push(e, pushTo);
     }
 
-    parseIdent(pushTo = null) {
+    parseIdent(pushTo = null, specialChars = null) {
+        if (specialChars === null) {
+            specialChars = [];
+        } else if (!Array.isArray(specialChars)) {
+            throw new Error('`specialChars` variable should be an array!');
+        }
         const start = this.pos;
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
             // Check if it is a latin letter.
-            if (!isLetter(c)) {
+            if (!isLetter(c) && specialChars.indexOf(c) === -1) {
                 break;
             }
-            this.increatePos();
+            this.increasePos();
         }
         const ident = this.text.substring(start, this.pos);
         if (ident.length !== 0) {
@@ -652,7 +656,7 @@ class Parser {
     parseVariable(pushTo = null, forceString = false) {
         const start = this.pos;
 
-        this.increatePos();
+        this.increasePos();
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
             if (c === '|') {
@@ -684,7 +688,7 @@ class Parser {
                 }
                 return;
             }
-            this.increatePos();
+            this.increasePos();
         }
         const variableName = this.text.substring(start + 1, this.pos);
         const e = new VariableElement(variableName, start, this.pos, this.currentLine,
@@ -726,7 +730,7 @@ class Parser {
                 this.pos -= 1;
                 return;
             }
-            this.increatePos();
+            this.increasePos();
         }
         const nb = this.text.substring(start, this.pos);
         this.push(new NumberElement(nb, start, this.pos, this.currentLine), pushTo);
@@ -801,7 +805,7 @@ class Parser {
             }
         };
 
-        this.increatePos();
+        this.increasePos();
         // TODO: instead of using a kind of state machine, maybe make it work as step?
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
@@ -955,7 +959,7 @@ class Parser {
                     key = null;
                 }
             }
-            this.increatePos();
+            this.increasePos();
         }
         if (errorHappened === true) {
             // do nothing
