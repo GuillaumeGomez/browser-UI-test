@@ -316,7 +316,7 @@ Please note that if you want to compare DOM elements, you should take a look at 
 
 #### assert-attribute-false
 
-**assert-attribute-false** command checks that the given attribute(s) of the element(s) don't have the given value. Examples:
+**assert-attribute-false** command checks that the given attribute(s) of the element(s) don't have the given value. If the element doesn't exist, the command will fail. Examples:
 
 ```
 // IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
@@ -369,10 +369,9 @@ Please note that if you want to compare DOM elements, you should take a look at 
 
 #### assert-css-false
 
-**assert-css-false** command checks that the CSS properties of the element(s) don't have the provided value. Examples:
+**assert-css-false** command checks that the CSS properties of the element(s) don't have the provided value. If the element doesn't exist, the command will fail. Examples:
 
 ```
-// IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
 assert-css-false: ("#id > .class", { "color": "blue" })
 assert-css-false: ("//*[@id='id']/*[@class='class']", { "color": "blue", "height": "10px" })
 
@@ -402,10 +401,9 @@ Please note that if you want to compare DOM elements, you should take a look at 
 
 #### assert-property-false
 
-**assert-property-false** command checks that the CSS properties of the element(s) don't have the provided value. Examples:
+**assert-property-false** command checks that the CSS properties of the element(s) don't have the provided value. If the element doesn't exist, the command will fail. Examples:
 
 ```
-// IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
 assert-property-false: ("#id > .class", { "offsetParent": "null" })
 assert-property-false: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" })
 
@@ -435,10 +433,9 @@ Please note that if you want to compare DOM elements, you should take a look at 
 
 #### assert-text-false
 
-**assert-text-false** command checks that the element(s) don't have the provided text. Examples:
+**assert-text-false** command checks that the element(s) don't have the provided text. If the element doesn't exist, the command will fail. Examples:
 
 ```
-// IMPORTANT: "#id > .class" has to exist otherwise the command will fail!
 assert-text-false: ("#id > .class", "hello")
 assert-text-false: ("//*[@id='id']/*[@class='class']", "hello")
 
@@ -496,10 +493,9 @@ compare-elements-attribute: ("//element1", "element2", ["attribute1", "attribute
 
 #### compare-elements-attribute-false
 
-**compare-elements-attribute-false** command allows you to check that two DOM elements' attributes are different. Examples:
+**compare-elements-attribute-false** command allows you to check that two DOM elements' attributes are different. If one of the elements doesn't exist, the command will fail. Examples:
 
 ```
-// IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
 compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX", ...])
 compare-elements-attribute-false: ("//element1", "element2", ["attribute1", "attributeX", ...])
 ```
@@ -517,10 +513,9 @@ compare-elements-css: ("//element1", "element2", ["CSS property1", "CSS property
 
 #### compare-elements-css-false
 
-**compare-elements-css-false** command allows you to check that two DOM elements' CSS properties are different. Examples:
+**compare-elements-css-false** command allows you to check that two DOM elements' CSS properties are different. If one of the elements doesn't exist, the command will fail. Examples:
 
 ```
-// IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
 compare-elements-css-false: ("element1", "//element2", ["CSS property1", "CSS property2", ...])
 compare-elements-css-false: ("//element1", "element2", ["CSS property1", "CSS property2", ...])
 ```
@@ -544,11 +539,9 @@ compare-elements-position: ("element1", "element2", ("y", "x"))
 
 #### compare-elements-position-false
 
-**compare-elements-position-false** command allows you to check that two DOM elements' X/Y positions are different. Examples:
+**compare-elements-position-false** command allows you to check that two DOM elements' X/Y positions are different. If one of the elements doesn't exist, the command will fail. Examples:
 
 ```
-// IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
-
 // Compare the X position.
 compare-elements-position-false: ("//element1", "element2", ("x"))
 // Compare the Y position.
@@ -576,11 +569,9 @@ compare-elements-position-near: ("element1", "element2", {"y": 3, "x": 1})
 
 #### compare-elements-position-near-false
 
-**compare-elements-position-near-false** command allows you to check that two DOM elements' X/Y positions differ by more than the given pixel range. Examples:
+**compare-elements-position-near-false** command allows you to check that two DOM elements' X/Y positions differ by more than the given pixel range. If one of the elements doesn't exist, the command will fail. Examples:
 
 ```
-// IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
-
 // Compare the X position.
 compare-elements-position-near-false: ("//element1", "element2", {"x": 1}))
 // Compare the Y position.
@@ -604,10 +595,9 @@ compare-elements-property: ("//element1", "element2", ["CSS property1", "CSS pro
 
 #### compare-elements-property-false
 
-**compare-elements-property-false** command allows you to check that two DOM elements' CSS properties are different. Examples:
+**compare-elements-property-false** command allows you to check that two DOM elements' CSS properties are different. If one of the elements doesn't exist, the command will fail. Examples:
 
 ```
-// IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
 compare-elements-property-false: ("element1", "//element2", ["CSS property1", "CSS property2", ...])
 compare-elements-property-false: ("//element1", "element2", ["CSS property1", "CSS property2", ...])
 ```
@@ -625,11 +615,9 @@ compare-elements-text: ("//element1", "element2")
 
 #### compare-elements-text-false
 
-**compare-elements-text-false** command allows you to compare two DOM elements (and check they're not equal!). Examples:
+**compare-elements-text-false** command allows you to compare two DOM elements (and check they're not equal!). If one of the elements doesn't exist, the command will fail. Examples:
 
 ```
-// IMPORTANT: "element1" and "element2" have to exist otherwise the command will fail!
-
 compare-elements-text-false: ("//element1", "element2")
 compare-elements-text-false: ("element1", "//element2")
 ```
