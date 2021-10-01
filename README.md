@@ -16,7 +16,7 @@ This is a big README, so to make you go through it faster:
  * [Exported elements](#exported-elements)
  * [Running it directly](#running-it-directly)
  * [Command list](#goml-scripts)
- * [Code comments](#comments)
+ * [Details on goml format](#details-on-goml-format)
  * [Run tests](#run-tests)
  * [Donations](#donations)
 
@@ -931,12 +931,29 @@ write: "text"
 write: 13 // this is the keycode for "enter"
 ```
 
+## Details on goml format
+
+Some common questions you might wonder about.
+
 ### Comments?
 
 You can add comments in the `.goml` scripts with `//`. Example:
 
 ```
 goto: https://somewhere.com // let's start somewhere!
+```
+
+### Multiline commands/strings?
+
+You can have a command/string on more than one line. For example:
+
+```
+write: (
+    ".elements",
+    "multi
+line
+text"
+)
 ```
 
 ## Run tests
