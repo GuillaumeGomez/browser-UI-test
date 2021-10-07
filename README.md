@@ -171,7 +171,7 @@ want to build the `Options` object yourself, you might be interested by what fol
 The list of fields of the `Options` class is the following:
 
  * `debug`: display more information
- * `emulate`: name of the device you want to emulate (list of available devices is [here](https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js) or you can use `--show-devices` option)
+ * `emulate`: name of the device you want to emulate (list of available devices is [here](https://github.com/puppeteer/puppeteer/blob/b5020dc04121b265c77662237dfb177d6de06053/src/common/DeviceDescriptors.ts) or you can use `--show-devices` option)
  * `extensions`: extensions to be loaded by the browser
  * `failureFolder`: path of the folder where failed tests image will be placed (`testFolder` value by default)
  * `generateImages`: if provided, it'll generate test images and won't run comparison tests
