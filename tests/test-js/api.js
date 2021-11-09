@@ -3794,7 +3794,13 @@ function checkText(x, func) {
             'instructions': [
                 'let parseTextElem = await page.$("a");\n' +
                 'if (parseTextElem === null) { throw \'"a" not found\'; }\n' +
-                'await page.evaluate(e => { e.innerText = "b";}, parseTextElem);',
+                'await page.evaluate(e => {\n' +
+                'if (["input", "textarea"].indexOf(e.tagName.toLowerCase()) !== -1) {\n' +
+                'e.value = "b";\n' +
+                '} else {\n' +
+                'e.innerText = "b";\n' +
+                '}\n' +
+                '}, parseTextElem);',
             ],
         });
 
@@ -3805,7 +3811,13 @@ function checkText(x, func) {
             'instructions': [
                 'let parseTextElem = await page.$("a");\n' +
                 'if (parseTextElem === null) { throw \'"a" not found\'; }\n' +
-                'await page.evaluate(e => { e.innerText = "b";}, parseTextElem);',
+                'await page.evaluate(e => {\n' +
+                'if (["input", "textarea"].indexOf(e.tagName.toLowerCase()) !== -1) {\n' +
+                'e.value = "b";\n' +
+                '} else {\n' +
+                'e.innerText = "b";\n' +
+                '}\n' +
+                '}, parseTextElem);',
             ],
         });
 }

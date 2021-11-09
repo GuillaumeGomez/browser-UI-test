@@ -1801,7 +1801,13 @@ function parseText(parser) {
     return {
         'instructions': [
             getAndSetElements(selector, varName, false) +
-            `await page.evaluate(e => { e.innerText = "${value}";}, ${varName});`,
+            'await page.evaluate(e => {\n' +
+            'if (["input", "textarea"].indexOf(e.tagName.toLowerCase()) !== -1) {\n' +
+            `e.value = "${value}";\n` +
+            '} else {\n' +
+            `e.innerText = "${value}";\n` +
+            '}\n' +
+            `}, ${varName});`,
         ],
     };
 }
