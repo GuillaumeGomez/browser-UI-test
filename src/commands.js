@@ -154,7 +154,7 @@ function parseWaitFor(parser) {
         }
         return {
             'instructions': [
-                `await page.waitFor(${ret.value})`,
+                `await page.waitFor(${ret.value});`,
             ],
             'wait': false,
         };
@@ -171,11 +171,11 @@ function parseWaitFor(parser) {
     let instructions;
     if (selector.isXPath) {
         instructions = [
-            `await page.waitForXPath("${selector.value}")`,
+            `await page.waitForXPath("${selector.value}");`,
         ];
     } else {
         instructions = [
-            `await page.waitFor("${selector.value}")`,
+            `await page.waitFor("${selector.value}");`,
         ];
     }
     return {
@@ -773,7 +773,7 @@ throw 'expected \`' + ${varValue} + '\` for property \`' + ${varKey} + '\` for $
     if (!checkAllElements) {
         instructions = [
             getAndSetElements(selector, varName, checkAllElements) +
-            `await ${varName}.evaluateHandle(e => {\n` +
+            `await ${varName}.evaluate(e => {\n` +
                 `${code}` +
             '});',
         ];
@@ -781,7 +781,7 @@ throw 'expected \`' + ${varValue} + '\` for property \`' + ${varKey} + '\` for $
         instructions = [
             getAndSetElements(selector, varName, checkAllElements) +
             `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
-                `await ${varName}[i].evaluateHandle(e => {\n` +
+                `await ${varName}[i].evaluate(e => {\n` +
                     `${code}` +
                 '});\n' +
             '}',
@@ -1485,7 +1485,7 @@ function parseCompareElementsPropertyInner(parser, assertFalse) {
         `${insertBefore}const value = await ${varName}1.evaluateHandle((e, p) => {\n` +
             'return String(e[p]);\n' +
         '}, property);\n' +
-        `await ${varName}2.evaluateHandle((e, v, p) => {\n` +
+        `await ${varName}2.evaluate((e, v, p) => {\n` +
             'if (v !== String(e[p])) {\n' +
             'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
             '}\n' +
