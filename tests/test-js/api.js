@@ -967,7 +967,7 @@ function checkAssertPropertyInner(x, func, before, after) {
         'instructions': [
             'let parseAssertElemProp = await page.$("a");\n' +
             'if (parseAssertElemProp === null) { throw \'"a" not found\'; }\n' +
-            'await parseAssertElemProp.evaluateHandle(e => {\n' +
+            'await parseAssertElemProp.evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
             'Object.entries(parseAssertElemPropDict)) {\n' +
@@ -990,7 +990,7 @@ function checkAssertPropertyInner(x, func, before, after) {
             'let parseAssertElemProp = await page.$$("a");\n' +
             'if (parseAssertElemProp.length === 0) { throw \'"a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {\n' +
-            'await parseAssertElemProp[i].evaluateHandle(e => {\n' +
+            'await parseAssertElemProp[i].evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
             'Object.entries(parseAssertElemPropDict)) {\n' +
@@ -1015,7 +1015,7 @@ function checkAssertPropertyInner(x, func, before, after) {
         'instructions': [
             'let parseAssertElemProp = await page.$("a");\n' +
             'if (parseAssertElemProp === null) { throw \'"a" not found\'; }\n' +
-            'await parseAssertElemProp.evaluateHandle(e => {\n' +
+            'await parseAssertElemProp.evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
             'Object.entries(parseAssertElemPropDict)) {\n' +
@@ -1038,7 +1038,7 @@ function checkAssertPropertyInner(x, func, before, after) {
             'let parseAssertElemProp = await page.$$("a");\n' +
             'if (parseAssertElemProp.length === 0) { throw \'"a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {\n' +
-            'await parseAssertElemProp[i].evaluateHandle(e => {\n' +
+            'await parseAssertElemProp[i].evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
             'Object.entries(parseAssertElemPropDict)) {\n' +
@@ -1061,7 +1061,7 @@ function checkAssertPropertyInner(x, func, before, after) {
         'instructions': [
             'let parseAssertElemProp = await page.$("a:focus");\n' +
             'if (parseAssertElemProp === null) { throw \'"a:focus" not found\'; }\n' +
-            'await parseAssertElemProp.evaluateHandle(e => {\n' +
+            'await parseAssertElemProp.evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
             'Object.entries(parseAssertElemPropDict)) {\n' +
@@ -1084,7 +1084,7 @@ function checkAssertPropertyInner(x, func, before, after) {
             'let parseAssertElemProp = await page.$$("a:focus");\n' +
             'if (parseAssertElemProp.length === 0) { throw \'"a:focus" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {\n' +
-            'await parseAssertElemProp[i].evaluateHandle(e => {\n' +
+            'await parseAssertElemProp[i].evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
             'Object.entries(parseAssertElemPropDict)) {\n' +
@@ -1107,7 +1107,7 @@ function checkAssertPropertyInner(x, func, before, after) {
         'instructions': [
             'let parseAssertElemProp = await page.$("a ::after");\n' +
             'if (parseAssertElemProp === null) { throw \'"a ::after" not found\'; }\n' +
-            'await parseAssertElemProp.evaluateHandle(e => {\n' +
+            'await parseAssertElemProp.evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
             'Object.entries(parseAssertElemPropDict)) {\n' +
@@ -1130,7 +1130,7 @@ function checkAssertPropertyInner(x, func, before, after) {
             'let parseAssertElemProp = await page.$$("a ::after");\n' +
             'if (parseAssertElemProp.length === 0) { throw \'"a ::after" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {\n' +
-            'await parseAssertElemProp[i].evaluateHandle(e => {\n' +
+            'await parseAssertElemProp[i].evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
             'Object.entries(parseAssertElemPropDict)) {\n' +
@@ -1156,7 +1156,7 @@ function checkAssertPropertyInner(x, func, before, after) {
             'let parseAssertElemProp = await page.$x("//a");\n' +
             'if (parseAssertElemProp.length === 0) { throw \'XPath "//a" not found\'; }\n' +
             'parseAssertElemProp = parseAssertElemProp[0];\n' +
-            'await parseAssertElemProp.evaluateHandle(e => {\n' +
+            'await parseAssertElemProp.evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
             'Object.entries(parseAssertElemPropDict)) {\n' +
@@ -1179,7 +1179,7 @@ function checkAssertPropertyInner(x, func, before, after) {
             'let parseAssertElemProp = await page.$x("//a");\n' +
             'if (parseAssertElemProp.length === 0) { throw \'XPath "//a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {\n' +
-            'await parseAssertElemProp[i].evaluateHandle(e => {\n' +
+            'await parseAssertElemProp[i].evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
             'Object.entries(parseAssertElemPropDict)) {\n' +
@@ -1208,7 +1208,7 @@ function checkAssertPropertyInner(x, func, before, after) {
             'let parseAssertElemProp = await page.$x("//a");\n' +
             'if (parseAssertElemProp.length === 0) { throw \'XPath "//a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {\n' +
-            'await parseAssertElemProp[i].evaluateHandle(e => {\n' +
+            'await parseAssertElemProp[i].evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
             'Object.entries(parseAssertElemPropDict)) {\n' +
@@ -2569,7 +2569,7 @@ function checkCompareElementsPropertyInner(x, func, before, after) {
             'const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {\n' +
             'return String(e[p]);\n' +
             '}, property);\n' +
-            'await parseCompareElementsProp2.evaluateHandle((e, v, p) => {\n' +
+            'await parseCompareElementsProp2.evaluate((e, v, p) => {\n' +
             'if (v !== String(e[p])) {\n' +
             'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
             '}\n' +
@@ -2596,7 +2596,7 @@ function checkCompareElementsPropertyInner(x, func, before, after) {
             'const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {\n' +
             'return String(e[p]);\n' +
             '}, property);\n' +
-            'await parseCompareElementsProp2.evaluateHandle((e, v, p) => {\n' +
+            'await parseCompareElementsProp2.evaluate((e, v, p) => {\n' +
             'if (v !== String(e[p])) {\n' +
             'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
             '}\n' +
@@ -2621,7 +2621,7 @@ function checkCompareElementsPropertyInner(x, func, before, after) {
             'const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {\n' +
             'return String(e[p]);\n' +
             '}, property);\n' +
-            'await parseCompareElementsProp2.evaluateHandle((e, v, p) => {\n' +
+            'await parseCompareElementsProp2.evaluate((e, v, p) => {\n' +
             'if (v !== String(e[p])) {\n' +
             'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
             '}\n' +
@@ -2647,7 +2647,7 @@ function checkCompareElementsPropertyInner(x, func, before, after) {
             'const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {\n' +
             'return String(e[p]);\n' +
             '}, property);\n' +
-            'await parseCompareElementsProp2.evaluateHandle((e, v, p) => {\n' +
+            'await parseCompareElementsProp2.evaluate((e, v, p) => {\n' +
             'if (v !== String(e[p])) {\n' +
             'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
             '}\n' +
@@ -2676,7 +2676,7 @@ function checkCompareElementsPropertyInner(x, func, before, after) {
             'const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {\n' +
             'return String(e[p]);\n' +
             '}, property);\n' +
-            'await parseCompareElementsProp2.evaluateHandle((e, v, p) => {\n' +
+            'await parseCompareElementsProp2.evaluate((e, v, p) => {\n' +
             'if (v !== String(e[p])) {\n' +
             'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
             '}\n' +
@@ -3854,7 +3854,7 @@ function checkWaitFor(x, func) {
         'error': 'expected an integer or a CSS selector or an XPath, found `hello`',
     });
     x.assert(func('1 2'), {'error': 'expected nothing, found `2`'});
-    x.assert(func('1'), {'instructions': ['await page.waitFor(1)'], 'wait': false});
+    x.assert(func('1'), {'instructions': ['await page.waitFor(1);'], 'wait': false});
     x.assert(func('-1'), {'error': 'number of milliseconds cannot be negative: `-1`'});
     x.assert(func('-1.0'), {
         'error': 'expected integer for number of milliseconds, found float: `-1.0`',
@@ -3870,14 +3870,14 @@ function checkWaitFor(x, func) {
         'error': 'CSS selector cannot be empty',
         'isXPath': false,
     });
-    x.assert(func('"a"'), {'instructions': ['await page.waitFor("a")'], 'wait': false});
-    x.assert(func('\'a\''), {'instructions': ['await page.waitFor("a")'], 'wait': false});
-    x.assert(func('\'"a\''), {'instructions': ['await page.waitFor("\\\\"a")'], 'wait': false});
+    x.assert(func('"a"'), {'instructions': ['await page.waitFor("a");'], 'wait': false});
+    x.assert(func('\'a\''), {'instructions': ['await page.waitFor("a");'], 'wait': false});
+    x.assert(func('\'"a\''), {'instructions': ['await page.waitFor("\\\\"a");'], 'wait': false});
 
     // XPath
     x.assert(func('"/a"'), { 'error': 'XPath must start with `//`'});
     x.assert(func('"//a"'), {
-        'instructions': ['await page.waitForXPath("//a")'],
+        'instructions': ['await page.waitForXPath("//a");'],
         'wait': false,
     });
 }
