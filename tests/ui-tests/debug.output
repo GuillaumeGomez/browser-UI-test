@@ -8,7 +8,18 @@ debug...
 [DEBUG] Done!
 [DEBUG] EXECUTING (line 3) "await arg.browser.overridePermissions(page.url(), arg.permissions);"
 [DEBUG] Done!
-[DEBUG] EXECUTING (line 4) "let parseCompareElementsCss1 = await page.$(".content>.right>p");
+[DEBUG] EXECUTING (line 4) "arg.showText = true;"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 4) "await page.evaluate(() => {
+let tmp = document.getElementById('browser-ui-test-style-text-hide');
+if (tmp) { tmp.remove(); }
+});"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 5) "if (!arg.showText) {
+throw "`show-text: true` needs to be used before checking for `color` (otherwise the browser doesn't compute it)";
+}"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 5) "let parseCompareElementsCss1 = await page.$(".content>.right>p");
 if (parseCompareElementsCss1 === null) { throw '".content>.right>p" not found'; }
 let parseCompareElementsCss2 = await page.$(".content>.left");
 if (parseCompareElementsCss2 === null) { throw '".content>.left" not found'; }
@@ -28,7 +39,7 @@ throw 'CSS property `' + css_property + '` did not match: ' + style1_2 + ' != ' 
 }
 }, parseCompareElementsCss1, parseCompareElementsCss2);"
 [DEBUG] Done!FAILED
-[ERROR] (line 4) Error: Evaluation failed: assert didn't fail: for command `compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])`
+[ERROR] (line 5) Error: Evaluation failed: assert didn't fail: for command `compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

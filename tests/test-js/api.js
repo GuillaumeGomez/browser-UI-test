@@ -602,6 +602,9 @@ function checkAssertCssInner(x, func, before, after) {
     x.assert(func('("a", {"b": ""})'), {
         'error': 'Empty values are not allowed: `b` has an empty value',
     });
+    x.assert(func('("a", {"": "b"})'), {
+        'error': 'Empty CSS property keys ("" or \'\') are not allowed',
+    });
 
     x.assert(func('("a", {"a": 1})'), {
         'instructions': [
@@ -921,6 +924,35 @@ function checkAssertCssInner(x, func, before, after) {
             '}\n' +
             '}, parseAssertElemCss[i]);\n' +
             '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // Check the specially added check if "color" is used.
+    x.assert(func('("a", {"color": 1})'), {
+        'instructions': [
+            'if (!arg.showText) {\n' +
+            'throw "`show-text: true` needs to be used before checking for `color` (otherwise ' +
+            'the browser doesn\'t compute it)";\n' +
+            '}',
+            'let parseAssertElemCss = await page.$("a");\n' +
+            'if (parseAssertElemCss === null) { throw \'"a" not found\'; }\n' +
+            'await page.evaluate(e => {\n' +
+            'let assertComputedStyle = getComputedStyle(e);\n' +
+            'const parseAssertElemCssDict = {"color":"1"};\n' +
+            'for (const [parseAssertElemCssKey, parseAssertElemCssValue] of ' +
+            'Object.entries(parseAssertElemCssDict)) {\n' +
+            before +
+            'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
+            'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            '}, parseAssertElemCss);',
         ],
         'wait': false,
         'checkResult': true,
@@ -1730,6 +1762,9 @@ function checkCompareElementsCssInner(x, func, before, after) {
     x.assert(func('("a", "b", 1)'), {
         'error': 'expected third argument to be an array of string, found a number',
     });
+    x.assert(func('("a", "b", [""])'), {
+        'error': 'Empty CSS property keys ("" or \'\') are not allowed',
+    });
 
     x.assert(func('("a", "b", ["margin"])'), {
         'instructions': [
@@ -1857,6 +1892,38 @@ function checkCompareElementsCssInner(x, func, before, after) {
             'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
             'let computed_style2 = getComputedStyle(e2);\n' +
             'const properties = ["margin"];\n' +
+            'for (let i = 0; i < properties.length; ++i) {\n' +
+            'const css_property = properties[i];\n' +
+            before +
+            'let style1_1 = e1.style[css_property];\n' +
+            'let style1_2 = computed_style1[css_property];\n' +
+            'let style2_1 = e2.style[css_property];\n' +
+            'let style2_2 = computed_style2[css_property];\n' +
+            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 ' +
+            '&& style1_2 != style2_2) {\n' +
+            'throw \'CSS property `\' + css_property + \'` did not match: \' + style1_2 + \' ' +
+            '!= \' + style2_2; }' + after + '\n' +
+            '}\n' +
+            '}, parseCompareElementsCss1, parseCompareElementsCss2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // Check the specially added check if "color" is used.
+    x.assert(func('("a", "b", ["color"])'), {
+        'instructions': [
+            'if (!arg.showText) {\n' +
+            'throw "`show-text: true` needs to be used before checking for `color` (otherwise ' +
+            'the browser doesn\'t compute it)";\n' +
+            '}',
+            'let parseCompareElementsCss1 = await page.$("a");\n' +
+            'if (parseCompareElementsCss1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsCss2 = await page.$("b");\n' +
+            'if (parseCompareElementsCss2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
+            'let computed_style2 = getComputedStyle(e2);\n' +
+            'const properties = ["color"];\n' +
             'for (let i = 0; i < properties.length; ++i) {\n' +
             'const css_property = properties[i];\n' +
             before +

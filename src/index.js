@@ -192,22 +192,33 @@ async function runCommand(loaded, logs, options, browser) {
         const commands = loaded['commands'];
         for (let x = 0; x < commands.length; ++x) {
             let failed = false;
+            // In case we have some unrecoverable error which cannot be caught in `fail: true`, like
+            // color check when text isn't displayed.
+            let stopLoop = false;
             const command = commands[x];
             const line_number = command['line_number'];
             debug_log.append(`EXECUTING (line ${line_number}) "${command['code']}"`);
             try {
                 await loadContent(command['code'])(page, extras).catch(err => {
-                    failed = true;
-                    const s_err = err.toString();
-                    if (extras.expectedToFail !== true) {
-                        const original = command['original'];
-                        error_log = `[ERROR] (line ${line_number}) ${s_err}: for ` +
-                            `command \`${original}\``;
+                    if (err === parser.COLOR_CHECK_ERROR) {
+                        error_log += `[ERROR] (line ${line_number}): ${err}`;
+                        stopLoop = true;
                     } else {
-                        // it's an expected failure so no need to log it
-                        debug_log.append(`[EXPECTED FAILURE] (line ${line_number}): ${s_err}`);
+                        failed = true;
+                        const s_err = err.toString();
+                        if (extras.expectedToFail !== true) {
+                            const original = command['original'];
+                            error_log = `[ERROR] (line ${line_number}) ${s_err}: for ` +
+                                `command \`${original}\``;
+                        } else {
+                            // it's an expected failure so no need to log it
+                            debug_log.append(`[EXPECTED FAILURE] (line ${line_number}): ${s_err}`);
+                        }
                     }
                 });
+                if (stopLoop) {
+                    break;
+                }
             } catch (error) { // parsing error
                 error_log = `(line ${line_number}) output:\n${error.message}\n`;
                 if (options.debug === true) {

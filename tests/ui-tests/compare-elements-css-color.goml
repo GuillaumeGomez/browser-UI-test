@@ -1,0 +1,4 @@
+// This test is to ensure that if "show-text" is false, then it fails.
+screenshot: false
+goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+compare-elements-css: (".content>.right>p", "a", ["color"])
