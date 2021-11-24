@@ -13,7 +13,7 @@ arg.debug_log.setDebugEnabled(false);
 } else {
 throw "`debug` command needs an object with a `debug_log` field of `Debug` type!";
 }"FAILED
-[ERROR] (line 5) Error: Evaluation failed: assert didn't fail: for command `compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])`
+[ERROR] (line 6) Error: Evaluation failed: assert didn't fail: for command `compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

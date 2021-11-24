@@ -1,6 +1,9 @@
 const {Parser, cleanString} = require('./parser.js');
 const consts = require('./consts.js');
 
+const COLOR_CHECK_ERROR = '`show-text: true` needs to be used before checking for `color` ' +
+'(otherwise the browser doesn\'t compute it)';
+
 function getAndSetElements(selector, varName, checkAllElements) {
     let code;
     if (selector.isXPath) {
@@ -656,6 +659,7 @@ function parseAssertCssInner(parser, assertFalse) {
     const varDict = varName + 'Dict';
     const varKey = varName + 'Key';
     const varValue = varName + 'Value';
+    let needColorCheck = false;
     // JSON.stringify produces a problematic output so instead we use this.
     let d = '';
     for (const [k, v] of Object.entries(entries.values)) {
@@ -663,6 +667,13 @@ function parseAssertCssInner(parser, assertFalse) {
             return {
                 'error': `Empty values are not allowed: \`${k}\` has an empty value`,
             };
+        } else if (k.length === 0) {
+            return {
+                'error': 'Empty CSS property keys ("" or \'\') are not allowed',
+            };
+        }
+        if (k === 'color') {
+            needColorCheck = true;
         }
         if (d.length > 0) {
             d += ',';
@@ -678,23 +689,27 @@ throw 'expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\` for ${xpat
 }${insertAfter}
 }\n`;
 
-    let instructions;
+    const instructions = [];
+    if (needColorCheck) {
+        instructions.push('if (!arg.showText) {\n' +
+            `throw "${COLOR_CHECK_ERROR}";\n` +
+            '}',
+        );
+    }
     if (!checkAllElements) {
-        instructions = [
-            getAndSetElements(selector, varName, checkAllElements) +
+        instructions.push(getAndSetElements(selector, varName, checkAllElements) +
             'await page.evaluate(e => {\n' +
             `let assertComputedStyle = getComputedStyle(e${pseudo});\n${code}` +
             `}, ${varName});`,
-        ];
+        );
     } else {
-        instructions = [
-            getAndSetElements(selector, varName, checkAllElements) +
+        instructions.push(getAndSetElements(selector, varName, checkAllElements) +
             `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
                 'await page.evaluate(e => {\n' +
                 `let assertComputedStyle = getComputedStyle(e${pseudo});\n${code}` +
                 `}, ${varName}[i]);\n` +
             '}',
-        ];
+        );
     }
     return {
         'instructions': instructions,
@@ -1378,11 +1393,21 @@ function parseCompareElementsCssInner(parser, assertFalse) {
         getAndSetElements(selector2, varName + '2', false);
 
     let arr = '';
+    let needColorCheck = false;
     for (let i = 0; i < array.length; ++i) {
-        if (i > 0) {
+        const key = array[i].getStringValue();
+        if (key.length === 0) {
+            return {
+                'error': 'Empty CSS property keys ("" or \'\') are not allowed',
+            };
+        }
+        if (arr.length > 0) {
             arr += ',';
         }
-        arr += `"${array[i].getStringValue()}"`;
+        if (key === 'color') {
+            needColorCheck = true;
+        }
+        arr += `"${key}"`;
     }
 
     const code = `const properties = [${arr}];\n` +
@@ -1398,15 +1423,23 @@ function parseCompareElementsCssInner(parser, assertFalse) {
             `style1_2 + ' != ' + style2_2; }${insertAfter}\n` +
     '}\n';
 
+    const instructions = [];
+    if (needColorCheck) {
+        instructions.push('if (!arg.showText) {\n' +
+            `throw "${COLOR_CHECK_ERROR}";\n` +
+            '}',
+        );
+    }
+    instructions.push(
+        selectors +
+        'await page.evaluate((e1, e2) => {' +
+        `let computed_style1 = getComputedStyle(e1${pseudo1});\n` +
+        `let computed_style2 = getComputedStyle(e2${pseudo2});\n` +
+        code +
+        `}, ${varName}1, ${varName}2);`,
+    );
     return {
-        'instructions': [
-            selectors +
-            'await page.evaluate((e1, e2) => {' +
-            `let computed_style1 = getComputedStyle(e1${pseudo1});\n` +
-            `let computed_style2 = getComputedStyle(e2${pseudo2});\n` +
-            code +
-            `}, ${varName}1, ${varName}2);`,
-        ],
+        'instructions': instructions,
         'wait': false,
         'checkResult': true,
     };
@@ -2428,6 +2461,7 @@ function parseContent(content, options) {
 
 const EXPORTS = {
     'parseContent': parseContent,
+    'COLOR_CHECK_ERROR': COLOR_CHECK_ERROR,
 };
 
 for (const func of Object.values(ORDERS)) {
