@@ -522,38 +522,24 @@ class Parser {
                 ),
                 pushTo,
             );
-        } else if (prev !== '') {
-            if (prev === ',') {
-                if (elems.length > 0) {
-                    const el = elems[elems.length - 1].getText();
-                    this.push(new constructor(elems, start, this.pos, full, this.currentLine,
-                        `unexpected \`,\` after \`${el}\``), pushTo);
-                } else {
-                    this.push(new constructor(elems, start, this.pos, full, this.currentLine,
-                        `unexpected \`,\` after \`${startChar}\``), pushTo);
-                }
-                this.pos = this.text.length;
-            } else if (elems.length > 1) { // we're at the end of the text
-                const el = elems[elems.length - 1].getText();
-                const prevText = elems[elems.length - 2].getText();
-                const prevEl = typeof prev !== 'undefined' ? prev : prevText;
-                this.push(new constructor(elems, start, this.pos, full, this.currentLine,
-                    `unexpected \`${el}\` after \`${prevEl}\``), pushTo);
-            } else {
-                const el = elems[elems.length - 1].getText();
-                // this case should never happen but just in case...
-                this.push(new constructor(elems, start, this.pos, full, this.currentLine,
-                    `unexpected \`${el}\` after \`${startChar}\``), pushTo);
-            }
         } else if (this.pos >= this.text.length || this.text.charAt(this.pos) !== endChar) {
             if (elems.length === 0) {
                 this.push(new constructor(elems, start, this.pos, full, this.currentLine,
                     `expected \`${endChar}\` at the end`),
                 pushTo);
             } else {
-                this.push(new constructor(elems, start, this.pos, full, this.currentLine,
-                    `expected \`${endChar}\` after \`${elems[elems.length - 1].getText()}\``),
-                pushTo);
+                let err;
+
+                if (prev === ',') {
+                    err = `expected \`${endChar}\` after \`${elems[elems.length - 1].getText()}\``;
+                } else {
+                    err = `expected \`${endChar}\` or \`,\` after ` +
+                        `\`${elems[elems.length - 1].getText()}\``;
+                }
+                this.push(
+                    new constructor(elems, start, this.pos, full, this.currentLine, err),
+                    pushTo,
+                );
             }
         } else if (elems.length > 0 && elems[elems.length - 1].error !== null) {
             this.push(
@@ -820,8 +806,6 @@ class Parser {
                     }
                     elems.push({'key': key});
                     parseEnd(this, pushTo, `unexpected \`}\` after \`${k}\`: expected a value`);
-                } else if (prevChar === ',') {
-                    parseEnd(this, pushTo, 'unexpected `,` before `}`');
                 } else {
                     parseEnd(this, pushTo);
                 }
@@ -864,8 +848,7 @@ class Parser {
                 // do nothing
             } else if (c === '|') {
                 if (key === null && prevChar === '' && elems.length > 0) {
-                    const text = elems[elems.length - 1].value.getText();
-                    const last = prevChar === ',' ? ',' : text;
+                    const last = elems[elems.length - 1].value.getText();
                     parseEnd(this, pushTo, `unexpected \`|\` after \`${last}\``);
                 } else if (key !== null && prevChar === '') {
                     parseEnd(this, pushTo, `expected \`:\` after \`${key}\`, found \`|\``);
@@ -932,8 +915,7 @@ class Parser {
                     if (key === null) {
                         elems.push({'key': el});
                         if (elems.length > 1) {
-                            const text = elems[elems.length - 2].value.getText();
-                            const last = prevChar === ',' ? ',' : text;
+                            const last = elems[elems.length - 2].value.getText();
                             parseEnd(this, pushTo, `unexpected \`${token}\` after \`${last}\``);
                         } else {
                             parseEnd(this, pushTo, `unexpected \`${token}\` after \`{\``);
@@ -941,7 +923,7 @@ class Parser {
                     } else if (prevChar !== ':') {
                         elems.push({'key': key, 'value': el});
                         parseEnd(this, pushTo,
-                            `expected \`:\` after \`${key.getText()}\`, found \`${token}\` after`);
+                            `expected \`:\` after \`${key.getText()}\`, found \`${token}\``);
                     } else {
                         elems.push({'key': key, 'value': el});
                         parseEnd(this, pushTo,
