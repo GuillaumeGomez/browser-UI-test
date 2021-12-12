@@ -67,6 +67,20 @@ function checkInteger(nb, text, negativeCheck = false) {
     return {'value': nb.getRaw()};
 }
 
+function showEnd(elem) {
+    const text = elem.getText();
+
+    if (text.length < 20) {
+        return text;
+    }
+    return text.slice(text.length - 20);
+}
+
+function showChar(c) {
+    const separator = c === '`' ? '\'' : '`';
+    return `${separator}${c}${separator}`;
+}
+
 class Element {
     constructor(kind, value, startPos, endPos, line, error = null) {
         this.kind = kind;
@@ -268,7 +282,6 @@ class Parser {
         this.error = null;
         // First, we skip all unneeded characters...
         this.skipWhiteSpaceCharacters();
-        this.commandStart = this.pos;
         this.command = this.extractNextCommandName();
         if (this.command === null || this.error !== null) {
             return false;
@@ -305,10 +318,11 @@ class Parser {
             } else if (isWhiteSpace(c)) {
                 // Do nothing.
             } else if (isLetter(c)) {
+                this.commandStart = this.pos;
                 this.parseIdent(tmp, ['-']);
                 command = tmp.pop();
             } else {
-                this.error = `Unexpected \`${c}\` when parsing command`;
+                this.error = `Unexpected ${showChar(c)} when parsing command`;
                 return null;
             }
             this.increasePos();
@@ -337,7 +351,7 @@ class Parser {
             } else if (c === ':') {
                 stop = true;
             } else {
-                this.error = `Unexpected \`${c}\` when parsing command ` +
+                this.error = `Unexpected ${showChar(c)} when parsing command ` +
                     `(after \`${command.getRaw()}\`)`;
                 return null;
             }
@@ -415,9 +429,21 @@ class Parser {
         const checker = (t, c, toCall) => {
             const elems = pushTo !== null ? pushTo : t.elems;
             if (elems.length > 0 && prev !== separator) {
-                const msg = separator === null ? 'nothing' : `\`${separator}\``;
+                let msg;
+
+                if (separator === null) {
+                    msg = endChar === '\n' ? 'nothing' : showChar(endChar);
+                } else {
+                    if (endChar === '\n') {
+                        msg = showChar(separator);
+                    } else {
+                        msg = `${showChar(separator)} or ${showChar(endChar)}`;
+                    }
+                }
                 const e = new CharElement(
-                    c, t.pos, this.currentLine, `expected ${msg}, found \`${c}\``);
+                    c, t.pos, this.currentLine,
+                    `expected ${msg}, found ${showChar(c)} after ` +
+                        `\`${showEnd(elems[elems.length - 1])}\``);
                 t.push(e, pushTo);
                 t.pos = t.text.length;
             } else {
@@ -525,15 +551,16 @@ class Parser {
         } else if (this.pos >= this.text.length || this.text.charAt(this.pos) !== endChar) {
             if (elems.length === 0) {
                 this.push(new constructor(elems, start, this.pos, full, this.currentLine,
-                    `expected \`${endChar}\` at the end`),
+                    `expected ${showChar(endChar)} at the end`),
                 pushTo);
             } else {
                 let err;
 
                 if (prev === ',') {
-                    err = `expected \`${endChar}\` after \`${elems[elems.length - 1].getText()}\``;
+                    const last = elems[elems.length - 1].getText();
+                    err = `expected ${showChar(endChar)} after \`${last}\``;
                 } else {
-                    err = `expected \`${endChar}\` or \`,\` after ` +
+                    err = `expected ${showChar(endChar)} or \`,\` after ` +
                         `\`${elems[elems.length - 1].getText()}\``;
                 }
                 this.push(
@@ -770,7 +797,7 @@ class Parser {
                 if (prevChar !== ',' && elems.length > 0) {
                     const last = elems[elems.length - 1].value.getText();
                     parseEnd(this, pushTo,
-                        `expected \`,\` after \`${last}\`, found \`${s.getText()}\``);
+                        `expected \`,\` or \`}\` after \`${last}\`, found \`${s.getText()}\``);
                 }
                 if (s.error !== null) {
                     parseEnd(this, pushTo, s.error);
@@ -835,7 +862,7 @@ class Parser {
                         let msg = 'unexpected `:` after `,`';
                         if (prevChar !== ',') {
                             const last = elems[elems.length - 1].value.getText();
-                            msg = `expected \`,\` after \`${last}\`, found \`:\``;
+                            msg = `expected \`,\` or \`}\` after \`${last}\`, found \`:\``;
                         }
                         parseEnd(this, pushTo, msg);
                     } else {

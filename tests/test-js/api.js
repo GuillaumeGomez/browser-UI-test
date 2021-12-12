@@ -104,8 +104,8 @@ function checkAssertAttributeInner(x, func, before, after) {
     x.assert(func('("a", "b")'), {
         'error': 'expected JSON dictionary as second argument, found `"b"`',
     });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
-    x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
+    x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('("a", "b", "c")'), {
         'error': 'expected JSON dictionary as second argument, found `"b"`',
     });
@@ -476,8 +476,8 @@ function checkAssertAttributeFalse(x, func) {
 
 function checkAssertCountInner(x, func, before, after) {
     x.assert(func('("a", 1, "c")'), {'error': 'unexpected argument after number of occurences'});
-    x.assert(func('("a", 1 2)'), {'error': 'expected `,`, found `2`'});
-    x.assert(func('("a", 1 a)'), {'error': 'expected `,`, found `a`'});
+    x.assert(func('("a", 1 2)'), {'error': 'expected `,` or `)`, found `2` after `1`'});
+    x.assert(func('("a", 1 a)'), {'error': 'expected `,` or `)`, found `a` after `1`'});
     x.assert(func('("a", -1)'), {'error': 'number of occurences cannot be negative: `-1`'});
     x.assert(func('("a", -1.0)'), {
         'error': 'expected integer for number of occurences, found float: `-1.0`',
@@ -591,8 +591,8 @@ function checkAssertCssInner(x, func, before, after) {
     x.assert(func('("a", "b")'), {
         'error': 'expected JSON dictionary as second argument, found `"b"`',
     });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
-    x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
+    x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('("a", "b", "c")'), {
         'error': 'expected JSON dictionary as second argument, found `"b"`',
     });
@@ -982,8 +982,8 @@ function checkAssertPropertyInner(x, func, before, after) {
     x.assert(func('("a", "b")'), {
         'error': 'expected JSON dictionary as second argument, found `"b"`',
     });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
-    x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
+    x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('("a", "b", "c")'), {
         'error': 'expected JSON dictionary as second argument, found `"b"`',
     });
@@ -1284,7 +1284,7 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
         'error': 'invalid number of values in the tuple, read the documentation to see the ' +
             'accepted inputs',
     });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('("a", 2)'), {'error': 'expected second argument to be a string, found `2`'});
     x.assert(func('("a")'), {
         'error': 'invalid number of values in the tuple, read the documentation to see the ' +
@@ -1463,12 +1463,11 @@ function checkAttribute(x, func) {
         'error': 'expected json as second argument (since there are only two arguments), found a ' +
             'string',
     });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
     x.assert(func('("a", )'), {
         'error': 'expected `("CSS selector" or "XPath", "attribute name", "attribute value")` or ' +
             '`("CSS selector" or "XPath", [JSON object])`',
     });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('("a", "b")'), {
         'error': 'expected json as second argument (since there are only two arguments), found ' +
             'a string',
@@ -2994,12 +2993,12 @@ function checkCss(x, func) {
         'error': 'expected json as second argument (since there are only two arguments), found a ' +
             'string',
     });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('("a", )'), {
         'error': 'expected `("CSS selector" or "XPath", "CSS property name", "CSS property value"' +
             ')` or `("CSS selector" or "XPath", [JSON object])`',
     });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('("a", "b")'), {
         'error': 'expected json as second argument (since there are only two arguments), found ' +
             'a string',
@@ -3688,7 +3687,7 @@ function checkPressKey(x, func) {
     x.assert(func('("a", "b", "c")'),
         {'error': 'invalid number of arguments in tuple, expected [string] or [integer] or ' +
                   '([string], [integer]) or ([integer], [integer])'});
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('(\'\', "b")'),
         {'error': 'expected an integer as tuple second argument, found a string'});
     x.assert(func('("a", "b")'),
@@ -3751,7 +3750,7 @@ function checkReload(x, func) {
                 'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 12});',
             ],
         });
-    x.assert(func('12 24'), {'error': 'expected nothing, found `2`'});
+    x.assert(func('12 24'), {'error': 'expected nothing, found `2` after `12`'});
     x.assert(func('0'),
         {
             'instructions': [
@@ -3907,7 +3906,7 @@ function checkText(x, func) {
     x.assert(func('("a")'), {'error': 'expected `("CSS selector" or "XPath", "text")`'});
     x.assert(func('("a", )'), {'error': 'expected `("CSS selector" or "XPath", "text")`'});
     x.assert(func('("a", "b", "c")'), {'error': 'expected `("CSS selector" or "XPath", "text")`'});
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('(\'\', "b")'), {
         'error': 'CSS selector cannot be empty',
         'isXPath': false,
@@ -3977,7 +3976,7 @@ function checkWaitFor(x, func) {
     x.assert(func('hello'), {
         'error': 'expected an integer or a CSS selector or an XPath, found `hello`',
     });
-    x.assert(func('1 2'), {'error': 'expected nothing, found `2`'});
+    x.assert(func('1 2'), {'error': 'expected nothing, found `2` after `1`'});
     x.assert(func('1'), {'instructions': ['await page.waitFor(1);'], 'wait': false});
     x.assert(func('-1'), {'error': 'number of milliseconds cannot be negative: `-1`'});
     x.assert(func('-1.0'), {
@@ -4022,7 +4021,7 @@ function checkWrite(x, func) {
         'error': 'invalid number of arguments in tuple, expected "string" or integer or ' +
             '("CSS selector" or "XPath", "string") or ("CSS selector" or "XPath", integer)',
     });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,`, found `"`'});
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('(\'\', "b")'), {
         'error': 'CSS selector cannot be empty',
         'isXPath': false,

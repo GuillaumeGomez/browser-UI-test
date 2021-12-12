@@ -1,0 +1,7 @@
+=> Starting doc-ui tests...
+
+error-comments... FAILED
+[ERROR] (line 4) Error: Evaluation failed: expected `194` for property `clientWidth` for selector `body`, found `800`: for command `assert-property: ("body", {"clientWidth": "194", "offsetWidth": "200"})`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed

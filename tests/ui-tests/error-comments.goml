@@ -1,0 +1,4 @@
+screenshot: false
+goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+// blabla
+assert-property: ("body", {"clientWidth": "194", "offsetWidth": "200"})
