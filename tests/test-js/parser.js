@@ -166,6 +166,22 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw()[1].getRaw(), 'true');
 
 
+    p = new Parser('(//hel\nfalse\n,\n//hehe\ntrue\n)');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].getText(), '(//hel\nfalse\n,\n//hehe\ntrue\n)');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw().length, 2);
+    x.assert(p.elems[0].getRaw()[0].error, null);
+    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
+    x.assert(p.elems[0].getRaw()[1].error, null);
+    x.assert(p.elems[0].getRaw()[1].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[1].getRaw(), 'true');
+
+
     p = new Parser('(false,"s", (3, 12))');
     p.parse();
     x.assert(p.error, null);
@@ -380,6 +396,22 @@ function checkArray(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'array');
     x.assert(p.elems[0].getText(), '[false,true]');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw().length, 2);
+    x.assert(p.elems[0].getRaw()[0].error, null);
+    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
+    x.assert(p.elems[0].getRaw()[1].error, null);
+    x.assert(p.elems[0].getRaw()[1].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[1].getRaw(), 'true');
+
+
+    p = new Parser('[//hello\nfalse\n,\n//data\ntrue\n]');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].getText(), '[//hello\nfalse\n,\n//data\ntrue\n]');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
@@ -896,6 +928,20 @@ function checkJson(x) {
     x.assert(p.elems[0].kind, 'json');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getText(), '{"x": 1,}');
+    x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
+    x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
+    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
+    x.assert(p.elems[0].getRaw()[0].value.kind, 'number');
+    x.assert(p.elems[0].getRaw()[0].value.getRaw(), '1');
+
+
+    p = new Parser('{\n\n\n\n\n"x"\n//tadam\n:\n1\n}\n');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getText(), '{\n\n\n\n\n"x"\n//tadam\n:\n1\n}');
     x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
     x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
     x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
