@@ -13,11 +13,23 @@ function checkTuple(x) {
 
     p = new Parser('("hello",');
     p.parse();
-    x.assert(p.error, 'unexpected `,` after `"hello"`');
+    x.assert(p.error, 'expected `)` after `"hello"`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
     x.assert(p.elems[0].isRecursive(), true);
-    x.assert(p.elems[0].error, 'unexpected `,` after `"hello"`');
+    x.assert(p.elems[0].error, 'expected `)` after `"hello"`');
+    x.assert(p.elems[0].getRaw().length, 1);
+    x.assert(p.elems[0].getRaw()[0].error, null);
+    x.assert(p.elems[0].getRaw()[0].kind, 'string');
+
+
+    p = new Parser('("hello",)');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].isRecursive(), true);
+    x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'string');
@@ -25,10 +37,10 @@ function checkTuple(x) {
 
     p = new Parser('("hello", 2');
     p.parse();
-    x.assert(p.error, 'expected `)` after `2`');
+    x.assert(p.error, 'expected `)` or `,` after `2`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
-    x.assert(p.elems[0].error, 'expected `)` after `2`');
+    x.assert(p.elems[0].error, 'expected `)` or `,` after `2`');
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'string');
@@ -38,10 +50,10 @@ function checkTuple(x) {
 
     p = new Parser('("hello", 2, true, {"a": {"b": 3}, "c": "d"},)');
     p.parse();
-    x.assert(p.error, 'unexpected `,` after `{"a": {"b": 3}, "c": "d"}`');
+    x.assert(p.error, null);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
-    x.assert(p.elems[0].error, 'unexpected `,` after `{"a": {"b": 3}, "c": "d"}`');
+    x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw().length, 4);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[1].error, null);
@@ -128,10 +140,10 @@ function checkTuple(x) {
 
     p = new Parser('(false//)');
     p.parse();
-    x.assert(p.error, 'expected `)` after `false`');
+    x.assert(p.error, 'expected `)` or `,` after `false`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
-    x.assert(p.elems[0].error, 'expected `)` after `false`');
+    x.assert(p.elems[0].error, 'expected `)` or `,` after `false`');
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
@@ -235,11 +247,11 @@ function checkArray(x) {
 
     p = new Parser('["hello",');
     p.parse();
-    x.assert(p.error, 'unexpected `,` after `"hello"`');
+    x.assert(p.error, 'expected `]` after `"hello"`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'array');
     x.assert(p.elems[0].isRecursive(), true);
-    x.assert(p.elems[0].error, 'unexpected `,` after `"hello"`');
+    x.assert(p.elems[0].error, 'expected `]` after `"hello"`');
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'string');
@@ -264,10 +276,10 @@ function checkArray(x) {
 
     p = new Parser('[{"a": {"b": 3}, "c": "d"},]');
     p.parse();
-    x.assert(p.error, 'unexpected `,` after `{"a": {"b": 3}, "c": "d"}`');
+    x.assert(p.error, null);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'array');
-    x.assert(p.elems[0].error, 'unexpected `,` after `{"a": {"b": 3}, "c": "d"}`');
+    x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'json');
@@ -352,10 +364,10 @@ function checkArray(x) {
 
     p = new Parser('[false//]');
     p.parse();
-    x.assert(p.error, 'expected `]` after `false`');
+    x.assert(p.error, 'expected `]` or `,` after `false`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'array');
-    x.assert(p.elems[0].error, 'expected `]` after `false`');
+    x.assert(p.elems[0].error, 'expected `]` or `,` after `false`');
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
@@ -879,10 +891,10 @@ function checkJson(x) {
 
     p = new Parser('{"x": 1,}');
     p.parse();
-    x.assert(p.error, 'unexpected `,` before `}`');
+    x.assert(p.error, null);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'unexpected `,` before `}`');
+    x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getText(), '{"x": 1,}');
     x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
     x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
@@ -1201,10 +1213,10 @@ function checkComment(x) {
 
     p = new Parser('(1//oups, an error!');
     p.parse();
-    x.assert(p.error, 'expected `)` after `1`');
+    x.assert(p.error, 'expected `)` or `,` after `1`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
-    x.assert(p.elems[0].error, 'expected `)` after `1`');
+    x.assert(p.elems[0].error, 'expected `)` or `,` after `1`');
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].kind, 'number');
     x.assert(p.elems[0].getRaw()[0].getRaw(), '1');
