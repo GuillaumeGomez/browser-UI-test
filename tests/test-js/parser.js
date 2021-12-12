@@ -63,16 +63,16 @@ function checkTuple(x) {
 
     p = new Parser('(true false)');
     p.parse();
-    x.assert(p.error, 'expected `,`, found `f`');
+    x.assert(p.error, 'expected `,` or `)`, found `f` after `true`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
     x.assert(p.elems[0].getText(), '(true false)');
-    x.assert(p.elems[0].error, 'expected `,`, found `f`');
+    x.assert(p.elems[0].error, 'expected `,` or `)`, found `f` after `true`');
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
-    x.assert(p.elems[0].getRaw()[1].error, 'expected `,`, found `f`');
+    x.assert(p.elems[0].getRaw()[1].error, 'expected `,` or `)`, found `f` after `true`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
     x.assert(p.elems[0].getRaw()[1].getRaw(), 'f');
 
@@ -95,16 +95,16 @@ function checkTuple(x) {
 
     p = new Parser('(true|false)');
     p.parse();
-    x.assert(p.error, 'expected `,`, found `|`');
+    x.assert(p.error, 'expected `,` or `)`, found `|` after `true`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
     x.assert(p.elems[0].getText(), '(true|false)');
-    x.assert(p.elems[0].error, 'expected `,`, found `|`');
+    x.assert(p.elems[0].error, 'expected `,` or `)`, found `|` after `true`');
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
-    x.assert(p.elems[0].getRaw()[1].error, 'expected `,`, found `|`');
+    x.assert(p.elems[0].getRaw()[1].error, 'expected `,` or `)`, found `|` after `true`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
     x.assert(p.elems[0].getRaw()[1].getRaw(), '|');
 
@@ -303,16 +303,16 @@ function checkArray(x) {
 
     p = new Parser('[true false]');
     p.parse();
-    x.assert(p.error, 'expected `,`, found `f`');
+    x.assert(p.error, 'expected `,` or `]`, found `f` after `true`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'array');
     x.assert(p.elems[0].getText(), '[true false]');
-    x.assert(p.elems[0].error, 'expected `,`, found `f`');
+    x.assert(p.elems[0].error, 'expected `,` or `]`, found `f` after `true`');
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
-    x.assert(p.elems[0].getRaw()[1].error, 'expected `,`, found `f`');
+    x.assert(p.elems[0].getRaw()[1].error, 'expected `,` or `]`, found `f` after `true`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
     x.assert(p.elems[0].getRaw()[1].getRaw(), 'f');
 
@@ -335,16 +335,16 @@ function checkArray(x) {
 
     p = new Parser('[true|false]');
     p.parse();
-    x.assert(p.error, 'expected `,`, found `|`');
+    x.assert(p.error, 'expected `,` or `]`, found `|` after `true`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'array');
     x.assert(p.elems[0].getText(), '[true|false]');
-    x.assert(p.elems[0].error, 'expected `,`, found `|`');
+    x.assert(p.elems[0].error, 'expected `,` or `]`, found `|` after `true`');
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'bool');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
-    x.assert(p.elems[0].getRaw()[1].error, 'expected `,`, found `|`');
+    x.assert(p.elems[0].getRaw()[1].error, 'expected `,` or `]`, found `|` after `true`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
     x.assert(p.elems[0].getRaw()[1].getRaw(), '|');
 
@@ -522,24 +522,24 @@ function checkIdent(x) {
 
     p = new Parser('true,');
     p.parse();
-    x.assert(p.error, 'expected nothing, found `,`');
+    x.assert(p.error, 'expected nothing, found `,` after `true`');
     x.assert(p.elems.length, 2);
     x.assert(p.elems[0].kind, 'bool');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'true');
     x.assert(p.elems[1].kind, 'char');
-    x.assert(p.elems[1].error, 'expected nothing, found `,`');
+    x.assert(p.elems[1].error, 'expected nothing, found `,` after `true`');
     x.assert(p.elems[1].getRaw(), ',');
 
     p = new Parser('aloha,');
     p.parse();
-    x.assert(p.error, 'expected nothing, found `,`');
+    x.assert(p.error, 'expected nothing, found `,` after `aloha`');
     x.assert(p.elems.length, 2);
     x.assert(p.elems[0].kind, 'ident');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'aloha');
     x.assert(p.elems[1].kind, 'char');
-    x.assert(p.elems[1].error, 'expected nothing, found `,`');
+    x.assert(p.elems[1].error, 'expected nothing, found `,` after `aloha`');
     x.assert(p.elems[1].getRaw(), ',');
 }
 
@@ -649,7 +649,7 @@ function checkNumber(x) {
 
     p = new Parser('42,');
     p.parse();
-    x.assert(p.error, 'expected nothing, found `,`');
+    x.assert(p.error, 'expected nothing, found `,` after `42`');
     x.assert(p.elems.length, 2);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
@@ -657,7 +657,7 @@ function checkNumber(x) {
     x.assert(p.elems[0].isNegative, false);
     x.assert(p.elems[0].isFloat, false);
     x.assert(p.elems[1].kind, 'char');
-    x.assert(p.elems[1].error, 'expected nothing, found `,`');
+    x.assert(p.elems[1].error, 'expected nothing, found `,` after `42`');
     x.assert(p.elems[1].getRaw(), ',');
 
 
@@ -993,10 +993,10 @@ function checkJson(x) {
 
     p = new Parser('{"x": "a" "y": 2}');
     p.parse();
-    x.assert(p.error, 'expected `,` after `"a"`, found `"y"`');
+    x.assert(p.error, 'expected `,` or `}` after `"a"`, found `"y"`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'expected `,` after `"a"`, found `"y"`');
+    x.assert(p.elems[0].error, 'expected `,` or `}` after `"a"`, found `"y"`');
     x.assert(p.elems[0].getText(), '{"x": "a" "y"');
     x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
     x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
@@ -1049,10 +1049,10 @@ function checkJson(x) {
 
     p = new Parser('{"x": "a": "y": "b"}');
     p.parse();
-    x.assert(p.error, 'expected `,` after `"a"`, found `:`');
+    x.assert(p.error, 'expected `,` or `}` after `"a"`, found `:`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'expected `,` after `"a"`, found `:`');
+    x.assert(p.elems[0].error, 'expected `,` or `}` after `"a"`, found `:`');
     x.assert(p.elems[0].getText(), '{"x": "a":');
     x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
     x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
