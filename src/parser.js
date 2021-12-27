@@ -41,7 +41,7 @@ function cleanString(s) {
                 parts[i] += '\\';
             }
         }
-        return parts.join('\'');
+        return parts.join('\'').replace(/\n/g, '\\n');
     }
     return s;
 }
