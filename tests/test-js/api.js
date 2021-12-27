@@ -1309,10 +1309,7 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
             before +
             'await page.evaluate(e => {\n' +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-            'if (e.value !== "\\\'b") { throw \'"\' + e.value + \'" !== "\\\'b"\'; }\n' +
-            '} else if (e.textContent !== "\\\'b") {\n' +
-            'throw \'"\' + e.textContent + \'" !== "\\\'b"\'; }\n' +
+            'browserUiTestHelpers.compareElemsText(e, "\\\'b");\n' +
             '}, parseAssertElemStr);' +
             after,
         ],
@@ -1325,10 +1322,7 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
             before +
             'await page.evaluate(e => {\n' +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-            'if (e.value !== "\\\'b") { throw \'"\' + e.value + \'" !== "\\\'b"\'; }\n' +
-            '} else if (e.textContent !== "\\\'b") {\n' +
-            'throw \'"\' + e.textContent + \'" !== "\\\'b"\'; }\n' +
+            'browserUiTestHelpers.compareElemsText(e, "\\\'b");\n' +
             '}, parseAssertElemStr);' +
             after,
         ],
@@ -1342,10 +1336,7 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
             before +
             'await page.evaluate(e => {\n' +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-            'if (e.value !== "\\\'b") { throw \'"\' + e.value + \'" !== "\\\'b"\'; }\n' +
-            '} else if (e.textContent !== "\\\'b") {\n' +
-            'throw \'"\' + e.textContent + \'" !== "\\\'b"\'; }\n' +
+            'browserUiTestHelpers.compareElemsText(e, "\\\'b");\n' +
             '}, parseAssertElemStr[i]);' +
             afterAllElements +
             '}',
@@ -1359,10 +1350,7 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
             before +
             'await page.evaluate(e => {\n' +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-            'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
-            '} else if (e.textContent !== "b") {\n' +
-            'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
+            'browserUiTestHelpers.compareElemsText(e, "b");\n' +
             '}, parseAssertElemStr);' +
             after,
         ],
@@ -1376,10 +1364,7 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
             before +
             'await page.evaluate(e => {\n' +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-            'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
-            '} else if (e.textContent !== "b") {\n' +
-            'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
+            'browserUiTestHelpers.compareElemsText(e, "b");\n' +
             '}, parseAssertElemStr[i]);' +
             afterAllElements +
             '}',
@@ -1396,10 +1381,7 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'parseAssertElemStr = parseAssertElemStr[0];\n' +
             before +
             'await page.evaluate(e => {\n' +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-            'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
-            '} else if (e.textContent !== "b") {\n' +
-            'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
+            'browserUiTestHelpers.compareElemsText(e, "b");\n' +
             '}, parseAssertElemStr);' +
             after,
         ],
@@ -1413,10 +1395,7 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
             before +
             'await page.evaluate(e => {\n' +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-            'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
-            '} else if (e.textContent !== "b") {\n' +
-            'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
+            'browserUiTestHelpers.compareElemsText(e, "b");\n' +
             '}, parseAssertElemStr[i]);' +
             afterAllElements +
             '}',
@@ -1434,10 +1413,7 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
             before +
             'await page.evaluate(e => {\n' +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-            'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
-            '} else if (e.textContent !== "b") {\n' +
-            'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
+            'browserUiTestHelpers.compareElemsText(e, "b");\n' +
             '}, parseAssertElemStr[i]);' +
             afterAllElements +
             '}',
@@ -3646,10 +3622,7 @@ function checkParseContent(x, func) {
                 'code': 'let parseAssertElemStr = await page.$("a");\n' +
                     'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
                     'await page.evaluate(e => {\n' +
-                    'if (e.tagName.toLowerCase() === "input") {\n' +
-                    'if (e.value !== "b") { throw \'"\' + e.value + \'" !== "b"\'; }\n' +
-                    '} else if (e.textContent !== "b") {\n' +
-                    'throw \'"\' + e.textContent + \'" !== "b"\'; }\n' +
+                    'browserUiTestHelpers.compareElemsText(e, "b");\n' +
                     '}, parseAssertElemStr);',
                 'wait': false,
                 'checkResult': true,

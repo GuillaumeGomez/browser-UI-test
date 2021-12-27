@@ -1041,10 +1041,7 @@ function parseAssertTextInner(parser, assertFalse) {
         instructions = [
             getAndSetElements(selector, varName, checkAllElements) +
             `${insertBefore}await page.evaluate(e => {\n` +
-            'if (e.tagName.toLowerCase() === "input") {\n' +
-                `if (e.value !== "${value}") { throw '"' + e.value + '" !== "${value}"'; }\n` +
-            `} else if (e.textContent !== "${value}") {\n` +
-                `throw '"' + e.textContent + '" !== "${value}"'; }\n` +
+            `browserUiTestHelpers.compareElemsText(e, "${value}");\n` +
             `}, ${varName});${insertAfter}`,
         ];
     } else {
@@ -1052,11 +1049,7 @@ function parseAssertTextInner(parser, assertFalse) {
             getAndSetElements(selector, varName, checkAllElements) +
             `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
                 `${insertBefore}await page.evaluate(e => {\n` +
-                'if (e.tagName.toLowerCase() === "input") {\n' +
-                    `if (e.value !== "${value}") { throw '"' + e.value + '" ` +
-                    `!== "${value}"'; }\n` +
-                `} else if (e.textContent !== "${value}") {\n` +
-                    `throw '"' + e.textContent + '" !== "${value}"'; }\n` +
+                `browserUiTestHelpers.compareElemsText(e, "${value}");\n` +
                 `}, ${varName}[i]);${insertAfter}` +
             '}',
         ];

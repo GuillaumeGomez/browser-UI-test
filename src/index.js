@@ -13,7 +13,6 @@ const path = require('path');
 const consts = require('./consts.js');
 const Module = require('module');
 
-
 // TODO: Make it into a class to provide some utility methods like 'isFailure'.
 const Status = {
     'Ok': 0,
@@ -188,6 +187,11 @@ async function runCommand(loaded, logs, options, browser) {
             });
         });
         await options.onPageCreatedCallback(page, loaded['file']);
+        // eslint-disable-next-line no-undef
+        const script = fs.readFileSync(path.join(__dirname, '/helpers.js'), 'utf8');
+        debug_log.append(`Injecting helpers script into page: "${script}"`);
+        await page.evaluateOnNewDocument(script);
+
         error_log = '';
         const commands = loaded['commands'];
         for (let x = 0; x < commands.length; ++x) {
