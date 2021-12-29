@@ -234,6 +234,8 @@ Here's the command list:
  * [`assert-count-false`](#assert-count-false)
  * [`assert-css`](#assert-css)
  * [`assert-css-false`](#assert-css-false)
+ * [`assert-position`](#assert-position)
+ * [`assert-position-false`](#assert-position-false)
  * [`assert-property`](#assert-property)
  * [`assert-property-false`](#assert-property-false)
  * [`assert-text`](#assert-text)
@@ -307,7 +309,7 @@ assert-false: ("#id > .class") // strictly equivalent
 assert-attribute: ("#id > .class", {"attribute-name": "attribute-value"})
 assert-attribute: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"})
 
-// If you to check all elements matching this selector/XPath, use `ALL`:
+// If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-attribute: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
 assert-attribute: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
 ```
@@ -323,7 +325,7 @@ Please note that if you want to compare DOM elements, you should take a look at 
 assert-attribute-false: ("#id > .class", {"attribute-name": "attribute-value"})
 assert-attribute-false: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"})
 
-// If you to check all elements matching this selector/XPath, use `ALL`:
+// If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-attribute-false: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
 assert-attribute-false: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
 ```
@@ -360,7 +362,7 @@ assert-count-false: ("//*[@id='id']/*[@class='class']", 2)
 assert-css: ("#id > .class", { "color": "blue" })
 assert-css: ("//*[@id='id']/*[@class='class']", { "color": "blue", "height": "10px" })
 
-// If you to check all elements matching this selector/XPath, use `ALL`:
+// If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-css: ("#id > .class", { "color": "blue" }, ALL)
 assert-css: ("//*[@id='id']/*[@class='class']", { "color": "blue", "height": "10px" }, ALL)
 ```
@@ -375,12 +377,44 @@ Please note that if you want to compare DOM elements, you should take a look at 
 assert-css-false: ("#id > .class", { "color": "blue" })
 assert-css-false: ("//*[@id='id']/*[@class='class']", { "color": "blue", "height": "10px" })
 
-// If you to check all elements matching this selector/XPath, use `ALL`:
+// If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-css-false: ("#id > .class", { "color": "blue" }, ALL)
 assert-css-false: ("//*[@id='id']/*[@class='class']", { "color": "blue", "height": "10px" }, ALL)
 ```
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-css-false) command.
+
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+
+#### assert-position
+
+**assert-position** command checks that the element(s) position matches the expected. Only `x` and `y` values are accepted as keys for the positions. Examples:
+
+```
+assert-position: (".class", {"x": 1, "y": 2})
+assert-position: ("//*[@class='class']", {"x": 1, "y": 2})
+
+// If you want to check all elements matching this selector/XPath, use `ALL`:
+assert-position: (".class", {"x": 1, "y": 2}, ALL)
+assert-position: ("//*[@class='class']", {"x": 1, "y": 2}, ALL)
+```
+
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-position`](#compare-elements-position) command.
+
+#### assert-position-false
+
+**assert-position-false** command checks that the element(s) position **does not** match the expected. Only `x` and `y` values are accepted as keys for the positions. Examples:
+
+```
+assert-position-false: (".class", {"x": 1, "y": 2})
+assert-position-false: ("//*[@class='class']", {"x": 1, "y": 2})
+
+// If you want to check all elements matching this selector/XPath, use `ALL`:
+assert-position-false: (".class", {"x": 1, "y": 2}, ALL)
+assert-position-false: ("//*[@class='class']", {"x": 1, "y": 2}, ALL)
+```
+
+Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-position-false`](#compare-elements-position-false) command.
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
 
@@ -392,7 +426,7 @@ Another thing to be noted: if you don't care wether the selector exists or not e
 assert-property: ("#id > .class", { "offsetParent": "null" })
 assert-property: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" })
 
-// If you to check all elements matching this selector/XPath, use `ALL`:
+// If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-property: ("#id > .class", { "offsetParent": "null" }, ALL)
 assert-property: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" }, ALL)
 ```
@@ -407,7 +441,7 @@ Please note that if you want to compare DOM elements, you should take a look at 
 assert-property-false: ("#id > .class", { "offsetParent": "null" })
 assert-property-false: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" })
 
-// If you to check all elements matching this selector/XPath, use `ALL`:
+// If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-property-false: ("#id > .class", { "offsetParent": "null" }, ALL)
 assert-property-false: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" }, ALL)
 ```
@@ -424,7 +458,7 @@ Another thing to be noted: if you don't care wether the selector exists or not e
 assert-text: ("#id > .class", "hello")
 assert-text: ("//*[@id='id']/*[@class='class']", "hello")
 
-// If you to check all elements matching this selector/XPath, use `ALL`:
+// If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-text: ("#id > .class", "hello", ALL)
 assert-text: ("//*[@id='id']/*[@class='class']", "hello", ALL)
 ```
@@ -439,7 +473,7 @@ Please note that if you want to compare DOM elements, you should take a look at 
 assert-text-false: ("#id > .class", "hello")
 assert-text-false: ("//*[@id='id']/*[@class='class']", "hello")
 
-// If you to check all elements matching this selector/XPath, use `ALL`:
+// If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-text-false: ("#id > .class", "hello", ALL)
 assert-text-false: ("//*[@id='id']/*[@class='class']", "hello", ALL)
 ```

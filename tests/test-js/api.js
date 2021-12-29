@@ -1291,6 +1291,368 @@ function checkAssertPropertyFalse(x, func) {
         '} catch(e) { continue; } throw "assert didn\'t fail";\n');
 }
 
+function checkAssertPositionInner(x, func, before, after) {
+    x.assert(func('("a", "b", )'), {
+        'error': 'expected JSON dictionary as second argument, found `"b"`',
+    });
+    x.assert(func('("a", "b")'), {
+        'error': 'expected JSON dictionary as second argument, found `"b"`',
+    });
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
+    x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
+    x.assert(func('("a", "b", "c")'), {
+        'error': 'expected JSON dictionary as second argument, found `"b"`',
+    });
+    x.assert(func('("a::after", {"a": 1}, all)'), {
+        'error': 'expected identifier `ALL` as third argument or nothing, found `all`',
+    });
+    x.assert(func('("a::after", {"a": 1}, ALLO)'), {
+        'error': 'expected identifier `ALL` as third argument or nothing, found `ALLO`',
+    });
+    x.assert(func('("a", {"b": "c", "b": "d"})'), {
+        'error': 'only number is allowed, found `"c"` (a string)',
+    });
+    x.assert(func('("a", {"b": ""})'), {
+        'error': 'only number is allowed, found `""` (a string)',
+    });
+    x.assert(func('("a", {"": 12})'), {
+        'error': 'Only accepted keys are "x" and "y", found `""` (in `{"": 12}`)',
+    });
+
+    x.assert(func('("a", {"x": 1})'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$("a");\n' +
+            'if (parseAssertPosition === null) { throw \'"a" not found\'; }\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkX(e) {\n' +
+            before +
+            'let x = e.getBoundingClientRect().left;\n' +
+            'if (x !== 1) {\n' +
+            'throw "different X values: " + x + " != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem);\n' +
+            '}, parseAssertPosition);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"x": 1}, ALL)'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$$("a");\n' +
+            'if (parseAssertPosition.length === 0) { throw \'"a" not found\'; }\n' +
+            'for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkX(e) {\n' +
+            before +
+            'let x = e.getBoundingClientRect().left;\n' +
+            'if (x !== 1) {\n' +
+            'throw "different X values: " + x + " != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem);\n' +
+            '}, parseAssertPosition[i]);\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"y": 1})'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$("a");\n' +
+            'if (parseAssertPosition === null) { throw \'"a" not found\'; }\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkY(e) {\n' +
+            before +
+            'let y = e.getBoundingClientRect().top;\n' +
+            'if (y !== 1) {\n' +
+            'throw "different Y values: " + y + " != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkY(elem);\n' +
+            '}, parseAssertPosition);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // Check the handling of pseudo elements
+    x.assert(func('("a::after", {"x": 1})'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$("a");\n' +
+            'if (parseAssertPosition === null) { throw \'"a" not found\'; }\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkX(e) {\n' +
+            before +
+            'let x = e.getBoundingClientRect().left;\n' +
+            'let pseudoStyle = window.getComputedStyle(e, "::after");\n' +
+            'let style = window.getComputedStyle(e);\n' +
+            'x += parseInt(pseudoStyle.left, 10) - parseInt(style.marginLeft, 10);\n' +
+            'if (x !== 1) {\n' +
+            'throw "different X values: " + x + " != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem);\n' +
+            '}, parseAssertPosition);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a::after", {"y": 1})'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$("a");\n' +
+            'if (parseAssertPosition === null) { throw \'"a" not found\'; }\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkY(e) {\n' +
+            before +
+            'let y = e.getBoundingClientRect().top;\n' +
+            'let pseudoStyle = window.getComputedStyle(e, "::after");\n' +
+            'let style = window.getComputedStyle(e);\n' +
+            'y += parseInt(pseudoStyle.top, 10) - parseInt(style.marginTop, 10);\n' +
+            'if (y !== 1) {\n' +
+            'throw "different Y values: " + y + " != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkY(elem);\n' +
+            '}, parseAssertPosition);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a:focus", {"x": 1})'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$("a:focus");\n' +
+            'if (parseAssertPosition === null) { throw \'"a:focus" not found\'; }\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkX(e) {\n' +
+            before +
+            'let x = e.getBoundingClientRect().left;\n' +
+            'if (x !== 1) {\n' +
+            'throw "different X values: " + x + " != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem);\n' +
+            '}, parseAssertPosition);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a:focus", {"x": 1}, ALL)'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$$("a:focus");\n' +
+            'if (parseAssertPosition.length === 0) { throw \'"a:focus" not found\'; }\n' +
+            'for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkX(e) {\n' +
+            before +
+            'let x = e.getBoundingClientRect().left;\n' +
+            'if (x !== 1) {\n' +
+            'throw "different X values: " + x + " != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem);\n' +
+            '}, parseAssertPosition[i]);\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a ::after", {"x": 1})'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$("a ::after");\n' +
+            'if (parseAssertPosition === null) { throw \'"a ::after" not found\'; }\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkX(e) {\n' +
+            before +
+            'let x = e.getBoundingClientRect().left;\n' +
+            'if (x !== 1) {\n' +
+            'throw "different X values: " + x + " != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem);\n' +
+            '}, parseAssertPosition);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a ::after", {"x": 1}, ALL)'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$$("a ::after");\n' +
+            'if (parseAssertPosition.length === 0) { throw \'"a ::after" not found\'; }\n' +
+            'for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkX(e) {\n' +
+            before +
+            'let x = e.getBoundingClientRect().left;\n' +
+            'if (x !== 1) {\n' +
+            'throw "different X values: " + x + " != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem);\n' +
+            '}, parseAssertPosition[i]);\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // XPath
+    x.assert(func('("//a", {"x": 1})'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$x("//a");\n' +
+            'if (parseAssertPosition.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseAssertPosition = parseAssertPosition[0];\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkX(e) {\n' +
+            before +
+            'let x = e.getBoundingClientRect().left;\n' +
+            'if (x !== 1) {\n' +
+            'throw "different X values: " + x + " != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem);\n' +
+            '}, parseAssertPosition);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("//a", {"x": 1}, ALL)'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$x("//a");\n' +
+            'if (parseAssertPosition.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkX(e) {\n' +
+            before +
+            'let x = e.getBoundingClientRect().left;\n' +
+            'if (x !== 1) {\n' +
+            'throw "different X values: " + x + " != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem);\n' +
+            '}, parseAssertPosition[i]);\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("//a", {"x": 1, "y": 2})'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$x("//a");\n' +
+            'if (parseAssertPosition.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseAssertPosition = parseAssertPosition[0];\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkX(e) {\n' +
+            before +
+            'let x = e.getBoundingClientRect().left;\n' +
+            'if (x !== 1) {\n' +
+            'throw "different X values: " + x + " != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem);\n' +
+            'function checkY(e) {\n' +
+            before +
+            'let y = e.getBoundingClientRect().top;\n' +
+            'if (y !== 2) {\n' +
+            'throw "different Y values: " + y + " != " + 2;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkY(elem);\n' +
+            '}, parseAssertPosition);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("//a", {"x": 1, "y": 2}, ALL)'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$x("//a");\n' +
+            'if (parseAssertPosition.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkX(e) {\n' +
+            before +
+            'let x = e.getBoundingClientRect().left;\n' +
+            'if (x !== 1) {\n' +
+            'throw "different X values: " + x + " != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem);\n' +
+            'function checkY(e) {\n' +
+            before +
+            'let y = e.getBoundingClientRect().top;\n' +
+            'if (y !== 2) {\n' +
+            'throw "different Y values: " + y + " != " + 2;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkY(elem);\n' +
+            '}, parseAssertPosition[i]);\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // Multiline
+    x.assert(func('("a", {"x": \n1\n, "x": 2})'), {'error': 'JSON dict key `x` is duplicated'});
+    x.assert(func('("//a"\n, \n{"x": \n1, \n"y": \n2}\n, \nALL)'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$x("//a");\n' +
+            'if (parseAssertPosition.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkX(e) {\n' +
+            before +
+            'let x = e.getBoundingClientRect().left;\n' +
+            'if (x !== 1) {\n' +
+            'throw "different X values: " + x + " != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem);\n' +
+            'function checkY(e) {\n' +
+            before +
+            'let y = e.getBoundingClientRect().top;\n' +
+            'if (y !== 2) {\n' +
+            'throw "different Y values: " + y + " != " + 2;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkY(elem);\n' +
+            '}, parseAssertPosition[i]);\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+}
+
+function checkAssertPosition(x, func) {
+    checkAssertPositionInner(x, func, '', '');
+}
+
+function checkAssertPositionFalse(x, func) {
+    checkAssertPositionInner(
+        x,
+        func,
+        'try {\n',
+        '} catch(e) { return; } throw "assert didn\'t fail";\n');
+}
+
 function checkAssertTextInner(x, func, before, after, afterAllElements) {
     x.assert(func('("a", )'), {
         'error': 'invalid number of values in the tuple, read the documentation to see the ' +
@@ -2023,7 +2385,7 @@ function checkCompareElementsPositionInner(x, func, before, after) {
     );
     x.assert(
         func('("a", "b", ("x", "yo"))'),
-        {'error': 'Only accepted values are "x" and "y", found `"yo"` (in `("x", "yo")`'},
+        {'error': 'Only accepted values are "x" and "y", found `"yo"` (in `("x", "yo")`)'},
     );
     x.assert(
         func('("a", "b", ("x", "y", "x"))'),
@@ -2293,7 +2655,7 @@ function checkCompareElementsPositionNearInner(x, func, before, after) {
     );
     x.assert(
         func('("a", "b", {"x": 1, "yo": 2})'),
-        {'error': 'Only accepted keys are "x" and "y", found `yo` (in `{"x": 1, "yo": 2}`'},
+        {'error': 'Only accepted keys are "x" and "y", found `"yo"` (in `{"x": 1, "yo": 2}`)'},
     );
     x.assert(
         func('("a", "b", {"x": 1, "x": 2})'),
@@ -4131,6 +4493,16 @@ const TO_CHECK = [
         'name': 'assert-property-false',
         'func': checkAssertPropertyFalse,
         'toCall': (e, o) => wrapper(parserFuncs.parseAssertPropertyFalse, e, o),
+    },
+    {
+        'name': 'assert-position',
+        'func': checkAssertPosition,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssertPosition, e, o),
+    },
+    {
+        'name': 'assert-position-false',
+        'func': checkAssertPositionFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssertPositionFalse, e, o),
     },
     {
         'name': 'assert-text',
