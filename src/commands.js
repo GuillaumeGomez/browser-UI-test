@@ -1701,6 +1701,26 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
     let x = false;
     let y = false;
     let code = '';
+
+    function handlePseudoX(selector, end) {
+        if (selector.isXPath || selector.pseudo === null) {
+            return '';
+        }
+        return `let pseudoStyle${end} = window.getComputedStyle(e${end}, "${selector.pseudo}");\n` +
+            `let style${end} = window.getComputedStyle(e${end});\n` +
+            `x${end} += parseInt(pseudoStyle${end}.left, 10) - ` +
+                `parseInt(style${end}.marginLeft, 10);\n`;
+    }
+    function handlePseudoY(selector, end) {
+        if (selector.isXPath || selector.pseudo === null) {
+            return '';
+        }
+        return `let pseudoStyle${end} = window.getComputedStyle(e${end}, "${selector.pseudo}");\n` +
+            `let style${end} = window.getComputedStyle(e${end});\n` +
+            `y${end} += parseInt(pseudoStyle${end}.top, 10) - ` +
+                `parseInt(style${end}.marginTop, 10);\n`;
+    }
+
     for (let i = 0; i < sub_tuple.length; ++i) {
         if (sub_tuple[i].kind !== 'string') {
             return { 'error': `\`${tuple[2].getText()}\` should only contain strings` };
@@ -1715,7 +1735,9 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
             code += 'function checkX(e1, e2) {\n' +
                 insertBefore +
                 'let x1 = e1.getBoundingClientRect().left;\n' +
+                handlePseudoX(selector1, '1') +
                 'let x2 = e2.getBoundingClientRect().left;\n' +
+                handlePseudoX(selector2, '2') +
                 'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
                 insertAfter +
                 '}\n' +
@@ -1730,7 +1752,9 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
             code += 'function checkY(e1, e2) {\n' +
                 insertBefore +
                 'let y1 = e1.getBoundingClientRect().top;\n' +
+                handlePseudoY(selector1, '1') +
                 'let y2 = e2.getBoundingClientRect().top;\n' +
+                handlePseudoY(selector2, '2') +
                 'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
                 insertAfter +
                 '}\n' +

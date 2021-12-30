@@ -2493,6 +2493,116 @@ function checkCompareElementsPositionInner(x, func, before, after) {
         'checkResult': true,
     });
 
+    // Pseudo element
+    x.assert(func('("a::after", "b", ("y", "x"))'), {
+        'instructions': [
+            'let parseCompareElementsPos1 = await page.$("a");\n' +
+            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPos2 = await page.$("b");\n' +
+            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkY(e1, e2) {\n' +
+            before +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
+            'let style1 = window.getComputedStyle(e1);\n' +
+            'y1 += parseInt(pseudoStyle1.top, 10) - parseInt(style1.marginTop, 10);\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
+            'let style1 = window.getComputedStyle(e1);\n' +
+            'x1 += parseInt(pseudoStyle1.left, 10) - parseInt(style1.marginLeft, 10);\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b::after", ("y", "x"))'), {
+        'instructions': [
+            'let parseCompareElementsPos1 = await page.$("a");\n' +
+            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPos2 = await page.$("b");\n' +
+            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkY(e1, e2) {\n' +
+            before +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
+            'let style2 = window.getComputedStyle(e2);\n' +
+            'y2 += parseInt(pseudoStyle2.top, 10) - parseInt(style2.marginTop, 10);\n' +
+            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
+            'let style2 = window.getComputedStyle(e2);\n' +
+            'x2 += parseInt(pseudoStyle2.left, 10) - parseInt(style2.marginLeft, 10);\n' +
+            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a::after", "b::after", ("y", "x"))'), {
+        'instructions': [
+            'let parseCompareElementsPos1 = await page.$("a");\n' +
+            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
+            'let parseCompareElementsPos2 = await page.$("b");\n' +
+            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
+            'await page.evaluate((elem1, elem2) => {\n' +
+            'function checkY(e1, e2) {\n' +
+            before +
+            'let y1 = e1.getBoundingClientRect().top;\n' +
+            'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
+            'let style1 = window.getComputedStyle(e1);\n' +
+            'y1 += parseInt(pseudoStyle1.top, 10) - parseInt(style1.marginTop, 10);\n' +
+            'let y2 = e2.getBoundingClientRect().top;\n' +
+            'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
+            'let style2 = window.getComputedStyle(e2);\n' +
+            'y2 += parseInt(pseudoStyle2.top, 10) - parseInt(style2.marginTop, 10);\n' +
+            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
+            after +
+            '}\n' +
+            'checkY(elem1, elem2);\n' +
+            'function checkX(e1, e2) {\n' +
+            before +
+            'let x1 = e1.getBoundingClientRect().left;\n' +
+            'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
+            'let style1 = window.getComputedStyle(e1);\n' +
+            'x1 += parseInt(pseudoStyle1.left, 10) - parseInt(style1.marginLeft, 10);\n' +
+            'let x2 = e2.getBoundingClientRect().left;\n' +
+            'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
+            'let style2 = window.getComputedStyle(e2);\n' +
+            'x2 += parseInt(pseudoStyle2.left, 10) - parseInt(style2.marginLeft, 10);\n' +
+            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
+            after +
+            '}\n' +
+            'checkX(elem1, elem2);\n' +
+            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
     // XPath
     x.assert(func('("//a", "b", ("y", "x"))'), {
         'instructions': [
