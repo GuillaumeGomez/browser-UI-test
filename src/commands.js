@@ -1154,6 +1154,112 @@ function parseAssertFalse(parser) {
     return parseAssertInner(parser, true);
 }
 
+function parseAssertPositionInner(parser, assertFalse) {
+    const selector = getAssertSelector(parser);
+    if (selector.error !== undefined) {
+        return selector;
+    }
+
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+
+    const checkAllElements = selector.checkAllElements;
+    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
+
+    const json = selector.tuple[1].getRaw();
+
+    const entries = validateJson(json, ['number'], 'JSON dict key');
+
+    if (entries.error !== undefined) {
+        return entries;
+    } else if (entries.values.length === 0) {
+        return {
+            'instructions': [],
+            'wait': false,
+            'warnings': entries.warnings,
+            'checkResult': true,
+        };
+    }
+
+    const varName = 'parseAssertPosition';
+
+    let code = '';
+    for (const [key, value] of Object.entries(entries.values)) {
+        if (key === 'x') {
+            code += 'function checkX(e) {\n' +
+                insertBefore +
+                'let x = e.getBoundingClientRect().left;\n';
+            if (isPseudo) {
+                code += `let pseudoStyle = window.getComputedStyle(e, "${selector.pseudo}");\n` +
+                    'let style = window.getComputedStyle(e);\n' +
+                    'x += parseInt(pseudoStyle.left, 10) - parseInt(style.marginLeft, 10);\n';
+            }
+            code += `if (x !== ${value}) {\n` +
+                `throw "different X values: " + x + " != " + ${value};\n` +
+                `}${insertAfter}\n` +
+                '}\n' +
+                'checkX(elem);\n';
+        } else if (key === 'y') {
+            code += 'function checkY(e) {\n' +
+                insertBefore +
+                'let y = e.getBoundingClientRect().top;\n';
+            if (isPseudo) {
+                code += `let pseudoStyle = window.getComputedStyle(e, "${selector.pseudo}");\n` +
+                    'let style = window.getComputedStyle(e);\n' +
+                    'y += parseInt(pseudoStyle.top, 10) - parseInt(style.marginTop, 10);\n';
+            }
+            code += `if (y !== ${value}) {\n` +
+                `throw "different Y values: " + y + " != " + ${value};\n` +
+                `}${insertAfter}\n` +
+                '}\n' +
+                'checkY(elem);\n';
+        } else {
+            return {
+                'error': 'Only accepted keys are "x" and "y", found `' +
+                    `"${key}"\` (in \`${selector.tuple[1].getText()}\`)`,
+            };
+        }
+    }
+    let instructions;
+    if (!checkAllElements) {
+        instructions = [
+            getAndSetElements(selector, varName, checkAllElements) +
+            'await page.evaluate(elem => {\n' +
+            code +
+            `}, ${varName});`,
+        ];
+    } else {
+        instructions = [
+            getAndSetElements(selector, varName, checkAllElements) +
+            `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
+                'await page.evaluate(elem => {\n' +
+                code +
+                `}, ${varName}[i]);\n` +
+            '}',
+        ];
+    }
+    return {
+        'instructions': instructions,
+        'wait': false,
+        'checkResult': true,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector" | "XPath", {"X" | "Y": integer})
+// * ("CSS selector" | "XPath", {"X" | "Y": integer}, ALL)
+function parseAssertPosition(parser) {
+    return parseAssertPositionInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * ("CSS selector" | "XPath", {"X" | "Y": integer})
+// * ("CSS selector" | "XPath", {"X" | "Y": integer}, ALL)
+function parseAssertPositionFalse(parser) {
+    return parseAssertPositionInner(parser, true);
+}
+
 function parseCompareElementsTextInner(parser, assertFalse) {
     const elems = parser.elems;
 
@@ -1633,7 +1739,7 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
         } else {
             return {
                 'error': 'Only accepted values are "x" and "y", found `' +
-                    `${sub_tuple[i].getText()}\` (in \`${tuple[2].getText()}\``,
+                    `${sub_tuple[i].getText()}\` (in \`${tuple[2].getText()}\`)`,
             };
         }
     }
@@ -1769,7 +1875,7 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
         } else {
             return {
                 'error': 'Only accepted keys are "x" and "y", found `' +
-                    `${key}\` (in \`${tuple[2].getText()}\``,
+                    `"${key}"\` (in \`${tuple[2].getText()}\`)`,
             };
         }
     }
@@ -2332,6 +2438,8 @@ const ORDERS = {
     'assert-count-false': parseAssertCountFalse,
     'assert-css': parseAssertCss,
     'assert-css-false': parseAssertCssFalse,
+    'assert-position': parseAssertPosition,
+    'assert-position-false': parseAssertPositionFalse,
     'assert-property': parseAssertProperty,
     'assert-property-false': parseAssertPropertyFalse,
     'assert-text': parseAssertText,
