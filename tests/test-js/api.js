@@ -987,6 +987,75 @@ function checkAssertCssFalse(x, func) {
         '} catch(e) { continue; } throw "assert didn\'t fail";\n');
 }
 
+function checkAssertLocalStorageInner(x, func, comp) {
+    x.assert(func('hello'), {'error': 'expected JSON, found `hello`'});
+    x.assert(func('{').error !== undefined); // JSON syntax error
+    x.assert(func('{"a": x}'), {'error': 'Only `null` ident is allowed, found `x`'});
+
+    x.assert(func('{"a": 1}'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'if (localStorage.getItem("a") ' + comp + ' "1") {\n' +
+            'var value = localStorage.getItem("a");\n' +
+            'throw "localStorage item \\"a\\" (" + value + ") ' + comp + ' \\"1\\"";\n' +
+            '}\n' +
+            '});',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('{"a": "1"}'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'if (localStorage.getItem("a") ' + comp + ' "1") {\n' +
+            'var value = localStorage.getItem("a");\n' +
+            'throw "localStorage item \\"a\\" (" + value + ") ' + comp + ' \\"1\\"";\n' +
+            '}\n' +
+            '});',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('{"a": "1", "b": "2px"}'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'if (localStorage.getItem("a") ' + comp + ' "1") {\n' +
+            'var value = localStorage.getItem("a");\n' +
+            'throw "localStorage item \\"a\\" (" + value + ") ' + comp + ' \\"1\\"";\n' +
+            '}\n' +
+            'if (localStorage.getItem("b") ' + comp + ' "2px") {\n' +
+            'var value = localStorage.getItem("b");\n' +
+            'throw "localStorage item \\"b\\" (" + value + ") ' + comp + ' \\"2px\\"";\n' +
+            '}\n' +
+            '});',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // Multiline
+    x.assert(func('{"a"\n: \n"1"}'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'if (localStorage.getItem("a") ' + comp + ' "1") {\n' +
+            'var value = localStorage.getItem("a");\n' +
+            'throw "localStorage item \\"a\\" (" + value + ") ' + comp + ' \\"1\\"";\n' +
+            '}\n' +
+            '});',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+}
+
+function checkAssertLocalStorage(x, func) {
+    checkAssertLocalStorageInner(x, func, '!=');
+}
+
+function checkAssertLocalStorageFalse(x, func) {
+    checkAssertLocalStorageInner(x, func, '==');
+}
+
 function checkAssertPropertyInner(x, func, before, after) {
     x.assert(func('("a", "b", )'), {
         'error': 'expected JSON dictionary as second argument, found `"b"`',
@@ -4593,6 +4662,16 @@ const TO_CHECK = [
         'name': 'assert-count-false',
         'func': checkAssertCountFalse,
         'toCall': (e, o) => wrapper(parserFuncs.parseAssertCountFalse, e, o),
+    },
+    {
+        'name': 'assert-local-storage',
+        'func': checkAssertLocalStorage,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssertLocalStorage, e, o),
+    },
+    {
+        'name': 'assert-local-storage-false',
+        'func': checkAssertLocalStorageFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssertLocalStorageFalse, e, o),
     },
     {
         'name': 'assert-property',

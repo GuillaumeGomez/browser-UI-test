@@ -1260,6 +1260,87 @@ function parseAssertPositionFalse(parser) {
     return parseAssertPositionInner(parser, true);
 }
 
+function parseAssertLocalStorageInner(parser, assertFalse) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {'error': 'expected JSON, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'json') {
+        return {'error': `expected JSON, found \`${parser.getRawArgs()}\``};
+    }
+    const json = elems[0].getRaw();
+    const content = [];
+    let warnings = [];
+
+    for (let i = 0; i < json.length; ++i) {
+        const entry = json[i];
+
+        if (entry['value'] === undefined) {
+            warnings.push(`No value for key \`${entry['key'].getText()}\``);
+            continue;
+        } else if (entry['key'].isRecursive() === true) {
+            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getText()}\``);
+            continue;
+        }
+        const key_s = entry['key'].getStringValue();
+        let value_s;
+        let err_s;
+        if (entry['value'].kind === 'ident') {
+            value_s = entry['value'].getStringValue();
+            err_s = value_s;
+            if (value_s !== 'null') {
+                return {'error': `Only \`null\` ident is allowed, found \`${value_s}\``};
+            }
+        } else {
+            value_s = `"${entry['value'].getStringValue()}"`;
+            err_s = `\\"${entry['value'].getStringValue()}\\"`;
+        }
+        if (assertFalse) {
+            content.push(
+                `if (localStorage.getItem("${key_s}") == ${value_s}) {\n` +
+                    `var value = localStorage.getItem("${key_s}");\n` +
+                    `throw "localStorage item \\"${key_s}\\" (" + value + ") == ${err_s}";\n` +
+                '}');
+        } else {
+            content.push(
+                `if (localStorage.getItem("${key_s}") != ${value_s}) {\n` +
+                    `var value = localStorage.getItem("${key_s}");\n` +
+                    `throw "localStorage item \\"${key_s}\\" (" + value + ") != ${err_s}";\n` +
+                '}');
+        }
+    }
+    warnings = warnings.length > 0 ? warnings : undefined;
+    if (content.length === 0) {
+        return {
+            'instructions': [],
+            'warnings': warnings,
+            'wait': false,
+        };
+    }
+    return {
+        'instructions': [
+            `await page.evaluate(() => {\n${content.join('\n')}\n});`,
+        ],
+        'warnings': warnings,
+        'wait': false,
+        'checkResult': true,
+    };
+}
+
+// Possible inputs:
+//
+// * JSON object (for example: {"key": "expected value", "another key": "another expected"})
+function parseAssertLocalStorage(parser) {
+    return parseAssertLocalStorageInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * JSON object (for example: {"key": "unexpected value", "another key": "another unexpected"})
+function parseAssertLocalStorageFalse(parser) {
+    return parseAssertLocalStorageInner(parser, true);
+}
+
 function parseCompareElementsTextInner(parser, assertFalse) {
     const elems = parser.elems;
 
@@ -2462,6 +2543,8 @@ const ORDERS = {
     'assert-count-false': parseAssertCountFalse,
     'assert-css': parseAssertCss,
     'assert-css-false': parseAssertCssFalse,
+    'assert-local-storage': parseAssertLocalStorage,
+    'assert-local-storage-false': parseAssertLocalStorageFalse,
     'assert-position': parseAssertPosition,
     'assert-position-false': parseAssertPositionFalse,
     'assert-property': parseAssertProperty,

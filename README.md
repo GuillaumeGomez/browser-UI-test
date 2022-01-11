@@ -386,6 +386,28 @@ Please note that if you want to compare DOM elements, you should take a look at 
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
 
+#### assert-local-storage
+
+**assert-local-storage** command checks that the local storage key has the given value. Examples:
+
+```
+assert-local-storage: {"key": "value"}
+
+// If you want to check that the key doesn't exist:
+assert-local-storage: {"key": null}
+```
+
+#### assert-local-storage-false
+
+**assert-local-storage-false** command checks that the local storage key doesn't have the same value as the provided one. Examples:
+
+```
+assert-local-storage-false: {"key": "value"}
+
+// If you want to check that the key exists:
+assert-local-storage-false: {"key": null}
+```
+
 #### assert-position
 
 **assert-position** command checks that the element(s) position matches the expected. Only `x` and `y` values are accepted as keys for the positions. Examples:
@@ -793,7 +815,7 @@ goto: https://somewhere.com // rendering without javascript
 
 #### local-storage
 
-**local-storage** command sets local storage's values. It expect a JSON object. Example:
+**local-storage** command sets local storage's values. It expects a JSON object. Example:
 
 ```
 local-storage: {"key": "value", "another key": "another value"}
