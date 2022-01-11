@@ -3992,19 +3992,53 @@ function checkJavascript(x, func) {
 function checkLocalStorage(x, func) {
     x.assert(func('hello'), {'error': 'expected JSON, found `hello`'});
     x.assert(func('{').error !== undefined); // JSON syntax error
+    x.assert(func('{"a": x}'), {'error': 'Only `null` ident is allowed, found `x`'});
 
     x.assert(func('{"a": 1}'), {
-        'instructions': ['await page.evaluate(() => { localStorage.setItem("a", "1"); })'],
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'localStorage.setItem("a", "1");\n' +
+            '})',
+        ],
     });
-    x.assert(func('{"a": "1"}'),
-        {'instructions': ['await page.evaluate(() => { localStorage.setItem("a", "1"); })']});
-    x.assert(func('{"a": "1", "b": "2px"}'),
-        {'instructions': ['await page.evaluate(() => { localStorage.setItem("a", "1");\n' +
-            'localStorage.setItem("b", "2px"); })']});
+    x.assert(func('{"a": "1"}'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'localStorage.setItem("a", "1");\n' +
+            '})',
+        ],
+    });
+    x.assert(func('{"a": "1", "b": "2px"}'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'localStorage.setItem("a", "1");\n' +
+            'localStorage.setItem("b", "2px");\n' +
+            '})',
+        ],
+    });
+    x.assert(func('{"a": "1"}'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'localStorage.setItem("a", "1");\n' +
+            '})',
+        ],
+    });
+    x.assert(func('{"a": null}'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'localStorage.removeItem("a");\n' +
+            '})',
+        ],
+    });
 
     // Multiline
-    x.assert(func('{"a"\n: \n"1"}'),
-        {'instructions': ['await page.evaluate(() => { localStorage.setItem("a", "1"); })']});
+    x.assert(func('{"a"\n: \n"1"}'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'localStorage.setItem("a", "1");\n' +
+            '})',
+        ],
+    });
 }
 
 function checkMoveCursorTo(x, func) {
