@@ -815,10 +815,13 @@ goto: https://somewhere.com // rendering without javascript
 
 #### local-storage
 
-**local-storage** command sets local storage's values. It expects a JSON object. Example:
+**local-storage** command sets or removes local storage's entries. It expects a JSON object. Example:
 
 ```
 local-storage: {"key": "value", "another key": "another value"}
+
+// If you want to remove an entry from the local storage, pass `null` as value:
+local-storage: {"key": null}
 ```
 
 #### move-cursor-to

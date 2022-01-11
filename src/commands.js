@@ -554,7 +554,14 @@ function parseLocalStorage(parser) {
         }
         const key_s = entry['key'].getStringValue();
         const value_s = entry['value'].getStringValue();
-        content.push(`localStorage.setItem("${key_s}", "${value_s}");`);
+        if (entry['value'].kind === 'ident') {
+            if (value_s !== 'null') {
+                return {'error': `Only \`null\` ident is allowed, found \`${value_s}\``};
+            }
+            content.push(`localStorage.removeItem("${key_s}");`);
+        } else {
+            content.push(`localStorage.setItem("${key_s}", "${value_s}");`);
+        }
     }
     warnings = warnings.length > 0 ? warnings : undefined;
     if (content.length === 0) {
@@ -565,7 +572,7 @@ function parseLocalStorage(parser) {
     }
     return {
         'instructions': [
-            `await page.evaluate(() => { ${content.join('\n')} })`,
+            `await page.evaluate(() => {\n${content.join('\n')}\n})`,
         ],
         'warnings': warnings,
     };
