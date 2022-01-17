@@ -2238,6 +2238,24 @@ function parseDebug(parser) {
 // Possible inputs:
 //
 // * boolean value (`true` or `false`)
+function parsePauseOnError(parser) {
+    const elems = parser.elems;
+    if (elems.length === 0) {
+        return {'error': 'expected `true` or `false` value, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'bool') {
+        return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
+    }
+    return {
+        'instructions': [
+            `arg.pauseOnError = ${elems[0].getRaw()};`,
+        ],
+        'wait': false,
+    };
+}
+
+// Possible inputs:
+//
+// * boolean value (`true` or `false`)
 function parseFail(parser) {
     const elems = parser.elems;
     if (elems.length === 0) {
@@ -2583,6 +2601,7 @@ const ORDERS = {
     'javascript': parseJavascript,
     'local-storage': parseLocalStorage,
     'move-cursor-to': parseMoveCursorTo,
+    'pause-on-error': parsePauseOnError,
     'permissions': parsePermissions,
     'press-key': parsePressKey,
     'reload': parseReload,

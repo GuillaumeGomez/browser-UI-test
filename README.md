@@ -179,7 +179,8 @@ The list of fields of the `Options` class is the following:
  * `noHeadless`: disable headless mode
  * `noScreenshot`: disable screenshots generation and comparison at the end of the scripts
  * `onPageCreatedCallback`: callback which is called when a new puppeteer page is created. It provides the puppeteer `page` and the test name as arguments.
- * `permissions`: List of permissions to enable (you can see the full list by running with `--show-permissions`)
+ * `pauseOnError`: will pause indefinitely if an error occurs.
+ * `permissions`: list of permissions to enable (you can see the full list by running with `--show-permissions`)
  * `runId`: id to be used for failed images extension ('test' by default)
  * `showText`: disable text invisibility (be careful when using it!)
  * `testFiles`: list of `.goml` files' path to be run
@@ -265,6 +266,7 @@ Here's the command list:
  * [`javascript`](#javascript)
  * [`local-storage`](#local-storage)
  * [`move-cursor-to`](#move-cursor-to)
+ * [`pause-on-error`](#pause-on-error)
  * [`permissions`](#permissions)
  * [`press-key`](#press-key)
  * [`reload`](#reload)
@@ -838,6 +840,16 @@ move-cursor-to: ".element"
 move-cursor-to: "//*[@class='element']"
 
 move-cursor-to: (10, 12)
+```
+
+#### pause-on-error
+
+**pause-on-error** command enables/disables the pause in case an error occurred. It is enabled by
+default when you run in `no-headless` mode.
+
+```
+pause-on-error: true // If an error occurs afterward, it'll pause until you press ENTER.
+pause-on-error: false
 ```
 
 #### permissions

@@ -9,30 +9,33 @@ function helper() {
 
     print('Available options:');
     print('');
-    print(`  --browser [BROWSER NAME] : Run tests on given browser (${browsers})`);
-    print('                             /!\\ Only testing on chrome is stable!');
-    print('  --debug                  : Display more information');
-    print('  --emulate [DEVICE NAME]  : Emulate the given device');
-    print('  --extension [PATH]       : Add an extension to load from the given path');
-    print('  --failure-folder [PATH]  : Path of the folder where failed tests image will');
-    print('                             be placed (same as `image-folder` if not provided)');
-    print('  --image-folder [PATH]    : Path of the folder where screenshots will be put (same as');
-    print('                             `test-folder` if not provided)');
-    print('  --incognito              : Enable incognito mode');
-    print('  --generate-images        : If provided, it\'ll generate missing test images');
-    print('  --no-headless            : Disable headless mode');
-    print('  --no-screenshot          : Disable screenshots at the end of the scripts by the end');
-    print('  --permission [PERMISSION]: Add a permission to enable');
-    print('  --run-id [id]            : Id to be used for failed images extension (\'test\'');
-    print('                             by default)');
-    print('  --show-devices           : Show list of available devices');
-    print('  --show-text              : Disable text invisibility (be careful when using it!)');
-    print('  --show-permissions       : Show list of available permissions');
-    print('  --test-folder [PATH]     : Path of the folder where `.goml` script files are');
-    print('  --timeout [MILLISECONDS] : Set default timeout for all tests');
-    print('  --test-files [PATHs]     : List of `.goml` files\' path to be run');
-    print('  --variable [name] [value]: Variable to be used in scripts');
-    print('  --help | -h              : Show this text');
+    print(`  --browser [BROWSER NAME]     : Run tests on given browser (${browsers})`);
+    print('                                 /!\\ Only testing on chrome is stable!');
+    print('  --debug                      : Display more information');
+    print('  --emulate [DEVICE NAME]      : Emulate the given device');
+    print('  --extension [PATH]           : Add an extension to load from the given path');
+    print('  --failure-folder [PATH]      : Path of the folder where failed tests image will');
+    print('                                 be placed (same as `image-folder` if not provided)');
+    print('  --image-folder [PATH]        : Path of the folder where screenshots will be put ' +
+        '(same as');
+    print('                                 `test-folder` if not provided)');
+    print('  --incognito                  : Enable incognito mode');
+    print('  --generate-images            : If provided, it\'ll generate missing test images');
+    print('  --no-headless                : Disable headless mode');
+    print('  --no-screenshot              : Disable screenshots at the end of the scripts by the' +
+        ' end');
+    print('  --pause-on-error [true|false]: Add a permission to enable');
+    print('  --permission [PERMISSION]    : Add a permission to enable');
+    print('  --run-id [id]                : Id to be used for failed images extension (\'test\'');
+    print('                                 by default)');
+    print('  --show-devices               : Show list of available devices');
+    print('  --show-text                  : Disable text invisibility (be careful when using it!)');
+    print('  --show-permissions           : Show list of available permissions');
+    print('  --test-folder [PATH]         : Path of the folder where `.goml` script files are');
+    print('  --timeout [MILLISECONDS]     : Set default timeout for all tests');
+    print('  --test-files [PATHs]         : List of `.goml` files\' path to be run');
+    print('  --variable [name] [value]    : Variable to be used in scripts');
+    print('  --help | -h                  : Show this text');
 }
 
 function showDeviceList(options) {
@@ -76,6 +79,7 @@ class Options {
         this.incognito = false;
         this.emulate = '';
         this.timeout = 30000;
+        this.pauseOnError = null;
         this.permissions = [];
         this.onPageCreatedCallback = async function() {};
     }
@@ -102,6 +106,7 @@ class Options {
         copy.timeout = this.timeout;
         copy.permissions = JSON.parse(JSON.stringify(this.permissions));
         copy.onPageCreatedCallback = this.onPageCreatedCallback;
+        copy.pauseOnError = this.pauseOnError;
         return copy;
     }
 
@@ -133,6 +138,16 @@ class Options {
                     it += 1;
                 } else {
                     throw new Error('Missing id after `--run-id` option');
+                }
+            } else if (args[it] === '--pause-on-error') {
+                if (it + 1 < args.length) {
+                    it += 1;
+                    if (['true', 'false'].indexOf(args[it]) === -1) {
+                        throw new Error('`--pause-on-error` can only be `true` or `false`!');
+                    }
+                    this.pauseOnError = args[it] === 'true';
+                } else {
+                    throw new Error('Missing `true` or `false` after `--pause-on-error` option');
                 }
             } else if (args[it] === '--generate-images') {
                 this.generateImages = true;
@@ -245,6 +260,10 @@ class Options {
 
     getFailureFolder() {
         return this.failureFolder === '' ? this.getImageFolder() : this.failureFolder;
+    }
+
+    shouldPauseOnError() {
+        return this.pauseOnError === true || this.headless === false && this.pauseOnError === null;
     }
 
     validate() {

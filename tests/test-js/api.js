@@ -4208,6 +4208,24 @@ function checkParseContent(x, func) {
     });
 }
 
+function checkPauseOnError(x, func) {
+    x.assert(func('hello'), {'error': 'expected `true` or `false` value, found `hello`'});
+    x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
+    x.assert(func('tru'), {'error': 'expected `true` or `false` value, found `tru`'});
+    x.assert(func('false'), {
+        'instructions': [
+            'arg.pauseOnError = false;',
+        ],
+        'wait': false,
+    });
+    x.assert(func('true'), {
+        'instructions': [
+            'arg.pauseOnError = true;',
+        ],
+        'wait': false,
+    });
+}
+
 function checkPermissions(x, func) {
     x.assert(func(''), {'error': 'expected an array of strings, found nothing'});
     x.assert(func('"a"'), {'error': 'expected an array of strings, found `"a"`'});
@@ -4861,6 +4879,11 @@ const TO_CHECK = [
         'name': 'move-cursor-to',
         'func': checkMoveCursorTo,
         'toCall': (e, o) => wrapper(parserFuncs.parseMoveCursorTo, e, o),
+    },
+    {
+        'name': 'pause-on-error',
+        'func': checkPauseOnError,
+        'toCall': (e, o) => wrapper(parserFuncs.parsePauseOnError, e, o),
     },
     {
         'name': 'permissions',
