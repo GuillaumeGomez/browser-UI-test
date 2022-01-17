@@ -225,7 +225,7 @@ async function runCommand(loaded, logs, options, browser) {
                 }
             } catch (error) { // parsing error
                 error_log = `(line ${line_number}) output:\n${error.message}\n`;
-                if (options.debug === true) {
+                if (debug_log.isEnabled()) {
                     error_log += `command \`${command['original']}\` failed on ` +
                         `\`${command['code']}\``;
                 }
