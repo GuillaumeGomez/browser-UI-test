@@ -12,6 +12,7 @@ const print = utils.print;
 const path = require('path');
 const consts = require('./consts.js');
 const Module = require('module');
+const readline = require('readline-sync');
 
 // TODO: Make it into a class to provide some utility methods like 'isFailure'.
 const Status = {
@@ -140,6 +141,11 @@ function checkFolders(options) {
     return createFolderIfNeeded(options.getImageFolder());
 }
 
+function waitUntilEnterPressed(error_log) {
+    print('An error occurred: `' + error_log + '`');
+    readline.question('Press ENTER to continue...');
+}
+
 async function runCommand(loaded, logs, options, browser) {
     let error_log;
     logs.append(loaded['file'] + '... ');
@@ -159,6 +165,8 @@ async function runCommand(loaded, logs, options, browser) {
             'browser': browser,
             'permissions': options.permissions,
             'debug_log': debug_log,
+            // If the `--no-headless` option is set, we enable it by default.
+            'pauseOnError': options.shouldPauseOnError(),
         };
         await page.exposeFunction('BrowserUiStyleInserter', () => {
             return getGlobalStyle(extras.showText);
@@ -229,16 +237,16 @@ async function runCommand(loaded, logs, options, browser) {
                     error_log += `command \`${command['original']}\` failed on ` +
                         `\`${command['code']}\``;
                 }
-            }
-            debug_log.append('Done!');
-            if (error_log.length > 0) {
                 break;
             }
+            debug_log.append('Done!');
             if (failed === false
                 && command['checkResult'] === true
                 && extras.expectedToFail === true) {
                 error_log += `(line ${line_number}) command \`${command['original']}\` was ` +
                     'supposed to fail but succeeded';
+            }
+            if (error_log.length > 0) {
                 break;
             }
             if (command['wait'] !== false) {
@@ -250,6 +258,9 @@ async function runCommand(loaded, logs, options, browser) {
             logs.append('FAILED', true);
             logs.warn(loaded['warnings']);
             logs.append(error_log + '\n');
+            if (extras.pauseOnError === true) {
+                waitUntilEnterPressed(error_log);
+            }
             await page.close();
             return Status.Failure;
         }
