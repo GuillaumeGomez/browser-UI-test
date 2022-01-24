@@ -263,6 +263,8 @@ Here's the command list:
  * [`focus`](#focus)
  * [`geolocation`](#geolocation)
  * [`goto`](#goto)
+ * [`history-go-back`](#history-go-back)
+ * [`history-go-forward`](#history-go-forward)
  * [`javascript`](#javascript)
  * [`local-storage`](#local-storage)
  * [`move-cursor-to`](#move-cursor-to)
@@ -806,6 +808,30 @@ You can of course use `{doc-path}` and `{current-dir}` at the same time:
 goto: file://{current-dir}/{doc-path}/file.html
 ```
 
+#### history-go-back
+
+**history-go-back** command goes back to the previous page in the browser history. If there no previous page, it'll fail (if you want to check that, take a look at [`fail`](#fail)). Example:
+
+```
+history-go-back:
+history-go-back: 12000 // wait for the previous page in history to render with a timeout of 12 seconds
+history-go-back: 0 // disable timeout, be careful when using it!
+```
+
+Please note that if no `timeout` is specified, the one from the [`timeout`](#timeout) command is used.
+
+#### history-go-forward
+
+**history-go-forward** command goes back to the next page in the browser history. If there no next page, it'll fail (if you want to check that, take a look at [`fail`](#fail)). Example:
+
+```
+history-go-back:
+history-go-back: 12000 // wait for the previous page in history to render with a timeout of 12 seconds
+history-go-back: 0 // disable timeout, be careful when using it!
+```
+
+Please note that if no `timeout` is specified, the one from the [`timeout`](#timeout) command is used.
+
 #### javascript
 
 **javascript** command enables/disables the javascript. If you want to render the page without javascript, don't forget to disable it before the call to `goto`! Examples:
@@ -884,6 +910,8 @@ reload:
 reload: 12000 // reload the current page with a timeout of 12 seconds
 reload: 0 // disable timeout, be careful when using it!
 ```
+
+Please note that if no `timeout` is specified, the one from the [`timeout`](#timeout) command is used.
 
 #### screenshot
 
