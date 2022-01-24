@@ -2271,11 +2271,7 @@ function parseFail(parser) {
     };
 }
 
-// Possible inputs:
-//
-// * nothing
-// * number (of milliseconds before timeout)
-function parseReload(parser, options) {
+function innerReloadAndHistory(parser, options, command, jsFunc, errorMessage) {
     let timeout = options.timeout;
     const warnings = [];
     const elems = parser.elems;
@@ -2298,15 +2294,50 @@ function parseReload(parser, options) {
         timeout = ret.value;
         if (parseInt(timeout) === 0) {
             warnings.push('You passed 0 as timeout, it means the timeout has been disabled on ' +
-                'this reload');
+                `this ${command}`);
         }
+    }
+    let insertAfter = '';
+    if (errorMessage !== null) {
+        insertAfter = 'if (ret === null) {\n' +
+            `throw "${errorMessage}";\n` +
+            '}\n';
     }
     return {
         'instructions': [
-            `await page.reload({'waitUntil': 'domcontentloaded', 'timeout': ${timeout}});`,
+            `const ret = page.${jsFunc}({'waitUntil': 'domcontentloaded', ` +
+                `'timeout': ${timeout}});\n` +
+                insertAfter +
+                'await ret;',
         ],
         'warnings': warnings.length > 0 ? warnings.join('\n') : undefined,
     };
+}
+
+// Possible inputs:
+//
+// * nothing
+// * number (of milliseconds before timeout)
+function parseReload(parser, options) {
+    return innerReloadAndHistory(parser, options, 'reload', 'reload', null);
+}
+
+// Possible inputs:
+//
+// * nothing
+// * number (of milliseconds before timeout)
+function parseHistoryGoBack(parser, options) {
+    return innerReloadAndHistory(
+        parser, options, 'history-go-back', 'goBack', 'cannot go back in history');
+}
+
+// Possible inputs:
+//
+// * nothing
+// * number (of milliseconds before timeout)
+function parseHistoryGoForward(parser, options) {
+    return innerReloadAndHistory(
+        parser, options, 'history-go-forward', 'goForward', 'cannot go forward in history');
 }
 
 // Possible inputs:
@@ -2598,6 +2629,8 @@ const ORDERS = {
     'focus': parseFocus,
     'geolocation': parseGeolocation,
     'goto': parseGoTo,
+    'history-go-back': parseHistoryGoBack,
+    'history-go-forward': parseHistoryGoForward,
     'javascript': parseJavascript,
     'local-storage': parseLocalStorage,
     'move-cursor-to': parseMoveCursorTo,

@@ -3979,6 +3979,55 @@ function checkGoTo(x, func) {
     });
 }
 
+function checkHistoryInner(x, func, name) {
+    // check tuple argument
+    x.assert(func(''), {
+        'instructions': [
+            `const ret = page.go${name}({'waitUntil': 'domcontentloaded', ` +
+                '\'timeout\': 30000});\n' +
+            'if (ret === null) {\n' +
+            `throw "cannot go ${name.toLowerCase()} in history";\n` +
+            '}\n' +
+            'await ret;',
+        ],
+    });
+    x.assert(func('"a"'), {'error': 'expected either [integer] or no arguments, found a string'});
+    x.assert(func('12'), {
+        'instructions': [
+            `const ret = page.go${name}({'waitUntil': 'domcontentloaded', ` +
+                '\'timeout\': 12});\n' +
+            'if (ret === null) {\n' +
+            `throw "cannot go ${name.toLowerCase()} in history";\n` +
+            '}\n' +
+            'await ret;',
+        ],
+    });
+    x.assert(func('12 24'), {'error': 'expected nothing, found `2` after `12`'});
+    x.assert(func('0'), {
+        'instructions': [
+            `const ret = page.go${name}({'waitUntil': 'domcontentloaded', ` +
+                '\'timeout\': 0});\n' +
+            'if (ret === null) {\n' +
+            `throw "cannot go ${name.toLowerCase()} in history";\n` +
+            '}\n' +
+            'await ret;',
+        ],
+        'warnings': 'You passed 0 as timeout, it means the timeout has been disabled on ' +
+            `this history-go-${name.toLowerCase()}`,
+    });
+    x.assert(func('-12'), {'error': 'timeout cannot be negative: `-12`'});
+    x.assert(func('-12.0'), {'error': 'expected integer for timeout, found float: `-12.0`'});
+    x.assert(func('12.0'), {'error': 'expected integer for timeout, found float: `12.0`'});
+}
+
+function checkHistoryGoBack(x, func) {
+    checkHistoryInner(x, func, 'Back');
+}
+
+function checkHistoryGoForward(x, func) {
+    checkHistoryInner(x, func, 'Forward');
+}
+
 function checkJavascript(x, func) {
     x.assert(func(''), {'error': 'expected `true` or `false` value, found nothing'});
     x.assert(func('"a"'), {'error': 'expected `true` or `false` value, found `"a"`'});
@@ -4158,8 +4207,9 @@ function checkParseContent(x, func) {
                     'line_number': 1,
                 },
                 {
-                    'code': 'await page.reload({\'waitUntil\': \'domcontentloaded\',' +
-                        ' \'timeout\': 30000});',
+                    'code': 'const ret = page.reload({\'waitUntil\': \'domcontentloaded\',' +
+                        ' \'timeout\': 30000});\n' +
+                        'await ret;',
                     'original': 'reload:',
                     'line_number': 2,
                 },
@@ -4327,28 +4377,31 @@ function checkPressKey(x, func) {
 
 function checkReload(x, func) {
     // check tuple argument
-    x.assert(func(''),
-        {
-            'instructions': [
-                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 30000});',
-            ],
-        });
+    x.assert(func(''), {
+        'instructions': [
+            'const ret = page.reload({\'waitUntil\': \'domcontentloaded\', ' +
+                '\'timeout\': 30000});\n' +
+            'await ret;',
+        ],
+    });
     x.assert(func('"a"'), {'error': 'expected either [integer] or no arguments, found a string'});
-    x.assert(func('12'),
-        {
-            'instructions': [
-                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 12});',
-            ],
-        });
+    x.assert(func('12'), {
+        'instructions': [
+            'const ret = page.reload({\'waitUntil\': \'domcontentloaded\', ' +
+                '\'timeout\': 12});\n' +
+            'await ret;',
+        ],
+    });
     x.assert(func('12 24'), {'error': 'expected nothing, found `2` after `12`'});
-    x.assert(func('0'),
-        {
-            'instructions': [
-                'await page.reload({\'waitUntil\': \'domcontentloaded\', \'timeout\': 0});',
-            ],
-            'warnings': 'You passed 0 as timeout, it means the timeout has been disabled on ' +
-                'this reload',
-        });
+    x.assert(func('0'), {
+        'instructions': [
+            'const ret = page.reload({\'waitUntil\': \'domcontentloaded\', ' +
+                '\'timeout\': 0});\n' +
+            'await ret;',
+        ],
+        'warnings': 'You passed 0 as timeout, it means the timeout has been disabled on ' +
+            'this reload',
+    });
     x.assert(func('-12'), {'error': 'timeout cannot be negative: `-12`'});
     x.assert(func('-12.0'), {'error': 'expected integer for timeout, found float: `-12.0`'});
     x.assert(func('12.0'), {'error': 'expected integer for timeout, found float: `12.0`'});
@@ -4864,6 +4917,16 @@ const TO_CHECK = [
         'name': 'goto',
         'func': checkGoTo,
         'toCall': (e, o) => wrapperGoTo(parserFuncs.parseGoTo, e, o),
+    },
+    {
+        'name': 'history-go-back',
+        'func': checkHistoryGoBack,
+        'toCall': (e, o) => wrapper(parserFuncs.parseHistoryGoBack, e, o),
+    },
+    {
+        'name': 'history-go-forward',
+        'func': checkHistoryGoForward,
+        'toCall': (e, o) => wrapper(parserFuncs.parseHistoryGoForward, e, o),
     },
     {
         'name': 'javascript',
