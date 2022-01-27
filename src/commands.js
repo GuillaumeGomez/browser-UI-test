@@ -2590,6 +2590,31 @@ function parseJavascript(parser) {
     };
 }
 
+// Possible inputs:
+//
+// * number
+function parseFontSize(parser) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {'error': 'expected a font size (in pixels), found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'number') {
+        return {'error': `expected a font size (in pixels), found \`${parser.getRawArgs()}\``};
+    }
+    return {
+        'instructions': [
+            'const client = await page.target().createCDPSession();\n' +
+            'await client.send("Page.enable");\n' +
+            'await client.send("Page.setFontSizes", {\n' +
+                'fontSizes: {\n' +
+                    `standard: ${elems[0].getRaw()},\n` +
+                    `fixed: ${elems[0].getRaw()},\n` +
+                '}\n' +
+            '});',
+        ],
+    };
+}
+
 const ORDERS = {
     'assert': parseAssert,
     'assert-false': parseAssertFalse,
@@ -2627,6 +2652,7 @@ const ORDERS = {
     'emulate': parseEmulate,
     'fail': parseFail,
     'focus': parseFocus,
+    'font-size': parseFontSize,
     'geolocation': parseGeolocation,
     'goto': parseGoTo,
     'history-go-back': parseHistoryGoBack,
