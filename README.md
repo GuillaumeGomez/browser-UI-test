@@ -261,6 +261,7 @@ Here's the command list:
  * [`emulate`](#emulate)
  * [`fail`](#fail)
  * [`focus`](#focus)
+ * [`font-size`](#font-size)
  * [`geolocation`](#geolocation)
  * [`goto`](#goto)
  * [`history-go-back`](#history-go-back)
@@ -766,6 +767,14 @@ focus: "//*[@class='element']"
 focus: "#element"
 // Same but with an XPath:
 focus: "//*[@id='element']"
+```
+
+#### font-size
+
+**font-size** command changes the default font size. Example:
+
+```
+font-size: 22 // Default font size will now be 22px.
 ```
 
 #### geolocation

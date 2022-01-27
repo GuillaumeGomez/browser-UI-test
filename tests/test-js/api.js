@@ -3855,6 +3855,7 @@ function checkEmulate(x, func) {
 }
 
 function checkFail(x, func) {
+    x.assert(func(''), {'error': 'expected `true` or `false` value, found nothing'});
     x.assert(func('hello'), {'error': 'expected `true` or `false` value, found `hello`'});
     x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
     x.assert(func('tru'), {'error': 'expected `true` or `false` value, found `tru`'});
@@ -3882,6 +3883,25 @@ function checkFocus(x, func) {
             'if (parseFocusVar.length === 0) { throw \'XPath "//a" not found\'; }\n' +
             'parseFocusVar = parseFocusVar[0];\n' +
             'await parseFocusVar.focus();',
+        ],
+    });
+}
+
+function checkFontSize(x, func) {
+    x.assert(func(''), {'error': 'expected a font size (in pixels), found nothing'});
+    x.assert(func('hello'), {'error': 'expected a font size (in pixels), found `hello`'});
+    x.assert(func('"12"'), {'error': 'expected a font size (in pixels), found `"12"`'});
+    x.assert(func('tru'), {'error': 'expected a font size (in pixels), found `tru`'});
+    x.assert(func('12'), {
+        'instructions': [
+            'const client = await page.target().createCDPSession();\n' +
+            'await client.send("Page.enable");\n' +
+            'await client.send("Page.setFontSizes", {\n' +
+                'fontSizes: {\n' +
+                    'standard: 12,\n' +
+                    'fixed: 12,\n' +
+                '}\n' +
+            '});',
         ],
     });
 }
@@ -4907,6 +4927,11 @@ const TO_CHECK = [
         'name': 'focus',
         'func': checkFocus,
         'toCall': (e, o) => wrapper(parserFuncs.parseFocus, e, o),
+    },
+    {
+        'name': 'font-size',
+        'func': checkFontSize,
+        'toCall': (e, o) => wrapper(parserFuncs.parseFontSize, e, o),
     },
     {
         'name': 'geolocation',
