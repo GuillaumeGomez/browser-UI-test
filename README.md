@@ -235,6 +235,8 @@ Here's the command list:
  * [`assert-count-false`](#assert-count-false)
  * [`assert-css`](#assert-css)
  * [`assert-css-false`](#assert-css-false)
+ * [`assert-local-storage`](#assert-local-storage)
+ * [`assert-local-storage-false`](#assert-local-storage-false)
  * [`assert-position`](#assert-position)
  * [`assert-position-false`](#assert-position-false)
  * [`assert-property`](#assert-property)
