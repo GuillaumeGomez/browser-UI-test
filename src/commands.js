@@ -157,7 +157,7 @@ function parseWaitFor(parser) {
         }
         return {
             'instructions': [
-                `await page.waitFor(${ret.value});`,
+                `await page.waitForTimeout(${ret.value});`,
             ],
             'wait': false,
         };
@@ -178,7 +178,7 @@ function parseWaitFor(parser) {
         ];
     } else {
         instructions = [
-            `await page.waitFor("${selector.value}");`,
+            `await page.waitForSelector("${selector.value}");`,
         ];
     }
     return {
