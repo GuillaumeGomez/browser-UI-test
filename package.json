@@ -33,7 +33,7 @@
     },
     "dependencies": {
         "pngjs": "^3.4.0",
-        "puppeteer": "2.1.1",
+        "puppeteer": "13.1.3",
         "readline-sync": "^1.4.10"
     },
     "devDependencies": {
