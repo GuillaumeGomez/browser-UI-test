@@ -680,10 +680,22 @@ function parseAssertCssInner(parser, assertFalse) {
         }
         d += `"${k}":"${v}"`;
     }
+    // This allows to round values in pixels to make checks simpler in case it's a decimal.
+    const extra = `\
+if (typeof assertComputedStyle[${varKey}] === "string" && \
+assertComputedStyle[${varKey}].search(/^(\\d+\\.\\d+px)$/g) === 0) {
+    if (parseInt(assertComputedStyle[${varKey}], 10) + "px" !== ${varValue}) {
+        throw 'expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\` for ${xpath}\
+\`${selector.value}\`, found \`' + assertComputedStyle[${varKey}] + '\` (or \`' + \
+parseInt(assertComputedStyle[${varKey}], 10) + 'px\`)';
+    }
+    continue;
+}`;
     const code = `const ${varDict} = {${d}};
 for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
 ${insertBefore}if (e.style[${varKey}] != ${varValue} && \
 assertComputedStyle[${varKey}] != ${varValue}) {
+${extra}
 throw 'expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\` for ${xpath}\
 \`${selector.value}\`, found \`' + assertComputedStyle[${varKey}] + '\`';
 }${insertAfter}
@@ -1193,7 +1205,8 @@ function parseAssertPositionInner(parser, assertFalse) {
                     'let style = window.getComputedStyle(e);\n' +
                     'x += parseInt(pseudoStyle.left, 10) - parseInt(style.marginLeft, 10);\n';
             }
-            code += `if (x !== ${value}) {\n` +
+            code += 'x = Math.round(x);\n' +
+                `if (x !== ${value}) {\n` +
                 `throw "different X values: " + x + " != " + ${value};\n` +
                 `}${insertAfter}\n` +
                 '}\n' +
@@ -1207,7 +1220,8 @@ function parseAssertPositionInner(parser, assertFalse) {
                     'let style = window.getComputedStyle(e);\n' +
                     'y += parseInt(pseudoStyle.top, 10) - parseInt(style.marginTop, 10);\n';
             }
-            code += `if (y !== ${value}) {\n` +
+            code += 'y = Math.round(y);\n' +
+                `if (y !== ${value}) {\n` +
                 `throw "different Y values: " + y + " != " + ${value};\n` +
                 `}${insertAfter}\n` +
                 '}\n' +
