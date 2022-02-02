@@ -150,7 +150,7 @@ function parseWaitFor(parser) {
         }
         return {
             'instructions': [
-                `await page.waitForTimeout(${ret.value});`,
+                `await page.waitFor(${ret.value});`,
             ],
             'wait': false,
         };
