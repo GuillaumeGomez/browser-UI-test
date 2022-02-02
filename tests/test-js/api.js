@@ -4829,7 +4829,7 @@ function checkWaitFor(x, func) {
         'error': 'expected an integer or a CSS selector or an XPath, found `hello`',
     });
     x.assert(func('1 2'), {'error': 'expected nothing, found `2` after `1`'});
-    x.assert(func('1'), {'instructions': ['await page.waitForTimeout(1);'], 'wait': false});
+    x.assert(func('1'), {'instructions': ['await page.waitFor(1);'], 'wait': false});
     x.assert(func('-1'), {'error': 'number of milliseconds cannot be negative: `-1`'});
     x.assert(func('-1.0'), {
         'error': 'expected integer for number of milliseconds, found float: `-1.0`',

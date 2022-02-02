@@ -251,7 +251,7 @@ async function runCommand(loaded, logs, options, browser) {
             }
             if (command['wait'] !== false) {
                 // We wait a bit between each command to be sure the browser can follow.
-                await page.waitForTimeout(100);
+                await page.waitFor(100);
             }
         }
         if (error_log.length > 0) {
