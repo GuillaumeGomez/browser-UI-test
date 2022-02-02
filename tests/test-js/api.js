@@ -2021,9 +2021,27 @@ function checkClick(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
     x.assert(func('\'\''), {'error': 'CSS selector cannot be empty', 'isXPath': false});
-    x.assert(func('"a"'), {'instructions': ['await page.click("a");']});
-    x.assert(func('\'a\''), {'instructions': ['await page.click("a");']});
-    x.assert(func('\'"a\''), {'instructions': ['await page.click("\\\\"a");']});
+    x.assert(func('"a"'), {
+        'instructions': [
+            'let parseClickVar = await page.$("a");\n' +
+            'if (parseClickVar === null) { throw \'"a" not found\'; }\n' +
+            'await parseClickVar.click();',
+        ],
+    });
+    x.assert(func('\'a\''), {
+        'instructions': [
+            'let parseClickVar = await page.$("a");\n' +
+            'if (parseClickVar === null) { throw \'"a" not found\'; }\n' +
+            'await parseClickVar.click();',
+        ],
+    });
+    x.assert(func('\'"a\''), {
+        'instructions': [
+            'let parseClickVar = await page.$("\\\\"a");\n' +
+            'if (parseClickVar === null) { throw \'"\\\\"a" not found\'; }\n' +
+            'await parseClickVar.click();',
+        ],
+    });
 
     // XPath
     x.assert(func('"/a"'), {'error': 'XPath must start with `//`'});

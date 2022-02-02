@@ -104,18 +104,11 @@ function parseClick(parser) {
         if (selector.error !== undefined) {
             return selector;
         }
-        if (selector.isXPath) {
-            const varName = 'parseClickVar';
-            return {
-                'instructions': [
-                    getAndSetElements(selector, varName, false) +
-                    `await ${varName}.click();`,
-                ],
-            };
-        }
+        const varName = 'parseClickVar';
         return {
             'instructions': [
-                `await page.click("${selector.value}");`,
+                getAndSetElements(selector, varName, false) +
+                `await ${varName}.click();`,
             ],
         };
     } else if (elems[0].kind !== 'tuple') {
