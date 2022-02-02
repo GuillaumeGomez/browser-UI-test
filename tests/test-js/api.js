@@ -634,6 +634,17 @@ function checkAssertCssInner(x, func, before, after) {
             before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
+            'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
+            'parseAssertElemCssValue) {\n' +
+            '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
+            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            '    }\n' +
+            '    continue;\n' +
+            '}\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
@@ -658,6 +669,17 @@ function checkAssertCssInner(x, func, before, after) {
             before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
+            'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
+            'parseAssertElemCssValue) {\n' +
+            '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
+            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            '    }\n' +
+            '    continue;\n' +
+            '}\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
@@ -684,6 +706,17 @@ function checkAssertCssInner(x, func, before, after) {
             before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
+            'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
+            'parseAssertElemCssValue) {\n' +
+            '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
+            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            '    }\n' +
+            '    continue;\n' +
+            '}\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
@@ -708,6 +741,17 @@ function checkAssertCssInner(x, func, before, after) {
             before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
+            'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
+            'parseAssertElemCssValue) {\n' +
+            '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
+            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            '    }\n' +
+            '    continue;\n' +
+            '}\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
@@ -732,6 +776,17 @@ function checkAssertCssInner(x, func, before, after) {
             before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
+            'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
+            'parseAssertElemCssValue) {\n' +
+            '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for selector `a:focus`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
+            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            '    }\n' +
+            '    continue;\n' +
+            '}\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a:focus`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
@@ -756,6 +811,17 @@ function checkAssertCssInner(x, func, before, after) {
             before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
+            'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
+            'parseAssertElemCssValue) {\n' +
+            '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for selector `a:focus`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
+            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            '    }\n' +
+            '    continue;\n' +
+            '}\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a:focus`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
@@ -780,6 +846,17 @@ function checkAssertCssInner(x, func, before, after) {
             before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
+            'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
+            'parseAssertElemCssValue) {\n' +
+            '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for selector `a ::after`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
+            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            '    }\n' +
+            '    continue;\n' +
+            '}\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a ::after`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
@@ -804,6 +881,17 @@ function checkAssertCssInner(x, func, before, after) {
             before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
+            'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
+            'parseAssertElemCssValue) {\n' +
+            '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for selector `a ::after`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
+            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            '    }\n' +
+            '    continue;\n' +
+            '}\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a ::after`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
@@ -831,6 +919,17 @@ function checkAssertCssInner(x, func, before, after) {
             before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
+            'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
+            'parseAssertElemCssValue) {\n' +
+            '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
+            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            '    }\n' +
+            '    continue;\n' +
+            '}\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
@@ -855,6 +954,17 @@ function checkAssertCssInner(x, func, before, after) {
             before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
+            'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
+            'parseAssertElemCssValue) {\n' +
+            '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
+            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            '    }\n' +
+            '    continue;\n' +
+            '}\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
@@ -880,6 +990,17 @@ function checkAssertCssInner(x, func, before, after) {
             before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
+            'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
+            'parseAssertElemCssValue) {\n' +
+            '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
+            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            '    }\n' +
+            '    continue;\n' +
+            '}\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
@@ -904,6 +1025,17 @@ function checkAssertCssInner(x, func, before, after) {
             before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
+            'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
+            'parseAssertElemCssValue) {\n' +
+            '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
+            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            '    }\n' +
+            '    continue;\n' +
+            '}\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
@@ -932,6 +1064,17 @@ function checkAssertCssInner(x, func, before, after) {
             before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
+            'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
+            'parseAssertElemCssValue) {\n' +
+            '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
+            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            '    }\n' +
+            '    continue;\n' +
+            '}\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
@@ -962,6 +1105,17 @@ function checkAssertCssInner(x, func, before, after) {
             before +
             'if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && ' +
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
+            'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
+            'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
+            'parseAssertElemCssValue) {\n' +
+            '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
+            'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
+            'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
+            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            '    }\n' +
+            '    continue;\n' +
+            '}\n' +
             'throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'`\';\n' +
@@ -1396,6 +1550,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
+            'x = Math.round(x);\n' +
             'if (x !== 1) {\n' +
             'throw "different X values: " + x + " != " + 1;\n' +
             '}\n' +
@@ -1416,6 +1571,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
+            'x = Math.round(x);\n' +
             'if (x !== 1) {\n' +
             'throw "different X values: " + x + " != " + 1;\n' +
             '}\n' +
@@ -1436,6 +1592,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkY(e) {\n' +
             before +
             'let y = e.getBoundingClientRect().top;\n' +
+            'y = Math.round(y);\n' +
             'if (y !== 1) {\n' +
             'throw "different Y values: " + y + " != " + 1;\n' +
             '}\n' +
@@ -1460,6 +1617,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'let pseudoStyle = window.getComputedStyle(e, "::after");\n' +
             'let style = window.getComputedStyle(e);\n' +
             'x += parseInt(pseudoStyle.left, 10) - parseInt(style.marginLeft, 10);\n' +
+            'x = Math.round(x);\n' +
             'if (x !== 1) {\n' +
             'throw "different X values: " + x + " != " + 1;\n' +
             '}\n' +
@@ -1482,6 +1640,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'let pseudoStyle = window.getComputedStyle(e, "::after");\n' +
             'let style = window.getComputedStyle(e);\n' +
             'y += parseInt(pseudoStyle.top, 10) - parseInt(style.marginTop, 10);\n' +
+            'y = Math.round(y);\n' +
             'if (y !== 1) {\n' +
             'throw "different Y values: " + y + " != " + 1;\n' +
             '}\n' +
@@ -1501,6 +1660,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
+            'x = Math.round(x);\n' +
             'if (x !== 1) {\n' +
             'throw "different X values: " + x + " != " + 1;\n' +
             '}\n' +
@@ -1521,6 +1681,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
+            'x = Math.round(x);\n' +
             'if (x !== 1) {\n' +
             'throw "different X values: " + x + " != " + 1;\n' +
             '}\n' +
@@ -1541,6 +1702,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
+            'x = Math.round(x);\n' +
             'if (x !== 1) {\n' +
             'throw "different X values: " + x + " != " + 1;\n' +
             '}\n' +
@@ -1561,6 +1723,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
+            'x = Math.round(x);\n' +
             'if (x !== 1) {\n' +
             'throw "different X values: " + x + " != " + 1;\n' +
             '}\n' +
@@ -1584,6 +1747,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
+            'x = Math.round(x);\n' +
             'if (x !== 1) {\n' +
             'throw "different X values: " + x + " != " + 1;\n' +
             '}\n' +
@@ -1604,6 +1768,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
+            'x = Math.round(x);\n' +
             'if (x !== 1) {\n' +
             'throw "different X values: " + x + " != " + 1;\n' +
             '}\n' +
@@ -1625,6 +1790,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
+            'x = Math.round(x);\n' +
             'if (x !== 1) {\n' +
             'throw "different X values: " + x + " != " + 1;\n' +
             '}\n' +
@@ -1634,6 +1800,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkY(e) {\n' +
             before +
             'let y = e.getBoundingClientRect().top;\n' +
+            'y = Math.round(y);\n' +
             'if (y !== 2) {\n' +
             'throw "different Y values: " + y + " != " + 2;\n' +
             '}\n' +
@@ -1654,6 +1821,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
+            'x = Math.round(x);\n' +
             'if (x !== 1) {\n' +
             'throw "different X values: " + x + " != " + 1;\n' +
             '}\n' +
@@ -1663,6 +1831,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkY(e) {\n' +
             before +
             'let y = e.getBoundingClientRect().top;\n' +
+            'y = Math.round(y);\n' +
             'if (y !== 2) {\n' +
             'throw "different Y values: " + y + " != " + 2;\n' +
             '}\n' +
@@ -1687,6 +1856,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
+            'x = Math.round(x);\n' +
             'if (x !== 1) {\n' +
             'throw "different X values: " + x + " != " + 1;\n' +
             '}\n' +
@@ -1696,6 +1866,7 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkY(e) {\n' +
             before +
             'let y = e.getBoundingClientRect().top;\n' +
+            'y = Math.round(y);\n' +
             'if (y !== 2) {\n' +
             'throw "different Y values: " + y + " != " + 2;\n' +
             '}\n' +
@@ -2021,9 +2192,27 @@ function checkClick(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
     x.assert(func('\'\''), {'error': 'CSS selector cannot be empty', 'isXPath': false});
-    x.assert(func('"a"'), {'instructions': ['await page.click("a");']});
-    x.assert(func('\'a\''), {'instructions': ['await page.click("a");']});
-    x.assert(func('\'"a\''), {'instructions': ['await page.click("\\\\"a");']});
+    x.assert(func('"a"'), {
+        'instructions': [
+            'let parseClickVar = await page.$("a");\n' +
+            'if (parseClickVar === null) { throw \'"a" not found\'; }\n' +
+            'await parseClickVar.click();',
+        ],
+    });
+    x.assert(func('\'a\''), {
+        'instructions': [
+            'let parseClickVar = await page.$("a");\n' +
+            'if (parseClickVar === null) { throw \'"a" not found\'; }\n' +
+            'await parseClickVar.click();',
+        ],
+    });
+    x.assert(func('\'"a\''), {
+        'instructions': [
+            'let parseClickVar = await page.$("\\\\"a");\n' +
+            'if (parseClickVar === null) { throw \'"\\\\"a" not found\'; }\n' +
+            'await parseClickVar.click();',
+        ],
+    });
 
     // XPath
     x.assert(func('"/a"'), {'error': 'XPath must start with `//`'});
