@@ -1205,9 +1205,9 @@ function parseAssertPositionInner(parser, assertFalse) {
                     'let style = window.getComputedStyle(e);\n' +
                     'x += parseInt(pseudoStyle.left, 10) - parseInt(style.marginLeft, 10);\n';
             }
-            code += 'x = Math.round(x);\n' +
-                `if (x !== ${value}) {\n` +
-                `throw "different X values: " + x + " != " + ${value};\n` +
+            code += 'let roundedX = Math.round(x);\n' +
+                `if (x !== ${value} && roundedX !== Math.round(${value})) {\n` +
+                `throw "different X values: " + x + "(or " + roundedX + ") != " + ${value};\n` +
                 `}${insertAfter}\n` +
                 '}\n' +
                 'checkX(elem);\n';
@@ -1220,9 +1220,9 @@ function parseAssertPositionInner(parser, assertFalse) {
                     'let style = window.getComputedStyle(e);\n' +
                     'y += parseInt(pseudoStyle.top, 10) - parseInt(style.marginTop, 10);\n';
             }
-            code += 'y = Math.round(y);\n' +
-                `if (y !== ${value}) {\n` +
-                `throw "different Y values: " + y + " != " + ${value};\n` +
+            code += 'let roundedY = Math.round(y);\n' +
+                `if (y !== ${value} && roundedY !== Math.round(${value})) {\n` +
+                `throw "different Y values: " + y + "(or " + roundedY + ") != " + ${value};\n` +
                 `}${insertAfter}\n` +
                 '}\n' +
                 'checkY(elem);\n';

@@ -1550,9 +1550,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
-            'x = Math.round(x);\n' +
-            'if (x !== 1) {\n' +
-            'throw "different X values: " + x + " != " + 1;\n' +
+            'let roundedX = Math.round(x);\n' +
+            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
+            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1571,9 +1571,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
-            'x = Math.round(x);\n' +
-            'if (x !== 1) {\n' +
-            'throw "different X values: " + x + " != " + 1;\n' +
+            'let roundedX = Math.round(x);\n' +
+            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
+            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1592,9 +1592,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkY(e) {\n' +
             before +
             'let y = e.getBoundingClientRect().top;\n' +
-            'y = Math.round(y);\n' +
-            'if (y !== 1) {\n' +
-            'throw "different Y values: " + y + " != " + 1;\n' +
+            'let roundedY = Math.round(y);\n' +
+            'if (y !== 1 && roundedY !== Math.round(1)) {\n' +
+            'throw "different Y values: " + y + "(or " + roundedY + ") != " + 1;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1617,9 +1617,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'let pseudoStyle = window.getComputedStyle(e, "::after");\n' +
             'let style = window.getComputedStyle(e);\n' +
             'x += parseInt(pseudoStyle.left, 10) - parseInt(style.marginLeft, 10);\n' +
-            'x = Math.round(x);\n' +
-            'if (x !== 1) {\n' +
-            'throw "different X values: " + x + " != " + 1;\n' +
+            'let roundedX = Math.round(x);\n' +
+            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
+            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1640,9 +1640,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'let pseudoStyle = window.getComputedStyle(e, "::after");\n' +
             'let style = window.getComputedStyle(e);\n' +
             'y += parseInt(pseudoStyle.top, 10) - parseInt(style.marginTop, 10);\n' +
-            'y = Math.round(y);\n' +
-            'if (y !== 1) {\n' +
-            'throw "different Y values: " + y + " != " + 1;\n' +
+            'let roundedY = Math.round(y);\n' +
+            'if (y !== 1 && roundedY !== Math.round(1)) {\n' +
+            'throw "different Y values: " + y + "(or " + roundedY + ") != " + 1;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1660,9 +1660,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
-            'x = Math.round(x);\n' +
-            'if (x !== 1) {\n' +
-            'throw "different X values: " + x + " != " + 1;\n' +
+            'let roundedX = Math.round(x);\n' +
+            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
+            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1681,9 +1681,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
-            'x = Math.round(x);\n' +
-            'if (x !== 1) {\n' +
-            'throw "different X values: " + x + " != " + 1;\n' +
+            'let roundedX = Math.round(x);\n' +
+            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
+            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1702,9 +1702,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
-            'x = Math.round(x);\n' +
-            'if (x !== 1) {\n' +
-            'throw "different X values: " + x + " != " + 1;\n' +
+            'let roundedX = Math.round(x);\n' +
+            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
+            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1723,9 +1723,32 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
-            'x = Math.round(x);\n' +
-            'if (x !== 1) {\n' +
-            'throw "different X values: " + x + " != " + 1;\n' +
+            'let roundedX = Math.round(x);\n' +
+            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
+            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
+            '}\n' +
+            after +
+            '}\n' +
+            'checkX(elem);\n' +
+            '}, parseAssertPosition[i]);\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    // With decimal.
+    x.assert(func('("a ::after", {"x": 1.14}, ALL)'), {
+        'instructions': [
+            'let parseAssertPosition = await page.$$("a ::after");\n' +
+            'if (parseAssertPosition.length === 0) { throw \'"a ::after" not found\'; }\n' +
+            'for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {\n' +
+            'await page.evaluate(elem => {\n' +
+            'function checkX(e) {\n' +
+            before +
+            'let x = e.getBoundingClientRect().left;\n' +
+            'let roundedX = Math.round(x);\n' +
+            'if (x !== 1.14 && roundedX !== Math.round(1.14)) {\n' +
+            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1.14;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1747,9 +1770,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
-            'x = Math.round(x);\n' +
-            'if (x !== 1) {\n' +
-            'throw "different X values: " + x + " != " + 1;\n' +
+            'let roundedX = Math.round(x);\n' +
+            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
+            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1768,9 +1791,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
-            'x = Math.round(x);\n' +
-            'if (x !== 1) {\n' +
-            'throw "different X values: " + x + " != " + 1;\n' +
+            'let roundedX = Math.round(x);\n' +
+            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
+            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1790,9 +1813,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
-            'x = Math.round(x);\n' +
-            'if (x !== 1) {\n' +
-            'throw "different X values: " + x + " != " + 1;\n' +
+            'let roundedX = Math.round(x);\n' +
+            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
+            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1800,9 +1823,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkY(e) {\n' +
             before +
             'let y = e.getBoundingClientRect().top;\n' +
-            'y = Math.round(y);\n' +
-            'if (y !== 2) {\n' +
-            'throw "different Y values: " + y + " != " + 2;\n' +
+            'let roundedY = Math.round(y);\n' +
+            'if (y !== 2 && roundedY !== Math.round(2)) {\n' +
+            'throw "different Y values: " + y + "(or " + roundedY + ") != " + 2;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1821,9 +1844,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
-            'x = Math.round(x);\n' +
-            'if (x !== 1) {\n' +
-            'throw "different X values: " + x + " != " + 1;\n' +
+            'let roundedX = Math.round(x);\n' +
+            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
+            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1831,9 +1854,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkY(e) {\n' +
             before +
             'let y = e.getBoundingClientRect().top;\n' +
-            'y = Math.round(y);\n' +
-            'if (y !== 2) {\n' +
-            'throw "different Y values: " + y + " != " + 2;\n' +
+            'let roundedY = Math.round(y);\n' +
+            'if (y !== 2 && roundedY !== Math.round(2)) {\n' +
+            'throw "different Y values: " + y + "(or " + roundedY + ") != " + 2;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1856,9 +1879,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkX(e) {\n' +
             before +
             'let x = e.getBoundingClientRect().left;\n' +
-            'x = Math.round(x);\n' +
-            'if (x !== 1) {\n' +
-            'throw "different X values: " + x + " != " + 1;\n' +
+            'let roundedX = Math.round(x);\n' +
+            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
+            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
             '}\n' +
             after +
             '}\n' +
@@ -1866,9 +1889,9 @@ function checkAssertPositionInner(x, func, before, after) {
             'function checkY(e) {\n' +
             before +
             'let y = e.getBoundingClientRect().top;\n' +
-            'y = Math.round(y);\n' +
-            'if (y !== 2) {\n' +
-            'throw "different Y values: " + y + " != " + 2;\n' +
+            'let roundedY = Math.round(y);\n' +
+            'if (y !== 2 && roundedY !== Math.round(2)) {\n' +
+            'throw "different Y values: " + y + "(or " + roundedY + ") != " + 2;\n' +
             '}\n' +
             after +
             '}\n' +
