@@ -684,10 +684,11 @@ function parseAssertCssInner(parser, assertFalse) {
     const extra = `\
 if (typeof assertComputedStyle[${varKey}] === "string" && \
 assertComputedStyle[${varKey}].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (parseInt(assertComputedStyle[${varKey}], 10) + "px" !== ${varValue}) {
+    if (browserUiTestHelpers.extractFloat(assertComputedStyle[${varKey}], true) + "px" !== \
+${varValue}) {
         throw 'expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\` for ${xpath}\
 \`${selector.value}\`, found \`' + assertComputedStyle[${varKey}] + '\` (or \`' + \
-parseInt(assertComputedStyle[${varKey}], 10) + 'px\`)';
+browserUiTestHelpers.extractFloat(assertComputedStyle[${varKey}], true) + 'px\`)';
     }
     continue;
 }`;
@@ -1203,7 +1204,8 @@ function parseAssertPositionInner(parser, assertFalse) {
             if (isPseudo) {
                 code += `let pseudoStyle = window.getComputedStyle(e, "${selector.pseudo}");\n` +
                     'let style = window.getComputedStyle(e);\n' +
-                    'x += parseInt(pseudoStyle.left, 10) - parseInt(style.marginLeft, 10);\n';
+                    'x += browserUiTestHelpers.extractFloat(pseudoStyle.left) - ' +
+                        'browserUiTestHelpers.extractFloat(style.marginLeft);\n';
             }
             code += 'let roundedX = Math.round(x);\n' +
                 `if (x !== ${value} && roundedX !== Math.round(${value})) {\n` +
@@ -1218,7 +1220,8 @@ function parseAssertPositionInner(parser, assertFalse) {
             if (isPseudo) {
                 code += `let pseudoStyle = window.getComputedStyle(e, "${selector.pseudo}");\n` +
                     'let style = window.getComputedStyle(e);\n' +
-                    'y += parseInt(pseudoStyle.top, 10) - parseInt(style.marginTop, 10);\n';
+                    'y += browserUiTestHelpers.extractFloat(pseudoStyle.top) - ' +
+                        'browserUiTestHelpers.extractFloat(style.marginTop);\n';
             }
             code += 'let roundedY = Math.round(y);\n' +
                 `if (y !== ${value} && roundedY !== Math.round(${value})) {\n` +
@@ -1803,8 +1806,8 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
         }
         return `let pseudoStyle${end} = window.getComputedStyle(e${end}, "${selector.pseudo}");\n` +
             `let style${end} = window.getComputedStyle(e${end});\n` +
-            `x${end} += parseInt(pseudoStyle${end}.left, 10) - ` +
-                `parseInt(style${end}.marginLeft, 10);\n`;
+            `x${end} += browserUiTestHelpers.extractFloat(pseudoStyle${end}.left) - ` +
+                `browserUiTestHelpers.extractFloat(style${end}.marginLeft);\n`;
     }
     function handlePseudoY(selector, end) {
         if (selector.isXPath || selector.pseudo === null) {
@@ -1812,8 +1815,8 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
         }
         return `let pseudoStyle${end} = window.getComputedStyle(e${end}, "${selector.pseudo}");\n` +
             `let style${end} = window.getComputedStyle(e${end});\n` +
-            `y${end} += parseInt(pseudoStyle${end}.top, 10) - ` +
-                `parseInt(style${end}.marginTop, 10);\n`;
+            `y${end} += browserUiTestHelpers.extractFloat(pseudoStyle${end}.top) - ` +
+                `browserUiTestHelpers.extractFloat(style${end}.marginTop);\n`;
     }
 
     for (let i = 0; i < sub_tuple.length; ++i) {

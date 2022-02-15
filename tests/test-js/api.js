@@ -636,12 +636,13 @@ function checkAssertCssInner(x, func, before, after) {
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
             'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
-            'parseAssertElemCssValue) {\n' +
+            '    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey]' +
+                    ', true) + "px" !== parseAssertElemCssValue) {\n' +
             '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
-            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            'browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) ' +
+                '+ \'px`)\';\n' +
             '    }\n' +
             '    continue;\n' +
             '}\n' +
@@ -671,12 +672,13 @@ function checkAssertCssInner(x, func, before, after) {
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
             'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
-            'parseAssertElemCssValue) {\n' +
+            '    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey]' +
+                    ', true) + "px" !== parseAssertElemCssValue) {\n' +
             '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
-            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            'browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) ' +
+                '+ \'px`)\';\n' +
             '    }\n' +
             '    continue;\n' +
             '}\n' +
@@ -708,12 +710,13 @@ function checkAssertCssInner(x, func, before, after) {
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
             'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
-            'parseAssertElemCssValue) {\n' +
+            '    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey]' +
+                    ', true) + "px" !== parseAssertElemCssValue) {\n' +
             '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
-            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            'browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) ' +
+                '+ \'px`)\';\n' +
             '    }\n' +
             '    continue;\n' +
             '}\n' +
@@ -743,12 +746,13 @@ function checkAssertCssInner(x, func, before, after) {
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
             'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
-            'parseAssertElemCssValue) {\n' +
+            '    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey]' +
+                ', true) + "px" !== parseAssertElemCssValue) {\n' +
             '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
-            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            'browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) ' +
+                '+ \'px`)\';\n' +
             '    }\n' +
             '    continue;\n' +
             '}\n' +
@@ -778,12 +782,13 @@ function checkAssertCssInner(x, func, before, after) {
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
             'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
-            'parseAssertElemCssValue) {\n' +
+            '    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey]' +
+                ', true) + "px" !== parseAssertElemCssValue) {\n' +
             '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a:focus`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
-            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            'browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) ' +
+                '+ \'px`)\';\n' +
             '    }\n' +
             '    continue;\n' +
             '}\n' +
@@ -813,12 +818,13 @@ function checkAssertCssInner(x, func, before, after) {
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
             'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
-            'parseAssertElemCssValue) {\n' +
+            '    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey]' +
+                ', true) + "px" !== parseAssertElemCssValue) {\n' +
             '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a:focus`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
-            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            'browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) ' +
+                '+ \'px`)\';\n' +
             '    }\n' +
             '    continue;\n' +
             '}\n' +
@@ -848,12 +854,13 @@ function checkAssertCssInner(x, func, before, after) {
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
             'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
-            'parseAssertElemCssValue) {\n' +
+            '    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey]' +
+                ', true) + "px" !== parseAssertElemCssValue) {\n' +
             '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a ::after`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
-            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            'browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) ' +
+                '+ \'px`)\';\n' +
             '    }\n' +
             '    continue;\n' +
             '}\n' +
@@ -883,12 +890,13 @@ function checkAssertCssInner(x, func, before, after) {
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
             'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
-            'parseAssertElemCssValue) {\n' +
+            '    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey]' +
+                ', true) + "px" !== parseAssertElemCssValue) {\n' +
             '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a ::after`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
-            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            'browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) ' +
+                '+ \'px`)\';\n' +
             '    }\n' +
             '    continue;\n' +
             '}\n' +
@@ -921,12 +929,13 @@ function checkAssertCssInner(x, func, before, after) {
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
             'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
-            'parseAssertElemCssValue) {\n' +
+            '    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey]' +
+                ', true) + "px" !== parseAssertElemCssValue) {\n' +
             '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
-            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            'browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) ' +
+                '+ \'px`)\';\n' +
             '    }\n' +
             '    continue;\n' +
             '}\n' +
@@ -956,12 +965,13 @@ function checkAssertCssInner(x, func, before, after) {
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
             'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
-            'parseAssertElemCssValue) {\n' +
+            '    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey]' +
+                ', true) + "px" !== parseAssertElemCssValue) {\n' +
             '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
-            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            'browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) ' +
+                '+ \'px`)\';\n' +
             '    }\n' +
             '    continue;\n' +
             '}\n' +
@@ -992,12 +1002,13 @@ function checkAssertCssInner(x, func, before, after) {
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
             'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
-            'parseAssertElemCssValue) {\n' +
+            '    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey]' +
+                ', true) + "px" !== parseAssertElemCssValue) {\n' +
             '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
-            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            'browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) ' +
+                '+ \'px`)\';\n' +
             '    }\n' +
             '    continue;\n' +
             '}\n' +
@@ -1027,12 +1038,13 @@ function checkAssertCssInner(x, func, before, after) {
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
             'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
-            'parseAssertElemCssValue) {\n' +
+            '    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey]' +
+                ', true) + "px" !== parseAssertElemCssValue) {\n' +
             '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
-            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            'browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) ' +
+                '+ \'px`)\';\n' +
             '    }\n' +
             '    continue;\n' +
             '}\n' +
@@ -1066,12 +1078,13 @@ function checkAssertCssInner(x, func, before, after) {
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
             'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
-            'parseAssertElemCssValue) {\n' +
+            '    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey]' +
+                ', true) + "px" !== parseAssertElemCssValue) {\n' +
             '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for XPath `//a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
-            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            'browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) ' +
+                '+ \'px`)\';\n' +
             '    }\n' +
             '    continue;\n' +
             '}\n' +
@@ -1107,12 +1120,13 @@ function checkAssertCssInner(x, func, before, after) {
             'assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {\n' +
             'if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && ' +
             'assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '    if (parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + "px" !== ' +
-            'parseAssertElemCssValue) {\n' +
+            '    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey]' +
+                ', true) + "px" !== parseAssertElemCssValue) {\n' +
             '        throw \'expected `\' + parseAssertElemCssValue + \'` for key `\' + ' +
             'parseAssertElemCssKey + \'` for selector `a`, found `\' + ' +
             'assertComputedStyle[parseAssertElemCssKey] + \'` (or `\' + ' +
-            'parseInt(assertComputedStyle[parseAssertElemCssKey], 10) + \'px`)\';\n' +
+            'browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) ' +
+                '+ \'px`)\';\n' +
             '    }\n' +
             '    continue;\n' +
             '}\n' +
@@ -1616,7 +1630,8 @@ function checkAssertPositionInner(x, func, before, after) {
             'let x = e.getBoundingClientRect().left;\n' +
             'let pseudoStyle = window.getComputedStyle(e, "::after");\n' +
             'let style = window.getComputedStyle(e);\n' +
-            'x += parseInt(pseudoStyle.left, 10) - parseInt(style.marginLeft, 10);\n' +
+            'x += browserUiTestHelpers.extractFloat(pseudoStyle.left) - ' +
+                'browserUiTestHelpers.extractFloat(style.marginLeft);\n' +
             'let roundedX = Math.round(x);\n' +
             'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
             'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
@@ -1639,7 +1654,8 @@ function checkAssertPositionInner(x, func, before, after) {
             'let y = e.getBoundingClientRect().top;\n' +
             'let pseudoStyle = window.getComputedStyle(e, "::after");\n' +
             'let style = window.getComputedStyle(e);\n' +
-            'y += parseInt(pseudoStyle.top, 10) - parseInt(style.marginTop, 10);\n' +
+            'y += browserUiTestHelpers.extractFloat(pseudoStyle.top) - ' +
+                'browserUiTestHelpers.extractFloat(style.marginTop);\n' +
             'let roundedY = Math.round(y);\n' +
             'if (y !== 1 && roundedY !== Math.round(1)) {\n' +
             'throw "different Y values: " + y + "(or " + roundedY + ") != " + 1;\n' +
@@ -2787,7 +2803,8 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'let y1 = e1.getBoundingClientRect().top;\n' +
             'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
             'let style1 = window.getComputedStyle(e1);\n' +
-            'y1 += parseInt(pseudoStyle1.top, 10) - parseInt(style1.marginTop, 10);\n' +
+            'y1 += browserUiTestHelpers.extractFloat(pseudoStyle1.top) - ' +
+                'browserUiTestHelpers.extractFloat(style1.marginTop);\n' +
             'let y2 = e2.getBoundingClientRect().top;\n' +
             'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
             after +
@@ -2798,7 +2815,8 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'let x1 = e1.getBoundingClientRect().left;\n' +
             'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
             'let style1 = window.getComputedStyle(e1);\n' +
-            'x1 += parseInt(pseudoStyle1.left, 10) - parseInt(style1.marginLeft, 10);\n' +
+            'x1 += browserUiTestHelpers.extractFloat(pseudoStyle1.left) - ' +
+                'browserUiTestHelpers.extractFloat(style1.marginLeft);\n' +
             'let x2 = e2.getBoundingClientRect().left;\n' +
             'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
             after +
@@ -2822,7 +2840,8 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'let y2 = e2.getBoundingClientRect().top;\n' +
             'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
             'let style2 = window.getComputedStyle(e2);\n' +
-            'y2 += parseInt(pseudoStyle2.top, 10) - parseInt(style2.marginTop, 10);\n' +
+            'y2 += browserUiTestHelpers.extractFloat(pseudoStyle2.top) - ' +
+                'browserUiTestHelpers.extractFloat(style2.marginTop);\n' +
             'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
             after +
             '}\n' +
@@ -2833,7 +2852,8 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'let x2 = e2.getBoundingClientRect().left;\n' +
             'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
             'let style2 = window.getComputedStyle(e2);\n' +
-            'x2 += parseInt(pseudoStyle2.left, 10) - parseInt(style2.marginLeft, 10);\n' +
+            'x2 += browserUiTestHelpers.extractFloat(pseudoStyle2.left) - ' +
+                'browserUiTestHelpers.extractFloat(style2.marginLeft);\n' +
             'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
             after +
             '}\n' +
@@ -2855,11 +2875,13 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'let y1 = e1.getBoundingClientRect().top;\n' +
             'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
             'let style1 = window.getComputedStyle(e1);\n' +
-            'y1 += parseInt(pseudoStyle1.top, 10) - parseInt(style1.marginTop, 10);\n' +
+            'y1 += browserUiTestHelpers.extractFloat(pseudoStyle1.top) - ' +
+                'browserUiTestHelpers.extractFloat(style1.marginTop);\n' +
             'let y2 = e2.getBoundingClientRect().top;\n' +
             'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
             'let style2 = window.getComputedStyle(e2);\n' +
-            'y2 += parseInt(pseudoStyle2.top, 10) - parseInt(style2.marginTop, 10);\n' +
+            'y2 += browserUiTestHelpers.extractFloat(pseudoStyle2.top) - ' +
+                'browserUiTestHelpers.extractFloat(style2.marginTop);\n' +
             'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
             after +
             '}\n' +
@@ -2869,11 +2891,13 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'let x1 = e1.getBoundingClientRect().left;\n' +
             'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
             'let style1 = window.getComputedStyle(e1);\n' +
-            'x1 += parseInt(pseudoStyle1.left, 10) - parseInt(style1.marginLeft, 10);\n' +
+            'x1 += browserUiTestHelpers.extractFloat(pseudoStyle1.left) - ' +
+                'browserUiTestHelpers.extractFloat(style1.marginLeft);\n' +
             'let x2 = e2.getBoundingClientRect().left;\n' +
             'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
             'let style2 = window.getComputedStyle(e2);\n' +
-            'x2 += parseInt(pseudoStyle2.left, 10) - parseInt(style2.marginLeft, 10);\n' +
+            'x2 += browserUiTestHelpers.extractFloat(pseudoStyle2.left) - ' +
+                'browserUiTestHelpers.extractFloat(style2.marginLeft);\n' +
             'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
             after +
             '}\n' +
