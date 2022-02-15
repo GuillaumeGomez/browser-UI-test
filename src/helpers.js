@@ -16,4 +16,11 @@ const browserUiTestHelpers = {
             throw '"' + elemValue + '" !== "' + value + '"';
         }
     },
+    extractFloat: function(value, rounded) {
+        const ret = parseFloat(value.replace('px', ''));
+        if (rounded === true) {
+            return Math.round(ret);
+        }
+        return ret;
+    },
 };
