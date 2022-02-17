@@ -9,7 +9,7 @@ const {runTests, Options} = require('../../src/index.js');
 const {Assert, plural, print} = require('./utils.js');
 
 async function wrapRunTests(options = new Options()) {
-    options.noScreenshot = true;
+    options.noScreenshotComparison = true;
     return await runTests(options, false);
 }
 

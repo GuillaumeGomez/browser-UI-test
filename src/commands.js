@@ -2190,7 +2190,7 @@ function parseCss(parser) {
 // * boolean value (`true` or `false`)
 // * "CSS selector"
 // * "XPath"
-function parseScreenshot(parser) {
+function parseScreenshotComparison(parser) {
     const elems = parser.elems;
     if (elems.length === 0) {
         return {'error': 'expected boolean or CSS selector or XPath, found nothing'};
@@ -2201,7 +2201,7 @@ function parseScreenshot(parser) {
     } else if (elems[0].kind === 'bool') {
         return {
             'instructions': [
-                `arg.takeScreenshot = ${elems[0].getRaw()};`,
+                `arg.screenshotComparison = ${elems[0].getRaw()};`,
             ],
             'wait': false,
         };
@@ -2216,7 +2216,7 @@ function parseScreenshot(parser) {
     }
     return {
         'instructions': [
-            `arg.takeScreenshot = "${selector.value}";`,
+            `arg.screenshotComparison = "${selector.value}";`,
         ],
         'wait': false,
         'warnings': warnings.length > 0 ? warnings.join('\n') : undefined,
@@ -2674,7 +2674,7 @@ const ORDERS = {
     'permissions': parsePermissions,
     'press-key': parsePressKey,
     'reload': parseReload,
-    'screenshot': parseScreenshot,
+    'screenshot-comparison': parseScreenshotComparison,
     'scroll-to': parseScrollTo,
     'show-text': parseShowText,
     'size': parseSize,
@@ -2690,7 +2690,7 @@ const NO_INTERACTION_COMMANDS = [
     'emulate',
     'fail',
     'javascript',
-    'screenshot',
+    'screenshot-comparison',
     'timeout',
 ];
 

@@ -8,15 +8,15 @@ const {Assert, plural, print, removeFolder} = require('./utils.js');
 
 
 async function wrapRunTests(options = new Options()) {
-    options.noScreenshot = true;
+    options.noScreenshotComparison = true;
     return await runTests(options, false);
 }
 async function wrapRunTest(testPath, options = new Options()) {
-    options.noScreenshot = true;
+    options.noScreenshotComparison = true;
     return await runTest(testPath, options, false);
 }
 async function wrapRunTestCode(testName, content, options = new Options()) {
-    options.noScreenshot = true;
+    options.noScreenshotComparison = true;
     return await runTestCode(testName, content, options, false);
 }
 
@@ -178,11 +178,11 @@ async function checkOptions(x) {
 
     options.parseArguments(['--test-files', 'osef']);
     await x.assertTry(() => options.validate(), [],
-        'You need to provide `--failure-folder` or `--test-folder` option if `--no-screenshot` ' +
-        'option isn\'t used!');
+        'You need to provide `--failure-folder` or `--test-folder` option if ' +
+        '`--no-screenshot-comparison` option isn\'t used!');
 
-    await x.assert(options.noScreenshot, false);
-    options.parseArguments(['--no-screenshot']);
+    await x.assert(options.noScreenshotComparison, false);
+    options.parseArguments(['--no-screenshot-comparison']);
     await x.assertTry(() => options.validate(), [],
         'Only `.goml` script files are allowed in the `--test-files` option, got `osef`');
 
@@ -288,9 +288,9 @@ async function checkOptions(x) {
     await x.assert(options.debug, false);
     await x.assertTry(() => options.parseArguments(['--debug']), [], true);
     await x.assert(options.debug, true);
-    await x.assert(options.noScreenshot, false);
-    await x.assertTry(() => options.parseArguments(['--no-screenshot']), [], true);
-    await x.assert(options.noScreenshot, true);
+    await x.assert(options.noScreenshotComparison, false);
+    await x.assertTry(() => options.parseArguments(['--no-screenshot-comparison']), [], true);
+    await x.assert(options.noScreenshotComparison, true);
     await x.assert(options.incognito, false);
     await x.assertTry(() => options.parseArguments(['--incognito']), [], true);
     await x.assert(options.incognito, true);
@@ -340,9 +340,9 @@ async function checkOptions(x) {
         '`Options.debug` field is supposed to be a boolean!');
 
     const options7 = new Options();
-    options7.noScreenshot = '';
+    options7.noScreenshotComparison = '';
     await x.assertTry(() => options7.validateFields(), [],
-        '`Options.noScreenshot` field is supposed to be a boolean!');
+        '`Options.noScreenshotComparison` field is supposed to be a boolean!');
 
     const options8 = new Options();
     options8.testFiles = '';

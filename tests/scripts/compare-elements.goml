@@ -1,4 +1,4 @@
-screenshot: false
+screenshot-comparison: false
 goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
 compare-elements-text: (".content>.right>p", ".content>.left>p")
 compare-elements-position: (".content>.right>p", ".content>.right>p", ("x", "y"))
