@@ -1,4 +1,4 @@
-screenshot: false
+screenshot-comparison: false
 goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
 fail: true // ensure that the checks below fail because they are not failing (understand who can!)
 assert-false: ("#button") // fails because the selector exists

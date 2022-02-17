@@ -114,7 +114,7 @@ const {Options, runTests} = require('browser-ui-test');
 const options = new Options();
 try {
     // This is more convenient that setting fields one by one.
-    options.parseArguments(['--no-screenshot', '--test-folder', 'some-other-place']);
+    options.parseArguments(['--no-screenshot-comparison', '--test-folder', 'some-other-place']);
 } catch (error) {
     console.error(`invalid argument: ${error}`);
     process.exit(1);

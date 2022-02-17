@@ -2,7 +2,7 @@
 
 debug2... 
 [DEBUG] Done!
-[DEBUG] EXECUTING (line 2) "arg.takeScreenshot = false;"
+[DEBUG] EXECUTING (line 2) "arg.screenshotComparison = false;"
 [DEBUG] Done!
 [DEBUG] EXECUTING (line 3) "await page.goto("file://$CURRENT_DIR/tests/html_files/elements.html");"
 [DEBUG] Done!

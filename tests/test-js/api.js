@@ -4425,7 +4425,7 @@ function checkParseContent(x, func) {
     x.assert(func('focus: "#foo"'),
         {
             'error': 'First command must be `goto` (`debug`, `emulate`, `fail`, `javascript`, ' +
-                '`screenshot` or `timeout` can be used before)!',
+                '`screenshot-comparison` or `timeout` can be used before)!',
             'line': 1,
         });
     x.assert(func('fail: true\ngoto: file:///home'),
@@ -4663,28 +4663,31 @@ function checkReload(x, func) {
     x.assert(func('12.0'), {'error': 'expected integer for timeout, found float: `12.0`'});
 }
 
-function checkScreenshot(x, func) {
+function checkScreenshotComparison(x, func) {
     x.assert(func(''), {'error': 'expected boolean or CSS selector or XPath, found nothing'});
     x.assert(func('hello'), {'error': 'expected boolean or CSS selector or XPath, found `hello`'});
     x.assert(func('"true"'),
         {
-            'instructions': ['arg.takeScreenshot = "true";'],
+            'instructions': ['arg.screenshotComparison = "true";'],
             'wait': false,
             'warnings': '`"true"` is a string and will be used as CSS selector. If you want to ' +
                 'set `true` or `false` value, remove quotes.',
         });
     x.assert(func('tru'), {'error': 'expected boolean or CSS selector or XPath, found `tru`'});
-    x.assert(func('false'), {'instructions': ['arg.takeScreenshot = false;'], 'wait': false});
-    x.assert(func('true'), {'instructions': ['arg.takeScreenshot = true;'], 'wait': false});
+    x.assert(func('false'), {'instructions': ['arg.screenshotComparison = false;'], 'wait': false});
+    x.assert(func('true'), {'instructions': ['arg.screenshotComparison = true;'], 'wait': false});
     x.assert(func('\'\''), {
         'error': 'CSS selector cannot be empty',
         'isXPath': false,
     });
-    x.assert(func('"test"'), {'instructions': ['arg.takeScreenshot = "test";'], 'wait': false});
+    x.assert(func('"test"'), {
+        'instructions': ['arg.screenshotComparison = "test";'],
+        'wait': false,
+    });
 
     // XPath
     x.assert(func('"/a"'), { 'error': 'XPath must start with `//`'});
-    x.assert(func('"//a"'), {'instructions': ['arg.takeScreenshot = "//a";'], 'wait': false});
+    x.assert(func('"//a"'), {'instructions': ['arg.screenshotComparison = "//a";'], 'wait': false});
 }
 
 function checkScrollTo(x, func) {
@@ -5230,9 +5233,9 @@ const TO_CHECK = [
         'toCall': (e, o) => wrapper(parserFuncs.parseReload, e, o),
     },
     {
-        'name': 'screenshot',
-        'func': checkScreenshot,
-        'toCall': (e, o) => wrapper(parserFuncs.parseScreenshot, e, o),
+        'name': 'screenshot-comparison',
+        'func': checkScreenshotComparison,
+        'toCall': (e, o) => wrapper(parserFuncs.parseScreenshotComparison, e, o),
     },
     {
         'name': 'scroll-to',

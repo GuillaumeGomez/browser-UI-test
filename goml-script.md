@@ -51,7 +51,7 @@ A small note: the variable `CURRENT_DIR` is always available (and contains the d
 
 ## Command list
 
-Those scripts aim to be as quick to write and as small as possible. To do so, they provide a short list of commands. Please note that those scripts must **always** start with a [`goto`](#goto) command (non-interactional commands such as `screenshot` or `fail` can be use first as well).
+Those scripts aim to be as quick to write and as small as possible. To do so, they provide a short list of commands. Please note that those scripts must **always** start with a [`goto`](#goto) command (non-interactional commands such as `screenshot-comparison` or `fail` can be use first as well).
 
 Here's the command list:
 
@@ -103,7 +103,7 @@ Here's the command list:
  * [`permissions`](#permissions)
  * [`press-key`](#press-key)
  * [`reload`](#reload)
- * [`screenshot`](#screenshot)
+ * [`screenshot-comparison`](#screenshot-comparison)
  * [`scroll-to`](#scroll-to)
  * [`show-text`](#show-text)
  * [`size`](#size)
@@ -752,22 +752,22 @@ reload: 0 // disable timeout, be careful when using it!
 
 Please note that if no `timeout` is specified, the one from the [`timeout`](#timeout) command is used.
 
-#### screenshot
+#### screenshot-comparison
 
-**screenshot** command enables/disables the screenshot at the end of the script (and therefore its comparison). It expects a boolean value or a CSS selector or an XPath. Example:
+**screenshot-comparison** command enables/disables the screenshot at the end of the script (and therefore its comparison). It overrides the `--no-screenshot-comparison` option value. It expects a boolean value or a CSS selector or an XPath. Example:
 
 ```
 // Disable screenshot comparison at the end of the script:
-screenshot: false
+screenshot-comparison: false
 
 // Will take a screenshot of the specified element and compare it at the end:
-screenshot: "#test"
+screenshot-comparison: "#test"
 
 // Same as the previous example but with an XPath:
-screenshot: "//*[@id='test']"
+screenshot-comparison: "//*[@id='test']"
 
 // Back to "normal", full page screenshot and comparison:
-screenshot: true
+screenshot-comparison: true
 ```
 
 #### scroll-to

@@ -158,7 +158,7 @@ async function runCommand(loaded, logs, options, browser) {
     await browser.emulate(options, page, debug_log);
     try {
         const extras = {
-            'takeScreenshot': options.noScreenshot === false,
+            'screenshotComparison': options.noScreenshotComparison === false,
             'expectedToFail': false,
             'showText': options.showText,
             'puppeteer': browser.puppeteer,
@@ -266,17 +266,17 @@ async function runCommand(loaded, logs, options, browser) {
         }
 
         let elem = page;
-        if (extras.takeScreenshot !== true) {
-            if (extras.takeScreenshot === false) {
+        if (extras.screenshotComparison !== true) {
+            if (extras.screenshotComparison === false) {
                 logs.append('ok', true);
                 debug_log.append('=> [NO SCREENSHOT COMPARISON]');
                 logs.warn(loaded['warnings']);
                 await page.close();
                 return Status.Ok;
             }
-            if (extras.takeScreenshot.startsWith('//')) {
+            if (extras.screenshotComparison.startsWith('//')) {
                 // This is an XPath.
-                elem = await page.$x(extras.takeScreenshot);
+                elem = await page.$x(extras.screenshotComparison);
                 if (elem.length === 0) {
                     elem = null;
                 } else {
@@ -284,11 +284,11 @@ async function runCommand(loaded, logs, options, browser) {
                 }
             } else {
                 // This is a CSS selector.
-                elem = await page.$(extras.takeScreenshot);
+                elem = await page.$(extras.screenshotComparison);
             }
             if (elem === null) {
                 logs.append('FAILED', true);
-                logs.append(`Cannot take screenshot: element \`${extras.takeScreenshot}\`` +
+                logs.append(`Cannot take screenshot: element \`${extras.screenshotComparison}\`` +
                     ' not found');
                 logs.warn(loaded['warnings']);
                 await page.close();
@@ -302,7 +302,7 @@ async function runCommand(loaded, logs, options, browser) {
         const newImage = `${p}-${options.runId}.png`;
         await elem.screenshot({
             'path': newImage,
-            'fullPage': extras.takeScreenshot === true ? true : undefined,
+            'fullPage': extras.screenshotComparison === true ? true : undefined,
         });
 
         const originalImage = `${path.join(options.getImageFolder(), loaded['file'])}.png`;

@@ -22,8 +22,8 @@ function helper() {
     print('  --incognito                  : Enable incognito mode');
     print('  --generate-images            : If provided, it\'ll generate missing test images');
     print('  --no-headless                : Disable headless mode');
-    print('  --no-screenshot              : Disable screenshots at the end of the scripts by the' +
-        ' end');
+    print('  --no-screenshot-comparison   : Disable screenshot comparisons at the end of the ' +
+        'scripts by the end');
     print('  --pause-on-error [true|false]: Add a permission to enable');
     print('  --permission [PERMISSION]    : Add a permission to enable');
     print('  --run-id [id]                : Id to be used for failed images extension (\'test\'');
@@ -71,7 +71,7 @@ class Options {
         this.imageFolder = '';
         this.showText = false;
         this.debug = false;
-        this.noScreenshot = false;
+        this.noScreenshotComparison = false;
         this.testFiles = [];
         this.variables = {};
         this.extensions = [];
@@ -96,7 +96,7 @@ class Options {
         copy.imageFolder = this.imageFolder.slice();
         copy.showText = this.showText;
         copy.debug = this.debug;
-        copy.noScreenshot = this.noScreenshot;
+        copy.noScreenshotComparison = this.noScreenshotComparison;
         copy.testFiles = JSON.parse(JSON.stringify(this.testFiles));
         copy.variables = JSON.parse(JSON.stringify(this.variables));
         copy.extensions = JSON.parse(JSON.stringify(this.extensions));
@@ -157,8 +157,8 @@ class Options {
                 this.showText = true;
             } else if (args[it] === '--debug') {
                 this.debug = true;
-            } else if (args[it] === '--no-screenshot') {
-                this.noScreenshot = true;
+            } else if (args[it] === '--no-screenshot-comparison') {
+                this.noScreenshotComparison = true;
             } else if (args[it] === '--no-sandbox') {
                 this.noSandbox = true;
             } else if (args[it] === '--incognito') {
@@ -271,10 +271,10 @@ class Options {
             throw new Error('You need to provide `--test-folder` option or at least one file ' +
                 'to test with `--test-files` option!');
         } else if (this.failureFolder.length === 0
-            && this.noScreenshot === false
+            && this.noScreenshotComparison === false
             && this.testFolder.length === 0) {
             throw new Error('You need to provide `--failure-folder` or `--test-folder` option if ' +
-                '`--no-screenshot` option isn\'t used!');
+                '`--no-screenshot-comparison` option isn\'t used!');
         }
         for (let i = 0; i < this.testFiles.length; ++i) {
             if (this.testFiles[i].endsWith('.goml') === false) {
@@ -304,7 +304,7 @@ class Options {
         validateField('failureFolder', 'string');
         validateField('showText', 'boolean');
         validateField('debug', 'boolean');
-        validateField('noScreenshot', 'boolean');
+        validateField('noScreenshotComparison', 'boolean');
         validateField('browser', 'string');
         validateField('imageFolder', 'string');
         validateField('incognito', 'boolean');
