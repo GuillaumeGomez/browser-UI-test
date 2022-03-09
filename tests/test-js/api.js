@@ -1,4 +1,5 @@
 const process = require('process');
+process.env.debug_tests = '1'; // We enable this to get all items from `commands.js`.
 const parserFuncs = require('../../src/commands.js');
 const {Parser} = require('../../src/parser.js');
 const Options = require('../../src/options.js').Options;
@@ -5279,6 +5280,12 @@ const TO_CHECK = [
     },
 ];
 
+function checkCommandsSets(x, commands) {
+    for (const command of commands) {
+        x.assert(parserFuncs.ORDERS[command] !== undefined, true);
+    }
+}
+
 async function checkCommands(x = new Assert()) {
     x.startTestSuite('API', false);
     print('=> Starting API tests...');
@@ -5299,9 +5306,26 @@ async function checkCommands(x = new Assert()) {
     print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
         `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
 
-    const errors = x.getTotalErrors();
+    const api_errors = x.getTotalErrors();
     x.endTestSuite(false);
-    return errors;
+
+    // The goal here is to check that each command listed in the various sets actually exists.
+    x.startTestSuite('Commands sets', false);
+    print('=> Starting commands sets tests...');
+    print('');
+
+    checkCommandsSets(x, parserFuncs.FATAL_ERROR_COMMANDS);
+    checkCommandsSets(x, parserFuncs.NO_INTERACTION_COMMANDS);
+    checkCommandsSets(x, parserFuncs.BEFORE_GOTO);
+
+    const exports_errors = x.getTotalErrors();
+
+    print('');
+    print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
+        `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
+
+    x.endTestSuite(false);
+    return api_errors + exports_errors;
 }
 
 if (require.main === module) {
