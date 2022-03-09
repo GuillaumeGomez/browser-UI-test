@@ -1,0 +1,5 @@
+// Checks that the script stops at the first "fatal error" (here the "goto").
+screenshot-comparison: false
+goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+click: "#something"
+assert: "#something"

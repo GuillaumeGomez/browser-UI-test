@@ -2684,6 +2684,23 @@ const ORDERS = {
     'write': parseWrite,
 };
 
+// If the command fails, the script should stop right away because everything coming after will
+// very likely be broken.
+const FATAL_ERROR_COMMANDS = [
+    'attribute',
+    'click',
+    'css',
+    'drag-and-drop',
+    'emulate',
+    'focus',
+    'goto',
+    'local-storage',
+    'move-cursor-to',
+    'scroll-to',
+    'text',
+    'write',
+];
+
 // Commands which do not run JS commands but change the behavior of the commands following.
 const NO_INTERACTION_COMMANDS = [
     'debug',
@@ -2701,7 +2718,7 @@ const BEFORE_GOTO = [
 
 function parseContent(content, options) {
     const parser = new Parser(content, options.variables);
-    const commands = {'instructions': []};
+    const commands = {'commands': []};
     let res;
     let firstGotoParsed = false;
 
@@ -2746,15 +2763,14 @@ function parseContent(content, options) {
                 }
                 commands['warnings'].push.apply(commands['warnings'], res['warnings']);
             }
-            for (let y = 0; y < res['instructions'].length; ++y) {
-                commands['instructions'].push({
-                    'code': res['instructions'][y],
-                    'wait': res['wait'],
-                    'checkResult': res['checkResult'],
-                    'original': parser.getOriginalCommand(),
-                    'line_number': parser.command.line,
-                });
-            }
+            commands['commands'].push({
+                'fatal_error': FATAL_ERROR_COMMANDS.indexOf(order) !== -1,
+                'wait': res['wait'],
+                'checkResult': res['checkResult'],
+                'original': parser.getOriginalCommand(),
+                'line_number': parser.command.line,
+                'instructions': res['instructions'],
+            });
         } else {
             return {'error': `Unknown command "${order}"`, 'line': parser.currentLine};
         }
