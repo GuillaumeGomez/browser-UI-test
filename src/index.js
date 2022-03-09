@@ -96,7 +96,7 @@ function parseTest(testName, content, logs, options) {
             logs.append(`[ERROR] line ${commands['line']}: ${commands['error']}`);
             return null;
         }
-        if (commands['instructions'].length === 0) {
+        if (commands['commands'].length === 0) {
             logs.append(testName + '... FAILED');
             logs.append('=> No command to execute');
             logs.warn(commands['warnings']);
@@ -104,7 +104,7 @@ function parseTest(testName, content, logs, options) {
         }
         return {
             'file': testName,
-            'commands': commands['instructions'],
+            'commands': commands['commands'],
             'warnings': commands['warnings'],
         };
     } catch (err) {
@@ -202,54 +202,68 @@ async function runCommand(loaded, logs, options, browser) {
 
         error_log = '';
         const commands = loaded['commands'];
+
+        command_loop:
         for (let x = 0; x < commands.length; ++x) {
+            const command = commands[x];
             let failed = false;
             // In case we have some unrecoverable error which cannot be caught in `fail: true`, like
             // color check when text isn't displayed.
+            //
+            // (It is needed because we cannot break from inside the `await.catch`.)
             let stopLoop = false;
-            const command = commands[x];
             const line_number = command['line_number'];
-            debug_log.append(`EXECUTING (line ${line_number}) "${command['code']}"`);
-            try {
-                await loadContent(command['code'])(page, extras).catch(err => {
-                    if (err === parser.COLOR_CHECK_ERROR) {
-                        error_log += `[ERROR] (line ${line_number}): ${err}`;
-                        stopLoop = true;
-                    } else {
-                        failed = true;
-                        const s_err = err.toString();
-                        if (extras.expectedToFail !== true) {
-                            const original = command['original'];
-                            error_log = `[ERROR] (line ${line_number}) ${s_err}: for ` +
-                                `command \`${original}\``;
+            const instructions = command['instructions'];
+            let stopInnerLoop = false;
+
+            for (let y = 0; y < instructions.length; ++y) {
+                debug_log.append(`EXECUTING (line ${line_number}) "${instructions[y]}"`);
+                try {
+                    await loadContent(instructions[y])(page, extras).catch(err => {
+                        if (err === parser.COLOR_CHECK_ERROR) {
+                            error_log += `[ERROR] (line ${line_number}): ${err}\n`;
+                            stopLoop = true;
                         } else {
-                            // it's an expected failure so no need to log it
-                            debug_log.append(`[EXPECTED FAILURE] (line ${line_number}): ${s_err}`);
+                            failed = true;
+                            const s_err = err.toString();
+                            if (extras.expectedToFail !== true) {
+                                const original = command['original'];
+                                error_log += `[ERROR] (line ${line_number}) ${s_err}: for ` +
+                                    `command \`${original}\`\n`;
+                                stopInnerLoop = true;
+                            } else {
+                                // it's an expected failure so no need to log it
+                                debug_log.append(
+                                    `[EXPECTED FAILURE] (line ${line_number}): ${s_err}`);
+                            }
                         }
+                    });
+                } catch (error) { // parsing error
+                    error_log += `(line ${line_number}) output:\n${error.message}\n`;
+                    if (debug_log.isEnabled()) {
+                        error_log += `command \`${command['original']}\` failed on ` +
+                            `\`${instructions[y]}\`\n`;
                     }
-                });
+                    break command_loop;
+                }
+                debug_log.append('Done!');
                 if (stopLoop) {
+                    break command_loop;
+                } else if (stopInnerLoop) {
                     break;
                 }
-            } catch (error) { // parsing error
-                error_log = `(line ${line_number}) output:\n${error.message}\n`;
-                if (debug_log.isEnabled()) {
-                    error_log += `command \`${command['original']}\` failed on ` +
-                        `\`${command['code']}\``;
-                }
-                break;
             }
-            debug_log.append('Done!');
             if (failed === false
                 && command['checkResult'] === true
                 && extras.expectedToFail === true) {
                 error_log += `(line ${line_number}) command \`${command['original']}\` was ` +
-                    'supposed to fail but succeeded';
+                    'supposed to fail but succeeded\n';
             }
             if (error_log.length > 0) {
-                break;
-            }
-            if (command['wait'] !== false) {
+                if (command['fatal_error'] === true || extras.pauseOnError === true) {
+                    break;
+                }
+            } else if (command['wait'] !== false) {
                 // We wait a bit between each command to be sure the browser can follow.
                 await page.waitFor(100);
             }
@@ -257,7 +271,7 @@ async function runCommand(loaded, logs, options, browser) {
         if (error_log.length > 0) {
             logs.append('FAILED', true);
             logs.warn(loaded['warnings']);
-            logs.append(error_log + '\n');
+            logs.append(error_log);
             if (extras.pauseOnError === true) {
                 waitUntilEnterPressed(error_log);
             }
