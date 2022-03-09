@@ -1,5 +1,6 @@
 const {Parser, cleanString} = require('./parser.js');
 const consts = require('./consts.js');
+const process = require('process');
 
 const COLOR_CHECK_ERROR = '`show-text: true` needs to be used before checking for `color` ' +
 '(otherwise the browser doesn\'t compute it)';
@@ -2785,6 +2786,13 @@ const EXPORTS = {
 
 for (const func of Object.values(ORDERS)) {
     EXPORTS[func.name] = func;
+}
+
+if (process.env.debug_tests === '1') {
+    EXPORTS['ORDERS'] = ORDERS;
+    EXPORTS['FATAL_ERROR_COMMANDS'] = FATAL_ERROR_COMMANDS;
+    EXPORTS['NO_INTERACTION_COMMANDS'] = NO_INTERACTION_COMMANDS;
+    EXPORTS['BEFORE_GOTO'] = BEFORE_GOTO;
 }
 
 // Those functions shouldn't be used directly!
