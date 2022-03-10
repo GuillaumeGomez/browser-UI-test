@@ -435,20 +435,25 @@ async function innerRunTests(logs, options) {
         return [logs.logs, failures];
     }
 
-    const browser = await utils.loadPuppeteer(options);
-    for (let i = 0; i < loaded.length; ++i) {
-        const ret = await runCommand(loaded[i], logs, options, browser);
-        if (ret !== Status.Ok) {
-            failures += 1;
+    try {
+        const browser = await utils.loadPuppeteer(options);
+        for (let i = 0; i < loaded.length; ++i) {
+            const ret = await runCommand(loaded[i], logs, options, browser);
+            if (ret !== Status.Ok) {
+                failures += 1;
+            }
         }
-    }
-    await browser.close();
+        await browser.close();
 
-    logs.append(
-        '\n<= doc-ui tests done: ' + (total - failures) + ' succeeded, ' + failures + ' failed');
+        logs.append(`\n<= doc-ui tests done: ${total - failures} succeeded, ${failures} failed`);
 
-    if (logs.showLogs === true) {
-        logs.append('');
+        if (logs.showLogs === true) {
+            logs.append('');
+        }
+    } catch (error) {
+        logs.append(`An exception occured: ${error.message}\n== STACKTRACE ==\n` +
+            `${new Error().stack}`);
+        return [logs.logs, 1];
     }
 
     return [logs.logs, failures];
@@ -475,13 +480,13 @@ async function innerRunTestCode(testName, content, options, showLogs, checkTestF
         if (ret !== Status.Ok) {
             return [logs.logs, 1];
         }
-
-        return [logs.logs, 0];
     } catch (error) {
         logs.append(`An exception occured: ${error.message}\n== STACKTRACE ==\n` +
             `${new Error().stack}`);
         return [logs.logs, 1];
     }
+
+    return [logs.logs, 0];
 }
 
 async function runTestCode(testName, content, options = new Options(), showLogs = false) {
