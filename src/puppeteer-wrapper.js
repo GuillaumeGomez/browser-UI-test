@@ -18,6 +18,20 @@ function buildPuppeteerOptions(options) {
     return puppeteer_options;
 }
 
+function check_if_known_error(error) {
+    const KNOWN_ERRORS = [
+        'Failed to launch the browser process!',
+        'read ECONNRESET',
+    ];
+
+    for (const known_error of KNOWN_ERRORS) {
+        if (error.message.indexOf(known_error) !== -1) {
+            return true;
+        }
+    }
+    return false;
+}
+
 class PuppeteerWrapper {
     constructor() {
         this.puppeteer = require('puppeteer');
@@ -26,7 +40,24 @@ class PuppeteerWrapper {
     }
 
     async init(options) {
-        this.browser = await this.puppeteer.launch(buildPuppeteerOptions(options));
+        let i;
+        let last_error;
+
+        for (i = 0; i < 3; ++i) {
+            try {
+                this.browser = await this.puppeteer.launch(buildPuppeteerOptions(options));
+            } catch (error) {
+                if (!check_if_known_error(error)) {
+                    throw error;
+                }
+                last_error = error;
+                continue;
+            }
+            break;
+        }
+        if (i === 3) {
+            throw last_error;
+        }
         if (options.incognito === true) {
             this.context = await this.browser.createIncognitoBrowserContext();
         }
@@ -49,7 +80,9 @@ class PuppeteerWrapper {
             await this.context.close();
             this.context = null;
         }
-        await this.browser.close();
+        if (this.browser !== null) {
+            await this.browser.close();
+        }
     }
 
     async overridePermissions(url, permissions) {
