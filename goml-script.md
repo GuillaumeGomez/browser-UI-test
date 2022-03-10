@@ -320,6 +320,16 @@ assert-text: ("#id > .class", "hello", ALL)
 assert-text: ("//*[@id='id']/*[@class='class']", "hello", ALL)
 ```
 
+Apart from "ALL", you can also use "CONTAINS", "ENDS_WITH" and "STARTS_WITH" and even combine them if you want. Example:
+
+```
+assert-text: (".class", "hello", CONTAINS)
+// To check that all ".class" elements contain "hello":
+assert-text: (".class", "hello", [ALL, CONTAINS])
+// To check that all ".class" elements start and end with "hello":
+assert-text: (".class", "hello", [ALL, STARTS_WITH, ENDS_WITH])
+```
+
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements-text) command.
 
 #### assert-text-false
@@ -333,6 +343,16 @@ assert-text-false: ("//*[@id='id']/*[@class='class']", "hello")
 // If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-text-false: ("#id > .class", "hello", ALL)
 assert-text-false: ("//*[@id='id']/*[@class='class']", "hello", ALL)
+```
+
+Apart from "ALL", you can also use "CONTAINS", "ENDS_WITH" and "STARTS_WITH" and even combine them if you want. Example:
+
+```
+assert-text-false: (".class", "hello", CONTAINS)
+// To check that no ".class" element contains "hello":
+assert-text: (".class", "hello", [ALL, CONTAINS])
+// To check that all ".class" elements don't start nor end with "hello":
+assert-text: (".class", "hello", [ALL, STARTS_WITH, ENDS_WITH])
 ```
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-text-false) command.
