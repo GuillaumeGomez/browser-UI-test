@@ -651,7 +651,7 @@ class Parser {
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
             // Check if it is a latin letter.
-            if (!isLetter(c) && specialChars.indexOf(c) === -1) {
+            if (c !== '_' && !isLetter(c) && specialChars.indexOf(c) === -1) {
                 break;
             }
             this.increasePos();

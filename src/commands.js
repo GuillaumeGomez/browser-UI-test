@@ -1008,15 +1008,18 @@ function parseAssertCountFalse(parser) {
 }
 
 function parseAssertTextInner(parser, assertFalse) {
-    const err = 'expected a tuple or a string, read the documentation to see the accepted inputs';
+    const err = 'expected a tuple, read the documentation to see the accepted inputs';
     const elems = parser.elems;
+    const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
+    const warnings = [];
+
+    const enabled_checks = {};
 
     if (elems.length === 0) {
         return {'error': err + ', found nothing'};
     } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
         return {'error': err + `, found \`${parser.getRawArgs()}\``};
     }
-    let checkAllElements = false;
     const tuple = elems[0].getRaw();
     if (tuple.length < 2 || tuple.length > 3) {
         return {'error': 'invalid number of values in the tuple, read the documentation to see ' +
@@ -1031,47 +1034,96 @@ function parseAssertTextInner(parser, assertFalse) {
             'error': `expected second argument to be a string, found \`${tuple[1].getRaw()}\``,
         };
     } else if (tuple.length === 3) {
-        if (tuple[2].kind !== 'ident') {
+        if (tuple[2].kind === 'ident') {
+            if (identifiers.indexOf(tuple[2].getRaw()) === -1) {
+                return {
+                    'error': `Unknown identifier \`${tuple[2].getRaw()}\`. Available identifiers ` +
+                        'are: [' + identifiers.map(x => `\`${x}\``).join(', ') + ']',
+                };
+            }
+            enabled_checks[tuple[2].getRaw()] = true;
+        } else if (tuple[2].kind === 'array') {
+            const array = tuple[2].getRaw();
+            const duplicated = {};
+
+            if (array.length > 0 && array[0].kind !== 'ident') {
+                return {
+                    'error': 'expected an identifier or an array of identifiers as third ' +
+                        'argument (among ' + identifiers.map(x => `\`${x}\``).join(', ') +
+                        `), found an array of \`${array[0].kind}\` (in \`${tuple[2].getText()}\`)`,
+                };
+            }
+
+            for (const entry of array) {
+                if (identifiers.indexOf(entry.getRaw()) === -1) {
+                    return {
+                        'error': `Unknown identifier \`${entry.getRaw()}\`. Available identifiers` +
+                            ' are: [' + identifiers.map(x => `\`${x}\``).join(', ') + ']',
+                    };
+                }
+                if (enabled_checks[entry.getRaw()] === true) {
+                    duplicated[entry.getRaw()] = true;
+                } else {
+                    enabled_checks[entry.getRaw()] = true;
+                }
+            }
+            for (const duplicata of Object.keys(duplicated)) {
+                warnings.push(
+                    `\`${duplicata}\` is present more than once in the third argument array`);
+            }
+        } else {
             return {
-                'error': 'expected identifier `ALL` as third argument or nothing, found `' +
-                    `${tuple[2].getRaw()}\``,
-            };
-        } else if (tuple[2].getRaw() !== 'ALL') {
-            return {
-                'error': 'expected identifier `ALL` as third argument or nothing, found `' +
-                    `${tuple[2].getRaw()}\``,
+                'error': 'expected an identifier or an array of identifiers (among ' +
+                    identifiers.map(x => `\`${x}\``).join(', ') +
+                    `) as third argument or nothing, found \`${tuple[2].getRaw()}\` ` +
+                    `(${tuple[0].getArticleKind()})`,
             };
         }
-        checkAllElements = true;
     }
 
-    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, checkAllElements);
+    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, enabled_checks['ALL']);
     const selector = tuple[0].getSelector();
 
     const value = tuple[1].getStringValue();
     const varName = 'parseAssertElemStr';
+
+    const checks = [];
+    if (enabled_checks['CONTAINS']) {
+        checks.push(`browserUiTestHelpers.elemTextContains(e, "${value}");`);
+    }
+    if (enabled_checks['STARTS_WITH']) {
+        checks.push(`browserUiTestHelpers.elemTextStartsWith(e, "${value}");`);
+    }
+    if (enabled_checks['ENDS_WITH']) {
+        checks.push(`browserUiTestHelpers.elemTextEndsWith(e, "${value}");`);
+    }
+    if (checks.length === 0) {
+        checks.push(`browserUiTestHelpers.compareElemText(e, "${value}");`);
+    }
+
     let instructions;
-    if (!checkAllElements) {
-        instructions = [
-            getAndSetElements(selector, varName, checkAllElements) +
-            `${insertBefore}await page.evaluate(e => {\n` +
-            `browserUiTestHelpers.compareElemsText(e, "${value}");\n` +
-            `}, ${varName});${insertAfter}`,
-        ];
+    if (enabled_checks['ALL'] !== true) {
+        instructions = getAndSetElements(selector, varName, false);
+        for (const check of checks) {
+            instructions += `${insertBefore}await page.evaluate(e => {\n` +
+                check +
+                `\n}, ${varName});${insertAfter}`;
+        }
     } else {
-        instructions = [
-            getAndSetElements(selector, varName, checkAllElements) +
-            `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
-                `${insertBefore}await page.evaluate(e => {\n` +
-                `browserUiTestHelpers.compareElemsText(e, "${value}");\n` +
-                `}, ${varName}[i]);${insertAfter}` +
-            '}',
-        ];
+        instructions = getAndSetElements(selector, varName, true) +
+            `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n`;
+        for (const check of checks) {
+            instructions += `${insertBefore}await page.evaluate(e => {\n` +
+                check +
+                `\n}, ${varName}[i]);${insertAfter}`;
+        }
+        instructions += '}';
     }
     return {
-        'instructions': instructions,
+        'instructions': [instructions],
         'wait': false,
         'checkResult': true,
+        'warnings': warnings.length > 0 ? warnings : undefined,
     };
 }
 
