@@ -597,6 +597,217 @@ function checkAssertCountFalse(x, func) {
     );
 }
 
+function checkAssertDocumentPropertyInner(x, func, before, after, special_after) {
+    x.assert(func('["a"]'), {
+        'error': 'expected a tuple or a JSON dict, found `["a"]`',
+    });
+    x.assert(func('("a", "b", )'), {
+        'error': 'expected first element of the tuple to be a JSON dict, found `"a"` (a string)',
+    });
+    x.assert(func('("a", "b")'), {
+        'error': 'expected first element of the tuple to be a JSON dict, found `"a"` (a string)',
+    });
+    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
+    x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
+    x.assert(func('({"a": "b"}, all)'), {
+        'error': 'unknown identifier `all`. Available identifiers are: [`CONTAINS`, `ENDS_WITH`, ' +
+            '`STARTS_WITH`]',
+    });
+    x.assert(func('("a::after", {"a": 1}, ALLO)'), {
+        'error': 'expected a tuple of one or two elements, found 3 elements',
+    });
+    x.assert(func('({"b": "c", "b": "d"})'), {'error': 'property `b` is duplicated'});
+    x.assert(func('({"": "b"})'), {
+        'error': 'empty name of properties ("" or \'\') are not allowed',
+    });
+
+    x.assert(func('{"a": "b"}'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'const parseAssertDictPropDict = {"a":"b"};\n' +
+            'for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(' +
+                'parseAssertDictPropDict)) {\n' +
+            before +
+            'if (document[parseAssertDictPropKey] === undefined) {\n' +
+            '    throw \'Unknown document property `\' + parseAssertDictPropKey + \'`\';\n' +
+            '}\n' +
+            special_after +
+            '(() => {\n' +
+            before +
+            'if (String(document[parseAssertDictPropKey]) != parseAssertDictPropValue) {\n' +
+            '    throw \'Expected `\' + parseAssertDictPropValue + \'` for property `\' + ' +
+                'parseAssertDictPropKey + \'`, found `\' + document[parseAssertDictPropKey] + \'' +
+                '`\';\n' +
+            '}' +
+            after + '\n' +
+            '})();\n' +
+            '}\n' +
+            '});',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('({"a": "b"})'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'const parseAssertDictPropDict = {"a":"b"};\n' +
+            'for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(' +
+                'parseAssertDictPropDict)) {\n' +
+            before +
+            'if (document[parseAssertDictPropKey] === undefined) {\n' +
+            '    throw \'Unknown document property `\' + parseAssertDictPropKey + \'`\';\n' +
+            '}\n' +
+            special_after +
+            '(() => {\n' +
+            before +
+            'if (String(document[parseAssertDictPropKey]) != parseAssertDictPropValue) {\n' +
+            '    throw \'Expected `\' + parseAssertDictPropValue + \'` for property `\' + ' +
+                'parseAssertDictPropKey + \'`, found `\' + document[parseAssertDictPropKey] + \'' +
+                '`\';\n' +
+            '}' +
+            after + '\n' +
+            '})();\n' +
+            '}\n' +
+            '});',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    x.assert(func('({"a": "b"}, CONTAINS)'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'const parseAssertDictPropDict = {"a":"b"};\n' +
+            'for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(' +
+                'parseAssertDictPropDict)) {\n' +
+            before +
+            'if (document[parseAssertDictPropKey] === undefined) {\n' +
+            '    throw \'Unknown document property `\' + parseAssertDictPropKey + \'`\';\n' +
+            '}\n' +
+            special_after +
+            '(() => {\n' +
+            before +
+            'if (String(document[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) === ' +
+                '-1) {\n' +
+            '    throw \'Property `\' + parseAssertDictPropKey + \'` (`\' + document[' +
+                'parseAssertDictPropKey] + \'`) does not contain `\' + ' +
+                'parseAssertDictPropValue + \'`\';\n' +
+            '}' +
+            after + '\n' +
+            '})();\n' +
+            '}\n' +
+            '});',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('({"a": "b"}, STARTS_WITH)'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'const parseAssertDictPropDict = {"a":"b"};\n' +
+            'for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(' +
+                'parseAssertDictPropDict)) {\n' +
+            before +
+            'if (document[parseAssertDictPropKey] === undefined) {\n' +
+            '    throw \'Unknown document property `\' + parseAssertDictPropKey + \'`\';\n' +
+            '}\n' +
+            special_after +
+            '(() => {\n' +
+            before +
+            'if (!String(document[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) ' +
+                '{\n' +
+            '    throw \'Property `\' + parseAssertDictPropKey + \'` (`\' + document[' +
+                'parseAssertDictPropKey] + \'`) does not start with `\' + ' +
+                'parseAssertDictPropValue + \'`\';\n' +
+            '}' +
+            after + '\n' +
+            '})();\n' +
+            '}\n' +
+            '});',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('({"a": "b"}, ENDS_WITH)'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'const parseAssertDictPropDict = {"a":"b"};\n' +
+            'for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(' +
+                'parseAssertDictPropDict)) {\n' +
+            before +
+            'if (document[parseAssertDictPropKey] === undefined) {\n' +
+            '    throw \'Unknown document property `\' + parseAssertDictPropKey + \'`\';\n' +
+            '}\n' +
+            special_after +
+            '(() => {\n' +
+            before +
+            'if (!String(document[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) ' +
+                '{\n' +
+            '    throw \'Property `\' + parseAssertDictPropKey + \'` (`\' + document[' +
+                'parseAssertDictPropKey] + \'`) does not end with `\' + ' +
+                'parseAssertDictPropValue + \'`\';\n' +
+            '}' +
+            after + '\n' +
+            '})();\n' +
+            '}\n' +
+            '});',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('({"a": "b"}, [STARTS_WITH, ENDS_WITH])'), {
+        'instructions': [
+            'await page.evaluate(() => {\n' +
+            'const parseAssertDictPropDict = {"a":"b"};\n' +
+            'for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(' +
+                'parseAssertDictPropDict)) {\n' +
+            before +
+            'if (document[parseAssertDictPropKey] === undefined) {\n' +
+            '    throw \'Unknown document property `\' + parseAssertDictPropKey + \'`\';\n' +
+            '}\n' +
+            special_after +
+            '(() => {\n' +
+            before +
+            'if (!String(document[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) ' +
+                '{\n' +
+            '    throw \'Property `\' + parseAssertDictPropKey + \'` (`\' + document[' +
+                'parseAssertDictPropKey] + \'`) does not start with `\' + ' +
+                'parseAssertDictPropValue + \'`\';\n' +
+            '}' +
+            after + '\n' +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (!String(document[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) ' +
+                '{\n' +
+            '    throw \'Property `\' + parseAssertDictPropKey + \'` (`\' + document[' +
+                'parseAssertDictPropKey] + \'`) does not end with `\' + ' +
+                'parseAssertDictPropValue + \'`\';\n' +
+            '}' +
+            after + '\n' +
+            '})();\n' +
+            '}\n' +
+            '});',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+}
+
+function checkAssertDocumentProperty(x, func) {
+    checkAssertDocumentPropertyInner(x, func, '', '', '');
+}
+
+function checkAssertDocumentPropertyFalse(x, func) {
+    checkAssertDocumentPropertyInner(
+        x,
+        func,
+        'try {\n',
+        '\n} catch(e) { return; } throw "assert didn\'t fail";',
+        '} catch (e) { continue; }\n',
+    );
+}
+
 function checkAssertCssInner(x, func, before, after) {
     x.assert(func('("a", "b", )'), {
         'error': 'expected JSON dictionary as second argument, found `"b"`',
@@ -620,7 +831,7 @@ function checkAssertCssInner(x, func, before, after) {
         'error': 'Empty values are not allowed: `b` has an empty value',
     });
     x.assert(func('("a", {"": "b"})'), {
-        'error': 'Empty CSS property keys ("" or \'\') are not allowed',
+        'error': 'empty name of properties ("" or \'\') are not allowed',
     });
 
     x.assert(func('("a", {"a": 1})'), {
@@ -1553,8 +1764,8 @@ function checkAssertPositionInner(x, func, before, after) {
     x.assert(func('("a", {"b": ""})'), {
         'error': 'only number is allowed, found `""` (a string)',
     });
-    x.assert(func('("a", {"": 12})'), {
-        'error': 'Only accepted keys are "x" and "y", found `""` (in `{"": 12}`)',
+    x.assert(func('("a", {"z": 12})'), {
+        'error': 'Only accepted keys are "x" and "y", found `"z"` (in `{"z": 12}`)',
     });
 
     x.assert(func('("a", {"x": 1})'), {
@@ -1943,6 +2154,14 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
     x.assert(func('("a")'), {
         'error': 'invalid number of values in the tuple, read the documentation to see the ' +
             'accepted inputs',
+    });
+    x.assert(func('("a", "b", ALLO)'), {
+        'error': 'unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
+            '`STARTS_WITH`, `ENDS_WITH`]',
+    });
+    x.assert(func('("a", "b", [ALLO])'), {
+        'error': 'unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
+            '`STARTS_WITH`, `ENDS_WITH`]',
     });
     x.assert(func('("a", "b", "c")'), {
         'error': 'expected an identifier or an array of identifiers (among `ALL`, `CONTAINS`, ' +
@@ -5191,6 +5410,16 @@ const TO_CHECK = [
         'name': 'assert-css-false',
         'func': checkAssertCssFalse,
         'toCall': (e, o) => wrapper(parserFuncs.parseAssertCssFalse, e, o),
+    },
+    {
+        'name': 'assert-document-property',
+        'func': checkAssertDocumentProperty,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssertDocumentProperty, e, o),
+    },
+    {
+        'name': 'assert-document-property-false',
+        'func': checkAssertDocumentPropertyFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssertDocumentPropertyFalse, e, o),
     },
     {
         'name': 'assert-count',

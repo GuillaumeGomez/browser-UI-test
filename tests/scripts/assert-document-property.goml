@@ -1,0 +1,14 @@
+goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
+screenshot-comparison: false
+assert-document-property: {"title": "basic test"}
+assert-document-property: ({"title": "basic test"})
+assert-document-property: ({"title": "c te"}, CONTAINS)
+assert-document-property: ({"title": "basic"}, STARTS_WITH)
+assert-document-property: ({"title": "test"}, ENDS_WITH)
+assert-document-property: ({"title": "basic"}, [STARTS_WITH, CONTAINS])
+assert-document-property-false: {"title": "basic"}
+assert-document-property-false: ({"title": "basic"})
+assert-document-property-false: ({"title": "bsic"}, STARTS_WITH)
+assert-document-property-false: ({"title": "bsic"}, CONTAINS)
+assert-document-property-false: ({"title": "bsic"}, ENDS_WITH)
+assert-document-property-false: ({"title": "bsic"}, [STARTS_WITH, CONTAINS])
