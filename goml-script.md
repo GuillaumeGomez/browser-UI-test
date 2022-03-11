@@ -63,6 +63,8 @@ Here's the command list:
  * [`assert-count-false`](#assert-count-false)
  * [`assert-css`](#assert-css)
  * [`assert-css-false`](#assert-css-false)
+ * [`assert-document-property`](#assert-document-property)
+ * [`assert-document-property-false`](#assert-document-property-false)
  * [`assert-local-storage`](#assert-local-storage)
  * [`assert-local-storage-false`](#assert-local-storage-false)
  * [`assert-position`](#assert-position)
@@ -220,6 +222,50 @@ assert-css-false: ("//*[@id='id']/*[@class='class']", { "color": "blue", "height
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-css-false) command.
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+
+#### assert-document-property
+
+**assert-document-property** command checks the properties' value of the `document` object of a webpage have the provided value. So if you want to check the current page's URL or title, this is the command you need. Examples:
+
+```
+assert-document-property: ({"URL": "https://some.where", "title": "a title"})
+// If you only provide properties, you can also only provide a JSON dict:
+assert-document-property: {"URL": "https://some.where", "title": "a title"}
+```
+
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+
+```
+assert-document-property: ({"URL": "https://some.where", "title": "a title"}, STARTS_WITH)
+```
+
+You can even combine the checks:
+
+```
+assert-document-property: ({"URL": "https://some.where", "title": "a title"}, [STARTS_WITH, ENDS_WITH])
+```
+
+#### assert-document-property-false
+
+**assert-document-property-false** command checks the properties' value of the `document` object of a webpage don't have the provided value. So if you want to check the current page's URL or title, this is the command you need. Examples:
+
+```
+assert-document-property-false: ({"URL": "https://some.where", "title": "a title"})
+// If you only provide properties, you can also only provide a JSON dict:
+assert-document-property-false: {"URL": "https://some.where", "title": "a title"}
+```
+
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+
+```
+assert-document-property-false: ({"URL": "https://some.where", "title": "a title"}, STARTS_WITH)
+```
+
+You can even combine the checks:
+
+```
+assert-document-property-false: ({"URL": "https://some.where", "title": "a title"}, [STARTS_WITH, ENDS_WITH])
+```
 
 #### assert-local-storage
 
