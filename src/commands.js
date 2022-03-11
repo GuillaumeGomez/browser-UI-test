@@ -71,6 +71,11 @@ function validateJson(json, allowedValueTypes, keyName) {
             };
         }
         const key_s = entry['key'].getStringValue();
+        if (key_s.length < 1) {
+            return {
+                'error': 'empty name of properties ("" or \'\') are not allowed',
+            };
+        }
         if (Object.prototype.hasOwnProperty.call(entries, key_s)) {
             return {
                 'error': `${keyName} \`${key_s}\` is duplicated`,
@@ -753,6 +758,210 @@ function parseAssertCssFalse(parser) {
     return parseAssertCssInner(parser, true);
 }
 
+function fillEnabledChecks(elem, identifiers, enabled_checks, warnings, err_pos) {
+    if (elem.kind === 'ident') {
+        if (identifiers.indexOf(elem.getRaw()) === -1) {
+            return {
+                'error': `unknown identifier \`${elem.getRaw()}\`. Available identifiers ` +
+                    'are: [' + identifiers.map(x => `\`${x}\``).join(', ') + ']',
+            };
+        }
+        enabled_checks[elem.getRaw()] = true;
+    } else if (elem.kind === 'array') {
+        const array = elem.getRaw();
+        const duplicated = {};
+
+        if (array.length > 0 && array[0].kind !== 'ident') {
+            return {
+                'error': `expected an identifier or an array of identifiers as ${err_pos} ` +
+                    'argument (among ' + identifiers.map(x => `\`${x}\``).join(', ') +
+                    `), found an array of \`${array[0].kind}\` (in \`${elem.getText()}\`)`,
+            };
+        }
+
+        for (const entry of array) {
+            if (identifiers.indexOf(entry.getRaw()) === -1) {
+                return {
+                    'error': `unknown identifier \`${entry.getRaw()}\`. Available identifiers` +
+                        ' are: [' + identifiers.map(x => `\`${x}\``).join(', ') + ']',
+                };
+            }
+            if (enabled_checks[entry.getRaw()] === true) {
+                duplicated[entry.getRaw()] = true;
+            } else {
+                enabled_checks[entry.getRaw()] = true;
+            }
+        }
+        for (const duplicata of Object.keys(duplicated)) {
+            warnings.push(
+                `\`${duplicata}\` is present more than once in the ${err_pos} argument array`);
+        }
+    } else {
+        return {
+            'error': 'expected an identifier or an array of identifiers (among ' +
+                identifiers.map(x => `\`${x}\``).join(', ') +
+                `) as ${err_pos} argument or nothing, found \`${elem.getRaw()}\` ` +
+                `(${elem.getArticleKind()})`,
+        };
+    }
+    return null;
+}
+
+function parseAssertDocumentPropertyInner(parser, assertFalse) {
+    const elems = parser.elems;
+    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH'];
+
+    if (elems.length === 0) {
+        return {'error': 'expected a tuple or a JSON dict, found nothing'};
+    // eslint-disable-next-line no-extra-parens
+    } else if (elems.length !== 1 || (elems[0].kind !== 'tuple' && elems[0].kind !== 'json')) {
+        return {'error': `expected a tuple or a JSON dict, found \`${parser.getRawArgs()}\``};
+    }
+
+    const enabled_checks = {};
+    const warnings = [];
+    let json_dict;
+
+    if (elems[0].kind === 'tuple') {
+        const tuple = elems[0].getRaw();
+        if (tuple.length < 1 || tuple.length > 2) {
+            return {
+                'error': `expected a tuple of one or two elements, found ${tuple.length} elements`,
+            };
+        } else if (tuple[0].kind !== 'json') {
+            return {
+                'error': 'expected first element of the tuple to be a JSON dict, found `' +
+                    `${tuple[0].getText()}\` (${tuple[0].getArticleKind()})`,
+            };
+        }
+        json_dict = tuple[0].getRaw();
+        if (tuple.length > 1) {
+            const ret = fillEnabledChecks(
+                tuple[1],
+                identifiers,
+                enabled_checks,
+                warnings,
+                'second',
+            );
+            if (ret !== null) {
+                return ret;
+            }
+        }
+    } else {
+        json_dict = elems[0].getRaw();
+    }
+
+    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
+
+    const entries = validateJson(json_dict, ['string', 'number'], 'property');
+    if (entries.error !== undefined) {
+        return entries;
+    } else if (entries.warnings !== undefined) {
+        for (const warning of entries.warnings) {
+            warnings.push(warning);
+        }
+    }
+
+    if (entries.values.length === 0) {
+        return {
+            'instructions': [],
+            'wait': false,
+            'warnings': warnings.length > 0 ? warnings : undefined,
+            'checkResult': true,
+        };
+    }
+
+    const varName = 'parseAssertDictProp';
+
+    const varDict = varName + 'Dict';
+    const varKey = varName + 'Key';
+    const varValue = varName + 'Value';
+    // JSON.stringify produces a problematic output so instead we use this.
+    let d = '';
+    for (const [k, v] of Object.entries(entries.values)) {
+        if (d.length > 0) {
+            d += ',';
+        }
+        d += `"${k}":"${v}"`;
+    }
+
+    const checks = [];
+    if (enabled_checks['CONTAINS']) {
+        checks.push(`if (String(document[${varKey}]).indexOf(${varValue}) === -1) {
+    throw 'Property \`' + ${varKey} + '\` (\`' + document[${varKey}] + '\`) does not contain \
+\`' + ${varValue} + '\`';
+}`);
+    }
+    if (enabled_checks['STARTS_WITH']) {
+        checks.push(`if (!String(document[${varKey}]).startsWith(${varValue})) {
+    throw 'Property \`' + ${varKey} + '\` (\`' + document[${varKey}] + '\`) does not start with \
+\`' + ${varValue} + '\`';
+}`);
+    }
+    if (enabled_checks['ENDS_WITH']) {
+        checks.push(`if (!String(document[${varKey}]).endsWith(${varValue})) {
+    throw 'Property \`' + ${varKey} + '\` (\`' + document[${varKey}] + '\`) does not end with \
+\`' + ${varValue} + '\`';
+}`);
+    }
+    // If no check was enabled.
+    if (checks.length === 0) {
+        checks.push(`if (String(document[${varKey}]) != ${varValue}) {
+    throw 'Expected \`' + ${varValue} + '\` for property \`' + ${varKey} + '\`, \
+found \`' + document[${varKey}] + '\`';
+}`);
+    }
+
+    let code = `const ${varDict} = {${d}};
+for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+${insertBefore}if (document[${varKey}] === undefined) {
+    throw 'Unknown document property \`' + ${varKey} + '\`';
+}\n`;
+
+    if (assertFalse) {
+        code += '} catch (e) { continue; }\n';
+    }
+
+    for (const check of checks) {
+        code += `(() => {
+${insertBefore}${check}${insertAfter}
+})();\n`;
+    }
+    code += '}\n';
+
+    const instructions = [
+        'await page.evaluate(() => {\n' +
+            code +
+        '});',
+    ];
+    return {
+        'instructions': instructions,
+        'wait': false,
+        'warnings': warnings.length > 0 ? warnings : undefined,
+        'checkResult': true,
+    };
+}
+
+// Possible inputs:
+//
+// * {"DOM property": "value"}
+// * ({"DOM property": "value"})
+// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH)
+// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH])
+function parseAssertDocumentProperty(parser) {
+    return parseAssertDocumentPropertyInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * {"DOM property": "value"}
+// * ({"DOM property": "value"})
+// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH)
+// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH])
+function parseAssertDocumentPropertyFalse(parser) {
+    return parseAssertDocumentPropertyInner(parser, true);
+}
+
 function parseAssertPropertyInner(parser, assertFalse) {
     const selector = getAssertSelector(parser);
     if (selector.error !== undefined) {
@@ -1034,50 +1243,9 @@ function parseAssertTextInner(parser, assertFalse) {
             'error': `expected second argument to be a string, found \`${tuple[1].getRaw()}\``,
         };
     } else if (tuple.length === 3) {
-        if (tuple[2].kind === 'ident') {
-            if (identifiers.indexOf(tuple[2].getRaw()) === -1) {
-                return {
-                    'error': `Unknown identifier \`${tuple[2].getRaw()}\`. Available identifiers ` +
-                        'are: [' + identifiers.map(x => `\`${x}\``).join(', ') + ']',
-                };
-            }
-            enabled_checks[tuple[2].getRaw()] = true;
-        } else if (tuple[2].kind === 'array') {
-            const array = tuple[2].getRaw();
-            const duplicated = {};
-
-            if (array.length > 0 && array[0].kind !== 'ident') {
-                return {
-                    'error': 'expected an identifier or an array of identifiers as third ' +
-                        'argument (among ' + identifiers.map(x => `\`${x}\``).join(', ') +
-                        `), found an array of \`${array[0].kind}\` (in \`${tuple[2].getText()}\`)`,
-                };
-            }
-
-            for (const entry of array) {
-                if (identifiers.indexOf(entry.getRaw()) === -1) {
-                    return {
-                        'error': `Unknown identifier \`${entry.getRaw()}\`. Available identifiers` +
-                            ' are: [' + identifiers.map(x => `\`${x}\``).join(', ') + ']',
-                    };
-                }
-                if (enabled_checks[entry.getRaw()] === true) {
-                    duplicated[entry.getRaw()] = true;
-                } else {
-                    enabled_checks[entry.getRaw()] = true;
-                }
-            }
-            for (const duplicata of Object.keys(duplicated)) {
-                warnings.push(
-                    `\`${duplicata}\` is present more than once in the third argument array`);
-            }
-        } else {
-            return {
-                'error': 'expected an identifier or an array of identifiers (among ' +
-                    identifiers.map(x => `\`${x}\``).join(', ') +
-                    `) as third argument or nothing, found \`${tuple[2].getRaw()}\` ` +
-                    `(${tuple[0].getArticleKind()})`,
-            };
+        const ret = fillEnabledChecks(tuple[2], identifiers, enabled_checks, warnings, 'third');
+        if (ret !== null) {
+            return ret;
         }
     }
 
@@ -2687,6 +2855,8 @@ const ORDERS = {
     'assert-count-false': parseAssertCountFalse,
     'assert-css': parseAssertCss,
     'assert-css-false': parseAssertCssFalse,
+    'assert-document-property': parseAssertDocumentProperty,
+    'assert-document-property-false': parseAssertDocumentPropertyFalse,
     'assert-local-storage': parseAssertLocalStorage,
     'assert-local-storage-false': parseAssertLocalStorageFalse,
     'assert-position': parseAssertPosition,
