@@ -577,15 +577,15 @@ function parseLocalStorage(parser) {
     };
 }
 
-function getInsertStrings(assertFalse, insideLoop) {
+function getInsertStrings(assertFalse, insideLoop, extra = '') {
     const insertBefore = 'try {\n';
 
     if (assertFalse) {
         if (insideLoop) {
             // We want to check ALL elements, not return at the first successful one!
-            return [insertBefore, '\n} catch(e) { continue; } throw "assert didn\'t fail";'];
+            return [insertBefore, `\n} catch(e) { continue; } throw "assert didn't fail${extra}";`];
         } else {
-            return [insertBefore, '\n} catch(e) { return; } throw "assert didn\'t fail";'];
+            return [insertBefore, `\n} catch(e) { return; } throw "assert didn't fail${extra}";`];
         }
     }
     return ['', ''];
@@ -1249,7 +1249,11 @@ function parseAssertTextInner(parser, assertFalse) {
         }
     }
 
-    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, enabled_checks['ALL']);
+    const [insertBefore, insertAfter] = getInsertStrings(
+        assertFalse,
+        false,
+        'TO_REPLACE',
+    );
     const selector = tuple[0].getSelector();
 
     const value = tuple[1].getStringValue();
@@ -1257,35 +1261,44 @@ function parseAssertTextInner(parser, assertFalse) {
 
     const checks = [];
     if (enabled_checks['CONTAINS']) {
-        checks.push(`browserUiTestHelpers.elemTextContains(e, "${value}");`);
+        checks.push([`browserUiTestHelpers.elemTextContains(e, "${value}");`, 'CONTAINS']);
     }
     if (enabled_checks['STARTS_WITH']) {
-        checks.push(`browserUiTestHelpers.elemTextStartsWith(e, "${value}");`);
+        checks.push([`browserUiTestHelpers.elemTextStartsWith(e, "${value}");`, 'STARTS_WITH']);
     }
     if (enabled_checks['ENDS_WITH']) {
-        checks.push(`browserUiTestHelpers.elemTextEndsWith(e, "${value}");`);
+        checks.push([`browserUiTestHelpers.elemTextEndsWith(e, "${value}");`, 'ENDS_WITH']);
     }
     if (checks.length === 0) {
-        checks.push(`browserUiTestHelpers.compareElemText(e, "${value}");`);
+        checks.push([`browserUiTestHelpers.compareElemText(e, "${value}");`, '']);
     }
 
-    let instructions;
+    let all_checks = '';
+    for (const check of checks) {
+        all_checks += '(() => {\n' +
+            insertBefore +
+            check[0] + '\n';
+
+        if (check[1].length > 0) {
+            all_checks += insertAfter.replace('TO_REPLACE', ` (for ${check[1]} check)`);
+        } else {
+            all_checks += insertAfter.replace('TO_REPLACE', '');
+        }
+
+        all_checks += '})();\n';
+    }
+
+    let instructions = getAndSetElements(selector, varName, enabled_checks['ALL'] === true);
     if (enabled_checks['ALL'] !== true) {
-        instructions = getAndSetElements(selector, varName, false);
-        for (const check of checks) {
-            instructions += `${insertBefore}await page.evaluate(e => {\n` +
-                check +
-                `\n}, ${varName});${insertAfter}`;
-        }
+        instructions += 'await page.evaluate(e => {\n' +
+            all_checks +
+            `}, ${varName});`;
     } else {
-        instructions = getAndSetElements(selector, varName, true) +
-            `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n`;
-        for (const check of checks) {
-            instructions += `${insertBefore}await page.evaluate(e => {\n` +
-                check +
-                `\n}, ${varName}[i]);${insertAfter}`;
-        }
-        instructions += '}';
+        instructions += `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
+            'await page.evaluate(e => {\n' +
+            all_checks +
+            `}, ${varName}[i]);\n` +
+            '}';
     }
     return {
         'instructions': [instructions],

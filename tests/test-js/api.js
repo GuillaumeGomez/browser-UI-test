@@ -2144,7 +2144,7 @@ function checkAssertPositionFalse(x, func) {
         '} catch(e) { return; } throw "assert didn\'t fail";\n');
 }
 
-function checkAssertTextInner(x, func, before, after, afterAllElements) {
+function checkAssertTextInner(x, func, before, after) {
     x.assert(func('("a", )'), {
         'error': 'invalid number of values in the tuple, read the documentation to see the ' +
             'accepted inputs',
@@ -2176,11 +2176,13 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
         'instructions': [
             'let parseAssertElemStr = await page.$("a");\n' +
             'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.compareElemText(e, "\\\'b");\n' +
-            '}, parseAssertElemStr);' +
-            after,
+            after('') +
+            '})();\n' +
+            '}, parseAssertElemStr);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2189,11 +2191,13 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
         'instructions': [
             'let parseAssertElemStr = await page.$("a");\n' +
             'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.compareElemText(e, "\\\'b");\n' +
-            '}, parseAssertElemStr);' +
-            after,
+            after('') +
+            '})();\n' +
+            '}, parseAssertElemStr);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2203,11 +2207,13 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'let parseAssertElemStr = await page.$$("a");\n' +
             'if (parseAssertElemStr.length === 0) { throw \'"a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.compareElemText(e, "\\\'b");\n' +
-            '}, parseAssertElemStr[i]);' +
-            afterAllElements +
+            after('') +
+            '})();\n' +
+            '}, parseAssertElemStr[i]);\n' +
             '}',
         ],
         'wait': false,
@@ -2218,11 +2224,13 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'let parseAssertElemStr = await page.$$("a");\n' +
             'if (parseAssertElemStr.length === 0) { throw \'"a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.compareElemText(e, "\\\'b");\n' +
-            '}, parseAssertElemStr[i]);' +
-            afterAllElements +
+            after('') +
+            '})();\n' +
+            '}, parseAssertElemStr[i]);\n' +
             '}',
         ],
         'wait': false,
@@ -2232,11 +2240,13 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
         'instructions': [
             'let parseAssertElemStr = await page.$("a");\n' +
             'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.compareElemText(e, "b");\n' +
-            '}, parseAssertElemStr);' +
-            after,
+            after('') +
+            '})();\n' +
+            '}, parseAssertElemStr);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2246,11 +2256,13 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'let parseAssertElemStr = await page.$$("a");\n' +
             'if (parseAssertElemStr.length === 0) { throw \'"a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.compareElemText(e, "b");\n' +
-            '}, parseAssertElemStr[i]);' +
-            afterAllElements +
+            after('') +
+            '})();\n' +
+            '}, parseAssertElemStr[i]);\n' +
             '}',
         ],
         'wait': false,
@@ -2260,11 +2272,13 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
         'instructions': [
             'let parseAssertElemStr = await page.$("a");\n' +
             'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.elemTextContains(e, "b");\n' +
-            '}, parseAssertElemStr);' +
-            after,
+            after(' (for CONTAINS check)') +
+            '})();\n' +
+            '}, parseAssertElemStr);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2273,11 +2287,13 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
         'instructions': [
             'let parseAssertElemStr = await page.$("a");\n' +
             'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.elemTextStartsWith(e, "b");\n' +
-            '}, parseAssertElemStr);' +
-            after,
+            after(' (for STARTS_WITH check)') +
+            '})();\n' +
+            '}, parseAssertElemStr);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2286,11 +2302,13 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
         'instructions': [
             'let parseAssertElemStr = await page.$("a");\n' +
             'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.elemTextEndsWith(e, "b");\n' +
-            '}, parseAssertElemStr);' +
-            after,
+            after(' (for ENDS_WITH check)') +
+            '})();\n' +
+            '}, parseAssertElemStr);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2299,16 +2317,18 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
         'instructions': [
             'let parseAssertElemStr = await page.$("a");\n' +
             'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.elemTextContains(e, "b");\n' +
-            '}, parseAssertElemStr);' +
-            after +
+            after(' (for CONTAINS check)') +
+            '})();\n' +
+            '(() => {\n' +
             before +
-            'await page.evaluate(e => {\n' +
             'browserUiTestHelpers.elemTextEndsWith(e, "b");\n' +
-            '}, parseAssertElemStr);' +
-            after,
+            after(' (for ENDS_WITH check)') +
+            '})();\n' +
+            '}, parseAssertElemStr);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2318,16 +2338,18 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
         'instructions': [
             'let parseAssertElemStr = await page.$("a");\n' +
             'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.elemTextContains(e, "b");\n' +
-            '}, parseAssertElemStr);' +
-            after +
+            after(' (for CONTAINS check)') +
+            '})();\n' +
+            '(() => {\n' +
             before +
-            'await page.evaluate(e => {\n' +
             'browserUiTestHelpers.elemTextEndsWith(e, "b");\n' +
-            '}, parseAssertElemStr);' +
-            after,
+            after(' (for ENDS_WITH check)') +
+            '})();\n' +
+            '}, parseAssertElemStr);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2338,16 +2360,18 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
         'instructions': [
             'let parseAssertElemStr = await page.$("a");\n' +
             'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.elemTextContains(e, "b");\n' +
-            '}, parseAssertElemStr);' +
-            after +
+            after(' (for CONTAINS check)') +
+            '})();\n' +
+            '(() => {\n' +
             before +
-            'await page.evaluate(e => {\n' +
             'browserUiTestHelpers.elemTextEndsWith(e, "b");\n' +
-            '}, parseAssertElemStr);' +
-            after,
+            after(' (for ENDS_WITH check)') +
+            '})();\n' +
+            '}, parseAssertElemStr);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2358,11 +2382,13 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'let parseAssertElemStr = await page.$$("a");\n' +
             'if (parseAssertElemStr.length === 0) { throw \'"a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.elemTextContains(e, "b");\n' +
-            '}, parseAssertElemStr[i]);' +
-            afterAllElements +
+            after(' (for CONTAINS check)') +
+            '})();\n' +
+            '}, parseAssertElemStr[i]);\n' +
             '}',
         ],
         'wait': false,
@@ -2373,16 +2399,18 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'let parseAssertElemStr = await page.$$("a");\n' +
             'if (parseAssertElemStr.length === 0) { throw \'"a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.elemTextContains(e, "b");\n' +
-            '}, parseAssertElemStr[i]);' +
-            afterAllElements +
+            after(' (for CONTAINS check)') +
+            '})();\n' +
+            '(() => {\n' +
             before +
-            'await page.evaluate(e => {\n' +
             'browserUiTestHelpers.elemTextStartsWith(e, "b");\n' +
-            '}, parseAssertElemStr[i]);' +
-            afterAllElements +
+            after(' (for STARTS_WITH check)') +
+            '})();\n' +
+            '}, parseAssertElemStr[i]);\n' +
             '}',
         ],
         'wait': false,
@@ -2395,11 +2423,13 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'let parseAssertElemStr = await page.$x("//a");\n' +
             'if (parseAssertElemStr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
             'parseAssertElemStr = parseAssertElemStr[0];\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.compareElemText(e, "b");\n' +
-            '}, parseAssertElemStr);' +
-            after,
+            after('') +
+            '})();\n' +
+            '}, parseAssertElemStr);',
         ],
         'wait': false,
         'checkResult': true,
@@ -2409,11 +2439,13 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'let parseAssertElemStr = await page.$x("//a");\n' +
             'if (parseAssertElemStr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.compareElemText(e, "b");\n' +
-            '}, parseAssertElemStr[i]);' +
-            afterAllElements +
+            after('') +
+            '})();\n' +
+            '}, parseAssertElemStr[i]);\n' +
             '}',
         ],
         'wait': false,
@@ -2424,11 +2456,13 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'let parseAssertElemStr = await page.$x("//a");\n' +
             'if (parseAssertElemStr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.compareElemText(e, "b");\n' +
-            '}, parseAssertElemStr[i]);' +
-            afterAllElements +
+            after('') +
+            '})();\n' +
+            '}, parseAssertElemStr[i]);\n' +
             '}',
         ],
         'wait': false,
@@ -2442,11 +2476,13 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
             'let parseAssertElemStr = await page.$x("//a");\n' +
             'if (parseAssertElemStr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
             'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            before +
             'await page.evaluate(e => {\n' +
+            '(() => {\n' +
+            before +
             'browserUiTestHelpers.compareElemText(e, "b");\n' +
-            '}, parseAssertElemStr[i]);' +
-            afterAllElements +
+            after('') +
+            '})();\n' +
+            '}, parseAssertElemStr[i]);\n' +
             '}',
         ],
         'wait': false,
@@ -2455,7 +2491,7 @@ function checkAssertTextInner(x, func, before, after, afterAllElements) {
 }
 
 function checkAssertText(x, func) {
-    checkAssertTextInner(x, func, '', '', '');
+    checkAssertTextInner(x, func, '', () => '');
 }
 
 function checkAssertTextFalse(x, func) {
@@ -2463,8 +2499,7 @@ function checkAssertTextFalse(x, func) {
         x,
         func,
         'try {\n',
-        '\n} catch(e) { return; } throw "assert didn\'t fail";',
-        '\n} catch(e) { continue; } throw "assert didn\'t fail";',
+        extra => `\n} catch(e) { return; } throw "assert didn't fail${extra}";`,
     );
 }
 
@@ -4895,7 +4930,9 @@ function checkParseContent(x, func) {
                     'let parseAssertElemStr = await page.$("a");\n' +
                         'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
                         'await page.evaluate(e => {\n' +
+                        '(() => {\n' +
                         'browserUiTestHelpers.compareElemText(e, "b");\n' +
+                        '})();\n' +
                         '}, parseAssertElemStr);',
                 ],
             },
