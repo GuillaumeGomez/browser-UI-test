@@ -20,4 +20,6 @@ module.exports = {
         'payment-handler',
         'push',
     ],
+    'COLOR_CHECK_ERROR': '`show-text: true` needs to be used before checking for `color` ' +
+        '(otherwise the browser doesn\'t compute it)',
 };
