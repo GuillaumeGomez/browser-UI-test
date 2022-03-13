@@ -114,46 +114,45 @@ function parseContent(content, options) {
             break;
         }
         const order = parser.command.getRaw().toLowerCase();
-        if (Object.prototype.hasOwnProperty.call(ORDERS, order)) {
-            if (firstGotoParsed === false) {
-                if (order !== 'goto' && NO_INTERACTION_COMMANDS.indexOf(order) === -1) {
-                    const cmds = NO_INTERACTION_COMMANDS.map(x => `\`${x}\``);
-                    const last = cmds.pop();
-                    const text = cmds.join(', ') + ` or ${last}`;
-                    return {
-                        'error': `First command must be \`goto\` (${text} can be used before)!`,
-                        'line': parser.currentLine,
-                    };
-                }
-                firstGotoParsed = order === 'goto';
-            } else if (BEFORE_GOTO.indexOf(order) !== -1) {
+        if (!Object.prototype.hasOwnProperty.call(ORDERS, order)) {
+            return {'error': `Unknown command "${order}"`, 'line': parser.currentLine};
+        }
+        if (firstGotoParsed === false) {
+            if (order !== 'goto' && NO_INTERACTION_COMMANDS.indexOf(order) === -1) {
+                const cmds = NO_INTERACTION_COMMANDS.map(x => `\`${x}\``);
+                const last = cmds.pop();
+                const text = cmds.join(', ') + ` or ${last}`;
                 return {
-                    'error': `Command ${order} must be used before first goto!`,
+                    'error': `First command must be \`goto\` (${text} can be used before)!`,
                     'line': parser.currentLine,
                 };
             }
-            res = ORDERS[order](parser, options);
-            if (res.error !== undefined) {
-                res.line = parser.currentLine;
-                return res;
-            }
-            if (res['warnings'] !== undefined) {
-                if (commands['warnings'] === undefined) {
-                    commands['warnings'] = [];
-                }
-                commands['warnings'].push.apply(commands['warnings'], res['warnings']);
-            }
-            commands['commands'].push({
-                'fatal_error': FATAL_ERROR_COMMANDS.indexOf(order) !== -1,
-                'wait': res['wait'],
-                'checkResult': res['checkResult'],
-                'original': parser.getOriginalCommand(),
-                'line_number': parser.command.line,
-                'instructions': res['instructions'],
-            });
-        } else {
-            return {'error': `Unknown command "${order}"`, 'line': parser.currentLine};
+            firstGotoParsed = order === 'goto';
+        } else if (BEFORE_GOTO.indexOf(order) !== -1) {
+            return {
+                'error': `Command ${order} must be used before first goto!`,
+                'line': parser.currentLine,
+            };
         }
+        res = ORDERS[order](parser, options);
+        if (res.error !== undefined) {
+            res.line = parser.currentLine;
+            return res;
+        }
+        if (res['warnings'] !== undefined) {
+            if (commands['warnings'] === undefined) {
+                commands['warnings'] = [];
+            }
+            commands['warnings'].push.apply(commands['warnings'], res['warnings']);
+        }
+        commands['commands'].push({
+            'fatal_error': FATAL_ERROR_COMMANDS.indexOf(order) !== -1,
+            'wait': res['wait'],
+            'checkResult': res['checkResult'],
+            'original': parser.getOriginalCommand(),
+            'line_number': parser.command.line,
+            'instructions': res['instructions'],
+        });
     }
     return commands;
 }
