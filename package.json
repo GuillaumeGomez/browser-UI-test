@@ -25,7 +25,7 @@
         "lint-fix": "eslint --fix src tests/test-js"
     },
     "files": [
-        "src/*.js"
+        "src"
     ],
     "repository": {
         "type": "git",
