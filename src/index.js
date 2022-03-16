@@ -259,7 +259,7 @@ async function runCommand(loaded, logs, options, browser) {
                 error_log += `(line ${line_number}) command \`${command['original']}\` was ` +
                     'supposed to fail but succeeded\n';
             }
-            if (error_log.length > 0) {
+            if (failed === true) {
                 if (command['fatal_error'] === true || extras.pauseOnError === true) {
                     break;
                 }
