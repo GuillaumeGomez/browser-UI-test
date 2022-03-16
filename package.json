@@ -1,6 +1,6 @@
 {
     "name": "browser-ui-test",
-    "version": "0.8.2",
+    "version": "0.8.3",
     "author": "Guillaume Gomez <guillaume1.gomez@gmail.com> (https://guillaume-gomez.fr)",
     "license": "MIT",
     "description": "Small JS framework to provide headless browser-based tests",
@@ -25,7 +25,7 @@
         "lint-fix": "eslint --fix src tests/test-js"
     },
     "files": [
-        "src/*.js"
+        "src"
     ],
     "repository": {
         "type": "git",
