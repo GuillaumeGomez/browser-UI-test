@@ -5,6 +5,8 @@ goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
 // This test ensures it fails because "header" doesn't end with  "Another" but starts with it.
 assert-text-false: ("header", "Another", [ENDS_WITH, STARTS_WITH])
 assert-text-false: ("header", "Another", STARTS_WITH)
+// Checks that if a command failed before this one, it'll still continue
+click: "header"
 // The opposite of the previous check.
 assert-text: ("header", "Another", [STARTS_WITH, ENDS_WITH])
 assert-text: ("header", "Another", ENDS_WITH)
@@ -12,4 +14,7 @@ assert-text: ("header", "Another", ENDS_WITH)
 assert-document-property-false: ({"title": "Other"}, [ENDS_WITH, STARTS_WITH])
 assert-document-property-false: ({"title": "Other"}, STARTS_WITH)
 assert-document-property: ({"title": "Other"}, [STARTS_WITH, ENDS_WITH])
+assert-document-property: ({"title": "Other"}, ENDS_WITH)
+// Ensures that a "fatal error" stops the script as expected.
+click: "#non-existent"
 assert-document-property: ({"title": "Other"}, ENDS_WITH)
