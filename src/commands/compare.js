@@ -39,8 +39,8 @@ function parseCompareElementsTextInner(parser, assertFalse) {
         return selector2;
     }
     const varName = 'parseCompareElementsText';
-    const selectors = getAndSetElements(selector1, varName + '1', false) +
-        getAndSetElements(selector2, varName + '2', false);
+    const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
+        getAndSetElements(selector2, varName + '2', false) + '\n';
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
 
@@ -131,8 +131,8 @@ function parseCompareElementsAttributeInner(parser, assertFalse) {
         return selector2;
     }
     const varName = 'parseCompareElementsAttr';
-    const selectors = getAndSetElements(selector1, varName + '1', false) +
-        getAndSetElements(selector2, varName + '2', false);
+    const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
+        getAndSetElements(selector2, varName + '2', false) + '\n';
 
     let arr = '';
     for (let i = 0; i < array.length; ++i) {
@@ -143,8 +143,7 @@ function parseCompareElementsAttributeInner(parser, assertFalse) {
     }
 
     const code = `const attributes = [${arr}];\n` +
-    'for (let i = 0; i < attributes.length; ++i) {\n' +
-    'const attr = attributes[i];\n' +
+    'for (const attr of attributes) {\n' +
     `${insertBefore}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n` +
         'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
     `}${insertAfter}\n` +
@@ -231,8 +230,8 @@ function parseCompareElementsCssInner(parser, assertFalse) {
         `, "${selector2.pseudo}"` : '';
 
     const varName = 'parseCompareElementsCss';
-    const selectors = getAndSetElements(selector1, varName + '1', false) +
-        getAndSetElements(selector2, varName + '2', false);
+    const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
+        getAndSetElements(selector2, varName + '2', false) + '\n';
 
     let arr = '';
     let needColorCheck = false;
@@ -253,8 +252,7 @@ function parseCompareElementsCssInner(parser, assertFalse) {
     }
 
     const code = `const properties = [${arr}];\n` +
-    'for (let i = 0; i < properties.length; ++i) {\n' +
-        'const css_property = properties[i];\n' +
+    'for (const css_property of properties) {\n' +
         `${insertBefore}let style1_1 = e1.style[css_property];\n` +
             'let style1_2 = computed_style1[css_property];\n' +
             'let style2_1 = e2.style[css_property];\n' +
@@ -351,12 +349,11 @@ function parseCompareElementsPropertyInner(parser, assertFalse) {
     }
 
     const varName = 'parseCompareElementsProp';
-    const selectors = getAndSetElements(selector1, varName + '1', false) +
-        getAndSetElements(selector2, varName + '2', false);
+    const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
+        getAndSetElements(selector2, varName + '2', false) + '\n';
 
     const code = `const ${varName}s = ${tuple[2].getText()};\n` +
-    `for (let i = 0; i < ${varName}s.length; ++i) {\n` +
-        `const property = ${varName}s[i];\n` +
+    `for (const property of ${varName}s) {\n` +
         `${insertBefore}const value = await ${varName}1.evaluateHandle((e, p) => {\n` +
             'return String(e[p]);\n' +
         '}, property);\n' +
@@ -437,8 +434,8 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
         return selector2;
     }
     const varName = 'parseCompareElementsPos';
-    const selectors = getAndSetElements(selector1, varName + '1', false) +
-        getAndSetElements(selector2, varName + '2', false);
+    const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
+        getAndSetElements(selector2, varName + '2', false) + '\n';
 
     const sub_tuple = tuple[2].getRaw();
     let x = false;
@@ -510,12 +507,13 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
             };
         }
     }
+    let instructions = selectors;
+    if (code.length !== 0) {
+        instructions += 'await page.evaluate((elem1, elem2) => {\n' +
+            `${code}}, ${varName}1, ${varName}2);`;
+    }
     return {
-        'instructions': [
-            selectors +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            `${code}}, ${varName}1, ${varName}2);`,
-        ],
+        'instructions': [instructions],
         'wait': false,
         'checkResult': true,
     };
@@ -573,13 +571,6 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
 
     if (entries.error !== undefined) {
         return entries;
-    } else if (entries.values.length === 0) {
-        return {
-            'instructions': [],
-            'wait': false,
-            'warnings': entries.warnings,
-            'checkResult': true,
-        };
     }
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
@@ -593,8 +584,8 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
         return selector2;
     }
     const varName = 'parseCompareElementsPosNear';
-    const selectors = getAndSetElements(selector1, varName + '1', false) +
-        getAndSetElements(selector2, varName + '2', false);
+    const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
+        getAndSetElements(selector2, varName + '2', false) + '\n';
 
     const warnings = [];
     let code = '';
@@ -646,12 +637,14 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
             };
         }
     }
+
+    let instructions = selectors;
+    if (code.length !== 0) {
+        instructions += 'await page.evaluate((elem1, elem2) => {\n' +
+            `${code}}, ${varName}1, ${varName}2);`;
+    }
     return {
-        'instructions': [
-            selectors +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            `${code}}, ${varName}1, ${varName}2);`,
-        ],
+        'instructions': [instructions],
         'wait': false,
         'checkResult': true,
         'warnings': warnings.length > 0 ? warnings : undefined,

@@ -26,8 +26,7 @@ if (parseCompareElementsCss2 === null) { throw '".content>.left" not found'; }
 await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);
 let computed_style2 = getComputedStyle(e2);
 const properties = ["color"];
-for (let i = 0; i < properties.length; ++i) {
-const css_property = properties[i];
+for (const css_property of properties) {
 try {
 let style1_1 = e1.style[css_property];
 let style1_2 = computed_style1[css_property];

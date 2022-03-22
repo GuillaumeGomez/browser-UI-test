@@ -100,21 +100,16 @@ function parseWaitForCss(parser) {
     const json = tuple[1].getRaw();
     const entries = validateJson(json, ['string', 'number'], 'CSS property');
 
+    const varName = 'parseWaitForCss';
+
     if (entries.error !== undefined) {
         return entries;
-    } else if (entries.values.length === 0) {
-        return {
-            'instructions': [],
-            'wait': false,
-            'warnings': entries.warnings,
-            'checkResult': true,
-        };
     }
+
     const propertyDict = buildPropertyDict(entries, 'CSS property', false);
     if (propertyDict.error !== undefined) {
         return propertyDict;
     }
-    const varName = 'parseWaitForCss';
     const varDict = varName + 'Dict';
     const varKey = varName + 'Key';
     const varValue = varName + 'Value';
@@ -144,7 +139,7 @@ if (e.style[${varKey}] != ${varValue} && computedEntry != ${varValue}) {
     nonMatchingProps.push(${varKey} + ": (" + computedEntry + " != " + ${varValue} + ")");
 }`;
 
-    instructions.push(getAndSetElements(selector, varName, false) +
+    instructions.push(getAndSetElements(selector, varName, false) + '\n' +
 // `page._timeoutSettings.timeout` is an internal thing so better be careful at any puppeteer
 // version update!
 `let timeLimit = page._timeoutSettings.timeout();
@@ -180,6 +175,8 @@ while (true) {
     return {
         'instructions': instructions,
         'wait': false,
+        'warnings': entries.warnings,
+        'checkResult': true,
     };
 }
 

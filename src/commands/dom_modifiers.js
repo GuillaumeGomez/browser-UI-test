@@ -43,7 +43,7 @@ function innerParseCssAttribute(parser, argName, varName, callback) {
         const value = tuple[2].getStringValue();
         return {
             'instructions': [
-                getAndSetElements(selector, varName, false) +
+                getAndSetElements(selector, varName, false) + '\n' +
                 `await page.evaluate(e => {\n${callback(attributeName, value)}\n}, ` +
                 `${varName});`,
             ],
@@ -92,7 +92,7 @@ function innerParseCssAttribute(parser, argName, varName, callback) {
     }
     return {
         'instructions': [
-            getAndSetElements(selector, varName, false) +
+            getAndSetElements(selector, varName, false) + '\n' +
             code,
         ],
         'warnings': warnings,
@@ -148,7 +148,7 @@ function parseText(parser) {
     const varName = 'parseTextElem';
     return {
         'instructions': [
-            getAndSetElements(selector, varName, false) +
+            getAndSetElements(selector, varName, false) + '\n' +
             'await page.evaluate(e => {\n' +
             'if (["input", "textarea"].indexOf(e.tagName.toLowerCase()) !== -1) {\n' +
             `e.value = "${value}";\n` +

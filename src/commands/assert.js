@@ -26,14 +26,8 @@ function parseAssertCssInner(parser, assertFalse) {
 
     if (entries.error !== undefined) {
         return entries;
-    } else if (entries.values.length === 0) {
-        return {
-            'instructions': [],
-            'wait': false,
-            'warnings': entries.warnings,
-            'checkResult': true,
-        };
     }
+
     const varName = 'parseAssertElemCss';
     const varDict = varName + 'Dict';
     const varKey = varName + 'Key';
@@ -72,13 +66,13 @@ throw 'expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\` for ${xpat
         );
     }
     if (!checkAllElements) {
-        instructions.push(getAndSetElements(selector, varName, checkAllElements) +
+        instructions.push(getAndSetElements(selector, varName, checkAllElements) + '\n' +
             'await page.evaluate(e => {\n' +
             `let assertComputedStyle = getComputedStyle(e${pseudo});\n${code}` +
             `}, ${varName});`,
         );
     } else {
-        instructions.push(getAndSetElements(selector, varName, checkAllElements) +
+        instructions.push(getAndSetElements(selector, varName, checkAllElements) + '\n' +
             `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
                 'await page.evaluate(e => {\n' +
                 `let assertComputedStyle = getComputedStyle(e${pseudo});\n${code}` +
@@ -169,7 +163,7 @@ function parseAssertDocumentPropertyInner(parser, assertFalse) {
         }
     }
 
-    if (entries.values.length === 0) {
+    if (Object.entries(entries.values).length === 0) {
         return {
             'instructions': [],
             'wait': false,
@@ -285,14 +279,6 @@ function parseAssertPropertyInner(parser, assertFalse) {
         return entries;
     }
 
-    if (entries.values.length === 0) {
-        return {
-            'instructions': [],
-            'wait': false,
-            'warnings': entries.warnings,
-            'checkResult': true,
-        };
-    }
     const varName = 'parseAssertElemProp';
     const varDict = varName + 'Dict';
     const varKey = varName + 'Key';
@@ -317,14 +303,14 @@ throw 'expected \`' + ${varValue} + '\` for property \`' + ${varKey} + '\` for $
     let instructions;
     if (!checkAllElements) {
         instructions = [
-            getAndSetElements(selector, varName, checkAllElements) +
+            getAndSetElements(selector, varName, checkAllElements) + '\n' +
             `await ${varName}.evaluate(e => {\n` +
                 `${code}` +
             '});',
         ];
     } else {
         instructions = [
-            getAndSetElements(selector, varName, checkAllElements) +
+            getAndSetElements(selector, varName, checkAllElements) + '\n' +
             `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
                 `await ${varName}[i].evaluate(e => {\n` +
                     `${code}` +
@@ -375,13 +361,6 @@ function parseAssertAttributeInner(parser, assertFalse) {
 
     if (entries.error !== undefined) {
         return entries;
-    } else if (entries.values.length === 0) {
-        return {
-            'instructions': [],
-            'wait': false,
-            'warnings': entries.warnings,
-            'checkResult': true,
-        };
     }
 
     const varName = 'parseAssertElemAttr';
@@ -409,14 +388,14 @@ throw 'expected \`' + ${varValue} + '\` for attribute \`' + ${varKey} + '\` for 
     let instructions;
     if (!checkAllElements) {
         instructions = [
-            getAndSetElements(selector, varName, checkAllElements) +
+            getAndSetElements(selector, varName, checkAllElements) + '\n' +
             'await page.evaluate(e => {\n' +
             code +
             `}, ${varName});`,
         ];
     } else {
         instructions = [
-            getAndSetElements(selector, varName, checkAllElements) +
+            getAndSetElements(selector, varName, checkAllElements) + '\n' +
             `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
                 'await page.evaluate(e => {\n' +
                 code +
@@ -595,7 +574,7 @@ function parseAssertTextInner(parser, assertFalse) {
         all_checks += '})();\n';
     }
 
-    let instructions = getAndSetElements(selector, varName, enabled_checks['ALL'] === true);
+    let instructions = getAndSetElements(selector, varName, enabled_checks['ALL'] === true) + '\n';
     if (enabled_checks['ALL'] !== true) {
         instructions += 'await page.evaluate(e => {\n' +
             all_checks +
@@ -725,13 +704,6 @@ function parseAssertPositionInner(parser, assertFalse) {
 
     if (entries.error !== undefined) {
         return entries;
-    } else if (entries.values.length === 0) {
-        return {
-            'instructions': [],
-            'wait': false,
-            'warnings': entries.warnings,
-            'checkResult': true,
-        };
     }
 
     const varName = 'parseAssertPosition';
@@ -777,26 +749,24 @@ function parseAssertPositionInner(parser, assertFalse) {
             };
         }
     }
-    let instructions;
+    let instructions = getAndSetElements(selector, varName, checkAllElements);
     if (!checkAllElements) {
-        instructions = [
-            getAndSetElements(selector, varName, checkAllElements) +
-            'await page.evaluate(elem => {\n' +
-            code +
-            `}, ${varName});`,
-        ];
+        if (code.length !== 0) {
+            instructions += '\nawait page.evaluate(elem => {\n' +
+                code +
+                `}, ${varName});`;
+        }
     } else {
-        instructions = [
-            getAndSetElements(selector, varName, checkAllElements) +
-            `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
+        if (code.length !== 0) {
+            instructions += `\nfor (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
                 'await page.evaluate(elem => {\n' +
                 code +
                 `}, ${varName}[i]);\n` +
-            '}',
-        ];
+            '}';
+        }
     }
     return {
-        'instructions': instructions,
+        'instructions': [instructions],
         'wait': false,
         'checkResult': true,
     };
