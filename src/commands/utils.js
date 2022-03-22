@@ -193,6 +193,34 @@ function fillEnabledChecks(elem, identifiers, enabled_checks, warnings, err_pos)
     return null;
 }
 
+function buildPropertyDict(entries, errorText, allowEmptyValues) {
+    const ret = {
+        'needColorCheck': false,
+        'dict': '',
+    };
+
+    // JSON.stringify produces a problematic output so instead we use this.
+    for (const [k, v] of Object.entries(entries.values)) {
+        if (v.length === 0 && allowEmptyValues !== true) {
+            return {
+                'error': `Empty values are not allowed: \`${k}\` has an empty value`,
+            };
+        } else if (k.length === 0) {
+            return {
+                'error': `Empty ${errorText} keys ("" or '') are not allowed`,
+            };
+        }
+        if (k === 'color') {
+            ret['needColorCheck'] = true;
+        }
+        if (ret['dict'].length > 0) {
+            ret['dict'] += ',';
+        }
+        ret['dict'] += `"${k}":"${v}"`;
+    }
+    return ret;
+}
+
 module.exports = {
     'getAndSetElements': getAndSetElements,
     'checkIntegerTuple': checkIntegerTuple,
@@ -200,4 +228,5 @@ module.exports = {
     'getInsertStrings': getInsertStrings,
     'getAssertSelector': getAssertSelector,
     'fillEnabledChecks': fillEnabledChecks,
+    'buildPropertyDict': buildPropertyDict,
 };
