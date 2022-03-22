@@ -1,6 +1,7 @@
 // All `assert*` commands.
 
 const {
+    buildPropertyDict,
     fillEnabledChecks,
     getAndSetElements,
     getAssertSelector,
@@ -18,8 +19,7 @@ function parseAssertCssInner(parser, assertFalse) {
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
 
     const xpath = selector.isXPath ? 'XPath ' : 'selector ';
-    const pseudo = !selector.isXPath && selector.pseudo !== null ?
-        `, "${selector.pseudo}"` : '';
+    const pseudo = !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '';
 
     const json = selector.tuple[1].getRaw();
     const entries = validateJson(json, ['string', 'number'], 'CSS property');
@@ -38,26 +38,9 @@ function parseAssertCssInner(parser, assertFalse) {
     const varDict = varName + 'Dict';
     const varKey = varName + 'Key';
     const varValue = varName + 'Value';
-    let needColorCheck = false;
-    // JSON.stringify produces a problematic output so instead we use this.
-    let d = '';
-    for (const [k, v] of Object.entries(entries.values)) {
-        if (v.length === 0) {
-            return {
-                'error': `Empty values are not allowed: \`${k}\` has an empty value`,
-            };
-        } else if (k.length === 0) {
-            return {
-                'error': 'Empty CSS property keys ("" or \'\') are not allowed',
-            };
-        }
-        if (k === 'color') {
-            needColorCheck = true;
-        }
-        if (d.length > 0) {
-            d += ',';
-        }
-        d += `"${k}":"${v}"`;
+    const propertyDict = buildPropertyDict(entries, 'CSS property', false);
+    if (propertyDict.error !== undefined) {
+        return propertyDict;
     }
     // This allows to round values in pixels to make checks simpler in case it's a decimal.
     const extra = `\
@@ -71,7 +54,7 @@ browserUiTestHelpers.extractFloat(assertComputedStyle[${varKey}], true) + 'px\`)
     }
     continue;
 }`;
-    const code = `const ${varDict} = {${d}};
+    const code = `const ${varDict} = {${propertyDict['dict']}};
 for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
 ${insertBefore}if (e.style[${varKey}] != ${varValue} && \
 assertComputedStyle[${varKey}] != ${varValue}) {
@@ -82,7 +65,7 @@ throw 'expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\` for ${xpat
 }\n`;
 
     const instructions = [];
-    if (needColorCheck) {
+    if (propertyDict['needColorCheck']) {
         instructions.push('if (!arg.showText) {\n' +
             `throw "${COLOR_CHECK_ERROR}";\n` +
             '}',

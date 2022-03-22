@@ -1,5 +1,12 @@
 // Contains commands which don't really have a "category".
 
+const { COLOR_CHECK_ERROR } = require('../consts.js');
+const {
+    buildPropertyDict,
+    getAndSetElements,
+    validateJson,
+} = require('./utils.js');
+
 // Possible inputs:
 //
 // * Number of milliseconds
@@ -46,6 +53,130 @@ function parseWaitFor(parser) {
             `await page.waitForSelector("${selector.value}");`,
         ];
     }
+    return {
+        'instructions': instructions,
+        'wait': false,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector", {"CSS property name": "expected CSS property value"}
+// * ("XPath", {"CSS property name": "expected CSS property value"}
+function parseWaitForCss(parser) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {
+            'error': 'expected a tuple with a string and a JSON dict, found nothing',
+        };
+    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
+        return {
+            'error': 'expected a tuple with a string and a JSON dict, ' +
+                `found \`${parser.getRawArgs()}\``,
+        };
+    }
+    const tuple = elems[0].getRaw();
+    if (tuple.length !== 2) {
+        return {
+            'error': 'expected a tuple with a string and a JSON dict, ' +
+                `found \`${parser.getRawArgs()}\``,
+        };
+    } else if (tuple[0].kind !== 'string') {
+        return {
+            'error': 'expected a CSS selector or an XPath as first tuple element, ' +
+                `found \`${tuple[0].getArticleKind()}\``,
+        };
+    } else if (tuple[1].kind !== 'json') {
+        return {
+            'error': 'expected a JSON dict as second tuple element, ' +
+                `found \`${tuple[1].getArticleKind()}\``,
+        };
+    }
+    const selector = tuple[0].getSelector();
+    if (selector.error !== undefined) {
+        return selector;
+    }
+    const json = tuple[1].getRaw();
+    const entries = validateJson(json, ['string', 'number'], 'CSS property');
+
+    if (entries.error !== undefined) {
+        return entries;
+    } else if (entries.values.length === 0) {
+        return {
+            'instructions': [],
+            'wait': false,
+            'warnings': entries.warnings,
+            'checkResult': true,
+        };
+    }
+    const propertyDict = buildPropertyDict(entries, 'CSS property', false);
+    if (propertyDict.error !== undefined) {
+        return propertyDict;
+    }
+    const varName = 'parseWaitForCss';
+    const varDict = varName + 'Dict';
+    const varKey = varName + 'Key';
+    const varValue = varName + 'Value';
+
+    const pseudo = !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '';
+
+    const instructions = [];
+    if (propertyDict['needColorCheck']) {
+        instructions.push('if (!arg.showText) {\n' +
+            `throw "${COLOR_CHECK_ERROR}";\n` +
+            '}',
+        );
+    }
+    const nonMatchingS = `nonMatchingProps.push(${varKey} + ": ((" + computedEntry + " && " + \
+extractedFloat + ") != " + ${varValue} + ")");`;
+    const check = `\
+computedEntry = computedStyle[${varKey}];
+if (e.style[${varKey}] != ${varValue} && computedEntry != ${varValue}) {
+    if (typeof computedEntry === "string" && computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
+        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+        if (extractedFloat !== ${varValue}) {
+            ${nonMatchingS}
+        } else {
+            continue;
+        }
+    }
+    nonMatchingProps.push(${varKey} + ": (" + computedEntry + " != " + ${varValue} + ")");
+}`;
+
+    instructions.push(getAndSetElements(selector, varName, false) +
+// `page._timeoutSettings.timeout` is an internal thing so better be careful at any puppeteer
+// version update!
+`let timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let nonMatchingProps;
+while (true) {
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        let extractedFloat;
+        const ${varDict} = {${propertyDict['dict']}};
+        const computedStyle = getComputedStyle(e${pseudo});
+        for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+            ${check}
+        }
+        return nonMatchingProps;
+    }, ${varName});
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following CSS properties still don't match: [" + props + "]");
+    }
+}`);
+
     return {
         'instructions': instructions,
         'wait': false,
@@ -106,4 +237,5 @@ function parseLocalStorage(parser) {
 module.exports = {
     'parseLocalStorage': parseLocalStorage,
     'parseWaitFor': parseWaitFor,
+    'parseWaitForCss': parseWaitForCss,
 };

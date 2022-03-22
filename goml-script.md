@@ -112,6 +112,7 @@ Here's the command list:
  * [`text`](#text)
  * [`timeout`](#timeout)
  * [`wait-for`](#wait-for)
+ * [`wait-for-css`](#wait-for-css)
  * [`write`](#write)
 
 #### assert
@@ -891,7 +892,7 @@ timeout: 0 // no more timeout, to be used cautiously!
 
 **wait-for** command waits for a given duration or for an element to be created. It expects a CSS selector or an XPath or a duration in milliseconds.
 
-**/!\\** Be careful when using it: if the given selector never appears, the test will timeout after 30 seconds by default (can be changed with the `timeout` command).
+**/!\\** Be careful when using it: if the given selector never appears, the test will timeout after 30 seconds by default (can be changed with the [`timeout`](#timeout) command).
 
 Examples:
 
@@ -905,6 +906,23 @@ wait-for: "//*[@class='element']"
 wait-for: "#element > a"
 // Same with an XPath:
 wait-for: "//*[@id='element']/a"
+```
+
+#### wait-for-css
+
+**wait-for-css** command waits for the given element to have the expected values for the provided CSS keys. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+
+Important to note: if the element doesn't exist, the command will fail too.
+
+Examples:
+
+```
+wait-for-css: ("#element", {"font-size": "12px"})
+wait-for-css: ("#element", {"font-size": "12px", "margin-top": "12px"})
+
+// Same with an XPath:
+wait-for-css: ("//*[@id='element']", {"font-size": "12px"})
+wait-for-css: ("//*[@id='element']", {"font-size": "12px", "margin-top": "12px"})
 ```
 
 #### write

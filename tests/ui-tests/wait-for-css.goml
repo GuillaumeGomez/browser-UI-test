@@ -1,0 +1,11 @@
+// This test ensures that the `wait-for-css` command is behaving like expected.
+screenshot-comparison: false
+goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+timeout: 500
+// Shouldn't wait here since it's already the case.
+wait-for-css: ("#js-call", {"margin-top": "0px"})
+click: "#js-call"
+// Should wait for 250ms here.
+wait-for-css: ("#js-call", {"margin-top": "12px"})
+// This next one should fail.
+wait-for-css: ("#js-call", {"margin-top": "13px"})
