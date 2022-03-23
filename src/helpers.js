@@ -15,6 +15,7 @@ function getElemText(e, value) {
 
 // eslint-disable-next-line no-unused-vars
 const browserUiTestHelpers = {
+    getElemText: getElemText,
     compareElemText: function(e, value) {
         const elemValue = getElemText(e, value);
         if (elemValue !== value) {

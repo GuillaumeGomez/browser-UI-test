@@ -115,8 +115,8 @@ function waitForInitializer(parser, errorMessage, allowEmptyValues) {
 
 // Possible inputs:
 //
-// * ("CSS selector", {"CSS property name": "expected CSS property value"}
-// * ("XPath", {"CSS property name": "expected CSS property value"}
+// * ("CSS selector", {"CSS property name": "expected CSS property value"})
+// * ("XPath", {"CSS property name": "expected CSS property value"})
 function parseWaitForCss(parser) {
     const data = waitForInitializer(parser, 'CSS property', false);
     if (data.error !== undefined) {
@@ -194,8 +194,8 @@ while (true) {
 
 // Possible inputs:
 //
-// * ("CSS selector", {"attribute name": "expected attribute value"}
-// * ("XPath", {"attribute name": "expected attribute value"}
+// * ("CSS selector", {"attribute name": "expected attribute value"})
+// * ("XPath", {"attribute name": "expected attribute value"})
 function parseWaitForAttribute(parser) {
     const data = waitForInitializer(parser, 'attribute', true);
     if (data.error !== undefined) {
@@ -249,6 +249,80 @@ while (true) {
         'instructions': instructions,
         'wait': false,
         'warnings': data['warnings'],
+        'checkResult': true,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector", "text")
+// * ("XPath", "text")
+function parseWaitForText(parser) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {
+            'error': 'expected a tuple with two strings, found nothing',
+        };
+    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
+        return {
+            'error': 'expected a tuple with two strings, ' +
+                `found \`${parser.getRawArgs()}\``,
+        };
+    }
+    const tuple = elems[0].getRaw();
+    if (tuple.length !== 2) {
+        return {
+            'error': 'expected a tuple with two strings, ' +
+                `found \`${parser.getRawArgs()}\``,
+        };
+    } else if (tuple[0].kind !== 'string') {
+        return {
+            'error': 'expected a CSS selector or an XPath as first tuple element, ' +
+                `found \`${tuple[0].getArticleKind()}\``,
+        };
+    } else if (tuple[1].kind !== 'string') {
+        return {
+            'error': 'expected a string as second tuple element, ' +
+                `found \`${tuple[1].getArticleKind()}\``,
+        };
+    }
+    const selector = tuple[0].getSelector();
+    if (selector.error !== undefined) {
+        return selector;
+    }
+    const value = tuple[1].getStringValue();
+    const varName = 'parseWaitForText';
+
+    const instructions = getAndSetElements(selector, varName, false) + '\n' +
+// `page._timeoutSettings.timeout` is an internal thing so better be careful at any puppeteer
+// version update!
+`let timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+const value = "${value}";
+let allTime = 0;
+let computedEntry;
+while (true) {
+    computedEntry = await page.evaluate(e => {
+        return browserUiTestHelpers.getElemText(e, "${value}");
+    }, ${varName});
+    if (computedEntry === value) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error("The text still doesn't match: \`" + computedEntry + "\` != \
+\`" + value + "\`");
+    }
+}`;
+
+    return {
+        'instructions': [instructions],
+        'wait': false,
         'checkResult': true,
     };
 }
@@ -309,4 +383,5 @@ module.exports = {
     'parseWaitFor': parseWaitFor,
     'parseWaitForAttribute': parseWaitForAttribute,
     'parseWaitForCss': parseWaitForCss,
+    'parseWaitForText': parseWaitForText,
 };
