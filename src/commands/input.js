@@ -25,7 +25,7 @@ function parseClick(parser) {
         const varName = 'parseClickVar';
         return {
             'instructions': [
-                getAndSetElements(selector, varName, false) +
+                getAndSetElements(selector, varName, false) + '\n' +
                 `await ${varName}.click();`,
             ],
         };
@@ -67,7 +67,7 @@ function parseFocus(parser) {
         const varName = 'parseFocusVar';
         return {
             'instructions': [
-                getAndSetElements(selector, varName, false) +
+                getAndSetElements(selector, varName, false) + '\n' +
                 `await ${varName}.focus();`,
             ],
         };
@@ -138,7 +138,7 @@ function parseWrite(parser) {
         if (selector.isXPath) {
             return {
                 'instructions': [
-                    getAndSetElements(selector, varName, false) +
+                    getAndSetElements(selector, varName, false) + '\n' +
                     `await ${varName}.type("${tuple[1].getStringValue()}");`,
                 ],
             };
@@ -156,7 +156,7 @@ function parseWrite(parser) {
     if (selector.isXPath) {
         return {
             'instructions': [
-                getAndSetElements(selector, varName, false) +
+                getAndSetElements(selector, varName, false) + '\n' +
                 `${varName}.focus();`,
                 `await page.keyboard.press(String.fromCharCode(${ret.value}));`,
             ],
@@ -282,7 +282,7 @@ function parseMoveCursorTo(parser) {
             const varName = 'parseMoveCursorToVar';
             return {
                 'instructions': [
-                    getAndSetElements(selector, varName, false) +
+                    getAndSetElements(selector, varName, false) + '\n' +
                     `await ${varName}.hover();`,
                 ],
             };
@@ -379,7 +379,7 @@ function parseDragAndDrop(parser) {
                 return selector;
             }
             const box = `${varName}_box`;
-            code += getAndSetElements(selector, varName, false) +
+            code += getAndSetElements(selector, varName, false) + '\n' +
                 `const ${box} = await ${varName}.boundingBox();\n` +
                 `const ${posName} = [${box}.x + ${box}.width / 2, ${box}.y + ${box}.height / 2];\n`;
         } else {
