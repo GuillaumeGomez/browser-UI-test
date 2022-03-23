@@ -6702,7 +6702,23 @@ async function checkCommands(x = new Assert()) {
         `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
 
     x.endTestSuite(false);
-    return api_errors + exports_errors;
+
+    print('');
+    // The goal in this one is to check that all commands are tested.
+    x.startTestSuite('Commands tested', false);
+
+    for (const order of Object.keys(parserFuncs.ORDERS)) {
+        if (TO_CHECK.findIndex(c => c.name === order) === -1) {
+            x.addError(`command "${order}" needs to be tested!`);
+        }
+    }
+    const untested_errors = x.getTotalErrors();
+
+    print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
+        `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
+    x.endTestSuite(false);
+
+    return api_errors + exports_errors + untested_errors;
 }
 
 if (require.main === module) {
