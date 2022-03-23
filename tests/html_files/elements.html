@@ -53,7 +53,10 @@ function change_style() {
 setTimeout(() => { document.getElementById("js-call").style.marginTop = "12px"; }, 250);
 }
 function change_attr() {
-setTimeout(() => { document.getElementById("js-call-attr").setAttribute("data-a", "b"); }, 250);
+setTimeout(() => {
+  document.getElementById("js-call-attr").setAttribute("data-a", "b");
+  document.getElementById("js-call-attr").textContent = "hello";
+}, 250);
 }</script>
 	</body>
 </html>

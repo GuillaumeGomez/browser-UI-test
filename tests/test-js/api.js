@@ -5851,7 +5851,6 @@ function checkWaitForAttribute(x, func) {
 }
 
 function checkWaitForCss(x, func) {
-    // Check integer
     x.assert(func(''), {
         'error': 'expected a tuple with a string and a JSON dict, found nothing',
     });
@@ -6270,6 +6269,118 @@ function checkWaitForCss(x, func) {
     });
 }
 
+function checkWaitForText(x, func) {
+    x.assert(func(''), {
+        'error': 'expected a tuple with two strings, found nothing',
+    });
+    x.assert(func('hello'), {
+        'error': 'expected a tuple with two strings, found `hello`',
+    });
+    x.assert(func('(1)'), {
+        'error': 'expected a tuple with two strings, found `(1)`',
+    });
+    x.assert(func('(1, 2)'), {
+        'error': 'expected a CSS selector or an XPath as first tuple element, found `a number`',
+    });
+    x.assert(func('("a", 2)'), {
+        'error': 'expected a string as second tuple element, found `a number`',
+    });
+
+    // Check CSS selector.
+    x.assert(func('("a", "b")'), {
+        'instructions': [
+            'let parseWaitForText = await page.$("a");\n' +
+            'if (parseWaitForText === null) { throw \'"a" not found\'; }\n' +
+            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'const value = "b";\n' +
+            'let allTime = 0;\n' +
+            'let computedEntry;\n' +
+            'while (true) {\n' +
+            '    computedEntry = await page.evaluate(e => {\n' +
+            '        return browserUiTestHelpers.getElemText(e, "b");\n' +
+            '    }, parseWaitForText);\n' +
+            '    if (computedEntry === value) {\n' +
+            '        break;\n' +
+            '    }\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The text still doesn\'t match: `" + computedEntry + "` != `' +
+                '" + value + "`");\n' +
+            '    }\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a::after", "b")'), {
+        'instructions': [
+            'let parseWaitForText = await page.$("a");\n' +
+            'if (parseWaitForText === null) { throw \'"a" not found\'; }\n' +
+            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'const value = "b";\n' +
+            'let allTime = 0;\n' +
+            'let computedEntry;\n' +
+            'while (true) {\n' +
+            '    computedEntry = await page.evaluate(e => {\n' +
+            '        return browserUiTestHelpers.getElemText(e, "b");\n' +
+            '    }, parseWaitForText);\n' +
+            '    if (computedEntry === value) {\n' +
+            '        break;\n' +
+            '    }\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The text still doesn\'t match: `" + computedEntry + "` != `' +
+                '" + value + "`");\n' +
+            '    }\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    x.assert(func('("//a", "b")'), {
+        'instructions': [
+            'let parseWaitForText = await page.$x("//a");\n' +
+            'if (parseWaitForText.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseWaitForText = parseWaitForText[0];\n' +
+            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'const value = "b";\n' +
+            'let allTime = 0;\n' +
+            'let computedEntry;\n' +
+            'while (true) {\n' +
+            '    computedEntry = await page.evaluate(e => {\n' +
+            '        return browserUiTestHelpers.getElemText(e, "b");\n' +
+            '    }, parseWaitForText);\n' +
+            '    if (computedEntry === value) {\n' +
+            '        break;\n' +
+            '    }\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The text still doesn\'t match: `" + computedEntry + "` != `' +
+                '" + value + "`");\n' +
+            '    }\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+}
+
 function checkWrite(x, func) {
     // check tuple argument
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
@@ -6644,6 +6755,11 @@ const TO_CHECK = [
         'name': 'wait-for-css',
         'func': checkWaitForCss,
         'toCall': (e, o) => wrapper(parserFuncs.parseWaitForCss, e, o),
+    },
+    {
+        'name': 'wait-for-text',
+        'func': checkWaitForText,
+        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForText, e, o),
     },
     {
         'name': 'write',
