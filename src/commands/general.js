@@ -59,11 +59,7 @@ function parseWaitFor(parser) {
     };
 }
 
-// Possible inputs:
-//
-// * ("CSS selector", {"CSS property name": "expected CSS property value"}
-// * ("XPath", {"CSS property name": "expected CSS property value"}
-function parseWaitForCss(parser) {
+function waitForInitializer(parser, errorMessage, allowEmptyValues) {
     const elems = parser.elems;
 
     if (elems.length === 0) {
@@ -98,33 +94,49 @@ function parseWaitForCss(parser) {
         return selector;
     }
     const json = tuple[1].getRaw();
-    const entries = validateJson(json, ['string', 'number'], 'CSS property');
-
-    const varName = 'parseWaitForCss';
+    const entries = validateJson(json, ['string', 'number'], errorMessage);
 
     if (entries.error !== undefined) {
         return entries;
     }
 
-    const propertyDict = buildPropertyDict(entries, 'CSS property', false);
+    const propertyDict = buildPropertyDict(entries, errorMessage, allowEmptyValues);
     if (propertyDict.error !== undefined) {
         return propertyDict;
     }
+
+    return {
+        'selector': selector,
+        'warnings': entries.warnings,
+        'pseudo': !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '',
+        'propertyDict': propertyDict,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector", {"CSS property name": "expected CSS property value"}
+// * ("XPath", {"CSS property name": "expected CSS property value"}
+function parseWaitForCss(parser) {
+    const data = waitForInitializer(parser, 'CSS property', false);
+    if (data.error !== undefined) {
+        return data;
+    }
+
+    const varName = 'parseWaitForCss';
     const varDict = varName + 'Dict';
     const varKey = varName + 'Key';
     const varValue = varName + 'Value';
 
-    const pseudo = !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '';
-
     const instructions = [];
-    if (propertyDict['needColorCheck']) {
+    if (data['propertyDict']['needColorCheck']) {
         instructions.push('if (!arg.showText) {\n' +
             `throw "${COLOR_CHECK_ERROR}";\n` +
             '}',
         );
     }
-    const nonMatchingS = `nonMatchingProps.push(${varKey} + ": ((" + computedEntry + " && " + \
-extractedFloat + ") != " + ${varValue} + ")");`;
+    const nonMatchingS = `nonMatchingProps.push(${varKey} + ": ((\`" + computedEntry + "\` && \`" \
++ extractedFloat + "\`) != \`" + ${varValue} + "\`)");`;
     const check = `\
 computedEntry = computedStyle[${varKey}];
 if (e.style[${varKey}] != ${varValue} && computedEntry != ${varValue}) {
@@ -136,10 +148,10 @@ if (e.style[${varKey}] != ${varValue} && computedEntry != ${varValue}) {
             continue;
         }
     }
-    nonMatchingProps.push(${varKey} + ": (" + computedEntry + " != " + ${varValue} + ")");
+    nonMatchingProps.push(${varKey} + ": (\`" + computedEntry + "\` != \`" + ${varValue} + "\`)");
 }`;
 
-    instructions.push(getAndSetElements(selector, varName, false) + '\n' +
+    instructions.push(getAndSetElements(data['selector'], varName, false) + '\n' +
 // `page._timeoutSettings.timeout` is an internal thing so better be careful at any puppeteer
 // version update!
 `let timeLimit = page._timeoutSettings.timeout();
@@ -151,8 +163,8 @@ while (true) {
         const nonMatchingProps = [];
         let computedEntry;
         let extractedFloat;
-        const ${varDict} = {${propertyDict['dict']}};
-        const computedStyle = getComputedStyle(e${pseudo});
+        const ${varDict} = {${data['propertyDict']['dict']}};
+        const computedStyle = getComputedStyle(e${data['pseudo']});
         for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
             ${check}
         }
@@ -175,7 +187,68 @@ while (true) {
     return {
         'instructions': instructions,
         'wait': false,
-        'warnings': entries.warnings,
+        'warnings': data['warnings'],
+        'checkResult': true,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector", {"attribute name": "expected attribute value"}
+// * ("XPath", {"attribute name": "expected attribute value"}
+function parseWaitForAttribute(parser) {
+    const data = waitForInitializer(parser, 'attribute', true);
+    if (data.error !== undefined) {
+        return data;
+    }
+
+    const varName = 'parseWaitForAttr';
+    const varDict = varName + 'Dict';
+    const varKey = varName + 'Key';
+    const varValue = varName + 'Value';
+
+    const instructions = [];
+    const check = `\
+computedEntry = e.getAttribute(${varKey});
+if (computedEntry !== ${varValue}) {
+    nonMatchingProps.push(${varKey} + ": (\`" + computedEntry + "\` != \`" + ${varValue} + "\`)");
+}`;
+
+    instructions.push(getAndSetElements(data['selector'], varName, false) + '\n' +
+// `page._timeoutSettings.timeout` is an internal thing so better be careful at any puppeteer
+// version update!
+`let timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let nonMatchingProps;
+while (true) {
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const ${varDict} = {${data['propertyDict']['dict']}};
+        for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+            ${check}
+        }
+        return nonMatchingProps;
+    }, ${varName});
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following attributes still don't match: [" + props + "]");
+    }
+}`);
+
+    return {
+        'instructions': instructions,
+        'wait': false,
+        'warnings': data['warnings'],
         'checkResult': true,
     };
 }
@@ -234,5 +307,6 @@ function parseLocalStorage(parser) {
 module.exports = {
     'parseLocalStorage': parseLocalStorage,
     'parseWaitFor': parseWaitFor,
+    'parseWaitForAttribute': parseWaitForAttribute,
     'parseWaitForCss': parseWaitForCss,
 };
