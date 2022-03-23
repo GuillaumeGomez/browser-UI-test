@@ -9,3 +9,5 @@ click: "#js-call"
 wait-for-css: ("#js-call", {"margin-top": "12px"})
 // This next one should fail.
 wait-for-css: ("#js-call", {"margin-top": "13px"})
+// Check that the script won't stop running anything after the previous command failed.
+assert-css: ("#js-call", {"margin-top": "12px"})

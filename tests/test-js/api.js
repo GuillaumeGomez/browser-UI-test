@@ -5533,6 +5533,323 @@ function checkWaitFor(x, func) {
     });
 }
 
+function checkWaitForAttribute(x, func) {
+    // Check integer
+    x.assert(func(''), {
+        'error': 'expected a tuple with a string and a JSON dict, found nothing',
+    });
+    x.assert(func('hello'), {
+        'error': 'expected a tuple with a string and a JSON dict, found `hello`',
+    });
+    x.assert(func('(1)'), {
+        'error': 'expected a tuple with a string and a JSON dict, found `(1)`',
+    });
+    x.assert(func('(1, 2)'), {
+        'error': 'expected a CSS selector or an XPath as first tuple element, found `a number`',
+    });
+    x.assert(func('("a", 2)'), {
+        'error': 'expected a JSON dict as second tuple element, found `a number`',
+    });
+    x.assert(func('("a", {"b": {"a": 2}})'), {
+        'error': 'only string and number are allowed, found `{"a": 2}` (a json)',
+    });
+
+    // Check css selector
+    x.assert(func('("a", {})'), {
+        'instructions': [
+            'let parseWaitForAttr = await page.$("a");\n' +
+            'if (parseWaitForAttr === null) { throw \'"a" not found\'; }\n' +
+            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'let allTime = 0;\n' +
+            'let nonMatchingProps;\n' +
+            'while (true) {\n' +
+            '    nonMatchingProps = await page.evaluate(e => {\n' +
+            '        const nonMatchingProps = [];\n' +
+            '        let computedEntry;\n' +
+            '        const parseWaitForAttrDict = {};\n' +
+            '        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(' +
+                'parseWaitForAttrDict)) {\n' +
+            '            computedEntry = e.getAttribute(parseWaitForAttrKey);\n' +
+            'if (computedEntry !== parseWaitForAttrValue) {\n' +
+            '    nonMatchingProps.push(parseWaitForAttrKey + ": (`" + computedEntry + "` != `" + ' +
+                'parseWaitForAttrValue + "`)");\n' +
+            '}\n' +
+            '        }\n' +
+            '        return nonMatchingProps;\n' +
+            '    }, parseWaitForAttr);\n' +
+            '    if (nonMatchingProps.length === 0) {\n' +
+            '        break;\n' +
+            '    }\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        const props = nonMatchingProps.join(", ");\n' +
+            '        throw new Error("The following attributes still don\'t match: [" + ' +
+                'props + "]");\n' +
+            '    }\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"x": 1})'), {
+        'instructions': [
+            'let parseWaitForAttr = await page.$("a");\n' +
+            'if (parseWaitForAttr === null) { throw \'"a" not found\'; }\n' +
+            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'let allTime = 0;\n' +
+            'let nonMatchingProps;\n' +
+            'while (true) {\n' +
+            '    nonMatchingProps = await page.evaluate(e => {\n' +
+            '        const nonMatchingProps = [];\n' +
+            '        let computedEntry;\n' +
+            '        const parseWaitForAttrDict = {"x":"1"};\n' +
+            '        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(' +
+                'parseWaitForAttrDict)) {\n' +
+            '            computedEntry = e.getAttribute(parseWaitForAttrKey);\n' +
+            'if (computedEntry !== parseWaitForAttrValue) {\n' +
+            '    nonMatchingProps.push(parseWaitForAttrKey + ": (`" + computedEntry + "` != `" + ' +
+                'parseWaitForAttrValue + "`)");\n' +
+            '}\n' +
+            '        }\n' +
+            '        return nonMatchingProps;\n' +
+            '    }, parseWaitForAttr);\n' +
+            '    if (nonMatchingProps.length === 0) {\n' +
+            '        break;\n' +
+            '    }\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        const props = nonMatchingProps.join(", ");\n' +
+            '        throw new Error("The following attributes still don\'t match: [" + ' +
+                'props + "]");\n' +
+            '    }\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"x": 1, "y": "2"})'), {
+        'instructions': [
+            'let parseWaitForAttr = await page.$("a");\n' +
+            'if (parseWaitForAttr === null) { throw \'"a" not found\'; }\n' +
+            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'let allTime = 0;\n' +
+            'let nonMatchingProps;\n' +
+            'while (true) {\n' +
+            '    nonMatchingProps = await page.evaluate(e => {\n' +
+            '        const nonMatchingProps = [];\n' +
+            '        let computedEntry;\n' +
+            '        const parseWaitForAttrDict = {"x":"1","y":"2"};\n' +
+            '        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(' +
+                'parseWaitForAttrDict)) {\n' +
+            '            computedEntry = e.getAttribute(parseWaitForAttrKey);\n' +
+            'if (computedEntry !== parseWaitForAttrValue) {\n' +
+            '    nonMatchingProps.push(parseWaitForAttrKey + ": (`" + computedEntry + "` != `" + ' +
+                'parseWaitForAttrValue + "`)");\n' +
+            '}\n' +
+            '        }\n' +
+            '        return nonMatchingProps;\n' +
+            '    }, parseWaitForAttr);\n' +
+            '    if (nonMatchingProps.length === 0) {\n' +
+            '        break;\n' +
+            '    }\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        const props = nonMatchingProps.join(", ");\n' +
+            '        throw new Error("The following attributes still don\'t match: [" + ' +
+                'props + "]");\n' +
+            '    }\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    // Check pseudo element.
+    x.assert(func('("a::after", {"x": 1, "y": "2"})'), {
+        'instructions': [
+            'let parseWaitForAttr = await page.$("a");\n' +
+            'if (parseWaitForAttr === null) { throw \'"a" not found\'; }\n' +
+            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'let allTime = 0;\n' +
+            'let nonMatchingProps;\n' +
+            'while (true) {\n' +
+            '    nonMatchingProps = await page.evaluate(e => {\n' +
+            '        const nonMatchingProps = [];\n' +
+            '        let computedEntry;\n' +
+            '        const parseWaitForAttrDict = {"x":"1","y":"2"};\n' +
+            '        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(' +
+                'parseWaitForAttrDict)) {\n' +
+            '            computedEntry = e.getAttribute(parseWaitForAttrKey);\n' +
+            'if (computedEntry !== parseWaitForAttrValue) {\n' +
+            '    nonMatchingProps.push(parseWaitForAttrKey + ": (`" + computedEntry + "` != `" + ' +
+                'parseWaitForAttrValue + "`)");\n' +
+            '}\n' +
+            '        }\n' +
+            '        return nonMatchingProps;\n' +
+            '    }, parseWaitForAttr);\n' +
+            '    if (nonMatchingProps.length === 0) {\n' +
+            '        break;\n' +
+            '    }\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        const props = nonMatchingProps.join(", ");\n' +
+            '        throw new Error("The following attributes still don\'t match: [" + ' +
+                'props + "]");\n' +
+            '    }\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"color": "blue"})'), {
+        'instructions': [
+            'let parseWaitForAttr = await page.$("a");\n' +
+            'if (parseWaitForAttr === null) { throw \'"a" not found\'; }\n' +
+            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'let allTime = 0;\n' +
+            'let nonMatchingProps;\n' +
+            'while (true) {\n' +
+            '    nonMatchingProps = await page.evaluate(e => {\n' +
+            '        const nonMatchingProps = [];\n' +
+            '        let computedEntry;\n' +
+            '        const parseWaitForAttrDict = {"color":"blue"};\n' +
+            '        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(' +
+                'parseWaitForAttrDict)) {\n' +
+            '            computedEntry = e.getAttribute(parseWaitForAttrKey);\n' +
+            'if (computedEntry !== parseWaitForAttrValue) {\n' +
+            '    nonMatchingProps.push(parseWaitForAttrKey + ": (`" + computedEntry + "` != `" + ' +
+                'parseWaitForAttrValue + "`)");\n' +
+            '}\n' +
+            '        }\n' +
+            '        return nonMatchingProps;\n' +
+            '    }, parseWaitForAttr);\n' +
+            '    if (nonMatchingProps.length === 0) {\n' +
+            '        break;\n' +
+            '    }\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        const props = nonMatchingProps.join(", ");\n' +
+            '        throw new Error("The following attributes still don\'t match: [" + ' +
+                'props + "]");\n' +
+            '    }\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // XPath
+    x.assert(func('("/a", {"x": "1"})'), { 'error': 'XPath must start with `//`'});
+    x.assert(func('("//a", {})'), {
+        'instructions': [
+            'let parseWaitForAttr = await page.$x("//a");\n' +
+            'if (parseWaitForAttr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseWaitForAttr = parseWaitForAttr[0];\n' +
+            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'let allTime = 0;\n' +
+            'let nonMatchingProps;\n' +
+            'while (true) {\n' +
+            '    nonMatchingProps = await page.evaluate(e => {\n' +
+            '        const nonMatchingProps = [];\n' +
+            '        let computedEntry;\n' +
+            '        const parseWaitForAttrDict = {};\n' +
+            '        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(' +
+                'parseWaitForAttrDict)) {\n' +
+            '            computedEntry = e.getAttribute(parseWaitForAttrKey);\n' +
+            'if (computedEntry !== parseWaitForAttrValue) {\n' +
+            '    nonMatchingProps.push(parseWaitForAttrKey + ": (`" + computedEntry + "` != `" + ' +
+                'parseWaitForAttrValue + "`)");\n' +
+            '}\n' +
+            '        }\n' +
+            '        return nonMatchingProps;\n' +
+            '    }, parseWaitForAttr);\n' +
+            '    if (nonMatchingProps.length === 0) {\n' +
+            '        break;\n' +
+            '    }\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        const props = nonMatchingProps.join(", ");\n' +
+            '        throw new Error("The following attributes still don\'t match: [" + ' +
+                'props + "]");\n' +
+            '    }\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("//a", {"x": "1"})'), {
+        'instructions': [
+            'let parseWaitForAttr = await page.$x("//a");\n' +
+            'if (parseWaitForAttr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+            'parseWaitForAttr = parseWaitForAttr[0];\n' +
+            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'let allTime = 0;\n' +
+            'let nonMatchingProps;\n' +
+            'while (true) {\n' +
+            '    nonMatchingProps = await page.evaluate(e => {\n' +
+            '        const nonMatchingProps = [];\n' +
+            '        let computedEntry;\n' +
+            '        const parseWaitForAttrDict = {"x":"1"};\n' +
+            '        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(' +
+                'parseWaitForAttrDict)) {\n' +
+            '            computedEntry = e.getAttribute(parseWaitForAttrKey);\n' +
+            'if (computedEntry !== parseWaitForAttrValue) {\n' +
+            '    nonMatchingProps.push(parseWaitForAttrKey + ": (`" + computedEntry + "` != `" + ' +
+                'parseWaitForAttrValue + "`)");\n' +
+            '}\n' +
+            '        }\n' +
+            '        return nonMatchingProps;\n' +
+            '    }, parseWaitForAttr);\n' +
+            '    if (nonMatchingProps.length === 0) {\n' +
+            '        break;\n' +
+            '    }\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        const props = nonMatchingProps.join(", ");\n' +
+            '        throw new Error("The following attributes still don\'t match: [" + ' +
+                'props + "]");\n' +
+            '    }\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+}
+
 function checkWaitForCss(x, func) {
     // Check integer
     x.assert(func(''), {
@@ -5580,14 +5897,14 @@ function checkWaitForCss(x, func) {
             '        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + ' +
                 '"px";\n' +
             '        if (extractedFloat !== parseWaitForCssValue) {\n' +
-            '            nonMatchingProps.push(parseWaitForCssKey + ": ((" + computedEntry + " ' +
-                '&& " + extractedFloat + ") != " + parseWaitForCssValue + ")");\n' +
+            '            nonMatchingProps.push(parseWaitForCssKey + ": ((`" + computedEntry + "` ' +
+                '&& `" + extractedFloat + "`) != `" + parseWaitForCssValue + "`)");\n' +
             '        } else {\n' +
             '            continue;\n' +
             '        }\n' +
             '    }\n' +
-            '    nonMatchingProps.push(parseWaitForCssKey + ": (" + computedEntry + " != " + ' +
-                'parseWaitForCssValue + ")");\n' +
+            '    nonMatchingProps.push(parseWaitForCssKey + ": (`" + computedEntry + "` != `" + ' +
+                'parseWaitForCssValue + "`)");\n' +
             '}\n' +
             '        }\n' +
             '        return nonMatchingProps;\n' +
@@ -5635,14 +5952,14 @@ function checkWaitForCss(x, func) {
             '        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + ' +
                 '"px";\n' +
             '        if (extractedFloat !== parseWaitForCssValue) {\n' +
-            '            nonMatchingProps.push(parseWaitForCssKey + ": ((" + computedEntry + " ' +
-                '&& " + extractedFloat + ") != " + parseWaitForCssValue + ")");\n' +
+            '            nonMatchingProps.push(parseWaitForCssKey + ": ((`" + computedEntry + "` ' +
+                '&& `" + extractedFloat + "`) != `" + parseWaitForCssValue + "`)");\n' +
             '        } else {\n' +
             '            continue;\n' +
             '        }\n' +
             '    }\n' +
-            '    nonMatchingProps.push(parseWaitForCssKey + ": (" + computedEntry + " != " + ' +
-                'parseWaitForCssValue + ")");\n' +
+            '    nonMatchingProps.push(parseWaitForCssKey + ": (`" + computedEntry + "` != `" + ' +
+                'parseWaitForCssValue + "`)");\n' +
             '}\n' +
             '        }\n' +
             '        return nonMatchingProps;\n' +
@@ -5690,14 +6007,14 @@ function checkWaitForCss(x, func) {
             '        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + ' +
                 '"px";\n' +
             '        if (extractedFloat !== parseWaitForCssValue) {\n' +
-            '            nonMatchingProps.push(parseWaitForCssKey + ": ((" + computedEntry + " ' +
-                '&& " + extractedFloat + ") != " + parseWaitForCssValue + ")");\n' +
+            '            nonMatchingProps.push(parseWaitForCssKey + ": ((`" + computedEntry + "` ' +
+                '&& `" + extractedFloat + "`) != `" + parseWaitForCssValue + "`)");\n' +
             '        } else {\n' +
             '            continue;\n' +
             '        }\n' +
             '    }\n' +
-            '    nonMatchingProps.push(parseWaitForCssKey + ": (" + computedEntry + " != " + ' +
-                'parseWaitForCssValue + ")");\n' +
+            '    nonMatchingProps.push(parseWaitForCssKey + ": (`" + computedEntry + "` != `" + ' +
+                'parseWaitForCssValue + "`)");\n' +
             '}\n' +
             '        }\n' +
             '        return nonMatchingProps;\n' +
@@ -5720,6 +6037,63 @@ function checkWaitForCss(x, func) {
         'wait': false,
         'checkResult': true,
     });
+    // Check pseudo element.
+    x.assert(func('("a::after", {"x": 1, "y": "2"})'), {
+        'instructions': [
+            'let parseWaitForCss = await page.$("a");\n' +
+            'if (parseWaitForCss === null) { throw \'"a" not found\'; }\n' +
+            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'let allTime = 0;\n' +
+            'let nonMatchingProps;\n' +
+            'while (true) {\n' +
+            '    nonMatchingProps = await page.evaluate(e => {\n' +
+            '        const nonMatchingProps = [];\n' +
+            '        let computedEntry;\n' +
+            '        let extractedFloat;\n' +
+            '        const parseWaitForCssDict = {"x":"1","y":"2"};\n' +
+            '        const computedStyle = getComputedStyle(e, "::after");\n' +
+            '        for (const [parseWaitForCssKey, parseWaitForCssValue] of Object.entries(' +
+                'parseWaitForCssDict)) {\n' +
+            '            computedEntry = computedStyle[parseWaitForCssKey];\n' +
+            'if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != ' +
+                'parseWaitForCssValue) {\n' +
+            '    if (typeof computedEntry === "string" && computedEntry.search' +
+                '(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
+            '        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + ' +
+                '"px";\n' +
+            '        if (extractedFloat !== parseWaitForCssValue) {\n' +
+            '            nonMatchingProps.push(parseWaitForCssKey + ": ((`" + computedEntry + "` ' +
+                '&& `" + extractedFloat + "`) != `" + parseWaitForCssValue + "`)");\n' +
+            '        } else {\n' +
+            '            continue;\n' +
+            '        }\n' +
+            '    }\n' +
+            '    nonMatchingProps.push(parseWaitForCssKey + ": (`" + computedEntry + "` != `" + ' +
+                'parseWaitForCssValue + "`)");\n' +
+            '}\n' +
+            '        }\n' +
+            '        return nonMatchingProps;\n' +
+            '    }, parseWaitForCss);\n' +
+            '    if (nonMatchingProps.length === 0) {\n' +
+            '        break;\n' +
+            '    }\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        const props = nonMatchingProps.join(", ");\n' +
+            '        throw new Error("The following CSS properties still don\'t match: [" + ' +
+                'props + "]");\n' +
+            '    }\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    // Checks colors.
     x.assert(func('("a", {"color": "blue"})'), {
         'instructions': [
             'if (!arg.showText) {\n' +
@@ -5749,14 +6123,14 @@ function checkWaitForCss(x, func) {
             '        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + ' +
                 '"px";\n' +
             '        if (extractedFloat !== parseWaitForCssValue) {\n' +
-            '            nonMatchingProps.push(parseWaitForCssKey + ": ((" + computedEntry + " ' +
-                '&& " + extractedFloat + ") != " + parseWaitForCssValue + ")");\n' +
+            '            nonMatchingProps.push(parseWaitForCssKey + ": ((`" + computedEntry + "` ' +
+                '&& `" + extractedFloat + "`) != `" + parseWaitForCssValue + "`)");\n' +
             '        } else {\n' +
             '            continue;\n' +
             '        }\n' +
             '    }\n' +
-            '    nonMatchingProps.push(parseWaitForCssKey + ": (" + computedEntry + " != " + ' +
-                'parseWaitForCssValue + ")");\n' +
+            '    nonMatchingProps.push(parseWaitForCssKey + ": (`" + computedEntry + "` != `" + ' +
+                'parseWaitForCssValue + "`)");\n' +
             '}\n' +
             '        }\n' +
             '        return nonMatchingProps;\n' +
@@ -5808,14 +6182,14 @@ function checkWaitForCss(x, func) {
             '        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + ' +
                 '"px";\n' +
             '        if (extractedFloat !== parseWaitForCssValue) {\n' +
-            '            nonMatchingProps.push(parseWaitForCssKey + ": ((" + computedEntry + " ' +
-                '&& " + extractedFloat + ") != " + parseWaitForCssValue + ")");\n' +
+            '            nonMatchingProps.push(parseWaitForCssKey + ": ((`" + computedEntry + "` ' +
+                '&& `" + extractedFloat + "`) != `" + parseWaitForCssValue + "`)");\n' +
             '        } else {\n' +
             '            continue;\n' +
             '        }\n' +
             '    }\n' +
-            '    nonMatchingProps.push(parseWaitForCssKey + ": (" + computedEntry + " != " + ' +
-                'parseWaitForCssValue + ")");\n' +
+            '    nonMatchingProps.push(parseWaitForCssKey + ": (`" + computedEntry + "` != `" + ' +
+                'parseWaitForCssValue + "`)");\n' +
             '}\n' +
             '        }\n' +
             '        return nonMatchingProps;\n' +
@@ -5864,14 +6238,14 @@ function checkWaitForCss(x, func) {
             '        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + ' +
                 '"px";\n' +
             '        if (extractedFloat !== parseWaitForCssValue) {\n' +
-            '            nonMatchingProps.push(parseWaitForCssKey + ": ((" + computedEntry + " ' +
-                '&& " + extractedFloat + ") != " + parseWaitForCssValue + ")");\n' +
+            '            nonMatchingProps.push(parseWaitForCssKey + ": ((`" + computedEntry + "` ' +
+                '&& `" + extractedFloat + "`) != `" + parseWaitForCssValue + "`)");\n' +
             '        } else {\n' +
             '            continue;\n' +
             '        }\n' +
             '    }\n' +
-            '    nonMatchingProps.push(parseWaitForCssKey + ": (" + computedEntry + " != " + ' +
-                'parseWaitForCssValue + ")");\n' +
+            '    nonMatchingProps.push(parseWaitForCssKey + ": (`" + computedEntry + "` != `" + ' +
+                'parseWaitForCssValue + "`)");\n' +
             '}\n' +
             '        }\n' +
             '        return nonMatchingProps;\n' +
@@ -6260,6 +6634,11 @@ const TO_CHECK = [
         'name': 'wait-for',
         'func': checkWaitFor,
         'toCall': (e, o) => wrapper(parserFuncs.parseWaitFor, e, o),
+    },
+    {
+        'name': 'wait-for-attribute',
+        'func': checkWaitForAttribute,
+        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForAttribute, e, o),
     },
     {
         'name': 'wait-for-css',
