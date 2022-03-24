@@ -114,6 +114,7 @@ Here's the command list:
  * [`wait-for`](#wait-for)
  * [`wait-for-attribute`](#wait-for-attribute)
  * [`wait-for-css`](#wait-for-css)
+ * [`wait-for-text`](#wait-for-text)
  * [`write`](#write)
 
 #### assert
@@ -941,6 +942,21 @@ wait-for-css: ("#element", {"font-size": "12px", "margin-top": "12px"})
 // Same with an XPath:
 wait-for-css: ("//*[@id='element']", {"font-size": "12px"})
 wait-for-css: ("//*[@id='element']", {"font-size": "12px", "margin-top": "12px"})
+```
+
+#### wait-for-text
+
+**wait-for-text** command waits for the given element to have the expected text. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+
+Important to note: if the element doesn't exist, the command will fail too.
+
+Examples:
+
+```
+wait-for-text: ("#element", "text")
+
+// Same with an XPath:
+wait-for-text: ("//*[@id='element']", "text")
 ```
 
 #### write

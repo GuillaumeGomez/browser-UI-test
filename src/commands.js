@@ -63,6 +63,7 @@ const ORDERS = {
     'wait-for': commands.parseWaitFor,
     'wait-for-attribute': commands.parseWaitForAttribute,
     'wait-for-css': commands.parseWaitForCss,
+    'wait-for-text': commands.parseWaitForText,
     'write': commands.parseWrite,
 };
 
@@ -83,6 +84,7 @@ const FATAL_ERROR_COMMANDS = [
     'wait-for',
     'wait-for-attribute',
     'wait-for-css',
+    'wait-for-text',
     'write',
 ];
 

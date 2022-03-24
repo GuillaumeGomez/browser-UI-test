@@ -69,5 +69,6 @@ module.exports = {
     'parseWaitFor': general.parseWaitFor,
     'parseWaitForAttribute': general.parseWaitForAttribute,
     'parseWaitForCss': general.parseWaitForCss,
+    'parseWaitForText': general.parseWaitForText,
     'parseWrite': input.parseWrite,
 };
