@@ -61,6 +61,7 @@ const ORDERS = {
     'text': commands.parseText,
     'timeout': commands.parseTimeout,
     'wait-for': commands.parseWaitFor,
+    'wait-for-attribute': commands.parseWaitForAttribute,
     'wait-for-css': commands.parseWaitForCss,
     'write': commands.parseWrite,
 };
@@ -80,6 +81,7 @@ const FATAL_ERROR_COMMANDS = [
     'scroll-to',
     'text',
     'wait-for',
+    'wait-for-attribute',
     'wait-for-css',
     'write',
 ];

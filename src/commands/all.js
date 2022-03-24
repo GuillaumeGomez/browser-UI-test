@@ -67,6 +67,7 @@ module.exports = {
     'parseText': dom_modifiers.parseText,
     'parseTimeout': context_setters.parseTimeout,
     'parseWaitFor': general.parseWaitFor,
+    'parseWaitForAttribute': general.parseWaitForAttribute,
     'parseWaitForCss': general.parseWaitForCss,
     'parseWrite': input.parseWrite,
 };
