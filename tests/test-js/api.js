@@ -1552,21 +1552,23 @@ function checkAssertLocalStorageFalse(x, func) {
 
 function checkAssertPropertyInner(x, func, before, after) {
     x.assert(func('("a", "b", )'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
+        'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
     });
     x.assert(func('("a", "b")'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
+        'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
     });
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('("a", "b", "c")'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
+        'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
     });
     x.assert(func('("a::after", {"a": 1}, all)'), {
-        'error': 'expected identifier `ALL` as third argument or nothing, found `all`',
+        'error': 'unknown identifier `all`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
+            '`STARTS_WITH`, `ENDS_WITH`]',
     });
     x.assert(func('("a::after", {"a": 1}, ALLO)'), {
-        'error': 'expected identifier `ALL` as third argument or nothing, found `ALLO`',
+        'error': 'unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
+            '`STARTS_WITH`, `ENDS_WITH`]',
     });
     x.assert(func('("a", {"b": "c", "b": "d"})'), {'error': 'property `b` is duplicated'});
     x.assert(func('("a", {"b": []})'), {
@@ -1583,15 +1585,24 @@ function checkAssertPropertyInner(x, func, before, after) {
             'await parseAssertElemProp.evaluate(e => {\n' +
             'const parseAssertElemPropDict = {};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
-            'Object.entries(parseAssertElemPropDict)) {\n' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
             before +
-            'if (e[parseAssertElemPropKey] === undefined || ' +
-            'String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
-            'throw \'expected `\' + parseAssertElemPropValue + \'` for property `\' + ' +
-            'parseAssertElemPropKey + \'` for selector `a`, found `\' + ' +
-            'e[parseAssertElemPropKey] + \'`\';\n' +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
+                '\n' +
             '}\n' +
-            after +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) isn\'t equal to `" + ' +
+                'parseAssertElemPropValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '});',
         ],
@@ -1605,15 +1616,24 @@ function checkAssertPropertyInner(x, func, before, after) {
             'await parseAssertElemProp.evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
-            'Object.entries(parseAssertElemPropDict)) {\n' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
             before +
-            'if (e[parseAssertElemPropKey] === undefined || ' +
-            'String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
-            'throw \'expected `\' + parseAssertElemPropValue + \'` for property `\' + ' +
-            'parseAssertElemPropKey + \'` for selector `a`, found `\' + ' +
-            'e[parseAssertElemPropKey] + \'`\';\n' +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
+                '\n' +
             '}\n' +
-            after +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) isn\'t equal to `" + ' +
+                'parseAssertElemPropValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '});',
         ],
@@ -1628,15 +1648,24 @@ function checkAssertPropertyInner(x, func, before, after) {
             'await parseAssertElemProp[i].evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
-            'Object.entries(parseAssertElemPropDict)) {\n' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
             before +
-            'if (e[parseAssertElemPropKey] === undefined || ' +
-            'String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
-            'throw \'expected `\' + parseAssertElemPropValue + \'` for property `\' + ' +
-            'parseAssertElemPropKey + \'` for selector `a`, found `\' + ' +
-            'e[parseAssertElemPropKey] + \'`\';\n' +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
+                '\n' +
             '}\n' +
-            after +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) isn\'t equal to `" + ' +
+                'parseAssertElemPropValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '});\n' +
             '}',
@@ -1653,15 +1682,24 @@ function checkAssertPropertyInner(x, func, before, after) {
             'await parseAssertElemProp.evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
-            'Object.entries(parseAssertElemPropDict)) {\n' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
             before +
-            'if (e[parseAssertElemPropKey] === undefined || ' +
-            'String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
-            'throw \'expected `\' + parseAssertElemPropValue + \'` for property `\' + ' +
-            'parseAssertElemPropKey + \'` for selector `a`, found `\' + ' +
-            'e[parseAssertElemPropKey] + \'`\';\n' +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
+                '\n' +
             '}\n' +
-            after +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) isn\'t equal to `" + ' +
+                'parseAssertElemPropValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '});',
         ],
@@ -1676,15 +1714,24 @@ function checkAssertPropertyInner(x, func, before, after) {
             'await parseAssertElemProp[i].evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
-            'Object.entries(parseAssertElemPropDict)) {\n' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
             before +
-            'if (e[parseAssertElemPropKey] === undefined || ' +
-            'String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
-            'throw \'expected `\' + parseAssertElemPropValue + \'` for property `\' + ' +
-            'parseAssertElemPropKey + \'` for selector `a`, found `\' + ' +
-            'e[parseAssertElemPropKey] + \'`\';\n' +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
+                '\n' +
             '}\n' +
-            after +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) isn\'t equal to `" + ' +
+                'parseAssertElemPropValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '});\n' +
             '}',
@@ -1699,15 +1746,24 @@ function checkAssertPropertyInner(x, func, before, after) {
             'await parseAssertElemProp.evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
-            'Object.entries(parseAssertElemPropDict)) {\n' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
             before +
-            'if (e[parseAssertElemPropKey] === undefined || ' +
-            'String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
-            'throw \'expected `\' + parseAssertElemPropValue + \'` for property `\' + ' +
-            'parseAssertElemPropKey + \'` for selector `a:focus`, found `\' + ' +
-            'e[parseAssertElemPropKey] + \'`\';\n' +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector ' +
+                '`a:focus`\';\n' +
             '}\n' +
-            after +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) isn\'t equal to `" + ' +
+                'parseAssertElemPropValue + "` for selector `a:focus`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '});',
         ],
@@ -1722,15 +1778,24 @@ function checkAssertPropertyInner(x, func, before, after) {
             'await parseAssertElemProp[i].evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
-            'Object.entries(parseAssertElemPropDict)) {\n' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
             before +
-            'if (e[parseAssertElemPropKey] === undefined || ' +
-            'String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
-            'throw \'expected `\' + parseAssertElemPropValue + \'` for property `\' + ' +
-            'parseAssertElemPropKey + \'` for selector `a:focus`, found `\' + ' +
-            'e[parseAssertElemPropKey] + \'`\';\n' +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector ' +
+                '`a:focus`\';\n' +
             '}\n' +
-            after +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) isn\'t equal to `" + ' +
+                'parseAssertElemPropValue + "` for selector `a:focus`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '});\n' +
             '}',
@@ -1745,15 +1810,24 @@ function checkAssertPropertyInner(x, func, before, after) {
             'await parseAssertElemProp.evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
-            'Object.entries(parseAssertElemPropDict)) {\n' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
             before +
-            'if (e[parseAssertElemPropKey] === undefined || ' +
-            'String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
-            'throw \'expected `\' + parseAssertElemPropValue + \'` for property `\' + ' +
-            'parseAssertElemPropKey + \'` for selector `a ::after`, found `\' + ' +
-            'e[parseAssertElemPropKey] + \'`\';\n' +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector ' +
+                '`a ::after`\';\n' +
             '}\n' +
-            after +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) isn\'t equal to `" + ' +
+                'parseAssertElemPropValue + "` for selector `a ::after`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '});',
         ],
@@ -1768,15 +1842,24 @@ function checkAssertPropertyInner(x, func, before, after) {
             'await parseAssertElemProp[i].evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
-            'Object.entries(parseAssertElemPropDict)) {\n' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
             before +
-            'if (e[parseAssertElemPropKey] === undefined || ' +
-            'String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
-            'throw \'expected `\' + parseAssertElemPropValue + \'` for property `\' + ' +
-            'parseAssertElemPropKey + \'` for selector `a ::after`, found `\' + ' +
-            'e[parseAssertElemPropKey] + \'`\';\n' +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector ' +
+                '`a ::after`\';\n' +
             '}\n' +
-            after +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) isn\'t equal to `" + ' +
+                'parseAssertElemPropValue + "` for selector `a ::after`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '});\n' +
             '}',
@@ -1794,15 +1877,24 @@ function checkAssertPropertyInner(x, func, before, after) {
             'await parseAssertElemProp.evaluate(e => {\n' +
             'const parseAssertElemPropDict = {};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
-            'Object.entries(parseAssertElemPropDict)) {\n' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
             before +
-            'if (e[parseAssertElemPropKey] === undefined || ' +
-            'String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
-            'throw \'expected `\' + parseAssertElemPropValue + \'` for property `\' + ' +
-            'parseAssertElemPropKey + \'` for XPath `//a`, found `\' + ' +
-            'e[parseAssertElemPropKey] + \'`\';\n' +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for XPath `//a`\';' +
+                '\n' +
             '}\n' +
-            after +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) isn\'t equal to `" + ' +
+                'parseAssertElemPropValue + "` for XPath `//a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '});',
         ],
@@ -1817,15 +1909,24 @@ function checkAssertPropertyInner(x, func, before, after) {
             'await parseAssertElemProp.evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
-            'Object.entries(parseAssertElemPropDict)) {\n' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
             before +
-            'if (e[parseAssertElemPropKey] === undefined || ' +
-            'String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
-            'throw \'expected `\' + parseAssertElemPropValue + \'` for property `\' + ' +
-            'parseAssertElemPropKey + \'` for XPath `//a`, found `\' + ' +
-            'e[parseAssertElemPropKey] + \'`\';\n' +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for XPath `//a`\';' +
+                '\n' +
             '}\n' +
-            after +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) isn\'t equal to `" + ' +
+                'parseAssertElemPropValue + "` for XPath `//a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '});',
         ],
@@ -1840,15 +1941,24 @@ function checkAssertPropertyInner(x, func, before, after) {
             'await parseAssertElemProp[i].evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
-            'Object.entries(parseAssertElemPropDict)) {\n' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
             before +
-            'if (e[parseAssertElemPropKey] === undefined || ' +
-            'String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
-            'throw \'expected `\' + parseAssertElemPropValue + \'` for property `\' + ' +
-            'parseAssertElemPropKey + \'` for XPath `//a`, found `\' + ' +
-            'e[parseAssertElemPropKey] + \'`\';\n' +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for XPath `//a`\';' +
+                '\n' +
             '}\n' +
-            after +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) isn\'t equal to `" + ' +
+                'parseAssertElemPropValue + "` for XPath `//a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '});\n' +
             '}',
@@ -1869,15 +1979,24 @@ function checkAssertPropertyInner(x, func, before, after) {
             'await parseAssertElemProp[i].evaluate(e => {\n' +
             'const parseAssertElemPropDict = {"a":"1"};\n' +
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
-            'Object.entries(parseAssertElemPropDict)) {\n' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
             before +
-            'if (e[parseAssertElemPropKey] === undefined || ' +
-            'String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
-            'throw \'expected `\' + parseAssertElemPropValue + \'` for property `\' + ' +
-            'parseAssertElemPropKey + \'` for XPath `//a`, found `\' + ' +
-            'e[parseAssertElemPropKey] + \'`\';\n' +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for XPath `//a`\';' +
+                '\n' +
             '}\n' +
-            after +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) isn\'t equal to `" + ' +
+                'parseAssertElemPropValue + "` for XPath `//a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '});\n' +
             '}',
@@ -1885,10 +2004,114 @@ function checkAssertPropertyInner(x, func, before, after) {
         'wait': false,
         'checkResult': true,
     });
+
+    // Extended checks.
+    x.assert(func('("a", {"a": 1}, STARTS_WITH)'), {
+        'instructions': [
+            'let parseAssertElemProp = await page.$("a");\n' +
+            'if (parseAssertElemProp === null) { throw \'"a" not found\'; }\n' +
+            'await parseAssertElemProp.evaluate(e => {\n' +
+            'const parseAssertElemPropDict = {"a":"1"};\n' +
+            'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
+            before +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
+                '\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (!String(e[parseAssertElemPropKey]).startsWith(parseAssertElemPropValue)) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) doesn\'t start with `" + ' +
+                'parseAssertElemPropValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('STARTS_WITH') +
+            '})();\n' +
+            '}\n' +
+            '});',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"a": 1}, [STARTS_WITH, STARTS_WITH])'), {
+        'instructions': [
+            'let parseAssertElemProp = await page.$("a");\n' +
+            'if (parseAssertElemProp === null) { throw \'"a" not found\'; }\n' +
+            'await parseAssertElemProp.evaluate(e => {\n' +
+            'const parseAssertElemPropDict = {"a":"1"};\n' +
+            'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
+            before +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
+                '\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (!String(e[parseAssertElemPropKey]).startsWith(parseAssertElemPropValue)) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) doesn\'t start with `" + ' +
+                'parseAssertElemPropValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('STARTS_WITH') +
+            '})();\n' +
+            '}\n' +
+            '});',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"a": 1}, [STARTS_WITH, ENDS_WITH])'), {
+        'instructions': [
+            'let parseAssertElemProp = await page.$("a");\n' +
+            'if (parseAssertElemProp === null) { throw \'"a" not found\'; }\n' +
+            'await parseAssertElemProp.evaluate(e => {\n' +
+            'const parseAssertElemPropDict = {"a":"1"};\n' +
+            'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
+                'Object.entries(parseAssertElemPropDict)) {\n' +
+            '(() => {\n' +
+            before +
+            'if (e[parseAssertElemPropKey] === undefined) {\n' +
+            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
+                '\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (!String(e[parseAssertElemPropKey]).startsWith(parseAssertElemPropValue)) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) doesn\'t start with `" + ' +
+                'parseAssertElemPropValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('STARTS_WITH') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (!String(e[parseAssertElemPropKey]).endsWith(parseAssertElemPropValue)) {\n' +
+            '    throw "property `" + parseAssertElemPropKey + "` (`" + ' +
+                'String(e[parseAssertElemPropKey]) + "`) doesn\'t end with `" + ' +
+                'parseAssertElemPropValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('ENDS_WITH') +
+            '})();\n' +
+            '}\n' +
+            '});',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
 }
 
 function checkAssertProperty(x, func) {
-    checkAssertPropertyInner(x, func, '', '');
+    checkAssertPropertyInner(x, func, '', () => '');
 }
 
 function checkAssertPropertyFalse(x, func) {
@@ -1896,7 +2119,13 @@ function checkAssertPropertyFalse(x, func) {
         x,
         func,
         'try {\n',
-        '} catch(e) { continue; } throw "assert didn\'t fail";\n');
+        t => {
+            if (t.length === 0) {
+                return '} catch(e) { return; } throw "assert didn\'t fail";\n';
+            } else {
+                return `} catch(e) { return; } throw "assert didn't fail (for ${t} check)";\n`;
+            }
+        });
 }
 
 function checkAssertPositionInner(x, func, before, after) {

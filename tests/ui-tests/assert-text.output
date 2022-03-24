@@ -3,13 +3,19 @@
 assert-text... FAILED
 [ERROR] (line 6) Error: Evaluation failed: assert didn't fail (for STARTS_WITH check): for command `assert-text-false: ("header", "Another", [ENDS_WITH, STARTS_WITH])`
 [ERROR] (line 7) Error: Evaluation failed: assert didn't fail (for STARTS_WITH check): for command `assert-text-false: ("header", "Another", STARTS_WITH)`
-[ERROR] (line 11) Error: Evaluation failed: "Another page!" doesn't end with "Another": for command `assert-text: ("header", "Another", [STARTS_WITH, ENDS_WITH])`
-[ERROR] (line 12) Error: Evaluation failed: "Another page!" doesn't end with "Another": for command `assert-text: ("header", "Another", ENDS_WITH)`
-[ERROR] (line 14) Error: Evaluation failed: assert didn't fail: for command `assert-document-property-false: ({"title": "Other"}, [ENDS_WITH, STARTS_WITH])`
-[ERROR] (line 15) Error: Evaluation failed: assert didn't fail: for command `assert-document-property-false: ({"title": "Other"}, STARTS_WITH)`
-[ERROR] (line 16) Error: Evaluation failed: Property `title` (`Other page`) does not end with `Other`: for command `assert-document-property: ({"title": "Other"}, [STARTS_WITH, ENDS_WITH])`
-[ERROR] (line 17) Error: Evaluation failed: Property `title` (`Other page`) does not end with `Other`: for command `assert-document-property: ({"title": "Other"}, ENDS_WITH)`
-[ERROR] (line 19) "#non-existent" not found: for command `click: "#non-existent"`
+[ERROR] (line 10) Error: Evaluation failed: property `className` (`content`) doesn't start with `.con` for selector `.content`: for command `assert-property: (".content", {"className": ".con"}, [ENDS_WITH, STARTS_WITH])`
+[ERROR] (line 11) Error: Evaluation failed: property `className` (`content`) doesn't start with `.con` for selector `.content`: for command `assert-property: (".content", {"className": ".con"}, [STARTS_WITH, ENDS_WITH])`
+[ERROR] (line 12) Error: Evaluation failed: property `className` (`content`) doesn't start with `.con` for selector `.content`: for command `assert-property: (".content", {"className": ".con"}, STARTS_WITH)`
+[ERROR] (line 13) Error: Evaluation failed: assert didn't fail: for command `assert-property-false: (".content", {"className": ".con"}, [STARTS_WITH, ENDS_WITH])`
+[ERROR] (line 14) Error: Evaluation failed: assert didn't fail: for command `assert-property-false: (".content", {"className": ".con"}, [STARTS_WITH, ENDS_WITH])`
+[ERROR] (line 15) Error: Evaluation failed: assert didn't fail: for command `assert-property-false: (".content", {"className": ".con"}, ENDS_WITH)`
+[ERROR] (line 19) Error: Evaluation failed: "Another page!" doesn't end with "Another": for command `assert-text: ("header", "Another", [STARTS_WITH, ENDS_WITH])`
+[ERROR] (line 20) Error: Evaluation failed: "Another page!" doesn't end with "Another": for command `assert-text: ("header", "Another", ENDS_WITH)`
+[ERROR] (line 22) Error: Evaluation failed: assert didn't fail: for command `assert-document-property-false: ({"title": "Other"}, [ENDS_WITH, STARTS_WITH])`
+[ERROR] (line 23) Error: Evaluation failed: assert didn't fail: for command `assert-document-property-false: ({"title": "Other"}, STARTS_WITH)`
+[ERROR] (line 24) Error: Evaluation failed: Property `title` (`Other page`) does not end with `Other`: for command `assert-document-property: ({"title": "Other"}, [STARTS_WITH, ENDS_WITH])`
+[ERROR] (line 25) Error: Evaluation failed: Property `title` (`Other page`) does not end with `Other`: for command `assert-document-property: ({"title": "Other"}, ENDS_WITH)`
+[ERROR] (line 27) "#non-existent" not found: for command `click: "#non-existent"`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed
