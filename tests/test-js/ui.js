@@ -10,7 +10,8 @@ const {Assert, plural, print} = require('./utils.js');
 
 async function wrapRunTests(options = new Options()) {
     options.noScreenshotComparison = true;
-    return await runTests(options, false);
+    const ret = await runTests(options, false);
+    return ret[0];
 }
 
 // This test ensures that the outputs looks as expected.
@@ -43,8 +44,9 @@ async function compareOutput(x) {
         await x.assertTry(
             wrapRunTests,
             [options],
-            [output.replaceAll('$CURRENT_DIR', utils.getCurrentDir()), 1],
+            output.replaceAll('$CURRENT_DIR', utils.getCurrentDir()),
             file,
+            false,
         );
     }
 }

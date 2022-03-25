@@ -48,11 +48,13 @@ class Assert {
     }
 
     // `extraInfo` is used as an additional message in case the test fails.
-    assert(value1, value2, pos, extraInfo) {
+    assert(value1, value2, pos, extraInfo, toJson) {
         this._addTest();
         if (typeof value2 !== 'undefined') {
-            value1 = toJSON(value1);
-            value2 = toJSON(value2);
+            if (toJson === true) {
+                value1 = toJSON(value1);
+                value2 = toJSON(value2);
+            }
             if (value1 !== value2) {
                 if (typeof pos === 'undefined') {
                     pos = getStackInfo(new Error().stack);
@@ -119,13 +121,13 @@ class Assert {
     }
 
     // `extraInfo` is used as an additional message in case the test fails.
-    async assertTry(callback, args, expectedValue, extraInfo) {
+    async assertTry(callback, args, expectedValue, extraInfo, toJson) {
         const pos = getStackInfo(new Error().stack, 2);
         try {
             const ret = await callback(...args);
-            return this.assert(ret, expectedValue, pos, extraInfo);
+            return this.assert(ret, expectedValue, pos, extraInfo, toJson);
         } catch (err) {
-            return this.assert(err.message, expectedValue, pos, extraInfo);
+            return this.assert(err.message, expectedValue, pos, extraInfo, toJson);
         }
     }
 
