@@ -118,21 +118,23 @@ function checkAssertFalse(x, func) {
 
 function checkAssertAttributeInner(x, func, before, after) {
     x.assert(func('("a", "b", )'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
+        'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
     });
     x.assert(func('("a", "b")'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
+        'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
     });
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('("a", "b", "c")'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
+        'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
     });
     x.assert(func('("a::after", {"a": 1}, all)'), {
-        'error': 'expected identifier `ALL` as third argument or nothing, found `all`',
+        'error': 'unknown identifier `all`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
+            '`STARTS_WITH`, `ENDS_WITH`]',
     });
     x.assert(func('("a::after", {"a": 1}, ALLO)'), {
-        'error': 'expected identifier `ALL` as third argument or nothing, found `ALLO`',
+        'error': 'unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
+            '`STARTS_WITH`, `ENDS_WITH`]',
     });
     x.assert(func('("a", {"b": "c", "b": "d"})'), {'error': 'attribute `b` is duplicated'});
 
@@ -143,14 +145,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -164,14 +174,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -186,14 +204,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -210,14 +236,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -232,14 +266,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -254,14 +296,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `b:after`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `b:after` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for selector `b:after`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -276,14 +326,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `b:after`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `b:after` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for selector `b:after`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -298,14 +356,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a ::after`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a ::after` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for selector `a ::after`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -320,14 +386,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a ::after`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a ::after` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for selector `a ::after`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -343,14 +417,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"b":"c","d":"e"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -365,14 +447,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"b":"c","d":"e"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -387,14 +477,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -409,14 +507,156 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for selector `a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
+            '}\n' +
+            '}, parseAssertElemAttr[i]);\n' +
+            '}',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"\\"b": "c"}, CONTAINS)'), {
+        'instructions': [
+            'let parseAssertElemAttr = await page.$("a");\n' +
+            'if (parseAssertElemAttr === null) { throw \'"a" not found\'; }\n' +
+            'await page.evaluate(e => {\n' +
+            'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
+            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
+            before +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
+            '}\n' +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr.indexOf(parseAssertElemAttrValue) === -1) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) ' +
+                'doesn\'t contain `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('CONTAINS') +
+            '})();\n' +
+            '}\n' +
+            '}, parseAssertElemAttr);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, CONTAINS])'), {
+        'instructions': [
+            'let parseAssertElemAttr = await page.$("a");\n' +
+            'if (parseAssertElemAttr === null) { throw \'"a" not found\'; }\n' +
+            'await page.evaluate(e => {\n' +
+            'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
+            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
+            before +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
+            '}\n' +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr.indexOf(parseAssertElemAttrValue) === -1) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) ' +
+                'doesn\'t contain `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('CONTAINS') +
+            '})();\n' +
+            '}\n' +
+            '}, parseAssertElemAttr);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, STARTS_WITH])'), {
+        'instructions': [
+            'let parseAssertElemAttr = await page.$("a");\n' +
+            'if (parseAssertElemAttr === null) { throw \'"a" not found\'; }\n' +
+            'await page.evaluate(e => {\n' +
+            'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
+            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
+            before +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
+            '}\n' +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr.indexOf(parseAssertElemAttrValue) === -1) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) ' +
+                'doesn\'t contain `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('CONTAINS') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (!attr.startsWith(parseAssertElemAttrValue)) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) ' +
+                'doesn\'t start with `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('STARTS_WITH') +
+            '})();\n' +
+            '}\n' +
+            '}, parseAssertElemAttr);',
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, STARTS_WITH, ALL])'), {
+        'instructions': [
+            'let parseAssertElemAttr = await page.$$("a");\n' +
+            'if (parseAssertElemAttr.length === 0) { throw \'"a" not found\'; }\n' +
+            'for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {\n' +
+            'await page.evaluate(e => {\n' +
+            'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
+            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
+            before +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
+            '}\n' +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr.indexOf(parseAssertElemAttrValue) === -1) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) ' +
+                'doesn\'t contain `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('CONTAINS') +
+            '})();\n' +
+            '(() => {\n' +
+            before +
+            'if (!attr.startsWith(parseAssertElemAttrValue)) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) ' +
+                'doesn\'t start with `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
+            '}\n' +
+            after('STARTS_WITH') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -434,14 +674,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for XPath `//a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "XPath `//a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for XPath `//a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -456,14 +704,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for XPath `//a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "XPath `//a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for XPath `//a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr);',
         ],
@@ -478,14 +734,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for XPath `//a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "XPath `//a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for XPath `//a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -496,7 +760,8 @@ function checkAssertAttributeInner(x, func, before, after) {
 
     // Multiline
     x.assert(func('("a::after", \n {"a": 1}, \n ALLO)'), {
-        'error': 'expected identifier `ALL` as third argument or nothing, found `ALLO`',
+        'error': 'unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
+            '`STARTS_WITH`, `ENDS_WITH`]',
     });
     x.assert(func('("//a",\n    \n{"b": "c"}, \n ALL)'), {
         'instructions': [
@@ -506,14 +771,22 @@ function checkAssertAttributeInner(x, func, before, after) {
             'await page.evaluate(e => {\n' +
             'const parseAssertElemAttrDict = {"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-            'Object.entries(parseAssertElemAttrDict)) {\n' +
+                'Object.entries(parseAssertElemAttrDict)) {\n' +
             before +
-            'if (e.getAttribute(parseAssertElemAttrAttribute) !== parseAssertElemAttrValue) {\n' +
-            'throw \'expected `\' + parseAssertElemAttrValue + \'` for attribute `\' + ' +
-            'parseAssertElemAttrAttribute + \'` for XPath `//a`, found `\' + ' +
-            'e.getAttribute(parseAssertElemAttrAttribute) + \'`\';\n' +
+            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
+            '    throw "XPath `//a` doesn\'t have an attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`";\n' +
             '}\n' +
-            after +
+            after('') +
+            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
+            '(() => {\n' +
+            before +
+            'if (attr !== parseAssertElemAttrValue) {\n' +
+            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
+                'equal to `" + parseAssertElemAttrValue + "` for XPath `//a`";\n' +
+            '}\n' +
+            after('') +
+            '})();\n' +
             '}\n' +
             '}, parseAssertElemAttr[i]);\n' +
             '}',
@@ -524,7 +797,7 @@ function checkAssertAttributeInner(x, func, before, after) {
 }
 
 function checkAssertAttribute(x, func) {
-    checkAssertAttributeInner(x, func, '', '');
+    checkAssertAttributeInner(x, func, '', () => '');
 }
 
 function checkAssertAttributeFalse(x, func) {
@@ -532,7 +805,13 @@ function checkAssertAttributeFalse(x, func) {
         x,
         func,
         'try {\n',
-        '} catch(e) { continue; } throw "assert didn\'t fail";\n',
+        t => {
+            if (t.length === 0) {
+                return '} catch(e) { return; } throw "assert didn\'t fail";\n';
+            } else {
+                return `} catch(e) { return; } throw "assert didn't fail (for ${t} check)";\n`;
+            }
+        },
     );
 }
 
