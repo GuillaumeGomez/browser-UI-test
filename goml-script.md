@@ -143,7 +143,7 @@ assert-false: ("#id > .class") // strictly equivalent
 
 #### assert-attribute
 
-**assert-attribute** command checks that the given attribute(s) of the element(s) have the expected value. Examples:
+**assert-attribute** command checks that the given attribute(s) of the element(s) have the expected value. If the element or one of the attributes doesn't exist, the command will fail. Examples:
 
 ```
 assert-attribute: ("#id > .class", {"attribute-name": "attribute-value"})
@@ -152,6 +152,26 @@ assert-attribute: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2":
 // If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-attribute: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
 assert-attribute: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
+```
+
+You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+
+```
+assert-attribute: (
+    "#id",
+    {"class": "where", "title": "a title"},
+    STARTS_WITH,
+)
+```
+
+You can even combine the checks:
+
+```
+assert-attribute: (
+    "#id",
+    {"class": "where", "title": "a title"},
+    [STARTS_WITH, ENDS_WITH, ALL],
+)
 ```
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements-attribute) command.
@@ -168,6 +188,26 @@ assert-attribute-false: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "
 // If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-attribute-false: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
 assert-attribute-false: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
+```
+
+You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+
+```
+assert-attribute-false: (
+    "#id",
+    {"class": "where", "title": "a title"},
+    STARTS_WITH,
+)
+```
+
+You can even combine the checks:
+
+```
+assert-attribute-false: (
+    "#id",
+    {"class": "where", "title": "a title"},
+    [STARTS_WITH, ENDS_WITH, ALL],
+)
 ```
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-attribute-false) command.
