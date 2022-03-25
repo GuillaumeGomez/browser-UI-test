@@ -372,13 +372,17 @@ ${varValue} + "\` for ${xpath}\`${selector.value}\`";
         }
         d += `"${k}":"${v}"`;
     }
+    let notFound = 'return;';
+    if (!assertFalse) {
+        notFound = `throw 'There is no property \`' + ${varKey} + '\` for \
+${xpath}\`${selector.value}\`';`;
+    }
     const code = `const ${varDict} = {${d}};
 for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
 (() => {
-${insertBefore}\
 if (e[${varKey}] === undefined) {
-throw 'There is no property \`' + ${varKey} + '\` for ${xpath}\`${selector.value}\`';
-}${insertAfter.replace('TO_REPLACE', '')}
+${notFound}
+}
 })();
 ${all_checks}\
 }\n`;
@@ -544,11 +548,16 @@ ${varValue} + "\` for ${xpath}\`${selector.value}\`";
         d += `"${k}":"${v}"`;
     }
 
+    let notFound = 'return;';
+    if (!assertFalse) {
+        notFound = `throw "${xpath}\`${selector.value}\` doesn't have an attribute named \`" + \
+${varKey} + "\`";`;
+    }
     const code = `const ${varDict} = {${d}};
 for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-${insertBefore}if (!e.hasAttribute(${varKey})) {
-    throw "${xpath}\`${selector.value}\` doesn't have an attribute named \`" + ${varKey} + "\`";
-}${insertAfter.replace('TO_REPLACE', '')}
+if (!e.hasAttribute(${varKey})) {
+    ${notFound}
+}
 const attr = e.getAttribute(${varKey});
 ${all_checks}\
 }\n`;

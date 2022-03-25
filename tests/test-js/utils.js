@@ -48,7 +48,7 @@ class Assert {
     }
 
     // `extraInfo` is used as an additional message in case the test fails.
-    assert(value1, value2, pos, extraInfo, toJson) {
+    assert(value1, value2, pos, extraInfo, toJson = true) {
         this._addTest();
         if (typeof value2 !== 'undefined') {
             if (toJson === true) {
@@ -121,7 +121,7 @@ class Assert {
     }
 
     // `extraInfo` is used as an additional message in case the test fails.
-    async assertTry(callback, args, expectedValue, extraInfo, toJson) {
+    async assertTry(callback, args, expectedValue, extraInfo, toJson = true) {
         const pos = getStackInfo(new Error().stack, 2);
         try {
             const ret = await callback(...args);

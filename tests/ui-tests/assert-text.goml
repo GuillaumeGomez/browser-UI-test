@@ -7,12 +7,16 @@ assert-text-false: ("header", "Another", [ENDS_WITH, STARTS_WITH])
 assert-text-false: ("header", "Another", STARTS_WITH)
 // This test ensures it fails because ".content"'s className doesn't end with ".con" but
 // starts with it.
-assert-property: (".content", {"className": ".con"}, [ENDS_WITH, STARTS_WITH])
-assert-property: (".content", {"className": ".con"}, [STARTS_WITH, ENDS_WITH])
-assert-property: (".content", {"className": ".con"}, STARTS_WITH)
-assert-property-false: (".content", {"className": ".con"}, [STARTS_WITH, ENDS_WITH])
-assert-property-false: (".content", {"className": ".con"}, [STARTS_WITH, ENDS_WITH])
-assert-property-false: (".content", {"className": ".con"}, ENDS_WITH)
+assert-property: (".content", {"className": "con"}, [ENDS_WITH, STARTS_WITH])
+assert-property: (".content", {"className": "con"}, [STARTS_WITH, ENDS_WITH])
+assert-property: (".content", {"className": "con"}, STARTS_WITH)
+assert-property-false: (".content", {"className": "con"}, [STARTS_WITH, ENDS_WITH])
+assert-property-false: (".content", {"className": "con"}, [STARTS_WITH, ENDS_WITH])
+assert-property-false: (".content", {"className": "con"}, ENDS_WITH)
+// We also check that the command fails if the attribute doesn't exist:
+assert-property: (".content", {"does-not-exist": ".con"})
+// Check that the "false" command succeeds if the attribute doesn't exist.
+assert-property-false: (".content", {"does-not-exist": ".con"})
 // This test ensures it fails because ".content"'s class doesn't end with ".con" but
 // starts with it.
 assert-attribute: (".content", {"class": ".con"}, [ENDS_WITH, STARTS_WITH])
@@ -23,6 +27,8 @@ assert-attribute-false: (".content", {"class": ".con"}, [STARTS_WITH, ENDS_WITH]
 assert-attribute-false: (".content", {"class": ".con"}, ENDS_WITH)
 // We also check that the command fails if the attribute doesn't exist:
 assert-attribute: (".content", {"does-not-exist": ".con"})
+// Check that the "false" command succeeds if the attribute doesn't exist.
+assert-attribute-false: (".content", {"does-not-exist": ".con"})
 // Checks that if a command failed before this one, it'll still continue
 click: "header"
 // The opposite of the previous check.
