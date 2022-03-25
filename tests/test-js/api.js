@@ -116,7 +116,7 @@ function checkAssertFalse(x, func) {
     checkAssertInner(x, func, 'try {\n', '\n} catch(e) { return; } throw "assert didn\'t fail";');
 }
 
-function checkAssertAttributeInner(x, func, before, after) {
+function checkAssertAttributeInner(x, func, before, check, after) {
     x.assert(func('("a", "b", )'), {
         'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
     });
@@ -146,12 +146,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -175,12 +172,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -205,12 +199,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -237,12 +228,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -267,12 +255,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -297,12 +282,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `b:after` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `b:after`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -327,12 +309,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `b:after` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `b:after`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -357,12 +336,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a ::after` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a ::after`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -387,12 +363,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"a":"1"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a ::after` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a ::after`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -418,12 +391,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"b":"c","d":"e"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -448,12 +418,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"b":"c","d":"e"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -478,12 +445,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -508,12 +472,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -538,12 +499,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -567,12 +525,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -596,12 +551,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -634,12 +586,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "selector `a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -675,12 +624,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "XPath `//a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('XPath `//a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -705,12 +651,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "XPath `//a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('XPath `//a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -735,12 +678,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "XPath `//a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('XPath `//a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -772,12 +712,9 @@ function checkAssertAttributeInner(x, func, before, after) {
             'const parseAssertElemAttrDict = {"b":"c"};\n' +
             'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
                 'Object.entries(parseAssertElemAttrDict)) {\n' +
-            before +
             'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            '    throw "XPath `//a` doesn\'t have an attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`";\n' +
+            check('XPath `//a`') +
             '}\n' +
-            after('') +
             'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
             '(() => {\n' +
             before +
@@ -797,7 +734,14 @@ function checkAssertAttributeInner(x, func, before, after) {
 }
 
 function checkAssertAttribute(x, func) {
-    checkAssertAttributeInner(x, func, '', () => '');
+    checkAssertAttributeInner(
+        x,
+        func,
+        '',
+        p => `    throw "${p} doesn't have an attribute named \`" + \
+parseAssertElemAttrAttribute + "\`";\n`,
+        () => '',
+    );
 }
 
 function checkAssertAttributeFalse(x, func) {
@@ -805,6 +749,7 @@ function checkAssertAttributeFalse(x, func) {
         x,
         func,
         'try {\n',
+        () => '    return;\n',
         t => {
             if (t.length === 0) {
                 return '} catch(e) { return; } throw "assert didn\'t fail";\n';
@@ -1829,7 +1774,7 @@ function checkAssertLocalStorageFalse(x, func) {
     checkAssertLocalStorageInner(x, func, '==');
 }
 
-function checkAssertPropertyInner(x, func, before, after) {
+function checkAssertPropertyInner(x, func, before, check, after) {
     x.assert(func('("a", "b", )'), {
         'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
     });
@@ -1866,12 +1811,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
-                '\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -1897,12 +1839,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
-                '\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -1929,12 +1868,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
-                '\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -1963,12 +1899,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
-                '\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -1995,12 +1928,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
-                '\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -2027,12 +1957,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector ' +
-                '`a:focus`\';\n' +
+            check('selector `a:focus`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -2059,12 +1986,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector ' +
-                '`a:focus`\';\n' +
+            check('selector `a:focus`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -2091,12 +2015,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector ' +
-                '`a ::after`\';\n' +
+            check('selector `a ::after`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -2123,12 +2044,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector ' +
-                '`a ::after`\';\n' +
+            check('selector `a ::after`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -2158,12 +2076,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for XPath `//a`\';' +
-                '\n' +
+            check('XPath `//a`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -2190,12 +2105,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for XPath `//a`\';' +
-                '\n' +
+            check('XPath `//a`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -2222,12 +2134,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for XPath `//a`\';' +
-                '\n' +
+            check('XPath `//a`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -2260,12 +2169,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for XPath `//a`\';' +
-                '\n' +
+            check('XPath `//a`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -2294,12 +2200,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
-                '\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -2325,12 +2228,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
-                '\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -2356,12 +2256,9 @@ function checkAssertPropertyInner(x, func, before, after) {
             'for (const [parseAssertElemPropKey, parseAssertElemPropValue] of ' +
                 'Object.entries(parseAssertElemPropDict)) {\n' +
             '(() => {\n' +
-            before +
             'if (e[parseAssertElemPropKey] === undefined) {\n' +
-            'throw \'There is no property `\' + parseAssertElemPropKey + \'` for selector `a`\';' +
-                '\n' +
+            check('selector `a`') +
             '}\n' +
-            after('') +
             '})();\n' +
             '(() => {\n' +
             before +
@@ -2390,7 +2287,11 @@ function checkAssertPropertyInner(x, func, before, after) {
 }
 
 function checkAssertProperty(x, func) {
-    checkAssertPropertyInner(x, func, '', () => '');
+    checkAssertPropertyInner(
+        x,
+        func,
+        '', s => `throw 'There is no property \`' + parseAssertElemPropKey + '\` for ${s}';\n`,
+        () => '');
 }
 
 function checkAssertPropertyFalse(x, func) {
@@ -2398,6 +2299,7 @@ function checkAssertPropertyFalse(x, func) {
         x,
         func,
         'try {\n',
+        () => 'return;\n',
         t => {
             if (t.length === 0) {
                 return '} catch(e) { return; } throw "assert didn\'t fail";\n';
