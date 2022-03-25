@@ -413,8 +413,10 @@ ${all_checks}\
 //
 // * ("CSS", {"DOM property": "value"})
 // * ("XPath", {"DOM property": "value"})
-// * ("CSS", {"DOM property": "value"}, ALL)
-// * ("XPath", {"DOM property": "value"}, ALL)
+// * ("CSS", {"DOM property": "value"}, IDENT)
+// * ("XPath", {"DOM property": "value"}, IDENT)
+// * ("CSS", {"DOM property": "value"}, [IDENT])
+// * ("XPath", {"DOM property": "value"}, [IDENT})
 function parseAssertProperty(parser) {
     return parseAssertPropertyInner(parser, false);
 }
@@ -423,33 +425,115 @@ function parseAssertProperty(parser) {
 //
 // * ("CSS", {"DOM property": "value"})
 // * ("XPath", {"DOM property": "value"})
-// * ("CSS", {"DOM property": "value"}, ALL)
-// * ("XPath", {"DOM property": "value"}, ALL)
+// * ("CSS", {"DOM property": "value"}, IDENT)
+// * ("XPath", {"DOM property": "value"}, IDENT)
+// * ("CSS", {"DOM property": "value"}, [IDENT])
+// * ("XPath", {"DOM property": "value"}, [IDENT})
 function parseAssertPropertyFalse(parser) {
     return parseAssertPropertyInner(parser, true);
 }
 
 function parseAssertAttributeInner(parser, assertFalse) {
-    const selector = getAssertSelector(parser);
-    if (selector.error !== undefined) {
-        return selector;
-    }
-    const checkAllElements = selector.checkAllElements;
-    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
+    const err = 'Read the documentation to see the accepted inputs';
+    const elems = parser.elems;
+    const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
+    const warnings = [];
+    const enabled_checks = {};
 
+    if (elems.length === 0) {
+        return {
+            'error': 'expected a tuple, found nothing. ' + err,
+        };
+    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
+        return {'error': `expected a tuple, found \`${parser.getRawArgs()}\`. ${err}`};
+    }
+    const tuple = elems[0].getRaw();
+    if (tuple.length < 2 || tuple.length > 3) {
+        return {
+            'error': 'invalid number of values in the tuple (expected 2 or 3, found ' +
+                tuple.length + '), ' + err,
+        };
+    } else if (tuple[0].kind !== 'string') {
+        return {
+            'error': 'expected a CSS selector or an XPath as first argument, ' +
+                `found ${tuple[0].getArticleKind()}`,
+        };
+    } else if (tuple[1].kind !== 'json') {
+        return {
+            'error': 'expected a JSON dictionary as second argument, found ' +
+                `\`${tuple[1].getText()}\` (${tuple[1].getArticleKind()})`,
+        };
+    } else if (tuple.length === 3) {
+        const ret = fillEnabledChecks(tuple[2], identifiers, enabled_checks, warnings, 'third');
+        if (ret !== null) {
+            return ret;
+        }
+    }
+
+    const [insertBefore, insertAfter] = getInsertStrings(
+        assertFalse,
+        false,
+        'TO_REPLACE',
+    );
+    const selector = tuple[0].getSelector();
     const xpath = selector.isXPath ? 'XPath ' : 'selector ';
-
-    const json = selector.tuple[1].getRaw();
-    const entries = validateJson(json, ['string', 'number'], 'attribute');
-
-    if (entries.error !== undefined) {
-        return entries;
-    }
 
     const varName = 'parseAssertElemAttr';
     const varDict = varName + 'Dict';
     const varKey = varName + 'Attribute';
     const varValue = varName + 'Value';
+
+    const checks = [];
+    if (enabled_checks['CONTAINS']) {
+        checks.push([`\
+if (attr.indexOf(${varValue}) === -1) {
+    throw "attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't contain \`" + \
+${varValue} + "\` for ${xpath}\`${selector.value}\`";
+}`, 'CONTAINS']);
+    }
+    if (enabled_checks['STARTS_WITH']) {
+        checks.push([`\
+if (!attr.startsWith(${varValue})) {
+    throw "attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't start with \`"\
+ + ${varValue} + "\` for ${xpath}\`${selector.value}\`";
+}`, 'STARTS_WITH']);
+    }
+    if (enabled_checks['ENDS_WITH']) {
+        checks.push([`\
+if (!attr.endsWith(${varValue})) {
+    throw "attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't end with \`" +\
+ ${varValue} + "\` for ${xpath}\`${selector.value}\`";
+}`, 'ENDS_WITH']);
+    }
+    if (checks.length === 0) {
+        checks.push([`\
+if (attr !== ${varValue}) {
+    throw "attribute \`" + ${varKey} + "\` (\`" + attr + "\`) isn't equal to \`" + \
+${varValue} + "\` for ${xpath}\`${selector.value}\`";
+}`, '']);
+    }
+
+    let all_checks = '';
+    for (const check of checks) {
+        all_checks += '(() => {\n' +
+            insertBefore +
+            check[0];
+
+        if (check[1].length > 0) {
+            all_checks += insertAfter.replace('TO_REPLACE', ` (for ${check[1]} check)`);
+        } else {
+            all_checks += insertAfter.replace('TO_REPLACE', '');
+        }
+
+        all_checks += '\n})();\n';
+    }
+
+    const json = tuple[1].getRaw();
+    const entries = validateJson(json, ['string', 'number'], 'attribute');
+    if (entries.error !== undefined) {
+        return entries;
+    }
+
 
     // JSON.stringify produces a problematic output so instead we use this.
     let d = '';
@@ -462,32 +546,29 @@ function parseAssertAttributeInner(parser, assertFalse) {
 
     const code = `const ${varDict} = {${d}};
 for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-${insertBefore}if (e.getAttribute(${varKey}) !== ${varValue}) {
-throw 'expected \`' + ${varValue} + '\` for attribute \`' + ${varKey} + '\` for ${xpath}\
-\`${selector.value}\`, found \`' + e.getAttribute(${varKey}) + '\`';
-}${insertAfter}
+${insertBefore}if (!e.hasAttribute(${varKey})) {
+    throw "${xpath}\`${selector.value}\` doesn't have an attribute named \`" + ${varKey} + "\`";
+}${insertAfter.replace('TO_REPLACE', '')}
+const attr = e.getAttribute(${varKey});
+${all_checks}\
 }\n`;
 
     let instructions;
-    if (!checkAllElements) {
-        instructions = [
-            getAndSetElements(selector, varName, checkAllElements) + '\n' +
-            'await page.evaluate(e => {\n' +
-            code +
-            `}, ${varName});`,
-        ];
-    } else {
-        instructions = [
-            getAndSetElements(selector, varName, checkAllElements) + '\n' +
+    if (enabled_checks['ALL'] === true) {
+        instructions = getAndSetElements(selector, varName, true) + '\n' +
             `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
                 'await page.evaluate(e => {\n' +
                 code +
                 `}, ${varName}[i]);\n` +
-            '}',
-        ];
+            '}';
+    } else {
+        instructions = getAndSetElements(selector, varName, false) + '\n' +
+            'await page.evaluate(e => {\n' +
+            code +
+            `}, ${varName});`;
     }
     return {
-        'instructions': instructions,
+        'instructions': [instructions],
         'wait': false,
         'warnings': entries.warnings,
         'checkResult': true,
@@ -496,20 +577,24 @@ throw 'expected \`' + ${varValue} + '\` for attribute \`' + ${varKey} + '\` for 
 
 // Possible inputs:
 //
-// * ("CSS", {"css property": "value"})
-// * ("XPath", {"css property": "value"})
-// * ("CSS", {"css property": "value"}, ALL)
-// * ("XPath", {"css property": "value"}, ALL)
+// * ("CSS", {"attribute name": "value"})
+// * ("XPath", {"attribute name": "value"})
+// * ("CSS", {"attribute name": "value"}, IDENT)
+// * ("XPath", {"attribute name": "value"}, IDENT)
+// * ("CSS", {"attribute name": "value"}, [IDENT])
+// * ("XPath", {"attribute name": "value"}, [IDENT])
 function parseAssertAttribute(parser) {
     return parseAssertAttributeInner(parser, false);
 }
 
 // Possible inputs:
 //
-// * ("CSS", {"css property": "value"})
-// * ("XPath", {"css property": "value"})
-// * ("CSS", {"css property": "value"}, ALL)
-// * ("XPath", {"css property": "value"}, ALL)
+// * ("CSS", {"attribute name": "value"})
+// * ("XPath", {"attribute name": "value"})
+// * ("CSS", {"attribute name": "value"}, IDENT)
+// * ("XPath", {"attribute name": "value"}, IDENT)
+// * ("CSS", {"attribute name": "value"}, [IDENT])
+// * ("XPath", {"attribute name": "value"}, [IDENT])
 function parseAssertAttributeFalse(parser) {
     return parseAssertAttributeInner(parser, true);
 }
