@@ -264,25 +264,106 @@ function parseAssertDocumentPropertyFalse(parser) {
 }
 
 function parseAssertPropertyInner(parser, assertFalse) {
-    const selector = getAssertSelector(parser);
-    if (selector.error !== undefined) {
-        return selector;
-    }
-    const checkAllElements = selector.checkAllElements;
-    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
+    const err = 'Read the documentation to see the accepted inputs';
+    const elems = parser.elems;
+    const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
+    const warnings = [];
+    const enabled_checks = {};
 
+    if (elems.length === 0) {
+        return {
+            'error': 'expected a tuple, found nothing. ' + err,
+        };
+    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
+        return {'error': `expected a tuple, found \`${parser.getRawArgs()}\`. ${err}`};
+    }
+    const tuple = elems[0].getRaw();
+    if (tuple.length < 2 || tuple.length > 3) {
+        return {
+            'error': 'invalid number of values in the tuple (expected 2 or 3, found ' +
+                tuple.length + '), ' + err,
+        };
+    } else if (tuple[0].kind !== 'string') {
+        return {
+            'error': 'expected a CSS selector or an XPath as first argument, ' +
+                `found ${tuple[0].getArticleKind()}`,
+        };
+    } else if (tuple[1].kind !== 'json') {
+        return {
+            'error': 'expected a JSON dictionary as second argument, found ' +
+                `\`${tuple[1].getText()}\` (${tuple[1].getArticleKind()})`,
+        };
+    } else if (tuple.length === 3) {
+        const ret = fillEnabledChecks(tuple[2], identifiers, enabled_checks, warnings, 'third');
+        if (ret !== null) {
+            return ret;
+        }
+    }
+
+    const [insertBefore, insertAfter] = getInsertStrings(
+        assertFalse,
+        false,
+        'TO_REPLACE',
+    );
+    const selector = tuple[0].getSelector();
     const xpath = selector.isXPath ? 'XPath ' : 'selector ';
-
-    const json = selector.tuple[1].getRaw();
-    const entries = validateJson(json, ['string', 'number'], 'property');
-    if (entries.error !== undefined) {
-        return entries;
-    }
 
     const varName = 'parseAssertElemProp';
     const varDict = varName + 'Dict';
     const varKey = varName + 'Key';
     const varValue = varName + 'Value';
+
+    const checks = [];
+    if (enabled_checks['CONTAINS']) {
+        checks.push([`\
+if (String(e[${varKey}]).indexOf(${varValue}) === -1) {
+    throw "property \`" + ${varKey} + "\` (\`" + String(e[${varKey}]) + "\`) doesn't contain \`" + \
+${varValue} + "\` for ${xpath}\`${selector.value}\`";
+}`, 'CONTAINS']);
+    }
+    if (enabled_checks['STARTS_WITH']) {
+        checks.push([`\
+if (!String(e[${varKey}]).startsWith(${varValue})) {
+    throw "property \`" + ${varKey} + "\` (\`" + String(e[${varKey}]) + "\`) doesn't start with \`"\
+ + ${varValue} + "\` for ${xpath}\`${selector.value}\`";
+}`, 'STARTS_WITH']);
+    }
+    if (enabled_checks['ENDS_WITH']) {
+        checks.push([`\
+if (!String(e[${varKey}]).endsWith(${varValue})) {
+    throw "property \`" + ${varKey} + "\` (\`" + String(e[${varKey}]) + "\`) doesn't end with \`" +\
+ ${varValue} + "\` for ${xpath}\`${selector.value}\`";
+}`, 'ENDS_WITH']);
+    }
+    if (checks.length === 0) {
+        checks.push([`\
+if (String(e[${varKey}]) != ${varValue}) {
+    throw "property \`" + ${varKey} + "\` (\`" + String(e[${varKey}]) + "\`) isn't equal to \`" + \
+${varValue} + "\` for ${xpath}\`${selector.value}\`";
+}`, '']);
+    }
+
+    let all_checks = '';
+    for (const check of checks) {
+        all_checks += '(() => {\n' +
+            insertBefore +
+            check[0];
+
+        if (check[1].length > 0) {
+            all_checks += insertAfter.replace('TO_REPLACE', ` (for ${check[1]} check)`);
+        } else {
+            all_checks += insertAfter.replace('TO_REPLACE', '');
+        }
+
+        all_checks += '\n})();\n';
+    }
+
+    const json = tuple[1].getRaw();
+    const entries = validateJson(json, ['string', 'number'], 'property');
+    if (entries.error !== undefined) {
+        return entries;
+    }
+
     // JSON.stringify produces a problematic output so instead we use this.
     let d = '';
     for (const [k, v] of Object.entries(entries.values)) {
@@ -293,29 +374,31 @@ function parseAssertPropertyInner(parser, assertFalse) {
     }
     const code = `const ${varDict} = {${d}};
 for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+(() => {
 ${insertBefore}\
-if (e[${varKey}] === undefined || String(e[${varKey}]) != ${varValue}) {
-throw 'expected \`' + ${varValue} + '\` for property \`' + ${varKey} + '\` for ${xpath}\
-\`${selector.value}\`, found \`' + e[${varKey}] + '\`';
-}${insertAfter}
+if (e[${varKey}] === undefined) {
+throw 'There is no property \`' + ${varKey} + '\` for ${xpath}\`${selector.value}\`';
+}${insertAfter.replace('TO_REPLACE', '')}
+})();
+${all_checks}\
 }\n`;
 
     let instructions;
-    if (!checkAllElements) {
+    if (enabled_checks['ALL'] === true) {
         instructions = [
-            getAndSetElements(selector, varName, checkAllElements) + '\n' +
-            `await ${varName}.evaluate(e => {\n` +
-                `${code}` +
-            '});',
-        ];
-    } else {
-        instructions = [
-            getAndSetElements(selector, varName, checkAllElements) + '\n' +
+            getAndSetElements(selector, varName, true) + '\n' +
             `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
                 `await ${varName}[i].evaluate(e => {\n` +
                     `${code}` +
                 '});\n' +
             '}',
+        ];
+    } else {
+        instructions = [
+            getAndSetElements(selector, varName, false) + '\n' +
+            `await ${varName}.evaluate(e => {\n` +
+                `${code}` +
+            '});',
         ];
     }
     return {
@@ -507,7 +590,6 @@ function parseAssertTextInner(parser, assertFalse) {
     const elems = parser.elems;
     const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
     const warnings = [];
-
     const enabled_checks = {};
 
     if (elems.length === 0) {

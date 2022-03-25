@@ -337,6 +337,26 @@ assert-property: ("#id > .class", { "offsetParent": "null" }, ALL)
 assert-property: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" }, ALL)
 ```
 
+You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+
+```
+assert-property: (
+    "#id",
+    {"className": "https://some.where", "title": "a title"},
+    STARTS_WITH,
+)
+```
+
+You can even combine the checks:
+
+```
+assert-property: (
+    "#id",
+    {"className": "https://some.where", "title": "a title"},
+    [STARTS_WITH, ENDS_WITH, ALL],
+)
+```
+
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements`](#compare-elements-property) command.
 
 #### assert-property-false
@@ -350,6 +370,26 @@ assert-property-false: ("//*[@id='id']/*[@class='class']", { "offsetParent": "nu
 // If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-property-false: ("#id > .class", { "offsetParent": "null" }, ALL)
 assert-property-false: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" }, ALL)
+```
+
+You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+
+```
+assert-property-false: (
+    "#id",
+    {"className": "https://some.where", "title": "a title"},
+    STARTS_WITH,
+)
+```
+
+You can even combine the checks:
+
+```
+assert-property-false: (
+    "#id",
+    {"className": "https://some.where", "title": "a title"},
+    [STARTS_WITH, ENDS_WITH, ALL],
+)
 ```
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-property-false) command.

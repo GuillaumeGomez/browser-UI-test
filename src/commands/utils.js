@@ -41,15 +41,13 @@ function validateJson(json, allowedValueTypes, keyName) {
     const entries = {};
     const warnings = [];
 
-    for (let i = 0; i < json.length; ++i) {
-        const entry = json[i];
-
+    for (const entry of json) {
         if (entry['value'] === undefined) {
             warnings.push(`No value for key \`${entry['key'].getText()}\``);
             continue;
         } else if (allowedValueTypes.indexOf(entry['value'].kind) === -1) {
             let allowed = '';
-            for (i = 0; i < allowedValueTypes.length - 1; ++i) {
+            for (let i = 0; i < allowedValueTypes.length - 1; ++i) {
                 if (allowed.length !== 0) {
                     allowed += ', ';
                 }
