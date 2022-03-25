@@ -382,7 +382,7 @@ You can use more specific checks as well by using one of the following identifie
 ```
 assert-property: (
     "#id",
-    {"className": "https://some.where", "title": "a title"},
+    {"className": "where", "title": "a title"},
     STARTS_WITH,
 )
 ```
@@ -392,7 +392,7 @@ You can even combine the checks:
 ```
 assert-property: (
     "#id",
-    {"className": "https://some.where", "title": "a title"},
+    {"className": "where", "title": "a title"},
     [STARTS_WITH, ENDS_WITH, ALL],
 )
 ```
@@ -417,7 +417,7 @@ You can use more specific checks as well by using one of the following identifie
 ```
 assert-property-false: (
     "#id",
-    {"className": "https://some.where", "title": "a title"},
+    {"className": "where", "title": "a title"},
     STARTS_WITH,
 )
 ```
@@ -427,7 +427,7 @@ You can even combine the checks:
 ```
 assert-property-false: (
     "#id",
-    {"className": "https://some.where", "title": "a title"},
+    {"className": "where", "title": "a title"},
     [STARTS_WITH, ENDS_WITH, ALL],
 )
 ```
