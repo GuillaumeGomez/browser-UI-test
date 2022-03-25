@@ -9,5 +9,5 @@ click: "#js-call-attr"
 wait-for-attribute: ("#js-call-attr", {"data-a": "b"})
 // This next one should fail.
 wait-for-attribute: ("#js-call-attr", {"data-a": "c"})
-// Check that the script won't stop running anything after the previous command failed.
+// Check that the script won't run anything after the previous command failed.
 assert-attribute: ("#js-call-attr", {"data-a": "c"})
