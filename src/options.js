@@ -72,6 +72,7 @@ class Options {
         this.showText = false;
         this.debug = false;
         this.noScreenshotComparison = false;
+        this.noSandbox = false;
         this.testFiles = [];
         this.variables = {};
         this.extensions = [];
@@ -97,6 +98,7 @@ class Options {
         copy.showText = this.showText;
         copy.debug = this.debug;
         copy.noScreenshotComparison = this.noScreenshotComparison;
+        copy.noSandbox = this.noSandbox;
         copy.testFiles = JSON.parse(JSON.stringify(this.testFiles));
         copy.variables = JSON.parse(JSON.stringify(this.variables));
         copy.extensions = JSON.parse(JSON.stringify(this.extensions));
