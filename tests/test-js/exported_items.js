@@ -291,6 +291,9 @@ async function checkOptions(x) {
     await x.assert(options.noScreenshotComparison, false);
     await x.assertTry(() => options.parseArguments(['--no-screenshot-comparison']), [], true);
     await x.assert(options.noScreenshotComparison, true);
+    await x.assert(options.noSandbox, false);
+    await x.assertTry(() => options.parseArguments(['--no-sandbox']), [], true);
+    await x.assert(options.noSandbox, true);
     await x.assert(options.incognito, false);
     await x.assertTry(() => options.parseArguments(['--incognito']), [], true);
     await x.assert(options.incognito, true);
