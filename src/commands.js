@@ -54,6 +54,7 @@ const ORDERS = {
     'permissions': commands.parsePermissions,
     'press-key': commands.parsePressKey,
     'reload': commands.parseReload,
+    'screenshot': commands.parseScreenshot,
     'screenshot-comparison': commands.parseScreenshotComparison,
     'scroll-to': commands.parseScrollTo,
     'show-text': commands.parseShowText,
@@ -79,6 +80,7 @@ const FATAL_ERROR_COMMANDS = [
     'goto',
     'local-storage',
     'move-cursor-to',
+    'screenshot',
     'scroll-to',
     'text',
     'wait-for',
@@ -159,6 +161,7 @@ function parseContent(content, options) {
             'original': parser.getOriginalCommand(),
             'line_number': parser.command.line,
             'instructions': res['instructions'],
+            'infos': res['infos'],
         });
     }
     return commands;

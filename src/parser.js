@@ -81,6 +81,38 @@ function showChar(c) {
     return `${separator}${c}${separator}`;
 }
 
+function getCssValue(value, text = '') {
+    const css = cleanCssSelector(value, text);
+    if (css.error !== undefined) {
+        return css;
+    }
+    const index = css.value.search(/[A-Za-z\])]::[A-Za-z][A-Za-z0-9_]*$/);
+    if (index !== -1) {
+        return {
+            'value': css.value.slice(0, index + 1),
+            'pseudo': css.value.slice(index + 1),
+        };
+    }
+    css['pseudo'] = null;
+    return css;
+}
+
+function getSelector(value, text = '') {
+    if (value.startsWith('//')) {
+        return {
+            'value': value,
+            'isXPath': true,
+        };
+    } else if (value.startsWith('/')) {
+        return {
+            'error': 'XPath must start with `//`',
+        };
+    }
+    const css = getCssValue(value, text);
+    css.isXPath = false;
+    return css;
+}
+
 class Element {
     constructor(kind, value, startPos, endPos, line, error = null) {
         this.kind = kind;
@@ -96,20 +128,7 @@ class Element {
     }
 
     getSelector(text = '') {
-        const s = this.getStringValue(true);
-        if (s.startsWith('//')) {
-            return {
-                'value': s,
-                'isXPath': true,
-            };
-        } else if (s.startsWith('/')) {
-            return {
-                'error': 'XPath must start with `//`',
-            };
-        }
-        const css = this.getCssValue(text);
-        css.isXPath = false;
-        return css;
+        return getSelector(this.getStringValue(true), text);
     }
 
     getStringValue(trim) {
@@ -129,19 +148,7 @@ class Element {
     }
 
     getCssValue(text = '') {
-        const css = cleanCssSelector(this.value, text);
-        if (css.error !== undefined) {
-            return css;
-        }
-        const index = css.value.search(/[A-Za-z\])]::[A-Za-z][A-Za-z0-9_]*$/);
-        if (index !== -1) {
-            return {
-                'value': css.value.slice(0, index + 1),
-                'pseudo': css.value.slice(index + 1),
-            };
-        }
-        css['pseudo'] = null;
-        return css;
+        return getCssValue(this.value, text);
     }
 
     isRecursive() {
@@ -997,4 +1004,5 @@ module.exports = {
     'UnknownElement': UnknownElement,
     'JsonElement': JsonElement,
     'cleanString': cleanString,
+    'getSelector': getSelector,
 };

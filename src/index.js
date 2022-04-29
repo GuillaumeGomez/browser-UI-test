@@ -2,7 +2,9 @@
 
 const fs = require('fs');
 const PNG = require('pngjs').PNG;
-const parser = require('./commands.js');
+const parser = require('./parser.js');
+const commands_parser = require('./commands.js');
+const { innerParseScreenshot } = require('./commands/general.js');
 const utils = require('./utils.js');
 const Options = require('./options.js').Options;
 const {Debug, Logs} = require('./logs.js');
@@ -90,7 +92,7 @@ function getGlobalStyle(showText) {
 
 function parseTest(testName, content, logs, options) {
     try {
-        const commands = parser.parseContent(content, options);
+        const commands = commands_parser.parseContent(content, options);
         if (Object.prototype.hasOwnProperty.call(commands, 'error')) {
             logs.append(testName + '... FAILED');
             logs.append(`[ERROR] line ${commands['line']}: ${commands['error']}`);
@@ -167,6 +169,7 @@ async function runCommand(loaded, logs, options, browser) {
             'debug_log': debug_log,
             // If the `--no-headless` option is set, we enable it by default.
             'pauseOnError': options.shouldPauseOnError(),
+            'getImageFolder': () => options.getImageFolder(),
         };
         await page.exposeFunction('BrowserUiStyleInserter', () => {
             return getGlobalStyle(extras.showText);
@@ -216,35 +219,39 @@ async function runCommand(loaded, logs, options, browser) {
             const instructions = command['instructions'];
             let stopInnerLoop = false;
 
-            for (let y = 0; y < instructions.length; ++y) {
-                debug_log.append(`EXECUTING (line ${line_number}) "${instructions[y]}"`);
+            for (const instruction of instructions) {
+                debug_log.append(`EXECUTING (line ${line_number}) "${instruction}"`);
+                let loadedInstruction;
                 try {
-                    await loadContent(instructions[y])(page, extras).catch(err => {
-                        if (err === parser.COLOR_CHECK_ERROR) {
-                            error_log += `[ERROR] (line ${line_number}): ${err}\n`;
-                            stopLoop = true;
-                        } else {
-                            failed = true;
-                            const s_err = err.toString();
-                            if (extras.expectedToFail !== true) {
-                                const original = command['original'];
-                                error_log += `[ERROR] (line ${line_number}) ${s_err}: for ` +
-                                    `command \`${original}\`\n`;
-                                stopInnerLoop = true;
-                            } else {
-                                // it's an expected failure so no need to log it
-                                debug_log.append(
-                                    `[EXPECTED FAILURE] (line ${line_number}): ${s_err}`);
-                            }
-                        }
-                    });
+                    loadedInstruction = loadContent(instruction);
                 } catch (error) { // parsing error
                     error_log += `(line ${line_number}) output:\n${error.message}\n`;
                     if (debug_log.isEnabled()) {
                         error_log += `command \`${command['original']}\` failed on ` +
-                            `\`${instructions[y]}\`\n`;
+                            `\`${instruction}\`\n`;
                     }
                     break command_loop;
+                }
+                try {
+                    await loadedInstruction(page, extras);
+                } catch (err) { // execution error
+                    if (err === commands_parser.COLOR_CHECK_ERROR) {
+                        error_log += `[ERROR] (line ${line_number}): ${err}\n`;
+                        stopLoop = true;
+                    } else {
+                        failed = true;
+                        const s_err = err.toString();
+                        if (extras.expectedToFail !== true) {
+                            const original = command['original'];
+                            error_log += `[ERROR] (line ${line_number}) ${s_err}: for ` +
+                                `command \`${original}\`\n`;
+                            stopInnerLoop = true;
+                        } else {
+                            // it's an expected failure so no need to log it
+                            debug_log.append(
+                                `[EXPECTED FAILURE] (line ${line_number}): ${s_err}`);
+                        }
+                    }
                 }
                 debug_log.append('Done!');
                 if (stopLoop) {
@@ -259,11 +266,16 @@ async function runCommand(loaded, logs, options, browser) {
                 error_log += `(line ${line_number}) command \`${command['original']}\` was ` +
                     'supposed to fail but succeeded\n';
             }
+            let shouldWait = false;
             if (failed === true) {
                 if (command['fatal_error'] === true || extras.pauseOnError === true) {
                     break;
                 }
             } else if (command['wait'] !== false) {
+                shouldWait = true;
+            }
+            logs.info(command['infos']);
+            if (shouldWait) {
                 // We wait a bit between each command to be sure the browser can follow.
                 await page.waitFor(100);
             }
@@ -279,7 +291,7 @@ async function runCommand(loaded, logs, options, browser) {
             return Status.Failure;
         }
 
-        let elem = page;
+        let selector = null;
         if (extras.screenshotComparison !== true) {
             if (extras.screenshotComparison === false) {
                 logs.append('ok', true);
@@ -288,38 +300,54 @@ async function runCommand(loaded, logs, options, browser) {
                 await page.close();
                 return Status.Ok;
             }
-            if (extras.screenshotComparison.startsWith('//')) {
-                // This is an XPath.
-                elem = await page.$x(extras.screenshotComparison);
-                if (elem.length === 0) {
-                    elem = null;
-                } else {
-                    elem = elem[0];
-                }
-            } else {
-                // This is a CSS selector.
-                elem = await page.$(extras.screenshotComparison);
-            }
-            if (elem === null) {
+            selector = parser.getSelector(extras.screenshotComparison);
+            if (selector.error !== undefined) {
                 logs.append('FAILED', true);
-                logs.append(`Cannot take screenshot: element \`${extras.screenshotComparison}\`` +
-                    ' not found');
+                logs.append(`Cannot take screenshot: ${selector.error.join('\n')}`);
                 logs.warn(loaded['warnings']);
                 await page.close();
                 return Status.MissingElementForScreenshot;
             }
         }
 
+        const data = innerParseScreenshot(
+            extras,
+            `${loaded['file']}-${options.runId}`,
+            selector,
+        );
+        let screenshot_error = null;
+        for (const instruction of data.instructions) {
+            let loadedInstruction;
+            try {
+                loadedInstruction = loadContent(instruction);
+            } catch (error) { // parsing error
+                screenshot_error = error;
+                break;
+            }
+            try {
+                await loadedInstruction(page, extras);
+            } catch (err) { // execution error
+                screenshot_error = err;
+                break;
+            }
+        }
+
+        if (screenshot_error !== null) {
+            logs.append('FAILED', true);
+            logs.append(`Cannot take screenshot: element \`${extras.screenshotComparison}\`` +
+                ` not found: ${screenshot_error}`);
+            logs.warn(loaded['warnings']);
+            await page.close();
+            return Status.MissingElementForScreenshot;
+        }
+        logs.info(data['infos']);
+
         const compare_s = options.generateImages === false ? 'COMPARISON' : 'GENERATION';
         debug_log.append(`=> [SCREENSHOT ${compare_s}]`);
         const p = path.join(options.getImageFolder(), loaded['file']);
         const newImage = `${p}-${options.runId}.png`;
-        await elem.screenshot({
-            'path': newImage,
-            'fullPage': extras.screenshotComparison === true ? true : undefined,
-        });
+        const originalImage = `${p}.png`;
 
-        const originalImage = `${path.join(options.getImageFolder(), loaded['file'])}.png`;
         if (fs.existsSync(originalImage) === false) {
             if (options.generateImages === false) {
                 logs.append('FAILED ("' + originalImage + '" not found, use "--generate-images" ' +
