@@ -1,5 +1,6 @@
 // Contains commands which don't really have a "category".
 
+const path = require('path');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 const {
     buildPropertyDict,
@@ -378,10 +379,87 @@ function parseLocalStorage(parser) {
     };
 }
 
+function innerParseScreenshot(options, filename, selector) {
+    let instructions = '';
+    const varName = 'screenshotElem';
+    let fullPage = true;
+    let extraInfo = '';
+
+    if (selector !== null) {
+        instructions += getAndSetElements(selector, varName, false) + '\n';
+        fullPage = false;
+        if (selector.isXPath) {
+            extraInfo = ` for XPath \`${selector.value}\``;
+        } else {
+            extraInfo = ` for CSS selector \`${selector.value}\``;
+        }
+    } else {
+        // In case no selector was specified, we take a screenshot of the whole page.
+        instructions += `const ${varName} = page;\n`;
+    }
+
+    const p = path.join(options.getImageFolder(), filename) + '.png';
+    const opt = {
+        'path': p,
+        'fullPage': fullPage,
+    };
+    instructions += `await ${varName}.screenshot(${JSON.stringify(opt)});`;
+    return {
+        'instructions': [instructions],
+        'wait': false,
+        'infos': [`Generating screenshot${extraInfo} into \`${p}\``],
+    };
+}
+
+// Possible inputs:
+//
+// * "name"
+// * ("name")
+// * ("name", "element to screenshot")
+function parseScreenshot(parser, options) {
+    const elems = parser.elems;
+    let filename;
+    let selector = null;
+
+    if (elems.length === 0) {
+        return {'error': 'expected a string or a tuple, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'tuple' && elems[0].kind !== 'string') {
+        return {'error': `expected a string or a tuple, found \`${parser.getRawArgs()}\``};
+    } else if (elems[0].kind === 'string') {
+        filename = elems[0].getStringValue();
+    } else {
+        const tuple = elems[0].getRaw();
+        if (tuple.length !== 1 && tuple.length !== 2) {
+            let err = `expected a tuple with one or two strings, found \`${tuple.length}\` element`;
+            if (tuple.length > 1) {
+                err += 's';
+            }
+            return {'error': err};
+        }
+        for (const el of tuple) {
+            if (el.kind !== 'string') {
+                return {
+                    'error': `expected all tuple elements to be strings, found \`${el.getText()}\``,
+                };
+            }
+        }
+        filename = tuple[0].getStringValue();
+        if (tuple.length === 2) {
+            selector = tuple[1].getSelector();
+            if (selector.error !== undefined) {
+                return selector;
+            }
+        }
+    }
+    return innerParseScreenshot(options, filename, selector);
+}
+
 module.exports = {
     'parseLocalStorage': parseLocalStorage,
     'parseWaitFor': parseWaitFor,
     'parseWaitForAttribute': parseWaitForAttribute,
     'parseWaitForCss': parseWaitForCss,
     'parseWaitForText': parseWaitForText,
+    'parseScreenshot': parseScreenshot,
+    'innerParseScreenshot': innerParseScreenshot,
 };

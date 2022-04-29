@@ -1,5 +1,15 @@
 const process = require('process');
 
+function addLog(logs, newLog, kind) {
+    if (typeof newLog === 'object') {
+        newLog = newLog.join('\n');
+    }
+    if (typeof newLog !== 'string' || newLog.length === 0) {
+        return;
+    }
+    logs.append(kind + newLog.split('\n').join('\n' + kind) + '\n');
+}
+
 class Logs {
     constructor(showLogs) {
         this.showLogs = showLogs;
@@ -21,14 +31,13 @@ class Logs {
     }
 
     // Accepts either a string or an array of string.
+    info(newLog) {
+        addLog(this, newLog, '[INFO] ');
+    }
+
+    // Accepts either a string or an array of string.
     warn(newLog) {
-        if (typeof newLog === 'object') {
-            newLog = newLog.join('\n');
-        }
-        if (typeof newLog !== 'string' || newLog.length === 0) {
-            return;
-        }
-        this.append('[WARNING] ' + newLog.split('\n').join('\n[WARNING] '));
+        addLog(this, newLog, '[WARNING] ');
     }
 }
 

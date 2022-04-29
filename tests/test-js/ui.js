@@ -65,6 +65,13 @@ async function checkUi(x = new Assert()) {
         print(`<== "ui-test" failed: ${err}\n${err.stack}`);
     }
 
+    const screenshotFile = 'tests/ui-tests/tadam.png';
+    if (fs.existsSync(screenshotFile) === false) {
+        x.addError('`screenshot-info.goml` should have generated a `tadam.png` file!');
+    } else {
+        fs.unlinkSync(screenshotFile);
+    }
+
     print('');
     print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
         `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);

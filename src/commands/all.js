@@ -60,6 +60,7 @@ module.exports = {
     'parsePermissions': emulation.parsePermissions,
     'parsePressKey': input.parsePressKey,
     'parseReload': navigation.parseReload,
+    'parseScreenshot': general.parseScreenshot,
     'parseScreenshotComparison': context_setters.parseScreenshotComparison,
     'parseScrollTo': input.parseScrollTo,
     'parseShowText': context_setters.parseShowText,

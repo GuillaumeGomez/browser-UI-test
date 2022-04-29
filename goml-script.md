@@ -105,6 +105,7 @@ Here's the command list:
  * [`permissions`](#permissions)
  * [`press-key`](#press-key)
  * [`reload`](#reload)
+ * [`screenshot`](#screenshot)
  * [`screenshot-comparison`](#screenshot-comparison)
  * [`scroll-to`](#scroll-to)
  * [`show-text`](#show-text)
@@ -900,6 +901,20 @@ reload: 0 // disable timeout, be careful when using it!
 ```
 
 Please note that if no `timeout` is specified, the one from the [`timeout`](#timeout) command is used.
+
+#### screenshot
+
+**screenshot** command generates a screenshot with the given name. It can generates a screenshot of a specific element if you give it a CSS selector or an XPath as second argument. Example:
+
+```
+// Generates a screenshot for the whole page named `a.png`.
+screenshot: "a"
+screenshot: ("a") // It does exactly the same thing.
+
+// To generate a screenshot of a specific element:
+screenshot: ("a", "#some-id")
+screenshot: ("a", "//*[@id='some-id'") // Same thing but with an XPath.
+```
 
 #### screenshot-comparison
 

@@ -5694,16 +5694,57 @@ function checkReload(x, func) {
     x.assert(func('12.0'), {'error': 'expected integer for timeout, found float: `12.0`'});
 }
 
+function checkScreenshot(x, func) {
+    x.assert(func(''), {'error': 'expected a string or a tuple, found nothing'});
+    x.assert(func('hello'), {'error': 'expected a string or a tuple, found `hello`'});
+    x.assert(func('"a"'), {
+        'instructions': [
+            'const screenshotElem = page;\n' +
+            'await screenshotElem.screenshot({"path":"a.png","fullPage":true});',
+        ],
+        'wait': false,
+        'infos': ['Generating screenshot into `a.png`'],
+    });
+    x.assert(func('("a")'), {
+        'instructions': [
+            'const screenshotElem = page;\n' +
+            'await screenshotElem.screenshot({"path":"a.png","fullPage":true});',
+        ],
+        'wait': false,
+        'infos': ['Generating screenshot into `a.png`'],
+    });
+    x.assert(func('("a", "b")'), {
+        'instructions': [
+            'let screenshotElem = await page.$("b");\n' +
+            'if (screenshotElem === null) { throw \'"b" not found\'; }\n' +
+            'await screenshotElem.screenshot({"path":"a.png","fullPage":false});',
+        ],
+        'wait': false,
+        'infos': ['Generating screenshot for CSS selector `b` into `a.png`'],
+    });
+
+    // XPath
+    x.assert(func('("a", "//b")'), {
+        'instructions': [
+            'let screenshotElem = await page.$x("//b");\n' +
+            'if (screenshotElem.length === 0) { throw \'XPath "//b" not found\'; }\n' +
+            'screenshotElem = screenshotElem[0];\n' +
+            'await screenshotElem.screenshot({"path":"a.png","fullPage":false});',
+        ],
+        'wait': false,
+        'infos': ['Generating screenshot for XPath `//b` into `a.png`'],
+    });
+}
+
 function checkScreenshotComparison(x, func) {
     x.assert(func(''), {'error': 'expected boolean or CSS selector or XPath, found nothing'});
     x.assert(func('hello'), {'error': 'expected boolean or CSS selector or XPath, found `hello`'});
-    x.assert(func('"true"'),
-        {
-            'instructions': ['arg.screenshotComparison = "true";'],
-            'wait': false,
-            'warnings': '`"true"` is a string and will be used as CSS selector. If you want to ' +
-                'set `true` or `false` value, remove quotes.',
-        });
+    x.assert(func('"true"'), {
+        'instructions': ['arg.screenshotComparison = "true";'],
+        'wait': false,
+        'warnings': '`"true"` is a string and will be used as CSS selector. If you want to ' +
+            'set `true` or `false` value, remove quotes.',
+    });
     x.assert(func('tru'), {'error': 'expected boolean or CSS selector or XPath, found `tru`'});
     x.assert(func('false'), {'instructions': ['arg.screenshotComparison = false;'], 'wait': false});
     x.assert(func('true'), {'instructions': ['arg.screenshotComparison = true;'], 'wait': false});
@@ -7120,6 +7161,11 @@ const TO_CHECK = [
         'name': 'reload',
         'func': checkReload,
         'toCall': (e, o) => wrapper(parserFuncs.parseReload, e, o),
+    },
+    {
+        'name': 'screenshot',
+        'func': checkScreenshot,
+        'toCall': (e, o) => wrapper(parserFuncs.parseScreenshot, e, o),
     },
     {
         'name': 'screenshot-comparison',
