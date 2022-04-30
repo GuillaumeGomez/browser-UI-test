@@ -174,17 +174,17 @@ class Assert {
     }
 }
 
-function removeFolder(path) {
-    if (fs.existsSync(path)) {
-        fs.readdirSync(path).forEach(file => {
-            const curPath = path.join(path, file);
+function removeFolder(entry) {
+    if (fs.existsSync(entry)) {
+        fs.readdirSync(entry).forEach(file => {
+            const curPath = path.join(entry, file);
             if (fs.lstatSync(curPath).isDirectory()) {
                 removeFolder(curPath);
             } else {
                 fs.unlinkSync(curPath);
             }
         });
-        fs.rmdirSync(path);
+        fs.rmdirSync(entry);
     }
 }
 
