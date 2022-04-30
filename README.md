@@ -114,7 +114,7 @@ const {Options, runTests} = require('browser-ui-test');
 const options = new Options();
 try {
     // This is more convenient that setting fields one by one.
-    options.parseArguments(['--no-screenshot-comparison', '--test-folder', 'some-other-place']);
+    options.parseArguments(['--enable-screenshot-comparison', '--test-folder', 'some-other-place']);
 } catch (error) {
     console.error(`invalid argument: ${error}`);
     process.exit(1);
@@ -177,7 +177,7 @@ The list of fields of the `Options` class is the following:
  * `generateImages`: if provided, it'll generate test images and won't run comparison tests
  * `imageFolder`: path of the folder where screenshots are and where they are generated (`testFolder` value by default)
  * `noHeadless`: disable headless mode
- * `noScreenshotComparison`: disable screenshots generation and comparison at the end of the scripts
+ * `screenshotComparison`: enable screenshots generation and comparison at the end of the scripts
  * `onPageCreatedCallback`: callback which is called when a new puppeteer page is created. It provides the puppeteer `page` and the test name as arguments.
  * `pauseOnError`: will pause indefinitely if an error occurs.
  * `permissions`: list of permissions to enable (you can see the full list by running with `--show-permissions`)
