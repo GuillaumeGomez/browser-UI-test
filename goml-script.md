@@ -918,11 +918,11 @@ screenshot: ("a", "//*[@id='some-id'") // Same thing but with an XPath.
 
 #### screenshot-comparison
 
-**screenshot-comparison** command enables/disables the screenshot at the end of the script (and therefore its comparison). It overrides the `--no-screenshot-comparison` option value. It expects a boolean value or a CSS selector or an XPath. Example:
+**screenshot-comparison** command enables/disables the screenshot at the end of the script (and therefore its comparison). It overrides the `--enable-screenshot-comparison` option value. It expects a boolean value or a CSS selector or an XPath. Example:
 
 ```
-// Disable screenshot comparison at the end of the script:
-screenshot-comparison: false
+// Enable screenshot comparison at the end of the script:
+screenshot-comparison: true
 
 // Will take a screenshot of the specified element and compare it at the end:
 screenshot-comparison: "#test"
@@ -930,8 +930,8 @@ screenshot-comparison: "#test"
 // Same as the previous example but with an XPath:
 screenshot-comparison: "//*[@id='test']"
 
-// Back to "normal", full page screenshot and comparison:
-screenshot-comparison: true
+// Disable screenshot comparison:
+screenshot-comparison: false
 ```
 
 #### scroll-to

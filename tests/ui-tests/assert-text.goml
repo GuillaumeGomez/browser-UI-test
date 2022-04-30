@@ -1,6 +1,5 @@
 // This test is meant to ensure that ALL checks are being run and that it doesn't stop at
 // the first successful one.
-screenshot-comparison: false
 goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
 // This test ensures it fails because "header" doesn't end with "Another" but starts with it.
 assert-text-false: ("header", "Another", [ENDS_WITH, STARTS_WITH])

@@ -8,15 +8,15 @@ const {Assert, plural, print, removeFolder} = require('./utils.js');
 
 
 async function wrapRunTests(options = new Options()) {
-    options.noScreenshotComparison = true;
+    options.screenshotComparison = false;
     return await runTests(options, false);
 }
 async function wrapRunTest(testPath, options = new Options()) {
-    options.noScreenshotComparison = true;
+    options.screenshotComparison = false;
     return await runTest(testPath, options, false);
 }
 async function wrapRunTestCode(testName, content, options = new Options()) {
-    options.noScreenshotComparison = true;
+    options.screenshotComparison = false;
     return await runTestCode(testName, content, options, false);
 }
 
@@ -176,13 +176,14 @@ async function checkOptions(x) {
         'You need to provide `--test-folder` option or at least one file to test with ' +
         '`--test-files` option!');
 
-    options.parseArguments(['--test-files', 'osef']);
+    options.parseArguments(['--enable-screenshot-comparison', '--test-files', 'osef']);
     await x.assertTry(() => options.validate(), [],
         'You need to provide `--failure-folder` or `--test-folder` option if ' +
-        '`--no-screenshot-comparison` option isn\'t used!');
+        '`--enable-screenshot-comparison` option is used!');
+    await x.assert(options.screenshotComparison, true);
 
-    await x.assert(options.noScreenshotComparison, false);
-    options.parseArguments(['--no-screenshot-comparison']);
+    options.screenshotComparison = false;
+    options.parseArguments([]);
     await x.assertTry(() => options.validate(), [],
         'Only `.goml` script files are allowed in the `--test-files` option, got `osef`');
 
@@ -288,9 +289,9 @@ async function checkOptions(x) {
     await x.assert(options.debug, false);
     await x.assertTry(() => options.parseArguments(['--debug']), [], true);
     await x.assert(options.debug, true);
-    await x.assert(options.noScreenshotComparison, false);
-    await x.assertTry(() => options.parseArguments(['--no-screenshot-comparison']), [], true);
-    await x.assert(options.noScreenshotComparison, true);
+    await x.assert(options.screenshotComparison, false);
+    await x.assertTry(() => options.parseArguments(['--enable-screenshot-comparison']), [], true);
+    await x.assert(options.screenshotComparison, true);
     await x.assert(options.noSandbox, false);
     await x.assertTry(() => options.parseArguments(['--no-sandbox']), [], true);
     await x.assert(options.noSandbox, true);
@@ -343,9 +344,9 @@ async function checkOptions(x) {
         '`Options.debug` field is supposed to be a boolean!');
 
     const options7 = new Options();
-    options7.noScreenshotComparison = '';
+    options7.screenshotComparison = '';
     await x.assertTry(() => options7.validateFields(), [],
-        '`Options.noScreenshotComparison` field is supposed to be a boolean!');
+        '`Options.screenshotComparison` field is supposed to be a boolean!');
 
     const options8 = new Options();
     options8.testFiles = '';

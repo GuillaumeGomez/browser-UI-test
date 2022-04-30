@@ -160,7 +160,7 @@ async function runCommand(loaded, logs, options, browser) {
     await browser.emulate(options, page, debug_log);
     try {
         const extras = {
-            'screenshotComparison': options.noScreenshotComparison === false,
+            'screenshotComparison': options.screenshotComparison === true,
             'expectedToFail': false,
             'showText': options.showText,
             'puppeteer': browser.puppeteer,

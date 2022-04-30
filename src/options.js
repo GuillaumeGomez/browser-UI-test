@@ -9,33 +9,34 @@ function helper() {
 
     print('Available options:');
     print('');
-    print(`  --browser [BROWSER NAME]     : Run tests on given browser (${browsers})`);
-    print('                                 /!\\ Only testing on chrome is stable!');
-    print('  --debug                      : Display more information');
-    print('  --emulate [DEVICE NAME]      : Emulate the given device');
-    print('  --extension [PATH]           : Add an extension to load from the given path');
-    print('  --failure-folder [PATH]      : Path of the folder where failed tests image will');
-    print('                                 be placed (same as `image-folder` if not provided)');
-    print('  --image-folder [PATH]        : Path of the folder where screenshots will be put ' +
+    print(`  --browser [BROWSER NAME]      : Run tests on given browser (${browsers})`);
+    print('                                  /!\\ Only testing on chrome is stable!');
+    print('  --debug                       : Display more information');
+    print('  --emulate [DEVICE NAME]       : Emulate the given device');
+    print('  --extension [PATH]            : Add an extension to load from the given path');
+    print('  --failure-folder [PATH]       : Path of the folder where failed tests image will');
+    print('                                  be placed (same as `image-folder` if not provided)');
+    print('  --image-folder [PATH]         : Path of the folder where screenshots will be put ' +
         '(same as');
-    print('                                 `test-folder` if not provided)');
-    print('  --incognito                  : Enable incognito mode');
-    print('  --generate-images            : If provided, it\'ll generate missing test images');
-    print('  --no-headless                : Disable headless mode');
-    print('  --no-screenshot-comparison   : Disable screenshot comparisons at the end of the ' +
+    print('                                  `test-folder` if not provided)');
+    print('  --incognito                   : Enable incognito mode');
+    print('  --generate-images             : If provided, it\'ll generate missing test images');
+    print('  --no-headless                 : Disable headless mode');
+    print('  --enable-screenshot-comparison: Enable screenshot comparisons at the end of the ' +
         'scripts by the end');
-    print('  --pause-on-error [true|false]: Add a permission to enable');
-    print('  --permission [PERMISSION]    : Add a permission to enable');
-    print('  --run-id [id]                : Id to be used for failed images extension (\'test\'');
-    print('                                 by default)');
-    print('  --show-devices               : Show list of available devices');
-    print('  --show-text                  : Disable text invisibility (be careful when using it!)');
-    print('  --show-permissions           : Show list of available permissions');
-    print('  --test-folder [PATH]         : Path of the folder where `.goml` script files are');
-    print('  --timeout [MILLISECONDS]     : Set default timeout for all tests');
-    print('  --test-files [PATHs]         : List of `.goml` files\' path to be run');
-    print('  --variable [name] [value]    : Variable to be used in scripts');
-    print('  --help | -h                  : Show this text');
+    print('  --pause-on-error [true|false] : Add a permission to enable');
+    print('  --permission [PERMISSION]     : Add a permission to enable');
+    print('  --run-id [id]                 : Id to be used for failed images extension (\'test\'');
+    print('                                  by default)');
+    print('  --show-devices                : Show list of available devices');
+    print('  --show-text                   : Disable text invisibility (be careful when using ' +
+        'it!)');
+    print('  --show-permissions            : Show list of available permissions');
+    print('  --test-folder [PATH]          : Path of the folder where `.goml` script files are');
+    print('  --timeout [MILLISECONDS]      : Set default timeout for all tests');
+    print('  --test-files [PATHs]          : List of `.goml` files\' path to be run');
+    print('  --variable [name] [value]     : Variable to be used in scripts');
+    print('  --help | -h                   : Show this text');
 }
 
 function showDeviceList(options) {
@@ -71,7 +72,7 @@ class Options {
         this.imageFolder = '';
         this.showText = false;
         this.debug = false;
-        this.noScreenshotComparison = false;
+        this.screenshotComparison = false;
         this.noSandbox = false;
         this.testFiles = [];
         this.variables = {};
@@ -97,7 +98,7 @@ class Options {
         copy.imageFolder = this.imageFolder.slice();
         copy.showText = this.showText;
         copy.debug = this.debug;
-        copy.noScreenshotComparison = this.noScreenshotComparison;
+        copy.screenshotComparison = this.screenshotComparison;
         copy.noSandbox = this.noSandbox;
         copy.testFiles = JSON.parse(JSON.stringify(this.testFiles));
         copy.variables = JSON.parse(JSON.stringify(this.variables));
@@ -159,8 +160,8 @@ class Options {
                 this.showText = true;
             } else if (args[it] === '--debug') {
                 this.debug = true;
-            } else if (args[it] === '--no-screenshot-comparison') {
-                this.noScreenshotComparison = true;
+            } else if (args[it] === '--enable-screenshot-comparison') {
+                this.screenshotComparison = true;
             } else if (args[it] === '--no-sandbox') {
                 this.noSandbox = true;
             } else if (args[it] === '--incognito') {
@@ -273,10 +274,10 @@ class Options {
             throw new Error('You need to provide `--test-folder` option or at least one file ' +
                 'to test with `--test-files` option!');
         } else if (this.failureFolder.length === 0
-            && this.noScreenshotComparison === false
+            && this.screenshotComparison === true
             && this.testFolder.length === 0) {
             throw new Error('You need to provide `--failure-folder` or `--test-folder` option if ' +
-                '`--no-screenshot-comparison` option isn\'t used!');
+                '`--enable-screenshot-comparison` option is used!');
         }
         for (let i = 0; i < this.testFiles.length; ++i) {
             if (this.testFiles[i].endsWith('.goml') === false) {
@@ -306,7 +307,7 @@ class Options {
         validateField('failureFolder', 'string');
         validateField('showText', 'boolean');
         validateField('debug', 'boolean');
-        validateField('noScreenshotComparison', 'boolean');
+        validateField('screenshotComparison', 'boolean');
         validateField('browser', 'string');
         validateField('imageFolder', 'string');
         validateField('incognito', 'boolean');
