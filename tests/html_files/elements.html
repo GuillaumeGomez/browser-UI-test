@@ -48,6 +48,7 @@ header {
 		<p id="another-one" style="font-size:14px;">hey</p>
 		<button id="js-call" onclick="change_style()">hey</button>
 		<button id="js-call-attr" onclick="change_attr()" data-b="a">hey</button>
+		<button id="invalid-js-call" onclick="invalid_js()">hey</button>
 		<script>
 function change_style() {
 setTimeout(() => { document.getElementById("js-call").style.marginTop = "12px"; }, 250);
@@ -57,6 +58,9 @@ setTimeout(() => {
   document.getElementById("js-call-attr").setAttribute("data-a", "b");
   document.getElementById("js-call-attr").textContent = "hello";
 }, 250);
+}
+function invalid_js() {
+null.hello();
 }</script>
 	</body>
 </html>
