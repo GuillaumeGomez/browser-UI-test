@@ -92,6 +92,7 @@ Here's the command list:
  * [`drag-and-drop`](#drag-and-drop)
  * [`emulate`](#emulate)
  * [`fail`](#fail)
+ * [`fail-on-js-error`](#fail-on-js-error)
  * [`focus`](#focus)
  * [`font-size`](#font-size)
  * [`geolocation`](#geolocation)
@@ -733,6 +734,15 @@ assert: ("#elem", "hello")
 // now we set it back to false to check the new text
 fail: false
 assert: ("#elem", "not hello")
+```
+
+#### fail-on-js-error
+
+**fail-on-js-error** command sets changes the behaviour of `browser-ui-test` when a JS error occurs on the web page. By default, they are ignored. Example:
+
+```
+# To enable the check:
+fail-on-js-error: true
 ```
 
 #### focus
