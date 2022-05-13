@@ -24,6 +24,8 @@ function helper() {
     print('  --no-headless                 : Disable headless mode');
     print('  --enable-screenshot-comparison: Enable screenshot comparisons at the end of the ' +
         'scripts by the end');
+    print('  --enable-fail-on-js-error     : If a JS error occurs on a web page, the test will ' +
+        'fail');
     print('  --pause-on-error [true|false] : Add a permission to enable');
     print('  --permission [PERMISSION]     : Add a permission to enable');
     print('  --run-id [id]                 : Id to be used for failed images extension (\'test\'');
@@ -84,6 +86,7 @@ class Options {
         this.pauseOnError = null;
         this.permissions = [];
         this.onPageCreatedCallback = async function() {};
+        this.failOnJsError = false;
     }
 
     clone() {
@@ -107,9 +110,10 @@ class Options {
         copy.incognito = this.incognito;
         copy.emulate = this.emulate.slice();
         copy.timeout = this.timeout;
+        copy.pauseOnError = this.pauseOnError;
         copy.permissions = JSON.parse(JSON.stringify(this.permissions));
         copy.onPageCreatedCallback = this.onPageCreatedCallback;
-        copy.pauseOnError = this.pauseOnError;
+        copy.failOnJsError = this.failOnJsError;
         return copy;
     }
 
@@ -243,6 +247,8 @@ class Options {
                 } else {
                     throw new Error('Missing permission name after `--permission` option');
                 }
+            } else if (args[it] === '--enable-fail-on-js-error') {
+                this.failOnJsError = true;
             } else {
                 throw new Error(`Unknown option \`${args[it]}\`\n` +
                     'Use `--help` if you want the list of the available commands');
@@ -317,6 +323,7 @@ class Options {
         validateField('extensions', 'array');
         validateField('permissions', 'array');
         validateField('onPageCreatedCallback', 'function');
+        validateField('failOnJsError', 'boolean');
         // eslint-disable-next-line eqeqeq
         if (this.variables.constructor != Object) {
             throw new Error('`Options.variables` field is supposed to be a dictionary-like!');

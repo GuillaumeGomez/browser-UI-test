@@ -169,7 +169,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             // If the `--no-headless` option is set, we enable it by default.
             'pauseOnError': options.shouldPauseOnError(),
             'getImageFolder': () => options.getImageFolder(),
-            'failOnJsError': false,
+            'failOnJsError': options.failOnJsError,
             'jsErrors': [],
         };
         page.on('pageerror', message => {
