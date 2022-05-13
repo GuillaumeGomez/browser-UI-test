@@ -148,7 +148,7 @@ function waitUntilEnterPressed(error_log) {
     readline.question('Press ENTER to continue...');
 }
 
-async function runCommand(loaded, logs, options, browser) {
+async function runAllCommands(loaded, logs, options, browser) {
     let error_log;
     logs.append(loaded['file'] + '... ');
 
@@ -170,6 +170,7 @@ async function runCommand(loaded, logs, options, browser) {
             // If the `--no-headless` option is set, we enable it by default.
             'pauseOnError': options.shouldPauseOnError(),
             'getImageFolder': () => options.getImageFolder(),
+            'failOnJsError': false,
         };
         await page.exposeFunction('BrowserUiStyleInserter', () => {
             return getGlobalStyle(extras.showText);
@@ -207,8 +208,7 @@ async function runCommand(loaded, logs, options, browser) {
         const commands = loaded['commands'];
 
         command_loop:
-        for (let x = 0; x < commands.length; ++x) {
-            const command = commands[x];
+        for (const command of commands) {
             let failed = false;
             // In case we have some unrecoverable error which cannot be caught in `fail: true`, like
             // color check when text isn't displayed.
@@ -408,15 +408,14 @@ async function innerRunTests(logs, options) {
             }
         });
     }
-    for (let i = 0; i < options.testFiles.length; ++i) {
-        if (fs.existsSync(options.testFiles[i]) && fs.lstatSync(options.testFiles[i]).isFile()) {
-            const fullPath = path.resolve(options.testFiles[i]);
+    for (const testFile of options.testFiles) {
+        if (fs.existsSync(testFile) && fs.lstatSync(testFile).isFile()) {
+            const fullPath = path.resolve(testFile);
             if (allFiles.indexOf(fullPath) === -1) {
                 allFiles.push(fullPath);
             }
         } else {
-            throw new Error(`File \`${options.testFiles[i]}\` not found (passed with ` +
-                '`--test-files` option)');
+            throw new Error(`File \`${testFile}\` not found (passed with \`--test-files\` option)`);
         }
     }
 
@@ -446,27 +445,27 @@ async function innerRunTests(logs, options) {
         return 0;
     });
 
-    const loaded = [];
-    for (let i = 0; i < allFiles.length; ++i) {
+    const all_loaded = [];
+    for (const file of allFiles) {
         total += 1;
 
-        const load = parseTestFile(allFiles[i], logs, options);
+        const load = parseTestFile(file, logs, options);
         if (load === null) {
             failures += 1;
         } else {
-            loaded.push(load);
+            all_loaded.push(load);
         }
     }
 
-    if (loaded.length === 0) {
+    if (all_loaded.length === 0) {
         logs.append('');
         return [logs.logs, failures];
     }
 
     try {
         const browser = await utils.loadPuppeteer(options);
-        for (let i = 0; i < loaded.length; ++i) {
-            const ret = await runCommand(loaded[i], logs, options, browser);
+        for (const loaded of all_loaded) {
+            const ret = await runAllCommands(loaded, logs, options, browser);
             if (ret !== Status.Ok) {
                 failures += 1;
             }
@@ -501,7 +500,7 @@ async function innerRunTestCode(testName, content, options, showLogs, checkTestF
         }
 
         const browser = await utils.loadPuppeteer(options);
-        const ret = await runCommand(load, logs, options, browser);
+        const ret = await runAllCommands(load, logs, options, browser);
 
         await browser.close();
 
