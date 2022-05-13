@@ -148,8 +148,7 @@ function waitUntilEnterPressed(error_log) {
     readline.question('Press ENTER to continue...');
 }
 
-async function runCommand(loaded, logs, options, browser) {
-    let error_log;
+async function runAllCommands(loaded, logs, options, browser) {
     logs.append(loaded['file'] + '... ');
 
     let notOk = false;
@@ -170,7 +169,13 @@ async function runCommand(loaded, logs, options, browser) {
             // If the `--no-headless` option is set, we enable it by default.
             'pauseOnError': options.shouldPauseOnError(),
             'getImageFolder': () => options.getImageFolder(),
+            'failOnJsError': options.failOnJsError,
+            'jsErrors': [],
         };
+        page.on('pageerror', message => {
+            extras.jsErrors.push(message);
+        });
+
         await page.exposeFunction('BrowserUiStyleInserter', () => {
             return getGlobalStyle(extras.showText);
         });
@@ -203,19 +208,29 @@ async function runCommand(loaded, logs, options, browser) {
         debug_log.append(`Injecting helpers script into page: "${script}"`);
         await page.evaluateOnNewDocument(script);
 
-        error_log = '';
+        // Defined here because I need `error_log` to be updated without being returned.
+        const checkJsErrors = () => {
+            if (!extras.failOnJsError || extras.jsErrors.length === 0) {
+                return false;
+            }
+            error_log += `[ERROR] (around line ${line_number}): JS errors occurred: ` +
+                extras.jsErrors.join('\n');
+            return true;
+        };
+
+        let error_log = '';
+        let line_number;
         const commands = loaded['commands'];
 
         command_loop:
-        for (let x = 0; x < commands.length; ++x) {
-            const command = commands[x];
+        for (const command of commands) {
             let failed = false;
             // In case we have some unrecoverable error which cannot be caught in `fail: true`, like
             // color check when text isn't displayed.
             //
             // (It is needed because we cannot break from inside the `await.catch`.)
             let stopLoop = false;
-            const line_number = command['line_number'];
+            line_number = command['line_number'];
             const instructions = command['instructions'];
             let stopInnerLoop = false;
 
@@ -254,7 +269,7 @@ async function runCommand(loaded, logs, options, browser) {
                     }
                 }
                 debug_log.append('Done!');
-                if (stopLoop) {
+                if (stopLoop || checkJsErrors()) {
                     break command_loop;
                 } else if (stopInnerLoop) {
                     break;
@@ -262,7 +277,8 @@ async function runCommand(loaded, logs, options, browser) {
             }
             if (failed === false
                 && command['checkResult'] === true
-                && extras.expectedToFail === true) {
+                && extras.expectedToFail === true
+            ) {
                 error_log += `(line ${line_number}) command \`${command['original']}\` was ` +
                     'supposed to fail but succeeded\n';
             }
@@ -280,7 +296,7 @@ async function runCommand(loaded, logs, options, browser) {
                 await page.waitFor(100);
             }
         }
-        if (error_log.length > 0) {
+        if (error_log.length > 0 || checkJsErrors()) {
             logs.append('FAILED', true);
             logs.warn(loaded['warnings']);
             logs.append(error_log);
@@ -408,15 +424,14 @@ async function innerRunTests(logs, options) {
             }
         });
     }
-    for (let i = 0; i < options.testFiles.length; ++i) {
-        if (fs.existsSync(options.testFiles[i]) && fs.lstatSync(options.testFiles[i]).isFile()) {
-            const fullPath = path.resolve(options.testFiles[i]);
+    for (const testFile of options.testFiles) {
+        if (fs.existsSync(testFile) && fs.lstatSync(testFile).isFile()) {
+            const fullPath = path.resolve(testFile);
             if (allFiles.indexOf(fullPath) === -1) {
                 allFiles.push(fullPath);
             }
         } else {
-            throw new Error(`File \`${options.testFiles[i]}\` not found (passed with ` +
-                '`--test-files` option)');
+            throw new Error(`File \`${testFile}\` not found (passed with \`--test-files\` option)`);
         }
     }
 
@@ -446,27 +461,27 @@ async function innerRunTests(logs, options) {
         return 0;
     });
 
-    const loaded = [];
-    for (let i = 0; i < allFiles.length; ++i) {
+    const all_loaded = [];
+    for (const file of allFiles) {
         total += 1;
 
-        const load = parseTestFile(allFiles[i], logs, options);
+        const load = parseTestFile(file, logs, options);
         if (load === null) {
             failures += 1;
         } else {
-            loaded.push(load);
+            all_loaded.push(load);
         }
     }
 
-    if (loaded.length === 0) {
+    if (all_loaded.length === 0) {
         logs.append('');
         return [logs.logs, failures];
     }
 
     try {
         const browser = await utils.loadPuppeteer(options);
-        for (let i = 0; i < loaded.length; ++i) {
-            const ret = await runCommand(loaded[i], logs, options, browser);
+        for (const loaded of all_loaded) {
+            const ret = await runAllCommands(loaded, logs, options, browser);
             if (ret !== Status.Ok) {
                 failures += 1;
             }
@@ -501,7 +516,7 @@ async function innerRunTestCode(testName, content, options, showLogs, checkTestF
         }
 
         const browser = await utils.loadPuppeteer(options);
-        const ret = await runCommand(load, logs, options, browser);
+        const ret = await runAllCommands(load, logs, options, browser);
 
         await browser.close();
 

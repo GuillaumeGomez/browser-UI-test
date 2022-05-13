@@ -298,6 +298,8 @@ async function checkOptions(x) {
     await x.assert(options.incognito, false);
     await x.assertTry(() => options.parseArguments(['--incognito']), [], true);
     await x.assert(options.incognito, true);
+    await x.assertTry(() => options.parseArguments(['--enable-fail-on-js-error']), [], true);
+    await x.assert(options.failOnJsError, true);
 
     await x.assertTry(() => options.parseArguments(['--browser']), [],
         'Missing browser name after `--browser` option');
@@ -408,6 +410,11 @@ async function checkOptions(x) {
     const options20 = new Options();
     options20.onPageCreatedCallback = async() => {};
     await x.assert(() => options20.validateFields());
+
+    const options21 = new Options();
+    options21.failOnJsError = '';
+    await x.assertTry(() => options21.validateFields(), [],
+        '`Options.failOnJsError` field is supposed to be a boolean!');
 }
 
 const TO_CHECK = [

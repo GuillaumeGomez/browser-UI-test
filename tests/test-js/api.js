@@ -5129,6 +5129,33 @@ function checkFail(x, func) {
     x.assert(func('true'), {'instructions': ['arg.expectedToFail = true;'], 'wait': false});
 }
 
+function checkFailOnJsError(x, func) {
+    x.assert(func(''), {'error': 'expected `true` or `false` value, found nothing'});
+    x.assert(func('hello'), {'error': 'expected `true` or `false` value, found `hello`'});
+    x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
+    x.assert(func('tru'), {'error': 'expected `true` or `false` value, found `tru`'});
+    x.assert(func('false'), {
+        'instructions': [
+            'const oldValue = arg.failOnJsError;\n' +
+            'arg.failOnJsError = false;\n' +
+            'if (oldValue !== true) {\n' +
+            '    arg.jsErrors.splice(0, arg.jsErrors.length);\n' +
+            '}',
+        ],
+        'wait': false,
+    });
+    x.assert(func('true'), {
+        'instructions': [
+            'const oldValue = arg.failOnJsError;\n' +
+            'arg.failOnJsError = true;\n' +
+            'if (oldValue !== true) {\n' +
+            '    arg.jsErrors.splice(0, arg.jsErrors.length);\n' +
+            '}',
+        ],
+        'wait': false,
+    });
+}
+
 function checkFocus(x, func) {
     x.assert(func('a'), {'error': 'expected a CSS selector or an XPath, found `a`'});
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
@@ -5452,8 +5479,8 @@ function checkParseContent(x, func) {
         ],
     });
     x.assert(func('focus: "#foo"'), {
-        'error': 'First command must be `goto` (`debug`, `emulate`, `fail`, `javascript`, ' +
-            '`screenshot-comparison` or `timeout` can be used before)!',
+        'error': 'First command must be `goto` (`debug`, `emulate`, `fail`, `fail-on-js-error`, ' +
+            '`javascript`, `screenshot-comparison` or `timeout` can be used before)!',
         'line': 1,
     });
     x.assert(func('fail: true\ngoto: file:///home'), {
@@ -7096,6 +7123,11 @@ const TO_CHECK = [
         'name': 'fail',
         'func': checkFail,
         'toCall': (e, o) => wrapper(parserFuncs.parseFail, e, o),
+    },
+    {
+        'name': 'fail-on-js-error',
+        'func': checkFailOnJsError,
+        'toCall': (e, o) => wrapper(parserFuncs.parseFailOnJsError, e, o),
     },
     {
         'name': 'focus',
