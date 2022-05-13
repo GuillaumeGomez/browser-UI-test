@@ -47,6 +47,7 @@ module.exports = {
     'parseDragAndDrop': input.parseDragAndDrop,
     'parseEmulate': emulation.parseEmulate,
     'parseFail': context_setters.parseFail,
+    'parseFailOnJsError': context_setters.parseFailOnJsError,
     'parseFocus': input.parseFocus,
     'parseFontSize': emulation.parseFontSize,
     'parseGeolocation': emulation.parseGeolocation,

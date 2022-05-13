@@ -149,7 +149,6 @@ function waitUntilEnterPressed(error_log) {
 }
 
 async function runAllCommands(loaded, logs, options, browser) {
-    let error_log;
     logs.append(loaded['file'] + '... ');
 
     let notOk = false;
@@ -171,7 +170,12 @@ async function runAllCommands(loaded, logs, options, browser) {
             'pauseOnError': options.shouldPauseOnError(),
             'getImageFolder': () => options.getImageFolder(),
             'failOnJsError': false,
+            'jsErrors': [],
         };
+        page.on('pageerror', message => {
+            extras.jsErrors.push(message);
+        });
+
         await page.exposeFunction('BrowserUiStyleInserter', () => {
             return getGlobalStyle(extras.showText);
         });
@@ -204,7 +208,18 @@ async function runAllCommands(loaded, logs, options, browser) {
         debug_log.append(`Injecting helpers script into page: "${script}"`);
         await page.evaluateOnNewDocument(script);
 
-        error_log = '';
+        // Defined here because I need `error_log` to be updated without being returned.
+        const checkJsErrors = () => {
+            if (!extras.failOnJsError || extras.jsErrors.length === 0) {
+                return false;
+            }
+            error_log += `[ERROR] (around line ${line_number}): JS errors occurred: ` +
+                extras.jsErrors.join('\n');
+            return true;
+        };
+
+        let error_log = '';
+        let line_number;
         const commands = loaded['commands'];
 
         command_loop:
@@ -215,7 +230,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             //
             // (It is needed because we cannot break from inside the `await.catch`.)
             let stopLoop = false;
-            const line_number = command['line_number'];
+            line_number = command['line_number'];
             const instructions = command['instructions'];
             let stopInnerLoop = false;
 
@@ -254,7 +269,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                     }
                 }
                 debug_log.append('Done!');
-                if (stopLoop) {
+                if (stopLoop || checkJsErrors()) {
                     break command_loop;
                 } else if (stopInnerLoop) {
                     break;
@@ -262,7 +277,8 @@ async function runAllCommands(loaded, logs, options, browser) {
             }
             if (failed === false
                 && command['checkResult'] === true
-                && extras.expectedToFail === true) {
+                && extras.expectedToFail === true
+            ) {
                 error_log += `(line ${line_number}) command \`${command['original']}\` was ` +
                     'supposed to fail but succeeded\n';
             }
@@ -280,7 +296,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                 await page.waitFor(100);
             }
         }
-        if (error_log.length > 0) {
+        if (error_log.length > 0 || checkJsErrors()) {
             logs.append('FAILED', true);
             logs.warn(loaded['warnings']);
             logs.append(error_log);

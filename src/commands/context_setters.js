@@ -159,9 +159,30 @@ function parseTimeout(parser) {
     };
 }
 
+function parseFailOnJsError(parser) {
+    const elems = parser.elems;
+    if (elems.length === 0) {
+        return {'error': 'expected `true` or `false` value, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'bool') {
+        return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
+    }
+    const instructions = [
+        `const oldValue = arg.failOnJsError;
+arg.failOnJsError = ${elems[0].getRaw()};
+if (oldValue !== true) {
+    arg.jsErrors.splice(0, arg.jsErrors.length);
+}`];
+
+    return {
+        'instructions': instructions,
+        'wait': false,
+    };
+}
+
 module.exports = {
     'parseDebug': parseDebug,
     'parseFail': parseFail,
+    'parseFailOnJsError': parseFailOnJsError,
     'parsePauseOnError': parsePauseOnError,
     'parseScreenshotComparison': parseScreenshotComparison,
     'parseShowText': parseShowText,
