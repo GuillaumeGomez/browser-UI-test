@@ -3258,8 +3258,8 @@ function checkClick(x, func) {
     });
     x.assert(func('\'"a\''), {
         'instructions': [
-            'let parseClickVar = await page.$("\\\\"a");\n' +
-            'if (parseClickVar === null) { throw \'"\\\\"a" not found\'; }\n' +
+            'let parseClickVar = await page.$("\\"a");\n' +
+            'if (parseClickVar === null) { throw \'"\\"a" not found\'; }\n' +
             'await parseClickVar.click();',
         ],
     });
@@ -5166,7 +5166,7 @@ function checkFocus(x, func) {
     });
     x.assert(func('"a"'), {'instructions': ['await page.focus("a");']});
     x.assert(func('\'a\''), {'instructions': ['await page.focus("a");']});
-    x.assert(func('\'"a\''), {'instructions': ['await page.focus("\\\\"a");']});
+    x.assert(func('\'"a\''), {'instructions': ['await page.focus("\\"a");']});
 
     // XPath
     x.assert(func('"/a"'), { 'error': 'XPath must start with `//`'});
@@ -5440,7 +5440,7 @@ function checkMoveCursorTo(x, func) {
     });
     x.assert(func('"a"'), {'instructions': ['await page.hover("a");']});
     x.assert(func('\'a\''), {'instructions': ['await page.hover("a");']});
-    x.assert(func('\'"a\''), {'instructions': ['await page.hover("\\\\"a");']});
+    x.assert(func('\'"a\''), {'instructions': ['await page.hover("\\"a");']});
 
     // XPath
     x.assert(func('"/a"'), { 'error': 'XPath must start with `//`'});
@@ -5827,7 +5827,7 @@ function checkScrollTo(x, func) {
     });
     x.assert(func('"a"'), {'instructions': ['await page.hover("a");']});
     x.assert(func('\'a\''), {'instructions': ['await page.hover("a");']});
-    x.assert(func('\'"a\''), {'instructions': ['await page.hover("\\\\"a");']});
+    x.assert(func('\'"a\''), {'instructions': ['await page.hover("\\"a");']});
 
     // XPath
     x.assert(func('"/a"'), { 'error': 'XPath must start with `//`'});
@@ -5998,7 +5998,7 @@ function checkWaitFor(x, func) {
     x.assert(func('\'a\''), {'instructions': ['await page.waitForSelector("a");'], 'wait': false});
     x.assert(func('\'"a\''), {
         'instructions': [
-            'await page.waitForSelector("\\\\"a");',
+            'await page.waitForSelector("\\"a");',
         ],
         'wait': false,
     });
