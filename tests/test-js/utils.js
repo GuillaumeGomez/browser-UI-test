@@ -78,7 +78,7 @@ class Assert {
                     }
                 }
                 this._incrError();
-                return;
+                return false;
             }
         } else if (!value1) {
             if (typeof pos === 'undefined') {
@@ -86,8 +86,9 @@ class Assert {
             }
             print(`[${pos.file}:${pos.line}] failed: \`${value1}\` is evalued to false`);
             this._incrError();
-            return;
+            return false;
         }
+        return true;
     }
 
     addError(message) {
@@ -125,6 +126,32 @@ class Assert {
         const pos = getStackInfo(new Error().stack, 2);
         try {
             const ret = await callback(...args);
+            return this.assert(ret, expectedValue, pos, extraInfo, toJson);
+        } catch (err) {
+            return this.assert(err.message, expectedValue, pos, extraInfo, toJson);
+        }
+    }
+
+    // Same as `assertTry` but handle some corner cases linked to UI tests.
+    async assertTryUi(callback, args, expectedValue, extraInfo, toJson = true) {
+        const pos = getStackInfo(new Error().stack, 2);
+        try {
+            const ret = await callback(...args);
+            const parts = expectedValue.split('$LINE');
+            let startIndex = 0;
+            if (parts.length > 1) {
+                for (const part of parts) {
+                    const toCheck = ret.slice(startIndex, startIndex + part.length);
+                    if (!this.assert(toCheck, part, pos, extraInfo, toJson)) {
+                        return false;
+                    }
+                    startIndex = part.length;
+                    while (startIndex < ret.length && ret[startIndex] !== ')') {
+                        startIndex += 1;
+                    }
+                }
+                return true;
+            }
             return this.assert(ret, expectedValue, pos, extraInfo, toJson);
         } catch (err) {
             return this.assert(err.message, expectedValue, pos, extraInfo, toJson);

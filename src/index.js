@@ -215,6 +215,8 @@ async function runAllCommands(loaded, logs, options, browser) {
             }
             error_log += `[ERROR] (around line ${line_number}): JS errors occurred: ` +
                 extras.jsErrors.join('\n');
+            // We empty the errors to prevent having it duplicated.
+            extras.jsErrors.splice(0, extras.jsErrors.length);
             return true;
         };
 
@@ -295,7 +297,9 @@ async function runAllCommands(loaded, logs, options, browser) {
                 // We wait a bit between each command to be sure the browser can follow.
                 await page.waitFor(100);
             }
-            checkJsErrors();
+            if (checkJsErrors()) {
+                break command_loop;
+            }
         }
         if (error_log.length > 0 || checkJsErrors()) {
             logs.append('FAILED', true);

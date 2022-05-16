@@ -41,7 +41,7 @@ async function compareOutput(x) {
         options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
             '--test-files', file]);
 
-        await x.assertTry(
+        await x.assertTryUi(
             wrapRunTests,
             [options],
             output.replaceAll('$CURRENT_DIR', utils.getCurrentDir()),

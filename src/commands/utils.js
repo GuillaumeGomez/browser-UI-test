@@ -38,7 +38,7 @@ function checkIntegerTuple(tuple, text1, text2, negativeCheck = false) {
 }
 
 function validateJson(json, allowedValueTypes, keyName) {
-    const entries = {};
+    const entries = Object.create(null);
     const warnings = [];
 
     for (const entry of json) {
@@ -153,7 +153,7 @@ function fillEnabledChecks(elem, identifiers, enabled_checks, warnings, err_pos)
         enabled_checks[elem.getRaw()] = true;
     } else if (elem.kind === 'array') {
         const array = elem.getRaw();
-        const duplicated = {};
+        const duplicated = Object.create(null);
 
         if (array.length > 0 && array[0].kind !== 'ident') {
             return {

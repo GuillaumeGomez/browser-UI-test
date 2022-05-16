@@ -119,7 +119,7 @@ function parseAssertDocumentPropertyInner(parser, assertFalse) {
         return {'error': `expected a tuple or a JSON dict, found \`${parser.getRawArgs()}\``};
     }
 
-    const enabled_checks = {};
+    const enabled_checks = Object.create(null);
     const warnings = [];
     let json_dict;
 
@@ -268,7 +268,7 @@ function parseAssertPropertyInner(parser, assertFalse) {
     const elems = parser.elems;
     const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
     const warnings = [];
-    const enabled_checks = {};
+    const enabled_checks = Object.create(null);
 
     if (elems.length === 0) {
         return {
@@ -442,7 +442,7 @@ function parseAssertAttributeInner(parser, assertFalse) {
     const elems = parser.elems;
     const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
     const warnings = [];
-    const enabled_checks = {};
+    const enabled_checks = Object.create(null);
 
     if (elems.length === 0) {
         return {
@@ -684,7 +684,7 @@ function parseAssertTextInner(parser, assertFalse) {
     const elems = parser.elems;
     const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
     const warnings = [];
-    const enabled_checks = {};
+    const enabled_checks = Object.create(null);
 
     if (elems.length === 0) {
         return {'error': err + ', found nothing'};

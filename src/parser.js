@@ -47,7 +47,7 @@ function cleanString(s) {
 }
 
 function cleanCssSelector(s, text = '') {
-    s = cleanString(s).replace(/\\/g, '\\\\').trim();
+    s = cleanString(s.replace(/\\/g, '\\\\')).trim();
     if (s.length === 0) {
         return {
             'error': `CSS selector ${text !== '' ? text + ' ' : ''}cannot be empty`,
@@ -100,7 +100,7 @@ function getCssValue(value, text = '') {
 function getSelector(value, text = '') {
     if (value.startsWith('//')) {
         return {
-            'value': value,
+            'value': cleanString(value),
             'isXPath': true,
         };
     } else if (value.startsWith('/')) {
@@ -128,15 +128,15 @@ class Element {
     }
 
     getSelector(text = '') {
-        return getSelector(this.getStringValue(true), text);
+        return getSelector(this.getStringValue(true, false), text);
     }
 
-    getStringValue(trim) {
+    getStringValue(trim, clean = true) {
         let v = this.value;
         if (trim === true) {
             v = v.trim();
         }
-        return cleanString(v);
+        return clean === true ? cleanString(v) : v;
     }
 
     getIntegerValue(text, negativeCheck = false) {
