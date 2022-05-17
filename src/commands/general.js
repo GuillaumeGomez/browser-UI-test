@@ -8,6 +8,44 @@ const {
     validateJson,
 } = require('./utils.js');
 
+function waitForElement(selector, varName) {
+    let code;
+    let kind;
+
+    if (selector.isXPath) {
+        kind = 'XPath';
+        code = `${varName} = await page.$x("${selector.value}");
+if (${varName}.length !== 0) {
+    ${varName} = ${varName}[0];
+    break;
+}`;
+    } else {
+        kind = 'CSS selector';
+        code = `${varName} = await page.$("${selector.value}");
+if (${varName} !== null) {
+    break;
+}`;
+    }
+
+    // `page._timeoutSettings.timeout` is an internal thing so better be careful at any puppeteer
+    // version update!
+    return `const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let ${varName} = null;
+while (true) {
+    ${code}
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error("The following ${kind} \\"${selector.value}\\" was not found");
+    }
+}`;
+}
+
 // Possible inputs:
 //
 // * Number of milliseconds
@@ -44,18 +82,8 @@ function parseWaitFor(parser) {
     if (selector.error !== undefined) {
         return selector;
     }
-    let instructions;
-    if (selector.isXPath) {
-        instructions = [
-            `await page.waitForXPath("${selector.value}");`,
-        ];
-    } else {
-        instructions = [
-            `await page.waitForSelector("${selector.value}");`,
-        ];
-    }
     return {
-        'instructions': instructions,
+        'instructions': [waitForElement(selector, 'parseWaitFor')],
         'wait': false,
     };
 }
@@ -152,13 +180,8 @@ if (e.style[${varKey}] != ${varValue} && computedEntry != ${varValue}) {
     nonMatchingProps.push(${varKey} + ": (\`" + computedEntry + "\` != \`" + ${varValue} + "\`)");
 }`;
 
-    instructions.push(getAndSetElements(data['selector'], varName, false) + '\n' +
-// `page._timeoutSettings.timeout` is an internal thing so better be careful at any puppeteer
-// version update!
-`let timeLimit = page._timeoutSettings.timeout();
-const timeAdd = 50;
-let allTime = 0;
-let nonMatchingProps;
+    instructions.push(waitForElement(data['selector'], varName) + '\n' +
+`let nonMatchingProps;
 while (true) {
     nonMatchingProps = await page.evaluate(e => {
         const nonMatchingProps = [];
@@ -215,13 +238,8 @@ if (computedEntry !== ${varValue}) {
     nonMatchingProps.push(${varKey} + ": (\`" + computedEntry + "\` != \`" + ${varValue} + "\`)");
 }`;
 
-    instructions.push(getAndSetElements(data['selector'], varName, false) + '\n' +
-// `page._timeoutSettings.timeout` is an internal thing so better be careful at any puppeteer
-// version update!
-`let timeLimit = page._timeoutSettings.timeout();
-const timeAdd = 50;
-let allTime = 0;
-let nonMatchingProps;
+    instructions.push(waitForElement(data['selector'], varName) + '\n' +
+`let nonMatchingProps;
 while (true) {
     nonMatchingProps = await page.evaluate(e => {
         const nonMatchingProps = [];
@@ -295,13 +313,8 @@ function parseWaitForText(parser) {
     const value = tuple[1].getStringValue();
     const varName = 'parseWaitForText';
 
-    const instructions = getAndSetElements(selector, varName, false) + '\n' +
-// `page._timeoutSettings.timeout` is an internal thing so better be careful at any puppeteer
-// version update!
-`let timeLimit = page._timeoutSettings.timeout();
-const timeAdd = 50;
-const value = "${value}";
-let allTime = 0;
+    const instructions = waitForElement(selector, varName) + '\n' +
+`const value = "${value}";
 let computedEntry;
 while (true) {
     computedEntry = await page.evaluate(e => {
