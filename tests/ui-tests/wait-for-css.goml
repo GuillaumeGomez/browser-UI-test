@@ -6,6 +6,9 @@ wait-for-css: ("#js-call", {"margin-top": "0px"})
 click: "#js-call"
 // Should wait for 250ms here.
 wait-for-css: ("#js-call", {"margin-top": "12px"})
+click: "#js-create-elem"
+// Should wait for 100 here (the element is created first).
+wait-for-css: ("#created-one", {"height": "20px"})
 // This next one should fail.
 wait-for-css: ("#js-call", {"margin-top": "13px"})
 // Check that the script won't stop running anything after the previous command failed.

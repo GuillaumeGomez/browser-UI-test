@@ -6,6 +6,9 @@ wait-for-text: ("#js-call-attr", "hey")
 click: "#js-call-attr"
 // Should wait for 250ms here.
 wait-for-text: ("#js-call-attr", "hello")
+click: "#js-create-elem"
+// Should wait for 100 here (the element is created first).
+wait-for-text: ("#created-one", "ding")
 // This next one should fail.
 wait-for-text: ("#js-call-attr", "hello bis")
 // Check that the script won't stop running anything after the previous command failed.

@@ -50,6 +50,7 @@ header {
 		<button id="js-call" onclick="change_style()">hey</button>
 		<button id="js-call-attr" onclick="change_attr()" data-b="a">hey</button>
 		<button id="invalid-js-call" onclick="invalid_js()">hey</button>
+		<button id="js-create-elem" onclick="addElem()">hey</button>
 		<script>
 function change_style() {
 setTimeout(() => { document.getElementById("js-call").style.marginTop = "12px"; }, 250);
@@ -59,6 +60,18 @@ setTimeout(() => {
   document.getElementById("js-call-attr").setAttribute("data-a", "b");
   document.getElementById("js-call-attr").textContent = "hello";
 }, 250);
+}
+function addElem() {
+setTimeout(() => {
+  const elem = document.createElement("div");
+  elem.id = "created-one";
+  document.body.appendChild(elem);
+  setTimeout(() => {
+    document.getElementById("created-one").setAttribute("data-a", "x");
+    document.getElementById("created-one").style.height = "20px";
+    document.getElementById("created-one").innerText = "ding";
+  }, 50);
+}, 50);
 }
 function invalid_js() {
 null.hello();

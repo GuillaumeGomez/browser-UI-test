@@ -1019,8 +1019,6 @@ wait-for: "//*[@id='element']/a"
 
 **wait-for-attribute** command waits for the given element to have the expected values for the attributes. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
 
-Important to note: if the element doesn't exist, the command will fail too.
-
 Examples:
 
 ```
@@ -1036,8 +1034,6 @@ wait-for-attribute: ("//*[@id='element']", {"class": "hello", "id": "some-id"})
 
 **wait-for-css** command waits for the given element to have the expected values for the provided CSS keys. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
 
-Important to note: if the element doesn't exist, the command will fail too.
-
 Examples:
 
 ```
@@ -1052,8 +1048,6 @@ wait-for-css: ("//*[@id='element']", {"font-size": "12px", "margin-top": "12px"}
 #### wait-for-text
 
 **wait-for-text** command waits for the given element to have the expected text. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
-
-Important to note: if the element doesn't exist, the command will fail too.
 
 Examples:
 

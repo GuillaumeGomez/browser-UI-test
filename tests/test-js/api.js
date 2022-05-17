@@ -5994,11 +5994,72 @@ function checkWaitFor(x, func) {
         'error': 'CSS selector cannot be empty',
         'isXPath': false,
     });
-    x.assert(func('"a"'), {'instructions': ['await page.waitForSelector("a");'], 'wait': false});
-    x.assert(func('\'a\''), {'instructions': ['await page.waitForSelector("a");'], 'wait': false});
+    x.assert(func('"a"'), {
+        'instructions': [
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'let allTime = 0;\n' +
+            'let parseWaitFor = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitFor = await page.$("a");\n' +
+            'if (parseWaitFor !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
+            '    }\n' +
+            '}',
+        ],
+        'wait': false,
+    });
+    x.assert(func('\'a\''), {
+        'instructions': [
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'let allTime = 0;\n' +
+            'let parseWaitFor = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitFor = await page.$("a");\n' +
+            'if (parseWaitFor !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
+            '    }\n' +
+            '}',
+        ],
+        'wait': false,
+    });
     x.assert(func('\'"a\''), {
         'instructions': [
-            'await page.waitForSelector("\\"a");',
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'let allTime = 0;\n' +
+            'let parseWaitFor = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitFor = await page.$("\\"a");\n' +
+            'if (parseWaitFor !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"\\"a\\" was not found");\n' +
+            '    }\n' +
+            '}',
         ],
         'wait': false,
     });
@@ -6006,7 +6067,27 @@ function checkWaitFor(x, func) {
     // XPath
     x.assert(func('"/a"'), { 'error': 'XPath must start with `//`'});
     x.assert(func('"//a"'), {
-        'instructions': ['await page.waitForXPath("//a");'],
+        'instructions': [
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeAdd = 50;\n' +
+            'let allTime = 0;\n' +
+            'let parseWaitFor = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitFor = await page.$x("//a");\n' +
+            'if (parseWaitFor.length !== 0) {\n' +
+            '    parseWaitFor = parseWaitFor[0];\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following XPath \\"//a\\" was not found");\n' +
+            '    }\n' +
+            '}',
+        ],
         'wait': false,
     });
 }
@@ -6035,11 +6116,24 @@ function checkWaitForAttribute(x, func) {
     // Check css selector
     x.assert(func('("a", {})'), {
         'instructions': [
-            'let parseWaitForAttr = await page.$("a");\n' +
-            'if (parseWaitForAttr === null) { throw \'"a" not found\'; }\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForAttr = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForAttr = await page.$("a");\n' +
+            'if (parseWaitForAttr !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
             'let nonMatchingProps;\n' +
             'while (true) {\n' +
             '    nonMatchingProps = await page.evaluate(e => {\n' +
@@ -6076,11 +6170,24 @@ function checkWaitForAttribute(x, func) {
     });
     x.assert(func('("a", {"x": 1})'), {
         'instructions': [
-            'let parseWaitForAttr = await page.$("a");\n' +
-            'if (parseWaitForAttr === null) { throw \'"a" not found\'; }\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForAttr = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForAttr = await page.$("a");\n' +
+            'if (parseWaitForAttr !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
             'let nonMatchingProps;\n' +
             'while (true) {\n' +
             '    nonMatchingProps = await page.evaluate(e => {\n' +
@@ -6117,11 +6224,24 @@ function checkWaitForAttribute(x, func) {
     });
     x.assert(func('("a", {"x": 1, "y": "2"})'), {
         'instructions': [
-            'let parseWaitForAttr = await page.$("a");\n' +
-            'if (parseWaitForAttr === null) { throw \'"a" not found\'; }\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForAttr = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForAttr = await page.$("a");\n' +
+            'if (parseWaitForAttr !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
             'let nonMatchingProps;\n' +
             'while (true) {\n' +
             '    nonMatchingProps = await page.evaluate(e => {\n' +
@@ -6159,11 +6279,24 @@ function checkWaitForAttribute(x, func) {
     // Check pseudo element.
     x.assert(func('("a::after", {"x": 1, "y": "2"})'), {
         'instructions': [
-            'let parseWaitForAttr = await page.$("a");\n' +
-            'if (parseWaitForAttr === null) { throw \'"a" not found\'; }\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForAttr = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForAttr = await page.$("a");\n' +
+            'if (parseWaitForAttr !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
             'let nonMatchingProps;\n' +
             'while (true) {\n' +
             '    nonMatchingProps = await page.evaluate(e => {\n' +
@@ -6200,11 +6333,24 @@ function checkWaitForAttribute(x, func) {
     });
     x.assert(func('("a", {"color": "blue"})'), {
         'instructions': [
-            'let parseWaitForAttr = await page.$("a");\n' +
-            'if (parseWaitForAttr === null) { throw \'"a" not found\'; }\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForAttr = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForAttr = await page.$("a");\n' +
+            'if (parseWaitForAttr !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
             'let nonMatchingProps;\n' +
             'while (true) {\n' +
             '    nonMatchingProps = await page.evaluate(e => {\n' +
@@ -6244,12 +6390,25 @@ function checkWaitForAttribute(x, func) {
     x.assert(func('("/a", {"x": "1"})'), { 'error': 'XPath must start with `//`'});
     x.assert(func('("//a", {})'), {
         'instructions': [
-            'let parseWaitForAttr = await page.$x("//a");\n' +
-            'if (parseWaitForAttr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseWaitForAttr = parseWaitForAttr[0];\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForAttr = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForAttr = await page.$x("//a");\n' +
+            'if (parseWaitForAttr.length !== 0) {\n' +
+            '    parseWaitForAttr = parseWaitForAttr[0];\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following XPath \\"//a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
             'let nonMatchingProps;\n' +
             'while (true) {\n' +
             '    nonMatchingProps = await page.evaluate(e => {\n' +
@@ -6286,12 +6445,25 @@ function checkWaitForAttribute(x, func) {
     });
     x.assert(func('("//a", {"x": "1"})'), {
         'instructions': [
-            'let parseWaitForAttr = await page.$x("//a");\n' +
-            'if (parseWaitForAttr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseWaitForAttr = parseWaitForAttr[0];\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForAttr = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForAttr = await page.$x("//a");\n' +
+            'if (parseWaitForAttr.length !== 0) {\n' +
+            '    parseWaitForAttr = parseWaitForAttr[0];\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following XPath \\"//a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
             'let nonMatchingProps;\n' +
             'while (true) {\n' +
             '    nonMatchingProps = await page.evaluate(e => {\n' +
@@ -6351,11 +6523,24 @@ function checkWaitForCss(x, func) {
     // Check css selector
     x.assert(func('("a", {})'), {
         'instructions': [
-            'let parseWaitForCss = await page.$("a");\n' +
-            'if (parseWaitForCss === null) { throw \'"a" not found\'; }\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForCss = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForCss = await page.$("a");\n' +
+            'if (parseWaitForCss !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
             'let nonMatchingProps;\n' +
             'while (true) {\n' +
             '    nonMatchingProps = await page.evaluate(e => {\n' +
@@ -6406,11 +6591,24 @@ function checkWaitForCss(x, func) {
     });
     x.assert(func('("a", {"x": 1})'), {
         'instructions': [
-            'let parseWaitForCss = await page.$("a");\n' +
-            'if (parseWaitForCss === null) { throw \'"a" not found\'; }\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForCss = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForCss = await page.$("a");\n' +
+            'if (parseWaitForCss !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
             'let nonMatchingProps;\n' +
             'while (true) {\n' +
             '    nonMatchingProps = await page.evaluate(e => {\n' +
@@ -6461,11 +6659,24 @@ function checkWaitForCss(x, func) {
     });
     x.assert(func('("a", {"x": 1, "y": "2"})'), {
         'instructions': [
-            'let parseWaitForCss = await page.$("a");\n' +
-            'if (parseWaitForCss === null) { throw \'"a" not found\'; }\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForCss = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForCss = await page.$("a");\n' +
+            'if (parseWaitForCss !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
             'let nonMatchingProps;\n' +
             'while (true) {\n' +
             '    nonMatchingProps = await page.evaluate(e => {\n' +
@@ -6517,11 +6728,24 @@ function checkWaitForCss(x, func) {
     // Check pseudo element.
     x.assert(func('("a::after", {"x": 1, "y": "2"})'), {
         'instructions': [
-            'let parseWaitForCss = await page.$("a");\n' +
-            'if (parseWaitForCss === null) { throw \'"a" not found\'; }\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForCss = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForCss = await page.$("a");\n' +
+            'if (parseWaitForCss !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
             'let nonMatchingProps;\n' +
             'while (true) {\n' +
             '    nonMatchingProps = await page.evaluate(e => {\n' +
@@ -6577,11 +6801,24 @@ function checkWaitForCss(x, func) {
             'throw "`show-text: true` needs to be used before checking for `color` (otherwise ' +
                 'the browser doesn\'t compute it)";\n' +
             '}',
-            'let parseWaitForCss = await page.$("a");\n' +
-            'if (parseWaitForCss === null) { throw \'"a" not found\'; }\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForCss = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForCss = await page.$("a");\n' +
+            'if (parseWaitForCss !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
             'let nonMatchingProps;\n' +
             'while (true) {\n' +
             '    nonMatchingProps = await page.evaluate(e => {\n' +
@@ -6635,12 +6872,25 @@ function checkWaitForCss(x, func) {
     x.assert(func('("/a", {"x": "1"})'), { 'error': 'XPath must start with `//`'});
     x.assert(func('("//a", {})'), {
         'instructions': [
-            'let parseWaitForCss = await page.$x("//a");\n' +
-            'if (parseWaitForCss.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseWaitForCss = parseWaitForCss[0];\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForCss = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForCss = await page.$x("//a");\n' +
+            'if (parseWaitForCss.length !== 0) {\n' +
+            '    parseWaitForCss = parseWaitForCss[0];\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following XPath \\"//a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
             'let nonMatchingProps;\n' +
             'while (true) {\n' +
             '    nonMatchingProps = await page.evaluate(e => {\n' +
@@ -6691,12 +6941,25 @@ function checkWaitForCss(x, func) {
     });
     x.assert(func('("//a", {"x": "1"})'), {
         'instructions': [
-            'let parseWaitForCss = await page.$x("//a");\n' +
-            'if (parseWaitForCss.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseWaitForCss = parseWaitForCss[0];\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForCss = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForCss = await page.$x("//a");\n' +
+            'if (parseWaitForCss.length !== 0) {\n' +
+            '    parseWaitForCss = parseWaitForCss[0];\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following XPath \\"//a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
             'let nonMatchingProps;\n' +
             'while (true) {\n' +
             '    nonMatchingProps = await page.evaluate(e => {\n' +
@@ -6767,12 +7030,25 @@ function checkWaitForText(x, func) {
     // Check CSS selector.
     x.assert(func('("a", "b")'), {
         'instructions': [
-            'let parseWaitForText = await page.$("a");\n' +
-            'if (parseWaitForText === null) { throw \'"a" not found\'; }\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
-            'const value = "b";\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForText = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForText = await page.$("a");\n' +
+            'if (parseWaitForText !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
+            'const value = "b";\n' +
             'let computedEntry;\n' +
             'while (true) {\n' +
             '    computedEntry = await page.evaluate(e => {\n' +
@@ -6797,12 +7073,25 @@ function checkWaitForText(x, func) {
     });
     x.assert(func('("a::after", "b")'), {
         'instructions': [
-            'let parseWaitForText = await page.$("a");\n' +
-            'if (parseWaitForText === null) { throw \'"a" not found\'; }\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
-            'const value = "b";\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForText = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForText = await page.$("a");\n' +
+            'if (parseWaitForText !== null) {\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
+            'const value = "b";\n' +
             'let computedEntry;\n' +
             'while (true) {\n' +
             '    computedEntry = await page.evaluate(e => {\n' +
@@ -6828,13 +7117,26 @@ function checkWaitForText(x, func) {
 
     x.assert(func('("//a", "b")'), {
         'instructions': [
-            'let parseWaitForText = await page.$x("//a");\n' +
-            'if (parseWaitForText.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseWaitForText = parseWaitForText[0];\n' +
-            'let timeLimit = page._timeoutSettings.timeout();\n' +
+            'const timeLimit = page._timeoutSettings.timeout();\n' +
             'const timeAdd = 50;\n' +
-            'const value = "b";\n' +
             'let allTime = 0;\n' +
+            'let parseWaitForText = null;\n' +
+            'while (true) {\n' +
+            '    parseWaitForText = await page.$x("//a");\n' +
+            'if (parseWaitForText.length !== 0) {\n' +
+            '    parseWaitForText = parseWaitForText[0];\n' +
+            '    break;\n' +
+            '}\n' +
+            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
+            '    if (timeLimit === 0) {\n' +
+            '        continue;\n' +
+            '    }\n' +
+            '    allTime += timeAdd;\n' +
+            '    if (allTime >= timeLimit) {\n' +
+            '        throw new Error("The following XPath \\"//a\\" was not found");\n' +
+            '    }\n' +
+            '}\n' +
+            'const value = "b";\n' +
             'let computedEntry;\n' +
             'while (true) {\n' +
             '    computedEntry = await page.evaluate(e => {\n' +
