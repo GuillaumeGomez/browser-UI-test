@@ -13,6 +13,14 @@ function getElemText(e, value) {
     return elemValue;
 }
 
+function extractFloat(value, rounded) {
+    const ret = parseFloat(value.replace('px', ''));
+    if (rounded === true) {
+        return Math.round(ret);
+    }
+    return ret;
+}
+
 // eslint-disable-next-line no-unused-vars
 const browserUiTestHelpers = {
     getElemText: getElemText,
@@ -40,11 +48,9 @@ const browserUiTestHelpers = {
             throw `"${elemValue}" doesn't contain "${value}"`;
         }
     },
-    extractFloat: function(value, rounded) {
-        const ret = parseFloat(value.replace('px', ''));
-        if (rounded === true) {
-            return Math.round(ret);
-        }
-        return ret;
+    extractFloat: extractFloat,
+    extractFloatOrZero: function(value, rounded) {
+        const ret = extractFloat(value, rounded);
+        return isNaN(ret) ? 0 : ret;
     },
 };
