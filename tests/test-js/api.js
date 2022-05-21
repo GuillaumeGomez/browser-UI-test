@@ -3842,8 +3842,8 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'let y1 = e1.getBoundingClientRect().top;\n' +
             'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
             'let style1 = window.getComputedStyle(e1);\n' +
-            'y1 += browserUiTestHelpers.extractFloat(pseudoStyle1.top) - ' +
-                'browserUiTestHelpers.extractFloat(style1.marginTop);\n' +
+            'y1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1.top) - ' +
+                'browserUiTestHelpers.extractFloatOrZero(style1.marginTop);\n' +
             'let y2 = e2.getBoundingClientRect().top;\n' +
             'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
             after +
@@ -3854,8 +3854,8 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'let x1 = e1.getBoundingClientRect().left;\n' +
             'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
             'let style1 = window.getComputedStyle(e1);\n' +
-            'x1 += browserUiTestHelpers.extractFloat(pseudoStyle1.left) - ' +
-                'browserUiTestHelpers.extractFloat(style1.marginLeft);\n' +
+            'x1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1.left) - ' +
+                'browserUiTestHelpers.extractFloatOrZero(style1.marginLeft);\n' +
             'let x2 = e2.getBoundingClientRect().left;\n' +
             'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
             after +
@@ -3879,8 +3879,8 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'let y2 = e2.getBoundingClientRect().top;\n' +
             'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
             'let style2 = window.getComputedStyle(e2);\n' +
-            'y2 += browserUiTestHelpers.extractFloat(pseudoStyle2.top) - ' +
-                'browserUiTestHelpers.extractFloat(style2.marginTop);\n' +
+            'y2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2.top) - ' +
+                'browserUiTestHelpers.extractFloatOrZero(style2.marginTop);\n' +
             'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
             after +
             '}\n' +
@@ -3891,8 +3891,8 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'let x2 = e2.getBoundingClientRect().left;\n' +
             'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
             'let style2 = window.getComputedStyle(e2);\n' +
-            'x2 += browserUiTestHelpers.extractFloat(pseudoStyle2.left) - ' +
-                'browserUiTestHelpers.extractFloat(style2.marginLeft);\n' +
+            'x2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2.left) - ' +
+                'browserUiTestHelpers.extractFloatOrZero(style2.marginLeft);\n' +
             'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
             after +
             '}\n' +
@@ -3914,13 +3914,13 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'let y1 = e1.getBoundingClientRect().top;\n' +
             'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
             'let style1 = window.getComputedStyle(e1);\n' +
-            'y1 += browserUiTestHelpers.extractFloat(pseudoStyle1.top) - ' +
-                'browserUiTestHelpers.extractFloat(style1.marginTop);\n' +
+            'y1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1.top) - ' +
+                'browserUiTestHelpers.extractFloatOrZero(style1.marginTop);\n' +
             'let y2 = e2.getBoundingClientRect().top;\n' +
             'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
             'let style2 = window.getComputedStyle(e2);\n' +
-            'y2 += browserUiTestHelpers.extractFloat(pseudoStyle2.top) - ' +
-                'browserUiTestHelpers.extractFloat(style2.marginTop);\n' +
+            'y2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2.top) - ' +
+                'browserUiTestHelpers.extractFloatOrZero(style2.marginTop);\n' +
             'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
             after +
             '}\n' +
@@ -3930,13 +3930,13 @@ function checkCompareElementsPositionInner(x, func, before, after) {
             'let x1 = e1.getBoundingClientRect().left;\n' +
             'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
             'let style1 = window.getComputedStyle(e1);\n' +
-            'x1 += browserUiTestHelpers.extractFloat(pseudoStyle1.left) - ' +
-                'browserUiTestHelpers.extractFloat(style1.marginLeft);\n' +
+            'x1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1.left) - ' +
+                'browserUiTestHelpers.extractFloatOrZero(style1.marginLeft);\n' +
             'let x2 = e2.getBoundingClientRect().left;\n' +
             'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
             'let style2 = window.getComputedStyle(e2);\n' +
-            'x2 += browserUiTestHelpers.extractFloat(pseudoStyle2.left) - ' +
-                'browserUiTestHelpers.extractFloat(style2.marginLeft);\n' +
+            'x2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2.left) - ' +
+                'browserUiTestHelpers.extractFloatOrZero(style2.marginLeft);\n' +
             'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
             after +
             '}\n' +
