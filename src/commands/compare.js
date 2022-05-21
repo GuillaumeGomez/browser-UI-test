@@ -448,8 +448,8 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
         }
         return `let pseudoStyle${end} = window.getComputedStyle(e${end}, "${selector.pseudo}");\n` +
             `let style${end} = window.getComputedStyle(e${end});\n` +
-            `x${end} += browserUiTestHelpers.extractFloat(pseudoStyle${end}.left) - ` +
-                `browserUiTestHelpers.extractFloat(style${end}.marginLeft);\n`;
+            `x${end} += browserUiTestHelpers.extractFloatOrZero(pseudoStyle${end}.left) - ` +
+                `browserUiTestHelpers.extractFloatOrZero(style${end}.marginLeft);\n`;
     }
     function handlePseudoY(selector, end) {
         if (selector.isXPath || selector.pseudo === null) {
@@ -457,8 +457,8 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
         }
         return `let pseudoStyle${end} = window.getComputedStyle(e${end}, "${selector.pseudo}");\n` +
             `let style${end} = window.getComputedStyle(e${end});\n` +
-            `y${end} += browserUiTestHelpers.extractFloat(pseudoStyle${end}.top) - ` +
-                `browserUiTestHelpers.extractFloat(style${end}.marginTop);\n`;
+            `y${end} += browserUiTestHelpers.extractFloatOrZero(pseudoStyle${end}.top) - ` +
+                `browserUiTestHelpers.extractFloatOrZero(style${end}.marginTop);\n`;
     }
 
     for (let i = 0; i < sub_tuple.length; ++i) {
