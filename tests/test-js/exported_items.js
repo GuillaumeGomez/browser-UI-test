@@ -310,6 +310,11 @@ async function checkOptions(x) {
     await x.assertTry(() => options.parseArguments(['--browser', 'chrome  ']), [], true);
     await x.assert(options.browser, 'chrome');
 
+    await x.assertTry(() => options.parseArguments(['--executable-path']), [],
+        'Missing executable path after `--executable-path` option');
+    await x.assertTry(() => options.parseArguments(['--executable-path', 'a']), [], true);
+    await x.assert(options.executablePath, 'a');
+
     const options0 = new Options();
     options0.runId = true;
     await x.assertTry(() => options0.validateFields(), [],
