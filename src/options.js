@@ -26,6 +26,7 @@ function helper() {
         'scripts by the end');
     print('  --enable-fail-on-js-error     : If a JS error occurs on a web page, the test will ' +
         'fail');
+    print('  --executable-path [PATH]      : Path of the browser\'s executable you want to use');
     print('  --pause-on-error [true|false] : Add a permission to enable');
     print('  --permission [PERMISSION]     : Add a permission to enable');
     print('  --run-id [id]                 : Id to be used for failed images extension (\'test\'');
@@ -87,6 +88,7 @@ class Options {
         this.permissions = [];
         this.onPageCreatedCallback = async function() {};
         this.failOnJsError = false;
+        this.executablePath = null;
     }
 
     clone() {
@@ -114,6 +116,7 @@ class Options {
         copy.permissions = JSON.parse(JSON.stringify(this.permissions));
         copy.onPageCreatedCallback = this.onPageCreatedCallback;
         copy.failOnJsError = this.failOnJsError;
+        copy.executablePath = this.executablePath !== null ? this.executablePath.slice() : null;
         return copy;
     }
 
@@ -246,6 +249,13 @@ class Options {
                     it += 1;
                 } else {
                     throw new Error('Missing permission name after `--permission` option');
+                }
+            } else if (args[it] === '--executable-path') {
+                if (it + 1 < args.length) {
+                    this.executablePath = args[it + 1];
+                    it += 1;
+                } else {
+                    throw new Error('Missing executable path after `--executable-path` option');
                 }
             } else if (args[it] === '--enable-fail-on-js-error') {
                 this.failOnJsError = true;
