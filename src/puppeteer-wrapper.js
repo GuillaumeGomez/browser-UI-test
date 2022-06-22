@@ -1,3 +1,5 @@
+const process = require('process');
+
 function buildPuppeteerOptions(options) {
     const puppeteer_options = {'args': ['--font-render-hinting=none']};
     if (options.headless === false) {
@@ -35,6 +37,10 @@ function check_if_known_error(error) {
     return false;
 }
 
+function handlePuppeteerExit() {
+    process.emit('browser-ui-test-puppeter-failure');
+}
+
 class PuppeteerWrapper {
     constructor() {
         this.puppeteer = require('puppeteer');
@@ -67,6 +73,11 @@ class PuppeteerWrapper {
     }
 
     async newPage(options, debug_log) {
+        // If chromium has an issue, puppeteer simply exits instead of returning an error...
+        // So to let the user knows what happened, we need to catch it so we can display an error
+        // to let them know how to go around this problem.
+        process.once('beforeExit', handlePuppeteerExit);
+
         let page;
         if (this.context) {
             debug_log.append('Starting test in incognito mode.');
@@ -74,6 +85,10 @@ class PuppeteerWrapper {
         } else {
             page = await this.browser.newPage();
         }
+
+        // If we reach this line, it means everything went fine so we can remove the listener.
+        process.removeListener('beforeExit', handlePuppeteerExit);
+
         page.setDefaultTimeout(options.timeout);
         return page;
     }
