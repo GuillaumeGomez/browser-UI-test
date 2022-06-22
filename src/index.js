@@ -604,6 +604,12 @@ async function runTests(options, showLogs = false) {
     }
 }
 
+process.on('browser-ui-test-puppeter-failure', () => {
+    console.error('ERROR: puppeteer failed when trying to create a new page. Please try again with \
+`--no-sandbox`');
+    process.exit(1);
+});
+
 if (require.main === module) {
     process.on('uncaughtException', function(err) {
         print(err.message);
