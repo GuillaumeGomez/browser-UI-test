@@ -30,7 +30,7 @@ text: ("#button", "hello") // set text of element #button
 assert: ("#button", "hello") // check if #button element's text has been set to "hello"
 ```
 
-The list of the commands is available [here]((https://github.com/GuillaumeGomez/browser-UI-test/blob/master/goml-script.md).
+The list of the commands is available [here](https://github.com/GuillaumeGomez/browser-UI-test/blob/master/goml-script.md).
 
 ### Trouble installing puppeteer?
 
