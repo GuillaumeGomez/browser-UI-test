@@ -9,14 +9,17 @@ const {Assert, plural, print, removeFolder} = require('./utils.js');
 
 async function wrapRunTests(options = new Options()) {
     options.screenshotComparison = false;
+    options.noSandbox = true;
     return await runTests(options, false);
 }
 async function wrapRunTest(testPath, options = new Options()) {
     options.screenshotComparison = false;
+    options.noSandbox = true;
     return await runTest(testPath, options, false);
 }
 async function wrapRunTestCode(testName, content, options = new Options()) {
     options.screenshotComparison = false;
+    options.noSandbox = true;
     return await runTestCode(testName, content, options, false);
 }
 

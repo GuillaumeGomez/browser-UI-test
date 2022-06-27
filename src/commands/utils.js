@@ -83,8 +83,10 @@ function validateJson(json, allowedValueTypes, keyName) {
     };
 }
 
-function getInsertStrings(assertFalse, insideLoop, extra = '') {
-    const insertBefore = 'try {\n';
+function getInsertStrings(assertFalse, insideLoop, extra = '', backlineAtEnd = true) {
+    const backlineStart = backlineAtEnd === true ? '' : '\n';
+    const backlineEnd = backlineAtEnd === true ? '\n' : '';
+    const insertBefore = `${backlineStart}try {${backlineEnd}`;
 
     if (assertFalse) {
         if (insideLoop) {

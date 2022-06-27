@@ -2,4 +2,4 @@
 screenshot-comparison: false
 goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
 assert: "#doesnt-exist"
-assert-css: (".content>.right>p", {"font-size": "200px"})
+assert-css: (".content>.right>p", {"font-size": "200px", "height": "30"})

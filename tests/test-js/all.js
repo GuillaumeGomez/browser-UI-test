@@ -6,7 +6,6 @@ const {Assert, plural, print} = require('./utils.js');
 const utils = require('../../src/utils.js');
 utils.print = function() {}; // overwriting the print function to avoid the print
 
-
 async function runAllTests() {
     const files = [];
     const x = new Assert();

@@ -2,7 +2,7 @@
 
 dont-stop-at-first-failure... FAILED
 [ERROR] (line 4) "#doesnt-exist" not found: for command `assert: "#doesnt-exist"`
-[ERROR] (line 5) Error: Evaluation failed: expected `200px` for key `font-size` for selector `.content>.right>p`, found `16px`: for command `assert-css: (".content>.right>p", {"font-size": "200px"})`
+[ERROR] (line 5) Error: Evaluation failed: The following CSS properties don't match (for selector `.content>.right>p`): [expected `200px` for key `font-size`, found `16px`, expected `30` for key `height`, found `18px`]: for command `assert-css: (".content>.right>p", {"font-size": "200px", "height": "30"})`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed
