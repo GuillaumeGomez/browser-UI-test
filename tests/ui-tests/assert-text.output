@@ -14,10 +14,10 @@ assert-text... FAILED
 [ERROR] (line 28) Error: Evaluation failed: selector `.content` doesn't have an attribute named `does-not-exist`: for command `assert-attribute: (".content", {"does-not-exist": ".con"})`
 [ERROR] (line 34) Error: Evaluation failed: "Another page!" doesn't end with "Another": for command `assert-text: ("header", "Another", [STARTS_WITH, ENDS_WITH])`
 [ERROR] (line 35) Error: Evaluation failed: "Another page!" doesn't end with "Another": for command `assert-text: ("header", "Another", ENDS_WITH)`
-[ERROR] (line 37) Error: Evaluation failed: assert didn't fail: for command `assert-document-property-false: ({"title": "Other"}, [ENDS_WITH, STARTS_WITH])`
-[ERROR] (line 38) Error: Evaluation failed: assert didn't fail: for command `assert-document-property-false: ({"title": "Other"}, STARTS_WITH)`
-[ERROR] (line 39) Error: Evaluation failed: Property `title` (`Other page`) does not end with `Other`: for command `assert-document-property: ({"title": "Other"}, [STARTS_WITH, ENDS_WITH])`
-[ERROR] (line 40) Error: Evaluation failed: Property `title` (`Other page`) does not end with `Other`: for command `assert-document-property: ({"title": "Other"}, ENDS_WITH)`
+[ERROR] (line 37) Error: Evaluation failed: The following errors happened: [assert didn't fail for property `title` (for STARTS_WITH check), assert didn't fail for property `bgColor` (for STARTS_WITH check), assert didn't fail for property `bgColor` (for ENDS_WITH check)]: for command `assert-document-property-false: ({"title": "Other", "bgColor": ""}, [ENDS_WITH, STARTS_WITH])`
+[ERROR] (line 38) Error: Evaluation failed: The following errors happened: [assert didn't fail for property `title` (for STARTS_WITH check)]: for command `assert-document-property-false: ({"title": "Other"}, STARTS_WITH)`
+[ERROR] (line 39) Error: Evaluation failed: The following errors happened: [Property `title` (`Other page`) does not end with `Other`, Property `bgColor` (``) does not start with `a`, Property `bgColor` (``) does not end with `a`]: for command `assert-document-property: ({"title": "Other", "bgColor": "a"}, [STARTS_WITH, ENDS_WITH])`
+[ERROR] (line 40) Error: Evaluation failed: The following errors happened: [Property `title` (`Other page`) does not end with `Other`]: for command `assert-document-property: ({"title": "Other"}, ENDS_WITH)`
 [ERROR] (line 42) "#non-existent" not found: for command `click: "#non-existent"`
 
 

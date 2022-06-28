@@ -864,7 +864,15 @@ function checkAssertCountFalse(x, func) {
     );
 }
 
-function checkAssertDocumentPropertyInner(x, func, before, after, special_after) {
+function checkAssertDocumentPropertyInner(
+    x,
+    func,
+    noProp,
+    defaultCheck,
+    containsCheck,
+    startsWithCheck,
+    endsWithCheck,
+) {
     x.assert(func('["a"]'), {
         'error': 'expected a tuple or a JSON dict, found `["a"]`',
     });
@@ -889,172 +897,123 @@ function checkAssertDocumentPropertyInner(x, func, before, after, special_after)
     });
 
     x.assert(func('{"a": "b"}'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'const parseAssertDictPropDict = {"a":"b"};\n' +
-            'for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(' +
-                'parseAssertDictPropDict)) {\n' +
-            before +
-            'if (document[parseAssertDictPropKey] === undefined) {\n' +
-            '    throw \'Unknown document property `\' + parseAssertDictPropKey + \'`\';\n' +
-            '}\n' +
-            special_after +
-            '(() => {\n' +
-            before +
-            'if (String(document[parseAssertDictPropKey]) != parseAssertDictPropValue) {\n' +
-            '    throw \'Expected `\' + parseAssertDictPropValue + \'` for property `\' + ' +
-                'parseAssertDictPropKey + \'`, found `\' + document[parseAssertDictPropKey] + \'' +
-                '`\';\n' +
-            '}' +
-            after + '\n' +
-            '})();\n' +
-            '}\n' +
-            '});',
+        'instructions': [`await page.evaluate(() => {
+    const nonMatchingProps = [];
+    const parseAssertDictPropDict = {"a":"b"};
+    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
+parseAssertDictPropDict)) {
+        if (document[parseAssertDictPropKey] === undefined) {${noProp()}
+            continue;
+        }
+        ${defaultCheck()}
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(", ");
+        throw "The following errors happened: [" + props + "]";
+    }
+});`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('({"a": "b"})'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'const parseAssertDictPropDict = {"a":"b"};\n' +
-            'for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(' +
-                'parseAssertDictPropDict)) {\n' +
-            before +
-            'if (document[parseAssertDictPropKey] === undefined) {\n' +
-            '    throw \'Unknown document property `\' + parseAssertDictPropKey + \'`\';\n' +
-            '}\n' +
-            special_after +
-            '(() => {\n' +
-            before +
-            'if (String(document[parseAssertDictPropKey]) != parseAssertDictPropValue) {\n' +
-            '    throw \'Expected `\' + parseAssertDictPropValue + \'` for property `\' + ' +
-                'parseAssertDictPropKey + \'`, found `\' + document[parseAssertDictPropKey] + \'' +
-                '`\';\n' +
-            '}' +
-            after + '\n' +
-            '})();\n' +
-            '}\n' +
-            '});',
+        'instructions': [`await page.evaluate(() => {
+    const nonMatchingProps = [];
+    const parseAssertDictPropDict = {"a":"b"};
+    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
+parseAssertDictPropDict)) {
+        if (document[parseAssertDictPropKey] === undefined) {${noProp()}
+            continue;
+        }
+        ${defaultCheck()}
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(", ");
+        throw "The following errors happened: [" + props + "]";
+    }
+});`,
         ],
         'wait': false,
         'checkResult': true,
     });
 
     x.assert(func('({"a": "b"}, CONTAINS)'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'const parseAssertDictPropDict = {"a":"b"};\n' +
-            'for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(' +
-                'parseAssertDictPropDict)) {\n' +
-            before +
-            'if (document[parseAssertDictPropKey] === undefined) {\n' +
-            '    throw \'Unknown document property `\' + parseAssertDictPropKey + \'`\';\n' +
-            '}\n' +
-            special_after +
-            '(() => {\n' +
-            before +
-            'if (String(document[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) === ' +
-                '-1) {\n' +
-            '    throw \'Property `\' + parseAssertDictPropKey + \'` (`\' + document[' +
-                'parseAssertDictPropKey] + \'`) does not contain `\' + ' +
-                'parseAssertDictPropValue + \'`\';\n' +
-            '}' +
-            after + '\n' +
-            '})();\n' +
-            '}\n' +
-            '});',
+        'instructions': [`await page.evaluate(() => {
+    const nonMatchingProps = [];
+    const parseAssertDictPropDict = {"a":"b"};
+    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
+parseAssertDictPropDict)) {
+        if (document[parseAssertDictPropKey] === undefined) {${noProp()}
+            continue;
+        }
+        ${containsCheck()}
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(", ");
+        throw "The following errors happened: [" + props + "]";
+    }
+});`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('({"a": "b"}, STARTS_WITH)'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'const parseAssertDictPropDict = {"a":"b"};\n' +
-            'for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(' +
-                'parseAssertDictPropDict)) {\n' +
-            before +
-            'if (document[parseAssertDictPropKey] === undefined) {\n' +
-            '    throw \'Unknown document property `\' + parseAssertDictPropKey + \'`\';\n' +
-            '}\n' +
-            special_after +
-            '(() => {\n' +
-            before +
-            'if (!String(document[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) ' +
-                '{\n' +
-            '    throw \'Property `\' + parseAssertDictPropKey + \'` (`\' + document[' +
-                'parseAssertDictPropKey] + \'`) does not start with `\' + ' +
-                'parseAssertDictPropValue + \'`\';\n' +
-            '}' +
-            after + '\n' +
-            '})();\n' +
-            '}\n' +
-            '});',
+        'instructions': [`await page.evaluate(() => {
+    const nonMatchingProps = [];
+    const parseAssertDictPropDict = {"a":"b"};
+    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
+parseAssertDictPropDict)) {
+        if (document[parseAssertDictPropKey] === undefined) {${noProp()}
+            continue;
+        }
+        ${startsWithCheck()}
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(", ");
+        throw "The following errors happened: [" + props + "]";
+    }
+});`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('({"a": "b"}, ENDS_WITH)'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'const parseAssertDictPropDict = {"a":"b"};\n' +
-            'for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(' +
-                'parseAssertDictPropDict)) {\n' +
-            before +
-            'if (document[parseAssertDictPropKey] === undefined) {\n' +
-            '    throw \'Unknown document property `\' + parseAssertDictPropKey + \'`\';\n' +
-            '}\n' +
-            special_after +
-            '(() => {\n' +
-            before +
-            'if (!String(document[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) ' +
-                '{\n' +
-            '    throw \'Property `\' + parseAssertDictPropKey + \'` (`\' + document[' +
-                'parseAssertDictPropKey] + \'`) does not end with `\' + ' +
-                'parseAssertDictPropValue + \'`\';\n' +
-            '}' +
-            after + '\n' +
-            '})();\n' +
-            '}\n' +
-            '});',
+        'instructions': [`await page.evaluate(() => {
+    const nonMatchingProps = [];
+    const parseAssertDictPropDict = {"a":"b"};
+    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
+parseAssertDictPropDict)) {
+        if (document[parseAssertDictPropKey] === undefined) {${noProp()}
+            continue;
+        }
+        ${endsWithCheck()}
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(", ");
+        throw "The following errors happened: [" + props + "]";
+    }
+});`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('({"a": "b"}, [STARTS_WITH, ENDS_WITH])'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'const parseAssertDictPropDict = {"a":"b"};\n' +
-            'for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(' +
-                'parseAssertDictPropDict)) {\n' +
-            before +
-            'if (document[parseAssertDictPropKey] === undefined) {\n' +
-            '    throw \'Unknown document property `\' + parseAssertDictPropKey + \'`\';\n' +
-            '}\n' +
-            special_after +
-            '(() => {\n' +
-            before +
-            'if (!String(document[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) ' +
-                '{\n' +
-            '    throw \'Property `\' + parseAssertDictPropKey + \'` (`\' + document[' +
-                'parseAssertDictPropKey] + \'`) does not start with `\' + ' +
-                'parseAssertDictPropValue + \'`\';\n' +
-            '}' +
-            after + '\n' +
-            '})();\n' +
-            '(() => {\n' +
-            before +
-            'if (!String(document[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) ' +
-                '{\n' +
-            '    throw \'Property `\' + parseAssertDictPropKey + \'` (`\' + document[' +
-                'parseAssertDictPropKey] + \'`) does not end with `\' + ' +
-                'parseAssertDictPropValue + \'`\';\n' +
-            '}' +
-            after + '\n' +
-            '})();\n' +
-            '}\n' +
-            '});',
+        'instructions': [`await page.evaluate(() => {
+    const nonMatchingProps = [];
+    const parseAssertDictPropDict = {"a":"b"};
+    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
+parseAssertDictPropDict)) {
+        if (document[parseAssertDictPropKey] === undefined) {${noProp()}
+            continue;
+        }
+        ${startsWithCheck()}
+        ${endsWithCheck()}
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(", ");
+        throw "The following errors happened: [" + props + "]";
+    }
+});`,
         ],
         'wait': false,
         'checkResult': true,
@@ -1062,16 +1021,53 @@ function checkAssertDocumentPropertyInner(x, func, before, after, special_after)
 }
 
 function checkAssertDocumentProperty(x, func) {
-    checkAssertDocumentPropertyInner(x, func, '', '', '');
+    checkAssertDocumentPropertyInner(
+        x,
+        func,
+        () => '\n            nonMatchingProps.push(\'Unknown document property `\' + ' +
+            'parseAssertDictPropKey + \'`\');',
+        () => `if (String(document[parseAssertDictPropKey]) != parseAssertDictPropValue) {
+            nonMatchingProps.push('Expected \`' + parseAssertDictPropValue + '\` for property \`' \
++ parseAssertDictPropKey + '\`, found \`' + document[parseAssertDictPropKey] + '\`');
+        }`,
+        () => `\
+if (String(document[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) === -1) {
+            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
+document[parseAssertDictPropKey] + '\`) does not contain \`' + parseAssertDictPropValue + '\`');
+        }`,
+        () => `if (!String(document[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
+document[parseAssertDictPropKey] + '\`) does not start with \`' + parseAssertDictPropValue + '\`');
+        }`,
+        () => `if (!String(document[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
+document[parseAssertDictPropKey] + '\`) does not end with \`' + parseAssertDictPropValue + '\`');
+        }`,
+    );
 }
 
 function checkAssertDocumentPropertyFalse(x, func) {
     checkAssertDocumentPropertyInner(
         x,
         func,
-        'try {\n',
-        '\n} catch(e) { return; } throw "assert didn\'t fail";',
-        '} catch (e) { continue; }\n',
+        () => '',
+        () => `if (String(document[parseAssertDictPropKey]) == parseAssertDictPropValue) {
+            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey \
++ '\`');
+        }`,
+        () => `\
+if (String(document[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) !== -1) {
+            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
+'\` (for CONTAINS check)');
+        }`,
+        () => `if (String(document[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
+'\` (for STARTS_WITH check)');
+        }`,
+        () => `if (String(document[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
+'\` (for ENDS_WITH check)');
+        }`,
     );
 }
 
