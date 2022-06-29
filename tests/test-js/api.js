@@ -1,6 +1,7 @@
 const process = require('process');
 process.env.debug_tests = '1'; // We enable this to get all items from `commands.js`.
 const parserFuncs = require('../../src/commands.js');
+const {indentString} = require('../../src/commands/utils.js');
 const {Parser} = require('../../src/parser.js');
 const Options = require('../../src/options.js').Options;
 const {Assert, plural, print} = require('./utils.js');
@@ -1075,7 +1076,7 @@ function checkAssertDocumentPropertyFalse(x, func) {
     );
 }
 
-function checkAssertCssInner(x, func, before, after) {
+function checkAssertCssInner(x, func, assertCall) {
     x.assert(func('("a", "b", )'), {
         'error': 'expected JSON dictionary as second argument, found `"b"`',
     });
@@ -1108,28 +1109,33 @@ await page.evaluate(e => {
     const nonMatchingProps = [];
     let assertComputedStyle = getComputedStyle(e);
     const parseAssertElemCssDict = {};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of Object.entries(\
-parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+Object.entries(parseAssertElemCssDict)) {
+        const localErr = [];
+        let succeeded = false;
+        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && assertComputedStyle\
-[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
+true) + "px" !== parseAssertElemCssValue) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                }
+                succeeded = true;
+            }
+            if (!succeeded) {
+                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+            }
+        }
+${assertCall(0)}
+    }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(", ");
-        throw "The following CSS properties don't match (for selector \`a\`): [" + props + "]";
-    }${after}
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
 }, parseAssertElemCss);`,
         ],
         'wait': false,
@@ -1142,28 +1148,33 @@ await page.evaluate(e => {
     const nonMatchingProps = [];
     let assertComputedStyle = getComputedStyle(e);
     const parseAssertElemCssDict = {"a":"1"};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of Object.entries(\
-parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+Object.entries(parseAssertElemCssDict)) {
+        const localErr = [];
+        let succeeded = false;
+        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && assertComputedStyle\
-[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
+true) + "px" !== parseAssertElemCssValue) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                }
+                succeeded = true;
+            }
+            if (!succeeded) {
+                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+            }
+        }
+${assertCall(0)}
+    }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(", ");
-        throw "The following CSS properties don't match (for selector \`a\`): [" + props + "]";
-    }${after}
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
 }, parseAssertElemCss);`,
         ],
         'wait': false,
@@ -1177,28 +1188,33 @@ for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
         const nonMatchingProps = [];
         let assertComputedStyle = getComputedStyle(e);
         const parseAssertElemCssDict = {"a":"1"};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
 Object.entries(parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+            const localErr = [];
+            let succeeded = false;
+            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+                if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                    if (browserUiTestHelpers.extractFloat(assertComputedStyle[\
+parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
+                        localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                    }
+                    succeeded = true;
+                }
+                if (!succeeded) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+                }
+            }
+${assertCall(1)}
+        }
         if (nonMatchingProps.length !== 0) {
             const props = nonMatchingProps.join(", ");
-            throw "The following CSS properties don't match (for selector \`a\`): [" + props + "]";
-        }${after}
+            throw "The following errors happened (for selector \`a\`): [" + props + "]";
+        }
     }, parseAssertElemCss[i]);
 }`,
         ],
@@ -1214,28 +1230,33 @@ await page.evaluate(e => {
     const nonMatchingProps = [];
     let assertComputedStyle = getComputedStyle(e, "::after");
     const parseAssertElemCssDict = {"a":"1"};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of Object.entries(\
-parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+Object.entries(parseAssertElemCssDict)) {
+        const localErr = [];
+        let succeeded = false;
+        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && assertComputedStyle\
-[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
+true) + "px" !== parseAssertElemCssValue) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                }
+                succeeded = true;
+            }
+            if (!succeeded) {
+                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+            }
+        }
+${assertCall(0)}
+    }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(", ");
-        throw "The following CSS properties don't match (for selector \`a\`): [" + props + "]";
-    }${after}
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
 }, parseAssertElemCss);`,
         ],
         'wait': false,
@@ -1249,28 +1270,33 @@ for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
         const nonMatchingProps = [];
         let assertComputedStyle = getComputedStyle(e, "::after");
         const parseAssertElemCssDict = {"a":"1"};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
 Object.entries(parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+            const localErr = [];
+            let succeeded = false;
+            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+                if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                    if (browserUiTestHelpers.extractFloat(assertComputedStyle[\
+parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
+                        localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                    }
+                    succeeded = true;
+                }
+                if (!succeeded) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+                }
+            }
+${assertCall(1)}
+        }
         if (nonMatchingProps.length !== 0) {
             const props = nonMatchingProps.join(", ");
-            throw "The following CSS properties don't match (for selector \`a\`): [" + props + "]";
-        }${after}
+            throw "The following errors happened (for selector \`a\`): [" + props + "]";
+        }
     }, parseAssertElemCss[i]);
 }`,
         ],
@@ -1284,29 +1310,33 @@ await page.evaluate(e => {
     const nonMatchingProps = [];
     let assertComputedStyle = getComputedStyle(e);
     const parseAssertElemCssDict = {"a":"1"};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of Object.entries(\
-parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+Object.entries(parseAssertElemCssDict)) {
+        const localErr = [];
+        let succeeded = false;
+        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && assertComputedStyle\
-[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
+true) + "px" !== parseAssertElemCssValue) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                }
+                succeeded = true;
+            }
+            if (!succeeded) {
+                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+            }
+        }
+${assertCall(0)}
+    }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(", ");
-        throw "The following CSS properties don't match (for selector \`a:focus\`): [" + props + \
-"]";
-    }${after}
+        throw "The following errors happened (for selector \`a:focus\`): [" + props + "]";
+    }
 }, parseAssertElemCss);`,
         ],
         'wait': false,
@@ -1320,29 +1350,33 @@ for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
         const nonMatchingProps = [];
         let assertComputedStyle = getComputedStyle(e);
         const parseAssertElemCssDict = {"a":"1"};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
 Object.entries(parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+            const localErr = [];
+            let succeeded = false;
+            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+                if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                    if (browserUiTestHelpers.extractFloat(assertComputedStyle[\
+parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
+                        localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' +\
+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
+                    }
+                    succeeded = true;
+                }
+                if (!succeeded) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+                }
+            }
+${assertCall(1)}
+        }
         if (nonMatchingProps.length !== 0) {
             const props = nonMatchingProps.join(", ");
-            throw "The following CSS properties don't match (for selector \`a:focus\`): [" + props \
-+ "]";
-        }${after}
+            throw "The following errors happened (for selector \`a:focus\`): [" + props + "]";
+        }
     }, parseAssertElemCss[i]);
 }`,
         ],
@@ -1356,29 +1390,33 @@ await page.evaluate(e => {
     const nonMatchingProps = [];
     let assertComputedStyle = getComputedStyle(e);
     const parseAssertElemCssDict = {"a":"1"};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of Object.entries(\
-parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+Object.entries(parseAssertElemCssDict)) {
+        const localErr = [];
+        let succeeded = false;
+        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && assertComputedStyle\
-[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
+true) + "px" !== parseAssertElemCssValue) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                }
+                succeeded = true;
+            }
+            if (!succeeded) {
+                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+            }
+        }
+${assertCall(0)}
+    }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(", ");
-        throw "The following CSS properties don't match (for selector \`a ::after\`): [" + props + \
-"]";
-    }${after}
+        throw "The following errors happened (for selector \`a ::after\`): [" + props + "]";
+    }
 }, parseAssertElemCss);`,
         ],
         'wait': false,
@@ -1392,29 +1430,33 @@ for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
         const nonMatchingProps = [];
         let assertComputedStyle = getComputedStyle(e);
         const parseAssertElemCssDict = {"a":"1"};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
 Object.entries(parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+            const localErr = [];
+            let succeeded = false;
+            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+                if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                    if (browserUiTestHelpers.extractFloat(assertComputedStyle[\
+parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
+                        localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                    }
+                    succeeded = true;
+                }
+                if (!succeeded) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+                }
+            }
+${assertCall(1)}
+        }
         if (nonMatchingProps.length !== 0) {
             const props = nonMatchingProps.join(", ");
-            throw "The following CSS properties don't match (for selector \`a ::after\`): [" + \
-props + "]";
-        }${after}
+            throw "The following errors happened (for selector \`a ::after\`): [" + props + "]";
+        }
     }, parseAssertElemCss[i]);
 }`,
         ],
@@ -1431,28 +1473,33 @@ await page.evaluate(e => {
     const nonMatchingProps = [];
     let assertComputedStyle = getComputedStyle(e);
     const parseAssertElemCssDict = {};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of Object.entries(\
-parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+Object.entries(parseAssertElemCssDict)) {
+        const localErr = [];
+        let succeeded = false;
+        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && assertComputedStyle\
-[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
+true) + "px" !== parseAssertElemCssValue) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                }
+                succeeded = true;
+            }
+            if (!succeeded) {
+                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+            }
+        }
+${assertCall(0)}
+    }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(", ");
-        throw "The following CSS properties don't match (for XPath \`//a\`): [" + props + "]";
-    }${after}
+        throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
+    }
 }, parseAssertElemCss);`,
         ],
         'wait': false,
@@ -1466,28 +1513,33 @@ await page.evaluate(e => {
     const nonMatchingProps = [];
     let assertComputedStyle = getComputedStyle(e);
     const parseAssertElemCssDict = {"a":"1"};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of Object.entries(\
-parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+Object.entries(parseAssertElemCssDict)) {
+        const localErr = [];
+        let succeeded = false;
+        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && assertComputedStyle\
-[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
+true) + "px" !== parseAssertElemCssValue) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                }
+                succeeded = true;
+            }
+            if (!succeeded) {
+                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+            }
+        }
+${assertCall(0)}
+    }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(", ");
-        throw "The following CSS properties don't match (for XPath \`//a\`): [" + props + "]";
-    }${after}
+        throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
+    }
 }, parseAssertElemCss);`,
         ],
         'wait': false,
@@ -1501,28 +1553,33 @@ for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
         const nonMatchingProps = [];
         let assertComputedStyle = getComputedStyle(e);
         const parseAssertElemCssDict = {"a":"1"};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
 Object.entries(parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+            const localErr = [];
+            let succeeded = false;
+            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+                if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                    if (browserUiTestHelpers.extractFloat(assertComputedStyle[\
+parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
+                        localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                    }
+                    succeeded = true;
+                }
+                if (!succeeded) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+                }
+            }
+${assertCall(1)}
+        }
         if (nonMatchingProps.length !== 0) {
             const props = nonMatchingProps.join(", ");
-            throw "The following CSS properties don't match (for XPath \`//a\`): [" + props + "]";
-        }${after}
+            throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
+        }
     }, parseAssertElemCss[i]);
 }`,
         ],
@@ -1537,28 +1594,33 @@ await page.evaluate(e => {
     const nonMatchingProps = [];
     let assertComputedStyle = getComputedStyle(e);
     const parseAssertElemCssDict = {"a":"1","b":"2"};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of Object.entries(\
-parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+Object.entries(parseAssertElemCssDict)) {
+        const localErr = [];
+        let succeeded = false;
+        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && assertComputedStyle\
-[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
+true) + "px" !== parseAssertElemCssValue) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                }
+                succeeded = true;
+            }
+            if (!succeeded) {
+                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+            }
+        }
+${assertCall(0)}
+    }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(", ");
-        throw "The following CSS properties don't match (for XPath \`//a\`): [" + props + "]";
-    }${after}
+        throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
+    }
 }, parseAssertElemCss);`,
         ],
         'wait': false,
@@ -1572,28 +1634,33 @@ for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
         const nonMatchingProps = [];
         let assertComputedStyle = getComputedStyle(e);
         const parseAssertElemCssDict = {"a":"1","b":"2"};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
 Object.entries(parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+            const localErr = [];
+            let succeeded = false;
+            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+                if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                    if (browserUiTestHelpers.extractFloat(assertComputedStyle[\
+parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
+                        localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                    }
+                    succeeded = true;
+                }
+                if (!succeeded) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+                }
+            }
+${assertCall(1)}
+        }
         if (nonMatchingProps.length !== 0) {
             const props = nonMatchingProps.join(", ");
-            throw "The following CSS properties don't match (for XPath \`//a\`): [" + props + "]";
-        }${after}
+            throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
+        }
     }, parseAssertElemCss[i]);
 }`,
         ],
@@ -1611,28 +1678,33 @@ for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
         const nonMatchingProps = [];
         let assertComputedStyle = getComputedStyle(e);
         const parseAssertElemCssDict = {"a":"1","b":"2"};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
 Object.entries(parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+            const localErr = [];
+            let succeeded = false;
+            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+                if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                    if (browserUiTestHelpers.extractFloat(assertComputedStyle[\
+parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
+                        localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                    }
+                    succeeded = true;
+                }
+                if (!succeeded) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+                }
+            }
+${assertCall(1)}
+        }
         if (nonMatchingProps.length !== 0) {
             const props = nonMatchingProps.join(", ");
-            throw "The following CSS properties don't match (for XPath \`//a\`): [" + props + "]";
-        }${after}
+            throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
+        }
     }, parseAssertElemCss[i]);
 }`,
         ],
@@ -1643,8 +1715,8 @@ parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssK
     // Check the specially added check if "color" is used.
     x.assert(func('("a", {"color": 1})'), {
         'instructions': [`if (!arg.showText) {
-throw "\`show-text: true\` needs to be used before checking for \`color\` (otherwise the browser \
-doesn't compute it)";
+    throw "\`show-text: true\` needs to be used before checking for \`color\` (otherwise the \
+browser doesn't compute it)";
 }`,
         `let parseAssertElemCss = await page.$("a");
 if (parseAssertElemCss === null) { throw '"a" not found'; }
@@ -1652,28 +1724,33 @@ await page.evaluate(e => {
     const nonMatchingProps = [];
     let assertComputedStyle = getComputedStyle(e);
     const parseAssertElemCssDict = {"color":"1"};
-for (const [parseAssertElemCssKey, parseAssertElemCssValue] of Object.entries(\
-parseAssertElemCssDict)) {
-    if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
+    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
+Object.entries(parseAssertElemCssDict)) {
+        const localErr = [];
+        let succeeded = false;
+        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-    if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && assertComputedStyle\
-[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + "px" \
-!== parseAssertElemCssValue) {
-        nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
+assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
+true) + "px" !== parseAssertElemCssValue) {
+                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
 + browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
-    }
-    continue;
-}
-    nonMatchingProps.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
+                }
+                succeeded = true;
+            }
+            if (!succeeded) {
+                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-}
-}${before}
+            }
+        }
+${assertCall(0)}
+    }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(", ");
-        throw "The following CSS properties don't match (for selector \`a\`): [" + props + "]";
-    }${after}
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
 }, parseAssertElemCss);`,
         ],
         'wait': false,
@@ -1682,15 +1759,21 @@ parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssK
 }
 
 function checkAssertCss(x, func) {
-    checkAssertCssInner(x, func, '', '');
+    checkAssertCssInner(
+        x,
+        func,
+        indent => indentString('nonMatchingProps.push(...localErr);', 2 + indent),
+    );
 }
 
 function checkAssertCssFalse(x, func) {
     checkAssertCssInner(
         x,
         func,
-        '\ntry {',
-        '\n} catch(e) { return; } throw "assert didn\'t fail";');
+        indent => indentString(`if (localErr.length === 0) {
+    nonMatchingProps.push("assert didn't fail for key \`" + parseAssertElemCssKey + '\`');
+}`, 2 + indent),
+    );
 }
 
 function checkAssertLocalStorageInner(x, func, comp) {
