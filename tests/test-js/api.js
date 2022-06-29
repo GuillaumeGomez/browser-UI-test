@@ -865,9 +865,10 @@ function checkAssertCountFalse(x, func) {
     );
 }
 
-function checkAssertDocumentPropertyInner(
+function checkAssertObjPropertyInner(
     x,
     func,
+    objName,
     noProp,
     defaultCheck,
     containsCheck,
@@ -903,7 +904,7 @@ function checkAssertDocumentPropertyInner(
     const parseAssertDictPropDict = {"a":"b"};
     for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
 parseAssertDictPropDict)) {
-        if (document[parseAssertDictPropKey] === undefined) {${noProp()}
+        if (${objName}[parseAssertDictPropKey] === undefined) {${noProp()}
             continue;
         }
         ${defaultCheck()}
@@ -923,7 +924,7 @@ parseAssertDictPropDict)) {
     const parseAssertDictPropDict = {"a":"b"};
     for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
 parseAssertDictPropDict)) {
-        if (document[parseAssertDictPropKey] === undefined) {${noProp()}
+        if (${objName}[parseAssertDictPropKey] === undefined) {${noProp()}
             continue;
         }
         ${defaultCheck()}
@@ -944,7 +945,7 @@ parseAssertDictPropDict)) {
     const parseAssertDictPropDict = {"a":"b"};
     for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
 parseAssertDictPropDict)) {
-        if (document[parseAssertDictPropKey] === undefined) {${noProp()}
+        if (${objName}[parseAssertDictPropKey] === undefined) {${noProp()}
             continue;
         }
         ${containsCheck()}
@@ -964,7 +965,7 @@ parseAssertDictPropDict)) {
     const parseAssertDictPropDict = {"a":"b"};
     for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
 parseAssertDictPropDict)) {
-        if (document[parseAssertDictPropKey] === undefined) {${noProp()}
+        if (${objName}[parseAssertDictPropKey] === undefined) {${noProp()}
             continue;
         }
         ${startsWithCheck()}
@@ -984,7 +985,7 @@ parseAssertDictPropDict)) {
     const parseAssertDictPropDict = {"a":"b"};
     for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
 parseAssertDictPropDict)) {
-        if (document[parseAssertDictPropKey] === undefined) {${noProp()}
+        if (${objName}[parseAssertDictPropKey] === undefined) {${noProp()}
             continue;
         }
         ${endsWithCheck()}
@@ -1004,7 +1005,7 @@ parseAssertDictPropDict)) {
     const parseAssertDictPropDict = {"a":"b"};
     for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
 parseAssertDictPropDict)) {
-        if (document[parseAssertDictPropKey] === undefined) {${noProp()}
+        if (${objName}[parseAssertDictPropKey] === undefined) {${noProp()}
             continue;
         }
         ${startsWithCheck()}
@@ -1022,9 +1023,10 @@ parseAssertDictPropDict)) {
 }
 
 function checkAssertDocumentProperty(x, func) {
-    checkAssertDocumentPropertyInner(
+    checkAssertObjPropertyInner(
         x,
         func,
+        'document',
         () => '\n            nonMatchingProps.push(\'Unknown document property `\' + ' +
             'parseAssertDictPropKey + \'`\');',
         () => `if (String(document[parseAssertDictPropKey]) != parseAssertDictPropValue) {
@@ -1048,9 +1050,10 @@ document[parseAssertDictPropKey] + '\`) does not end with \`' + parseAssertDictP
 }
 
 function checkAssertDocumentPropertyFalse(x, func) {
-    checkAssertDocumentPropertyInner(
+    checkAssertObjPropertyInner(
         x,
         func,
+        'document',
         () => '',
         () => `if (String(document[parseAssertDictPropKey]) == parseAssertDictPropValue) {
             nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey \
@@ -1066,6 +1069,59 @@ if (String(document[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) !
 '\` (for STARTS_WITH check)');
         }`,
         () => `if (String(document[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
+'\` (for ENDS_WITH check)');
+        }`,
+    );
+}
+
+function checkAssertWindowProperty(x, func) {
+    checkAssertObjPropertyInner(
+        x,
+        func,
+        'window',
+        () => '\n            nonMatchingProps.push(\'Unknown window property `\' + ' +
+            'parseAssertDictPropKey + \'`\');',
+        () => `if (String(window[parseAssertDictPropKey]) != parseAssertDictPropValue) {
+            nonMatchingProps.push('Expected \`' + parseAssertDictPropValue + '\` for property \`' \
++ parseAssertDictPropKey + '\`, found \`' + window[parseAssertDictPropKey] + '\`');
+        }`,
+        () => `\
+if (String(window[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) === -1) {
+            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
+window[parseAssertDictPropKey] + '\`) does not contain \`' + parseAssertDictPropValue + '\`');
+        }`,
+        () => `if (!String(window[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
+window[parseAssertDictPropKey] + '\`) does not start with \`' + parseAssertDictPropValue + '\`');
+        }`,
+        () => `if (!String(window[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
+window[parseAssertDictPropKey] + '\`) does not end with \`' + parseAssertDictPropValue + '\`');
+        }`,
+    );
+}
+
+function checkAssertWindowPropertyFalse(x, func) {
+    checkAssertObjPropertyInner(
+        x,
+        func,
+        'window',
+        () => '',
+        () => `if (String(window[parseAssertDictPropKey]) == parseAssertDictPropValue) {
+            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey \
++ '\`');
+        }`,
+        () => `\
+if (String(window[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) !== -1) {
+            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
+'\` (for CONTAINS check)');
+        }`,
+        () => `if (String(window[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
+'\` (for STARTS_WITH check)');
+        }`,
+        () => `if (String(window[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) {
             nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
 '\` (for ENDS_WITH check)');
         }`,
@@ -7397,6 +7453,16 @@ const TO_CHECK = [
         'name': 'assert-text-false',
         'func': checkAssertTextFalse,
         'toCall': (e, o) => wrapper(parserFuncs.parseAssertTextFalse, e, o),
+    },
+    {
+        'name': 'assert-window-property',
+        'func': checkAssertWindowProperty,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssertWindowProperty, e, o),
+    },
+    {
+        'name': 'assert-window-property-false',
+        'func': checkAssertWindowPropertyFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssertWindowPropertyFalse, e, o),
     },
     {
         'name': 'attribute',

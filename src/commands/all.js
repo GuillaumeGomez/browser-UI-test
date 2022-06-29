@@ -28,6 +28,8 @@ module.exports = {
     'parseAssertPropertyFalse': assert.parseAssertPropertyFalse,
     'parseAssertText': assert.parseAssertText,
     'parseAssertTextFalse': assert.parseAssertTextFalse,
+    'parseAssertWindowProperty': assert.parseAssertWindowProperty,
+    'parseAssertWindowPropertyFalse': assert.parseAssertWindowPropertyFalse,
     'parseAttribute': dom_modifiers.parseAttribute,
     'parseClick': input.parseClick,
     'parseCompareElementsAttribute': compare.parseCompareElementsAttribute,

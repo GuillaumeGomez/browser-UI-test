@@ -73,6 +73,8 @@ Here's the command list:
  * [`assert-property-false`](#assert-property-false)
  * [`assert-text`](#assert-text)
  * [`assert-text-false`](#assert-text-false)
+ * [`assert-window-property`](#assert-window-property)
+ * [`assert-window-property-false`](#assert-window-property-false)
  * [`attribute`](#attribute)
  * [`click`](#click)
  * [`compare-elements-attribute`](#compare-elements-attribute)
@@ -489,6 +491,62 @@ assert-text: (".class", "hello", [ALL, STARTS_WITH, ENDS_WITH])
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-text-false) command.
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+
+#### assert-window-property
+
+**assert-window-property** command checks the properties' value of the `window` object of a webpage have the provided value. Examples:
+
+```
+assert-window-property: ({"pageYOffset": "0", "location": "https://some.where"})
+// If you only provide properties, you can also only provide a JSON dict:
+assert-window-property: {"pageYOffset": "0", "location": "https://some.where"}
+```
+
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+
+```
+assert-window-property: (
+    {"location": "https://some.where", "pageYOffset": "0"},
+    STARTS_WITH,
+)
+```
+
+You can even combine the checks:
+
+```
+assert-window-property: (
+    {"location": "https://some.where", "pageYOffset": "0"},
+    [STARTS_WITH, ENDS_WITH],
+)
+```
+
+#### assert-window-property-false
+
+**assert-window-property-false** command checks the properties' value of the `window` object of a webpage don't have the provided value. Examples:
+
+```
+assert-window-property-false: ({"location": "https://some.where", "pageYOffset": "10"})
+// If you only provide properties, you can also only provide a JSON dict:
+assert-window-property-false: {"location": "https://some.where", "pageYOffset": "10"}
+```
+
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+
+```
+assert-window-property-false: (
+    {"location": "https://some.where", "pageYOffset": "10"},
+    STARTS_WITH,
+)
+```
+
+You can even combine the checks:
+
+```
+assert-windo-property-false: (
+    {"location": "https://some.where", "pageYOffset": "10"},
+    [STARTS_WITH, ENDS_WITH],
+)
+```
 
 #### attribute
 

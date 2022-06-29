@@ -38,6 +38,11 @@ assert-document-property-false: ({"title": "Other", "bgColor": ""}, [ENDS_WITH, 
 assert-document-property-false: ({"title": "Other"}, STARTS_WITH)
 assert-document-property: ({"title": "Other", "bgColor": "a"}, [STARTS_WITH, ENDS_WITH])
 assert-document-property: ({"title": "Other"}, ENDS_WITH)
+// Same check on assert-document-property.
+assert-window-property-false: ({"pageYOffset": "0", "pageXOffset": "0"}, [ENDS_WITH, STARTS_WITH])
+assert-window-property-false: ({"pageYOffset": "0"}, STARTS_WITH)
+assert-window-property: ({"pageYOffset": "www", "pageXOffset": "www"}, [STARTS_WITH, ENDS_WITH])
+assert-window-property: ({"pageYOffset": "www"}, ENDS_WITH)
 // Ensures that a "fatal error" stops the script as expected.
 click: "#non-existent"
 assert-document-property: ({"title": "Other"}, ENDS_WITH)

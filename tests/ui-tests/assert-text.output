@@ -18,7 +18,11 @@ assert-text... FAILED
 [ERROR] (line 38) Error: Evaluation failed: The following errors happened: [assert didn't fail for property `title` (for STARTS_WITH check)]: for command `assert-document-property-false: ({"title": "Other"}, STARTS_WITH)`
 [ERROR] (line 39) Error: Evaluation failed: The following errors happened: [Property `title` (`Other page`) does not end with `Other`, Property `bgColor` (``) does not start with `a`, Property `bgColor` (``) does not end with `a`]: for command `assert-document-property: ({"title": "Other", "bgColor": "a"}, [STARTS_WITH, ENDS_WITH])`
 [ERROR] (line 40) Error: Evaluation failed: The following errors happened: [Property `title` (`Other page`) does not end with `Other`]: for command `assert-document-property: ({"title": "Other"}, ENDS_WITH)`
-[ERROR] (line 42) "#non-existent" not found: for command `click: "#non-existent"`
+[ERROR] (line 42) Error: Evaluation failed: The following errors happened: [assert didn't fail for property `pageYOffset` (for STARTS_WITH check), assert didn't fail for property `pageYOffset` (for ENDS_WITH check), assert didn't fail for property `pageXOffset` (for STARTS_WITH check), assert didn't fail for property `pageXOffset` (for ENDS_WITH check)]: for command `assert-window-property-false: ({"pageYOffset": "0", "pageXOffset": "0"}, [ENDS_WITH, STARTS_WITH])`
+[ERROR] (line 43) Error: Evaluation failed: The following errors happened: [assert didn't fail for property `pageYOffset` (for STARTS_WITH check)]: for command `assert-window-property-false: ({"pageYOffset": "0"}, STARTS_WITH)`
+[ERROR] (line 44) Error: Evaluation failed: The following errors happened: [Property `pageYOffset` (`0`) does not start with `www`, Property `pageYOffset` (`0`) does not end with `www`, Property `pageXOffset` (`0`) does not start with `www`, Property `pageXOffset` (`0`) does not end with `www`]: for command `assert-window-property: ({"pageYOffset": "www", "pageXOffset": "www"}, [STARTS_WITH, ENDS_WITH])`
+[ERROR] (line 45) Error: Evaluation failed: The following errors happened: [Property `pageYOffset` (`0`) does not end with `www`]: for command `assert-window-property: ({"pageYOffset": "www"}, ENDS_WITH)`
+[ERROR] (line 47) "#non-existent" not found: for command `click: "#non-existent"`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed
