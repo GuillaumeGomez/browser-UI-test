@@ -133,7 +133,7 @@ function parseAssertCssFalse(parser) {
     return parseAssertCssInner(parser, true);
 }
 
-function parseAssertDocumentPropertyInner(parser, assertFalse) {
+function parseAssertObjPropertyInner(parser, assertFalse, objName) {
     const elems = parser.elems;
     const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH'];
 
@@ -213,39 +213,39 @@ function parseAssertDocumentPropertyInner(parser, assertFalse) {
     const checks = [];
     if (enabled_checks['CONTAINS']) {
         if (assertFalse) {
-            checks.push(`${indent}if (String(document[${varKey}]).indexOf(${varValue}) !== -1) {
+            checks.push(`${indent}if (String(${objName}[${varKey}]).indexOf(${varValue}) !== -1) {
 ${indent}    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
 CONTAINS check)');
 ${indent}}`);
         } else {
-            checks.push(`${indent}if (String(document[${varKey}]).indexOf(${varValue}) === -1) {
-${indent}    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + document[${varKey}] + '\
+            checks.push(`${indent}if (String(${objName}[${varKey}]).indexOf(${varValue}) === -1) {
+${indent}    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
 \`) does not contain \`' + ${varValue} + '\`');
 ${indent}}`);
         }
     }
     if (enabled_checks['STARTS_WITH']) {
         if (assertFalse) {
-            checks.push(`${indent}if (String(document[${varKey}]).startsWith(${varValue})) {
+            checks.push(`${indent}if (String(${objName}[${varKey}]).startsWith(${varValue})) {
 ${indent}    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
 STARTS_WITH check)');
 ${indent}}`);
         } else {
-            checks.push(`${indent}if (!String(document[${varKey}]).startsWith(${varValue})) {
-${indent}    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + document[${varKey}] + '\
+            checks.push(`${indent}if (!String(${objName}[${varKey}]).startsWith(${varValue})) {
+${indent}    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
 \`) does not start with \`' + ${varValue} + '\`');
 ${indent}}`);
         }
     }
     if (enabled_checks['ENDS_WITH']) {
         if (assertFalse) {
-            checks.push(`${indent}if (String(document[${varKey}]).endsWith(${varValue})) {
+            checks.push(`${indent}if (String(${objName}[${varKey}]).endsWith(${varValue})) {
 ${indent}    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
 ENDS_WITH check)');
 ${indent}}`);
         } else {
-            checks.push(`${indent}if (!String(document[${varKey}]).endsWith(${varValue})) {
-${indent}    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + document[${varKey}] + '\
+            checks.push(`${indent}if (!String(${objName}[${varKey}]).endsWith(${varValue})) {
+${indent}    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
 \`) does not end with \`' + ${varValue} + '\`');
 ${indent}}`);
         }
@@ -253,20 +253,20 @@ ${indent}}`);
     // If no check was enabled.
     if (checks.length === 0) {
         if (assertFalse) {
-            checks.push(`${indent}if (String(document[${varKey}]) == ${varValue}) {
+            checks.push(`${indent}if (String(${objName}[${varKey}]) == ${varValue}) {
 ${indent}    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\`');
 ${indent}}`);
         } else {
-            checks.push(`${indent}if (String(document[${varKey}]) != ${varValue}) {
+            checks.push(`${indent}if (String(${objName}[${varKey}]) != ${varValue}) {
 ${indent}    nonMatchingProps.push('Expected \`' + ${varValue} + '\` for property \`' + ${varKey} \
-+ '\`, found \`' + document[${varKey}] + '\`');
++ '\`, found \`' + ${objName}[${varKey}] + '\`');
 ${indent}}`);
         }
     }
 
     let err = '';
     if (!assertFalse) {
-        err = `\n${indent}    nonMatchingProps.push('Unknown document property \`' + ${varKey} + \
+        err = `\n${indent}    nonMatchingProps.push('Unknown ${objName} property \`' + ${varKey} + \
 '\`');`;
     }
 
@@ -274,7 +274,7 @@ ${indent}}`);
     const nonMatchingProps = [];
     const ${varDict} = {${d}};
     for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-        if (document[${varKey}] === undefined) {${err}
+        if (${objName}[${varKey}] === undefined) {${err}
             continue;
         }
 ${checks.join('\n')}
@@ -300,7 +300,7 @@ ${checks.join('\n')}
 // * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH)
 // * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH])
 function parseAssertDocumentProperty(parser) {
-    return parseAssertDocumentPropertyInner(parser, false);
+    return parseAssertObjPropertyInner(parser, false, 'document');
 }
 
 // Possible inputs:
@@ -310,7 +310,27 @@ function parseAssertDocumentProperty(parser) {
 // * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH)
 // * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH])
 function parseAssertDocumentPropertyFalse(parser) {
-    return parseAssertDocumentPropertyInner(parser, true);
+    return parseAssertObjPropertyInner(parser, true, 'document');
+}
+
+// Possible inputs:
+//
+// * {"DOM property": "value"}
+// * ({"DOM property": "value"})
+// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH)
+// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH])
+function parseAssertWindowProperty(parser) {
+    return parseAssertObjPropertyInner(parser, false, 'window');
+}
+
+// Possible inputs:
+//
+// * {"DOM property": "value"}
+// * ({"DOM property": "value"})
+// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH)
+// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH])
+function parseAssertWindowPropertyFalse(parser) {
+    return parseAssertObjPropertyInner(parser, true, 'window');
 }
 
 function parseAssertPropertyInner(parser, assertFalse) {
@@ -1114,4 +1134,6 @@ module.exports = {
     'parseAssertPropertyFalse': parseAssertPropertyFalse,
     'parseAssertText': parseAssertText,
     'parseAssertTextFalse': parseAssertTextFalse,
+    'parseAssertWindowProperty': parseAssertWindowProperty,
+    'parseAssertWindowPropertyFalse': parseAssertWindowPropertyFalse,
 };
