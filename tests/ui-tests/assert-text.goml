@@ -34,9 +34,9 @@ click: "header"
 assert-text: ("header", "Another", [STARTS_WITH, ENDS_WITH])
 assert-text: ("header", "Another", ENDS_WITH)
 // Same check on assert-document-property.
-assert-document-property-false: ({"title": "Other"}, [ENDS_WITH, STARTS_WITH])
+assert-document-property-false: ({"title": "Other", "bgColor": ""}, [ENDS_WITH, STARTS_WITH])
 assert-document-property-false: ({"title": "Other"}, STARTS_WITH)
-assert-document-property: ({"title": "Other"}, [STARTS_WITH, ENDS_WITH])
+assert-document-property: ({"title": "Other", "bgColor": "a"}, [STARTS_WITH, ENDS_WITH])
 assert-document-property: ({"title": "Other"}, ENDS_WITH)
 // Ensures that a "fatal error" stops the script as expected.
 click: "#non-existent"

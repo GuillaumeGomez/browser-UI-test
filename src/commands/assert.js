@@ -177,8 +177,6 @@ function parseAssertDocumentPropertyInner(parser, assertFalse) {
         json_dict = elems[0].getRaw();
     }
 
-    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
-
     const entries = validateJson(json_dict, ['string', 'number'], 'property');
     if (entries.error !== undefined) {
         return entries;
@@ -211,54 +209,81 @@ function parseAssertDocumentPropertyInner(parser, assertFalse) {
         d += `"${k}":"${v}"`;
     }
 
+    const indent = '        ';
     const checks = [];
     if (enabled_checks['CONTAINS']) {
-        checks.push(`if (String(document[${varKey}]).indexOf(${varValue}) === -1) {
-    throw 'Property \`' + ${varKey} + '\` (\`' + document[${varKey}] + '\`) does not contain \
-\`' + ${varValue} + '\`';
-}`);
+        if (assertFalse) {
+            checks.push(`${indent}if (String(document[${varKey}]).indexOf(${varValue}) !== -1) {
+${indent}    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
+CONTAINS check)');
+${indent}}`);
+        } else {
+            checks.push(`${indent}if (String(document[${varKey}]).indexOf(${varValue}) === -1) {
+${indent}    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + document[${varKey}] + '\
+\`) does not contain \`' + ${varValue} + '\`');
+${indent}}`);
+        }
     }
     if (enabled_checks['STARTS_WITH']) {
-        checks.push(`if (!String(document[${varKey}]).startsWith(${varValue})) {
-    throw 'Property \`' + ${varKey} + '\` (\`' + document[${varKey}] + '\`) does not start with \
-\`' + ${varValue} + '\`';
-}`);
+        if (assertFalse) {
+            checks.push(`${indent}if (String(document[${varKey}]).startsWith(${varValue})) {
+${indent}    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
+STARTS_WITH check)');
+${indent}}`);
+        } else {
+            checks.push(`${indent}if (!String(document[${varKey}]).startsWith(${varValue})) {
+${indent}    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + document[${varKey}] + '\
+\`) does not start with \`' + ${varValue} + '\`');
+${indent}}`);
+        }
     }
     if (enabled_checks['ENDS_WITH']) {
-        checks.push(`if (!String(document[${varKey}]).endsWith(${varValue})) {
-    throw 'Property \`' + ${varKey} + '\` (\`' + document[${varKey}] + '\`) does not end with \
-\`' + ${varValue} + '\`';
-}`);
+        if (assertFalse) {
+            checks.push(`${indent}if (String(document[${varKey}]).endsWith(${varValue})) {
+${indent}    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
+ENDS_WITH check)');
+${indent}}`);
+        } else {
+            checks.push(`${indent}if (!String(document[${varKey}]).endsWith(${varValue})) {
+${indent}    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + document[${varKey}] + '\
+\`) does not end with \`' + ${varValue} + '\`');
+${indent}}`);
+        }
     }
     // If no check was enabled.
     if (checks.length === 0) {
-        checks.push(`if (String(document[${varKey}]) != ${varValue}) {
-    throw 'Expected \`' + ${varValue} + '\` for property \`' + ${varKey} + '\`, \
-found \`' + document[${varKey}] + '\`';
-}`);
+        if (assertFalse) {
+            checks.push(`${indent}if (String(document[${varKey}]) == ${varValue}) {
+${indent}    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\`');
+${indent}}`);
+        } else {
+            checks.push(`${indent}if (String(document[${varKey}]) != ${varValue}) {
+${indent}    nonMatchingProps.push('Expected \`' + ${varValue} + '\` for property \`' + ${varKey} \
++ '\`, found \`' + document[${varKey}] + '\`');
+${indent}}`);
+        }
     }
 
-    let code = `const ${varDict} = {${d}};
-for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-${insertBefore}if (document[${varKey}] === undefined) {
-    throw 'Unknown document property \`' + ${varKey} + '\`';
-}\n`;
-
-    if (assertFalse) {
-        code += '} catch (e) { continue; }\n';
+    let err = '';
+    if (!assertFalse) {
+        err = `\n${indent}    nonMatchingProps.push('Unknown document property \`' + ${varKey} + \
+'\`');`;
     }
 
-    for (const check of checks) {
-        code += `(() => {
-${insertBefore}${check}${insertAfter}
-})();\n`;
+    const instructions = [`await page.evaluate(() => {
+    const nonMatchingProps = [];
+    const ${varDict} = {${d}};
+    for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+        if (document[${varKey}] === undefined) {${err}
+            continue;
+        }
+${checks.join('\n')}
     }
-    code += '}\n';
-
-    const instructions = [
-        'await page.evaluate(() => {\n' +
-            code +
-        '});',
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(", ");
+        throw "The following errors happened: [" + props + "]";
+    }
+});`,
     ];
     return {
         'instructions': instructions,
