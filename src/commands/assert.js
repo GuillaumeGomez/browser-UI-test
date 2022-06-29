@@ -7,6 +7,7 @@ const {
     getAssertSelector,
     getInsertStrings,
     validateJson,
+    indentString,
 } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 
@@ -16,7 +17,6 @@ function parseAssertCssInner(parser, assertFalse) {
         return selector;
     }
     const checkAllElements = selector.checkAllElements;
-    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false, '', false);
 
     const xpath = selector.isXPath ? 'XPath ' : 'selector ';
     const pseudo = !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '';
@@ -36,67 +36,75 @@ function parseAssertCssInner(parser, assertFalse) {
     if (propertyDict.error !== undefined) {
         return propertyDict;
     }
+
+    const indent = checkAllElements ? 1 : 0;
+
     // This allows to round values in pixels to make checks simpler in case it's a decimal.
     const extra = `\
 if (typeof assertComputedStyle[${varKey}] === "string" && \
 assertComputedStyle[${varKey}].search(/^(\\d+\\.\\d+px)$/g) === 0) {
     if (browserUiTestHelpers.extractFloat(assertComputedStyle[${varKey}], true) + "px" !== \
 ${varValue}) {
-        nonMatchingProps.push('expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\`, \
+        localErr.push('expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\`, \
 found \`' + assertComputedStyle[${varKey}] + '\` (or \`' + \
 browserUiTestHelpers.extractFloat(assertComputedStyle[${varKey}], true) + 'px\`)');
     }
-    continue;
+    succeeded = true;
 }`;
 
-    const code = `const ${varDict} = {${propertyDict['dict']}};
+    let code = `const ${varDict} = {${propertyDict['dict']}};
 for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+    const localErr = [];
+    let succeeded = false;
     if (e.style[${varKey}] != ${varValue} && assertComputedStyle[${varKey}] != \
 ${varValue}) {
-    ${extra}
-    nonMatchingProps.push('expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\`, \
-found \`' + assertComputedStyle[${varKey}] + '\`');
-}
-}`;
-
-    let tab = '';
-    if (checkAllElements) {
-        tab = '    ';
+${indentString(extra, 2)}
+        if (!succeeded) {
+            localErr.push('expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\`\
+, found \`' + assertComputedStyle[${varKey}] + '\`');
+        }
     }
+`;
+    if (assertFalse) {
+        code += `    if (localErr.length === 0) {
+        nonMatchingProps.push("assert didn't fail for key \`" + ${varKey} + '\`');
+    }`;
+    } else {
+        code += '    nonMatchingProps.push(...localErr);';
+    }
+
+    code += '\n}';
+
     const errorCheck = `if (nonMatchingProps.length !== 0) {
-${tab}        const props = nonMatchingProps.join(", ");
-${tab}        throw "The following CSS properties don't match (for ${xpath}\`\
-${selector.value}\`): [" + props + "]";
-${tab}    }`;
+    const props = nonMatchingProps.join(", ");
+    throw "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props + "]";
+}`;
 
     const instructions = [];
     if (propertyDict['needColorCheck']) {
-        instructions.push('if (!arg.showText) {\n' +
-            `throw "${COLOR_CHECK_ERROR}";\n` +
-            '}',
-        );
-    }
-    if (!checkAllElements) {
-        instructions.push(getAndSetElements(selector, varName, checkAllElements) + '\n' +
-`await page.evaluate(e => {
-    const nonMatchingProps = [];
-    let assertComputedStyle = getComputedStyle(e${pseudo});
-    ${code}${insertBefore}
-    ${errorCheck}${insertAfter}
-}, ${varName});`,
-        );
-    } else {
-        instructions.push(getAndSetElements(selector, varName, checkAllElements) + '\n' +
-`for (let i = 0, len = ${varName}.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let assertComputedStyle = getComputedStyle(e${pseudo});
-        ${code}${insertBefore}
-        ${errorCheck}${insertAfter}
-    }, ${varName}[i]);
+        instructions.push(`if (!arg.showText) {
+    throw "${COLOR_CHECK_ERROR}";
 }`,
         );
     }
+    let whole = getAndSetElements(selector, varName, checkAllElements) + '\n';
+    if (checkAllElements) {
+        whole += `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n`;
+    }
+    whole += indentString(`\
+await page.evaluate(e => {
+    const nonMatchingProps = [];
+    let assertComputedStyle = getComputedStyle(e${pseudo});
+${indentString(code, 1)}
+${indentString(errorCheck, 1)}
+`, indent);
+    if (checkAllElements) {
+        whole += `    }, ${varName}[i]);
+}`;
+    } else {
+        whole += `}, ${varName});`;
+    }
+    instructions.push(whole);
     return {
         'instructions': instructions,
         'wait': false,

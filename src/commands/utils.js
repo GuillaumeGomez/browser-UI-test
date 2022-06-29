@@ -221,6 +221,22 @@ function buildPropertyDict(entries, errorText, allowEmptyValues) {
     return ret;
 }
 
+function indentString(s, indentLevel) {
+    let indent = '';
+
+    while (indentLevel > 0) {
+        indent += '    ';
+        indentLevel -= 1;
+    }
+    const parts = s.split('\n');
+    return parts.map(p => {
+        if (p.length > 0) {
+            return `${indent}${p}`;
+        }
+        return p;
+    }).join('\n');
+}
+
 module.exports = {
     'getAndSetElements': getAndSetElements,
     'checkIntegerTuple': checkIntegerTuple,
@@ -229,4 +245,5 @@ module.exports = {
     'getAssertSelector': getAssertSelector,
     'fillEnabledChecks': fillEnabledChecks,
     'buildPropertyDict': buildPropertyDict,
+    'indentString': indentString,
 };
