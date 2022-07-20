@@ -544,11 +544,6 @@ function parseAssertAttributeInner(parser, assertFalse) {
         }
     }
 
-    const [insertBefore, insertAfter] = getInsertStrings(
-        assertFalse,
-        false,
-        'TO_REPLACE',
-    );
     const selector = tuple[0].getSelector();
     const xpath = selector.isXPath ? 'XPath ' : 'selector ';
 
@@ -559,47 +554,64 @@ function parseAssertAttributeInner(parser, assertFalse) {
 
     const checks = [];
     if (enabled_checks['CONTAINS']) {
-        checks.push([`\
+        if (assertFalse) {
+            checks.push(`\
+if (attr.indexOf(${varValue}) !== -1) {
+    nonMatchingAttrs.push("assert didn't fail for attribute \`" + ${varKey} + "\` (\`" + attr + \
+"\`) (for CONTAINS check)");
+}`);
+        } else {
+            checks.push(`\
 if (attr.indexOf(${varValue}) === -1) {
-    throw "attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't contain \`" + \
-${varValue} + "\` for ${xpath}\`${selector.value}\`";
-}`, 'CONTAINS']);
+    nonMatchingAttrs.push("attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't contain \`"\
+ + ${varValue} + "\` (for CONTAINS check)");
+}`);
+        }
     }
     if (enabled_checks['STARTS_WITH']) {
-        checks.push([`\
+        if (assertFalse) {
+            checks.push(`\
+if (attr.startsWith(${varValue})) {
+    nonMatchingAttrs.push("assert didn't fail for attribute \`" + ${varKey} + "\` (\`" + attr + \
+"\`) (for STARTS_WITH check)");
+}`);
+        } else {
+            checks.push(`\
 if (!attr.startsWith(${varValue})) {
-    throw "attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't start with \`"\
- + ${varValue} + "\` for ${xpath}\`${selector.value}\`";
-}`, 'STARTS_WITH']);
+    nonMatchingAttrs.push("attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't start with \
+\`" + ${varValue} + "\` (for STARTS_WITH check)");
+}`);
+        }
     }
     if (enabled_checks['ENDS_WITH']) {
-        checks.push([`\
+        if (assertFalse) {
+            checks.push(`\
+if (attr.endsWith(${varValue})) {
+    nonMatchingAttrs.push("assert didn't fail for attribute \`" + ${varKey} + "\` (\`" + attr + \
+"\`) (for ENDS_WITH check)");
+}`);
+        } else {
+            checks.push(`\
 if (!attr.endsWith(${varValue})) {
-    throw "attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't end with \`" +\
- ${varValue} + "\` for ${xpath}\`${selector.value}\`";
-}`, 'ENDS_WITH']);
+    nonMatchingAttrs.push("attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't end with \`"\
+ + ${varValue} + "\` for ${xpath}\`${selector.value}\`");
+}`);
+        }
     }
     if (checks.length === 0) {
-        checks.push([`\
-if (attr !== ${varValue}) {
-    throw "attribute \`" + ${varKey} + "\` (\`" + attr + "\`) isn't equal to \`" + \
-${varValue} + "\` for ${xpath}\`${selector.value}\`";
-}`, '']);
-    }
-
-    let all_checks = '';
-    for (const check of checks) {
-        all_checks += '(() => {\n' +
-            insertBefore +
-            check[0];
-
-        if (check[1].length > 0) {
-            all_checks += insertAfter.replace('TO_REPLACE', ` (for ${check[1]} check)`);
+        if (assertFalse) {
+            checks.push(`\
+if (attr === ${varValue}) {
+    nonMatchingAttrs.push("assert didn't fail for attribute \`" + ${varKey} + "\` (\`" + \
+attr + "\`)");
+}`);
         } else {
-            all_checks += insertAfter.replace('TO_REPLACE', '');
+            checks.push(`\
+if (attr !== ${varValue}) {
+    nonMatchingAttrs.push("attribute \`" + ${varKey} + "\` isn't equal to \`" + ${varValue} + "\` \
+(\`" + attr + "\`)");
+}`);
         }
-
-        all_checks += '\n})();\n';
     }
 
     const json = tuple[1].getRaw();
@@ -607,7 +619,14 @@ ${varValue} + "\` for ${xpath}\`${selector.value}\`";
     if (entries.error !== undefined) {
         return entries;
     }
-
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    if (isPseudo) {
+        if (entries.warnings === undefined) {
+            entries.warnings = [];
+        }
+        entries.warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
+the check will be performed on the element itself`);
+    }
 
     // JSON.stringify produces a problematic output so instead we use this.
     let d = '';
@@ -618,33 +637,41 @@ ${varValue} + "\` for ${xpath}\`${selector.value}\`";
         d += `"${k}":"${v}"`;
     }
 
-    let notFound = 'return;';
+    let noAttrError = '';
     if (!assertFalse) {
-        notFound = `throw "${xpath}\`${selector.value}\` doesn't have an attribute named \`" + \
-${varKey} + "\`";`;
+        noAttrError = `
+        nonMatchingAttrs.push("No attribute named \`" + ${varKey} + "\`");`;
     }
-    const code = `const ${varDict} = {${d}};
+
+    const code = `const nonMatchingAttrs = [];
+const ${varDict} = {${d}};
 for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-if (!e.hasAttribute(${varKey})) {
-    ${notFound}
+    if (!e.hasAttribute(${varKey})) {${noAttrError}
+        continue;
+    }
+    const attr = e.getAttribute(${varKey});
+${indentString(checks.join('\n'), 1)}
 }
-const attr = e.getAttribute(${varKey});
-${all_checks}\
-}\n`;
+if (nonMatchingAttrs.length !== 0) {
+    const props = nonMatchingAttrs.join(", ");
+    throw "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props + "]";
+}`;
 
     let instructions;
     if (enabled_checks['ALL'] === true) {
-        instructions = getAndSetElements(selector, varName, true) + '\n' +
-            `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
-                'await page.evaluate(e => {\n' +
-                code +
-                `}, ${varName}[i]);\n` +
-            '}';
+        instructions = `\
+${getAndSetElements(selector, varName, true)}
+for (let i = 0, len = ${varName}.length; i < len; ++i) {
+    await page.evaluate(e => {
+${indentString(code, 2)}
+    }, ${varName}[i]);
+}`;
     } else {
-        instructions = getAndSetElements(selector, varName, false) + '\n' +
-            'await page.evaluate(e => {\n' +
-            code +
-            `}, ${varName});`;
+        instructions = `\
+${getAndSetElements(selector, varName, false)}
+await page.evaluate(e => {
+${indentString(code, 1)}
+}, ${varName});`;
     }
     return {
         'instructions': [instructions],
