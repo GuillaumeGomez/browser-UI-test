@@ -6087,71 +6087,71 @@ function checkWaitFor(x, func) {
         'isXPath': false,
     });
     x.assert(func('"a"'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitFor = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitFor = await page.$("a");\n' +
-            'if (parseWaitFor !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitFor = null;
+while (true) {
+    parseWaitFor = await page.$("a");
+    if (parseWaitFor !== null) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error("The following CSS selector \\"a\\" was not found");
+    }
+}`,
         ],
         'wait': false,
     });
     x.assert(func('\'a\''), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitFor = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitFor = await page.$("a");\n' +
-            'if (parseWaitFor !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitFor = null;
+while (true) {
+    parseWaitFor = await page.$("a");
+    if (parseWaitFor !== null) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error("The following CSS selector \\"a\\" was not found");
+    }
+}`,
         ],
         'wait': false,
     });
     x.assert(func('\'"a\''), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitFor = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitFor = await page.$("\\"a");\n' +
-            'if (parseWaitFor !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"\\"a\\" was not found");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitFor = null;
+while (true) {
+    parseWaitFor = await page.$("\\"a");
+    if (parseWaitFor !== null) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error("The following CSS selector \\"\\"a\\" was not found");
+    }
+}`,
         ],
         'wait': false,
     });
@@ -6159,26 +6159,26 @@ function checkWaitFor(x, func) {
     // XPath
     x.assert(func('"/a"'), { 'error': 'XPath must start with `//`'});
     x.assert(func('"//a"'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitFor = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitFor = await page.$x("//a");\n' +
-            'if (parseWaitFor.length !== 0) {\n' +
-            '    parseWaitFor = parseWaitFor[0];\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following XPath \\"//a\\" was not found");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitFor = null;
+while (true) {
+    parseWaitFor = await page.$x("//a");
+    if (parseWaitFor.length !== 0) {
+        parseWaitFor = parseWaitFor[0];
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error("The following XPath \\"//a\\" was not found");
+    }
+}`,
         ],
         'wait': false,
     });
@@ -6207,272 +6207,270 @@ function checkWaitForAttribute(x, func) {
 
     // Check css selector
     x.assert(func('("a", {})'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForAttr = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForAttr = await page.$("a");\n' +
-            'if (parseWaitForAttr !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'let nonMatchingProps;\n' +
-            'while (true) {\n' +
-            '    nonMatchingProps = await page.evaluate(e => {\n' +
-            '        const nonMatchingProps = [];\n' +
-            '        let computedEntry;\n' +
-            '        const parseWaitForAttrDict = {};\n' +
-            '        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(' +
-                'parseWaitForAttrDict)) {\n' +
-            '            computedEntry = e.getAttribute(parseWaitForAttrKey);\n' +
-            'if (computedEntry !== parseWaitForAttrValue) {\n' +
-            '    nonMatchingProps.push(parseWaitForAttrKey + ": (`" + computedEntry + "` != `" + ' +
-                'parseWaitForAttrValue + "`)");\n' +
-            '}\n' +
-            '        }\n' +
-            '        return nonMatchingProps;\n' +
-            '    }, parseWaitForAttr);\n' +
-            '    if (nonMatchingProps.length === 0) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        const props = nonMatchingProps.join(", ");\n' +
-            '        throw new Error("The following attributes still don\'t match: [" + ' +
-                'props + "]");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForAttr = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForAttr = await page.$("a");
+        if (parseWaitForAttr !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForAttrDict = {};
+        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of \
+Object.entries(parseWaitForAttrDict)) {
+            computedEntry = e.getAttribute(parseWaitForAttrKey);
+            if (computedEntry !== parseWaitForAttrValue) {
+                nonMatchingProps.push(parseWaitForAttrKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForAttrValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForAttr);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following attributes still don't match: [" + props + "]");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"x": 1})'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForAttr = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForAttr = await page.$("a");\n' +
-            'if (parseWaitForAttr !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'let nonMatchingProps;\n' +
-            'while (true) {\n' +
-            '    nonMatchingProps = await page.evaluate(e => {\n' +
-            '        const nonMatchingProps = [];\n' +
-            '        let computedEntry;\n' +
-            '        const parseWaitForAttrDict = {"x":"1"};\n' +
-            '        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(' +
-                'parseWaitForAttrDict)) {\n' +
-            '            computedEntry = e.getAttribute(parseWaitForAttrKey);\n' +
-            'if (computedEntry !== parseWaitForAttrValue) {\n' +
-            '    nonMatchingProps.push(parseWaitForAttrKey + ": (`" + computedEntry + "` != `" + ' +
-                'parseWaitForAttrValue + "`)");\n' +
-            '}\n' +
-            '        }\n' +
-            '        return nonMatchingProps;\n' +
-            '    }, parseWaitForAttr);\n' +
-            '    if (nonMatchingProps.length === 0) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        const props = nonMatchingProps.join(", ");\n' +
-            '        throw new Error("The following attributes still don\'t match: [" + ' +
-                'props + "]");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForAttr = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForAttr = await page.$("a");
+        if (parseWaitForAttr !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForAttrDict = {"x":"1"};
+        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of \
+Object.entries(parseWaitForAttrDict)) {
+            computedEntry = e.getAttribute(parseWaitForAttrKey);
+            if (computedEntry !== parseWaitForAttrValue) {
+                nonMatchingProps.push(parseWaitForAttrKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForAttrValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForAttr);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following attributes still don't match: [" + props + "]");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"x": 1, "y": "2"})'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForAttr = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForAttr = await page.$("a");\n' +
-            'if (parseWaitForAttr !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'let nonMatchingProps;\n' +
-            'while (true) {\n' +
-            '    nonMatchingProps = await page.evaluate(e => {\n' +
-            '        const nonMatchingProps = [];\n' +
-            '        let computedEntry;\n' +
-            '        const parseWaitForAttrDict = {"x":"1","y":"2"};\n' +
-            '        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(' +
-                'parseWaitForAttrDict)) {\n' +
-            '            computedEntry = e.getAttribute(parseWaitForAttrKey);\n' +
-            'if (computedEntry !== parseWaitForAttrValue) {\n' +
-            '    nonMatchingProps.push(parseWaitForAttrKey + ": (`" + computedEntry + "` != `" + ' +
-                'parseWaitForAttrValue + "`)");\n' +
-            '}\n' +
-            '        }\n' +
-            '        return nonMatchingProps;\n' +
-            '    }, parseWaitForAttr);\n' +
-            '    if (nonMatchingProps.length === 0) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        const props = nonMatchingProps.join(", ");\n' +
-            '        throw new Error("The following attributes still don\'t match: [" + ' +
-                'props + "]");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForAttr = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForAttr = await page.$("a");
+        if (parseWaitForAttr !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForAttrDict = {"x":"1","y":"2"};
+        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of \
+Object.entries(parseWaitForAttrDict)) {
+            computedEntry = e.getAttribute(parseWaitForAttrKey);
+            if (computedEntry !== parseWaitForAttrValue) {
+                nonMatchingProps.push(parseWaitForAttrKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForAttrValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForAttr);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following attributes still don't match: [" + props + "]");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     // Check pseudo element.
     x.assert(func('("a::after", {"x": 1, "y": "2"})'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForAttr = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForAttr = await page.$("a");\n' +
-            'if (parseWaitForAttr !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'let nonMatchingProps;\n' +
-            'while (true) {\n' +
-            '    nonMatchingProps = await page.evaluate(e => {\n' +
-            '        const nonMatchingProps = [];\n' +
-            '        let computedEntry;\n' +
-            '        const parseWaitForAttrDict = {"x":"1","y":"2"};\n' +
-            '        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(' +
-                'parseWaitForAttrDict)) {\n' +
-            '            computedEntry = e.getAttribute(parseWaitForAttrKey);\n' +
-            'if (computedEntry !== parseWaitForAttrValue) {\n' +
-            '    nonMatchingProps.push(parseWaitForAttrKey + ": (`" + computedEntry + "` != `" + ' +
-                'parseWaitForAttrValue + "`)");\n' +
-            '}\n' +
-            '        }\n' +
-            '        return nonMatchingProps;\n' +
-            '    }, parseWaitForAttr);\n' +
-            '    if (nonMatchingProps.length === 0) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        const props = nonMatchingProps.join(", ");\n' +
-            '        throw new Error("The following attributes still don\'t match: [" + ' +
-                'props + "]");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForAttr = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForAttr = await page.$("a");
+        if (parseWaitForAttr !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForAttrDict = {"x":"1","y":"2"};
+        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of \
+Object.entries(parseWaitForAttrDict)) {
+            computedEntry = e.getAttribute(parseWaitForAttrKey);
+            if (computedEntry !== parseWaitForAttrValue) {
+                nonMatchingProps.push(parseWaitForAttrKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForAttrValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForAttr);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following attributes still don't match: [" + props + "]");
+    }
+}`,
         ],
         'wait': false,
+        'warnings': ['Pseudo-elements (`::after`) don\'t have attributes so the check will be \
+performed on the element itself'],
         'checkResult': true,
     });
+    // Ensures that there is no "show-text" check (because of "color").
     x.assert(func('("a", {"color": "blue"})'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForAttr = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForAttr = await page.$("a");\n' +
-            'if (parseWaitForAttr !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'let nonMatchingProps;\n' +
-            'while (true) {\n' +
-            '    nonMatchingProps = await page.evaluate(e => {\n' +
-            '        const nonMatchingProps = [];\n' +
-            '        let computedEntry;\n' +
-            '        const parseWaitForAttrDict = {"color":"blue"};\n' +
-            '        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(' +
-                'parseWaitForAttrDict)) {\n' +
-            '            computedEntry = e.getAttribute(parseWaitForAttrKey);\n' +
-            'if (computedEntry !== parseWaitForAttrValue) {\n' +
-            '    nonMatchingProps.push(parseWaitForAttrKey + ": (`" + computedEntry + "` != `" + ' +
-                'parseWaitForAttrValue + "`)");\n' +
-            '}\n' +
-            '        }\n' +
-            '        return nonMatchingProps;\n' +
-            '    }, parseWaitForAttr);\n' +
-            '    if (nonMatchingProps.length === 0) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        const props = nonMatchingProps.join(", ");\n' +
-            '        throw new Error("The following attributes still don\'t match: [" + ' +
-                'props + "]");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForAttr = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForAttr = await page.$("a");
+        if (parseWaitForAttr !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForAttrDict = {"color":"blue"};
+        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of \
+Object.entries(parseWaitForAttrDict)) {
+            computedEntry = e.getAttribute(parseWaitForAttrKey);
+            if (computedEntry !== parseWaitForAttrValue) {
+                nonMatchingProps.push(parseWaitForAttrKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForAttrValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForAttr);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following attributes still don't match: [" + props + "]");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -6481,111 +6479,109 @@ function checkWaitForAttribute(x, func) {
     // XPath
     x.assert(func('("/a", {"x": "1"})'), { 'error': 'XPath must start with `//`'});
     x.assert(func('("//a", {})'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForAttr = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForAttr = await page.$x("//a");\n' +
-            'if (parseWaitForAttr.length !== 0) {\n' +
-            '    parseWaitForAttr = parseWaitForAttr[0];\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following XPath \\"//a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'let nonMatchingProps;\n' +
-            'while (true) {\n' +
-            '    nonMatchingProps = await page.evaluate(e => {\n' +
-            '        const nonMatchingProps = [];\n' +
-            '        let computedEntry;\n' +
-            '        const parseWaitForAttrDict = {};\n' +
-            '        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(' +
-                'parseWaitForAttrDict)) {\n' +
-            '            computedEntry = e.getAttribute(parseWaitForAttrKey);\n' +
-            'if (computedEntry !== parseWaitForAttrValue) {\n' +
-            '    nonMatchingProps.push(parseWaitForAttrKey + ": (`" + computedEntry + "` != `" + ' +
-                'parseWaitForAttrValue + "`)");\n' +
-            '}\n' +
-            '        }\n' +
-            '        return nonMatchingProps;\n' +
-            '    }, parseWaitForAttr);\n' +
-            '    if (nonMatchingProps.length === 0) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        const props = nonMatchingProps.join(", ");\n' +
-            '        throw new Error("The following attributes still don\'t match: [" + ' +
-                'props + "]");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForAttr = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForAttr = await page.$x("//a");
+        if (parseWaitForAttr.length !== 0) {
+            parseWaitForAttr = parseWaitForAttr[0];
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following XPath \\"//a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForAttrDict = {};
+        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of \
+Object.entries(parseWaitForAttrDict)) {
+            computedEntry = e.getAttribute(parseWaitForAttrKey);
+            if (computedEntry !== parseWaitForAttrValue) {
+                nonMatchingProps.push(parseWaitForAttrKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForAttrValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForAttr);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following attributes still don't match: [" + props + "]");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("//a", {"x": "1"})'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForAttr = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForAttr = await page.$x("//a");\n' +
-            'if (parseWaitForAttr.length !== 0) {\n' +
-            '    parseWaitForAttr = parseWaitForAttr[0];\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following XPath \\"//a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'let nonMatchingProps;\n' +
-            'while (true) {\n' +
-            '    nonMatchingProps = await page.evaluate(e => {\n' +
-            '        const nonMatchingProps = [];\n' +
-            '        let computedEntry;\n' +
-            '        const parseWaitForAttrDict = {"x":"1"};\n' +
-            '        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(' +
-                'parseWaitForAttrDict)) {\n' +
-            '            computedEntry = e.getAttribute(parseWaitForAttrKey);\n' +
-            'if (computedEntry !== parseWaitForAttrValue) {\n' +
-            '    nonMatchingProps.push(parseWaitForAttrKey + ": (`" + computedEntry + "` != `" + ' +
-                'parseWaitForAttrValue + "`)");\n' +
-            '}\n' +
-            '        }\n' +
-            '        return nonMatchingProps;\n' +
-            '    }, parseWaitForAttr);\n' +
-            '    if (nonMatchingProps.length === 0) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        const props = nonMatchingProps.join(", ");\n' +
-            '        throw new Error("The following attributes still don\'t match: [" + ' +
-                'props + "]");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForAttr = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForAttr = await page.$x("//a");
+        if (parseWaitForAttr.length !== 0) {
+            parseWaitForAttr = parseWaitForAttr[0];
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following XPath \\"//a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForAttrDict = {"x":"1"};
+        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of \
+Object.entries(parseWaitForAttrDict)) {
+            computedEntry = e.getAttribute(parseWaitForAttrKey);
+            if (computedEntry !== parseWaitForAttrValue) {
+                nonMatchingProps.push(parseWaitForAttrKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForAttrValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForAttr);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following attributes still don't match: [" + props + "]");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -6614,274 +6610,266 @@ function checkWaitForCss(x, func) {
 
     // Check css selector
     x.assert(func('("a", {})'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForCss = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForCss = await page.$("a");\n' +
-            'if (parseWaitForCss !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'let nonMatchingProps;\n' +
-            'while (true) {\n' +
-            '    nonMatchingProps = await page.evaluate(e => {\n' +
-            '        const nonMatchingProps = [];\n' +
-            '        let computedEntry;\n' +
-            '        let extractedFloat;\n' +
-            '        const parseWaitForCssDict = {};\n' +
-            '        const computedStyle = getComputedStyle(e);\n' +
-            '        for (const [parseWaitForCssKey, parseWaitForCssValue] of Object.entries(' +
-                'parseWaitForCssDict)) {\n' +
-            '            computedEntry = computedStyle[parseWaitForCssKey];\n' +
-            'if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != ' +
-                'parseWaitForCssValue) {\n' +
-            '    if (typeof computedEntry === "string" && computedEntry.search' +
-                '(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + ' +
-                '"px";\n' +
-            '        if (extractedFloat !== parseWaitForCssValue) {\n' +
-            '            nonMatchingProps.push(parseWaitForCssKey + ": ((`" + computedEntry + "` ' +
-                '&& `" + extractedFloat + "`) != `" + parseWaitForCssValue + "`)");\n' +
-            '        } else {\n' +
-            '            continue;\n' +
-            '        }\n' +
-            '    }\n' +
-            '    nonMatchingProps.push(parseWaitForCssKey + ": (`" + computedEntry + "` != `" + ' +
-                'parseWaitForCssValue + "`)");\n' +
-            '}\n' +
-            '        }\n' +
-            '        return nonMatchingProps;\n' +
-            '    }, parseWaitForCss);\n' +
-            '    if (nonMatchingProps.length === 0) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        const props = nonMatchingProps.join(", ");\n' +
-            '        throw new Error("The following CSS properties still don\'t match: [" + ' +
-                'props + "]");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForCss = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForCss = await page.$("a");
+        if (parseWaitForCss !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        let extractedFloat;
+        const parseWaitForCssDict = {};
+        const computedStyle = getComputedStyle(e);
+        for (const [parseWaitForCssKey, parseWaitForCssValue] of \
+Object.entries(parseWaitForCssDict)) {
+            computedEntry = computedStyle[parseWaitForCssKey];
+            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != \
+parseWaitForCssValue) {
+                if (typeof computedEntry === "string" && \
+computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                    extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+                    if (extractedFloat !== parseWaitForCssValue) {
+                        nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
+&& \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
+                    } else {
+                        continue;
+                    }
+                }
+                nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForCssValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForCss);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following CSS properties still don't match: [" + props + "]");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"x": 1})'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForCss = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForCss = await page.$("a");\n' +
-            'if (parseWaitForCss !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'let nonMatchingProps;\n' +
-            'while (true) {\n' +
-            '    nonMatchingProps = await page.evaluate(e => {\n' +
-            '        const nonMatchingProps = [];\n' +
-            '        let computedEntry;\n' +
-            '        let extractedFloat;\n' +
-            '        const parseWaitForCssDict = {"x":"1"};\n' +
-            '        const computedStyle = getComputedStyle(e);\n' +
-            '        for (const [parseWaitForCssKey, parseWaitForCssValue] of Object.entries(' +
-                'parseWaitForCssDict)) {\n' +
-            '            computedEntry = computedStyle[parseWaitForCssKey];\n' +
-            'if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != ' +
-                'parseWaitForCssValue) {\n' +
-            '    if (typeof computedEntry === "string" && computedEntry.search' +
-                '(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + ' +
-                '"px";\n' +
-            '        if (extractedFloat !== parseWaitForCssValue) {\n' +
-            '            nonMatchingProps.push(parseWaitForCssKey + ": ((`" + computedEntry + "` ' +
-                '&& `" + extractedFloat + "`) != `" + parseWaitForCssValue + "`)");\n' +
-            '        } else {\n' +
-            '            continue;\n' +
-            '        }\n' +
-            '    }\n' +
-            '    nonMatchingProps.push(parseWaitForCssKey + ": (`" + computedEntry + "` != `" + ' +
-                'parseWaitForCssValue + "`)");\n' +
-            '}\n' +
-            '        }\n' +
-            '        return nonMatchingProps;\n' +
-            '    }, parseWaitForCss);\n' +
-            '    if (nonMatchingProps.length === 0) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        const props = nonMatchingProps.join(", ");\n' +
-            '        throw new Error("The following CSS properties still don\'t match: [" + ' +
-                'props + "]");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForCss = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForCss = await page.$("a");
+        if (parseWaitForCss !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        let extractedFloat;
+        const parseWaitForCssDict = {"x":"1"};
+        const computedStyle = getComputedStyle(e);
+        for (const [parseWaitForCssKey, parseWaitForCssValue] of \
+Object.entries(parseWaitForCssDict)) {
+            computedEntry = computedStyle[parseWaitForCssKey];
+            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != \
+parseWaitForCssValue) {
+                if (typeof computedEntry === "string" && \
+computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                    extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+                    if (extractedFloat !== parseWaitForCssValue) {
+                        nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
+&& \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
+                    } else {
+                        continue;
+                    }
+                }
+                nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForCssValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForCss);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following CSS properties still don't match: [" + props + "]");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"x": 1, "y": "2"})'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForCss = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForCss = await page.$("a");\n' +
-            'if (parseWaitForCss !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'let nonMatchingProps;\n' +
-            'while (true) {\n' +
-            '    nonMatchingProps = await page.evaluate(e => {\n' +
-            '        const nonMatchingProps = [];\n' +
-            '        let computedEntry;\n' +
-            '        let extractedFloat;\n' +
-            '        const parseWaitForCssDict = {"x":"1","y":"2"};\n' +
-            '        const computedStyle = getComputedStyle(e);\n' +
-            '        for (const [parseWaitForCssKey, parseWaitForCssValue] of Object.entries(' +
-                'parseWaitForCssDict)) {\n' +
-            '            computedEntry = computedStyle[parseWaitForCssKey];\n' +
-            'if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != ' +
-                'parseWaitForCssValue) {\n' +
-            '    if (typeof computedEntry === "string" && computedEntry.search' +
-                '(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + ' +
-                '"px";\n' +
-            '        if (extractedFloat !== parseWaitForCssValue) {\n' +
-            '            nonMatchingProps.push(parseWaitForCssKey + ": ((`" + computedEntry + "` ' +
-                '&& `" + extractedFloat + "`) != `" + parseWaitForCssValue + "`)");\n' +
-            '        } else {\n' +
-            '            continue;\n' +
-            '        }\n' +
-            '    }\n' +
-            '    nonMatchingProps.push(parseWaitForCssKey + ": (`" + computedEntry + "` != `" + ' +
-                'parseWaitForCssValue + "`)");\n' +
-            '}\n' +
-            '        }\n' +
-            '        return nonMatchingProps;\n' +
-            '    }, parseWaitForCss);\n' +
-            '    if (nonMatchingProps.length === 0) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        const props = nonMatchingProps.join(", ");\n' +
-            '        throw new Error("The following CSS properties still don\'t match: [" + ' +
-                'props + "]");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForCss = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForCss = await page.$("a");
+        if (parseWaitForCss !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        let extractedFloat;
+        const parseWaitForCssDict = {"x":"1","y":"2"};
+        const computedStyle = getComputedStyle(e);
+        for (const [parseWaitForCssKey, parseWaitForCssValue] of \
+Object.entries(parseWaitForCssDict)) {
+            computedEntry = computedStyle[parseWaitForCssKey];
+            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != \
+parseWaitForCssValue) {
+                if (typeof computedEntry === "string" && \
+computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                    extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+                    if (extractedFloat !== parseWaitForCssValue) {
+                        nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
+&& \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
+                    } else {
+                        continue;
+                    }
+                }
+                nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForCssValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForCss);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following CSS properties still don't match: [" + props + "]");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     // Check pseudo element.
     x.assert(func('("a::after", {"x": 1, "y": "2"})'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForCss = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForCss = await page.$("a");\n' +
-            'if (parseWaitForCss !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'let nonMatchingProps;\n' +
-            'while (true) {\n' +
-            '    nonMatchingProps = await page.evaluate(e => {\n' +
-            '        const nonMatchingProps = [];\n' +
-            '        let computedEntry;\n' +
-            '        let extractedFloat;\n' +
-            '        const parseWaitForCssDict = {"x":"1","y":"2"};\n' +
-            '        const computedStyle = getComputedStyle(e, "::after");\n' +
-            '        for (const [parseWaitForCssKey, parseWaitForCssValue] of Object.entries(' +
-                'parseWaitForCssDict)) {\n' +
-            '            computedEntry = computedStyle[parseWaitForCssKey];\n' +
-            'if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != ' +
-                'parseWaitForCssValue) {\n' +
-            '    if (typeof computedEntry === "string" && computedEntry.search' +
-                '(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + ' +
-                '"px";\n' +
-            '        if (extractedFloat !== parseWaitForCssValue) {\n' +
-            '            nonMatchingProps.push(parseWaitForCssKey + ": ((`" + computedEntry + "` ' +
-                '&& `" + extractedFloat + "`) != `" + parseWaitForCssValue + "`)");\n' +
-            '        } else {\n' +
-            '            continue;\n' +
-            '        }\n' +
-            '    }\n' +
-            '    nonMatchingProps.push(parseWaitForCssKey + ": (`" + computedEntry + "` != `" + ' +
-                'parseWaitForCssValue + "`)");\n' +
-            '}\n' +
-            '        }\n' +
-            '        return nonMatchingProps;\n' +
-            '    }, parseWaitForCss);\n' +
-            '    if (nonMatchingProps.length === 0) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        const props = nonMatchingProps.join(", ");\n' +
-            '        throw new Error("The following CSS properties still don\'t match: [" + ' +
-                'props + "]");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForCss = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForCss = await page.$("a");
+        if (parseWaitForCss !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        let extractedFloat;
+        const parseWaitForCssDict = {"x":"1","y":"2"};
+        const computedStyle = getComputedStyle(e, "::after");
+        for (const [parseWaitForCssKey, parseWaitForCssValue] of \
+Object.entries(parseWaitForCssDict)) {
+            computedEntry = computedStyle[parseWaitForCssKey];
+            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != \
+parseWaitForCssValue) {
+                if (typeof computedEntry === "string" && \
+computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                    extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+                    if (extractedFloat !== parseWaitForCssValue) {
+                        nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
+&& \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
+                    } else {
+                        continue;
+                    }
+                }
+                nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForCssValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForCss);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following CSS properties still don't match: [" + props + "]");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -6889,72 +6877,72 @@ function checkWaitForCss(x, func) {
     // Checks colors.
     x.assert(func('("a", {"color": "blue"})'), {
         'instructions': [
-            'if (!arg.showText) {\n' +
-            'throw "`show-text: true` needs to be used before checking for `color` (otherwise ' +
-                'the browser doesn\'t compute it)";\n' +
-            '}',
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForCss = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForCss = await page.$("a");\n' +
-            'if (parseWaitForCss !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'let nonMatchingProps;\n' +
-            'while (true) {\n' +
-            '    nonMatchingProps = await page.evaluate(e => {\n' +
-            '        const nonMatchingProps = [];\n' +
-            '        let computedEntry;\n' +
-            '        let extractedFloat;\n' +
-            '        const parseWaitForCssDict = {"color":"blue"};\n' +
-            '        const computedStyle = getComputedStyle(e);\n' +
-            '        for (const [parseWaitForCssKey, parseWaitForCssValue] of Object.entries(' +
-                'parseWaitForCssDict)) {\n' +
-            '            computedEntry = computedStyle[parseWaitForCssKey];\n' +
-            'if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != ' +
-                'parseWaitForCssValue) {\n' +
-            '    if (typeof computedEntry === "string" && computedEntry.search' +
-                '(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + ' +
-                '"px";\n' +
-            '        if (extractedFloat !== parseWaitForCssValue) {\n' +
-            '            nonMatchingProps.push(parseWaitForCssKey + ": ((`" + computedEntry + "` ' +
-                '&& `" + extractedFloat + "`) != `" + parseWaitForCssValue + "`)");\n' +
-            '        } else {\n' +
-            '            continue;\n' +
-            '        }\n' +
-            '    }\n' +
-            '    nonMatchingProps.push(parseWaitForCssKey + ": (`" + computedEntry + "` != `" + ' +
-                'parseWaitForCssValue + "`)");\n' +
-            '}\n' +
-            '        }\n' +
-            '        return nonMatchingProps;\n' +
-            '    }, parseWaitForCss);\n' +
-            '    if (nonMatchingProps.length === 0) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        const props = nonMatchingProps.join(", ");\n' +
-            '        throw new Error("The following CSS properties still don\'t match: [" + ' +
-                'props + "]");\n' +
-            '    }\n' +
-            '}',
+            `\
+if (!arg.showText) {
+    throw "\`show-text: true\` needs to be used before checking for \`color\` (otherwise the \
+browser doesn't compute it)";
+}`,
+            `\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForCss = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForCss = await page.$("a");
+        if (parseWaitForCss !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        let extractedFloat;
+        const parseWaitForCssDict = {"color":"blue"};
+        const computedStyle = getComputedStyle(e);
+        for (const [parseWaitForCssKey, parseWaitForCssValue] of \
+Object.entries(parseWaitForCssDict)) {
+            computedEntry = computedStyle[parseWaitForCssKey];
+            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != \
+parseWaitForCssValue) {
+                if (typeof computedEntry === "string" && \
+computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                    extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+                    if (extractedFloat !== parseWaitForCssValue) {
+                        nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
+&& \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
+                    } else {
+                        continue;
+                    }
+                }
+                nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForCssValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForCss);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following CSS properties still don't match: [" + props + "]");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -6963,139 +6951,135 @@ function checkWaitForCss(x, func) {
     // XPath
     x.assert(func('("/a", {"x": "1"})'), { 'error': 'XPath must start with `//`'});
     x.assert(func('("//a", {})'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForCss = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForCss = await page.$x("//a");\n' +
-            'if (parseWaitForCss.length !== 0) {\n' +
-            '    parseWaitForCss = parseWaitForCss[0];\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following XPath \\"//a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'let nonMatchingProps;\n' +
-            'while (true) {\n' +
-            '    nonMatchingProps = await page.evaluate(e => {\n' +
-            '        const nonMatchingProps = [];\n' +
-            '        let computedEntry;\n' +
-            '        let extractedFloat;\n' +
-            '        const parseWaitForCssDict = {};\n' +
-            '        const computedStyle = getComputedStyle(e);\n' +
-            '        for (const [parseWaitForCssKey, parseWaitForCssValue] of Object.entries(' +
-                'parseWaitForCssDict)) {\n' +
-            '            computedEntry = computedStyle[parseWaitForCssKey];\n' +
-            'if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != ' +
-                'parseWaitForCssValue) {\n' +
-            '    if (typeof computedEntry === "string" && computedEntry.search' +
-                '(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + ' +
-                '"px";\n' +
-            '        if (extractedFloat !== parseWaitForCssValue) {\n' +
-            '            nonMatchingProps.push(parseWaitForCssKey + ": ((`" + computedEntry + "` ' +
-                '&& `" + extractedFloat + "`) != `" + parseWaitForCssValue + "`)");\n' +
-            '        } else {\n' +
-            '            continue;\n' +
-            '        }\n' +
-            '    }\n' +
-            '    nonMatchingProps.push(parseWaitForCssKey + ": (`" + computedEntry + "` != `" + ' +
-                'parseWaitForCssValue + "`)");\n' +
-            '}\n' +
-            '        }\n' +
-            '        return nonMatchingProps;\n' +
-            '    }, parseWaitForCss);\n' +
-            '    if (nonMatchingProps.length === 0) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        const props = nonMatchingProps.join(", ");\n' +
-            '        throw new Error("The following CSS properties still don\'t match: [" + ' +
-                'props + "]");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForCss = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForCss = await page.$x("//a");
+        if (parseWaitForCss.length !== 0) {
+            parseWaitForCss = parseWaitForCss[0];
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following XPath \\"//a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        let extractedFloat;
+        const parseWaitForCssDict = {};
+        const computedStyle = getComputedStyle(e);
+        for (const [parseWaitForCssKey, parseWaitForCssValue] of \
+Object.entries(parseWaitForCssDict)) {
+            computedEntry = computedStyle[parseWaitForCssKey];
+            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != \
+parseWaitForCssValue) {
+                if (typeof computedEntry === "string" && \
+computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                    extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+                    if (extractedFloat !== parseWaitForCssValue) {
+                        nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
+&& \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
+                    } else {
+                        continue;
+                    }
+                }
+                nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForCssValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForCss);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following CSS properties still don't match: [" + props + "]");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("//a", {"x": "1"})'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForCss = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForCss = await page.$x("//a");\n' +
-            'if (parseWaitForCss.length !== 0) {\n' +
-            '    parseWaitForCss = parseWaitForCss[0];\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following XPath \\"//a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'let nonMatchingProps;\n' +
-            'while (true) {\n' +
-            '    nonMatchingProps = await page.evaluate(e => {\n' +
-            '        const nonMatchingProps = [];\n' +
-            '        let computedEntry;\n' +
-            '        let extractedFloat;\n' +
-            '        const parseWaitForCssDict = {"x":"1"};\n' +
-            '        const computedStyle = getComputedStyle(e);\n' +
-            '        for (const [parseWaitForCssKey, parseWaitForCssValue] of Object.entries(' +
-                'parseWaitForCssDict)) {\n' +
-            '            computedEntry = computedStyle[parseWaitForCssKey];\n' +
-            'if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != ' +
-                'parseWaitForCssValue) {\n' +
-            '    if (typeof computedEntry === "string" && computedEntry.search' +
-                '(/^(\\d+\\.\\d+px)$/g) === 0) {\n' +
-            '        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + ' +
-                '"px";\n' +
-            '        if (extractedFloat !== parseWaitForCssValue) {\n' +
-            '            nonMatchingProps.push(parseWaitForCssKey + ": ((`" + computedEntry + "` ' +
-                '&& `" + extractedFloat + "`) != `" + parseWaitForCssValue + "`)");\n' +
-            '        } else {\n' +
-            '            continue;\n' +
-            '        }\n' +
-            '    }\n' +
-            '    nonMatchingProps.push(parseWaitForCssKey + ": (`" + computedEntry + "` != `" + ' +
-                'parseWaitForCssValue + "`)");\n' +
-            '}\n' +
-            '        }\n' +
-            '        return nonMatchingProps;\n' +
-            '    }, parseWaitForCss);\n' +
-            '    if (nonMatchingProps.length === 0) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        const props = nonMatchingProps.join(", ");\n' +
-            '        throw new Error("The following CSS properties still don\'t match: [" + ' +
-                'props + "]");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForCss = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForCss = await page.$x("//a");
+        if (parseWaitForCss.length !== 0) {
+            parseWaitForCss = parseWaitForCss[0];
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following XPath \\"//a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        let extractedFloat;
+        const parseWaitForCssDict = {"x":"1"};
+        const computedStyle = getComputedStyle(e);
+        for (const [parseWaitForCssKey, parseWaitForCssValue] of \
+Object.entries(parseWaitForCssDict)) {
+            computedEntry = computedStyle[parseWaitForCssKey];
+            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != \
+parseWaitForCssValue) {
+                if (typeof computedEntry === "string" && \
+computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                    extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+                    if (extractedFloat !== parseWaitForCssValue) {
+                        nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
+&& \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
+                    } else {
+                        continue;
+                    }
+                }
+                nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForCssValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForCss);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following CSS properties still don't match: [" + props + "]");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -7121,132 +7105,134 @@ function checkWaitForText(x, func) {
 
     // Check CSS selector.
     x.assert(func('("a", "b")'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForText = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForText = await page.$("a");\n' +
-            'if (parseWaitForText !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'const value = "b";\n' +
-            'let computedEntry;\n' +
-            'while (true) {\n' +
-            '    computedEntry = await page.evaluate(e => {\n' +
-            '        return browserUiTestHelpers.getElemText(e, "b");\n' +
-            '    }, parseWaitForText);\n' +
-            '    if (computedEntry === value) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The text still doesn\'t match: `" + computedEntry + "` != `' +
-                '" + value + "`");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForText = null;
+const value = "b";
+let computedEntry;
+while (true) {
+    while (true) {
+        parseWaitForText = await page.$("a");
+        if (parseWaitForText !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    computedEntry = await page.evaluate(e => {
+        return browserUiTestHelpers.getElemText(e, "b");
+    }, parseWaitForText);
+    if (computedEntry === value) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error("The text still doesn't match: \`" + computedEntry + "\` != \`" + \
+value + "\`");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a::after", "b")'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForText = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForText = await page.$("a");\n' +
-            'if (parseWaitForText !== null) {\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following CSS selector \\"a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'const value = "b";\n' +
-            'let computedEntry;\n' +
-            'while (true) {\n' +
-            '    computedEntry = await page.evaluate(e => {\n' +
-            '        return browserUiTestHelpers.getElemText(e, "b");\n' +
-            '    }, parseWaitForText);\n' +
-            '    if (computedEntry === value) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The text still doesn\'t match: `" + computedEntry + "` != `' +
-                '" + value + "`");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForText = null;
+const value = "b";
+let computedEntry;
+while (true) {
+    while (true) {
+        parseWaitForText = await page.$("a");
+        if (parseWaitForText !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    computedEntry = await page.evaluate(e => {
+        return browserUiTestHelpers.getElemText(e, "b");
+    }, parseWaitForText);
+    if (computedEntry === value) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error("The text still doesn't match: \`" + computedEntry + "\` != \`" + \
+value + "\`");
+    }
+}`,
         ],
         'wait': false,
+        'warnings': ['Pseudo-elements (`::after`) don\'t have attributes so the check will be \
+performed on the element itself'],
         'checkResult': true,
     });
 
     x.assert(func('("//a", "b")'), {
-        'instructions': [
-            'const timeLimit = page._timeoutSettings.timeout();\n' +
-            'const timeAdd = 50;\n' +
-            'let allTime = 0;\n' +
-            'let parseWaitForText = null;\n' +
-            'while (true) {\n' +
-            '    parseWaitForText = await page.$x("//a");\n' +
-            'if (parseWaitForText.length !== 0) {\n' +
-            '    parseWaitForText = parseWaitForText[0];\n' +
-            '    break;\n' +
-            '}\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The following XPath \\"//a\\" was not found");\n' +
-            '    }\n' +
-            '}\n' +
-            'const value = "b";\n' +
-            'let computedEntry;\n' +
-            'while (true) {\n' +
-            '    computedEntry = await page.evaluate(e => {\n' +
-            '        return browserUiTestHelpers.getElemText(e, "b");\n' +
-            '    }, parseWaitForText);\n' +
-            '    if (computedEntry === value) {\n' +
-            '        break;\n' +
-            '    }\n' +
-            '    await new Promise(r => setTimeout(r, timeAdd));\n' +
-            '    if (timeLimit === 0) {\n' +
-            '        continue;\n' +
-            '    }\n' +
-            '    allTime += timeAdd;\n' +
-            '    if (allTime >= timeLimit) {\n' +
-            '        throw new Error("The text still doesn\'t match: `" + computedEntry + "` != `' +
-                '" + value + "`");\n' +
-            '    }\n' +
-            '}',
+        'instructions': [`\
+const timeLimit = page._timeoutSettings.timeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForText = null;
+const value = "b";
+let computedEntry;
+while (true) {
+    while (true) {
+        parseWaitForText = await page.$x("//a");
+        if (parseWaitForText.length !== 0) {
+            parseWaitForText = parseWaitForText[0];
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following XPath \\"//a\\" was not found");
+        }
+    }
+    computedEntry = await page.evaluate(e => {
+        return browserUiTestHelpers.getElemText(e, "b");
+    }, parseWaitForText);
+    if (computedEntry === value) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error("The text still doesn't match: \`" + computedEntry + "\` != \`" + \
+value + "\`");
+    }
+}`,
         ],
         'wait': false,
         'checkResult': true,
