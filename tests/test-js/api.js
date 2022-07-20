@@ -117,7 +117,7 @@ function checkAssertFalse(x, func) {
     checkAssertInner(x, func, 'try {\n', '\n} catch(e) { return; } throw "assert didn\'t fail";');
 }
 
-function checkAssertAttributeInner(x, func, before, check, after) {
+function checkAssertAttributeInner(x, func, notFound, equal, contains, startsWith) {
     x.assert(func('("a", "b", )'), {
         'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
     });
@@ -140,81 +140,75 @@ function checkAssertAttributeInner(x, func, before, check, after) {
     x.assert(func('("a", {"b": "c", "b": "d"})'), {'error': 'attribute `b` is duplicated'});
 
     x.assert(func('("a", {})'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$("a");\n' +
-            'if (parseAssertElemAttr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$("a");
+if (parseAssertElemAttr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {};
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"a": 1})'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$("a");\n' +
-            'if (parseAssertElemAttr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$("a");
+if (parseAssertElemAttr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {"a":"1"};
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"a": 1}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$$("a");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$$("a");
+if (parseAssertElemAttr.length === 0) { throw '"a" not found'; }
+for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const nonMatchingAttrs = [];
+        const parseAssertElemAttrDict = {"a":"1"};
+        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
+                continue;
+            }
+            const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(3)}
+        }
+        if (nonMatchingAttrs.length !== 0) {
+            const props = nonMatchingAttrs.join(", ");
+            throw "The following errors happened (for selector \`a\`): [" + props + "]";
+        }
+    }, parseAssertElemAttr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -222,394 +216,356 @@ function checkAssertAttributeInner(x, func, before, check, after) {
 
     // Check the handling of pseudo elements
     x.assert(func('("a::after", {"a": 1})'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$("a");\n' +
-            'if (parseAssertElemAttr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$("a");
+if (parseAssertElemAttr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {"a":"1"};
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
         ],
         'wait': false,
+        'warnings': ['Pseudo-elements (`::after`) don\'t have attributes so the check will be ' +
+            'performed on the element itself'],
         'checkResult': true,
     });
     x.assert(func('("a::after", {"a": 1}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$$("a");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$$("a");
+if (parseAssertElemAttr.length === 0) { throw '"a" not found'; }
+for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const nonMatchingAttrs = [];
+        const parseAssertElemAttrDict = {"a":"1"};
+        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
+                continue;
+            }
+            const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(3)}
+        }
+        if (nonMatchingAttrs.length !== 0) {
+            const props = nonMatchingAttrs.join(", ");
+            throw "The following errors happened (for selector \`a\`): [" + props + "]";
+        }
+    }, parseAssertElemAttr[i]);
+}`,
         ],
         'wait': false,
+        'warnings': ['Pseudo-elements (`::after`) don\'t have attributes so the check will be ' +
+            'performed on the element itself'],
         'checkResult': true,
     });
     x.assert(func('("b:after", {"a": 1})'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$("b:after");\n' +
-            'if (parseAssertElemAttr === null) { throw \'"b:after" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `b:after`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for selector `b:after`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$("b:after");
+if (parseAssertElemAttr === null) { throw '"b:after" not found'; }
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {"a":"1"};
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for selector \`b:after\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("b:after", {"a": 1}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$$("b:after");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'"b:after" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `b:after`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for selector `b:after`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$$("b:after");
+if (parseAssertElemAttr.length === 0) { throw '"b:after" not found'; }
+for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const nonMatchingAttrs = [];
+        const parseAssertElemAttrDict = {"a":"1"};
+        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
+                continue;
+            }
+            const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(3)}
+        }
+        if (nonMatchingAttrs.length !== 0) {
+            const props = nonMatchingAttrs.join(", ");
+            throw "The following errors happened (for selector \`b:after\`): [" + props + "]";
+        }
+    }, parseAssertElemAttr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a ::after", {"a": 1})'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$("a ::after");\n' +
-            'if (parseAssertElemAttr === null) { throw \'"a ::after" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a ::after`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for selector `a ::after`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$("a ::after");
+if (parseAssertElemAttr === null) { throw '"a ::after" not found'; }
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {"a":"1"};
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for selector \`a ::after\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a ::after", {"a": 1}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$$("a ::after");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'"a ::after" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"a":"1"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a ::after`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for selector `a ::after`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$$("a ::after");
+if (parseAssertElemAttr.length === 0) { throw '"a ::after" not found'; }
+for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const nonMatchingAttrs = [];
+        const parseAssertElemAttrDict = {"a":"1"};
+        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
+                continue;
+            }
+            const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(3)}
+        }
+        if (nonMatchingAttrs.length !== 0) {
+            const props = nonMatchingAttrs.join(", ");
+            throw "The following errors happened (for selector \`a ::after\`): [" + props + "]";
+        }
+    }, parseAssertElemAttr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
 
     x.assert(func('("a", {"b": "c", "d": "e"})'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$("a");\n' +
-            'if (parseAssertElemAttr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"b":"c","d":"e"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$("a");
+if (parseAssertElemAttr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {"b":"c","d":"e"};
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"b": "c", "d": "e"}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$$("a");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"b":"c","d":"e"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$$("a");
+if (parseAssertElemAttr.length === 0) { throw '"a" not found'; }
+for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const nonMatchingAttrs = [];
+        const parseAssertElemAttrDict = {"b":"c","d":"e"};
+        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
+                continue;
+            }
+            const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(3)}
+        }
+        if (nonMatchingAttrs.length !== 0) {
+            const props = nonMatchingAttrs.join(", ");
+            throw "The following errors happened (for selector \`a\`): [" + props + "]";
+        }
+    }, parseAssertElemAttr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"\\"b": "c"})'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$("a");\n' +
-            'if (parseAssertElemAttr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$("a");
+if (parseAssertElemAttr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {"\\"b":"c"};
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"\\"b": "c"}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$$("a");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$$("a");
+if (parseAssertElemAttr.length === 0) { throw '"a" not found'; }
+for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const nonMatchingAttrs = [];
+        const parseAssertElemAttrDict = {"\\"b":"c"};
+        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
+                continue;
+            }
+            const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(3)}
+        }
+        if (nonMatchingAttrs.length !== 0) {
+            const props = nonMatchingAttrs.join(", ");
+            throw "The following errors happened (for selector \`a\`): [" + props + "]";
+        }
+    }, parseAssertElemAttr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"\\"b": "c"}, CONTAINS)'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$("a");\n' +
-            'if (parseAssertElemAttr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr.indexOf(parseAssertElemAttrValue) === -1) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) ' +
-                'doesn\'t contain `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('CONTAINS') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$("a");
+if (parseAssertElemAttr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {"\\"b":"c"};
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${contains(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, CONTAINS])'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$("a");\n' +
-            'if (parseAssertElemAttr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr.indexOf(parseAssertElemAttrValue) === -1) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) ' +
-                'doesn\'t contain `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('CONTAINS') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$("a");
+if (parseAssertElemAttr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {"\\"b":"c"};
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${contains(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, STARTS_WITH])'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$("a");\n' +
-            'if (parseAssertElemAttr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr.indexOf(parseAssertElemAttrValue) === -1) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) ' +
-                'doesn\'t contain `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('CONTAINS') +
-            '})();\n' +
-            '(() => {\n' +
-            before +
-            'if (!attr.startsWith(parseAssertElemAttrValue)) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) ' +
-                'doesn\'t start with `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('STARTS_WITH') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$("a");
+if (parseAssertElemAttr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {"\\"b":"c"};
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${contains(2)}
+${startsWith(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, STARTS_WITH, ALL])'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$$("a");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"\\"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('selector `a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr.indexOf(parseAssertElemAttrValue) === -1) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) ' +
-                'doesn\'t contain `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('CONTAINS') +
-            '})();\n' +
-            '(() => {\n' +
-            before +
-            'if (!attr.startsWith(parseAssertElemAttrValue)) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) ' +
-                'doesn\'t start with `" + parseAssertElemAttrValue + "` for selector `a`";\n' +
-            '}\n' +
-            after('STARTS_WITH') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$$("a");
+if (parseAssertElemAttr.length === 0) { throw '"a" not found'; }
+for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const nonMatchingAttrs = [];
+        const parseAssertElemAttrDict = {"\\"b":"c"};
+        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
+                continue;
+            }
+            const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${contains(3)}
+${startsWith(3)}
+        }
+        if (nonMatchingAttrs.length !== 0) {
+            const props = nonMatchingAttrs.join(", ");
+            throw "The following errors happened (for selector \`a\`): [" + props + "]";
+        }
+    }, parseAssertElemAttr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -617,83 +573,77 @@ function checkAssertAttributeInner(x, func, before, check, after) {
 
     // XPath
     x.assert(func('("//a", {})'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$x("//a");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseAssertElemAttr = parseAssertElemAttr[0];\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('XPath `//a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for XPath `//a`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$x("//a");
+if (parseAssertElemAttr.length === 0) { throw 'XPath "//a" not found'; }
+parseAssertElemAttr = parseAssertElemAttr[0];
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {};
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("//a", {"b": "c"})'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$x("//a");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseAssertElemAttr = parseAssertElemAttr[0];\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('XPath `//a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for XPath `//a`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr);',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$x("//a");
+if (parseAssertElemAttr.length === 0) { throw 'XPath "//a" not found'; }
+parseAssertElemAttr = parseAssertElemAttr[0];
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {"b":"c"};
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("//a", {"b": "c"}, ALL)'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$x("//a");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('XPath `//a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for XPath `//a`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$x("//a");
+if (parseAssertElemAttr.length === 0) { throw 'XPath "//a" not found'; }
+for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const nonMatchingAttrs = [];
+        const parseAssertElemAttrDict = {"b":"c"};
+        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
+                continue;
+            }
+            const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(3)}
+        }
+        if (nonMatchingAttrs.length !== 0) {
+            const props = nonMatchingAttrs.join(", ");
+            throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
+        }
+    }, parseAssertElemAttr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -705,29 +655,27 @@ function checkAssertAttributeInner(x, func, before, check, after) {
             '`STARTS_WITH`, `ENDS_WITH`]',
     });
     x.assert(func('("//a",\n    \n{"b": "c"}, \n ALL)'), {
-        'instructions': [
-            'let parseAssertElemAttr = await page.$x("//a");\n' +
-            'if (parseAssertElemAttr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            'const parseAssertElemAttrDict = {"b":"c"};\n' +
-            'for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of ' +
-                'Object.entries(parseAssertElemAttrDict)) {\n' +
-            'if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n' +
-            check('XPath `//a`') +
-            '}\n' +
-            'const attr = e.getAttribute(parseAssertElemAttrAttribute);\n' +
-            '(() => {\n' +
-            before +
-            'if (attr !== parseAssertElemAttrValue) {\n' +
-            '    throw "attribute `" + parseAssertElemAttrAttribute + "` (`" + attr + "`) isn\'t ' +
-                'equal to `" + parseAssertElemAttrValue + "` for XPath `//a`";\n' +
-            '}\n' +
-            after('') +
-            '})();\n' +
-            '}\n' +
-            '}, parseAssertElemAttr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemAttr = await page.$x("//a");
+if (parseAssertElemAttr.length === 0) { throw 'XPath "//a" not found'; }
+for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const nonMatchingAttrs = [];
+        const parseAssertElemAttrDict = {"b":"c"};
+        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
+                continue;
+            }
+            const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(3)}
+        }
+        if (nonMatchingAttrs.length !== 0) {
+            const props = nonMatchingAttrs.join(", ");
+            throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
+        }
+    }, parseAssertElemAttr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -738,10 +686,24 @@ function checkAssertAttribute(x, func) {
     checkAssertAttributeInner(
         x,
         func,
-        '',
-        p => `    throw "${p} doesn't have an attribute named \`" + \
-parseAssertElemAttrAttribute + "\`";\n`,
-        () => '',
+        indent => '\n' +
+            indentString('nonMatchingAttrs.push("No attribute named `" + ' +
+                'parseAssertElemAttrAttribute + "`");', indent),
+        indent => indentString(`\
+if (attr !== parseAssertElemAttrValue) {
+    nonMatchingAttrs.push("attribute \`" + parseAssertElemAttrAttribute + "\` isn't equal to \`" + \
+parseAssertElemAttrValue + "\` (\`" + attr + "\`)");
+}`, indent),
+        indent => indentString(`\
+if (attr.indexOf(parseAssertElemAttrValue) === -1) {
+    nonMatchingAttrs.push("attribute \`" + parseAssertElemAttrAttribute + "\` (\`" + attr + "\`) \
+doesn't contain \`" + parseAssertElemAttrValue + "\` (for CONTAINS check)");
+}`, indent),
+        indent => indentString(`\
+if (!attr.startsWith(parseAssertElemAttrValue)) {
+    nonMatchingAttrs.push("attribute \`" + parseAssertElemAttrAttribute + "\` (\`" + attr + "\`) \
+doesn't start with \`" + parseAssertElemAttrValue + "\` (for STARTS_WITH check)");
+}`, indent),
     );
 }
 
@@ -749,15 +711,22 @@ function checkAssertAttributeFalse(x, func) {
     checkAssertAttributeInner(
         x,
         func,
-        'try {\n',
-        () => '    return;\n',
-        t => {
-            if (t.length === 0) {
-                return '} catch(e) { return; } throw "assert didn\'t fail";\n';
-            } else {
-                return `} catch(e) { return; } throw "assert didn't fail (for ${t} check)";\n`;
-            }
-        },
+        () => '',
+        indent => indentString(`\
+if (attr === parseAssertElemAttrValue) {
+    nonMatchingAttrs.push("assert didn't fail for attribute \`" + parseAssertElemAttrAttribute + \
+"\` (\`" + attr + "\`)");
+}`, indent),
+        indent => indentString(`\
+if (attr.indexOf(parseAssertElemAttrValue) !== -1) {
+    nonMatchingAttrs.push("assert didn't fail for attribute \`" + parseAssertElemAttrAttribute + \
+"\` (\`" + attr + "\`) (for CONTAINS check)");
+}`, indent),
+        indent => indentString(`\
+if (attr.startsWith(parseAssertElemAttrValue)) {
+    nonMatchingAttrs.push("assert didn't fail for attribute \`" + parseAssertElemAttrAttribute + \
+"\` (\`" + attr + "\`) (for STARTS_WITH check)");
+}`, indent),
     );
 }
 
