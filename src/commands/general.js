@@ -6,6 +6,7 @@ const {
     buildPropertyDict,
     getAndSetElements,
     validateJson,
+    indentString,
 } = require('./utils.js');
 
 function waitForElement(selector, varName) {
@@ -14,14 +15,16 @@ function waitForElement(selector, varName) {
 
     if (selector.isXPath) {
         kind = 'XPath';
-        code = `${varName} = await page.$x("${selector.value}");
+        code = `\
+${varName} = await page.$x("${selector.value}");
 if (${varName}.length !== 0) {
     ${varName} = ${varName}[0];
     break;
 }`;
     } else {
         kind = 'CSS selector';
-        code = `${varName} = await page.$("${selector.value}");
+        code = `\
+${varName} = await page.$("${selector.value}");
 if (${varName} !== null) {
     break;
 }`;
@@ -29,12 +32,14 @@ if (${varName} !== null) {
 
     // `page._timeoutSettings.timeout` is an internal thing so better be careful at any puppeteer
     // version update!
-    return `const timeLimit = page._timeoutSettings.timeout();
+    return [`\
+const timeLimit = page._timeoutSettings.timeout();
 const timeAdd = 50;
 let allTime = 0;
-let ${varName} = null;
+let ${varName} = null;`,
+    `\
 while (true) {
-    ${code}
+${indentString(code, 1)}
     await new Promise(r => setTimeout(r, timeAdd));
     if (timeLimit === 0) {
         continue;
@@ -43,7 +48,7 @@ while (true) {
     if (allTime >= timeLimit) {
         throw new Error("The following ${kind} \\"${selector.value}\\" was not found");
     }
-}`;
+}`];
 }
 
 // Possible inputs:
@@ -82,8 +87,9 @@ function parseWaitFor(parser) {
     if (selector.error !== undefined) {
         return selector;
     }
+    const [init, looper] = waitForElement(selector, 'parseWaitFor');
     return {
-        'instructions': [waitForElement(selector, 'parseWaitFor')],
+        'instructions': [init + '\n' + looper],
         'wait': false,
     };
 }
@@ -159,12 +165,12 @@ function parseWaitForCss(parser) {
 
     const instructions = [];
     if (data['propertyDict']['needColorCheck']) {
-        instructions.push('if (!arg.showText) {\n' +
-            `throw "${COLOR_CHECK_ERROR}";\n` +
-            '}',
-        );
+        instructions.push(`\
+if (!arg.showText) {
+    throw "${COLOR_CHECK_ERROR}";
+}`);
     }
-    const nonMatchingS = `nonMatchingProps.push(${varKey} + ": ((\`" + computedEntry + "\` && \`" \
+    const nonMatchingS = `nonMatchingProps.push(${varKey} + ": (\`" + computedEntry + "\` && \`" \
 + extractedFloat + "\`) != \`" + ${varValue} + "\`)");`;
     const check = `\
 computedEntry = computedStyle[${varKey}];
@@ -180,9 +186,12 @@ if (e.style[${varKey}] != ${varValue} && computedEntry != ${varValue}) {
     nonMatchingProps.push(${varKey} + ": (\`" + computedEntry + "\` != \`" + ${varValue} + "\`)");
 }`;
 
-    instructions.push(waitForElement(data['selector'], varName) + '\n' +
-`let nonMatchingProps;
+    const [init, looper] = waitForElement(data['selector'], varName);
+    instructions.push(`\
+${init}
+let nonMatchingProps;
 while (true) {
+${indentString(looper, 1)}
     nonMatchingProps = await page.evaluate(e => {
         const nonMatchingProps = [];
         let computedEntry;
@@ -190,7 +199,7 @@ while (true) {
         const ${varDict} = {${data['propertyDict']['dict']}};
         const computedStyle = getComputedStyle(e${data['pseudo']});
         for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-            ${check}
+${indentString(check, 3)}
         }
         return nonMatchingProps;
     }, ${varName});
@@ -226,6 +235,15 @@ function parseWaitForAttribute(parser) {
         return data;
     }
 
+    const isPseudo = !data.selector.isXPath && data.selector.pseudo !== null;
+    if (isPseudo) {
+        if (data.warnings === undefined) {
+            data.warnings = [];
+        }
+        data.warnings.push(`Pseudo-elements (\`${data.selector.pseudo}\`) don't have attributes so \
+the check will be performed on the element itself`);
+    }
+
     const varName = 'parseWaitForAttr';
     const varDict = varName + 'Dict';
     const varKey = varName + 'Key';
@@ -238,15 +256,19 @@ if (computedEntry !== ${varValue}) {
     nonMatchingProps.push(${varKey} + ": (\`" + computedEntry + "\` != \`" + ${varValue} + "\`)");
 }`;
 
-    instructions.push(waitForElement(data['selector'], varName) + '\n' +
-`let nonMatchingProps;
+    const [init, looper] = waitForElement(data['selector'], varName);
+
+    instructions.push(`\
+${init}
+let nonMatchingProps;
 while (true) {
+${indentString(looper, 1)}
     nonMatchingProps = await page.evaluate(e => {
         const nonMatchingProps = [];
         let computedEntry;
         const ${varDict} = {${data['propertyDict']['dict']}};
         for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-            ${check}
+${indentString(check, 3)}
         }
         return nonMatchingProps;
     }, ${varName});
@@ -310,13 +332,25 @@ function parseWaitForText(parser) {
     if (selector.error !== undefined) {
         return selector;
     }
+
+    let warnings = undefined;
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    if (isPseudo) {
+        warnings = [`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
+the check will be performed on the element itself`];
+    }
+
     const value = tuple[1].getStringValue();
     const varName = 'parseWaitForText';
 
-    const instructions = waitForElement(selector, varName) + '\n' +
-`const value = "${value}";
+    const [init, looper] = waitForElement(selector, varName);
+
+    const instructions = `\
+${init}
+const value = "${value}";
 let computedEntry;
 while (true) {
+${indentString(looper, 1)}
     computedEntry = await page.evaluate(e => {
         return browserUiTestHelpers.getElemText(e, "${value}");
     }, ${varName});
@@ -337,6 +371,7 @@ while (true) {
     return {
         'instructions': [instructions],
         'wait': false,
+        'warnings': warnings,
         'checkResult': true,
     };
 }
