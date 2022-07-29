@@ -224,6 +224,9 @@ function buildPropertyDict(entries, errorText, allowEmptyValues) {
 function indentString(s, indentLevel) {
     let indent = '';
 
+    if (indentLevel < 1) {
+        return s;
+    }
     while (indentLevel > 0) {
         indent += '    ';
         indentLevel -= 1;

@@ -75,7 +75,8 @@ ${indentString(extra, 2)}
 
     code += '\n}';
 
-    const errorCheck = `if (nonMatchingProps.length !== 0) {
+    const errorCheck = `\
+if (nonMatchingProps.length !== 0) {
     const props = nonMatchingProps.join(", ");
     throw "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props + "]";
 }`;
@@ -379,11 +380,6 @@ function parseAssertPropertyInner(parser, assertFalse) {
         }
     }
 
-    const [insertBefore, insertAfter] = getInsertStrings(
-        assertFalse,
-        false,
-        'TO_REPLACE',
-    );
     const selector = tuple[0].getSelector();
     const xpath = selector.isXPath ? 'XPath ' : 'selector ';
 
@@ -394,47 +390,64 @@ function parseAssertPropertyInner(parser, assertFalse) {
 
     const checks = [];
     if (enabled_checks['CONTAINS']) {
-        checks.push([`\
+        if (assertFalse) {
+            checks.push(`\
+if (String(e[${varKey}]).indexOf(${varValue}) !== -1) {
+    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
+CONTAINS check)');
+}`);
+        } else {
+            checks.push(`\
 if (String(e[${varKey}]).indexOf(${varValue}) === -1) {
-    throw "property \`" + ${varKey} + "\` (\`" + String(e[${varKey}]) + "\`) doesn't contain \`" + \
-${varValue} + "\` for ${xpath}\`${selector.value}\`";
-}`, 'CONTAINS']);
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
+\`) does not contain \`' + ${varValue} + '\`');
+}`);
+        }
     }
     if (enabled_checks['STARTS_WITH']) {
-        checks.push([`\
+        if (assertFalse) {
+            checks.push(`\
+if (String(e[${varKey}]).startsWith(${varValue})) {
+    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
+STARTS_WITH check)');
+}`);
+        } else {
+            checks.push(`\
 if (!String(e[${varKey}]).startsWith(${varValue})) {
-    throw "property \`" + ${varKey} + "\` (\`" + String(e[${varKey}]) + "\`) doesn't start with \`"\
- + ${varValue} + "\` for ${xpath}\`${selector.value}\`";
-}`, 'STARTS_WITH']);
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
+\`) does not start with \`' + ${varValue} + '\`');
+}`);
+        }
     }
     if (enabled_checks['ENDS_WITH']) {
-        checks.push([`\
-if (!String(e[${varKey}]).endsWith(${varValue})) {
-    throw "property \`" + ${varKey} + "\` (\`" + String(e[${varKey}]) + "\`) doesn't end with \`" +\
- ${varValue} + "\` for ${xpath}\`${selector.value}\`";
-}`, 'ENDS_WITH']);
-    }
-    if (checks.length === 0) {
-        checks.push([`\
-if (String(e[${varKey}]) != ${varValue}) {
-    throw "property \`" + ${varKey} + "\` (\`" + String(e[${varKey}]) + "\`) isn't equal to \`" + \
-${varValue} + "\` for ${xpath}\`${selector.value}\`";
-}`, '']);
-    }
-
-    let all_checks = '';
-    for (const check of checks) {
-        all_checks += '(() => {\n' +
-            insertBefore +
-            check[0];
-
-        if (check[1].length > 0) {
-            all_checks += insertAfter.replace('TO_REPLACE', ` (for ${check[1]} check)`);
+        if (assertFalse) {
+            checks.push(`\
+if (String(e[${varKey}]).endsWith(${varValue})) {
+    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
+ENDS_WITH check)');
+}`);
         } else {
-            all_checks += insertAfter.replace('TO_REPLACE', '');
+            checks.push(`\
+if (!String(e[${varKey}]).endsWith(${varValue})) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
+\`) does not end with \`' + ${varValue} + '\`');
+}`);
         }
-
-        all_checks += '\n})();\n';
+    }
+    // If no check was enabled.
+    if (checks.length === 0) {
+        if (assertFalse) {
+            checks.push(`\
+if (String(e[${varKey}]) == ${varValue}) {
+    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\`');
+}`);
+        } else {
+            checks.push(`\
+if (String(e[${varKey}]) != ${varValue}) {
+    nonMatchingProps.push('Expected \`' + ${varValue} + '\` for property \`' + ${varKey} \
++ '\`, found \`' + e[${varKey}] + '\`');
+}`);
+        }
     }
 
     const json = tuple[1].getRaw();
@@ -442,6 +455,15 @@ ${varValue} + "\` for ${xpath}\`${selector.value}\`";
     if (entries.error !== undefined) {
         return entries;
     }
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    if (isPseudo) {
+        if (entries.warnings === undefined) {
+            entries.warnings = [];
+        }
+        entries.warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
+the check will be performed on the element itself`);
+    }
+
 
     // JSON.stringify produces a problematic output so instead we use this.
     let d = '';
@@ -451,41 +473,43 @@ ${varValue} + "\` for ${xpath}\`${selector.value}\`";
         }
         d += `"${k}":"${v}"`;
     }
-    let notFound = 'return;';
-    if (!assertFalse) {
-        notFound = `throw 'There is no property \`' + ${varKey} + '\` for \
-${xpath}\`${selector.value}\`';`;
-    }
-    const code = `const ${varDict} = {${d}};
-for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-(() => {
-if (e[${varKey}] === undefined) {
-${notFound}
-}
-})();
-${all_checks}\
-}\n`;
 
-    let instructions;
-    if (enabled_checks['ALL'] === true) {
-        instructions = [
-            getAndSetElements(selector, varName, true) + '\n' +
-            `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
-                `await ${varName}[i].evaluate(e => {\n` +
-                    `${code}` +
-                '});\n' +
-            '}',
-        ];
+    let unknown = '';
+    if (!assertFalse) {
+        unknown = '\n';
+        unknown += indentString(
+            `nonMatchingProps.push('Unknown property \`' + ${varKey} + '\`');`, 3);
+    }
+
+    const checkAllElements = enabled_checks['ALL'] === true;
+    const indent = checkAllElements ? 1 : 0;
+    let whole = getAndSetElements(selector, varName, checkAllElements) + '\n';
+    if (checkAllElements) {
+        whole += `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n`;
+    }
+    whole += indentString(`\
+await page.evaluate(e => {
+    const nonMatchingProps = [];
+    const ${varDict} = {${d}};
+    for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+        if (e[${varKey}] === undefined) {${unknown}
+            continue;
+        }
+${indentString(checks.join('\n'), 2)}
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(", ");
+        throw "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props + "]";
+    }
+`, indent);
+    if (checkAllElements) {
+        whole += `    }, ${varName}[i]);
+}`;
     } else {
-        instructions = [
-            getAndSetElements(selector, varName, false) + '\n' +
-            `await ${varName}.evaluate(e => {\n` +
-                `${code}` +
-            '});',
-        ];
+        whole += `}, ${varName});`;
     }
     return {
-        'instructions': instructions,
+        'instructions': [whole],
         'wait': false,
         'warnings': entries.warnings,
         'checkResult': true,
