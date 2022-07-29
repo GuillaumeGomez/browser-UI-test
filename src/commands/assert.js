@@ -209,75 +209,84 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
         d += `"${k}":"${v}"`;
     }
 
-    const indent = '        ';
     const checks = [];
     if (enabled_checks['CONTAINS']) {
         if (assertFalse) {
-            checks.push(`${indent}if (String(${objName}[${varKey}]).indexOf(${varValue}) !== -1) {
-${indent}    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
+            checks.push(`\
+if (String(${objName}[${varKey}]).indexOf(${varValue}) !== -1) {
+    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
 CONTAINS check)');
-${indent}}`);
+}`);
         } else {
-            checks.push(`${indent}if (String(${objName}[${varKey}]).indexOf(${varValue}) === -1) {
-${indent}    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
+            checks.push(`\
+if (String(${objName}[${varKey}]).indexOf(${varValue}) === -1) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
 \`) does not contain \`' + ${varValue} + '\`');
-${indent}}`);
+}`);
         }
     }
     if (enabled_checks['STARTS_WITH']) {
         if (assertFalse) {
-            checks.push(`${indent}if (String(${objName}[${varKey}]).startsWith(${varValue})) {
-${indent}    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
+            checks.push(`\
+if (String(${objName}[${varKey}]).startsWith(${varValue})) {
+    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
 STARTS_WITH check)');
-${indent}}`);
+}`);
         } else {
-            checks.push(`${indent}if (!String(${objName}[${varKey}]).startsWith(${varValue})) {
-${indent}    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
+            checks.push(`\
+if (!String(${objName}[${varKey}]).startsWith(${varValue})) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
 \`) does not start with \`' + ${varValue} + '\`');
-${indent}}`);
+}`);
         }
     }
     if (enabled_checks['ENDS_WITH']) {
         if (assertFalse) {
-            checks.push(`${indent}if (String(${objName}[${varKey}]).endsWith(${varValue})) {
-${indent}    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
+            checks.push(`\
+if (String(${objName}[${varKey}]).endsWith(${varValue})) {
+    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
 ENDS_WITH check)');
-${indent}}`);
+}`);
         } else {
-            checks.push(`${indent}if (!String(${objName}[${varKey}]).endsWith(${varValue})) {
-${indent}    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
+            checks.push(`\
+if (!String(${objName}[${varKey}]).endsWith(${varValue})) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
 \`) does not end with \`' + ${varValue} + '\`');
-${indent}}`);
+}`);
         }
     }
     // If no check was enabled.
     if (checks.length === 0) {
         if (assertFalse) {
-            checks.push(`${indent}if (String(${objName}[${varKey}]) == ${varValue}) {
-${indent}    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\`');
-${indent}}`);
+            checks.push(`\
+if (String(${objName}[${varKey}]) == ${varValue}) {
+    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\`');
+}`);
         } else {
-            checks.push(`${indent}if (String(${objName}[${varKey}]) != ${varValue}) {
-${indent}    nonMatchingProps.push('Expected \`' + ${varValue} + '\` for property \`' + ${varKey} \
+            checks.push(`\
+if (String(${objName}[${varKey}]) != ${varValue}) {
+    nonMatchingProps.push('Expected \`' + ${varValue} + '\` for property \`' + ${varKey} \
 + '\`, found \`' + ${objName}[${varKey}] + '\`');
-${indent}}`);
+}`);
         }
     }
 
     let err = '';
     if (!assertFalse) {
-        err = `\n${indent}    nonMatchingProps.push('Unknown ${objName} property \`' + ${varKey} + \
-'\`');`;
+        err = '\n';
+        err += indentString(`nonMatchingProps.push('Unknown ${objName} property \`' + ${varKey} + \
+'\`');`, 3);
     }
 
-    const instructions = [`await page.evaluate(() => {
+    const instructions = [`\
+await page.evaluate(() => {
     const nonMatchingProps = [];
     const ${varDict} = {${d}};
     for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
         if (${objName}[${varKey}] === undefined) {${err}
             continue;
         }
-${checks.join('\n')}
+${indentString(checks.join('\n'), 2)}
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(", ");
