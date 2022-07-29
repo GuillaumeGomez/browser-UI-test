@@ -1,0 +1,4 @@
+// This test ensures that when using pseudo elements, there are warnings.
+goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+assert-attribute: (".content::after", {"class": "content"})
+assert-property: (".content::after", {"className": "content"})
