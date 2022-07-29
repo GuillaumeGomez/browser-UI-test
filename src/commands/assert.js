@@ -627,7 +627,7 @@ if (attr.endsWith(${varValue})) {
             checks.push(`\
 if (!attr.endsWith(${varValue})) {
     nonMatchingAttrs.push("attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't end with \`"\
- + ${varValue} + "\` for ${xpath}\`${selector.value}\`");
+ + ${varValue} + "\`");
 }`);
         }
     }
