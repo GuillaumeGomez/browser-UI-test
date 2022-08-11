@@ -1,3 +1,5 @@
+const process = require('process');
+const path = require('path');
 const utils = require('./utils.js');
 const print = utils.print;
 const consts = require('./consts.js');
@@ -39,7 +41,14 @@ function helper() {
     print('  --timeout [MILLISECONDS]      : Set default timeout for all tests');
     print('  --test-files [PATHs]          : List of `.goml` files\' path to be run');
     print('  --variable [name] [value]     : Variable to be used in scripts');
+    print('  --version                     : Show the current version of the framework');
     print('  --help | -h                   : Show this text');
+}
+
+function showVersion() {
+    const package_json = utils.readFile(path.join(__dirname, '..', 'package.json'));
+    print(JSON.parse(package_json)['version']);
+    process.exit(0);
 }
 
 function showDeviceList(options) {
@@ -259,6 +268,8 @@ class Options {
                 }
             } else if (args[it] === '--enable-fail-on-js-error') {
                 this.failOnJsError = true;
+            } else if (args[it] === '--version') {
+                showVersion();
             } else {
                 throw new Error(`Unknown option \`${args[it]}\`\n` +
                     'Use `--help` if you want the list of the available commands');

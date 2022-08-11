@@ -29,6 +29,14 @@ you can install it locally using this command:
 npm install browser-ui-test
 ```
 
+### Trouble installing puppeteer?
+
+In case you can't install puppeteer "normally", you can give a try to `--unsafe-perm=true`:
+
+```bash
+$ npm install puppeteer --unsafe-perm=true
+```
+
 ## Usage
 
 You can either use this framework by using it as dependency or running it directly. In both cases you'll need to write some `.goml` scripts. It looks like this:
@@ -40,14 +48,6 @@ assert: ("#button", "hello") // check if #button element's text has been set to 
 ```
 
 The list of the commands is available [here](https://github.com/GuillaumeGomez/browser-UI-test/blob/master/goml-script.md).
-
-### Trouble installing puppeteer?
-
-In case you can't install puppeteer "normally", you can give a try to `--unsafe-perm=true`:
-
-```bash
-$ npm install puppeteer --unsafe-perm=true
-```
 
 ### Using this framework as a binary
 

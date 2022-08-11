@@ -27,10 +27,9 @@ function readFile(filePath, encoding, callback) {
         encoding = 'utf8';
     }
     if (callback) {
-        fs.readFile(filePath, encoding, callback);
-    } else {
-        return fs.readFileSync(filePath, encoding);
+        return fs.readFile(filePath, encoding, callback);
     }
+    return fs.readFileSync(filePath, encoding);
 }
 
 function print(s, backline = true) {
