@@ -20,6 +20,15 @@ This is a big README, so to make you go through it faster:
  * [Run tests](#run-tests)
  * [Donations](#donations)
 
+## How to install
+
+This framework is hosted on npmjs [here](https://www.npmjs.com/package/browser-ui-test). Therefore,
+you can install it locally using this command:
+
+```console
+npm install browser-ui-test
+```
+
 ## Usage
 
 You can either use this framework by using it as dependency or running it directly. In both cases you'll need to write some `.goml` scripts. It looks like this:
