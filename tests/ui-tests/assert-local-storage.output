@@ -1,0 +1,8 @@
+=> Starting doc-ui tests...
+
+assert-local-storage... FAILED
+[ERROR] (line 3) Error: Evaluation failed: The following errors happened: [localStorage item "something" (of value "whatever") != "null", localStorage item "other" (of value "hehe") != "null"]: for command `assert-local-storage: {"something": "whatever", "other": "hehe"}`
+[ERROR] (line 6) Error: Evaluation failed: The following errors happened: [localStorage item "something" (of value "whatever") != "null"]: for command `assert-local-storage: {"something": "whatever"}`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed

@@ -1103,12 +1103,10 @@ function parseAssertLocalStorageInner(parser, assertFalse) {
         return {'error': `expected JSON, found \`${parser.getRawArgs()}\``};
     }
     const json = elems[0].getRaw();
-    const content = [];
     let warnings = [];
 
-    for (let i = 0; i < json.length; ++i) {
-        const entry = json[i];
-
+    let d = '';
+    for (const entry of json) {
         if (entry['value'] === undefined) {
             warnings.push(`No value for key \`${entry['key'].getText()}\``);
             continue;
@@ -1118,43 +1116,53 @@ function parseAssertLocalStorageInner(parser, assertFalse) {
         }
         const key_s = entry['key'].getStringValue();
         let value_s;
-        let err_s;
         if (entry['value'].kind === 'ident') {
             value_s = entry['value'].getStringValue();
-            err_s = value_s;
             if (value_s !== 'null') {
                 return {'error': `Only \`null\` ident is allowed, found \`${value_s}\``};
             }
         } else {
             value_s = `"${entry['value'].getStringValue()}"`;
-            err_s = `\\"${entry['value'].getStringValue()}\\"`;
         }
-        if (assertFalse) {
-            content.push(
-                `if (localStorage.getItem("${key_s}") == ${value_s}) {\n` +
-                    `var value = localStorage.getItem("${key_s}");\n` +
-                    `throw "localStorage item \\"${key_s}\\" (" + value + ") == ${err_s}";\n` +
-                '}');
-        } else {
-            content.push(
-                `if (localStorage.getItem("${key_s}") != ${value_s}) {\n` +
-                    `var value = localStorage.getItem("${key_s}");\n` +
-                    `throw "localStorage item \\"${key_s}\\" (" + value + ") != ${err_s}";\n` +
-                '}');
+        if (d.length > 0) {
+            d += ',';
         }
+        d += `"${key_s}":${value_s}`;
     }
     warnings = warnings.length > 0 ? warnings : undefined;
-    if (content.length === 0) {
+    if (d.length === 0) {
         return {
             'instructions': [],
             'warnings': warnings,
             'wait': false,
         };
     }
+
+    const varName = 'localStorageElem';
+    const varDict = `${varName}Dict`;
+    const varKey = `${varName}Key`;
+    const varValue = `${varName}Value`;
+
+    const checkSign = assertFalse ? '==' : '!=';
+
+    const code = `\
+await page.evaluate(() => {
+    const errors = [];
+    const ${varDict} = {${d}};
+    for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+        let ${varName} = window.localStorage.getItem("${varKey}");
+        if (${varName} ${checkSign} ${varValue}) {
+            errors.push("localStorage item \\"" + ${varKey} + "\\" (of value \\"" + ${varValue} + \
+"\\") ${checkSign} \\"" + ${varName} + "\\"");
+        }
+    }
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+});`;
     return {
-        'instructions': [
-            `await page.evaluate(() => {\n${content.join('\n')}\n});`,
-        ],
+        'instructions': [code],
         'warnings': warnings,
         'wait': false,
         'checkResult': true,
