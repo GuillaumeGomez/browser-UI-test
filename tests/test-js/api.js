@@ -1803,56 +1803,88 @@ function checkAssertLocalStorageInner(x, func, comp) {
     x.assert(func('{"a": x}'), {'error': 'Only `null` ident is allowed, found `x`'});
 
     x.assert(func('{"a": 1}'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'if (localStorage.getItem("a") ' + comp + ' "1") {\n' +
-            'var value = localStorage.getItem("a");\n' +
-            'throw "localStorage item \\"a\\" (" + value + ") ' + comp + ' \\"1\\"";\n' +
-            '}\n' +
-            '});',
-        ],
+        'instructions': [`\
+await page.evaluate(() => {
+    const errors = [];
+    const localStorageElemDict = {"a":"1"};
+    for (const [localStorageElemKey, localStorageElemValue] of \
+Object.entries(localStorageElemDict)) {
+        let localStorageElem = window.localStorage.getItem("localStorageElemKey");
+        if (localStorageElem ${comp} localStorageElemValue) {
+            errors.push("localStorage item \\"" + localStorageElemKey + "\\" (of value \\"" + \
+localStorageElemValue + "\\") ${comp} \\"" + localStorageElem + "\\"");
+        }
+    }
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+});`],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('{"a": "1"}'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'if (localStorage.getItem("a") ' + comp + ' "1") {\n' +
-            'var value = localStorage.getItem("a");\n' +
-            'throw "localStorage item \\"a\\" (" + value + ") ' + comp + ' \\"1\\"";\n' +
-            '}\n' +
-            '});',
-        ],
+        'instructions': [`\
+await page.evaluate(() => {
+    const errors = [];
+    const localStorageElemDict = {"a":"1"};
+    for (const [localStorageElemKey, localStorageElemValue] of \
+Object.entries(localStorageElemDict)) {
+        let localStorageElem = window.localStorage.getItem("localStorageElemKey");
+        if (localStorageElem ${comp} localStorageElemValue) {
+            errors.push("localStorage item \\"" + localStorageElemKey + "\\" (of value \\"" + \
+localStorageElemValue + "\\") ${comp} \\"" + localStorageElem + "\\"");
+        }
+    }
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+});`],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('{"a": "1", "b": "2px"}'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'if (localStorage.getItem("a") ' + comp + ' "1") {\n' +
-            'var value = localStorage.getItem("a");\n' +
-            'throw "localStorage item \\"a\\" (" + value + ") ' + comp + ' \\"1\\"";\n' +
-            '}\n' +
-            'if (localStorage.getItem("b") ' + comp + ' "2px") {\n' +
-            'var value = localStorage.getItem("b");\n' +
-            'throw "localStorage item \\"b\\" (" + value + ") ' + comp + ' \\"2px\\"";\n' +
-            '}\n' +
-            '});',
-        ],
+        'instructions': [`\
+await page.evaluate(() => {
+    const errors = [];
+    const localStorageElemDict = {"a":"1","b":"2px"};
+    for (const [localStorageElemKey, localStorageElemValue] of \
+Object.entries(localStorageElemDict)) {
+        let localStorageElem = window.localStorage.getItem("localStorageElemKey");
+        if (localStorageElem ${comp} localStorageElemValue) {
+            errors.push("localStorage item \\"" + localStorageElemKey + "\\" (of value \\"" + \
+localStorageElemValue + "\\") ${comp} \\"" + localStorageElem + "\\"");
+        }
+    }
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+});`],
         'wait': false,
         'checkResult': true,
     });
 
     // Multiline
     x.assert(func('{"a"\n: \n"1"}'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'if (localStorage.getItem("a") ' + comp + ' "1") {\n' +
-            'var value = localStorage.getItem("a");\n' +
-            'throw "localStorage item \\"a\\" (" + value + ") ' + comp + ' \\"1\\"";\n' +
-            '}\n' +
-            '});',
-        ],
+        'instructions': [`\
+await page.evaluate(() => {
+    const errors = [];
+    const localStorageElemDict = {"a":"1"};
+    for (const [localStorageElemKey, localStorageElemValue] of \
+Object.entries(localStorageElemDict)) {
+        let localStorageElem = window.localStorage.getItem("localStorageElemKey");
+        if (localStorageElem ${comp} localStorageElemValue) {
+            errors.push("localStorage item \\"" + localStorageElemKey + "\\" (of value \\"" + \
+localStorageElemValue + "\\") ${comp} \\"" + localStorageElem + "\\"");
+        }
+    }
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+});`],
         'wait': false,
         'checkResult': true,
     });

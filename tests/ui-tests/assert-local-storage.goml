@@ -1,0 +1,6 @@
+// This test is mostly to check the output of the local-storage command.
+goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+assert-local-storage: {"something": "whatever", "other": "hehe"}
+click: "#js-local-storage"
+assert-local-storage-false: {"something": "whatever"}
+assert-local-storage: {"something": "whatever"}
