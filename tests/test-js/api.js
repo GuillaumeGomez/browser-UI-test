@@ -2330,7 +2330,7 @@ ENDS_WITH check)');
     );
 }
 
-function checkAssertPositionInner(x, func, before, after) {
+function checkAssertPositionInner(x, func, cond) {
     x.assert(func('("a", "b", )'), {
         'error': 'expected JSON dictionary as second argument, found `"b"`',
     });
@@ -2359,71 +2359,86 @@ function checkAssertPositionInner(x, func, before, after) {
     });
 
     x.assert(func('("a", {})'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$("a");\n' +
-            'if (parseAssertPosition === null) { throw \'"a" not found\'; }',
+        'instructions': [`\
+let parseAssertPosition = await page.$("a");
+if (parseAssertPosition === null) { throw '"a" not found'; }
+await page.evaluate(elem => {
+    const errors = [];
+    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+        let v = e.getBoundingClientRect()[field];
+        let roundedV = Math.round(v);
+${indentString(cond, 2)}
+    }
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertPosition);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"x": 1})'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$("a");\n' +
-            'if (parseAssertPosition === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkX(e) {\n' +
-            before +
-            'let x = e.getBoundingClientRect().left;\n' +
-            'let roundedX = Math.round(x);\n' +
-            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
-            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem);\n' +
-            '}, parseAssertPosition);',
+        'instructions': [`\
+let parseAssertPosition = await page.$("a");
+if (parseAssertPosition === null) { throw '"a" not found'; }
+await page.evaluate(elem => {
+    const errors = [];
+    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+        let v = e.getBoundingClientRect()[field];
+        let roundedV = Math.round(v);
+${indentString(cond, 2)}
+    }
+    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertPosition);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"x": 1}, ALL)'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$$("a");\n' +
-            'if (parseAssertPosition.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkX(e) {\n' +
-            before +
-            'let x = e.getBoundingClientRect().left;\n' +
-            'let roundedX = Math.round(x);\n' +
-            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
-            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem);\n' +
-            '}, parseAssertPosition[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertPosition = await page.$$("a");
+if (parseAssertPosition.length === 0) { throw '"a" not found'; }
+for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
+    await page.evaluate(elem => {
+        const errors = [];
+        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+            let v = e.getBoundingClientRect()[field];
+            let roundedV = Math.round(v);
+${indentString(cond, 3)}
+        }
+        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertPosition[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", {"y": 1})'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$("a");\n' +
-            'if (parseAssertPosition === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkY(e) {\n' +
-            before +
-            'let y = e.getBoundingClientRect().top;\n' +
-            'let roundedY = Math.round(y);\n' +
-            'if (y !== 1 && roundedY !== Math.round(1)) {\n' +
-            'throw "different Y values: " + y + "(or " + roundedY + ") != " + 1;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkY(elem);\n' +
-            '}, parseAssertPosition);',
+        'instructions': [`\
+let parseAssertPosition = await page.$("a");
+if (parseAssertPosition === null) { throw '"a" not found'; }
+await page.evaluate(elem => {
+    const errors = [];
+    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+        let v = e.getBoundingClientRect()[field];
+        let roundedV = Math.round(v);
+${indentString(cond, 2)}
+    }
+    checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 1, errors);
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertPosition);`,
         ],
         'wait': false,
         'checkResult': true,
@@ -2431,156 +2446,163 @@ function checkAssertPositionInner(x, func, before, after) {
 
     // Check the handling of pseudo elements
     x.assert(func('("a::after", {"x": 1})'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$("a");\n' +
-            'if (parseAssertPosition === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkX(e) {\n' +
-            before +
-            'let x = e.getBoundingClientRect().left;\n' +
-            'let pseudoStyle = window.getComputedStyle(e, "::after");\n' +
-            'let style = window.getComputedStyle(e);\n' +
-            'x += browserUiTestHelpers.extractFloat(pseudoStyle.left) - ' +
-                'browserUiTestHelpers.extractFloat(style.marginLeft);\n' +
-            'let roundedX = Math.round(x);\n' +
-            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
-            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem);\n' +
-            '}, parseAssertPosition);',
+        'instructions': [`\
+let parseAssertPosition = await page.$("a");
+if (parseAssertPosition === null) { throw '"a" not found'; }
+await page.evaluate(elem => {
+    const errors = [];
+    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+        let v = e.getBoundingClientRect()[field];
+        let pseudoStyle = window.getComputedStyle(e, "::after");
+        let style = window.getComputedStyle(e);
+        val += browserUiTestHelpers.extractFloat(pseudoStyle[field]) - ' + \
+browserUiTestHelpers.extractFloat(style[styleField]);
+        let roundedV = Math.round(v);
+${indentString(cond, 2)}
+    }
+    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertPosition);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a::after", {"y": 1})'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$("a");\n' +
-            'if (parseAssertPosition === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkY(e) {\n' +
-            before +
-            'let y = e.getBoundingClientRect().top;\n' +
-            'let pseudoStyle = window.getComputedStyle(e, "::after");\n' +
-            'let style = window.getComputedStyle(e);\n' +
-            'y += browserUiTestHelpers.extractFloat(pseudoStyle.top) - ' +
-                'browserUiTestHelpers.extractFloat(style.marginTop);\n' +
-            'let roundedY = Math.round(y);\n' +
-            'if (y !== 1 && roundedY !== Math.round(1)) {\n' +
-            'throw "different Y values: " + y + "(or " + roundedY + ") != " + 1;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkY(elem);\n' +
-            '}, parseAssertPosition);',
+        'instructions': [`\
+let parseAssertPosition = await page.$("a");
+if (parseAssertPosition === null) { throw '"a" not found'; }
+await page.evaluate(elem => {
+    const errors = [];
+    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+        let v = e.getBoundingClientRect()[field];
+        let pseudoStyle = window.getComputedStyle(e, "::after");
+        let style = window.getComputedStyle(e);
+        val += browserUiTestHelpers.extractFloat(pseudoStyle[field]) - ' + \
+browserUiTestHelpers.extractFloat(style[styleField]);
+        let roundedV = Math.round(v);
+${indentString(cond, 2)}
+    }
+    checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 1, errors);
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertPosition);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a:focus", {"x": 1})'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$("a:focus");\n' +
-            'if (parseAssertPosition === null) { throw \'"a:focus" not found\'; }\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkX(e) {\n' +
-            before +
-            'let x = e.getBoundingClientRect().left;\n' +
-            'let roundedX = Math.round(x);\n' +
-            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
-            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem);\n' +
-            '}, parseAssertPosition);',
+        'instructions': [`\
+let parseAssertPosition = await page.$("a:focus");
+if (parseAssertPosition === null) { throw '"a:focus" not found'; }
+await page.evaluate(elem => {
+    const errors = [];
+    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+        let v = e.getBoundingClientRect()[field];
+        let roundedV = Math.round(v);
+${indentString(cond, 2)}
+    }
+    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertPosition);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a:focus", {"x": 1}, ALL)'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$$("a:focus");\n' +
-            'if (parseAssertPosition.length === 0) { throw \'"a:focus" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkX(e) {\n' +
-            before +
-            'let x = e.getBoundingClientRect().left;\n' +
-            'let roundedX = Math.round(x);\n' +
-            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
-            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem);\n' +
-            '}, parseAssertPosition[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertPosition = await page.$$("a:focus");
+if (parseAssertPosition.length === 0) { throw '"a:focus" not found'; }
+for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
+    await page.evaluate(elem => {
+        const errors = [];
+        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+            let v = e.getBoundingClientRect()[field];
+            let roundedV = Math.round(v);
+${indentString(cond, 3)}
+        }
+        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertPosition[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a ::after", {"x": 1})'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$("a ::after");\n' +
-            'if (parseAssertPosition === null) { throw \'"a ::after" not found\'; }\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkX(e) {\n' +
-            before +
-            'let x = e.getBoundingClientRect().left;\n' +
-            'let roundedX = Math.round(x);\n' +
-            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
-            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem);\n' +
-            '}, parseAssertPosition);',
+        'instructions': [`\
+let parseAssertPosition = await page.$("a ::after");
+if (parseAssertPosition === null) { throw '"a ::after" not found'; }
+await page.evaluate(elem => {
+    const errors = [];
+    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+        let v = e.getBoundingClientRect()[field];
+        let roundedV = Math.round(v);
+${indentString(cond, 2)}
+    }
+    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertPosition);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a ::after", {"x": 1}, ALL)'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$$("a ::after");\n' +
-            'if (parseAssertPosition.length === 0) { throw \'"a ::after" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkX(e) {\n' +
-            before +
-            'let x = e.getBoundingClientRect().left;\n' +
-            'let roundedX = Math.round(x);\n' +
-            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
-            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem);\n' +
-            '}, parseAssertPosition[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertPosition = await page.$$("a ::after");
+if (parseAssertPosition.length === 0) { throw '"a ::after" not found'; }
+for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
+    await page.evaluate(elem => {
+        const errors = [];
+        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+            let v = e.getBoundingClientRect()[field];
+            let roundedV = Math.round(v);
+${indentString(cond, 3)}
+        }
+        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertPosition[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     // With decimal.
     x.assert(func('("a ::after", {"x": 1.14}, ALL)'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$$("a ::after");\n' +
-            'if (parseAssertPosition.length === 0) { throw \'"a ::after" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkX(e) {\n' +
-            before +
-            'let x = e.getBoundingClientRect().left;\n' +
-            'let roundedX = Math.round(x);\n' +
-            'if (x !== 1.14 && roundedX !== Math.round(1.14)) {\n' +
-            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1.14;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem);\n' +
-            '}, parseAssertPosition[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertPosition = await page.$$("a ::after");
+if (parseAssertPosition.length === 0) { throw '"a ::after" not found'; }
+for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
+    await page.evaluate(elem => {
+        const errors = [];
+        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+            let v = e.getBoundingClientRect()[field];
+            let roundedV = Math.round(v);
+${indentString(cond, 3)}
+        }
+        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1.14, errors);
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertPosition[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -2588,116 +2610,114 @@ function checkAssertPositionInner(x, func, before, after) {
 
     // XPath
     x.assert(func('("//a", {})'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$x("//a");\n' +
-            'if (parseAssertPosition.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseAssertPosition = parseAssertPosition[0];',
+        'instructions': [`\
+let parseAssertPosition = await page.$x("//a");
+if (parseAssertPosition.length === 0) { throw 'XPath "//a" not found'; }
+parseAssertPosition = parseAssertPosition[0];
+await page.evaluate(elem => {
+    const errors = [];
+    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+        let v = e.getBoundingClientRect()[field];
+        let roundedV = Math.round(v);
+${indentString(cond, 2)}
+    }
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertPosition);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("//a", {"x": 1})'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$x("//a");\n' +
-            'if (parseAssertPosition.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseAssertPosition = parseAssertPosition[0];\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkX(e) {\n' +
-            before +
-            'let x = e.getBoundingClientRect().left;\n' +
-            'let roundedX = Math.round(x);\n' +
-            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
-            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem);\n' +
-            '}, parseAssertPosition);',
+        'instructions': [`\
+let parseAssertPosition = await page.$x("//a");
+if (parseAssertPosition.length === 0) { throw 'XPath "//a" not found'; }
+parseAssertPosition = parseAssertPosition[0];
+await page.evaluate(elem => {
+    const errors = [];
+    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+        let v = e.getBoundingClientRect()[field];
+        let roundedV = Math.round(v);
+${indentString(cond, 2)}
+    }
+    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertPosition);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("//a", {"x": 1}, ALL)'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$x("//a");\n' +
-            'if (parseAssertPosition.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkX(e) {\n' +
-            before +
-            'let x = e.getBoundingClientRect().left;\n' +
-            'let roundedX = Math.round(x);\n' +
-            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
-            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem);\n' +
-            '}, parseAssertPosition[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertPosition = await page.$x("//a");
+if (parseAssertPosition.length === 0) { throw 'XPath "//a" not found'; }
+for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
+    await page.evaluate(elem => {
+        const errors = [];
+        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+            let v = e.getBoundingClientRect()[field];
+            let roundedV = Math.round(v);
+${indentString(cond, 3)}
+        }
+        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertPosition[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("//a", {"x": 1, "y": 2})'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$x("//a");\n' +
-            'if (parseAssertPosition.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseAssertPosition = parseAssertPosition[0];\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkX(e) {\n' +
-            before +
-            'let x = e.getBoundingClientRect().left;\n' +
-            'let roundedX = Math.round(x);\n' +
-            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
-            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem);\n' +
-            'function checkY(e) {\n' +
-            before +
-            'let y = e.getBoundingClientRect().top;\n' +
-            'let roundedY = Math.round(y);\n' +
-            'if (y !== 2 && roundedY !== Math.round(2)) {\n' +
-            'throw "different Y values: " + y + "(or " + roundedY + ") != " + 2;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkY(elem);\n' +
-            '}, parseAssertPosition);',
+        'instructions': [`\
+let parseAssertPosition = await page.$x("//a");
+if (parseAssertPosition.length === 0) { throw 'XPath "//a" not found'; }
+parseAssertPosition = parseAssertPosition[0];
+await page.evaluate(elem => {
+    const errors = [];
+    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+        let v = e.getBoundingClientRect()[field];
+        let roundedV = Math.round(v);
+${indentString(cond, 2)}
+    }
+    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
+    checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 2, errors);
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertPosition);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("//a", {"x": 1, "y": 2}, ALL)'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$x("//a");\n' +
-            'if (parseAssertPosition.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkX(e) {\n' +
-            before +
-            'let x = e.getBoundingClientRect().left;\n' +
-            'let roundedX = Math.round(x);\n' +
-            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
-            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem);\n' +
-            'function checkY(e) {\n' +
-            before +
-            'let y = e.getBoundingClientRect().top;\n' +
-            'let roundedY = Math.round(y);\n' +
-            'if (y !== 2 && roundedY !== Math.round(2)) {\n' +
-            'throw "different Y values: " + y + "(or " + roundedY + ") != " + 2;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkY(elem);\n' +
-            '}, parseAssertPosition[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertPosition = await page.$x("//a");
+if (parseAssertPosition.length === 0) { throw 'XPath "//a" not found'; }
+for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
+    await page.evaluate(elem => {
+        const errors = [];
+        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+            let v = e.getBoundingClientRect()[field];
+            let roundedV = Math.round(v);
+${indentString(cond, 3)}
+        }
+        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
+        checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 2, errors);
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertPosition[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -2706,33 +2726,25 @@ function checkAssertPositionInner(x, func, before, after) {
     // Multiline
     x.assert(func('("a", {"x": \n1\n, "x": 2})'), {'error': 'JSON dict key `x` is duplicated'});
     x.assert(func('("//a"\n, \n{"x": \n1, \n"y": \n2}\n, \nALL)'), {
-        'instructions': [
-            'let parseAssertPosition = await page.$x("//a");\n' +
-            'if (parseAssertPosition.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {\n' +
-            'await page.evaluate(elem => {\n' +
-            'function checkX(e) {\n' +
-            before +
-            'let x = e.getBoundingClientRect().left;\n' +
-            'let roundedX = Math.round(x);\n' +
-            'if (x !== 1 && roundedX !== Math.round(1)) {\n' +
-            'throw "different X values: " + x + "(or " + roundedX + ") != " + 1;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem);\n' +
-            'function checkY(e) {\n' +
-            before +
-            'let y = e.getBoundingClientRect().top;\n' +
-            'let roundedY = Math.round(y);\n' +
-            'if (y !== 2 && roundedY !== Math.round(2)) {\n' +
-            'throw "different Y values: " + y + "(or " + roundedY + ") != " + 2;\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkY(elem);\n' +
-            '}, parseAssertPosition[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertPosition = await page.$x("//a");
+if (parseAssertPosition.length === 0) { throw 'XPath "//a" not found'; }
+for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
+    await page.evaluate(elem => {
+        const errors = [];
+        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+            let v = e.getBoundingClientRect()[field];
+            let roundedV = Math.round(v);
+${indentString(cond, 3)}
+        }
+        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
+        checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 2, errors);
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertPosition[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -2740,15 +2752,24 @@ function checkAssertPositionInner(x, func, before, after) {
 }
 
 function checkAssertPosition(x, func) {
-    checkAssertPositionInner(x, func, '', '');
+    checkAssertPositionInner(
+        x,
+        func,
+        `\
+if (v !== value && roundedV !== Math.round(value)) {
+    errors.push("different " + kind + " values: " + v + " (or " + roundedV + ") != " + value);
+}`);
 }
 
 function checkAssertPositionFalse(x, func) {
     checkAssertPositionInner(
         x,
         func,
-        'try {\n',
-        '} catch(e) { return; } throw "assert didn\'t fail";\n');
+        `\
+if (v === value || roundedV === Math.round(value)) {
+    errors.push("same " + kind + " values (whereas it shouldn't): " + v + " (or " + roundedV + ") \
+!= " + value);
+}`);
 }
 
 function checkAssertTextInner(x, func, before, after) {
