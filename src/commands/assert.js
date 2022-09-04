@@ -1002,7 +1002,6 @@ function parseAssertPositionInner(parser, assertFalse) {
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
 
     const checkAllElements = selector.checkAllElements;
-    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
 
     const json = selector.tuple[1].getRaw();
 
@@ -1014,40 +1013,12 @@ function parseAssertPositionInner(parser, assertFalse) {
 
     const varName = 'parseAssertPosition';
 
-    let code = '';
+    let checks = '';
     for (const [key, value] of Object.entries(entries.values)) {
         if (key === 'x') {
-            code += 'function checkX(e) {\n' +
-                insertBefore +
-                'let x = e.getBoundingClientRect().left;\n';
-            if (isPseudo) {
-                code += `let pseudoStyle = window.getComputedStyle(e, "${selector.pseudo}");\n` +
-                    'let style = window.getComputedStyle(e);\n' +
-                    'x += browserUiTestHelpers.extractFloat(pseudoStyle.left) - ' +
-                        'browserUiTestHelpers.extractFloat(style.marginLeft);\n';
-            }
-            code += 'let roundedX = Math.round(x);\n' +
-                `if (x !== ${value} && roundedX !== Math.round(${value})) {\n` +
-                `throw "different X values: " + x + "(or " + roundedX + ") != " + ${value};\n` +
-                `}${insertAfter}\n` +
-                '}\n' +
-                'checkX(elem);\n';
+            checks += `\ncheckAssertPosBrowser(elem, 'left', 'marginLeft', 'X', ${value}, errors);`;
         } else if (key === 'y') {
-            code += 'function checkY(e) {\n' +
-                insertBefore +
-                'let y = e.getBoundingClientRect().top;\n';
-            if (isPseudo) {
-                code += `let pseudoStyle = window.getComputedStyle(e, "${selector.pseudo}");\n` +
-                    'let style = window.getComputedStyle(e);\n' +
-                    'y += browserUiTestHelpers.extractFloat(pseudoStyle.top) - ' +
-                        'browserUiTestHelpers.extractFloat(style.marginTop);\n';
-            }
-            code += 'let roundedY = Math.round(y);\n' +
-                `if (y !== ${value} && roundedY !== Math.round(${value})) {\n` +
-                `throw "different Y values: " + y + "(or " + roundedY + ") != " + ${value};\n` +
-                `}${insertAfter}\n` +
-                '}\n' +
-                'checkY(elem);\n';
+            checks += `\ncheckAssertPosBrowser(elem, 'top', 'marginTop', 'Y', ${value}, errors);`;
         } else {
             return {
                 'error': 'Only accepted keys are "x" and "y", found `' +
@@ -1055,24 +1026,61 @@ function parseAssertPositionInner(parser, assertFalse) {
             };
         }
     }
-    let instructions = getAndSetElements(selector, varName, checkAllElements);
-    if (!checkAllElements) {
-        if (code.length !== 0) {
-            instructions += '\nawait page.evaluate(elem => {\n' +
-                code +
-                `}, ${varName});`;
-        }
-    } else {
-        if (code.length !== 0) {
-            instructions += `\nfor (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
-                'await page.evaluate(elem => {\n' +
-                code +
-                `}, ${varName}[i]);\n` +
-            '}';
-        }
+
+    let extra = '';
+    if (isPseudo) {
+        extra += `
+let pseudoStyle = window.getComputedStyle(e, "${selector.pseudo}");
+let style = window.getComputedStyle(e);
+val += browserUiTestHelpers.extractFloat(pseudoStyle[field]) - ' + \
+browserUiTestHelpers.extractFloat(style[styleField]);`;
     }
+
+    let check;
+    if (assertFalse) {
+        check = `\
+if (v === value || roundedV === Math.round(value)) {
+    errors.push("same " + kind + " values (whereas it shouldn't): " + v + " (or " + roundedV + ") \
+!= " + value);
+}`;
+    } else {
+        check = `\
+if (v !== value && roundedV !== Math.round(value)) {
+    errors.push("different " + kind + " values: " + v + " (or " + roundedV + ") != " + value);
+}`;
+    }
+
+    const code = `\
+function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+    let v = e.getBoundingClientRect()[field];${indentString(extra, 1)}
+    let roundedV = Math.round(v);
+${indentString(check, 1)}
+}${checks}`;
+
+    let whole = getAndSetElements(selector, varName, checkAllElements) + '\n';
+    let indent = 0;
+    if (checkAllElements) {
+        whole += `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n`;
+        indent = 1;
+    }
+    whole += indentString(`\
+await page.evaluate(elem => {
+    const errors = [];
+${indentString(code, 1)}
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+`, indent);
+    if (checkAllElements) {
+        whole += `    }, ${varName}[i]);
+}`;
+    } else {
+        whole += `}, ${varName});`;
+    }
+
     return {
-        'instructions': [instructions],
+        'instructions': [whole],
         'wait': false,
         'checkResult': true,
     };
