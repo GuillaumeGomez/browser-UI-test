@@ -1,8 +1,8 @@
 => Starting doc-ui tests...
 
 assert-text... FAILED
-[ERROR] (line 5) Error: Evaluation failed: assert didn't fail (for STARTS_WITH check): for command `assert-text-false: ("header", "Another", [ENDS_WITH, STARTS_WITH])`
-[ERROR] (line 6) Error: Evaluation failed: assert didn't fail (for STARTS_WITH check): for command `assert-text-false: ("header", "Another", STARTS_WITH)`
+[ERROR] (line 5) Error: Evaluation failed: The following errors happened: [`Another page!` starts with `Another` (for STARTS_WITH check)]: for command `assert-text-false: ("header", "Another", [ENDS_WITH, STARTS_WITH])`
+[ERROR] (line 6) Error: Evaluation failed: The following errors happened: [`Another page!` starts with `Another` (for STARTS_WITH check)]: for command `assert-text-false: ("header", "Another", STARTS_WITH)`
 [ERROR] (line 9) Error: Evaluation failed: The following errors happened (for selector `.content`): [Property `className` (`content`) does not end with `con`]: for command `assert-property: (".content", {"className": "con"}, [ENDS_WITH, STARTS_WITH])`
 [ERROR] (line 10) Error: Evaluation failed: The following errors happened (for selector `.content`): [Property `className` (`content`) does not end with `con`]: for command `assert-property: (".content", {"className": "con"}, [STARTS_WITH, ENDS_WITH])`
 [ERROR] (line 12) Error: Evaluation failed: The following errors happened (for selector `.content`): [assert didn't fail for property `className` (for STARTS_WITH check)]: for command `assert-property-false: (".content", {"className": "con"}, [STARTS_WITH, ENDS_WITH])`
@@ -13,8 +13,8 @@ assert-text... FAILED
 [ERROR] (line 23) Error: Evaluation failed: The following errors happened (for selector `.content`): [attribute `class` (`content`) doesn't start with `.con` (for STARTS_WITH check)]: for command `assert-attribute: (".content", {"class": ".con"}, STARTS_WITH)`
 [ERROR] (line 24) Error: Evaluation failed: The following errors happened (for selector `.content`): [No attribute named `"class`]: for command `assert-attribute: (".content", {"\"class": ".con"})`
 [ERROR] (line 29) Error: Evaluation failed: The following errors happened (for selector `.content`): [No attribute named `does-not-exist`]: for command `assert-attribute: (".content", {"does-not-exist": ".con"})`
-[ERROR] (line 35) Error: Evaluation failed: "Another page!" doesn't end with "Another": for command `assert-text: ("header", "Another", [STARTS_WITH, ENDS_WITH])`
-[ERROR] (line 36) Error: Evaluation failed: "Another page!" doesn't end with "Another": for command `assert-text: ("header", "Another", ENDS_WITH)`
+[ERROR] (line 35) Error: Evaluation failed: The following errors happened: [`Another page!` doesn't end with `Another` (for ENDS_WITH check)]: for command `assert-text: ("header", "Another", [STARTS_WITH, ENDS_WITH])`
+[ERROR] (line 36) Error: Evaluation failed: The following errors happened: [`Another page!` doesn't end with `Another` (for ENDS_WITH check)]: for command `assert-text: ("header", "Another", ENDS_WITH)`
 [ERROR] (line 38) Error: Evaluation failed: The following errors happened: [assert didn't fail for property `title` (for STARTS_WITH check), assert didn't fail for property `bgColor` (for STARTS_WITH check), assert didn't fail for property `bgColor` (for ENDS_WITH check)]: for command `assert-document-property-false: ({"title": "Other", "bgColor": ""}, [ENDS_WITH, STARTS_WITH])`
 [ERROR] (line 39) Error: Evaluation failed: The following errors happened: [assert didn't fail for property `title` (for STARTS_WITH check)]: for command `assert-document-property-false: ({"title": "Other"}, STARTS_WITH)`
 [ERROR] (line 40) Error: Evaluation failed: The following errors happened: [Property `title` (`Other page`) does not end with `Other`, Property `bgColor` (``) does not start with `a`, Property `bgColor` (``) does not end with `a`]: for command `assert-document-property: ({"title": "Other", "bgColor": "a"}, [STARTS_WITH, ENDS_WITH])`
