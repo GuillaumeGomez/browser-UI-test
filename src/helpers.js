@@ -26,27 +26,19 @@ const browserUiTestHelpers = {
     getElemText: getElemText,
     compareElemText: function(e, value) {
         const elemValue = getElemText(e, value);
-        if (elemValue !== value) {
-            throw '"' + elemValue + '" !== "' + value + '"';
-        }
+        return elemValue === value;
     },
     elemTextStartsWith: function(e, value) {
         const elemValue = getElemText(e, value);
-        if (!elemValue.startsWith(value)) {
-            throw `"${elemValue}" doesn't start with "${value}"`;
-        }
+        return elemValue.startsWith(value);
     },
     elemTextEndsWith: function(e, value) {
         const elemValue = getElemText(e, value);
-        if (!elemValue.endsWith(value)) {
-            throw `"${elemValue}" doesn't end with "${value}"`;
-        }
+        return elemValue.endsWith(value);
     },
     elemTextContains: function(e, value) {
         const elemValue = getElemText(e, value);
-        if (elemValue.indexOf(value) === -1) {
-            throw `"${elemValue}" doesn't contain "${value}"`;
-        }
+        return elemValue.indexOf(value) !== -1;
     },
     extractFloat: extractFloat,
     extractFloatOrZero: function(value, rounded) {
