@@ -841,11 +841,6 @@ function parseAssertTextInner(parser, assertFalse) {
         }
     }
 
-    const [insertBefore, insertAfter] = getInsertStrings(
-        assertFalse,
-        false,
-        'TO_REPLACE',
-    );
     const selector = tuple[0].getSelector();
 
     const value = tuple[1].getStringValue();
@@ -853,47 +848,89 @@ function parseAssertTextInner(parser, assertFalse) {
 
     const checks = [];
     if (enabled_checks['CONTAINS']) {
-        checks.push([`browserUiTestHelpers.elemTextContains(e, "${value}");`, 'CONTAINS']);
+        if (assertFalse) {
+            checks.push(`\
+if (browserUiTestHelpers.elemTextContains(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` contains \`" + value + "\` \
+(for CONTAINS check)");
+}`);
+        } else {
+            checks.push(`\
+if (!browserUiTestHelpers.elemTextContains(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` doesn't contain \`" + value + "\` \
+(for CONTAINS check)");
+}`);
+        }
     }
     if (enabled_checks['STARTS_WITH']) {
-        checks.push([`browserUiTestHelpers.elemTextStartsWith(e, "${value}");`, 'STARTS_WITH']);
+        if (assertFalse) {
+            checks.push(`\
+if (browserUiTestHelpers.elemTextStartsWith(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` starts with \`" + value + "\` (for STARTS_WITH \
+check)");
+}`);
+        } else {
+            checks.push(`\
+if (!browserUiTestHelpers.elemTextStartsWith(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` doesn't start with \`" + value + "\` \
+(for STARTS_WITH check)");
+}`);
+        }
     }
     if (enabled_checks['ENDS_WITH']) {
-        checks.push([`browserUiTestHelpers.elemTextEndsWith(e, "${value}");`, 'ENDS_WITH']);
+        if (assertFalse) {
+            checks.push(`\
+if (browserUiTestHelpers.elemTextEndsWith(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` ends with \`" + value + "\` (for ENDS_WITH \
+check)");
+}`);
+        } else {
+            checks.push(`\
+if (!browserUiTestHelpers.elemTextEndsWith(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` doesn't end with \`" + value + "\` \
+(for ENDS_WITH check)");
+}`);
+        }
     }
     if (checks.length === 0) {
-        checks.push([`browserUiTestHelpers.compareElemText(e, "${value}");`, '']);
-    }
-
-    let all_checks = '';
-    for (const check of checks) {
-        all_checks += '(() => {\n' +
-            insertBefore +
-            check[0] + '\n';
-
-        if (check[1].length > 0) {
-            all_checks += insertAfter.replace('TO_REPLACE', ` (for ${check[1]} check)`);
+        if (assertFalse) {
+            checks.push(`\
+if (browserUiTestHelpers.compareElemText(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` is equal to \`" + value + "\`");
+}`);
         } else {
-            all_checks += insertAfter.replace('TO_REPLACE', '');
+            checks.push(`\
+if (!browserUiTestHelpers.compareElemText(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` isn't equal to \`" + value + "\`");
+}`);
         }
-
-        all_checks += '})();\n';
     }
 
-    let instructions = getAndSetElements(selector, varName, enabled_checks['ALL'] === true) + '\n';
-    if (enabled_checks['ALL'] !== true) {
-        instructions += 'await page.evaluate(e => {\n' +
-            all_checks +
-            `}, ${varName});`;
+    let whole = getAndSetElements(selector, varName, enabled_checks['ALL'] === true) + '\n';
+    let indent = 0;
+    if (enabled_checks['ALL'] === true) {
+        whole += `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n`;
+        indent = 1;
+    }
+    whole += indentString(`\
+await page.evaluate(e => {
+    const errors = [];
+    const value = "${value}";
+${indentString(checks.join('\n'), 1)}
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+`, indent);
+    if (enabled_checks['ALL'] === true) {
+        whole += `    }, ${varName}[i]);
+}`;
     } else {
-        instructions += `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n` +
-            'await page.evaluate(e => {\n' +
-            all_checks +
-            `}, ${varName}[i]);\n` +
-            '}';
+        whole += `}, ${varName});`;
     }
+
     return {
-        'instructions': [instructions],
+        'instructions': [whole],
         'wait': false,
         'checkResult': true,
         'warnings': warnings.length > 0 ? warnings : undefined,

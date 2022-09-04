@@ -2772,7 +2772,7 @@ if (v === value || roundedV === Math.round(value)) {
 }`);
 }
 
-function checkAssertTextInner(x, func, before, after) {
+function checkAssertTextInner(x, func, compare, contains, startsWith, endsWith) {
     x.assert(func('("a", )'), {
         'error': 'invalid number of values in the tuple, read the documentation to see the ' +
             'accepted inputs',
@@ -2800,184 +2800,200 @@ function checkAssertTextInner(x, func, before, after) {
             '`, `CONTAINS`, `STARTS_WITH`, `ENDS_WITH`), found an array of `string` (in `["c"]`)',
     });
 
+    // Checking that having a pending comma is valid.
     x.assert(func('("a", "\'b",)'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$("a");\n' +
-            'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.compareElemText(e, "\\\'b");\n' +
-            after('') +
-            '})();\n' +
-            '}, parseAssertElemStr);',
+        'instructions': [`\
+let parseAssertElemStr = await page.$("a");
+if (parseAssertElemStr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const errors = [];
+    const value = "\\'b";
+${compare(1)}
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertElemStr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", "\'b")'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$("a");\n' +
-            'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.compareElemText(e, "\\\'b");\n' +
-            after('') +
-            '})();\n' +
-            '}, parseAssertElemStr);',
+        'instructions': [`\
+let parseAssertElemStr = await page.$("a");
+if (parseAssertElemStr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const errors = [];
+    const value = "\\'b";
+${compare(1)}
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertElemStr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", "\'b", ALL)'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$$("a");\n' +
-            'if (parseAssertElemStr.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.compareElemText(e, "\\\'b");\n' +
-            after('') +
-            '})();\n' +
-            '}, parseAssertElemStr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemStr = await page.$$("a");
+if (parseAssertElemStr.length === 0) { throw '"a" not found'; }
+for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const errors = [];
+        const value = "\\'b";
+${compare(2)}
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertElemStr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
+    // Ensure that wrapping `ALL` into an array is also accepted.
     x.assert(func('("a", "\'b", [ALL])'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$$("a");\n' +
-            'if (parseAssertElemStr.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.compareElemText(e, "\\\'b");\n' +
-            after('') +
-            '})();\n' +
-            '}, parseAssertElemStr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemStr = await page.$$("a");
+if (parseAssertElemStr.length === 0) { throw '"a" not found'; }
+for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const errors = [];
+        const value = "\\'b";
+${compare(2)}
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertElemStr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", "b")'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$("a");\n' +
-            'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.compareElemText(e, "b");\n' +
-            after('') +
-            '})();\n' +
-            '}, parseAssertElemStr);',
+        'instructions': [`\
+let parseAssertElemStr = await page.$("a");
+if (parseAssertElemStr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const errors = [];
+    const value = "b";
+${compare(1)}
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertElemStr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", "b", ALL)'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$$("a");\n' +
-            'if (parseAssertElemStr.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.compareElemText(e, "b");\n' +
-            after('') +
-            '})();\n' +
-            '}, parseAssertElemStr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemStr = await page.$$("a");
+if (parseAssertElemStr.length === 0) { throw '"a" not found'; }
+for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const errors = [];
+        const value = "b";
+${compare(2)}
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertElemStr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", "b", CONTAINS)'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$("a");\n' +
-            'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.elemTextContains(e, "b");\n' +
-            after(' (for CONTAINS check)') +
-            '})();\n' +
-            '}, parseAssertElemStr);',
+        'instructions': [`\
+let parseAssertElemStr = await page.$("a");
+if (parseAssertElemStr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const errors = [];
+    const value = "b";
+${contains(1)}
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertElemStr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", "b", STARTS_WITH)'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$("a");\n' +
-            'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.elemTextStartsWith(e, "b");\n' +
-            after(' (for STARTS_WITH check)') +
-            '})();\n' +
-            '}, parseAssertElemStr);',
+        'instructions': [`\
+let parseAssertElemStr = await page.$("a");
+if (parseAssertElemStr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const errors = [];
+    const value = "b";
+${startsWith(1)}
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertElemStr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", "b", ENDS_WITH)'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$("a");\n' +
-            'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.elemTextEndsWith(e, "b");\n' +
-            after(' (for ENDS_WITH check)') +
-            '})();\n' +
-            '}, parseAssertElemStr);',
+        'instructions': [`\
+let parseAssertElemStr = await page.$("a");
+if (parseAssertElemStr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const errors = [];
+    const value = "b";
+${endsWith(1)}
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertElemStr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", "b", [CONTAINS, ENDS_WITH])'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$("a");\n' +
-            'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.elemTextContains(e, "b");\n' +
-            after(' (for CONTAINS check)') +
-            '})();\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.elemTextEndsWith(e, "b");\n' +
-            after(' (for ENDS_WITH check)') +
-            '})();\n' +
-            '}, parseAssertElemStr);',
+        'instructions': [`\
+let parseAssertElemStr = await page.$("a");
+if (parseAssertElemStr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const errors = [];
+    const value = "b";
+${contains(1)}
+${endsWith(1)}
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertElemStr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     // If an identifier is present more than once, we check that there is a warning about it.
     x.assert(func('("a", "b", [CONTAINS, ENDS_WITH, CONTAINS])'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$("a");\n' +
-            'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.elemTextContains(e, "b");\n' +
-            after(' (for CONTAINS check)') +
-            '})();\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.elemTextEndsWith(e, "b");\n' +
-            after(' (for ENDS_WITH check)') +
-            '})();\n' +
-            '}, parseAssertElemStr);',
+        'instructions': [`\
+let parseAssertElemStr = await page.$("a");
+if (parseAssertElemStr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const errors = [];
+    const value = "b";
+${contains(1)}
+${endsWith(1)}
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertElemStr);`,
         ],
         'wait': false,
         'checkResult': true,
@@ -2985,61 +3001,59 @@ function checkAssertTextInner(x, func, before, after) {
     });
     // Checking that the warning is not duplicated.
     x.assert(func('("a", "b", [CONTAINS, ENDS_WITH, CONTAINS, CONTAINS])'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$("a");\n' +
-            'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.elemTextContains(e, "b");\n' +
-            after(' (for CONTAINS check)') +
-            '})();\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.elemTextEndsWith(e, "b");\n' +
-            after(' (for ENDS_WITH check)') +
-            '})();\n' +
-            '}, parseAssertElemStr);',
+        'instructions': [`\
+let parseAssertElemStr = await page.$("a");
+if (parseAssertElemStr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const errors = [];
+    const value = "b";
+${contains(1)}
+${endsWith(1)}
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertElemStr);`,
         ],
         'wait': false,
         'checkResult': true,
         'warnings': ['`CONTAINS` is present more than once in the third argument array'],
     });
     x.assert(func('("a", "b", [ALL, CONTAINS])'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$$("a");\n' +
-            'if (parseAssertElemStr.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.elemTextContains(e, "b");\n' +
-            after(' (for CONTAINS check)') +
-            '})();\n' +
-            '}, parseAssertElemStr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemStr = await page.$$("a");
+if (parseAssertElemStr.length === 0) { throw '"a" not found'; }
+for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const errors = [];
+        const value = "b";
+${contains(2)}
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertElemStr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", "b", [ALL, CONTAINS, STARTS_WITH])'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$$("a");\n' +
-            'if (parseAssertElemStr.length === 0) { throw \'"a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.elemTextContains(e, "b");\n' +
-            after(' (for CONTAINS check)') +
-            '})();\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.elemTextStartsWith(e, "b");\n' +
-            after(' (for STARTS_WITH check)') +
-            '})();\n' +
-            '}, parseAssertElemStr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemStr = await page.$$("a");
+if (parseAssertElemStr.length === 0) { throw '"a" not found'; }
+for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const errors = [];
+        const value = "b";
+${contains(2)}
+${startsWith(2)}
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertElemStr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -3047,51 +3061,78 @@ function checkAssertTextInner(x, func, before, after) {
 
     // XPath
     x.assert(func('("//a", "b")'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$x("//a");\n' +
-            'if (parseAssertElemStr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseAssertElemStr = parseAssertElemStr[0];\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.compareElemText(e, "b");\n' +
-            after('') +
-            '})();\n' +
-            '}, parseAssertElemStr);',
+        'instructions': [`\
+let parseAssertElemStr = await page.$x("//a");
+if (parseAssertElemStr.length === 0) { throw 'XPath "//a" not found'; }
+parseAssertElemStr = parseAssertElemStr[0];
+await page.evaluate(e => {
+    const errors = [];
+    const value = "b";
+${compare(1)}
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertElemStr);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("//a", "b", ALL)'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$x("//a");\n' +
-            'if (parseAssertElemStr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.compareElemText(e, "b");\n' +
-            after('') +
-            '})();\n' +
-            '}, parseAssertElemStr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemStr = await page.$x("//a");
+if (parseAssertElemStr.length === 0) { throw 'XPath "//a" not found'; }
+for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const errors = [];
+        const value = "b";
+${compare(2)}
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertElemStr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("//a", "b", [ALL])'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$x("//a");\n' +
-            'if (parseAssertElemStr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.compareElemText(e, "b");\n' +
-            after('') +
-            '})();\n' +
-            '}, parseAssertElemStr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemStr = await page.$x("//a");
+if (parseAssertElemStr.length === 0) { throw 'XPath "//a" not found'; }
+for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const errors = [];
+        const value = "b";
+${compare(2)}
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertElemStr[i]);
+}`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // Check correct escape of `'`.
+    x.assert(func('("//a[text()=\'l\']", "b", [ALL])'), {
+        'instructions': [`\
+let parseAssertElemStr = await page.$x("//a[text()=\\'l\\']");
+if (parseAssertElemStr.length === 0) { throw 'XPath "//a[text()=\\'l\\']" not found'; }
+for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const errors = [];
+        const value = "b";
+${compare(2)}
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertElemStr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -3100,18 +3141,20 @@ function checkAssertTextInner(x, func, before, after) {
     // Multiline
     x.assert(func('("a", \n2\n)'), {'error': 'expected second argument to be a string, found `2`'});
     x.assert(func('("//a"\n, \n"b",\n ALL)'), {
-        'instructions': [
-            'let parseAssertElemStr = await page.$x("//a");\n' +
-            'if (parseAssertElemStr.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n' +
-            'await page.evaluate(e => {\n' +
-            '(() => {\n' +
-            before +
-            'browserUiTestHelpers.compareElemText(e, "b");\n' +
-            after('') +
-            '})();\n' +
-            '}, parseAssertElemStr[i]);\n' +
-            '}',
+        'instructions': [`\
+let parseAssertElemStr = await page.$x("//a");
+if (parseAssertElemStr.length === 0) { throw 'XPath "//a" not found'; }
+for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const errors = [];
+        const value = "b";
+${compare(2)}
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    }, parseAssertElemStr[i]);
+}`,
         ],
         'wait': false,
         'checkResult': true,
@@ -3119,15 +3162,54 @@ function checkAssertTextInner(x, func, before, after) {
 }
 
 function checkAssertText(x, func) {
-    checkAssertTextInner(x, func, '', () => '');
+    checkAssertTextInner(
+        x,
+        func,
+        indent => indentString(`\
+if (!browserUiTestHelpers.compareElemText(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` isn't equal to \`" + value + "\`");
+}`, indent),
+        indent => indentString(`\
+if (!browserUiTestHelpers.elemTextContains(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` doesn't contain \`" + value + "\` \
+(for CONTAINS check)");
+}`, indent),
+        indent => indentString(`\
+if (!browserUiTestHelpers.elemTextStartsWith(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` doesn't start with \`" + value + "\` \
+(for STARTS_WITH check)");
+}`, indent),
+        indent => indentString(`\
+if (!browserUiTestHelpers.elemTextEndsWith(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` doesn't end with \`" + value + "\` \
+(for ENDS_WITH check)");
+}`, indent),
+    );
 }
 
 function checkAssertTextFalse(x, func) {
     checkAssertTextInner(
         x,
         func,
-        'try {\n',
-        extra => `\n} catch(e) { return; } throw "assert didn't fail${extra}";`,
+        indent => indentString(`\
+if (browserUiTestHelpers.compareElemText(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` is equal to \`" + value + "\`");
+}`, indent),
+        indent => indentString(`\
+if (browserUiTestHelpers.elemTextContains(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` contains \`" + value + "\` \
+(for CONTAINS check)");
+}`, indent),
+        indent => indentString(`\
+if (browserUiTestHelpers.elemTextStartsWith(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` starts with \`" + value + "\` \
+(for STARTS_WITH check)");
+}`, indent),
+        indent => indentString(`\
+if (browserUiTestHelpers.elemTextEndsWith(e, value)) {
+    errors.push("\`" + getElemText(e, value) + "\` ends with \`" + value + "\` \
+(for ENDS_WITH check)");
+}`, indent),
     );
 }
 
@@ -5600,14 +5682,20 @@ function checkParseContent(x, func) {
                 'checkResult': true,
                 'original': 'assert-text: ("a", "b")',
                 'line_number': 2,
-                'instructions': [
-                    'let parseAssertElemStr = await page.$("a");\n' +
-                        'if (parseAssertElemStr === null) { throw \'"a" not found\'; }\n' +
-                        'await page.evaluate(e => {\n' +
-                        '(() => {\n' +
-                        'browserUiTestHelpers.compareElemText(e, "b");\n' +
-                        '})();\n' +
-                        '}, parseAssertElemStr);',
+                'instructions': [`\
+let parseAssertElemStr = await page.$("a");
+if (parseAssertElemStr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const errors = [];
+    const value = "b";
+    if (!browserUiTestHelpers.compareElemText(e, value)) {
+        errors.push("\`" + getElemText(e, value) + "\` isn't equal to \`" + value + "\`");
+    }
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertElemStr);`,
                 ],
             },
         ],
