@@ -73,7 +73,7 @@ function parseWaitFor(parser) {
         }
         return {
             'instructions': [
-                `await page.waitFor(${ret.value});`,
+                `await new Promise(r => setTimeout(r, ${ret.value}));`,
             ],
             'wait': false,
         };

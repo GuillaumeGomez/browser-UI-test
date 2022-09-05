@@ -295,7 +295,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             logs.info(command['infos']);
             if (shouldWait) {
                 // We wait a bit between each command to be sure the browser can follow.
-                await page.waitFor(100);
+                await new Promise(r => setTimeout(r, 100));
             }
             if (checkJsErrors()) {
                 break command_loop;
