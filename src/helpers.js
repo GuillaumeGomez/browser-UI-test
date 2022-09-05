@@ -18,6 +18,9 @@ function extractFloat(value, rounded) {
     if (rounded === true) {
         return Math.round(ret);
     }
+    if (Number.isNaN(ret)) {
+        return 0.;
+    }
     return ret;
 }
 

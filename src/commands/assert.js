@@ -1069,7 +1069,7 @@ function parseAssertPositionInner(parser, assertFalse) {
         extra += `
 let pseudoStyle = window.getComputedStyle(e, "${selector.pseudo}");
 let style = window.getComputedStyle(e);
-val += browserUiTestHelpers.extractFloat(pseudoStyle[field]) - ' + \
+v += browserUiTestHelpers.extractFloat(pseudoStyle[field]) - \
 browserUiTestHelpers.extractFloat(style[styleField]);`;
     }
 
@@ -1195,7 +1195,7 @@ await page.evaluate(() => {
     const errors = [];
     const ${varDict} = {${d}};
     for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-        let ${varName} = window.localStorage.getItem("${varKey}");
+        let ${varName} = window.localStorage.getItem(${varKey});
         if (${varName} ${checkSign} ${varValue}) {
             errors.push("localStorage item \\"" + ${varKey} + "\\" (of value \\"" + ${varValue} + \
 "\\") ${checkSign} \\"" + ${varName} + "\\"");

@@ -4,3 +4,10 @@ assert-local-storage: {"something": "whatever", "other": "hehe"}
 click: "#js-local-storage"
 assert-local-storage-false: {"something": "whatever"}
 assert-local-storage: {"something": "whatever"}
+assert-local-storage: {"something": "hello"}
+assert-local-storage-false: {"something": "hello"}
+local-storage: {"something": "whatever"}
+assert-local-storage: {"something": "whatever"}
+assert-local-storage: {"something": "whatever", "other": "hehe"}
+local-storage: {"other": "hehe"}
+assert-local-storage: {"something": "whatever", "other": "hehe"}
