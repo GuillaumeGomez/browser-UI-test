@@ -1809,7 +1809,7 @@ await page.evaluate(() => {
     const localStorageElemDict = {"a":"1"};
     for (const [localStorageElemKey, localStorageElemValue] of \
 Object.entries(localStorageElemDict)) {
-        let localStorageElem = window.localStorage.getItem("localStorageElemKey");
+        let localStorageElem = window.localStorage.getItem(localStorageElemKey);
         if (localStorageElem ${comp} localStorageElemValue) {
             errors.push("localStorage item \\"" + localStorageElemKey + "\\" (of value \\"" + \
 localStorageElemValue + "\\") ${comp} \\"" + localStorageElem + "\\"");
@@ -1830,7 +1830,7 @@ await page.evaluate(() => {
     const localStorageElemDict = {"a":"1"};
     for (const [localStorageElemKey, localStorageElemValue] of \
 Object.entries(localStorageElemDict)) {
-        let localStorageElem = window.localStorage.getItem("localStorageElemKey");
+        let localStorageElem = window.localStorage.getItem(localStorageElemKey);
         if (localStorageElem ${comp} localStorageElemValue) {
             errors.push("localStorage item \\"" + localStorageElemKey + "\\" (of value \\"" + \
 localStorageElemValue + "\\") ${comp} \\"" + localStorageElem + "\\"");
@@ -1851,7 +1851,7 @@ await page.evaluate(() => {
     const localStorageElemDict = {"a":"1","b":"2px"};
     for (const [localStorageElemKey, localStorageElemValue] of \
 Object.entries(localStorageElemDict)) {
-        let localStorageElem = window.localStorage.getItem("localStorageElemKey");
+        let localStorageElem = window.localStorage.getItem(localStorageElemKey);
         if (localStorageElem ${comp} localStorageElemValue) {
             errors.push("localStorage item \\"" + localStorageElemKey + "\\" (of value \\"" + \
 localStorageElemValue + "\\") ${comp} \\"" + localStorageElem + "\\"");
@@ -1874,7 +1874,7 @@ await page.evaluate(() => {
     const localStorageElemDict = {"a":"1"};
     for (const [localStorageElemKey, localStorageElemValue] of \
 Object.entries(localStorageElemDict)) {
-        let localStorageElem = window.localStorage.getItem("localStorageElemKey");
+        let localStorageElem = window.localStorage.getItem(localStorageElemKey);
         if (localStorageElem ${comp} localStorageElemValue) {
             errors.push("localStorage item \\"" + localStorageElemKey + "\\" (of value \\"" + \
 localStorageElemValue + "\\") ${comp} \\"" + localStorageElem + "\\"");
@@ -2455,7 +2455,7 @@ await page.evaluate(elem => {
         let v = e.getBoundingClientRect()[field];
         let pseudoStyle = window.getComputedStyle(e, "::after");
         let style = window.getComputedStyle(e);
-        val += browserUiTestHelpers.extractFloat(pseudoStyle[field]) - ' + \
+        v += browserUiTestHelpers.extractFloat(pseudoStyle[field]) - \
 browserUiTestHelpers.extractFloat(style[styleField]);
         let roundedV = Math.round(v);
 ${indentString(cond, 2)}
@@ -2480,7 +2480,7 @@ await page.evaluate(elem => {
         let v = e.getBoundingClientRect()[field];
         let pseudoStyle = window.getComputedStyle(e, "::after");
         let style = window.getComputedStyle(e);
-        val += browserUiTestHelpers.extractFloat(pseudoStyle[field]) - ' + \
+        v += browserUiTestHelpers.extractFloat(pseudoStyle[field]) - \
 browserUiTestHelpers.extractFloat(style[styleField]);
         let roundedV = Math.round(v);
 ${indentString(cond, 2)}
