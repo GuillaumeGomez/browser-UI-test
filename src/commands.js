@@ -26,6 +26,7 @@ const ORDERS = {
     'assert-window-property-false': commands.parseAssertWindowPropertyFalse,
     'attribute': commands.parseAttribute,
     'click': commands.parseClick,
+    'click-with-offset': commands.parseClickWithOffset,
     'compare-elements-attribute': commands.parseCompareElementsAttribute,
     'compare-elements-attribute-false': commands.parseCompareElementsAttributeFalse,
     'compare-elements-css': commands.parseCompareElementsCss,

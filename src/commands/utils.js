@@ -37,7 +37,7 @@ function checkIntegerTuple(tuple, text1, text2, negativeCheck = false) {
     return {'value': [ret.value, ret2.value]};
 }
 
-function validateJson(json, allowedValueTypes, keyName) {
+function validateJson(json, allowedValueTypes, keyName, allowedKeys = null) {
     const entries = Object.create(null);
     const warnings = [];
 
@@ -58,8 +58,9 @@ function validateJson(json, allowedValueTypes, keyName) {
             }
             allowed += allowedValueTypes[allowedValueTypes.length - 1];
             const article = allowedValueTypes.length > 1 ? 'are' : 'is';
+            const extra = allowedValueTypes.length > 1 ? 's' : '';
             return {
-                'error': `only ${allowed} ${article} allowed, found \`` +
+                'error': `only ${allowed} type${extra} ${article} allowed as value, found \`` +
                     `${entry['value'].getText()}\` (${entry['value'].getArticleKind()})`,
             };
         }
@@ -72,6 +73,10 @@ function validateJson(json, allowedValueTypes, keyName) {
         if (Object.prototype.hasOwnProperty.call(entries, key_s)) {
             return {
                 'error': `${keyName} \`${key_s}\` is duplicated`,
+            };
+        } else if (allowedKeys !== null && allowedKeys.indexOf(key_s) === -1) {
+            return {
+                'error': `Unexpected key \`${key_s}\`, allowed keys: [${allowedKeys.join(', ')}]`,
             };
         }
         const value_s = entry['value'].getStringValue();
@@ -193,7 +198,7 @@ function fillEnabledChecks(elem, identifiers, enabled_checks, warnings, err_pos)
     return null;
 }
 
-function buildPropertyDict(entries, errorText, allowEmptyValues) {
+function buildPropertyDict(entries, errorText, allowEmptyValues, valuesAsStrings = true) {
     const ret = {
         'needColorCheck': false,
         'dict': '',
@@ -216,7 +221,11 @@ function buildPropertyDict(entries, errorText, allowEmptyValues) {
         if (ret['dict'].length > 0) {
             ret['dict'] += ',';
         }
-        ret['dict'] += `"${k}":"${v}"`;
+        if (valuesAsStrings === true) {
+            ret['dict'] += `"${k}":"${v}"`;
+        } else {
+            ret['dict'] += `"${k}":${v}`;
+        }
     }
     return ret;
 }
@@ -224,7 +233,7 @@ function buildPropertyDict(entries, errorText, allowEmptyValues) {
 function indentString(s, indentLevel) {
     let indent = '';
 
-    if (indentLevel < 1) {
+    if (indentLevel < 1 || s.length === 0) {
         return s;
     }
     while (indentLevel > 0) {
