@@ -1920,10 +1920,10 @@ function checkAssertPropertyInner(x, func, exists, equal, startsWith, endsWith) 
     });
     x.assert(func('("a", {"b": "c", "b": "d"})'), {'error': 'property `b` is duplicated'});
     x.assert(func('("a", {"b": []})'), {
-        'error': 'only string and number are allowed, found `[]` (an array)',
+        'error': 'only string and number types are allowed as value, found `[]` (an array)',
     });
     x.assert(func('("a", {"b": gateau})'), {
-        'error': 'only string and number are allowed, found `gateau` (an ident)',
+        'error': 'only string and number types are allowed as value, found `gateau` (an ident)',
     });
 
     x.assert(func('("a", {})'), {
@@ -2189,7 +2189,7 @@ ${equal(3)}
 
     // Multiline
     x.assert(func('("a", \n{"b"\n:\n []})'), {
-        'error': 'only string and number are allowed, found `[]` (an array)',
+        'error': 'only string and number types are allowed as value, found `[]` (an array)',
     });
     x.assert(func('("//a"\n, \n{"a": \n1},\n ALL)'), {
         'instructions': [`\
@@ -2349,10 +2349,10 @@ function checkAssertPositionInner(x, func, cond) {
         'error': 'expected identifier `ALL` as third argument or nothing, found `ALLO`',
     });
     x.assert(func('("a", {"b": "c", "b": "d"})'), {
-        'error': 'only number is allowed, found `"c"` (a string)',
+        'error': 'only number type is allowed as value, found `"c"` (a string)',
     });
     x.assert(func('("a", {"b": ""})'), {
-        'error': 'only number is allowed, found `""` (a string)',
+        'error': 'only number type is allowed as value, found `""` (a string)',
     });
     x.assert(func('("a", {"z": 12})'), {
         'error': 'Only accepted keys are "x" and "y", found `"z"` (in `{"z": 12}`)',
@@ -3355,18 +3355,25 @@ function checkClick(x, func) {
     x.assert(func('(1.0,2)'), {'error': 'expected integer for X position, found float: `1.0`'});
     x.assert(func('(2,-1.0)'), {'error': 'expected integer for Y position, found float: `-1.0`'});
     x.assert(func('(2,1.0)'), {'error': 'expected integer for Y position, found float: `1.0`'});
-    x.assert(func('(1,2)'), {'instructions': ['await page.mouse.click(1,2);']});
-    x.assert(func('(-1,2)'), {'instructions': ['await page.mouse.click(-1,2);']});
-    x.assert(func('(-2,1)'), {'instructions': ['await page.mouse.click(-2,1);']});
+    x.assert(func('(1,2)'), {'instructions': ['await page.mouse.click(1, 2);']});
+    x.assert(func('(-1,2)'), {'instructions': ['await page.mouse.click(-1, 2);']});
+    x.assert(func('(-2,1)'), {'instructions': ['await page.mouse.click(-2, 1);']});
 
 
-    x.assert(func('(1,2,)'), {'instructions': ['await page.mouse.click(1,2);']});
+    x.assert(func('(1,2,)'), {'instructions': ['await page.mouse.click(1, 2);']});
 
     // Check css selector
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
     x.assert(func('\'\''), {'error': 'CSS selector cannot be empty', 'isXPath': false});
     x.assert(func('"a"'), {
+        'instructions': [
+            'let parseClickVar = await page.$("a");\n' +
+            'if (parseClickVar === null) { throw \'"a" not found\'; }\n' +
+            'await parseClickVar.click();',
+        ],
+    });
+    x.assert(func('"a::before"'), {
         'instructions': [
             'let parseClickVar = await page.$("a");\n' +
             'if (parseClickVar === null) { throw \'"a" not found\'; }\n' +
@@ -3403,7 +3410,122 @@ function checkClick(x, func) {
     x.assert(func('(a\n,\n2)'), {
         'error': 'invalid syntax: expected "([number], [number])", found `(a\n,\n2)`',
     });
-    x.assert(func('(\n-2\n,\n1)'), {'instructions': ['await page.mouse.click(-2,1);']});
+    x.assert(func('(\n-2\n,\n1)'), {'instructions': ['await page.mouse.click(-2, 1);']});
+}
+
+function checkClickWithOffset(x, func) {
+    // Check position
+    x.assert(func('hello'), {
+        'error': 'expected a tuple, found `hello`',
+    });
+    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {
+        'error': 'expected `(["CSS Selector"|"XPath"], [JSON])`, found `(1)`',
+    });
+    x.assert(func('(1,)'), {
+        'error': 'expected `(["CSS Selector"|"XPath"], [JSON])`, found `(1,)`',
+    });
+    x.assert(func('("a",)'), {
+        'error': 'expected `(["CSS Selector"|"XPath"], [JSON])`, found `("a",)`',
+    });
+    x.assert(func('(1,2)'), {
+        'error': 'expected first argument of tuple to be a "CSS selector" or an "XPath", found `1`',
+    });
+    x.assert(func('("a",{"a":"b"})'), {
+        'error': 'only number type is allowed as value, found `"b"` (a string)',
+    });
+    x.assert(func('("a",{"a":{"a": "b"}})'), {
+        'error': 'only number type is allowed as value, found `{"a": "b"}` (a json)',
+    });
+    x.assert(func('("a",{"a":b})'), {
+        'error': 'only number type is allowed as value, found `b` (an ident)',
+    });
+    x.assert(func('("a",{"a":2})'), {
+        'error': 'Unexpected key `a`, allowed keys: [x, y]',
+    });
+    x.assert(func('("a", {"x": 1, "x": 2})'), {
+        'error': 'JSON dict key `x` is duplicated',
+    });
+
+    // CSS selector
+    x.assert(func('("a", {"x": 1})'), {
+        'instructions': [`\
+let parseClickWithOffsetVar = await page.$("a");
+if (parseClickWithOffsetVar === null) { throw '"a" not found'; }
+await parseClickWithOffsetVar.click({
+    "offset": {"x":1},
+});`,
+        ],
+    });
+    x.assert(func('("a", {"y": 2})'), {
+        'instructions': [`\
+let parseClickWithOffsetVar = await page.$("a");
+if (parseClickWithOffsetVar === null) { throw '"a" not found'; }
+await parseClickWithOffsetVar.click({
+    "offset": {"y":2},
+});`,
+        ],
+    });
+    x.assert(func('("a", {})'), {
+        'instructions': [`\
+let parseClickWithOffsetVar = await page.$("a");
+if (parseClickWithOffsetVar === null) { throw '"a" not found'; }
+await parseClickWithOffsetVar.click({
+    "offset": {},
+});`,
+        ],
+    });
+    x.assert(func('("a", {"x": 1, "y": 2})'), {
+        'instructions': [`\
+let parseClickWithOffsetVar = await page.$("a");
+if (parseClickWithOffsetVar === null) { throw '"a" not found'; }
+await parseClickWithOffsetVar.click({
+    "offset": {"x":1,"y":2},
+});`,
+        ],
+    });
+
+    x.assert(func('("a::before", {"x": 1})'), {
+        'instructions': [`\
+let parseClickWithOffsetVar = await page.$("a");
+if (parseClickWithOffsetVar === null) { throw '"a" not found'; }
+await parseClickWithOffsetVar.click({
+    "offset": {"x":1},
+});`,
+        ],
+        'warnings': [
+            'Pseudo-elements (`::before`) can\'t be retrieved so `click` will be performed on the' +
+                ' element directly',
+        ],
+    });
+
+    // XPath
+    x.assert(func('("/a", {"x": 1})'), {'error': 'XPath must start with `//`'});
+    x.assert(func('("//a", {"x": 1})'), {
+        'instructions': [`\
+let parseClickWithOffsetVar = await page.$x("//a");
+if (parseClickWithOffsetVar.length === 0) { throw 'XPath "//a" not found'; }
+parseClickWithOffsetVar = parseClickWithOffsetVar[0];
+await parseClickWithOffsetVar.click({
+    "offset": {"x":1},
+});`,
+        ],
+    });
+
+    // Multiline
+    x.assert(func('(a\n,\n2)'), {
+        'error': 'expected first argument of tuple to be a "CSS selector" or an "XPath", found `a`',
+    });
+    x.assert(func('(\n"a"\n,\n{\n"x":\n1})'), {
+        'instructions': [`\
+let parseClickWithOffsetVar = await page.$("a");
+if (parseClickWithOffsetVar === null) { throw '"a" not found'; }
+await parseClickWithOffsetVar.click({
+    "offset": {"x":1},
+});`,
+        ],
+    });
 }
 
 function checkCompareElementsAttributeInner(x, func, before, after) {
@@ -4241,7 +4363,7 @@ function checkCompareElementsPositionNearInner(x, func, before, after) {
     );
     x.assert(
         func('("a", "b", {"x": "a", "y": 2})'),
-        {'error': 'only number is allowed, found `"a"` (a string)'},
+        {'error': 'only number type is allowed as value, found `"a"` (a string)'},
     );
     x.assert(
         func('("a", "b", {"x": -1})'),
@@ -5552,8 +5674,8 @@ function checkMoveCursorTo(x, func) {
     x.assert(func('(2,1.0)'), {'error': 'expected integer for Y position, found float: `1.0`'});
     x.assert(func('(2,-1.0)'), {'error': 'expected integer for Y position, found float: `-1.0`'});
 
-    x.assert(func('(1,2,)'), {'instructions': ['await page.mouse.move(1,2);']});
-    x.assert(func('(1,2)'), {'instructions': ['await page.mouse.move(1,2);']});
+    x.assert(func('(1,2,)'), {'instructions': ['await page.mouse.move(1, 2);']});
+    x.assert(func('(1,2)'), {'instructions': ['await page.mouse.move(1, 2);']});
 
     // Check css selector
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
@@ -5579,7 +5701,7 @@ function checkMoveCursorTo(x, func) {
 
     // Multiline
     x.assert(func('(\n-1\n,2)'), {'error': 'X position cannot be negative: `-1`'});
-    x.assert(func('(1\n,\n2)'), {'instructions': ['await page.mouse.move(1,2);']});
+    x.assert(func('(1\n,\n2)'), {'instructions': ['await page.mouse.move(1, 2);']});
 }
 
 function checkParseContent(x, func) {
@@ -5943,10 +6065,10 @@ function checkScrollTo(x, func) {
     x.assert(func('(1.0,2)'), {'error': 'expected integer for X position, found float: `1.0`'});
     x.assert(func('(2,-1.0)'), {'error': 'expected integer for Y position, found float: `-1.0`'});
     x.assert(func('(2,1.0)'), {'error': 'expected integer for Y position, found float: `1.0`'});
-    x.assert(func('(1,2)'), {'instructions': ['await page.mouse.move(1,2);']});
+    x.assert(func('(1,2)'), {'instructions': ['await page.mouse.move(1, 2);']});
 
 
-    x.assert(func('(1,2,)'), {'instructions': ['await page.mouse.move(1,2);']});
+    x.assert(func('(1,2,)'), {'instructions': ['await page.mouse.move(1, 2);']});
 
     // Check css selector
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
@@ -5974,7 +6096,7 @@ function checkScrollTo(x, func) {
     x.assert(func('(a,\n2\n)'), {
         'error': 'invalid syntax: expected "([number], [number])", found `(a,\n2\n)`',
     });
-    x.assert(func('(1\n,\n2)'), {'instructions': ['await page.mouse.move(1,2);']});
+    x.assert(func('(1\n,\n2)'), {'instructions': ['await page.mouse.move(1, 2);']});
 }
 
 function checkShowText(x, func) {
@@ -6243,7 +6365,7 @@ function checkWaitForAttribute(x, func) {
         'error': 'expected a JSON dict as second tuple element, found `a number`',
     });
     x.assert(func('("a", {"b": {"a": 2}})'), {
-        'error': 'only string and number are allowed, found `{"a": 2}` (a json)',
+        'error': 'only string and number types are allowed as value, found `{"a": 2}` (a json)',
     });
 
     // Check css selector
@@ -6646,7 +6768,7 @@ function checkWaitForCss(x, func) {
         'error': 'expected a JSON dict as second tuple element, found `a number`',
     });
     x.assert(func('("a", {"b": {"a": 2}})'), {
-        'error': 'only string and number are allowed, found `{"a": 2}` (a json)',
+        'error': 'only string and number types are allowed as value, found `{"a": 2}` (a json)',
     });
 
     // Check css selector
@@ -7469,6 +7591,11 @@ const TO_CHECK = [
         'name': 'click',
         'func': checkClick,
         'toCall': (e, o) => wrapper(parserFuncs.parseClick, e, o),
+    },
+    {
+        'name': 'click-with-offset',
+        'func': checkClickWithOffset,
+        'toCall': (e, o) => wrapper(parserFuncs.parseClickWithOffset, e, o),
     },
     {
         'name': 'compare-elements-attribute',
