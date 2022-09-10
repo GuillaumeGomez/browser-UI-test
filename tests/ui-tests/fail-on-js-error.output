@@ -1,7 +1,7 @@
 => Starting doc-ui tests...
 
 fail-on-js-error... FAILED
-[ERROR] (around line $LINE): JS errors occurred: Error: TypeError: Cannot read property 'hello' of null
+[ERROR] (around line $LINE): JS errors occurred: Error: TypeError: Cannot read properties of null (reading 'hello')
     at invalid_js (file://$CURRENT_DIR/tests/html_files/elements.html:86:6)
     at HTMLButtonElement.onclick (file://$CURRENT_DIR/tests/html_files/elements.html:60:55)
 

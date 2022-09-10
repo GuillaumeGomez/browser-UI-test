@@ -33,7 +33,7 @@ if (${varName} !== null) {
     // `page._timeoutSettings.timeout` is an internal thing so better be careful at any puppeteer
     // version update!
     return [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let ${varName} = null;`,
