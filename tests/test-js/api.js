@@ -3387,6 +3387,18 @@ function checkClick(x, func) {
             'await parseClickVar.click();',
         ],
     });
+    // On pseudo element.
+    x.assert(func('"a::after"'), {
+        'instructions': [
+            'let parseClickVar = await page.$("a");\n' +
+            'if (parseClickVar === null) { throw \'"a" not found\'; }\n' +
+            'await parseClickVar.click();',
+        ],
+        'warnings': [
+            'Pseudo-elements (`::after`) can\'t be retrieved so `click` will be performed' +
+                ' on the element directly',
+        ],
+    });
 
     // XPath
     x.assert(func('"/a"'), {'error': 'XPath must start with `//`'});
