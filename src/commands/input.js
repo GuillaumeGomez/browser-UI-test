@@ -1,6 +1,11 @@
 // List commands handling inputs.
 
-const { getAndSetElements, checkIntegerTuple } = require('./utils.js');
+const {
+    getAndSetElements,
+    checkIntegerTuple,
+    validateJson,
+    buildPropertyDict,
+} = require('./utils.js');
 
 // Possible inputs:
 //
@@ -50,11 +55,75 @@ function parseClick(parser) {
     const [x, y] = ret.value;
     return {
         'instructions': [
-            `await page.mouse.click(${x},${y});`,
+            `await page.mouse.click(${x}, ${y});`,
         ],
     };
 }
 
+// Possible inputs:
+//
+// * ("CSS selector"|"XPath", {"x"|"y": [number]})
+function parseClickWithOffset(parser) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {'error': 'expected a tuple, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
+        return {
+            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
+        };
+    }
+    const tuple = elems[0].getRaw();
+    if (tuple.length !== 2) {
+        return {
+            'error': 'expected `(["CSS Selector"|"XPath"], [JSON])`, ' +
+                `found \`${elems[0].getText()}\``,
+        };
+    } else if (tuple[0].kind !== 'string') {
+        return {
+            'error': 'expected first argument of tuple to be a "CSS selector" or ' +
+                `an "XPath", found \`${tuple[0].getText()}\``,
+        };
+    } else if (tuple[1].kind !== 'json') {
+        return {
+            'error': 'expected second argument of tuple to be a JSON dictionary, found ' +
+                `\`${tuple[1].getText()}\``,
+        };
+    }
+
+    const json = tuple[1].getRaw();
+    const entries = validateJson(json, ['number'], 'JSON dict key', ['x', 'y']);
+    if (entries.error !== undefined) {
+        return entries;
+    }
+    const values = buildPropertyDict(entries, 'JSON dict key', false, false);
+    if (values.error !== undefined) {
+        return values;
+    }
+    const selector = tuple[0].getSelector();
+    if (selector.error !== undefined) {
+        return selector;
+    }
+    const varName = 'parseClickWithOffsetVar';
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    if (isPseudo) {
+        if (entries.warnings === undefined) {
+            entries.warnings = [];
+        }
+        entries.warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) can't be retrieved so \
+\`click\` will be performed on the element directly`);
+    }
+
+    return {
+        'instructions': [`\
+${getAndSetElements(selector, varName, false)}
+await ${varName}.click({
+    "offset": {${values.dict}},
+});`,
+        ],
+        'warnings': entries.warnings,
+    };
+}
 
 // Possible inputs:
 //
@@ -314,7 +383,7 @@ function parseMoveCursorTo(parser) {
     const [x, y] = ret.value;
     return {
         'instructions': [
-            `await page.mouse.move(${x},${y});`,
+            `await page.mouse.move(${x}, ${y});`,
         ],
     };
 }
@@ -414,6 +483,7 @@ function parseDragAndDrop(parser) {
 
 module.exports = {
     'parseClick': parseClick,
+    'parseClickWithOffset': parseClickWithOffset,
     'parseDragAndDrop': parseDragAndDrop,
     'parseFocus': parseFocus,
     'parseMoveCursorTo': parseMoveCursorTo,

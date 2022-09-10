@@ -77,6 +77,7 @@ Here's the command list:
  * [`assert-window-property-false`](#assert-window-property-false)
  * [`attribute`](#attribute)
  * [`click`](#click)
+ * [`click-with-offset`](#click-with-offset)
  * [`compare-elements-attribute`](#compare-elements-attribute)
  * [`compare-elements-attribute-false`](#compare-elements-attribute-false)
  * [`compare-elements-css`](#compare-elements-css)
@@ -580,6 +581,20 @@ click: "#element > a"
 click: "//*[@id='element']/a"
 
 click: (10, 12)
+```
+
+#### click-with-offset
+
+**click-with-offset** command send a click event on an element after applying the provided offset. It expects a CSS selector or an XPath and a JSON dictionary. Examples:
+
+```
+// Clicking on `.element` but adding an offset of 10 on `X`.
+click-with-offset: (".element", {"x": 10}
+// Same but with an XPath:
+click-with-offset: ("//*[@class='element']", {"x": 10}
+
+click-with-offset: (".element", {"x": 10, "y": 3}
+click-with-offset: (".element", {"y": 3}
 ```
 
 #### compare-elements-attribute
