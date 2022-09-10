@@ -23,11 +23,20 @@ function parseClick(parser) {
             return selector;
         }
         const varName = 'parseClickVar';
+
+        const isPseudo = !selector.isXPath && selector.pseudo !== null;
+        const warnings = [];
+        if (isPseudo) {
+            warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) can't be retrieved so \
+\`click\` will be performed on the element directly`);
+        }
+
         return {
             'instructions': [
                 getAndSetElements(selector, varName, false) + '\n' +
                 `await ${varName}.click();`,
             ],
+            'warnings': warnings.length !== 0 ? warnings : undefined,
         };
     } else if (elems[0].kind !== 'tuple') {
         return {
