@@ -3379,6 +3379,10 @@ function checkClick(x, func) {
             'if (parseClickVar === null) { throw \'"a" not found\'; }\n' +
             'await parseClickVar.click();',
         ],
+        'warnings': [
+            'Pseudo-elements (`::before`) can\'t be retrieved so `click` will be ' +
+                'performed on the element directly',
+        ],
     });
     x.assert(func('\'a\''), {
         'instructions': [
