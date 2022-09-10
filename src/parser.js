@@ -510,7 +510,7 @@ class Parser {
                     if (elems.length === 1) {
                         el.error = `unexpected \`${token}\` as first token`;
                     } else {
-                        const prevElem = elems[elems.length - 2].value;
+                        const prevElem = elems[elems.length - 2].getText();
                         el.error = `unexpected token \`${token}\` after \`${prevElem}\``;
                     }
                     this.error = el.error;

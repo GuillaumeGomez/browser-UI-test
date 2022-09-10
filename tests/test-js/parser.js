@@ -1234,6 +1234,14 @@ function checkJson(x) {
     x.assert(p.elems[0].getRaw()[2].key.getRaw(), 'z');
     x.assert(p.elems[0].getRaw()[2].value.kind, 'number');
     x.assert(p.elems[0].getRaw()[2].value.getRaw(), '56');
+
+    p = new Parser('({"x": 1},}');
+    p.parse();
+    x.assert(p.error, 'unexpected token `}` after `{"x": 1}`');
+
+    p = new Parser('({"x": 1}}');
+    p.parse();
+    x.assert(p.error, 'expected `,` or `)`, found `}` after `{"x": 1}`');
 }
 
 function checkComment(x) {
