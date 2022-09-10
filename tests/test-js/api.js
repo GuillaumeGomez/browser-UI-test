@@ -6141,7 +6141,7 @@ function checkWaitFor(x, func) {
     });
     x.assert(func('"a"'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitFor = null;
@@ -6164,7 +6164,7 @@ while (true) {
     });
     x.assert(func('\'a\''), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitFor = null;
@@ -6187,7 +6187,7 @@ while (true) {
     });
     x.assert(func('\'"a\''), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitFor = null;
@@ -6213,7 +6213,7 @@ while (true) {
     x.assert(func('"/a"'), { 'error': 'XPath must start with `//`'});
     x.assert(func('"//a"'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitFor = null;
@@ -6261,7 +6261,7 @@ function checkWaitForAttribute(x, func) {
     // Check css selector
     x.assert(func('("a", {})'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForAttr = null;
@@ -6314,7 +6314,7 @@ parseWaitForAttrValue + "\`)");
     });
     x.assert(func('("a", {"x": 1})'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForAttr = null;
@@ -6367,7 +6367,7 @@ parseWaitForAttrValue + "\`)");
     });
     x.assert(func('("a", {"x": 1, "y": "2"})'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForAttr = null;
@@ -6421,7 +6421,7 @@ parseWaitForAttrValue + "\`)");
     // Check pseudo element.
     x.assert(func('("a::after", {"x": 1, "y": "2"})'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForAttr = null;
@@ -6477,7 +6477,7 @@ performed on the element itself'],
     // Ensures that there is no "show-text" check (because of "color").
     x.assert(func('("a", {"color": "blue"})'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForAttr = null;
@@ -6533,7 +6533,7 @@ parseWaitForAttrValue + "\`)");
     x.assert(func('("/a", {"x": "1"})'), { 'error': 'XPath must start with `//`'});
     x.assert(func('("//a", {})'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForAttr = null;
@@ -6587,7 +6587,7 @@ parseWaitForAttrValue + "\`)");
     });
     x.assert(func('("//a", {"x": "1"})'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForAttr = null;
@@ -6664,7 +6664,7 @@ function checkWaitForCss(x, func) {
     // Check css selector
     x.assert(func('("a", {})'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForCss = null;
@@ -6730,7 +6730,7 @@ parseWaitForCssValue + "\`)");
     });
     x.assert(func('("a", {"x": 1})'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForCss = null;
@@ -6796,7 +6796,7 @@ parseWaitForCssValue + "\`)");
     });
     x.assert(func('("a", {"x": 1, "y": "2"})'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForCss = null;
@@ -6863,7 +6863,7 @@ parseWaitForCssValue + "\`)");
     // Check pseudo element.
     x.assert(func('("a::after", {"x": 1, "y": "2"})'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForCss = null;
@@ -6936,7 +6936,7 @@ if (!arg.showText) {
 browser doesn't compute it)";
 }`,
             `\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForCss = null;
@@ -7005,7 +7005,7 @@ parseWaitForCssValue + "\`)");
     x.assert(func('("/a", {"x": "1"})'), { 'error': 'XPath must start with `//`'});
     x.assert(func('("//a", {})'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForCss = null;
@@ -7072,7 +7072,7 @@ parseWaitForCssValue + "\`)");
     });
     x.assert(func('("//a", {"x": "1"})'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForCss = null;
@@ -7159,7 +7159,7 @@ function checkWaitForText(x, func) {
     // Check CSS selector.
     x.assert(func('("a", "b")'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForText = null;
@@ -7202,7 +7202,7 @@ value + "\`");
     });
     x.assert(func('("a::after", "b")'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForText = null;
@@ -7248,7 +7248,7 @@ performed on the element itself'],
 
     x.assert(func('("//a", "b")'), {
         'instructions': [`\
-const timeLimit = page._timeoutSettings.timeout();
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForText = null;
