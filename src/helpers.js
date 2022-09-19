@@ -14,12 +14,12 @@ function getElemText(e, value) {
 }
 
 function extractFloat(value, rounded) {
-    const ret = parseFloat(value.replace('px', ''));
+    let ret = parseFloat(value.replace('px', ''));
     if (rounded === true) {
-        return Math.round(ret);
+        ret = Math.round(ret);
     }
     if (Number.isNaN(ret)) {
-        return 0.;
+        return null;
     }
     return ret;
 }
@@ -46,6 +46,6 @@ const browserUiTestHelpers = {
     extractFloat: extractFloat,
     extractFloatOrZero: function(value, rounded) {
         const ret = extractFloat(value, rounded);
-        return isNaN(ret) ? 0 : ret;
+        return ret === null ? 0. : ret;
     },
 };
