@@ -1138,11 +1138,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
             if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
-true) + "px" !== parseAssertElemCssValue) {
+                if (browserUiTestHelpers.extractFloatOrZero(\
+assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                     localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                 }
                 succeeded = true;
             }
@@ -1177,11 +1178,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
             if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
-true) + "px" !== parseAssertElemCssValue) {
+                if (browserUiTestHelpers.extractFloatOrZero(\
+assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                     localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                 }
                 succeeded = true;
             }
@@ -1217,11 +1219,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
                 if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloat(assertComputedStyle[\
+                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[\
 parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                         localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                     }
                     succeeded = true;
                 }
@@ -1259,11 +1262,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
             if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
-true) + "px" !== parseAssertElemCssValue) {
+                if (browserUiTestHelpers.extractFloatOrZero(\
+assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                     localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                 }
                 succeeded = true;
             }
@@ -1299,11 +1303,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
                 if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloat(assertComputedStyle[\
+                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[\
 parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                         localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                     }
                     succeeded = true;
                 }
@@ -1339,11 +1344,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
             if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
-true) + "px" !== parseAssertElemCssValue) {
+                if (browserUiTestHelpers.extractFloatOrZero(\
+assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                     localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                 }
                 succeeded = true;
             }
@@ -1379,11 +1385,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
                 if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloat(assertComputedStyle[\
+                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[\
 parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                         localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' +\
- browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                     }
                     succeeded = true;
                 }
@@ -1419,11 +1426,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
             if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
-true) + "px" !== parseAssertElemCssValue) {
+                if (browserUiTestHelpers.extractFloatOrZero(\
+assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                     localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                 }
                 succeeded = true;
             }
@@ -1459,11 +1467,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
                 if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloat(assertComputedStyle[\
+                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[\
 parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                         localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                     }
                     succeeded = true;
                 }
@@ -1502,11 +1511,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
             if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
-true) + "px" !== parseAssertElemCssValue) {
+                if (browserUiTestHelpers.extractFloatOrZero(\
+assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                     localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                 }
                 succeeded = true;
             }
@@ -1542,11 +1552,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
             if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
-true) + "px" !== parseAssertElemCssValue) {
+                if (browserUiTestHelpers.extractFloatOrZero(\
+assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                     localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                 }
                 succeeded = true;
             }
@@ -1582,11 +1593,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
                 if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloat(assertComputedStyle[\
+                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[\
 parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                         localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                     }
                     succeeded = true;
                 }
@@ -1623,11 +1635,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
             if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
-true) + "px" !== parseAssertElemCssValue) {
+                if (browserUiTestHelpers.extractFloatOrZero(\
+assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                     localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                 }
                 succeeded = true;
             }
@@ -1663,11 +1676,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
                 if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloat(assertComputedStyle[\
+                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[\
 parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                         localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                     }
                     succeeded = true;
                 }
@@ -1707,11 +1721,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
                 if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloat(assertComputedStyle[\
+                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[\
 parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                         localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                     }
                     succeeded = true;
                 }
@@ -1753,11 +1768,12 @@ Object.entries(parseAssertElemCssDict)) {
 assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
             if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
 assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], \
-true) + "px" !== parseAssertElemCssValue) {
+                if (browserUiTestHelpers.extractFloatOrZero(\
+assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
                     localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
 parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloat(assertComputedStyle[parseAssertElemCssKey], true) + 'px\`)');
++ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
+'px\`)');
                 }
                 succeeded = true;
             }
@@ -2455,8 +2471,8 @@ await page.evaluate(elem => {
         let v = e.getBoundingClientRect()[field];
         let pseudoStyle = window.getComputedStyle(e, "::after");
         let style = window.getComputedStyle(e);
-        v += browserUiTestHelpers.extractFloat(pseudoStyle[field]) - \
-browserUiTestHelpers.extractFloat(style[styleField]);
+        v += browserUiTestHelpers.extractFloatOrZero(pseudoStyle[field]) - \
+browserUiTestHelpers.extractFloatOrZero(style[styleField]);
         let roundedV = Math.round(v);
 ${indentString(cond, 2)}
     }
@@ -2480,8 +2496,8 @@ await page.evaluate(elem => {
         let v = e.getBoundingClientRect()[field];
         let pseudoStyle = window.getComputedStyle(e, "::after");
         let style = window.getComputedStyle(e);
-        v += browserUiTestHelpers.extractFloat(pseudoStyle[field]) - \
-browserUiTestHelpers.extractFloat(style[styleField]);
+        v += browserUiTestHelpers.extractFloatOrZero(pseudoStyle[field]) - \
+browserUiTestHelpers.extractFloatOrZero(style[styleField]);
         let roundedV = Math.round(v);
 ${indentString(cond, 2)}
     }
@@ -3561,51 +3577,188 @@ function checkCompareElementsAttributeInner(x, func, before, after) {
     x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
     x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
     x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
-    x.assert(func('("a")'), {'error': 'expected 3 elements in the tuple, found 1 element'});
+    x.assert(func('("a")'), {'error': 'expected 3 or 4 elements in the tuple, found 1 element'});
     x.assert(func('("a", 1)'),
-        {'error': 'expected 3 elements in the tuple, found 2 elements'},
+        {'error': 'expected 3 or 4 elements in the tuple, found 2 elements'},
     );
     x.assert(func('("a", "a", "b", "c")'), {
-        'error': 'expected 3 elements in the tuple, found 4 elements',
+        'error': 'expected third argument to be an array of string, found a string',
     });
     x.assert(func('("a", "b", 1)'), {
         'error': 'expected third argument to be an array of string, found a string',
     });
+    x.assert(func('("a", "b", ["a"], 1)'), {
+        'error': 'expected fourth argument to be a string of an operator (one of `<`, `<=`, `>`, ' +
+            '`>=`, `=`), found a number',
+    });
+    x.assert(func('("a", "b", ["a"], "a")'), {
+        'error': 'Unknown operator `a` in fourth argument. Expected one of [`<`, `<=`, `>`, ' +
+            '`>=`, `=`]',
+    });
 
     x.assert(func('("a", "b", [])'), {
-        'instructions': [
-            'let parseCompareElementsAttr1 = await page.$("a");\n' +
-            'if (parseCompareElementsAttr1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsAttr2 = await page.$("b");\n' +
-            'if (parseCompareElementsAttr2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((e1, e2) => {\n' +
-            'const attributes = [];\n' +
-            'for (const attr of attributes) {\n' +
-            before +
-            'if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n' +
-            'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
-            '}' + after + '\n' +
-            '}\n' +
-            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);',
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$("a");
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
+let parseCompareElementsAttr2 = await page.$("b");
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = [];
+for (const attr of attributes) {
+    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
+        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", "b", [\'"data-whatever\'])'), {
-        'instructions': [
-            'let parseCompareElementsAttr1 = await page.$("a");\n' +
-            'if (parseCompareElementsAttr1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsAttr2 = await page.$("b");\n' +
-            'if (parseCompareElementsAttr2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((e1, e2) => {\n' +
-            'const attributes = ["\\"data-whatever"];\n' +
-            'for (const attr of attributes) {\n' +
-            before +
-            'if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n' +
-            'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
-            '}' + after + '\n' +
-            '}\n' +
-            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);',
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$("a");
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
+let parseCompareElementsAttr2 = await page.$("b");
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
+        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    // Checking operators.
+    x.assert(func('("a", "b", [\'"data-whatever\'], "=")'), {
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$("a");
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
+let parseCompareElementsAttr2 = await page.$("b");
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
+        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", [\'"data-whatever\'], ">")'), {
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$("a");
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
+let parseCompareElementsAttr2 = await page.$("b");
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
+    if (value1 === null) {
+        throw attr + " (" + e1.getAttribute(attr) + ") from \`a\` isn't a number so \
+comparison cannot be performed";
+    }
+    let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
+    if (value2 === null) {
+        throw attr + " (" + e2.getAttribute(attr) + ") from \`b\` isn't a number so \
+comparison cannot be performed";
+    }
+    ${before}if (value1 <= value2) {
+        throw attr + ": " + e1.getAttribute(attr) + " <= " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", [\'"data-whatever\'], ">=")'), {
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$("a");
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
+let parseCompareElementsAttr2 = await page.$("b");
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
+    if (value1 === null) {
+        throw attr + " (" + e1.getAttribute(attr) + ") from \`a\` isn't a number so \
+comparison cannot be performed";
+    }
+    let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
+    if (value2 === null) {
+        throw attr + " (" + e2.getAttribute(attr) + ") from \`b\` isn't a number so \
+comparison cannot be performed";
+    }
+    ${before}if (value1 < value2) {
+        throw attr + ": " + e1.getAttribute(attr) + " < " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", [\'"data-whatever\'], "<")'), {
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$("a");
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
+let parseCompareElementsAttr2 = await page.$("b");
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
+    if (value1 === null) {
+        throw attr + " (" + e1.getAttribute(attr) + ") from \`a\` isn't a number so \
+comparison cannot be performed";
+    }
+    let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
+    if (value2 === null) {
+        throw attr + " (" + e2.getAttribute(attr) + ") from \`b\` isn't a number so \
+comparison cannot be performed";
+    }
+    ${before}if (value1 >= value2) {
+        throw attr + ": " + e1.getAttribute(attr) + " >= " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", [\'"data-whatever\'], "<=")'), {
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$("a");
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
+let parseCompareElementsAttr2 = await page.$("b");
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
+    if (value1 === null) {
+        throw attr + " (" + e1.getAttribute(attr) + ") from \`a\` isn't a number so \
+comparison cannot be performed";
+    }
+    let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
+    if (value2 === null) {
+        throw attr + " (" + e2.getAttribute(attr) + ") from \`b\` isn't a number so \
+comparison cannot be performed";
+    }
+    ${before}if (value1 > value2) {
+        throw attr + ": " + e1.getAttribute(attr) + " > " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
         ],
         'wait': false,
         'checkResult': true,
@@ -3614,82 +3767,78 @@ function checkCompareElementsAttributeInner(x, func, before, after) {
     // XPath
     x.assert(func('("/a", "b", [\'"data-whatever\'])'), {'error': 'XPath must start with `//`'});
     x.assert(func('("//a", "b", [])'), {
-        'instructions': [
-            'let parseCompareElementsAttr1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsAttr1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElementsAttr1 = parseCompareElementsAttr1[0];\n' +
-            'let parseCompareElementsAttr2 = await page.$("b");\n' +
-            'if (parseCompareElementsAttr2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((e1, e2) => {\n' +
-            'const attributes = [];\n' +
-            'for (const attr of attributes) {\n' +
-            before +
-            'if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n' +
-            'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
-            '}' + after + '\n' +
-            '}\n' +
-            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);',
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$x("//a");
+if (parseCompareElementsAttr1.length === 0) { throw 'XPath "//a" not found'; }
+parseCompareElementsAttr1 = parseCompareElementsAttr1[0];
+let parseCompareElementsAttr2 = await page.$("b");
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = [];
+for (const attr of attributes) {
+    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
+        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("//a", "b", [\'"data-whatever\'])'), {
-        'instructions': [
-            'let parseCompareElementsAttr1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsAttr1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElementsAttr1 = parseCompareElementsAttr1[0];\n' +
-            'let parseCompareElementsAttr2 = await page.$("b");\n' +
-            'if (parseCompareElementsAttr2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((e1, e2) => {\n' +
-            'const attributes = ["\\"data-whatever"];\n' +
-            'for (const attr of attributes) {\n' +
-            before +
-            'if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n' +
-            'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
-            '}' + after + '\n' +
-            '}\n' +
-            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);',
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$x("//a");
+if (parseCompareElementsAttr1.length === 0) { throw 'XPath "//a" not found'; }
+parseCompareElementsAttr1 = parseCompareElementsAttr1[0];
+let parseCompareElementsAttr2 = await page.$("b");
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
+        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("a", "//b", [\'"data-whatever\'])'), {
-        'instructions': [
-            'let parseCompareElementsAttr1 = await page.$("a");\n' +
-            'if (parseCompareElementsAttr1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsAttr2 = await page.$x("//b");\n' +
-            'if (parseCompareElementsAttr2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElementsAttr2 = parseCompareElementsAttr2[0];\n' +
-            'await page.evaluate((e1, e2) => {\n' +
-            'const attributes = ["\\"data-whatever"];\n' +
-            'for (const attr of attributes) {\n' +
-            before +
-            'if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n' +
-            'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
-            '}' + after + '\n' +
-            '}\n' +
-            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);',
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$("a");
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
+let parseCompareElementsAttr2 = await page.$x("//b");
+if (parseCompareElementsAttr2.length === 0) { throw 'XPath "//b" not found'; }
+parseCompareElementsAttr2 = parseCompareElementsAttr2[0];
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
+        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
         ],
         'wait': false,
         'checkResult': true,
     });
     x.assert(func('("//a", "//b", [\'"data-whatever\'])'), {
-        'instructions': [
-            'let parseCompareElementsAttr1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsAttr1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElementsAttr1 = parseCompareElementsAttr1[0];\n' +
-            'let parseCompareElementsAttr2 = await page.$x("//b");\n' +
-            'if (parseCompareElementsAttr2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElementsAttr2 = parseCompareElementsAttr2[0];\n' +
-            'await page.evaluate((e1, e2) => {\n' +
-            'const attributes = ["\\"data-whatever"];\n' +
-            'for (const attr of attributes) {\n' +
-            before +
-            'if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n' +
-            'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
-            '}' + after + '\n' +
-            '}\n' +
-            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);',
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$x("//a");
+if (parseCompareElementsAttr1.length === 0) { throw 'XPath "//a" not found'; }
+parseCompareElementsAttr1 = parseCompareElementsAttr1[0];
+let parseCompareElementsAttr2 = await page.$x("//b");
+if (parseCompareElementsAttr2.length === 0) { throw 'XPath "//b" not found'; }
+parseCompareElementsAttr2 = parseCompareElementsAttr2[0];
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
+        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
         ],
         'wait': false,
         'checkResult': true,
@@ -3700,22 +3849,21 @@ function checkCompareElementsAttributeInner(x, func, before, after) {
         'error': 'expected third argument to be an array of string, found a string',
     });
     x.assert(func('("//a"\n,\n "//b", [\'"data-whatever\'])'), {
-        'instructions': [
-            'let parseCompareElementsAttr1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsAttr1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElementsAttr1 = parseCompareElementsAttr1[0];\n' +
-            'let parseCompareElementsAttr2 = await page.$x("//b");\n' +
-            'if (parseCompareElementsAttr2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElementsAttr2 = parseCompareElementsAttr2[0];\n' +
-            'await page.evaluate((e1, e2) => {\n' +
-            'const attributes = ["\\"data-whatever"];\n' +
-            'for (const attr of attributes) {\n' +
-            before +
-            'if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n' +
-            'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
-            '}' + after + '\n' +
-            '}\n' +
-            '}, parseCompareElementsAttr1, parseCompareElementsAttr2);',
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$x("//a");
+if (parseCompareElementsAttr1.length === 0) { throw 'XPath "//a" not found'; }
+parseCompareElementsAttr1 = parseCompareElementsAttr1[0];
+let parseCompareElementsAttr2 = await page.$x("//b");
+if (parseCompareElementsAttr2.length === 0) { throw 'XPath "//b" not found'; }
+parseCompareElementsAttr2 = parseCompareElementsAttr2[0];
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
+        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
         ],
         'wait': false,
         'checkResult': true,
@@ -3730,8 +3878,8 @@ function checkCompareElementsAttributeFalse(x, func) {
     checkCompareElementsAttributeInner(
         x,
         func,
-        'try {\n',
-        '\n} catch(e) { continue; } throw "assert didn\'t fail";',
+        'try {\n    ',
+        '\n    } catch(e) { continue; } throw "assert didn\'t fail";',
     );
 }
 
@@ -6823,7 +6971,8 @@ Object.entries(parseWaitForCssDict)) {
 parseWaitForCssValue) {
                 if (typeof computedEntry === "string" && \
 computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) \
++ "px";
                     if (extractedFloat !== parseWaitForCssValue) {
                         nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
 && \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
@@ -6889,7 +7038,8 @@ Object.entries(parseWaitForCssDict)) {
 parseWaitForCssValue) {
                 if (typeof computedEntry === "string" && \
 computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) \
++ "px";
                     if (extractedFloat !== parseWaitForCssValue) {
                         nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
 && \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
@@ -6955,7 +7105,8 @@ Object.entries(parseWaitForCssDict)) {
 parseWaitForCssValue) {
                 if (typeof computedEntry === "string" && \
 computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) \
++ "px";
                     if (extractedFloat !== parseWaitForCssValue) {
                         nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
 && \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
@@ -7022,7 +7173,8 @@ Object.entries(parseWaitForCssDict)) {
 parseWaitForCssValue) {
                 if (typeof computedEntry === "string" && \
 computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) \
++ "px";
                     if (extractedFloat !== parseWaitForCssValue) {
                         nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
 && \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
@@ -7095,7 +7247,8 @@ Object.entries(parseWaitForCssDict)) {
 parseWaitForCssValue) {
                 if (typeof computedEntry === "string" && \
 computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) \
++ "px";
                     if (extractedFloat !== parseWaitForCssValue) {
                         nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
 && \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
@@ -7165,7 +7318,8 @@ Object.entries(parseWaitForCssDict)) {
 parseWaitForCssValue) {
                 if (typeof computedEntry === "string" && \
 computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) \
++ "px";
                     if (extractedFloat !== parseWaitForCssValue) {
                         nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
 && \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
@@ -7232,7 +7386,8 @@ Object.entries(parseWaitForCssDict)) {
 parseWaitForCssValue) {
                 if (typeof computedEntry === "string" && \
 computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) \
++ "px";
                     if (extractedFloat !== parseWaitForCssValue) {
                         nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
 && \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");

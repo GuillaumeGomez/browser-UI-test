@@ -43,11 +43,11 @@ function parseAssertCssInner(parser, assertFalse) {
     const extra = `\
 if (typeof assertComputedStyle[${varKey}] === "string" && \
 assertComputedStyle[${varKey}].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloat(assertComputedStyle[${varKey}], true) + "px" !== \
+    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[${varKey}], true) + "px" !== \
 ${varValue}) {
         localErr.push('expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\`, \
 found \`' + assertComputedStyle[${varKey}] + '\` (or \`' + \
-browserUiTestHelpers.extractFloat(assertComputedStyle[${varKey}], true) + 'px\`)');
+browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[${varKey}], true) + 'px\`)');
     }
     succeeded = true;
 }`;
@@ -1069,8 +1069,8 @@ function parseAssertPositionInner(parser, assertFalse) {
         extra += `
 let pseudoStyle = window.getComputedStyle(e, "${selector.pseudo}");
 let style = window.getComputedStyle(e);
-v += browserUiTestHelpers.extractFloat(pseudoStyle[field]) - \
-browserUiTestHelpers.extractFloat(style[styleField]);`;
+v += browserUiTestHelpers.extractFloatOrZero(pseudoStyle[field]) - \
+browserUiTestHelpers.extractFloatOrZero(style[styleField]);`;
     }
 
     let check;

@@ -599,20 +599,46 @@ click-with-offset: (".element", {"y": 3}
 
 #### compare-elements-attribute
 
-**compare-elements-attribute** command allows you to compare two DOM elements' attributes are equal. Examples:
+**compare-elements-attribute** command allows you to compare two DOM elements' attributes. By default, it's checking if they're equal Examples:
 
 ```
 compare-elements-attribute: ("element1", "element2", ["attribute1", "attributeX", ...])
 compare-elements-attribute: ("//element1", "element2", ["attribute1", "attributeX", ...])
+
+// The two previous commands can be written like this too:
+compare-elements-attribute: ("element1", "element2", ["attribute1", "attributeX", ...], "=")
+compare-elements-attribute: ("//element1", "element2", ["attribute1", "attributeX", ...], "=")
+```
+
+Here is the list of the supported operators: `=`, `<`, `>`, `<=`, `>=`.
+
+Examples:
+
+```
+compare-elements-attribute: ("element1", "element2", ["attribute1", "attributeX", ...], "<")
+compare-elements-attribute: ("element1", "element2", ["attribute1", "attributeX", ...], ">=")
 ```
 
 #### compare-elements-attribute-false
 
-**compare-elements-attribute-false** command allows you to check that two DOM elements' attributes are different. If one of the elements doesn't exist, the command will fail. Examples:
+**compare-elements-attribute-false** command allows you to check that two DOM elements' attributes (and assuming the comparison will fail). If one of the elements doesn't exist, the command will fail. Examples:
 
 ```
 compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX", ...])
 compare-elements-attribute-false: ("//element1", "element2", ["attribute1", "attributeX", ...])
+
+// The two previous commands can be written like this too:
+compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX", ...], "=")
+compare-elements-attribute-false: ("//element1", "element2", ["attribute1", "attributeX", ...], "=")
+```
+
+Here is the list of the supported operators: `=`, `<`, `>`, `<=`, `>=`.
+
+Examples:
+
+```
+compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX", ...], "<")
+compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX", ...], ">=")
 ```
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.

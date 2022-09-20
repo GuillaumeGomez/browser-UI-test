@@ -1,6 +1,6 @@
 // All `compare*` commands.
 
-const { getAndSetElements, getInsertStrings, validateJson } = require('./utils.js');
+const { getAndSetElements, getInsertStrings, validateJson, indentString } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 
 function parseCompareElementsTextInner(parser, assertFalse) {
@@ -93,8 +93,8 @@ function parseCompareElementsAttributeInner(parser, assertFalse) {
         };
     }
     const tuple = elems[0].getRaw();
-    if (tuple.length !== 3) {
-        let err = `expected 3 elements in the tuple, found ${tuple.length} element`;
+    if (tuple.length < 3 || tuple.length > 4) {
+        let err = `expected 3 or 4 elements in the tuple, found ${tuple.length} element`;
         if (tuple.length > 1) {
             err += 's';
         }
@@ -114,7 +114,25 @@ function parseCompareElementsAttributeInner(parser, assertFalse) {
             'error': 'expected third argument to be an array of string, ' +
                 `found ${tuple[1].getArticleKind()}`,
         };
+    } else if (tuple.length === 4) {
+        const operators = ['<', '<=', '>', '>=', '='];
+
+        if (tuple[3].kind !== 'string') {
+            return {
+                'error': 'expected fourth argument to be a string of an operator (one of ' +
+                    operators.map(x => `\`${x}\``).join(', ') + '), found ' +
+                    tuple[3].getArticleKind(),
+            };
+        } else if (operators.indexOf(tuple[3].getRaw()) === -1) {
+            return {
+                'error': `Unknown operator \`${tuple[3].getRaw()}\` in fourth argument. Expected ` +
+                    `one of [${operators.map(x => `\`${x}\``).join(', ')}]`,
+            };
+        }
     }
+
+    const operator = tuple.length === 4 ? tuple[3].getRaw() : '=';
+
     const array = tuple[2].getRaw();
     if (array.length > 0 && array[0].kind !== 'string') {
         return {'error': `expected an array of strings, found \`${tuple[2].getText()}\``};
@@ -142,12 +160,41 @@ function parseCompareElementsAttributeInner(parser, assertFalse) {
         arr += `"${array[i].getStringValue()}"`;
     }
 
-    const code = `const attributes = [${arr}];\n` +
-    'for (const attr of attributes) {\n' +
-    `${insertBefore}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n` +
-        'throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);\n' +
-    `}${insertAfter}\n` +
-    '}\n';
+    let comparison;
+
+    if (operator === '=') {
+        comparison = `\
+${insertBefore}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
+    throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
+}${insertAfter}`;
+    } else {
+        const matchings = {
+            '<': '>=',
+            '<=': '>',
+            '>': '<=',
+            '>=': '<',
+        };
+        comparison = `\
+let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
+if (value1 === null) {
+    throw attr + " (" + e1.getAttribute(attr) + ") from \`${selector1.value}\` isn't a number so \
+comparison cannot be performed";
+}
+let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
+if (value2 === null) {
+    throw attr + " (" + e2.getAttribute(attr) + ") from \`${selector2.value}\` isn't a number so \
+comparison cannot be performed";
+}
+${insertBefore}if (value1 ${matchings[operator]} value2) {
+    throw attr + ": " + e1.getAttribute(attr) + " ${matchings[operator]} " + e2.getAttribute(attr);
+}${insertAfter}`;
+    }
+
+    const code = `const attributes = [${arr}];
+for (const attr of attributes) {
+${indentString(comparison, 1)}
+}
+`;
 
     return {
         'instructions': [

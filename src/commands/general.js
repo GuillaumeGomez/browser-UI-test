@@ -176,7 +176,7 @@ if (!arg.showText) {
 computedEntry = computedStyle[${varKey}];
 if (e.style[${varKey}] != ${varValue} && computedEntry != ${varValue}) {
     if (typeof computedEntry === "string" && computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-        extractedFloat = browserUiTestHelpers.extractFloat(computedEntry, true) + "px";
+        extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) + "px";
         if (extractedFloat !== ${varValue}) {
             ${nonMatchingS}
         } else {
