@@ -3587,13 +3587,21 @@ function checkCompareElementsAttributeInner(x, func, before, after) {
     x.assert(func('("a", "b", 1)'), {
         'error': 'expected third argument to be an array of string, found a string',
     });
+    x.assert(func('("a", "b", ["a"], 1)'), {
+        'error': 'expected fourth argument to be a string of an operator (one of `<`, `<=`, `>`, ' +
+            '`>=`, `=`), found a number',
+    });
+    x.assert(func('("a", "b", ["a"], "a")'), {
+        'error': 'Unknown operator `a` in fourth argument. Expected one of [`<`, `<=`, `>`, ' +
+            '`>=`, `=`]',
+    });
 
     x.assert(func('("a", "b", [])'), {
         'instructions': [`\
 let parseCompareElementsAttr1 = await page.$("a");
-if (parseCompareElementsAttr1 === null) { throw \'"a" not found\'; }
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
 let parseCompareElementsAttr2 = await page.$("b");
-if (parseCompareElementsAttr2 === null) { throw \'"b" not found\'; }
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
 await page.evaluate((e1, e2) => {
 const attributes = [];
 for (const attr of attributes) {
@@ -3609,14 +3617,145 @@ for (const attr of attributes) {
     x.assert(func('("a", "b", [\'"data-whatever\'])'), {
         'instructions': [`\
 let parseCompareElementsAttr1 = await page.$("a");
-if (parseCompareElementsAttr1 === null) { throw \'"a" not found\'; }
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
 let parseCompareElementsAttr2 = await page.$("b");
-if (parseCompareElementsAttr2 === null) { throw \'"b" not found\'; }
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
 await page.evaluate((e1, e2) => {
 const attributes = ["\\"data-whatever"];
 for (const attr of attributes) {
     ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
         throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    // Checking operators.
+    x.assert(func('("a", "b", [\'"data-whatever\'], "=")'), {
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$("a");
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
+let parseCompareElementsAttr2 = await page.$("b");
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
+        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", [\'"data-whatever\'], ">")'), {
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$("a");
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
+let parseCompareElementsAttr2 = await page.$("b");
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
+    if (value1 === null) {
+        throw attr + " (" + e1.getAttribute(attr) + ") from \`a\` isn't a number so \
+comparison cannot be performed";
+    }
+    let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
+    if (value2 === null) {
+        throw attr + " (" + e2.getAttribute(attr) + ") from \`b\` isn't a number so \
+comparison cannot be performed";
+    }
+    ${before}if (value1 <= value2) {
+        throw attr + ": " + e1.getAttribute(attr) + " <= " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", [\'"data-whatever\'], ">=")'), {
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$("a");
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
+let parseCompareElementsAttr2 = await page.$("b");
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
+    if (value1 === null) {
+        throw attr + " (" + e1.getAttribute(attr) + ") from \`a\` isn't a number so \
+comparison cannot be performed";
+    }
+    let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
+    if (value2 === null) {
+        throw attr + " (" + e2.getAttribute(attr) + ") from \`b\` isn't a number so \
+comparison cannot be performed";
+    }
+    ${before}if (value1 < value2) {
+        throw attr + ": " + e1.getAttribute(attr) + " < " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", [\'"data-whatever\'], "<")'), {
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$("a");
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
+let parseCompareElementsAttr2 = await page.$("b");
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
+    if (value1 === null) {
+        throw attr + " (" + e1.getAttribute(attr) + ") from \`a\` isn't a number so \
+comparison cannot be performed";
+    }
+    let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
+    if (value2 === null) {
+        throw attr + " (" + e2.getAttribute(attr) + ") from \`b\` isn't a number so \
+comparison cannot be performed";
+    }
+    ${before}if (value1 >= value2) {
+        throw attr + ": " + e1.getAttribute(attr) + " >= " + e2.getAttribute(attr);
+    }${after}
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", "b", [\'"data-whatever\'], "<=")'), {
+        'instructions': [`\
+let parseCompareElementsAttr1 = await page.$("a");
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
+let parseCompareElementsAttr2 = await page.$("b");
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = ["\\"data-whatever"];
+for (const attr of attributes) {
+    let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
+    if (value1 === null) {
+        throw attr + " (" + e1.getAttribute(attr) + ") from \`a\` isn't a number so \
+comparison cannot be performed";
+    }
+    let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
+    if (value2 === null) {
+        throw attr + " (" + e2.getAttribute(attr) + ") from \`b\` isn't a number so \
+comparison cannot be performed";
+    }
+    ${before}if (value1 > value2) {
+        throw attr + ": " + e1.getAttribute(attr) + " > " + e2.getAttribute(attr);
     }${after}
 }
 }, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
@@ -3630,10 +3769,10 @@ for (const attr of attributes) {
     x.assert(func('("//a", "b", [])'), {
         'instructions': [`\
 let parseCompareElementsAttr1 = await page.$x("//a");
-if (parseCompareElementsAttr1.length === 0) { throw \'XPath "//a" not found\'; }
+if (parseCompareElementsAttr1.length === 0) { throw 'XPath "//a" not found'; }
 parseCompareElementsAttr1 = parseCompareElementsAttr1[0];
 let parseCompareElementsAttr2 = await page.$("b");
-if (parseCompareElementsAttr2 === null) { throw \'"b" not found\'; }
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
 await page.evaluate((e1, e2) => {
 const attributes = [];
 for (const attr of attributes) {
@@ -3649,10 +3788,10 @@ for (const attr of attributes) {
     x.assert(func('("//a", "b", [\'"data-whatever\'])'), {
         'instructions': [`\
 let parseCompareElementsAttr1 = await page.$x("//a");
-if (parseCompareElementsAttr1.length === 0) { throw \'XPath "//a" not found\'; }
+if (parseCompareElementsAttr1.length === 0) { throw 'XPath "//a" not found'; }
 parseCompareElementsAttr1 = parseCompareElementsAttr1[0];
 let parseCompareElementsAttr2 = await page.$("b");
-if (parseCompareElementsAttr2 === null) { throw \'"b" not found\'; }
+if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
 await page.evaluate((e1, e2) => {
 const attributes = ["\\"data-whatever"];
 for (const attr of attributes) {
@@ -3668,9 +3807,9 @@ for (const attr of attributes) {
     x.assert(func('("a", "//b", [\'"data-whatever\'])'), {
         'instructions': [`\
 let parseCompareElementsAttr1 = await page.$("a");
-if (parseCompareElementsAttr1 === null) { throw \'"a" not found\'; }
+if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
 let parseCompareElementsAttr2 = await page.$x("//b");
-if (parseCompareElementsAttr2.length === 0) { throw \'XPath "//b" not found\'; }
+if (parseCompareElementsAttr2.length === 0) { throw 'XPath "//b" not found'; }
 parseCompareElementsAttr2 = parseCompareElementsAttr2[0];
 await page.evaluate((e1, e2) => {
 const attributes = ["\\"data-whatever"];
@@ -3687,10 +3826,10 @@ for (const attr of attributes) {
     x.assert(func('("//a", "//b", [\'"data-whatever\'])'), {
         'instructions': [`\
 let parseCompareElementsAttr1 = await page.$x("//a");
-if (parseCompareElementsAttr1.length === 0) { throw \'XPath "//a" not found\'; }
+if (parseCompareElementsAttr1.length === 0) { throw 'XPath "//a" not found'; }
 parseCompareElementsAttr1 = parseCompareElementsAttr1[0];
 let parseCompareElementsAttr2 = await page.$x("//b");
-if (parseCompareElementsAttr2.length === 0) { throw \'XPath "//b" not found\'; }
+if (parseCompareElementsAttr2.length === 0) { throw 'XPath "//b" not found'; }
 parseCompareElementsAttr2 = parseCompareElementsAttr2[0];
 await page.evaluate((e1, e2) => {
 const attributes = ["\\"data-whatever"];
@@ -3712,10 +3851,10 @@ for (const attr of attributes) {
     x.assert(func('("//a"\n,\n "//b", [\'"data-whatever\'])'), {
         'instructions': [`\
 let parseCompareElementsAttr1 = await page.$x("//a");
-if (parseCompareElementsAttr1.length === 0) { throw \'XPath "//a" not found\'; }
+if (parseCompareElementsAttr1.length === 0) { throw 'XPath "//a" not found'; }
 parseCompareElementsAttr1 = parseCompareElementsAttr1[0];
 let parseCompareElementsAttr2 = await page.$x("//b");
-if (parseCompareElementsAttr2.length === 0) { throw \'XPath "//b" not found\'; }
+if (parseCompareElementsAttr2.length === 0) { throw 'XPath "//b" not found'; }
 parseCompareElementsAttr2 = parseCompareElementsAttr2[0];
 await page.evaluate((e1, e2) => {
 const attributes = ["\\"data-whatever"];
