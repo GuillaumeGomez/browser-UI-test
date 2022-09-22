@@ -22,6 +22,8 @@ const ORDERS = {
     'assert-property-false': commands.parseAssertPropertyFalse,
     'assert-text': commands.parseAssertText,
     'assert-text-false': commands.parseAssertTextFalse,
+    'assert-variable': commands.parseAssertVariable,
+    'assert-variable-false': commands.parseAssertVariableFalse,
     'assert-window-property': commands.parseAssertWindowProperty,
     'assert-window-property-false': commands.parseAssertWindowPropertyFalse,
     'attribute': commands.parseAttribute,
@@ -63,6 +65,8 @@ const ORDERS = {
     'scroll-to': commands.parseScrollTo,
     'show-text': commands.parseShowText,
     'size': commands.parseSize,
+    'store-property': commands.parseStoreProperty,
+    'store-value': commands.parseStoreValue,
     'text': commands.parseText,
     'timeout': commands.parseTimeout,
     'wait-for': commands.parseWaitFor,
@@ -86,6 +90,8 @@ const FATAL_ERROR_COMMANDS = [
     'move-cursor-to',
     'screenshot',
     'scroll-to',
+    'store-property',
+    'store-value',
     'text',
     'wait-for',
     'wait-for-attribute',
@@ -96,12 +102,15 @@ const FATAL_ERROR_COMMANDS = [
 
 // Commands which do not run JS commands but change the behavior of the commands following.
 const NO_INTERACTION_COMMANDS = [
+    'assert-variable',
+    'assert-variable-false',
     'debug',
     'emulate',
     'fail',
     'fail-on-js-error',
     'javascript',
     'screenshot-comparison',
+    'store-value',
     'timeout',
 ];
 

@@ -8,6 +8,7 @@ const emulation = require('./emulation.js');
 const general = require('./general.js');
 const input = require('./input.js');
 const navigation = require('./navigation.js');
+const store = require('./store.js');
 
 module.exports = {
     'parseAssert': assert.parseAssert,
@@ -28,6 +29,8 @@ module.exports = {
     'parseAssertPropertyFalse': assert.parseAssertPropertyFalse,
     'parseAssertText': assert.parseAssertText,
     'parseAssertTextFalse': assert.parseAssertTextFalse,
+    'parseAssertVariable': assert.parseAssertVariable,
+    'parseAssertVariableFalse': assert.parseAssertVariableFalse,
     'parseAssertWindowProperty': assert.parseAssertWindowProperty,
     'parseAssertWindowPropertyFalse': assert.parseAssertWindowPropertyFalse,
     'parseAttribute': dom_modifiers.parseAttribute,
@@ -69,6 +72,8 @@ module.exports = {
     'parseScrollTo': input.parseScrollTo,
     'parseShowText': context_setters.parseShowText,
     'parseSize': emulation.parseSize,
+    'parseStoreProperty': store.parseStoreProperty,
+    'parseStoreValue': store.parseStoreValue,
     'parseText': dom_modifiers.parseText,
     'parseTimeout': context_setters.parseTimeout,
     'parseWaitFor': general.parseWaitFor,

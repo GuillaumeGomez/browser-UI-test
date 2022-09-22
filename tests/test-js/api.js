@@ -1056,6 +1056,61 @@ if (String(document[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) !
     );
 }
 
+function checkAssertVariableInner(x, func, operator) {
+    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
+    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {'error': 'expected 2 elements in the tuple, found 1 element'});
+    x.assert(func('(1, 1)'), {
+        'error': 'expected first argument to be an ident, found a number (`1`)',
+    });
+    x.assert(func('(a, {"a": "b"})'), {
+        'error': 'expected second argument to be a number or a string, found a json (`{"a": "b"}`)',
+    });
+
+    x.assert(func('(VAR, "a")'), {
+        'instructions': [`\
+if (arg.variables["VAR"] ${operator} "a") {
+    throw 'variable (of value \`' + arg.variables["VAR"] + '\` ${operator} \`' + "a" + '\`';
+}`,
+        ],
+        'wait': false,
+    });
+
+    x.assert(func('(VAR, "\'a")'), {
+        'instructions': [`\
+if (arg.variables["VAR"] ${operator} "'a") {
+    throw 'variable (of value \`' + arg.variables["VAR"] + '\` ${operator} \`' + "'a" + '\`';
+}`,
+        ],
+        'wait': false,
+    });
+    x.assert(func('(VAR, 1)'), {
+        'instructions': [`\
+if (arg.variables["VAR"] ${operator} 1) {
+    throw 'variable (of value \`' + arg.variables["VAR"] + '\` ${operator} \`' + 1 + '\`';
+}`,
+        ],
+        'wait': false,
+    });
+    x.assert(func('(VAR, 1.28)'), {
+        'instructions': [`\
+if (arg.variables["VAR"] ${operator} 1.28) {
+    throw 'variable (of value \`' + arg.variables["VAR"] + '\` ${operator} \`' + 1.28 + '\`';
+}`,
+        ],
+        'wait': false,
+    });
+}
+
+function checkAssertVariable(x, func) {
+    checkAssertVariableInner(x, func, '!=');
+}
+
+function checkAssertVariableFalse(x, func) {
+    checkAssertVariableInner(x, func, '==');
+}
+
 function checkAssertWindowProperty(x, func) {
     checkAssertObjPropertyInner(
         x,
@@ -5899,8 +5954,10 @@ function checkParseContent(x, func) {
         },
     ]);
     x.assert(func('focus: "#foo"'), [{
-        'error': 'First command must be `goto` (`debug`, `emulate`, `fail`, `fail-on-js-error`, ' +
-            '`javascript`, `screenshot-comparison` or `timeout` can be used before)!',
+        'error': 'First command must be `goto` (`assert-variable`, `assert-variable-false`, ' +
+            '`debug`, `emulate`, `fail`, `fail-on-js-error`, ' +
+            '`javascript`, `screenshot-comparison`, `store-value` or `timeout` can be used ' +
+            'before)!',
         'line': 1,
     }]);
     x.assert(func('fail: true\ngoto: file:///home'), [
@@ -6330,6 +6387,91 @@ function checkSize(x, func) {
     x.assert(func('(1\n,2)'), {'instructions': ['await page.setViewport({width: 1, height: 2})']});
 }
 
+function checkStoreProperty(x, func) {
+    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
+    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {'error': 'expected 3 elements in the tuple, found 1 element'});
+    x.assert(func('(1, 1, 1)'), {
+        'error': 'expected first argument to be an ident, found a number (`1`)',
+    });
+    x.assert(func('(a, 1, 1)'), {
+        'error': 'expected second argument to be a string, found a number (`1`)',
+    });
+    x.assert(func('(a, "1", 1)'), {
+        'error': 'expected third argument to be a CSS selector or an XPath, found a number (`1`)',
+    });
+    x.assert(func('(VAR, \'\', "b")'), {
+        'error': 'CSS selector cannot be empty',
+        'isXPath': false,
+    });
+
+    x.assert(func('(VAR, "a", "b")'), {
+        'instructions': [`\
+let parseStoreProperty = await page.$("a");
+if (parseStoreProperty === null) { throw '"a" not found'; }
+const jsHandle = await parseStoreProperty.evaluateHandle((e, p) => {
+    return String(e[p]);
+}, "b");
+arg.variables["VAR"] = await jsHandle.jsonValue();`,
+        ],
+        'wait': false,
+    });
+    x.assert(func('(VAR, "//a", "b")'), {
+        'instructions': [`\
+let parseStoreProperty = await page.$x("//a");
+if (parseStoreProperty.length === 0) { throw 'XPath "//a" not found'; }
+parseStoreProperty = parseStoreProperty[0];
+const jsHandle = await parseStoreProperty.evaluateHandle((e, p) => {
+    return String(e[p]);
+}, "b");
+arg.variables["VAR"] = await jsHandle.jsonValue();`,
+        ],
+        'wait': false,
+    });
+
+    x.assert(func('(VAR, "a::after", "b")'), {
+        'instructions': [`\
+let parseStoreProperty = await page.$("a");
+if (parseStoreProperty === null) { throw '"a" not found'; }
+const jsHandle = await parseStoreProperty.evaluateHandle((e, p) => {
+    return String(e[p]);
+}, "b");
+arg.variables["VAR"] = await jsHandle.jsonValue();`,
+        ],
+        'wait': false,
+        'warnings': [
+            'Pseudo-elements (`::after`) don\'t have attributes so the check will be performed ' +
+            'on the element itself'],
+    });
+}
+
+function checkStoreValue(x, func) {
+    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
+    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {'error': 'expected 2 elements in the tuple, found 1 element'});
+    x.assert(func('(1, 1)'), {
+        'error': 'expected first argument to be an ident, found a number (`1`)',
+    });
+    x.assert(func('(a, {"a": "b"})'), {
+        'error': 'expected second argument to be a number or a string, found a json (`{"a": "b"}`)',
+    });
+
+    x.assert(func('(VAR, "a")'), {
+        'instructions': ['arg.variables["VAR"] = "a";'],
+        'wait': false,
+    });
+    x.assert(func('(VAR, 1)'), {
+        'instructions': ['arg.variables["VAR"] = 1;'],
+        'wait': false,
+    });
+    x.assert(func('(VAR, 1.28)'), {
+        'instructions': ['arg.variables["VAR"] = 1.28;'],
+        'wait': false,
+    });
+}
+
 function checkText(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('("a", "b"'), {'error': 'expected `)` or `,` after `"b"`'});
@@ -6347,6 +6489,21 @@ function checkText(x, func) {
             'instructions': [
                 'let parseTextElem = await page.$("a");\n' +
                 'if (parseTextElem === null) { throw \'"a" not found\'; }\n' +
+                'await page.evaluate(e => {\n' +
+                'if (["input", "textarea"].indexOf(e.tagName.toLowerCase()) !== -1) {\n' +
+                'e.value = "b";\n' +
+                '} else {\n' +
+                'e.innerText = "b";\n' +
+                '}\n' +
+                '}, parseTextElem);',
+            ],
+        });
+    x.assert(func('("//a", "b")'),
+        {
+            'instructions': [
+                'let parseTextElem = await page.$x("//a");\n' +
+                'if (parseTextElem.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+                'parseTextElem = parseTextElem[0];\n' +
                 'await page.evaluate(e => {\n' +
                 'if (["input", "textarea"].indexOf(e.tagName.toLowerCase()) !== -1) {\n' +
                 'e.value = "b";\n' +
@@ -7757,6 +7914,16 @@ const TO_CHECK = [
         'toCall': (e, o) => wrapper(parserFuncs.parseAssertTextFalse, e, o),
     },
     {
+        'name': 'assert-variable',
+        'func': checkAssertVariable,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssertVariable, e, o),
+    },
+    {
+        'name': 'assert-variable-false',
+        'func': checkAssertVariableFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssertVariableFalse, e, o),
+    },
+    {
         'name': 'assert-window-property',
         'func': checkAssertWindowProperty,
         'toCall': (e, o) => wrapper(parserFuncs.parseAssertWindowProperty, e, o),
@@ -7960,6 +8127,16 @@ const TO_CHECK = [
         'name': 'size',
         'func': checkSize,
         'toCall': (e, o) => wrapper(parserFuncs.parseSize, e, o),
+    },
+    {
+        'name': 'store-property',
+        'func': checkStoreProperty,
+        'toCall': (e, o) => wrapper(parserFuncs.parseStoreProperty, e, o),
+    },
+    {
+        'name': 'store-value',
+        'func': checkStoreValue,
+        'toCall': (e, o) => wrapper(parserFuncs.parseStoreValue, e, o),
     },
     {
         'name': 'text',

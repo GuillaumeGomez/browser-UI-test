@@ -47,6 +47,8 @@ text: ("#an-element", |A_VARIABLE|)
 
 In here, it'll set "#an-element" element's text to "12".
 
+If you want to set a variable from inside a script, use one of the `store-*` commands. Important to be noted: the created variables only override the variables set with `--variable` in the current script and don't change environment variables.
+
 A small note: the variable `CURRENT_DIR` is always available (and contains the directory where the script has been started) and **cannot** be override! It is also guaranteed to never end with `/` or `\\`.
 
 ## Command list
@@ -73,6 +75,8 @@ Here's the command list:
  * [`assert-property-false`](#assert-property-false)
  * [`assert-text`](#assert-text)
  * [`assert-text-false`](#assert-text-false)
+ * [`assert-variable`](#assert-variable)
+ * [`assert-variable-false`](#assert-variable-false)
  * [`assert-window-property`](#assert-window-property)
  * [`assert-window-property-false`](#assert-window-property-false)
  * [`attribute`](#attribute)
@@ -114,6 +118,8 @@ Here's the command list:
  * [`scroll-to`](#scroll-to)
  * [`show-text`](#show-text)
  * [`size`](#size)
+ * [`store-property`](#store-property)
+ * [`store-value`](#store-value)
  * [`text`](#text)
  * [`timeout`](#timeout)
  * [`wait-for`](#wait-for)
@@ -492,6 +498,30 @@ assert-text: (".class", "hello", [ALL, STARTS_WITH, ENDS_WITH])
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-text-false) command.
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+
+#### assert-variable
+
+**assert-variable** commands checks that the value of the given variable is the one provided. Examples:
+
+```
+assert-variable: (variable_name, "hello")
+assert-variable: (variable_name, 12)
+assert-variable: (variable_name, 12.1)
+```
+
+For more information about variables, read the [variables section](#variables).
+
+#### assert-variable-false
+
+**assert-variable-false** commands checks that the value of the given variable is not the one provided. Examples:
+
+```
+assert-variable-false: (variable_name, "hello")
+assert-variable-false: (variable_name, 12)
+assert-variable-false: (variable_name, 12.1)
+```
+
+For more information about variables, read the [variables section](#variables).
 
 #### assert-window-property
 
@@ -1074,6 +1104,29 @@ show-text: true // text won't be invisible anymore
 ```
 size: (700, 1000)
 ```
+
+#### store-property
+
+**store-property** command stores an element's property into a variable. Examples:
+
+```
+store-property: (variable_name, "#button", "clientHeight")
+store-property: (variable_name, "#button", "scrollHeight")
+```
+
+For more information about variables, read the [variables section](#variables).
+
+#### store-value
+
+**store-value** command stores a value into a variable. The value can be a number of a string. Examples:
+
+```
+store-value: (variable_name, "hello")
+store-value: (variable_name, 1)
+store-value: (variable_name, 1.45)
+```
+
+For more information about variables, read the [variables section](#variables).
 
 #### text
 
