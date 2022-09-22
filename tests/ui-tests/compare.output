@@ -1,0 +1,8 @@
+=> Starting doc-ui tests...
+
+compare... FAILED
+[ERROR] (line 4) Error: Evaluation failed: clientHeight: `24` !== `6`: for command `compare-elements-property: ("header", "#the-input", ["clientHeight"])`
+[ERROR] (line 10) assert didn't fail: for command `compare-elements-property-false: ("#useless\.input", "#the-input", ["clientHeight"])`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed
