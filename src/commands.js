@@ -110,70 +110,69 @@ const BEFORE_GOTO = [
     'emulate',
 ];
 
-function parseContent(content, options) {
-    const parser = new Parser(content, options.variables);
-    const commands = {'commands': []};
-    let res;
-    let firstGotoParsed = false;
+class ParserWithContext {
+    constructor(content, options) {
+        this.parser = new Parser(content, options.variables);
+        this.firstGotoParsed = false;
+        this.options = options;
+    }
 
-    for (;;) {
-        if (!parser.parseNextCommand()) {
-            if (parser.error) {
+    variables() {
+        return this.parser.variables;
+    }
+
+    get_next_command() {
+        if (!this.parser.parseNextCommand()) {
+            if (this.parser.error) {
                 return {
-                    'error': parser.error,
-                    'line': parser.currentLine,
+                    'error': this.parser.error,
+                    'line': this.parser.currentLine,
                 };
             }
             // We reached the end of the file!
-            break;
+            return null;
         }
-        const order = parser.command.getRaw().toLowerCase();
+        const order = this.parser.command.getRaw().toLowerCase();
         if (!Object.prototype.hasOwnProperty.call(ORDERS, order)) {
-            return {'error': `Unknown command "${order}"`, 'line': parser.currentLine};
+            return {'error': `Unknown command "${order}"`, 'line': this.parser.currentLine};
         }
-        if (firstGotoParsed === false) {
+        if (this.firstGotoParsed === false) {
             if (order !== 'goto' && NO_INTERACTION_COMMANDS.indexOf(order) === -1) {
                 const cmds = NO_INTERACTION_COMMANDS.map(x => `\`${x}\``);
                 const last = cmds.pop();
                 const text = cmds.join(', ') + ` or ${last}`;
                 return {
                     'error': `First command must be \`goto\` (${text} can be used before)!`,
-                    'line': parser.currentLine,
+                    'line': this.parser.currentLine,
                 };
             }
-            firstGotoParsed = order === 'goto';
+            this.firstGotoParsed = order === 'goto';
         } else if (BEFORE_GOTO.indexOf(order) !== -1) {
             return {
                 'error': `Command ${order} must be used before first goto!`,
-                'line': parser.currentLine,
+                'line': this.parser.currentLine,
             };
         }
-        res = ORDERS[order](parser, options);
+        const res = ORDERS[order](this.parser, this.options);
         if (res.error !== undefined) {
-            res.line = parser.currentLine;
+            res.line = this.parser.currentLine;
             return res;
         }
-        if (res['warnings'] !== undefined) {
-            if (commands['warnings'] === undefined) {
-                commands['warnings'] = [];
-            }
-            commands['warnings'].push.apply(commands['warnings'], res['warnings']);
-        }
-        commands['commands'].push({
+        return {
             'fatal_error': FATAL_ERROR_COMMANDS.indexOf(order) !== -1,
             'wait': res['wait'],
             'checkResult': res['checkResult'],
-            'original': parser.getOriginalCommand(),
-            'line_number': parser.command.line,
+            'original': this.parser.getOriginalCommand(),
+            'line_number': this.parser.command.line,
             'instructions': res['instructions'],
             'infos': res['infos'],
-        });
+            'warnings': res['warnings'],
+        };
     }
-    return commands;
 }
 
 const EXPORTS = {
-    'parseContent': parseContent,
+    'ParserWithContext': ParserWithContext,
     'COLOR_CHECK_ERROR': consts.COLOR_CHECK_ERROR,
 };
 

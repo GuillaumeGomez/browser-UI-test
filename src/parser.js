@@ -265,7 +265,11 @@ class Parser {
         if (typeof variables === 'undefined' || variables === null) {
             variables = {};
         }
-        this.variables = variables;
+        this.variables = Object.create(null);
+        // We don't copy the map, only its content.
+        for (const key in variables) {
+            this.variables[key] = variables[key];
+        }
         // For humans, the first line isn't 0 but 1.
         this.currentLine = 1;
         this.command = null;

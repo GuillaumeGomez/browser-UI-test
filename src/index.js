@@ -92,22 +92,10 @@ function getGlobalStyle(showText) {
 
 function parseTest(testName, content, logs, options) {
     try {
-        const commands = commands_parser.parseContent(content, options);
-        if (Object.prototype.hasOwnProperty.call(commands, 'error')) {
-            logs.append(testName + '... FAILED');
-            logs.append(`[ERROR] line ${commands['line']}: ${commands['error']}`);
-            return null;
-        }
-        if (commands['commands'].length === 0) {
-            logs.append(testName + '... FAILED');
-            logs.append('=> No command to execute');
-            logs.warn(commands['warnings']);
-            return null;
-        }
+        const parser = new commands_parser.ParserWithContext(content, options);
         return {
             'file': testName,
-            'commands': commands['commands'],
-            'warnings': commands['warnings'],
+            'parser': parser,
         };
     } catch (err) {
         logs.append(testName + '... FAILED (exception occured)');
@@ -150,6 +138,7 @@ function waitUntilEnterPressed(error_log) {
 
 async function runAllCommands(loaded, logs, options, browser) {
     logs.append(loaded['file'] + '... ');
+    const context_parser = loaded['parser'];
 
     let notOk = false;
     let returnValue = Status.Ok;
@@ -171,6 +160,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             'getImageFolder': () => options.getImageFolder(),
             'failOnJsError': options.failOnJsError,
             'jsErrors': [],
+            'variables': context_parser.variables(),
         };
         page.on('pageerror', message => {
             extras.jsErrors.push(message);
@@ -208,6 +198,8 @@ async function runAllCommands(loaded, logs, options, browser) {
         debug_log.append(`Injecting helpers script into page: "${script}"`);
         await page.evaluateOnNewDocument(script);
 
+        let line_number;
+
         // Defined here because I need `error_log` to be updated without being returned.
         const checkJsErrors = () => {
             if (!extras.failOnJsError || extras.jsErrors.length === 0) {
@@ -221,11 +213,28 @@ async function runAllCommands(loaded, logs, options, browser) {
         };
 
         let error_log = '';
-        let line_number;
-        const commands = loaded['commands'];
+        const warnings = [];
 
         command_loop:
-        for (const command of commands) {
+        for (let nb_commands = 0;; ++nb_commands) {
+            const command = context_parser.get_next_command();
+            if (command === null) {
+                if (nb_commands === 0) {
+                    logs.append('FAILED');
+                    logs.append('=> No command to execute');
+                    return Status.Failure;
+                }
+                break;
+            }
+            if (command['warnings'] !== undefined) {
+                warnings.push.apply(warnings, command['warnings']);
+            }
+            if (Object.prototype.hasOwnProperty.call(command, 'error')) {
+                logs.append('FAILED');
+                logs.warn(warnings);
+                logs.append(`[ERROR] line ${command['line']}: ${command['error']}`);
+                return Status.Failure;
+            }
             let failed = false;
             // In case we have some unrecoverable error which cannot be caught in `fail: true`, like
             // color check when text isn't displayed.
@@ -303,7 +312,7 @@ async function runAllCommands(loaded, logs, options, browser) {
         }
         if (error_log.length > 0 || checkJsErrors()) {
             logs.append('FAILED', true);
-            logs.warn(loaded['warnings']);
+            logs.warn(warnings);
             logs.append(error_log);
             if (extras.pauseOnError === true) {
                 waitUntilEnterPressed(error_log);
@@ -317,7 +326,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             if (extras.screenshotComparison === false) {
                 logs.append('ok', true);
                 debug_log.append('=> [NO SCREENSHOT COMPARISON]');
-                logs.warn(loaded['warnings']);
+                logs.warn(warnings);
                 await page.close();
                 return Status.Ok;
             }
@@ -325,7 +334,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             if (selector.error !== undefined) {
                 logs.append('FAILED', true);
                 logs.append(`Cannot take screenshot: ${selector.error.join('\n')}`);
-                logs.warn(loaded['warnings']);
+                logs.warn(warnings);
                 await page.close();
                 return Status.MissingElementForScreenshot;
             }
@@ -357,7 +366,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             logs.append('FAILED', true);
             logs.append(`Cannot take screenshot: element \`${extras.screenshotComparison}\`` +
                 ` not found: ${screenshot_error}`);
-            logs.warn(loaded['warnings']);
+            logs.warn(warnings);
             await page.close();
             return Status.MissingElementForScreenshot;
         }
