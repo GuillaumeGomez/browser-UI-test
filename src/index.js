@@ -220,7 +220,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             const command = context_parser.get_next_command();
             if (command === null) {
                 if (nb_commands === 0) {
-                    logs.append('FAILED');
+                    logs.append('FAILED', true);
                     logs.append('=> No command to execute');
                     return Status.Failure;
                 }
@@ -230,7 +230,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                 warnings.push.apply(warnings, command['warnings']);
             }
             if (Object.prototype.hasOwnProperty.call(command, 'error')) {
-                logs.append('FAILED');
+                logs.append('FAILED', true);
                 logs.warn(warnings);
                 logs.append(`[ERROR] line ${command['line']}: ${command['error']}`);
                 return Status.Failure;
