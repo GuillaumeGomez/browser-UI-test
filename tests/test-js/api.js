@@ -6330,6 +6330,65 @@ function checkSize(x, func) {
     x.assert(func('(1\n,2)'), {'instructions': ['await page.setViewport({width: 1, height: 2})']});
 }
 
+function checkStoreProperty(x, func) {
+    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
+    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {'error': 'expected 3 elements in the tuple, found 1 element'});
+    x.assert(func('(1, 1, 1)'), {
+        'error': 'expected first argument to be an ident, found a number (`1`)',
+    });
+    x.assert(func('(a, 1, 1)'), {
+        'error': 'expected second argument to be a string, found a number (`1`)',
+    });
+    x.assert(func('(a, "1", 1)'), {
+        'error': 'expected third argument to be a CSS selector or an XPath, found a number (`1`)',
+    });
+    x.assert(func('(VAR, \'\', "b")'), {
+        'error': 'CSS selector cannot be empty',
+        'isXPath': false,
+    });
+
+    x.assert(func('(VAR, "a", "b")'), {
+        'instructions': [`\
+let parseStoreProperty = await page.$("a");
+if (parseStoreProperty === null) { throw '"a" not found'; }
+const jsHandle = await parseStoreProperty.evaluateHandle((e, p) => {
+    return String(e[p]);
+}, "b");
+arg.variables["VAR"] = await jsHandle.jsonValue();`,
+        ],
+        'wait': false,
+    });
+    x.assert(func('(VAR, "//a", "b")'), {
+        'instructions': [`\
+let parseStoreProperty = await page.$x("//a");
+if (parseStoreProperty.length === 0) { throw 'XPath "//a" not found'; }
+parseStoreProperty = parseStoreProperty[0];
+const jsHandle = await parseStoreProperty.evaluateHandle((e, p) => {
+    return String(e[p]);
+}, "b");
+arg.variables["VAR"] = await jsHandle.jsonValue();`,
+        ],
+        'wait': false,
+    });
+
+    x.assert(func('(VAR, "a::after", "b")'), {
+        'instructions': [`\
+let parseStoreProperty = await page.$("a");
+if (parseStoreProperty === null) { throw '"a" not found'; }
+const jsHandle = await parseStoreProperty.evaluateHandle((e, p) => {
+    return String(e[p]);
+}, "b");
+arg.variables["VAR"] = await jsHandle.jsonValue();`,
+        ],
+        'wait': false,
+        'warnings': [
+            'Pseudo-elements (`::after`) don\'t have attributes so the check will be performed ' +
+            'on the element itself'],
+    });
+}
+
 function checkText(x, func) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('("a", "b"'), {'error': 'expected `)` or `,` after `"b"`'});
@@ -6347,6 +6406,21 @@ function checkText(x, func) {
             'instructions': [
                 'let parseTextElem = await page.$("a");\n' +
                 'if (parseTextElem === null) { throw \'"a" not found\'; }\n' +
+                'await page.evaluate(e => {\n' +
+                'if (["input", "textarea"].indexOf(e.tagName.toLowerCase()) !== -1) {\n' +
+                'e.value = "b";\n' +
+                '} else {\n' +
+                'e.innerText = "b";\n' +
+                '}\n' +
+                '}, parseTextElem);',
+            ],
+        });
+    x.assert(func('("//a", "b")'),
+        {
+            'instructions': [
+                'let parseTextElem = await page.$x("//a");\n' +
+                'if (parseTextElem.length === 0) { throw \'XPath "//a" not found\'; }\n' +
+                'parseTextElem = parseTextElem[0];\n' +
                 'await page.evaluate(e => {\n' +
                 'if (["input", "textarea"].indexOf(e.tagName.toLowerCase()) !== -1) {\n' +
                 'e.value = "b";\n' +
@@ -7960,6 +8034,11 @@ const TO_CHECK = [
         'name': 'size',
         'func': checkSize,
         'toCall': (e, o) => wrapper(parserFuncs.parseSize, e, o),
+    },
+    {
+        'name': 'store-property',
+        'func': checkStoreProperty,
+        'toCall': (e, o) => wrapper(parserFuncs.parseStoreProperty, e, o),
     },
     {
         'name': 'text',
