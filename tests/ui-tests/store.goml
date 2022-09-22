@@ -1,0 +1,8 @@
+// This test ensures that the `store*` commands are working as expected.
+goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+store-value: (background_color, "#111")
+// This check should fail.
+assert-css: ("header", {"background-color": |background_color|})
+store-value: (background_color, "rgb(17, 17, 17)")
+assert-css: ("header", {"background-color": |background_color|})
+store-property: (height, "header", "clientHeight")
