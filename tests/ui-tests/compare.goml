@@ -1,0 +1,10 @@
+// This test ensures that the `store*` commands are working as expected.
+goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+// Should fail.
+compare-elements-property: ("header", "#the-input", ["clientHeight"])
+// Should succeed.
+compare-elements-property: ("#useless\.input", "#the-input", ["clientHeight"])
+// Should succeed.
+compare-elements-property-false: ("header", "#the-input", ["clientHeight"])
+// Should fail.
+compare-elements-property-false: ("#useless\.input", "#the-input", ["clientHeight"])
