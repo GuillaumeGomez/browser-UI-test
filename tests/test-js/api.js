@@ -32,11 +32,23 @@ function wrapperGoTo(callback, arg, options) {
     return callback(p, options);
 }
 
-function wrapperParseContent(callback, arg, options) {
+function wrapperParseContent(arg, options) {
     if (typeof options === 'undefined') {
         options = new Options();
     }
-    return callback(arg, options);
+    const parser = new parserFuncs.ParserWithContext(arg, options);
+    const res = [];
+    while (true) { // eslint-disable-line no-constant-condition
+        const tmp = parser.get_next_command();
+        if (tmp === null) {
+            break;
+        }
+        res.push(tmp);
+        if (tmp.error !== undefined) {
+            break;
+        }
+    }
+    return res;
 }
 
 function checkAssertInner(x, func, before, after) {
@@ -5869,106 +5881,108 @@ function checkMoveCursorTo(x, func) {
 }
 
 function checkParseContent(x, func) {
-    x.assert(func(''), {'commands': []});
-    x.assert(func('// just a comment'), {'commands': []});
-    x.assert(func('  // just a comment'), {'commands': []});
-    x.assert(func('a: '), {'error': 'Unknown command "a"', 'line': 1});
-    x.assert(func(':'), {'error': 'Unexpected `:` when parsing command', 'line': 1});
+    x.assert(func(''), []);
+    x.assert(func('// just a comment'), []);
+    x.assert(func('  // just a comment'), []);
+    x.assert(func('a: '), [{'error': 'Unknown command "a"', 'line': 1}]);
+    x.assert(func(':'), [{'error': 'Unexpected `:` when parsing command', 'line': 1}]);
 
-    x.assert(func('goto: file:///home'), {
-        'commands': [
-            {
-                'fatal_error': true,
-                'original': 'goto: file:///home',
-                'line_number': 1,
-                'instructions': [
-                    'await page.goto("file:///home");',
-                    'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-                ],
-            },
-        ],
-    });
-    x.assert(func('focus: "#foo"'), {
+    x.assert(func('goto: file:///home'), [
+        {
+            'fatal_error': true,
+            'original': 'goto: file:///home',
+            'line_number': 1,
+            'instructions': [
+                'await page.goto("file:///home");',
+                'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+            ],
+        },
+    ]);
+    x.assert(func('focus: "#foo"'), [{
         'error': 'First command must be `goto` (`debug`, `emulate`, `fail`, `fail-on-js-error`, ' +
             '`javascript`, `screenshot-comparison` or `timeout` can be used before)!',
         'line': 1,
-    });
-    x.assert(func('fail: true\ngoto: file:///home'), {
-        'commands': [
-            {
-                'fatal_error': false,
-                'wait': false,
-                'original': 'fail: true',
-                'line_number': 1,
-                'instructions': ['arg.expectedToFail = true;'],
-            },
-            {
-                'fatal_error': true,
-                'original': 'goto: file:///home',
-                'line_number': 2,
-                'instructions': [
-                    'await page.goto("file:///home");',
-                    'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-                ],
-            },
-        ],
-    });
-    x.assert(func('goto: file:///home\nreload:\ngoto: file:///home'), {
-        'commands': [
-            {
-                'fatal_error': true,
-                'original': 'goto: file:///home',
-                'line_number': 1,
-                'instructions': [
-                    'await page.goto("file:///home");',
-                    'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-                ],
-            },
-            {
-                'fatal_error': false,
-                'original': 'reload:',
-                'line_number': 2,
-                'instructions': [
-                    'const ret = page.reload({\'waitUntil\': \'domcontentloaded\',' +
-                        ' \'timeout\': 30000});\n' +
-                        'await ret;',
-                ],
-            },
-            {
-                'fatal_error': true,
-                'original': 'goto: file:///home',
-                'line_number': 3,
-                'instructions': [
-                    'await page.goto("file:///home");',
-                    'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-                ],
-            },
-        ],
-    });
-    x.assert(func('// just a comment\na: b'), {'error': 'Unknown command "a"', 'line': 2});
-    x.assert(func('goto: file:///home\nemulate: "test"'),
+    }]);
+    x.assert(func('fail: true\ngoto: file:///home'), [
+        {
+            'fatal_error': false,
+            'wait': false,
+            'original': 'fail: true',
+            'line_number': 1,
+            'instructions': ['arg.expectedToFail = true;'],
+        },
+        {
+            'fatal_error': true,
+            'original': 'goto: file:///home',
+            'line_number': 2,
+            'instructions': [
+                'await page.goto("file:///home");',
+                'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+            ],
+        },
+    ]);
+    x.assert(func('goto: file:///home\nreload:\ngoto: file:///home'), [
+        {
+            'fatal_error': true,
+            'original': 'goto: file:///home',
+            'line_number': 1,
+            'instructions': [
+                'await page.goto("file:///home");',
+                'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+            ],
+        },
+        {
+            'fatal_error': false,
+            'original': 'reload:',
+            'line_number': 2,
+            'instructions': [`\
+const ret = page.reload({'waitUntil': 'domcontentloaded', 'timeout': 30000});
+await ret;`,
+            ],
+        },
+        {
+            'fatal_error': true,
+            'original': 'goto: file:///home',
+            'line_number': 3,
+            'instructions': [
+                'await page.goto("file:///home");',
+                'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+            ],
+        },
+    ]);
+    x.assert(func('// just a comment\na: b'), [{'error': 'Unknown command "a"', 'line': 2}]);
+    x.assert(func('goto: file:///home\nemulate: "test"'), [
+        {
+            'fatal_error': true,
+            'original': 'goto: file:///home',
+            'line_number': 1,
+            'instructions': [
+                'await page.goto("file:///home");',
+                'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+            ],
+        },
         {
             'error': 'Command emulate must be used before first goto!',
             'line': 2,
-        });
-    x.assert(func('goto: file:///home\nassert-text: ("a", "b")'), {
-        'commands': [
-            {
-                'fatal_error': true,
-                'original': 'goto: file:///home',
-                'line_number': 1,
-                'instructions': [
-                    'await page.goto("file:///home");',
-                    'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-                ],
-            },
-            {
-                'fatal_error': false,
-                'wait': false,
-                'checkResult': true,
-                'original': 'assert-text: ("a", "b")',
-                'line_number': 2,
-                'instructions': [`\
+        },
+    ]);
+    x.assert(func('goto: file:///home\nassert-text: ("a", "b")'), [
+        {
+            'fatal_error': true,
+            'original': 'goto: file:///home',
+            'line_number': 1,
+            'instructions': [
+                'await page.goto("file:///home");',
+                'await arg.browser.overridePermissions(page.url(), arg.permissions);',
+            ],
+        },
+        {
+            'fatal_error': false,
+            'wait': false,
+            'checkResult': true,
+            'original': 'assert-text: ("a", "b")',
+            'line_number': 2,
+            'instructions': [`\
 let parseAssertElemStr = await page.$("a");
 if (parseAssertElemStr === null) { throw '"a" not found'; }
 await page.evaluate(e => {
@@ -5982,10 +5996,9 @@ await page.evaluate(e => {
         throw "The following errors happened: [" + errs + "]";
     }
 }, parseAssertElemStr);`,
-                ],
-            },
-        ],
-    });
+            ],
+        },
+    ]);
 }
 
 function checkPauseOnError(x, func) {
@@ -7987,7 +8000,7 @@ const TO_CHECK = [
     {
         'name': 'parseContent',
         'func': checkParseContent,
-        'toCall': (e, o) => wrapperParseContent(parserFuncs.parseContent, e, o),
+        'toCall': (e, o) => wrapperParseContent(e, o),
     },
 ];
 
