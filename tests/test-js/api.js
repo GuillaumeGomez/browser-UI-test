@@ -5900,7 +5900,8 @@ function checkParseContent(x, func) {
     ]);
     x.assert(func('focus: "#foo"'), [{
         'error': 'First command must be `goto` (`debug`, `emulate`, `fail`, `fail-on-js-error`, ' +
-            '`javascript`, `screenshot-comparison` or `timeout` can be used before)!',
+            '`javascript`, `screenshot-comparison`, `store-value` or `timeout` can be used ' +
+            'before)!',
         'line': 1,
     }]);
     x.assert(func('fail: true\ngoto: file:///home'), [
@@ -6386,6 +6387,32 @@ arg.variables["VAR"] = await jsHandle.jsonValue();`,
         'warnings': [
             'Pseudo-elements (`::after`) don\'t have attributes so the check will be performed ' +
             'on the element itself'],
+    });
+}
+
+function checkStoreValue(x, func) {
+    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
+    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {'error': 'expected 2 elements in the tuple, found 1 element'});
+    x.assert(func('(1, 1)'), {
+        'error': 'expected first argument to be an ident, found a number (`1`)',
+    });
+    x.assert(func('(a, {"a": "b"})'), {
+        'error': 'expected second argument to be a number or a string, found a json (`{"a": "b"}`)',
+    });
+
+    x.assert(func('(VAR, "a")'), {
+        'instructions': ['arg.variables["VAR"] = "a";'],
+        'wait': false,
+    });
+    x.assert(func('(VAR, 1)'), {
+        'instructions': ['arg.variables["VAR"] = 1;'],
+        'wait': false,
+    });
+    x.assert(func('(VAR, 1.28)'), {
+        'instructions': ['arg.variables["VAR"] = 1.28;'],
+        'wait': false,
     });
 }
 
@@ -8039,6 +8066,11 @@ const TO_CHECK = [
         'name': 'store-property',
         'func': checkStoreProperty,
         'toCall': (e, o) => wrapper(parserFuncs.parseStoreProperty, e, o),
+    },
+    {
+        'name': 'store-value',
+        'func': checkStoreValue,
+        'toCall': (e, o) => wrapper(parserFuncs.parseStoreValue, e, o),
     },
     {
         'name': 'text',
