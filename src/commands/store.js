@@ -25,17 +25,17 @@ function parseStoreProperty(parser) {
     } else if (tuple[0].kind !== 'ident') {
         return {
             'error': `expected first argument to be an ident, found ${tuple[0].getArticleKind()} \
-(\`${tuple[0].getRaw()}\`)`,
+(\`${tuple[0].getText()}\`)`,
         };
     } else if (tuple[1].kind !== 'string') {
         return {
             'error': `expected second argument to be a string, found ${tuple[1].getArticleKind()} \
-(\`${tuple[1].getRaw()}\`)`,
+(\`${tuple[1].getText()}\`)`,
         };
     } else if (tuple[2].kind !== 'string') {
         return {
             'error': `expected third argument to be a CSS selector or an XPath, found \
-${tuple[2].getArticleKind()} (\`${tuple[2].getRaw()}\`)`,
+${tuple[2].getArticleKind()} (\`${tuple[2].getText()}\`)`,
         };
     }
 
@@ -65,6 +65,42 @@ arg.variables["${tuple[0].getText()}"] = await jsHandle.jsonValue();`;
     };
 }
 
+// Possible inputs:
+//
+// * (ident, "string" | number)
+function parseStoreValue(parser) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {'error': 'expected a tuple, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
+        return {'error': `expected a tuple, found \`${parser.getRawArgs()}\``};
+    }
+    const tuple = elems[0].getRaw();
+    if (tuple.length !== 2) {
+        let err = `expected 2 elements in the tuple, found ${tuple.length} element`;
+        if (tuple.length > 1) {
+            err += 's';
+        }
+        return {'error': err};
+    } else if (tuple[0].kind !== 'ident') {
+        return {
+            'error': 'expected first argument to be an ident, ' +
+                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getText()}\`)`,
+        };
+    } else if (tuple[1].kind !== 'number' && tuple[1].kind !== 'string') {
+        return {
+            'error': `expected second argument to be a number or a string, found \
+${tuple[1].getArticleKind()} (\`${tuple[1].getText()}\`)`,
+        };
+    }
+    return {
+        'instructions': [`arg.variables["${tuple[0].getText()}"] = ${tuple[1].getText()};`],
+        'wait': false,
+    };
+}
+
 module.exports = {
     'parseStoreProperty': parseStoreProperty,
+    'parseStoreValue': parseStoreValue,
 };

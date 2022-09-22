@@ -64,6 +64,7 @@ const ORDERS = {
     'show-text': commands.parseShowText,
     'size': commands.parseSize,
     'store-property': commands.parseStoreProperty,
+    'store-value': commands.parseStoreValue,
     'text': commands.parseText,
     'timeout': commands.parseTimeout,
     'wait-for': commands.parseWaitFor,
@@ -105,6 +106,7 @@ const NO_INTERACTION_COMMANDS = [
     'fail-on-js-error',
     'javascript',
     'screenshot-comparison',
+    'store-value',
     'timeout',
 ];
 

@@ -71,6 +71,7 @@ module.exports = {
     'parseShowText': context_setters.parseShowText,
     'parseSize': emulation.parseSize,
     'parseStoreProperty': store.parseStoreProperty,
+    'parseStoreValue': store.parseStoreValue,
     'parseText': dom_modifiers.parseText,
     'parseTimeout': context_setters.parseTimeout,
     'parseWaitFor': general.parseWaitFor,
