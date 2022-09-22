@@ -1056,6 +1056,61 @@ if (String(document[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) !
     );
 }
 
+function checkAssertVariableInner(x, func, operator) {
+    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
+    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {'error': 'expected 2 elements in the tuple, found 1 element'});
+    x.assert(func('(1, 1)'), {
+        'error': 'expected first argument to be an ident, found a number (`1`)',
+    });
+    x.assert(func('(a, {"a": "b"})'), {
+        'error': 'expected second argument to be a number or a string, found a json (`{"a": "b"}`)',
+    });
+
+    x.assert(func('(VAR, "a")'), {
+        'instructions': [`\
+if (arg.variables["VAR"] ${operator} "a") {
+    throw 'variable (of value \`' + arg.variables["VAR"] + '\` ${operator} \`' + "a" + '\`';
+}`,
+        ],
+        'wait': false,
+    });
+
+    x.assert(func('(VAR, "\'a")'), {
+        'instructions': [`\
+if (arg.variables["VAR"] ${operator} "'a") {
+    throw 'variable (of value \`' + arg.variables["VAR"] + '\` ${operator} \`' + "'a" + '\`';
+}`,
+        ],
+        'wait': false,
+    });
+    x.assert(func('(VAR, 1)'), {
+        'instructions': [`\
+if (arg.variables["VAR"] ${operator} 1) {
+    throw 'variable (of value \`' + arg.variables["VAR"] + '\` ${operator} \`' + 1 + '\`';
+}`,
+        ],
+        'wait': false,
+    });
+    x.assert(func('(VAR, 1.28)'), {
+        'instructions': [`\
+if (arg.variables["VAR"] ${operator} 1.28) {
+    throw 'variable (of value \`' + arg.variables["VAR"] + '\` ${operator} \`' + 1.28 + '\`';
+}`,
+        ],
+        'wait': false,
+    });
+}
+
+function checkAssertVariable(x, func) {
+    checkAssertVariableInner(x, func, '!=');
+}
+
+function checkAssertVariableFalse(x, func) {
+    checkAssertVariableInner(x, func, '==');
+}
+
 function checkAssertWindowProperty(x, func) {
     checkAssertObjPropertyInner(
         x,
@@ -5899,7 +5954,8 @@ function checkParseContent(x, func) {
         },
     ]);
     x.assert(func('focus: "#foo"'), [{
-        'error': 'First command must be `goto` (`debug`, `emulate`, `fail`, `fail-on-js-error`, ' +
+        'error': 'First command must be `goto` (`assert-variable`, `assert-variable-false`, ' +
+            '`debug`, `emulate`, `fail`, `fail-on-js-error`, ' +
             '`javascript`, `screenshot-comparison`, `store-value` or `timeout` can be used ' +
             'before)!',
         'line': 1,
@@ -7856,6 +7912,16 @@ const TO_CHECK = [
         'name': 'assert-text-false',
         'func': checkAssertTextFalse,
         'toCall': (e, o) => wrapper(parserFuncs.parseAssertTextFalse, e, o),
+    },
+    {
+        'name': 'assert-variable',
+        'func': checkAssertVariable,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssertVariable, e, o),
+    },
+    {
+        'name': 'assert-variable-false',
+        'func': checkAssertVariableFalse,
+        'toCall': (e, o) => wrapper(parserFuncs.parseAssertVariableFalse, e, o),
     },
     {
         'name': 'assert-window-property',
