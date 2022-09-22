@@ -29,6 +29,8 @@ module.exports = {
     'parseAssertPropertyFalse': assert.parseAssertPropertyFalse,
     'parseAssertText': assert.parseAssertText,
     'parseAssertTextFalse': assert.parseAssertTextFalse,
+    'parseAssertVariable': assert.parseAssertVariable,
+    'parseAssertVariableFalse': assert.parseAssertVariableFalse,
     'parseAssertWindowProperty': assert.parseAssertWindowProperty,
     'parseAssertWindowPropertyFalse': assert.parseAssertWindowPropertyFalse,
     'parseAttribute': dom_modifiers.parseAttribute,

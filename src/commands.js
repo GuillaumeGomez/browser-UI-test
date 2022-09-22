@@ -22,6 +22,8 @@ const ORDERS = {
     'assert-property-false': commands.parseAssertPropertyFalse,
     'assert-text': commands.parseAssertText,
     'assert-text-false': commands.parseAssertTextFalse,
+    'assert-variable': commands.parseAssertVariable,
+    'assert-variable-false': commands.parseAssertVariableFalse,
     'assert-window-property': commands.parseAssertWindowProperty,
     'assert-window-property-false': commands.parseAssertWindowPropertyFalse,
     'attribute': commands.parseAttribute,
@@ -100,6 +102,8 @@ const FATAL_ERROR_COMMANDS = [
 
 // Commands which do not run JS commands but change the behavior of the commands following.
 const NO_INTERACTION_COMMANDS = [
+    'assert-variable',
+    'assert-variable-false',
     'debug',
     'emulate',
     'fail',
