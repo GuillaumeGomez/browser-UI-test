@@ -842,6 +842,11 @@ function parseAssertTextInner(parser, assertFalse) {
     }
 
     const selector = tuple[0].getSelector();
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    if (isPseudo) {
+        warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have text so \
+the check will be performed on the element itself`);
+    }
 
     const value = tuple[1].getStringValue();
     const varName = 'parseAssertElemStr';
@@ -851,14 +856,14 @@ function parseAssertTextInner(parser, assertFalse) {
         if (assertFalse) {
             checks.push(`\
 if (browserUiTestHelpers.elemTextContains(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` contains \`" + value + "\` \
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` contains \`" + value + "\` \
 (for CONTAINS check)");
 }`);
         } else {
             checks.push(`\
 if (!browserUiTestHelpers.elemTextContains(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` doesn't contain \`" + value + "\` \
-(for CONTAINS check)");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` doesn't contain \`" + \
+value + "\` (for CONTAINS check)");
 }`);
         }
     }
@@ -866,14 +871,14 @@ if (!browserUiTestHelpers.elemTextContains(e, value)) {
         if (assertFalse) {
             checks.push(`\
 if (browserUiTestHelpers.elemTextStartsWith(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` starts with \`" + value + "\` (for STARTS_WITH \
-check)");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` starts with \`" + value \
++ "\` (for STARTS_WITH check)");
 }`);
         } else {
             checks.push(`\
 if (!browserUiTestHelpers.elemTextStartsWith(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` doesn't start with \`" + value + "\` \
-(for STARTS_WITH check)");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` doesn't start with \`" + \
+value + "\` (for STARTS_WITH check)");
 }`);
         }
     }
@@ -881,14 +886,14 @@ if (!browserUiTestHelpers.elemTextStartsWith(e, value)) {
         if (assertFalse) {
             checks.push(`\
 if (browserUiTestHelpers.elemTextEndsWith(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` ends with \`" + value + "\` (for ENDS_WITH \
-check)");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` ends with \`" + value + \
+"\` (for ENDS_WITH check)");
 }`);
         } else {
             checks.push(`\
 if (!browserUiTestHelpers.elemTextEndsWith(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` doesn't end with \`" + value + "\` \
-(for ENDS_WITH check)");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` doesn't end with \`" + \
+value + "\` (for ENDS_WITH check)");
 }`);
         }
     }
@@ -896,12 +901,14 @@ if (!browserUiTestHelpers.elemTextEndsWith(e, value)) {
         if (assertFalse) {
             checks.push(`\
 if (browserUiTestHelpers.compareElemText(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` is equal to \`" + value + "\`");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` is equal to \`" + value \
++ "\`");
 }`);
         } else {
             checks.push(`\
 if (!browserUiTestHelpers.compareElemText(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` isn't equal to \`" + value + "\`");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` isn't equal to \`" + \
+value + "\`");
 }`);
         }
     }

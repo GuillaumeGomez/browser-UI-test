@@ -2996,6 +2996,27 @@ function checkAssertTextInner(x, func, compare, contains, startsWith, endsWith) 
             '`, `CONTAINS`, `STARTS_WITH`, `ENDS_WITH`), found an array of `string` (in `["c"]`)',
     });
 
+    // Checking pseudo element.
+    x.assert(func('("a::after", "\'b")'), {
+        'instructions': [`\
+let parseAssertElemStr = await page.$("a");
+if (parseAssertElemStr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const errors = [];
+    const value = "\\'b";
+${compare(1)}
+    if (errors.length !== 0) {
+        const errs = errors.join(", ");
+        throw "The following errors happened: [" + errs + "]";
+    }
+}, parseAssertElemStr);`,
+        ],
+        'wait': false,
+        'checkResult': true,
+        'warnings': ['Pseudo-elements (`::after`) don\'t have text so the check will be performed' +
+            ' on the element itself'],
+    });
+
     // Checking that having a pending comma is valid.
     x.assert(func('("a", "\'b",)'), {
         'instructions': [`\
@@ -3363,22 +3384,23 @@ function checkAssertText(x, func) {
         func,
         indent => indentString(`\
 if (!browserUiTestHelpers.compareElemText(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` isn't equal to \`" + value + "\`");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` isn't equal to \`" + \
+value + "\`");
 }`, indent),
         indent => indentString(`\
 if (!browserUiTestHelpers.elemTextContains(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` doesn't contain \`" + value + "\` \
-(for CONTAINS check)");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` doesn't contain \`" + \
+value + "\` (for CONTAINS check)");
 }`, indent),
         indent => indentString(`\
 if (!browserUiTestHelpers.elemTextStartsWith(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` doesn't start with \`" + value + "\` \
-(for STARTS_WITH check)");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` doesn't start with \`" + \
+value + "\` (for STARTS_WITH check)");
 }`, indent),
         indent => indentString(`\
 if (!browserUiTestHelpers.elemTextEndsWith(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` doesn't end with \`" + value + "\` \
-(for ENDS_WITH check)");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` doesn't end with \`" + \
+value + "\` (for ENDS_WITH check)");
 }`, indent),
     );
 }
@@ -3389,22 +3411,23 @@ function checkAssertTextFalse(x, func) {
         func,
         indent => indentString(`\
 if (browserUiTestHelpers.compareElemText(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` is equal to \`" + value + "\`");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` is equal to \`" + \
+value + "\`");
 }`, indent),
         indent => indentString(`\
 if (browserUiTestHelpers.elemTextContains(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` contains \`" + value + "\` \
-(for CONTAINS check)");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` contains \`" + \
+value + "\` (for CONTAINS check)");
 }`, indent),
         indent => indentString(`\
 if (browserUiTestHelpers.elemTextStartsWith(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` starts with \`" + value + "\` \
-(for STARTS_WITH check)");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` starts with \`" + \
+value + "\` (for STARTS_WITH check)");
 }`, indent),
         indent => indentString(`\
 if (browserUiTestHelpers.elemTextEndsWith(e, value)) {
-    errors.push("\`" + getElemText(e, value) + "\` ends with \`" + value + "\` \
-(for ENDS_WITH check)");
+    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` ends with \`" + \
+value + "\` (for ENDS_WITH check)");
 }`, indent),
     );
 }
@@ -6159,7 +6182,8 @@ await page.evaluate(e => {
     const errors = [];
     const value = "b";
     if (!browserUiTestHelpers.compareElemText(e, value)) {
-        errors.push("\`" + getElemText(e, value) + "\` isn't equal to \`" + value + "\`");
+        errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` isn't equal to \`" + \
+value + "\`");
     }
     if (errors.length !== 0) {
         const errs = errors.join(", ");
