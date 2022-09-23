@@ -1228,8 +1228,10 @@ function parseAssertLocalStorageFalse(parser) {
     return parseAssertLocalStorageInner(parser, true);
 }
 
-function parseAssertVariableInner(parser, operator) {
+function parseAssertVariableInner(parser, assertFalse) {
     const elems = parser.elems;
+    const enabled_checks = Object.create(null);
+    const warnings = [];
 
     if (elems.length === 0) {
         return {'error': 'expected a tuple, found nothing'};
@@ -1237,8 +1239,8 @@ function parseAssertVariableInner(parser, operator) {
         return {'error': `expected a tuple, found \`${parser.getRawArgs()}\``};
     }
     const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        let err = `expected 2 elements in the tuple, found ${tuple.length} element`;
+    if (tuple.length !== 2 && tuple.length !== 3) {
+        let err = `expected 2 or 3 elements in the tuple, found ${tuple.length} element`;
         if (tuple.length > 1) {
             err += 's';
         }
@@ -1253,14 +1255,82 @@ function parseAssertVariableInner(parser, operator) {
             'error': `expected second argument to be a number or a string, found \
 ${tuple[1].getArticleKind()} (\`${tuple[1].getText()}\`)`,
         };
+    } else if (tuple.length > 2) {
+        const identifiers = ['CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
+        const ret = fillEnabledChecks(tuple[2], identifiers, enabled_checks, warnings, 'third');
+        if (ret !== null) {
+            return ret;
+        }
     }
+
+    const checks = [];
+
+    if (enabled_checks['CONTAINS']) {
+        if (assertFalse) {
+            checks.push(`\
+if (value1.indexOf(value2) !== -1) {
+    errors.push("\`" + value1 + "\` contains \`" + value2 + "\` (for CONTAINS check)");
+}`);
+        } else {
+            checks.push(`\
+if (value1.indexOf(value2) === -1) {
+    errors.push("\`" + value1 + "\` doesn't contain \`" + value2 + "\` (for CONTAINS check)");
+}`);
+        }
+    }
+    if (enabled_checks['STARTS_WITH']) {
+        if (assertFalse) {
+            checks.push(`\
+if (value1.startsWith(value2)) {
+    errors.push("\`" + value1 + "\` starts with \`" + value2 + "\` (for STARTS_WITH check)");
+}`);
+        } else {
+            checks.push(`\
+if (!value1.startsWith(value2)) {
+    errors.push("\`" + value1 + "\` doesn't start with \`" + value2 + "\` (for STARTS_WITH check)");
+}`);
+        }
+    }
+    if (enabled_checks['ENDS_WITH']) {
+        if (assertFalse) {
+            checks.push(`\
+if (value1.endsWith(value2)) {
+    errors.push("\`" + value1 + "\` ends with \`" + value2 + "\` (for ENDS_WITH check)");
+}`);
+        } else {
+            checks.push(`\
+if (!value1.endsWith(value2)) {
+    errors.push("\`" + value1 + "\` doesn't end with \`" + value2 + "\` (for ENDS_WITH check)");
+}`);
+        }
+    }
+    if (checks.length === 0) {
+        if (assertFalse) {
+            checks.push(`\
+if (value1 === value2) {
+    errors.push("\`" + value1 + "\` is equal to \`" + value2 + "\`");
+}`);
+        } else {
+            checks.push(`\
+if (value1 !== value2) {
+    errors.push("\`" + value1 + "\` isn't equal to \`" + value2 + "\`");
+}`);
+        }
+    }
+
     return {
         'instructions': [`\
-if (arg.variables["${tuple[0].getText()}"] ${operator} ${tuple[1].getText()}) {
-    throw 'variable (of value \`' + arg.variables["${tuple[0].getText()}"] + '\` ${operator} \`' + \
-${tuple[1].getText()} + '\`';
-}`],
+let value1 = String(arg.variables["${tuple[0].getText()}"]);
+let value2 = String(${tuple[1].getText()});
+const errors = [];
+${checks.join('\n')}
+if (errors.length !== 0) {
+    const errs = errors.join(", ");
+    throw "The following errors happened: [" + errs + "]";
+}`,
+        ],
         'wait': false,
+        'warnings': warnings.length > 0 ? warnings : undefined,
     };
 }
 
@@ -1268,14 +1338,14 @@ ${tuple[1].getText()} + '\`';
 //
 // * (ident, "string" | number)
 function parseAssertVariable(parser) {
-    return parseAssertVariableInner(parser, '!=');
+    return parseAssertVariableInner(parser, false);
 }
 
 // Possible inputs:
 //
 // * (ident, "string" | number)
 function parseAssertVariableFalse(parser) {
-    return parseAssertVariableInner(parser, '==');
+    return parseAssertVariableInner(parser, true);
 }
 
 module.exports = {
