@@ -120,6 +120,7 @@ Here's the command list:
  * [`size`](#size)
  * [`store-attribute`](#store-attribute)
  * [`store-css`](#store-css)
+ * [`store-local-variable`](#store-local-variable)
  * [`store-property`](#store-property)
  * [`store-value`](#store-value)
  * [`text`](#text)
@@ -1139,6 +1140,18 @@ For more information about variables, read the [variables section](#variables).
 ```
 store-css: (variable_name, "#button", "color")
 assert-variable: (variable_name, "rgb(255, 0, 0)")
+```
+
+For more information about variables, read the [variables section](#variables).
+
+#### store-local-variable
+
+**store-local-variable** command stores a value from the local storage into a variable. Examples:
+
+```
+local-storage: {"key": "value"}
+store-local-storage: (variable_name, "key")
+assert-variable: (variable_name, "value")
 ```
 
 For more information about variables, read the [variables section](#variables).
