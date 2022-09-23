@@ -118,6 +118,7 @@ Here's the command list:
  * [`scroll-to`](#scroll-to)
  * [`show-text`](#show-text)
  * [`size`](#size)
+ * [`store-attribute`](#store-attribute)
  * [`store-property`](#store-property)
  * [`store-value`](#store-value)
  * [`text`](#text)
@@ -1104,6 +1105,17 @@ show-text: true // text won't be invisible anymore
 ```
 size: (700, 1000)
 ```
+
+#### store-attribute
+
+**store-attribute** command stores an element's attribute into a variable. Examples:
+
+```
+store-attribute: (variable_name, "#button", "id")
+assert-variable: (variable_name, "button")
+```
+
+For more information about variables, read the [variables section](#variables).
 
 #### store-property
 
