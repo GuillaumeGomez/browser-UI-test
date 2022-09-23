@@ -119,6 +119,7 @@ Here's the command list:
  * [`show-text`](#show-text)
  * [`size`](#size)
  * [`store-attribute`](#store-attribute)
+ * [`store-css`](#store-css)
  * [`store-property`](#store-property)
  * [`store-value`](#store-value)
  * [`text`](#text)
@@ -1113,6 +1114,16 @@ size: (700, 1000)
 ```
 store-attribute: (variable_name, "#button", "id")
 assert-variable: (variable_name, "button")
+```
+
+For more information about variables, read the [variables section](#variables).
+
+#### store-css
+
+**store-css** command stores an element's CSS into a variable. Examples:
+
+```
+store-css: (variable_name, "#button", "color")
 ```
 
 For more information about variables, read the [variables section](#variables).
