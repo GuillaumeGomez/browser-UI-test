@@ -4,6 +4,7 @@ store... FAILED
 [ERROR] (line 5) Error: Evaluation failed: The following errors happened (for selector `header`): [expected `#111` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": |background_color|})`
 [ERROR] (line 10) variable (of value `24` != `12`: for command `assert-variable: (height, "12")`
 [ERROR] (line 11) variable (of value `24` == `24`: for command `assert-variable-false: (height, "24")`
+[ERROR] (line 21) Error: Evaluation failed: No attribute name `data-whatever`: for command `store-attribute: (attr, "header", "data-whatever")`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed
