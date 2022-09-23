@@ -1056,22 +1056,31 @@ if (String(document[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) !
     );
 }
 
-function checkAssertVariableInner(x, func, operator) {
+function checkAssertVariableInner(x, func, equal, contains, starts_with, ends_with) {
     x.assert(func(''), {'error': 'expected a tuple, found nothing'});
     x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {'error': 'expected 2 elements in the tuple, found 1 element'});
+    x.assert(func('(1)'), {'error': 'expected 2 or 3 elements in the tuple, found 1 element'});
     x.assert(func('(1, 1)'), {
         'error': 'expected first argument to be an ident, found a number (`1`)',
     });
     x.assert(func('(a, {"a": "b"})'), {
         'error': 'expected second argument to be a number or a string, found a json (`{"a": "b"}`)',
     });
+    x.assert(func('(a, "b", "a")'), {
+        'error': 'expected an identifier or an array of identifiers (among `CONTAINS`, ' +
+            '`STARTS_WITH`, `ENDS_WITH`) as third argument or nothing, found `a` (a string)',
+    });
 
     x.assert(func('(VAR, "a")'), {
         'instructions': [`\
-if (arg.variables["VAR"] ${operator} "a") {
-    throw 'variable (of value \`' + arg.variables["VAR"] + '\` ${operator} \`' + "a" + '\`';
+let value1 = String(arg.variables["VAR"]);
+let value2 = String("a");
+const errors = [];
+${equal}
+if (errors.length !== 0) {
+    const errs = errors.join(", ");
+    throw "The following errors happened: [" + errs + "]";
 }`,
         ],
         'wait': false,
@@ -1079,24 +1088,94 @@ if (arg.variables["VAR"] ${operator} "a") {
 
     x.assert(func('(VAR, "\'a")'), {
         'instructions': [`\
-if (arg.variables["VAR"] ${operator} "'a") {
-    throw 'variable (of value \`' + arg.variables["VAR"] + '\` ${operator} \`' + "'a" + '\`';
+let value1 = String(arg.variables["VAR"]);
+let value2 = String("'a");
+const errors = [];
+${equal}
+if (errors.length !== 0) {
+    const errs = errors.join(", ");
+    throw "The following errors happened: [" + errs + "]";
 }`,
         ],
         'wait': false,
     });
     x.assert(func('(VAR, 1)'), {
         'instructions': [`\
-if (arg.variables["VAR"] ${operator} 1) {
-    throw 'variable (of value \`' + arg.variables["VAR"] + '\` ${operator} \`' + 1 + '\`';
+let value1 = String(arg.variables["VAR"]);
+let value2 = String(1);
+const errors = [];
+${equal}
+if (errors.length !== 0) {
+    const errs = errors.join(", ");
+    throw "The following errors happened: [" + errs + "]";
 }`,
         ],
         'wait': false,
     });
     x.assert(func('(VAR, 1.28)'), {
         'instructions': [`\
-if (arg.variables["VAR"] ${operator} 1.28) {
-    throw 'variable (of value \`' + arg.variables["VAR"] + '\` ${operator} \`' + 1.28 + '\`';
+let value1 = String(arg.variables["VAR"]);
+let value2 = String(1.28);
+const errors = [];
+${equal}
+if (errors.length !== 0) {
+    const errs = errors.join(", ");
+    throw "The following errors happened: [" + errs + "]";
+}`,
+        ],
+        'wait': false,
+    });
+
+    x.assert(func('(VAR, "a", [CONTAINS])'), {
+        'instructions': [`\
+let value1 = String(arg.variables["VAR"]);
+let value2 = String("a");
+const errors = [];
+${contains}
+if (errors.length !== 0) {
+    const errs = errors.join(", ");
+    throw "The following errors happened: [" + errs + "]";
+}`,
+        ],
+        'wait': false,
+    });
+    x.assert(func('(VAR, "a", [STARTS_WITH])'), {
+        'instructions': [`\
+let value1 = String(arg.variables["VAR"]);
+let value2 = String("a");
+const errors = [];
+${starts_with}
+if (errors.length !== 0) {
+    const errs = errors.join(", ");
+    throw "The following errors happened: [" + errs + "]";
+}`,
+        ],
+        'wait': false,
+    });
+    x.assert(func('(VAR, "a", [ENDS_WITH])'), {
+        'instructions': [`\
+let value1 = String(arg.variables["VAR"]);
+let value2 = String("a");
+const errors = [];
+${ends_with}
+if (errors.length !== 0) {
+    const errs = errors.join(", ");
+    throw "The following errors happened: [" + errs + "]";
+}`,
+        ],
+        'wait': false,
+    });
+    x.assert(func('(VAR, "a", [STARTS_WITH, CONTAINS, ENDS_WITH])'), {
+        'instructions': [`\
+let value1 = String(arg.variables["VAR"]);
+let value2 = String("a");
+const errors = [];
+${contains}
+${starts_with}
+${ends_with}
+if (errors.length !== 0) {
+    const errs = errors.join(", ");
+    throw "The following errors happened: [" + errs + "]";
 }`,
         ],
         'wait': false,
@@ -1104,11 +1183,45 @@ if (arg.variables["VAR"] ${operator} 1.28) {
 }
 
 function checkAssertVariable(x, func) {
-    checkAssertVariableInner(x, func, '!=');
+    checkAssertVariableInner(x, func,
+        `\
+if (value1 !== value2) {
+    errors.push("\`" + value1 + "\` isn't equal to \`" + value2 + "\`");
+}`,
+        `\
+if (value1.indexOf(value2) === -1) {
+    errors.push("\`" + value1 + "\` doesn't contain \`" + value2 + "\` (for CONTAINS check)");
+}`,
+        `\
+if (!value1.startsWith(value2)) {
+    errors.push("\`" + value1 + "\` doesn't start with \`" + value2 + "\` (for STARTS_WITH check)");
+}`,
+        `\
+if (!value1.endsWith(value2)) {
+    errors.push("\`" + value1 + "\` doesn't end with \`" + value2 + "\` (for ENDS_WITH check)");
+}`,
+    );
 }
 
 function checkAssertVariableFalse(x, func) {
-    checkAssertVariableInner(x, func, '==');
+    checkAssertVariableInner(x, func,
+        `\
+if (value1 === value2) {
+    errors.push("\`" + value1 + "\` is equal to \`" + value2 + "\`");
+}`,
+        `\
+if (value1.indexOf(value2) !== -1) {
+    errors.push("\`" + value1 + "\` contains \`" + value2 + "\` (for CONTAINS check)");
+}`,
+        `\
+if (value1.startsWith(value2)) {
+    errors.push("\`" + value1 + "\` starts with \`" + value2 + "\` (for STARTS_WITH check)");
+}`,
+        `\
+if (value1.endsWith(value2)) {
+    errors.push("\`" + value1 + "\` ends with \`" + value2 + "\` (for ENDS_WITH check)");
+}`,
+    );
 }
 
 function checkAssertWindowProperty(x, func) {

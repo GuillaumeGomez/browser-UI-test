@@ -6,12 +6,16 @@ assert-css: ("header", {"background-color": |background_color|})
 store-value: (background_color, "rgb(17, 17, 17)")
 assert-css: ("header", {"background-color": |background_color|})
 store-property: (height, "header", "clientHeight")
-// Both checks should fail
+// The 4 checks should fail
 assert-variable: (height, "12")
 assert-variable-false: (height, "24")
-// Both checks should succeed
+assert-variable-false: (height, "2", [STARTS_WITH, CONTAINS])
+assert-variable-false: (height, "4", [CONTAINS, ENDS_WITH])
+// The 4 checks should succeed
 assert-variable: (height, "24")
 assert-variable-false: (height, "12")
+assert-variable: (height, "2", [STARTS_WITH, CONTAINS])
+assert-variable: (height, "4", [CONTAINS, ENDS_WITH])
 store-css: (height, "header", "background-color")
 // Should succeed
 assert-variable: (height, "rgb(17, 17, 17)")
