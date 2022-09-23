@@ -507,8 +507,15 @@ Another thing to be noted: if you don't care wether the selector exists or not e
 
 ```
 assert-variable: (variable_name, "hello")
+assert-variable: (variable_name, "hel", CONTAINS)
 assert-variable: (variable_name, 12)
 assert-variable: (variable_name, 12.1)
+```
+
+Apart from "CONTAINS", you can also use "ENDS_WITH" and "STARTS_WITH" and even combine them if you want. Example:
+
+```
+assert-variable: (variable_name, "hel", [CONTAINS, STARTS_WITH])
 ```
 
 For more information about variables, read the [variables section](#variables).
@@ -519,8 +526,15 @@ For more information about variables, read the [variables section](#variables).
 
 ```
 assert-variable-false: (variable_name, "hello")
+assert-variable-false: (variable_name, "hel", CONTAINS)
 assert-variable-false: (variable_name, 12)
 assert-variable-false: (variable_name, 12.1)
+```
+
+Apart from "CONTAINS", you can also use "ENDS_WITH" and "STARTS_WITH" and even combine them if you want. Example:
+
+```
+assert-variable-false: (variable_name, "hel", [CONTAINS, ENDS_WITH])
 ```
 
 For more information about variables, read the [variables section](#variables).
