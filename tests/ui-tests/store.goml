@@ -12,3 +12,6 @@ assert-variable-false: (height, "24")
 // Both checks should succeed
 assert-variable: (height, "24")
 assert-variable-false: (height, "12")
+store-css: (height, "header", "background-color")
+// Should succeed
+assert-variable: (height, "rgb(17, 17, 17)")
