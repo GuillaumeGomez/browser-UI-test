@@ -29,3 +29,10 @@ local-storage: {"a key": "a value"}
 store-local-storage: (local, "a key")
 // Should fail.
 assert-variable: (local, "a key")
+// Should succeed.
+assert-variable: (local, "a value")
+store-text: (text, "#another-one")
+// Should fail.
+assert-variable: (text, "hoy")
+// Should succeed.
+assert-variable: (text, "hey")

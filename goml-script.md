@@ -1162,11 +1162,23 @@ For more information about variables, read the [variables section](#variables).
 
 ```
 store-property: (variable_name, "#button", "clientHeight")
-assert-variable: (varible_name, 152)
+assert-variable: (variable_name, 152)
 store-property: (variable_name, "#button", "scrollHeight")
 ```
 
 For more information about variables, read the [variables section](#variables).
+
+#### store-text
+
+**store-text** command stores an element's text into a variable. Examples:
+
+```
+store-property: (variable_name, "#button")
+assert-variable: (variable_name, "click me")
+```
+
+For more information about variables, read the [variables section](#variables).
+
 
 #### store-value
 

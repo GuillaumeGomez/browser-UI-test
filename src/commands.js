@@ -69,6 +69,7 @@ const ORDERS = {
     'store-css': commands.parseStoreCss,
     'store-local-storage': commands.parseStoreLocalStorage,
     'store-property': commands.parseStoreProperty,
+    'store-text': commands.parseStoreText,
     'store-value': commands.parseStoreValue,
     'text': commands.parseText,
     'timeout': commands.parseTimeout,

@@ -76,6 +76,7 @@ module.exports = {
     'parseStoreCss': store.parseStoreCss,
     'parseStoreLocalStorage': store.parseStoreLocalStorage,
     'parseStoreProperty': store.parseStoreProperty,
+    'parseStoreText': store.parseStoreText,
     'parseStoreValue': store.parseStoreValue,
     'parseText': dom_modifiers.parseText,
     'parseTimeout': context_setters.parseTimeout,
