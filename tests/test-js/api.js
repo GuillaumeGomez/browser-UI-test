@@ -6755,6 +6755,62 @@ arg.variables["VAR"] = await jsHandle.jsonValue();`,
     });
 }
 
+function checkStoreText(x, func) {
+    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
+    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {'error': 'expected 2 elements in the tuple, found 1 element'});
+    x.assert(func('(1, 1)'), {
+        'error': 'expected first argument to be an ident, found a number (`1`)',
+    });
+    x.assert(func('(a, 1)'), {
+        'error': 'expected second argument to be a CSS selector or an XPath, found a number (`1`)',
+    });
+    x.assert(func('(VAR, \'\')'), {
+        'error': 'CSS selector cannot be empty',
+        'isXPath': false,
+    });
+
+    x.assert(func('(VAR, "a")'), {
+        'instructions': [`\
+let parseStoreText = await page.$("a");
+if (parseStoreText === null) { throw '"a" not found'; }
+const jsHandle = await parseStoreText.evaluateHandle(e => {
+    return browserUiTestHelpers.getElemText(e, "");
+});
+arg.variables["VAR"] = await jsHandle.jsonValue();`,
+        ],
+        'wait': false,
+    });
+    x.assert(func('(VAR, "//a")'), {
+        'instructions': [`\
+let parseStoreText = await page.$x("//a");
+if (parseStoreText.length === 0) { throw 'XPath "//a" not found'; }
+parseStoreText = parseStoreText[0];
+const jsHandle = await parseStoreText.evaluateHandle(e => {
+    return browserUiTestHelpers.getElemText(e, "");
+});
+arg.variables["VAR"] = await jsHandle.jsonValue();`,
+        ],
+        'wait': false,
+    });
+
+    x.assert(func('(VAR, "a::after")'), {
+        'instructions': [`\
+let parseStoreText = await page.$("a");
+if (parseStoreText === null) { throw '"a" not found'; }
+const jsHandle = await parseStoreText.evaluateHandle(e => {
+    return browserUiTestHelpers.getElemText(e, "");
+});
+arg.variables["VAR"] = await jsHandle.jsonValue();`,
+        ],
+        'wait': false,
+        'warnings': [
+            'Pseudo-elements (`::after`) don\'t have attributes so the check will be performed ' +
+            'on the element itself'],
+    });
+}
+
 function checkStoreValue(x, func) {
     x.assert(func(''), {'error': 'expected a tuple, found nothing'});
     x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
@@ -8456,6 +8512,11 @@ const TO_CHECK = [
         'name': 'store-property',
         'func': checkStoreProperty,
         'toCall': (e, o) => wrapper(parserFuncs.parseStoreProperty, e, o),
+    },
+    {
+        'name': 'store-text',
+        'func': checkStoreText,
+        'toCall': (e, o) => wrapper(parserFuncs.parseStoreText, e, o),
     },
     {
         'name': 'store-value',
