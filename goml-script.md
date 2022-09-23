@@ -1124,6 +1124,7 @@ For more information about variables, read the [variables section](#variables).
 
 ```
 store-css: (variable_name, "#button", "color")
+assert-variable: (variable_name, "rgb(255, 0, 0)")
 ```
 
 For more information about variables, read the [variables section](#variables).
@@ -1134,6 +1135,7 @@ For more information about variables, read the [variables section](#variables).
 
 ```
 store-property: (variable_name, "#button", "clientHeight")
+assert-variable: (varible_name, 152)
 store-property: (variable_name, "#button", "scrollHeight")
 ```
 
