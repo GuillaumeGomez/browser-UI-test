@@ -6638,6 +6638,29 @@ arg.variables["VAR"] = await jsHandle.jsonValue();`,
     });
 }
 
+function checkStoreLocalStorage(x, func) {
+    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
+    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {'error': 'expected 2 elements in the tuple, found 1 element'});
+    x.assert(func('(1, 1)'), {
+        'error': 'expected first argument to be an ident, found a number (`1`)',
+    });
+    x.assert(func('(a, 1)'), {
+        'error': 'expected second argument to be a string, found a number (`1`)',
+    });
+
+    x.assert(func('(VAR, "a")'), {
+        'instructions': [`\
+const jsHandle = await page.evaluateHandle(() => {
+    return window.localStorage.getItem("a");
+});
+arg.variables["VAR"] = await jsHandle.jsonValue();`,
+        ],
+        'wait': false,
+    });
+}
+
 function checkStoreProperty(x, func) {
     x.assert(func(''), {'error': 'expected a tuple, found nothing'});
     x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
@@ -8399,6 +8422,11 @@ const TO_CHECK = [
         'name': 'store-css',
         'func': checkStoreCss,
         'toCall': (e, o) => wrapper(parserFuncs.parseStoreCss, e, o),
+    },
+    {
+        'name': 'store-local-storage',
+        'func': checkStoreLocalStorage,
+        'toCall': (e, o) => wrapper(parserFuncs.parseStoreLocalStorage, e, o),
     },
     {
         'name': 'store-property',

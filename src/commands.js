@@ -67,6 +67,7 @@ const ORDERS = {
     'size': commands.parseSize,
     'store-attribute': commands.parseStoreAttribute,
     'store-css': commands.parseStoreCss,
+    'store-local-storage': commands.parseStoreLocalStorage,
     'store-property': commands.parseStoreProperty,
     'store-value': commands.parseStoreValue,
     'text': commands.parseText,
