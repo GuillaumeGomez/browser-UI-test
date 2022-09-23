@@ -225,9 +225,50 @@ ${tuple[1].getArticleKind()} (\`${tuple[1].getText()}\`)`,
     };
 }
 
+// Possible inputs:
+//
+// * (ident, "string")
+function parseStoreLocalStorage(parser) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {'error': 'expected a tuple, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
+        return {'error': `expected a tuple, found \`${parser.getRawArgs()}\``};
+    }
+    const tuple = elems[0].getRaw();
+    if (tuple.length !== 2) {
+        let err = `expected 2 elements in the tuple, found ${tuple.length} element`;
+        if (tuple.length > 1) {
+            err += 's';
+        }
+        return {'error': err};
+    } else if (tuple[0].kind !== 'ident') {
+        return {
+            'error': 'expected first argument to be an ident, ' +
+                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getText()}\`)`,
+        };
+    } else if (tuple[1].kind !== 'string') {
+        return {
+            'error': `expected second argument to be a string, found \
+${tuple[1].getArticleKind()} (\`${tuple[1].getText()}\`)`,
+        };
+    }
+    return {
+        'instructions': [`\
+const jsHandle = await page.evaluateHandle(() => {
+    return window.localStorage.getItem(${tuple[1].getText()});
+});
+arg.variables["${tuple[0].getText()}"] = await jsHandle.jsonValue();`,
+        ],
+        'wait': false,
+    };
+}
+
 module.exports = {
     'parseStoreAttribute': parseStoreAttribute,
     'parseStoreCss': parseStoreCss,
+    'parseStoreLocalStorage': parseStoreLocalStorage,
     'parseStoreProperty': parseStoreProperty,
     'parseStoreValue': parseStoreValue,
 };

@@ -74,6 +74,7 @@ module.exports = {
     'parseSize': emulation.parseSize,
     'parseStoreAttribute': store.parseStoreAttribute,
     'parseStoreCss': store.parseStoreCss,
+    'parseStoreLocalStorage': store.parseStoreLocalStorage,
     'parseStoreProperty': store.parseStoreProperty,
     'parseStoreValue': store.parseStoreValue,
     'parseText': dom_modifiers.parseText,
