@@ -15,3 +15,9 @@ assert-variable-false: (height, "12")
 store-css: (height, "header", "background-color")
 // Should succeed
 assert-variable: (height, "rgb(17, 17, 17)")
+store-attribute: (attr, ".right", "data-whatever")
+assert-variable: (attr, "a")
+// Should fail
+store-attribute: (attr, "header", "data-whatever")
+// Variable shouldn't change value.
+assert-variable: (attr, "a")

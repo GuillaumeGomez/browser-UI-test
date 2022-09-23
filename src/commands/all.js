@@ -72,6 +72,7 @@ module.exports = {
     'parseScrollTo': input.parseScrollTo,
     'parseShowText': context_setters.parseShowText,
     'parseSize': emulation.parseSize,
+    'parseStoreAttribute': store.parseStoreAttribute,
     'parseStoreCss': store.parseStoreCss,
     'parseStoreProperty': store.parseStoreProperty,
     'parseStoreValue': store.parseStoreValue,

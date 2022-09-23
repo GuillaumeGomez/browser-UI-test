@@ -65,6 +65,7 @@ const ORDERS = {
     'scroll-to': commands.parseScrollTo,
     'show-text': commands.parseShowText,
     'size': commands.parseSize,
+    'store-attribute': commands.parseStoreAttribute,
     'store-css': commands.parseStoreCss,
     'store-property': commands.parseStoreProperty,
     'store-value': commands.parseStoreValue,
