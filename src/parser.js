@@ -113,6 +113,10 @@ function getSelector(value, text = '') {
     return css;
 }
 
+function isAdditionable(elem) {
+    return ['string', 'number'].indexOf(elem.kind) !== -1;
+}
+
 class Element {
     constructor(kind, value, startPos, endPos, line, error = null) {
         this.kind = kind;
@@ -431,15 +435,20 @@ class Parser {
         this.elems.push(new UnknownElement(line, this.argsStart, this.argsEnd, startLine));
     }
 
+    getElems(pushTo = null) {
+        return pushTo !== null ? pushTo : this.elems;
+    }
+
     parse(endChar = '\n', pushTo = null, separator = null) {
         if (pushTo === null) {
             this.argsStart = this.pos;
         }
         let prev = '';
+        let foundPlus = false;
 
         const checker = (t, c, toCall) => {
-            const elems = pushTo !== null ? pushTo : t.elems;
-            if (elems.length > 0 && prev !== separator) {
+            const elems = t.getElems(pushTo);
+            if (elems.length > 0 && !foundPlus && prev !== separator) {
                 let msg;
 
                 if (separator === null) {
@@ -460,10 +469,11 @@ class Parser {
             } else {
                 t[toCall](pushTo);
                 prev = '';
+                foundPlus = false;
             }
         };
 
-        while (this.pos < this.text.length) {
+        while (this.pos < this.text.length && this.error === null) {
             const c = this.text.charAt(this.pos);
 
             if (c === endChar) {
@@ -475,7 +485,7 @@ class Parser {
             } else if (isWhiteSpace(c)) {
                 // do nothing
             } else if (c === separator) {
-                const elems = pushTo !== null ? pushTo : this.elems;
+                const elems = this.getElems(pushTo);
                 if (elems.length === 0) {
                     this.push(new CharElement(separator, this.pos, this.currentLine,
                         `unexpected \`${separator}\` as first element`), pushTo);
@@ -505,9 +515,19 @@ class Parser {
                 continue;
             } else if (c === '|') {
                 checker(this, c, 'parseVariable');
+            } else if (c === '+' && this.getElems(pushTo).length !== 0) {
+                if (!foundPlus) {
+                    this.push(new CharElement(c, this.pos, this.currentLine), pushTo);
+                    foundPlus = true;
+                } else {
+                    const elems = this.getElems(pushTo);
+                    const el = elems[elems.length - 1];
+                    el.error = 'unexpected `+` after `+`';
+                    this.error = el.error;
+                }
             } else {
                 checker(this, c, 'parseIdent');
-                const elems = pushTo !== null ? pushTo : this.elems;
+                const elems = this.getElems(pushTo);
                 const el = elems[elems.length - 1];
                 if (el.kind === 'unknown') {
                     const token = el.value;
@@ -526,7 +546,78 @@ class Parser {
         if (pushTo === null) {
             this.argsEnd = this.pos;
         }
+        if (this.error === null) {
+            this.handleExpressions(this.getElems());
+        }
         return prev;
+    }
+
+    handleExpressions(elems) {
+        for (let i = elems.length - 1; i > 0; --i) {
+            if (elems[i].kind !== 'char' || elems[i].value !== '+') {
+                continue;
+            }
+            if (i + 1 >= elems.length) {
+                elems[i].error = '`+` token should be followed by something';
+                this.error = elems[i].error;
+                return;
+            }
+            if (!isAdditionable(elems[i + 1])) {
+                elems[i + 1].error = `${elems[i + 1].getArticleKind()} (\`\
+${elems[i + 1].getText()}\`) cannot be used after a \`+\` token`;
+                this.error = elems[i + 1].error;
+                return;
+            }
+
+            let subs = [elems[i + 1]];
+            let last = i;
+            for (; i > 0; i -= 2) {
+                if (elems[i].kind !== 'char' || elems[i].value !== '+') {
+                    break;
+                }
+                if (!isAdditionable(elems[i - 1])) {
+                    elems[i - 1].error = `${elems[i - 1].getArticleKind()} (\`\
+${elems[i - 1].getText()}\`) cannot be used before a \`+\` token`;
+                    this.error = elems[i - 1].error;
+                    return;
+                }
+                subs.push(elems[i - 1]);
+                last = i;
+            }
+
+            subs = subs.reverse();
+            if (subs.some(e => e.kind === 'string')) {
+                // At least one element is a string so all of them are treated as a string.
+                const full = [];
+                let value = '';
+
+                for (const elem of subs) {
+                    if (elem.kind === 'string') {
+                        full.push(elem.getText());
+                    } else {
+                        full.push(`"${elem.value}"`);
+                    }
+                    value += elem.value;
+                }
+                elems[i + 1] = new StringElement(
+                    value,
+                    subs[0].startPos,
+                    subs[subs.length - 1].endPos,
+                    full.join(' + '),
+                    subs[0].line,
+                );
+            } else {
+                // All elements are numbers so treating as a number.
+                elems[i + 1] = new NumberElement(
+                    subs.map(e => e.value).join(' + '),
+                    subs[0].startPos,
+                    subs[subs.length - 1].endPos,
+                    subs[0].line,
+                );
+            }
+            // We remove the two elements that are not needed anymore.
+            elems.splice(last, last + subs.length * 2 + 1);
+        }
     }
 
     parseComment(pushTo = null) {
@@ -706,7 +797,7 @@ class Parser {
                             associatedValue,
                             start,
                             this.pos,
-                            associatedValue,
+                            `"${cleanString(associatedValue)}"`,
                             this.currentLine,
                         ),
                         pushTo,
