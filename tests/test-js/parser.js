@@ -776,41 +776,41 @@ function checkNumber(x) {
 function checkJson(x) {
     let p = new Parser('{1: 2}');
     p.parse();
-    x.assert(p.error, '`1`: numbers cannot be used as keys');
+    x.assert(p.error, 'only strings can be used as keys in JSON dict, found a number (`1`)');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, '`1`: numbers cannot be used as keys');
+    x.assert(
+        p.elems[0].error,
+        'only strings can be used as keys in JSON dict, found a number (`1`)',
+    );
     x.assert(p.elems[0].getText(), '{1');
-    x.assert(p.elems[0].getRaw().length, 1);
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'number');
-    x.assert(p.elems[0].getRaw()[0].key.getRaw(), '1');
-    x.assert(p.elems[0].getRaw()[0].value === undefined);
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{-1: 2}');
     p.parse();
-    x.assert(p.error, '`-1`: numbers cannot be used as keys');
+    x.assert(p.error, 'only strings can be used as keys in JSON dict, found a number (`-1`)');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, '`-1`: numbers cannot be used as keys');
+    x.assert(
+        p.elems[0].error,
+        'only strings can be used as keys in JSON dict, found a number (`-1`)',
+    );
     x.assert(p.elems[0].getText(), '{-1');
-    x.assert(p.elems[0].getRaw().length, 1);
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'number');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '-1');
-    x.assert(p.elems[0].getRaw()[0].value === undefined);
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{-1.2: 2}');
     p.parse();
-    x.assert(p.error, '`-1.2`: numbers cannot be used as keys');
+    x.assert(p.error, 'only strings can be used as keys in JSON dict, found a number (`-1.2`)');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, '`-1.2`: numbers cannot be used as keys');
+    x.assert(
+        p.elems[0].error,
+        'only strings can be used as keys in JSON dict, found a number (`-1.2`)',
+    );
     x.assert(p.elems[0].getText(), '{-1.2');
-    x.assert(p.elems[0].getRaw().length, 1);
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'number');
-    x.assert(p.elems[0].getRaw()[0].key.getRaw(), '-1.2');
-    x.assert(p.elems[0].getRaw()[0].value === undefined);
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     process.env['variable'] = '1';
@@ -846,35 +846,40 @@ function checkJson(x) {
 
     p = new Parser('{true: 1}');
     p.parse();
-    x.assert(p.error, '`true`: booleans and idents cannot be used as keys');
+    x.assert(p.error, 'only strings can be used as keys in JSON dict, found a bool (`true`)');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, '`true`: booleans and idents cannot be used as keys');
+    x.assert(
+        p.elems[0].error,
+        'only strings can be used as keys in JSON dict, found a bool (`true`)',
+    );
     x.assert(p.elems[0].getText(), '{true');
 
 
     p = new Parser('{{"a": 2}: 1}');
     p.parse();
-    x.assert(p.error, '`{"a": 2}`: JSON objects cannot be used as keys');
+    x.assert(p.error, 'only strings can be used as keys in JSON dict, found a json (`{"a": 2}`)');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, '`{"a": 2}`: JSON objects cannot be used as keys');
+    x.assert(
+        p.elems[0].error,
+        'only strings can be used as keys in JSON dict, found a json (`{"a": 2}`)',
+    );
     x.assert(p.elems[0].getText(), '{{"a": 2}');
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'json');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '{"a": 2}');
-    x.assert(p.elems[0].getRaw()[0].value === undefined);
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{.1: 1}');
     p.parse();
-    x.assert(p.error, 'unexpected `.` after `{`');
+    x.assert(p.error, 'only strings can be used as keys in JSON dict, found an unknown item (`.`)');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'unexpected `.` after `{`');
-    x.assert(p.elems[0].getText(), '{.');
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'unknown');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '.');
-    x.assert(p.elems[0].getRaw()[0].value === undefined);
+    x.assert(
+        p.elems[0].error,
+        'only strings can be used as keys in JSON dict, found an unknown item (`.`)',
+    );
+    x.assert(p.elems[0].getText(), '{.1: 1}');
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{"a": []}');
@@ -913,28 +918,25 @@ function checkJson(x) {
 
     p = new Parser('{[1, 2]: 1}');
     p.parse();
-    x.assert(p.error, '`[1, 2]`: arrays cannot be used as keys');
+    x.assert(p.error, 'only strings can be used as keys in JSON dict, found an array (`[1, 2]`)');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, '`[1, 2]`: arrays cannot be used as keys');
+    x.assert(
+        p.elems[0].error,
+        'only strings can be used as keys in JSON dict, found an array (`[1, 2]`)',
+    );
     x.assert(p.elems[0].getText(), '{[1, 2]');
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'array');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '[1, 2]');
-    x.assert(p.elems[0].getRaw()[0].value === undefined);
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{"x": .}');
     p.parse();
-    x.assert(p.error, 'invalid value `.` for key `"x"`');
+    x.assert(p.error, 'unexpected `.` as first token for key `"x"`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'invalid value `.` for key `"x"`');
-    x.assert(p.elems[0].getText(), '{"x": .');
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
-    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
-    x.assert(p.elems[0].getRaw()[0].value.kind, 'unknown');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw(), '.');
+    x.assert(p.elems[0].error, 'unexpected `.` as first token for key `"x"`');
+    x.assert(p.elems[0].getText(), '{"x": .}');
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{"x": 1,}');
@@ -967,29 +969,22 @@ function checkJson(x) {
 
     p = new Parser('{"x": .,}');
     p.parse();
-    x.assert(p.error, 'invalid value `.` for key `"x"`');
+    x.assert(p.error, 'unexpected `.` as first token for key `"x"`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'invalid value `.` for key `"x"`');
-    x.assert(p.elems[0].getText(), '{"x": .');
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
-    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
-    x.assert(p.elems[0].getRaw()[0].value.kind, 'unknown');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw(), '.');
+    x.assert(p.elems[0].error, 'unexpected `.` as first token for key `"x"`');
+    x.assert(p.elems[0].getText(), '{"x": .,}');
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{"x": }');
     p.parse();
-    x.assert(p.error, 'unexpected `}` after `"x":`: expected a value');
+    x.assert(p.error, 'expected a value for key `"x"`, found nothing');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'unexpected `}` after `"x":`: expected a value');
+    x.assert(p.elems[0].error, 'expected a value for key `"x"`, found nothing');
     x.assert(p.elems[0].getText(), '{"x": }');
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
-    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
-    x.assert(p.elems[0].getRaw()[0].value === undefined);
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{"x": "a"}');
@@ -1009,17 +1004,12 @@ function checkJson(x) {
 
     p = new Parser('{"x": "a" "y": 2}');
     p.parse();
-    x.assert(p.error, 'expected `,` or `}` after `"a"`, found `"y"`');
+    x.assert(p.error, 'expected `,` or `}` after `"a"`, found `"`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'expected `,` or `}` after `"a"`, found `"y"`');
-    x.assert(p.elems[0].getText(), '{"x": "a" "y"');
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
-    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
-    x.assert(p.elems[0].getRaw()[0].value.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].value.getText(), '"a"');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw(), 'a');
+    x.assert(p.elems[0].error, 'expected `,` or `}` after `"a"`, found `"`');
+    x.assert(p.elems[0].getText(), '{"x": "a" "y": 2}');
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{"x" 2}');
@@ -1028,27 +1018,18 @@ function checkJson(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
     x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `2`');
-    x.assert(p.elems[0].getText(), '{"x" 2');
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
-    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
-    x.assert(p.elems[0].getRaw()[0].value.kind, 'number');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw(), '2');
+    x.assert(p.elems[0].getText(), '{"x" 2}');
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{"x" "a"}');
     p.parse();
-    x.assert(p.error, 'expected `:` after `"x"`, found `"a"`');
+    x.assert(p.error, 'expected `:` after `"x"`, found `"`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `"a"`');
-    x.assert(p.elems[0].getText(), '{"x" "a"');
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
-    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
-    x.assert(p.elems[0].getRaw()[0].value.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].value.getText(), '"a"');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw(), 'a');
+    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `"`');
+    x.assert(p.elems[0].getText(), '{"x" "a"}');
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{"x", "a"}');
@@ -1057,48 +1038,52 @@ function checkJson(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
     x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `,`');
-    x.assert(p.elems[0].getText(), '{"x",');
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
-    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
+    x.assert(p.elems[0].getText(), '{"x"');
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{"x": "a": "y": "b"}');
     p.parse();
-    x.assert(p.error, 'expected `,` or `}` after `"a"`, found `:`');
+    x.assert(p.error, 'unexpected `:` after key `"a"`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'expected `,` or `}` after `"a"`, found `:`');
-    x.assert(p.elems[0].getText(), '{"x": "a":');
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
-    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
-    x.assert(p.elems[0].getRaw()[0].value.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].value.getText(), '"a"');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw(), 'a');
+    x.assert(p.elems[0].error, 'unexpected `:` after key `"a"`');
+    x.assert(p.elems[0].getText(), '{"x": "a"');
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{, "a"}');
     p.parse();
-    x.assert(p.error, 'unexpected `,` after `{`');
+    x.assert(p.error, 'expected a key after `{`, found `,`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'unexpected `,` after `{`');
-    x.assert(p.elems[0].getText(), '{,');
+    x.assert(
+        p.elems[0].error,
+        'expected a key after `{`, found `,`',
+    );
+    x.assert(p.elems[0].getText(), '{');
+
+
+    p = new Parser('{"a": 1,,}');
+    p.parse();
+    x.assert(p.error, 'expected a key after `1`, found `,`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(
+        p.elems[0].error,
+        'expected a key after `1`, found `,`',
+    );
+    x.assert(p.elems[0].getText(), '{"a": 1,');
 
 
     p = new Parser('{"x": 2|"y": "a"}');
     p.parse();
-    x.assert(p.error, 'unexpected `|` after `2`');
+    x.assert(p.error, 'expected `,` or `}` after `2`, found `|`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'unexpected `|` after `2`');
-    x.assert(p.elems[0].getText(), '{"x": 2|');
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
-    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
-    x.assert(p.elems[0].getRaw()[0].value.kind, 'number');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw(), '2');
+    x.assert(p.elems[0].error, 'expected `,` or `}` after `2`, found `|`');
+    x.assert(p.elems[0].getText(), '{"x": 2|"y": "a"}');
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{"x": 2,|"y": "a"}');
@@ -1117,35 +1102,22 @@ function checkJson(x) {
 
     p = new Parser('{"x" {"y": 1}}');
     p.parse();
-    x.assert(p.error, 'expected `:` after `"x"`, found `{"y": 1}`');
+    x.assert(p.error, 'expected `:` after `"x"`, found `{`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `{"y": 1}`');
-    x.assert(p.elems[0].getText(), '{"x" {"y": 1}');
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
-    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
-    x.assert(p.elems[0].getRaw()[0].value.kind, 'json');
-    x.assert(p.elems[0].getRaw()[0].value.getText(), '{"y": 1}');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw()[0].key.getRaw(), 'y');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw()[0].key.getText(), '"y"');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw()[0].value.kind, 'number');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw()[0].value.getRaw(), '1');
+    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `{`');
+    x.assert(p.elems[0].getText(), '{"x" {"y": 1}}');
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{"x" true}');
     p.parse();
-    x.assert(p.error, 'expected `:` after `"x"`, found `true`');
+    x.assert(p.error, 'expected `:` after `"x"`, found `t`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `true`');
-    x.assert(p.elems[0].getText(), '{"x" true');
-    x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '"x"');
-    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
-    x.assert(p.elems[0].getRaw()[0].value.kind, 'bool');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw(), 'true');
+    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `t`');
+    x.assert(p.elems[0].getText(), '{"x" true}');
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('{"x": "a", "y": true, "z": 56}');
@@ -1454,6 +1426,37 @@ function checkConcat(x) {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'a12');
     x.assert(p.elems[0].getText(), '"a" + "1" + "2"');
+
+    p = new Parser('"a" + 1 + \n2');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'a12');
+    x.assert(p.elems[0].getText(), '"a" + "1" + "2"');
+
+    p = new Parser('"a" + 1 + // comment?\n2');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'a12');
+    x.assert(p.elems[0].getText(), '"a" + "1" + "2"');
+
+    p = new Parser('{"x" + 2: 1,}');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getText(), '{"x" + 2: 1,}');
+    x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
+    x.assert(p.elems[0].getRaw()[0].key.getText(), '"x" + "2"');
+    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x2');
+    x.assert(p.elems[0].getRaw()[0].value.kind, 'number');
+    x.assert(p.elems[0].getRaw()[0].value.getRaw(), '1');
 }
 
 const TO_CHECK = [
