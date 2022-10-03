@@ -134,7 +134,23 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'string');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'hello');
-    x.assert(p.elems[0].getRaw()[0].getText(), 'hello');
+    x.assert(p.elems[0].getRaw()[0].getText(), '"hello"');
+    process.env['variable'] = undefined;
+
+
+    process.env['variable'] = '1';
+    p = new Parser('(|variable|)');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].getText(), '(|variable|)');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw().length, 1);
+    x.assert(p.elems[0].getRaw()[0].error, null);
+    x.assert(p.elems[0].getRaw()[0].kind, 'number');
+    x.assert(p.elems[0].getRaw()[0].getRaw(), '1');
+    x.assert(p.elems[0].getRaw()[0].getText(), '1');
     process.env['variable'] = undefined;
 
 
@@ -374,7 +390,7 @@ function checkArray(x) {
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'string');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'hello');
-    x.assert(p.elems[0].getRaw()[0].getText(), 'hello');
+    x.assert(p.elems[0].getRaw()[0].getText(), '"hello"');
     process.env['variable'] = undefined;
 
 
@@ -808,7 +824,7 @@ function checkJson(x) {
     x.assert(p.elems[0].getText(), '{|variable|: 2}');
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), '1');
+    x.assert(p.elems[0].getRaw()[0].key.getText(), '"1"');
     x.assert(p.elems[0].getRaw()[0].value.kind, 'number');
     x.assert(p.elems[0].getRaw()[0].value.getRaw(), '2');
 
@@ -821,7 +837,7 @@ function checkJson(x) {
     x.assert(p.elems[0].getText(), '{|variable value|: |variable|}');
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].key.getText(), 'a');
+    x.assert(p.elems[0].getRaw()[0].key.getText(), '"a"');
     x.assert(p.elems[0].getRaw()[0].value.kind, 'number');
     x.assert(p.elems[0].getRaw()[0].value.getRaw(), '1');
     process.env['variable'] = undefined;
@@ -1300,6 +1316,146 @@ function checkComment(x) {
     x.assert(p.elems[0].getText(), '"just a string// with a comment in the middle!"');
 }
 
+function checkConcat(x) {
+    let p = new Parser('1 + + 1');
+    p.parse();
+    x.assert(p.error, 'unexpected `+` after `+`');
+    x.assert(p.elems.length, 2);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[1].kind, 'char');
+    x.assert(p.elems[1].error, 'unexpected `+` after `+`');
+
+    p = new Parser('+ 1 + 1');
+    p.parse();
+    x.assert(p.error, 'unexpected `+` as first token');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'unknown');
+    x.assert(p.elems[0].error, 'unexpected `+` as first token');
+
+    p = new Parser('1 + true');
+    p.parse();
+    x.assert(p.error, 'a bool (`true`) cannot be used after a `+` token');
+    x.assert(p.elems.length, 3);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[1].kind, 'char');
+    x.assert(p.elems[1].error, null);
+    x.assert(p.elems[2].kind, 'bool');
+    x.assert(p.elems[2].error, 'a bool (`true`) cannot be used after a `+` token');
+
+    p = new Parser('1 + 1');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '1 + 1');
+    x.assert(p.elems[0].getText(), '1 + 1');
+
+    p = new Parser('1 + 1 +    4');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '1 + 1 + 4');
+    x.assert(p.elems[0].getText(), '1 + 1 + 4');
+
+    p = new Parser('"a" + "b" ');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'ab');
+    x.assert(p.elems[0].getText(), '"a" + "b"');
+
+    p = new Parser('"a" +   "b"');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'ab');
+    x.assert(p.elems[0].getText(), '"a" + "b"');
+
+    p = new Parser('"a" + 1 ');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'a1');
+    x.assert(p.elems[0].getText(), '"a" + "1"');
+
+    p = new Parser('1 + "a" ');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '1a');
+    x.assert(p.elems[0].getText(), '"1" + "a"');
+
+    p = new Parser('1 + "a" + 4 +    "bcd"');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '1a4bcd');
+    x.assert(p.elems[0].getText(), '"1" + "a" + "4" + "bcd"');
+
+    process.env['variable'] = 'hello';
+    p = new Parser('|variable| + 2');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'hello2');
+    x.assert(p.elems[0].getText(), '"hello" + "2"');
+
+    process.env['variable'] = '1';
+    p = new Parser('|variable| + 2');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '1 + 2');
+    x.assert(p.elems[0].getText(), '1 + 2');
+    process.env['variable'] = undefined;
+
+    p = new Parser('1 + "" + 2');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '12');
+    x.assert(p.elems[0].getText(), '"1" + "" + "2"');
+
+    p = new Parser('1 + 2 + "a"');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '12a');
+    x.assert(p.elems[0].getText(), '"1" + "2" + "a"');
+
+    p = new Parser('"a" + 1 + 2');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'a12');
+    x.assert(p.elems[0].getText(), '"a" + "1" + "2"');
+}
+
 const TO_CHECK = [
     {'name': 'tuple', 'func': checkTuple},
     {'name': 'array', 'func': checkArray},
@@ -1308,6 +1464,7 @@ const TO_CHECK = [
     {'name': 'number', 'func': checkNumber},
     {'name': 'json', 'func': checkJson},
     {'name': 'comment', 'func': checkComment},
+    {'name': 'concatenation', 'func': checkConcat},
 ];
 
 async function checkParsers(x = new Assert()) {
