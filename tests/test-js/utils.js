@@ -10,7 +10,7 @@ function toJSON(value) {
 }
 
 function getStackInfo(stack, level = 2) {
-    const parents = stack.split('at ');
+    const parents = stack.split(' at ');
     const parent = parents[level >= parents.length ? parents.length - 1 : level].trim();
     const parts = parent.split(':');
     const line = parts[parts.length - 2];
