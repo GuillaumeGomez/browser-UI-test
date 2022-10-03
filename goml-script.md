@@ -7,6 +7,7 @@ This file describes how the `.goml` format works.
  * [Add comments in scripts](#add-comments-in-scripts)
  * [Multiline commands/strings?](#multiline-commandsstrings)
  * [Variables](#variables)
+ * [Concatenation](#concatenation)
  * [Command list](#command-list)
 
 ## Add comments in scripts
@@ -50,6 +51,22 @@ In here, it'll set "#an-element" element's text to "12".
 If you want to set a variable from inside a script, use one of the `store-*` commands. Important to be noted: the created variables only override the variables set with `--variable` in the current script and don't change environment variables.
 
 A small note: the variable `CURRENT_DIR` is always available (and contains the directory where the script has been started) and **cannot** be override! It is also guaranteed to never end with `/` or `\\`.
+
+## Concatenation
+
+You can concatenate numbers and strings using the `+` sign:
+
+```
+store-value: (effect, ":hover")
+text: ("element" + |effect|, "something " + 2 + " something else")
+```
+
+Rules of concatenation s simple: if any of the element is a string, then it'll concatenate as a string. Examples:
+
+```
+1 + 2 + "a" // gives "12a"
+1 + 2 // gives "3"
+```
 
 ## Command list
 
