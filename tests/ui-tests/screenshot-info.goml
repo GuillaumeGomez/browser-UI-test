@@ -1,4 +1,4 @@
 // This test ensures that the `screenshot` command is displaying the expected content.
 screenshot-comparison: false
-goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 screenshot: ("tadam", "#js-call-attr")

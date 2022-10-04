@@ -92,7 +92,7 @@ async function checkRunTestCode(x, func) {
 
     // Check a failing code
     await x.assertTry(func, ['test',
-        'fail: true\ngoto: file://|CURRENT_DIR|/tests/scripts/basic.html\n' +
+        'fail: true\ngoto: "file://" + |CURRENT_DIR| + "/tests/scripts/basic.html"\n' +
         'assert-text: ("#button", "Go somewhere else!")'], ['test... ok', 0]);
 
     // check if test-folder option is ignored
@@ -104,7 +104,7 @@ async function checkRunTestCode(x, func) {
 
     // Check a working code
     await x.assertTry(func, ['test',
-        'goto: file://|CURRENT_DIR|/tests/html_files/basic.html\n' +
+        'goto: "file://" + |CURRENT_DIR| + "/tests/html_files/basic.html"\n' +
         'assert-text: ("#button", "Go somewhere else!")'], ['test... ok', 0]);
 
     // Check callback
@@ -126,7 +126,7 @@ async function checkRunTestCode(x, func) {
         }); // if we receive a request, we don't process it.
     };
     await x.assertTry(func, ['hoho',
-        'goto: file://|CURRENT_DIR|/tests/html_files/basic.html\n' +
+        'goto: "file://" + |CURRENT_DIR| + "/tests/html_files/basic.html"\n' +
         'click: "#button"\n' +
         'assert-text: ("body > header", "Basic test!")', options2], ['hoho... ok', 0]);
 }

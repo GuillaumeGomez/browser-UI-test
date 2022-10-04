@@ -1,4 +1,4 @@
-goto: file://|CURRENT_DIR|/|DOC_PATH|/similar-ones.html
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/similar-ones.html"
 assert: (".simili")
 assert-false: (".simili-non-existent")
 assert-count: (".simili", 4)

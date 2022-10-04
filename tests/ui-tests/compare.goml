@@ -1,5 +1,5 @@
 // This test ensures that the `store*` commands are working as expected.
-goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 // Should fail.
 compare-elements-property: ("header", "#the-input", ["clientHeight"])
 // Should succeed.

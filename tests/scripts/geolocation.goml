@@ -1,4 +1,4 @@
-goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
 permissions: ['geolocation']
 geolocation: (6.4854, 43.214852)
 assert-text: ("#button", "Go somewhere else!")

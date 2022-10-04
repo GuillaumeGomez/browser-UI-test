@@ -1,5 +1,5 @@
 // This test ensures that the escapes are handled correctly.
-goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 // This one checks the handling of single quotes.
 assert-css: ("input[id='the-input']", {"height": "10px"})
 // This one checks the handling of `\` in a CSS selector.
