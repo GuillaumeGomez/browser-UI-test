@@ -1,1 +1,1 @@
-goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"

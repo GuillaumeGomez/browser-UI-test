@@ -1,4 +1,4 @@
 screenshot-comparison: true
-goto: file://|CURRENT_DIR|/|DOC_PATH|/basic.html
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
 click: "#button"
 assert-text: ("body > header", "Another page!")

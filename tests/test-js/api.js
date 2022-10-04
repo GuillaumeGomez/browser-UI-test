@@ -19,19 +19,6 @@ function wrapper(callback, arg, options) {
     return callback(p, options);
 }
 
-function wrapperGoTo(callback, arg, options) {
-    if (typeof options === 'undefined') {
-        options = new Options();
-    }
-
-    const p = new Parser(arg, options.variables);
-    p.parseGoTo();
-    if (p.error !== null) {
-        return {'error': p.error};
-    }
-    return callback(p, options);
-}
-
 function wrapperParseContent(arg, options) {
     if (typeof options === 'undefined') {
         options = new Options();
@@ -5839,44 +5826,44 @@ function checkGeolocation(x, func) {
 }
 
 function checkGoTo(x, func) {
-    x.assert(func('a'), {'error': 'a relative path or a full URL was expected, found `a`'});
-    x.assert(func('"'), {'error': 'a relative path or a full URL was expected, found `"`'});
-    x.assert(func('http:/a'),
+    x.assert(func('"a"'), {'error': 'a relative path or a full URL was expected, found `a`'});
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func('"http:/a"'),
         {'error': 'a relative path or a full URL was expected, found `http:/a`'});
-    x.assert(func('https:/a'),
+    x.assert(func('"https:/a"'),
         {'error': 'a relative path or a full URL was expected, found `https:/a`'});
-    x.assert(func('https://a'), {
+    x.assert(func('"https://a"'), {
         'instructions': [
             'await page.goto("https://a");',
             'await arg.browser.overridePermissions(page.url(), arg.permissions);',
         ],
     });
-    x.assert(func('www.x'), {
+    x.assert(func('"www.x"'), {
         'instructions': [
             'await page.goto("www.x");',
             'await arg.browser.overridePermissions(page.url(), arg.permissions);',
         ],
     });
-    x.assert(func('/a'), {
+    x.assert(func('"/a"'), {
         'instructions': [
             'await page.goto(page.url().split("/").slice(0, -1).join("/") + "/a");',
             'await arg.browser.overridePermissions(page.url(), arg.permissions);',
         ],
     });
-    x.assert(func('./a'), {
+    x.assert(func('"./a"'), {
         'instructions': [
             'await page.goto(page.url().split("/").slice(0, -1).join("/") + "/./a");',
             'await arg.browser.overridePermissions(page.url(), arg.permissions);',
         ],
     });
-    x.assert(func('file:///a'), {
+    x.assert(func('"file:///a"'), {
         'instructions': [
             'await page.goto("file:///a");',
             'await arg.browser.overridePermissions(page.url(), arg.permissions);',
         ],
     });
     // `docPath` parameter always ends with '/'
-    x.assert(func('file://|doc-path|/a', {'variables': {'doc-path': 'foo'}}), {
+    x.assert(func('"file://" + |doc_path| + "/a"', {'variables': {'doc_path': 'foo'}}), {
         'instructions': [
             'await page.goto("file://foo/a");',
             'await arg.browser.overridePermissions(page.url(), arg.permissions);',
@@ -5888,19 +5875,19 @@ function checkGoTo(x, func) {
             'await arg.browser.overridePermissions(page.url(), arg.permissions);',
         ],
     });
-    x.assert(func('http://foo/|url|fa', {'variables': {'url': 'tadam/'}}), {
+    x.assert(func('"http://foo/" + |url| + "fa"', {'variables': {'url': 'tadam/'}}), {
         'instructions': [
             'await page.goto("http://foo/tadam/fa");',
             'await arg.browser.overridePermissions(page.url(), arg.permissions);',
         ],
     });
-    x.assert(func('http://foo/|url|/fa', {'variables': {'url': 'tadam'}}), {
+    x.assert(func('"http://foo/" + |url| + "/fa"', {'variables': {'url': 'tadam'}}), {
         'instructions': [
             'await page.goto("http://foo/tadam/fa");',
             'await arg.browser.overridePermissions(page.url(), arg.permissions);',
         ],
     });
-    x.assert(func('http://foo/|url|/fa'), {
+    x.assert(func('"http://foo/" + |url| + "/fa"'), {
         'error': 'variable `url` not found in options nor environment',
     });
 }
@@ -6078,10 +6065,10 @@ function checkParseContent(x, func) {
     x.assert(func('a: '), [{'error': 'Unknown command "a"', 'line': 1}]);
     x.assert(func(':'), [{'error': 'Unexpected `:` when parsing command', 'line': 1}]);
 
-    x.assert(func('goto: file:///home'), [
+    x.assert(func('goto: "file:///home"'), [
         {
             'fatal_error': true,
-            'original': 'goto: file:///home',
+            'original': 'goto: "file:///home"',
             'line_number': 1,
             'instructions': [
                 'await page.goto("file:///home");',
@@ -6096,7 +6083,7 @@ function checkParseContent(x, func) {
             'before)!',
         'line': 1,
     }]);
-    x.assert(func('fail: true\ngoto: file:///home'), [
+    x.assert(func('fail: true\ngoto: "file:///home"'), [
         {
             'fatal_error': false,
             'wait': false,
@@ -6106,7 +6093,7 @@ function checkParseContent(x, func) {
         },
         {
             'fatal_error': true,
-            'original': 'goto: file:///home',
+            'original': 'goto: "file:///home"',
             'line_number': 2,
             'instructions': [
                 'await page.goto("file:///home");',
@@ -6114,10 +6101,10 @@ function checkParseContent(x, func) {
             ],
         },
     ]);
-    x.assert(func('goto: file:///home\nreload:\ngoto: file:///home'), [
+    x.assert(func('goto: "file:///home"\nreload:\ngoto: "file:///home"'), [
         {
             'fatal_error': true,
-            'original': 'goto: file:///home',
+            'original': 'goto: "file:///home"',
             'line_number': 1,
             'instructions': [
                 'await page.goto("file:///home");',
@@ -6135,7 +6122,7 @@ await ret;`,
         },
         {
             'fatal_error': true,
-            'original': 'goto: file:///home',
+            'original': 'goto: "file:///home"',
             'line_number': 3,
             'instructions': [
                 'await page.goto("file:///home");',
@@ -6144,10 +6131,10 @@ await ret;`,
         },
     ]);
     x.assert(func('// just a comment\na: b'), [{'error': 'Unknown command "a"', 'line': 2}]);
-    x.assert(func('goto: file:///home\nemulate: "test"'), [
+    x.assert(func('goto: "file:///home"\nemulate: "test"'), [
         {
             'fatal_error': true,
-            'original': 'goto: file:///home',
+            'original': 'goto: "file:///home"',
             'line_number': 1,
             'instructions': [
                 'await page.goto("file:///home");',
@@ -6159,10 +6146,10 @@ await ret;`,
             'line': 2,
         },
     ]);
-    x.assert(func('goto: file:///home\nassert-text: ("a", "b")'), [
+    x.assert(func('goto: "file:///home"\nassert-text: ("a", "b")'), [
         {
             'fatal_error': true,
-            'original': 'goto: file:///home',
+            'original': 'goto: "file:///home"',
             'line_number': 1,
             'instructions': [
                 'await page.goto("file:///home");',
@@ -8421,7 +8408,7 @@ const TO_CHECK = [
     {
         'name': 'goto',
         'func': checkGoTo,
-        'toCall': (e, o) => wrapperGoTo(parserFuncs.parseGoTo, e, o),
+        'toCall': (e, o) => wrapper(parserFuncs.parseGoTo, e, o),
     },
     {
         'name': 'history-go-back',

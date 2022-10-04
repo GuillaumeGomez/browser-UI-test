@@ -1,6 +1,6 @@
 // Checks that all asserts are checking even if they all fail.
 screenshot-comparison: false
-goto: file://|CURRENT_DIR|/|DOC_PATH|/elements.html
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 assert: "#doesnt-exist"
 assert-css: (".content>.right>p", {"font-size": "200px", "height": "30"})
 assert-css-false: (".content>.right>p", {"font-size": "16px", "height": "18px"})
