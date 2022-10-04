@@ -1,7 +1,5 @@
 const getVariableValue = require('./utils.js').getVariableValue;
 
-const COMMENT_START = '//';
-
 function isWhiteSpace(c) {
     return c === ' ' || c === '\t' || c === '\r' || c === '\n';
 }
@@ -306,12 +304,7 @@ class Parser {
             return false;
         }
         // Now that we have the command, let's get its arguments!
-        if (this.command.getRaw().toLowerCase() === 'goto') {
-            // The 'goto' command is a special case. We need to parse it differently...
-            this.parseGoTo();
-        } else {
-            this.parse();
-        }
+        this.parse();
         return this.error === null;
     }
 
@@ -394,49 +387,6 @@ class Parser {
         if (increaseIfNothing === true && start === this.pos) {
             this.pos += 1;
         }
-    }
-
-    // This whole function exists because the `goto` command parsing is special.
-    parseGoTo() {
-        // Since it's not using the common parser system, we have to get rid of the useless
-        // characters first...
-        this.skipWhiteSpaceCharacters();
-        // Now that we found the first non-whitespace character, time to get the rest!
-        this.argsStart = this.pos;
-        const startLine = this.currentLine;
-        while (this.pos < this.text.length && this.text.charAt(this.pos) !== '\n') {
-            // Exceptionally, we don't use `increasePos()` here!
-            this.pos += 1;
-        }
-        this.argsEnd = this.pos;
-        const input = this.text.slice(this.argsStart, this.pos);
-        // This function doesn't use the parser so we still need to remove the comment part...
-        const parts = input.split(COMMENT_START);
-        let line = '';
-        if (parts.length > 1) {
-            for (let i = 0; i < parts.length; ++i) {
-                if (parts[i].endsWith(':')) {
-                    line += `${parts[i]}//`;
-                    if (i + 1 < parts.length) {
-                        i += 1;
-                        line += parts[i];
-                    }
-                }
-            }
-        } else {
-            line = input;
-        }
-        line = line.trim().split('|');
-        for (let i = 1; i < line.length; i += 2) {
-            const variable = getVariableValue(this.variables, line[i]);
-            if (variable === null) {
-                this.error = `variable \`${line[i]}\` not found in options nor environment`;
-                return;
-            }
-            line[i] = variable;
-        }
-        line = line.join('');
-        this.elems.push(new UnknownElement(line, this.argsStart, this.argsEnd, startLine));
     }
 
     getElems(pushTo = null) {
@@ -803,7 +753,7 @@ ${elems[i - 1].getText()}\`) cannot be used before a \`+\` token`;
                 const associatedValue = this.getVariableValue(variableName);
                 if (associatedValue === null) {
                     this.pos = this.text.length + 1;
-                    this.push(new VariableElement(variableName, start, this.pos,
+                    this.push(new VariableElement(variableName, start, this.pos, this.currentLine,
                         `variable \`${variableName}\` not found in options nor environment`),
                     pushTo);
                     return;

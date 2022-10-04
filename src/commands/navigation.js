@@ -4,6 +4,10 @@ const { cleanString } = require('../parser.js');
 
 // Possible inputs:
 //
+// * string
+//
+// The string can be either one of:
+//
 // * relative path (example: ../struct.Path.html)
 // * full URL (for example: https://doc.rust-lang.org/std/struct.Path.html)
 // * local path (example: file://some-file.html)
@@ -13,8 +17,15 @@ function parseGoTo(parser) {
     } else if (parser.elems.length !== 1) {
         return {'error': `Expected a URL, found \`${parser.getRawArgs()}\``};
     }
+
+    let line = parser.elems[0];
+    if (line.kind !== 'string') {
+        return {'error': `Expected a URL (inside a string), found \`${line.getArticleKind()}\` (\`\
+${line.getText()}\`)`};
+    }
+
+    line = line.value.trim();
     // There will always be one element...
-    const line = parser.elems[0].getRaw();
     const permissions = 'await arg.browser.overridePermissions(page.url(), arg.permissions);';
     // We just check if it goes to an HTML file, not checking much though...
     if (line.startsWith('http://') === true
