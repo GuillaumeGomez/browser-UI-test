@@ -15,7 +15,7 @@ This file describes how the `.goml` format works.
 You can add comments in the `.goml` scripts with `//`. Example:
 
 ```
-goto: https://somewhere.com // let's start somewhere!
+goto: "https://somewhere.com" // let's start somewhere!
 ```
 
 ## Multiline commands/strings?
@@ -945,29 +945,29 @@ geolocation: (144.9337482, -37.7879639) // position of Melbourne
 **goto** command changes the current page to the given path/url. It expects a path (starting with `.` or `/`) or a URL. Examples:
 
 ```
-goto: https://test.com
-goto: http://test.com
-goto: /test
-goto: ../test
-goto: file://some-location/index.html
+goto: "https://test.com"
+goto: "http://test.com"
+goto: "/test"
+goto: "../test"
+goto: "file://some-location/index.html"
 ```
 
-**/!\\** If you want to use `goto` with `file://`, please remember that you must pass a full path to the web browser (from the root). You can access this information direction with `{current-dir}`:
+**/!\\** If you want to use `goto` with `file://`, please remember that you must pass a full path to the web browser (from the root). You can access this information direction with `|CURRENT_DIR|`:
 
 ```
-goto: file://{current-dir}/my-folder/index.html
+goto: "file://" + |CURRENT_DIR| + "/my-folder/index.html"
 ```
 
 If you don't want to rewrite your doc path everytime, you can run the test with the `doc-path` argument and then use it as follow:
 
 ```
-goto: file://{doc-path}/file.html
+goto: "file://" + |DOC_PATH| + "/file.html"
 ```
 
-You can of course use `{doc-path}` and `{current-dir}` at the same time:
+You can of course use `|DOC_PATH|` and `|CURRENT_DIR|` at the same time:
 
 ```
-goto: file://{current-dir}/{doc-path}/file.html
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/file.html"
 ```
 
 #### history-go-back
@@ -1000,7 +1000,7 @@ Please note that if no `timeout` is specified, the one from the [`timeout`](#tim
 
 ```
 javascript: false // we disable it before using goto to have a page rendered without javascript
-goto: https://somewhere.com // rendering without javascript
+goto: "https://somewhere.com" // rendering without javascript
 ```
 
 #### local-storage
