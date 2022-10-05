@@ -75,8 +75,8 @@ function parseScreenshotComparison(parser) {
     if (selector.error !== undefined) {
         return selector;
     } else if (selector.value === 'true' || selector.value === 'false') {
-        warnings.push(`\`${elems[0].getText()}\` is a string and will be used as CSS selector.` +
-            ' If you want to set `true` or `false` value, remove quotes.');
+        warnings.push(`\`${elems[0].getErrorText()}\` is a string and will be used as CSS ` +
+            'selector. If you want to set `true` or `false` value, remove quotes.');
     }
     return {
         'instructions': [

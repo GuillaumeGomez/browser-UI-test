@@ -158,7 +158,7 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
         } else if (tuple[0].kind !== 'json') {
             return {
                 'error': 'expected first element of the tuple to be a JSON dict, found `' +
-                    `${tuple[0].getText()}\` (${tuple[0].getArticleKind()})`,
+                    `${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
             };
         }
         json_dict = tuple[0].getRaw();
@@ -371,7 +371,7 @@ function parseAssertPropertyInner(parser, assertFalse) {
     } else if (tuple[1].kind !== 'json') {
         return {
             'error': 'expected a JSON dictionary as second argument, found ' +
-                `\`${tuple[1].getText()}\` (${tuple[1].getArticleKind()})`,
+                `\`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
         };
     } else if (tuple.length === 3) {
         const ret = fillEnabledChecks(tuple[2], identifiers, enabled_checks, warnings, 'third');
@@ -568,7 +568,7 @@ function parseAssertAttributeInner(parser, assertFalse) {
     } else if (tuple[1].kind !== 'json') {
         return {
             'error': 'expected a JSON dictionary as second argument, found ' +
-                `\`${tuple[1].getText()}\` (${tuple[1].getArticleKind()})`,
+                `\`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
         };
     } else if (tuple.length === 3) {
         const ret = fillEnabledChecks(tuple[2], identifiers, enabled_checks, warnings, 'third');
@@ -1066,7 +1066,7 @@ function parseAssertPositionInner(parser, assertFalse) {
         } else {
             return {
                 'error': 'Only accepted keys are "x" and "y", found `' +
-                    `"${key}"\` (in \`${selector.tuple[1].getText()}\`)`,
+                    `"${key}"\` (in \`${selector.tuple[1].getErrorText()}\`)`,
             };
         }
     }
@@ -1160,10 +1160,10 @@ function parseAssertLocalStorageInner(parser, assertFalse) {
     let d = '';
     for (const entry of json) {
         if (entry['value'] === undefined) {
-            warnings.push(`No value for key \`${entry['key'].getText()}\``);
+            warnings.push(`No value for key \`${entry['key'].getErrorText()}\``);
             continue;
         } else if (entry['key'].isRecursive() === true) {
-            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getText()}\``);
+            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getErrorText()}\``);
             continue;
         }
         const key_s = entry['key'].getStringValue();
@@ -1255,12 +1255,14 @@ function parseAssertVariableInner(parser, assertFalse) {
     } else if (tuple[0].kind !== 'ident') {
         return {
             'error': 'expected first argument to be an ident, ' +
-                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getText()}\`)`,
+                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getErrorText()}\`)`,
         };
-    } else if (tuple[1].kind !== 'number' && tuple[1].kind !== 'string') {
+    } else if (tuple[1].kind !== 'number' &&
+        tuple[1].kind !== 'string' &&
+        tuple[1].kind !== 'json') {
         return {
-            'error': `expected second argument to be a number or a string, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getText()}\`)`,
+            'error': `expected second argument to be a number, a string or a JSON dict, found \
+${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
         };
     } else if (tuple.length > 2) {
         const identifiers = ['CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
@@ -1327,8 +1329,14 @@ if (value1 !== value2) {
 
     return {
         'instructions': [`\
-let value1 = String(arg.variables["${tuple[0].getText()}"]);
-let value2 = String(${tuple[1].getText()});
+function stringifyValue(value) {
+    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
+        return String(value);
+    }
+    return JSON.stringify(value);
+}
+const value1 = stringifyValue(arg.variables["${tuple[0].displayInCode()}"]);
+const value2 = stringifyValue(${tuple[1].displayInCode()});
 const errors = [];
 ${checks.join('\n')}
 if (errors.length !== 0) {

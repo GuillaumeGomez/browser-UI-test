@@ -66,12 +66,12 @@ function parseGeolocation(parser) {
     if (tuple[0].kind !== 'number') {
         return {
             'error': 'expected number for longitude (first argument), ' +
-                `found \`${tuple[0].getText()}\``,
+                `found \`${tuple[0].getErrorText()}\``,
         };
     } else if (tuple[1].kind !== 'number') {
         return {
             'error': 'expected number for latitude (second argument), ' +
-                `found \`${tuple[1].getText()}\``,
+                `found \`${tuple[1].getErrorText()}\``,
         };
     }
     return {
@@ -94,21 +94,21 @@ function parsePermissions(parser) {
     }
     const array = elems[0].getRaw();
     if (array.length > 0 && array[0].kind !== 'string') {
-        return {'error': `expected an array of strings, found \`${elems[0].getText()}\``};
+        return {'error': `expected an array of strings, found \`${elems[0].getErrorText()}\``};
     }
 
     for (let i = 0; i < array.length; ++i) {
         if (consts.AVAILABLE_PERMISSIONS.indexOf(array[i].getRaw()) === -1) {
             return {
-                'error': `\`${array[i].getText()}\` is an unknown permission, you can see the ` +
-                    'list of available permissions with the `--show-permissions` option',
+                'error': `\`${array[i].getErrorText()}\` is an unknown permission, you can see ` +
+                    'the list of available permissions with the `--show-permissions` option',
             };
         }
     }
 
     return {
         'instructions': [
-            `arg.permissions = ${elems[0].getText()};`,
+            `arg.permissions = ${elems[0].displayInCode()};`,
             'await arg.browser.overridePermissions(page.url(), arg.permissions);',
         ],
     };

@@ -23,7 +23,7 @@ function checkIntegerTuple(tuple, text1, text2, negativeCheck = false) {
     if (value.length !== 2 || value[0].kind !== 'number' || value[1].kind !== 'number') {
         return {
             'error': 'invalid syntax: expected "([number], [number])", ' +
-                `found \`${tuple.getText()}\``,
+                `found \`${tuple.getErrorText()}\``,
         };
     }
     const ret = value[0].getIntegerValue(text1, negativeCheck);
@@ -43,7 +43,7 @@ function validateJson(json, allowedValueTypes, keyName, allowedKeys = null) {
 
     for (const entry of json) {
         if (entry['value'] === undefined) {
-            warnings.push(`No value for key \`${entry['key'].getText()}\``);
+            warnings.push(`No value for key \`${entry['key'].getErrorText()}\``);
             continue;
         } else if (allowedValueTypes.indexOf(entry['value'].kind) === -1) {
             let allowed = '';
@@ -61,7 +61,7 @@ function validateJson(json, allowedValueTypes, keyName, allowedKeys = null) {
             const extra = allowedValueTypes.length > 1 ? 's' : '';
             return {
                 'error': `only ${allowed} type${extra} ${article} allowed as value, found \`` +
-                    `${entry['value'].getText()}\` (${entry['value'].getArticleKind()})`,
+                    `${entry['value'].getErrorText()}\` (${entry['value'].getArticleKind()})`,
             };
         }
         const key_s = entry['key'].getStringValue();
@@ -124,7 +124,8 @@ function getAssertSelector(parser) {
         };
     } else if (tuple[1].kind !== 'json') {
         return {
-            'error': `expected JSON dictionary as second argument, found \`${tuple[1].getText()}\``,
+            'error': `expected JSON dictionary as second argument, found \
+\`${tuple[1].getErrorText()}\``,
         };
     } else if (tuple.length === 3) {
         if (tuple[2].kind !== 'ident') {
@@ -166,7 +167,7 @@ function fillEnabledChecks(elem, identifiers, enabled_checks, warnings, err_pos)
             return {
                 'error': `expected an identifier or an array of identifiers as ${err_pos} ` +
                     'argument (among ' + identifiers.map(x => `\`${x}\``).join(', ') +
-                    `), found an array of \`${array[0].kind}\` (in \`${elem.getText()}\`)`,
+                    `), found an array of \`${array[0].kind}\` (in \`${elem.getErrorText()}\`)`,
             };
         }
 
