@@ -4,7 +4,10 @@ store-value: (background_color, "#111")
 // This check should fail.
 assert-css: ("header", {"background-color": |background_color|})
 store-value: (background_color, "rgb(17, 17, 17)")
+// Duplicating variable.
+store-value: (background_color2, |background_color|)
 assert-css: ("header", {"background-color": |background_color|})
+assert-css: ("header", {"background-color": |background_color2|})
 store-property: (height, "header", "clientHeight")
 // The 4 checks should fail
 assert-variable: (height, "12")
@@ -36,3 +39,8 @@ store-text: (text, "#another-one")
 assert-variable: (text, "hoy")
 // Should succeed.
 assert-variable: (text, "hey")
+store-value: (css_checks, {"background-color": |background_color|})
+assert-css: ("header", |css_checks|)
+assert-variable: (css_checks, {"background-color": "rgb(17, 17, 17)"})
+// Should fail
+assert-variable: (css_checks, "a")
