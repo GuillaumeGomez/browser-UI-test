@@ -887,6 +887,18 @@ function checkJson(x) {
     x.assert(p.elems[0].getErrorText(), '{true');
 
 
+    p = new Parser('{hello: 1}');
+    p.parse();
+    x.assert(p.error, 'only strings can be used as keys in JSON dict, found an ident (`hello`)');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(
+        p.elems[0].error,
+        'only strings can be used as keys in JSON dict, found an ident (`hello`)',
+    );
+    x.assert(p.elems[0].getErrorText(), '{hello');
+
+
     p = new Parser('{{"a": 2}: 1}');
     p.parse();
     x.assert(p.error, 'only strings can be used as keys in JSON dict, found a json (`{"a": 2}`)');
