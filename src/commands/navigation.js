@@ -21,7 +21,7 @@ function parseGoTo(parser) {
     let line = parser.elems[0];
     if (line.kind !== 'string') {
         return {'error': `Expected a URL (inside a string), found \`${line.getArticleKind()}\` (\`\
-${line.getText()}\`)`};
+${line.getErrorText()}\`)`};
     }
 
     line = line.value.trim();

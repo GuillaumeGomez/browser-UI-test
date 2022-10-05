@@ -69,10 +69,10 @@ function innerParseCssAttribute(parser, argName, varName, callback) {
         const entry = json[i];
 
         if (entry['value'] === undefined) {
-            warnings.push(`No value for key \`${entry['key'].getText()}\``);
+            warnings.push(`No value for key \`${entry['key'].getErrorText()}\``);
             continue;
         } else if (entry['key'].isRecursive() === true) {
-            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getText()}\``);
+            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getErrorText()}\``);
             continue;
         }
         const key_s = entry['key'].getStringValue();

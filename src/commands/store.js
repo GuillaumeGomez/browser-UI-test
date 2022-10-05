@@ -25,17 +25,17 @@ function parseStoreAttribute(parser) {
     } else if (tuple[0].kind !== 'ident') {
         return {
             'error': `expected first argument to be an ident, found ${tuple[0].getArticleKind()} \
-(\`${tuple[0].getText()}\`)`,
+(\`${tuple[0].getErrorText()}\`)`,
         };
     } else if (tuple[1].kind !== 'string') {
         return {
             'error': `expected second argument to be a CSS selector or an XPath, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getText()}\`)`,
+${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
         };
     } else if (tuple[2].kind !== 'string') {
         return {
             'error': `expected third argument to be a string, found \
-${tuple[2].getArticleKind()} (\`${tuple[2].getText()}\`)`,
+${tuple[2].getArticleKind()} (\`${tuple[2].getErrorText()}\`)`,
         };
     }
 
@@ -54,12 +54,12 @@ the check will be performed on the element itself`);
     const code = `\
 ${getAndSetElements(selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
-    if (!e.hasAttribute(${tuple[2].getText()})) {
-        throw "No attribute name \`" + ${tuple[2].getText()} + "\`";
+    if (!e.hasAttribute(${tuple[2].displayInCode()})) {
+        throw "No attribute name \`" + ${tuple[2].displayInCode()} + "\`";
     }
-    return String(e.getAttribute(${tuple[2].getText()}));
+    return String(e.getAttribute(${tuple[2].displayInCode()}));
 });
-arg.variables["${tuple[0].getText()}"] = await jsHandle.jsonValue();`;
+arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`;
 
     return {
         'instructions': [code],
@@ -91,17 +91,17 @@ function parseStoreCss(parser) {
     } else if (tuple[0].kind !== 'ident') {
         return {
             'error': `expected first argument to be an ident, found ${tuple[0].getArticleKind()} \
-(\`${tuple[0].getText()}\`)`,
+(\`${tuple[0].getErrorText()}\`)`,
         };
     } else if (tuple[1].kind !== 'string') {
         return {
             'error': `expected second argument to be a CSS selector or an XPath, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getText()}\`)`,
+${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
         };
     } else if (tuple[2].kind !== 'string') {
         return {
             'error': `expected third argument to be a string, found \
-${tuple[2].getArticleKind()} (\`${tuple[2].getText()}\`)`,
+${tuple[2].getArticleKind()} (\`${tuple[2].getErrorText()}\`)`,
         };
     }
 
@@ -116,9 +116,9 @@ ${tuple[2].getArticleKind()} (\`${tuple[2].getText()}\`)`,
     const code = `\
 ${getAndSetElements(selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
-    return String(getComputedStyle(e${pseudo})[${tuple[2].getText()}]);
+    return String(getComputedStyle(e${pseudo})[${tuple[2].displayInCode()}]);
 });
-arg.variables["${tuple[0].getText()}"] = await jsHandle.jsonValue();`;
+arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`;
 
     return {
         'instructions': [code],
@@ -150,17 +150,17 @@ function parseStoreProperty(parser) {
     } else if (tuple[0].kind !== 'ident') {
         return {
             'error': `expected first argument to be an ident, found ${tuple[0].getArticleKind()} \
-(\`${tuple[0].getText()}\`)`,
+(\`${tuple[0].getErrorText()}\`)`,
         };
     } else if (tuple[1].kind !== 'string') {
         return {
             'error': `expected second argument to be a CSS selector or an XPath, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getText()}\`)`,
+${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
         };
     } else if (tuple[2].kind !== 'string') {
         return {
             'error': `expected third argument to be a string, found \
-${tuple[2].getArticleKind()} (\`${tuple[2].getText()}\`)`,
+${tuple[2].getArticleKind()} (\`${tuple[2].getErrorText()}\`)`,
         };
     }
 
@@ -179,9 +179,9 @@ the check will be performed on the element itself`);
     const code = `\
 ${getAndSetElements(selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
-    return String(e[${tuple[2].getText()}]);
+    return String(e[${tuple[2].displayInCode()}]);
 });
-arg.variables["${tuple[0].getText()}"] = await jsHandle.jsonValue();`;
+arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`;
 
     return {
         'instructions': [code],
@@ -192,7 +192,7 @@ arg.variables["${tuple[0].getText()}"] = await jsHandle.jsonValue();`;
 
 // Possible inputs:
 //
-// * (ident, "string" | number)
+// * (ident, "string" | number | json)
 function parseStoreValue(parser) {
     const elems = parser.elems;
 
@@ -211,16 +211,20 @@ function parseStoreValue(parser) {
     } else if (tuple[0].kind !== 'ident') {
         return {
             'error': 'expected first argument to be an ident, ' +
-                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getText()}\`)`,
+                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getErrorText()}\`)`,
         };
-    } else if (tuple[1].kind !== 'number' && tuple[1].kind !== 'string') {
+    } else if (tuple[1].kind !== 'number' &&
+        tuple[1].kind !== 'string' &&
+        tuple[1].kind !== 'json') {
         return {
-            'error': `expected second argument to be a number or a string, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getText()}\`)`,
+            'error': `expected second argument to be a number, a string or a JSON dict, found \
+${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
         };
     }
     return {
-        'instructions': [`arg.variables["${tuple[0].getText()}"] = ${tuple[1].getText()};`],
+        'instructions': [
+            `arg.variables["${tuple[0].displayInCode()}"] = ${tuple[1].displayInCode()};`,
+        ],
         'wait': false,
     };
 }
@@ -246,20 +250,20 @@ function parseStoreLocalStorage(parser) {
     } else if (tuple[0].kind !== 'ident') {
         return {
             'error': 'expected first argument to be an ident, ' +
-                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getText()}\`)`,
+                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getErrorText()}\`)`,
         };
     } else if (tuple[1].kind !== 'string') {
         return {
             'error': `expected second argument to be a string, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getText()}\`)`,
+${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
         };
     }
     return {
         'instructions': [`\
 const jsHandle = await page.evaluateHandle(() => {
-    return window.localStorage.getItem(${tuple[1].getText()});
+    return window.localStorage.getItem(${tuple[1].displayInCode()});
 });
-arg.variables["${tuple[0].getText()}"] = await jsHandle.jsonValue();`,
+arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`,
         ],
         'wait': false,
     };
@@ -289,12 +293,12 @@ function parseStoreText(parser) {
     } else if (tuple[0].kind !== 'ident') {
         return {
             'error': `expected first argument to be an ident, found ${tuple[0].getArticleKind()} \
-(\`${tuple[0].getText()}\`)`,
+(\`${tuple[0].getErrorText()}\`)`,
         };
     } else if (tuple[1].kind !== 'string') {
         return {
             'error': `expected second argument to be a CSS selector or an XPath, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getText()}\`)`,
+${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
         };
     }
 
@@ -315,7 +319,7 @@ ${getAndSetElements(selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
     return browserUiTestHelpers.getElemText(e, "");
 });
-arg.variables["${tuple[0].getText()}"] = await jsHandle.jsonValue();`;
+arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`;
 
     return {
         'instructions': [code],

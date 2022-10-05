@@ -135,7 +135,7 @@ function parseCompareElementsAttributeInner(parser, assertFalse) {
 
     const array = tuple[2].getRaw();
     if (array.length > 0 && array[0].kind !== 'string') {
-        return {'error': `expected an array of strings, found \`${tuple[2].getText()}\``};
+        return {'error': `expected an array of strings, found \`${tuple[2].getErrorText()}\``};
     }
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
@@ -257,7 +257,7 @@ function parseCompareElementsCssInner(parser, assertFalse) {
     }
     const array = tuple[2].getRaw();
     if (array.length > 0 && array[0].kind !== 'string') {
-        return {'error': `expected an array of strings, found \`${tuple[2].getText()}\``};
+        return {'error': `expected an array of strings, found \`${tuple[2].getErrorText()}\``};
     }
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
@@ -381,7 +381,7 @@ function parseCompareElementsPropertyInner(parser, assertFalse) {
     }
     const array = tuple[2].getRaw();
     if (array.length > 0 && array[0].kind !== 'string') {
-        return {'error': `expected an array of strings, found \`${tuple[2].getText()}\``};
+        return {'error': `expected an array of strings, found \`${tuple[2].getErrorText()}\``};
     }
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
@@ -399,7 +399,7 @@ function parseCompareElementsPropertyInner(parser, assertFalse) {
     const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
         getAndSetElements(selector2, varName + '2', false) + '\n';
 
-    const code = `const ${varName}s = ${tuple[2].getText()};\n` +
+    const code = `const ${varName}s = ${tuple[2].displayInCode()};\n` +
     `for (const property of ${varName}s) {\n` +
         `${insertBefore}const value = await ${varName}1.evaluateHandle((e, p) => {\n` +
             'return String(e[p]);\n' +
@@ -467,7 +467,7 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
     }
     const array = tuple[2].getRaw();
     if (array.length > 0 && array[0].kind !== 'string') {
-        return {'error': `expected an array of strings, found \`${tuple[2].getText()}\``};
+        return {'error': `expected an array of strings, found \`${tuple[2].getErrorText()}\``};
     }
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
@@ -510,13 +510,13 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
 
     for (let i = 0; i < sub_tuple.length; ++i) {
         if (sub_tuple[i].kind !== 'string') {
-            return { 'error': `\`${tuple[2].getText()}\` should only contain strings` };
+            return { 'error': `\`${tuple[2].getErrorText()}\` should only contain strings` };
         }
         const value = sub_tuple[i].getRaw();
         if (value === 'x') {
             if (x) {
                 return {
-                    'error': `Duplicated "x" value in \`${tuple[2].getText()}\``,
+                    'error': `Duplicated "x" value in \`${tuple[2].getErrorText()}\``,
                 };
             }
             code += 'function checkX(e1, e2) {\n' +
@@ -533,7 +533,7 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
         } else if (value === 'y') {
             if (y) {
                 return {
-                    'error': `Duplicated "y" value in \`${tuple[2].getText()}\``,
+                    'error': `Duplicated "y" value in \`${tuple[2].getErrorText()}\``,
                 };
             }
             code += 'function checkY(e1, e2) {\n' +
@@ -550,7 +550,7 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
         } else {
             return {
                 'error': 'Only accepted values are "x" and "y", found `' +
-                    `${sub_tuple[i].getText()}\` (in \`${tuple[2].getText()}\`)`,
+                    `${sub_tuple[i].getErrorText()}\` (in \`${tuple[2].getErrorText()}\`)`,
             };
         }
     }
@@ -680,7 +680,7 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
         } else {
             return {
                 'error': 'Only accepted keys are "x" and "y", found `' +
-                    `"${key}"\` (in \`${tuple[2].getText()}\`)`,
+                    `"${key}"\` (in \`${tuple[2].getErrorText()}\`)`,
             };
         }
     }

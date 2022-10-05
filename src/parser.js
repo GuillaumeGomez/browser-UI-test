@@ -17,12 +17,19 @@ function isLetter(c) {
 }
 
 function matchInteger(s) {
-    for (let i = s.length - 1; i >= 0; --i) {
-        if (!isNumber(s.charAt(i))) {
-            return false;
+    if (typeof s === 'number' || s instanceof Number) {
+        return true;
+    } else if (typeof s === 'string' || s instanceof String) {
+        for (let i = s.length - 1; i >= 0; --i) {
+            if (!isNumber(s.charAt(i))) {
+                return false;
+            }
         }
+        return true;
+    } else {
+        // Very likely a JSON dict.
+        return false;
     }
-    return true;
 }
 
 function cleanString(s) {
@@ -58,15 +65,15 @@ function cleanCssSelector(s, text = '') {
 
 function checkInteger(nb, text, negativeCheck = false) {
     if (nb.isFloat === true) {
-        return {'error': `expected integer for ${text}, found float: \`${nb.getText()}\``};
+        return {'error': `expected integer for ${text}, found float: \`${nb.getErrorText()}\``};
     } else if (negativeCheck === true && nb.isNegative === true) {
-        return {'error': `${text} cannot be negative: \`${nb.getText()}\``};
+        return {'error': `${text} cannot be negative: \`${nb.getErrorText()}\``};
     }
     return {'value': nb.getRaw()};
 }
 
 function showEnd(elem) {
-    const text = elem.getText();
+    const text = elem.getErrorText();
 
     if (text.length < 20) {
         return text;
@@ -159,7 +166,7 @@ class Element {
     }
 
     // Mostly there for debug, limit its usage as much as possible!
-    getText() {
+    getErrorText() {
         return this.value;
     }
 
@@ -169,6 +176,10 @@ class Element {
             return 'an unknown item';
         }
         return (['array', 'ident'].indexOf(this.kind) !== -1 ? 'an ' : 'a ') + this.kind;
+    }
+
+    displayInCode() {
+        return this.value;
     }
 }
 
@@ -188,8 +199,12 @@ class TupleElement extends Element {
         return true;
     }
 
-    getText() {
+    getErrorText() {
         return this.fullText;
+    }
+
+    displayInCode() {
+        return '(' + this.value.map(e => e.displayInCode()).join(', ') + ')';
     }
 }
 
@@ -203,8 +218,12 @@ class ArrayElement extends Element {
         return true;
     }
 
-    getText() {
+    getErrorText() {
         return this.fullText;
+    }
+
+    displayInCode() {
+        return '[' + this.value.map(e => e.displayInCode()).join(', ') + ']';
     }
 }
 
@@ -214,8 +233,12 @@ class StringElement extends Element {
         this.fullText = fullText;
     }
 
-    getText() {
+    getErrorText() {
         return this.fullText;
+    }
+
+    displayInCode() {
+        return `"${cleanString(this.value)}"`;
     }
 }
 
@@ -240,12 +263,19 @@ class JsonElement extends Element {
         this.fullText = fullText;
     }
 
-    getText() {
+    isRecursive() {
+        return true;
+    }
+
+    getErrorText() {
         return this.fullText;
     }
 
-    isRecursive() {
-        return true;
+    displayInCode() {
+        const p = this.value.map(e => {
+            return e.key.displayInCode() + ': ' + e.value.displayInCode();
+        });
+        return '{' + p.join(', ') + '}';
     }
 }
 
@@ -506,7 +536,7 @@ class Parser {
                     if (elems.length === 1) {
                         el.error = `unexpected \`${token}\` as first token${extra}`;
                     } else {
-                        const prevElem = elems[elems.length - 2].getText();
+                        const prevElem = elems[elems.length - 2].getErrorText();
                         el.error = `unexpected token \`${token}\` after \`${prevElem}\``;
                     }
                     this.error = el.error;
@@ -536,7 +566,7 @@ class Parser {
             }
             if (!isAdditionable(elems[i + 1])) {
                 elems[i + 1].error = `${elems[i + 1].getArticleKind()} (\`\
-${elems[i + 1].getText()}\`) cannot be used after a \`+\` token`;
+${elems[i + 1].getErrorText()}\`) cannot be used after a \`+\` token`;
                 this.error = elems[i + 1].error;
                 return;
             }
@@ -549,7 +579,7 @@ ${elems[i + 1].getText()}\`) cannot be used after a \`+\` token`;
                 }
                 if (!isAdditionable(elems[i - 1])) {
                     elems[i - 1].error = `${elems[i - 1].getArticleKind()} (\`\
-${elems[i - 1].getText()}\`) cannot be used before a \`+\` token`;
+${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
                     this.error = elems[i - 1].error;
                     return;
                 }
@@ -565,7 +595,7 @@ ${elems[i - 1].getText()}\`) cannot be used before a \`+\` token`;
 
                 for (const elem of subs) {
                     if (elem.kind === 'string') {
-                        full.push(elem.getText());
+                        full.push(elem.getErrorText());
                     } else {
                         full.push(`"${elem.value}"`);
                     }
@@ -631,11 +661,11 @@ ${elems[i - 1].getText()}\`) cannot be used before a \`+\` token`;
                 let err;
 
                 if (prev === ',') {
-                    const last = elems[elems.length - 1].getText();
+                    const last = elems[elems.length - 1].getErrorText();
                     err = `expected ${showChar(endChar)} after \`${last}\``;
                 } else {
                     err = `expected ${showChar(endChar)} or \`,\` after ` +
-                        `\`${elems[elems.length - 1].getText()}\``;
+                        `\`${elems[elems.length - 1].getErrorText()}\``;
                 }
                 this.push(
                     new constructor(elems, start, this.pos, full, this.currentLine, err),
@@ -724,8 +754,11 @@ ${elems[i - 1].getText()}\`) cannot be used before a \`+\` token`;
         const start = this.pos;
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
-            // Check if it is a latin letter.
-            if (c !== '_' && !isLetter(c) && specialChars.indexOf(c) === -1) {
+            // Check if it is a latin letter or a number.
+            if (c !== '_' &&
+                !isLetter(c) &&
+                specialChars.indexOf(c) === -1 &&
+                (!isNumber(c) || this.pos === start)) {
                 break;
             }
             this.increasePos();
@@ -758,22 +791,31 @@ ${elems[i - 1].getText()}\`) cannot be used before a \`+\` token`;
                     pushTo);
                     return;
                 }
-                if (!this.forceVariableAsString && matchInteger(associatedValue) === true) {
-                    this.push(
-                        new NumberElement(associatedValue, start, this.pos, this.currentLine),
-                        pushTo,
-                    );
+                if (['number', 'string'].indexOf(typeof associatedValue) !== -1) {
+                    if (typeof associatedValue === 'number' ||
+                        // eslint-disable-next-line no-extra-parens
+                        (!this.forceVariableAsString && matchInteger(associatedValue) === true)) {
+                        this.push(
+                            new NumberElement(associatedValue, start, this.pos, this.currentLine),
+                            pushTo,
+                        );
+                    } else {
+                        this.push(
+                            new StringElement(
+                                associatedValue,
+                                start,
+                                this.pos,
+                                `"${cleanString(associatedValue)}"`,
+                                this.currentLine,
+                            ),
+                            pushTo,
+                        );
+                    }
                 } else {
-                    this.push(
-                        new StringElement(
-                            associatedValue,
-                            start,
-                            this.pos,
-                            `"${cleanString(associatedValue)}"`,
-                            this.currentLine,
-                        ),
-                        pushTo,
-                    );
+                    // this is a JSON dict and it should be parsed.
+                    const p = new Parser(JSON.stringify(associatedValue), this.variables);
+                    p.parseJson();
+                    this.push(p.elems[0], pushTo);
                 }
                 return;
             }
@@ -869,8 +911,8 @@ ${elems[i - 1].getText()}\`) cannot be used before a \`+\` token`;
             this.forceVariableAsString = false;
 
             if (elems.length > 1) {
-                keyError(this, `expected \`:\` after \`${elems[0].getText()}\`, found \
-\`${elems[1].getText()}\``);
+                keyError(this, `expected \`:\` after \`${elems[0].getErrorText()}\`, found \
+\`${elems[1].getErrorText()}\``);
                 return;
             } else if (elems.length === 0) {
                 if (ender === ':') {
@@ -883,7 +925,7 @@ ${elems[i - 1].getText()}\`) cannot be used before a \`+\` token`;
                         const last = json[json.length - 1];
                         keyError(
                             this,
-                            `expected a key after \`${last.value.getText()}\`, found \`,\``,
+                            `expected a key after \`${last.value.getErrorText()}\`, found \`,\``,
                         );
                     }
                     return;
@@ -894,12 +936,12 @@ ${elems[i - 1].getText()}\`) cannot be used before a \`+\` token`;
                 return;
             } else if (elems[0].kind !== 'string') {
                 const article = elems[0].getArticleKind();
-                const extra = ` (\`${elems[0].getText()}\`)`;
+                const extra = ` (\`${elems[0].getErrorText()}\`)`;
                 keyError(this, `only strings can be used as keys in JSON dict, found \
 ${article}${extra}`);
                 return;
             } else if (ender === '}' || ender === ',') {
-                const after = elems[0].getText();
+                const after = elems[0].getErrorText();
                 keyError(this, `expected \`:\` after \`${after}\`, found \`${ender}\``);
                 return;
             } else if (this.error !== null) {
@@ -910,24 +952,29 @@ ${article}${extra}`);
 
             this.increasePos(); // Moving past `:`.
             elems = [];
-            ender = this.parse([',', '}', ':'], elems, null, ` for key \`${key.getText()}\``)[1];
+            ender = this.parse(
+                [',', '}', ':'],
+                elems,
+                null,
+                ` for key \`${key.getErrorText()}\``,
+            )[1];
             if (elems.length > 1) {
-                keyError(this, `expected \`,\` or \`}\` after \`${elems[0].getText()}\`, found \
-\`${elems[1].getText()}\``);
+                keyError(this, `expected \`,\` or \`}\` after \`${elems[0].getErrorText()}\`, \
+found \`${elems[1].getErrorText()}\``);
                 return;
             } else if (ender === ':') {
                 let error = 'unexpected `:` ';
                 if (elems.length !== 0) {
-                    error += `after key \`${elems[0].getText()}\``;
+                    error += `after key \`${elems[0].getErrorText()}\``;
                 } else {
-                    error += `after key \`${key.getText()}\``;
+                    error += `after key \`${key.getErrorText()}\``;
                 }
                 keyError(this, error);
                 return;
             } else if (elems.length === 0) {
                 keyError(
                     this,
-                    `expected a value for key \`${key.getText()}\`, found nothing`,
+                    `expected a value for key \`${key.getErrorText()}\`, found nothing`,
                     ender === '}',
                 );
                 return;
@@ -948,7 +995,7 @@ ${article}${extra}`);
                 error = 'unclosed empty JSON object';
             } else {
                 const last = json[json.length - 1].value;
-                error = `unclosed JSON object: expected \`}\` after \`${last.getText()}\``;
+                error = `unclosed JSON object: expected \`}\` after \`${last.getErrorText()}\``;
             }
         }
         const extra = error === null ? 1 : 0;

@@ -1051,18 +1051,40 @@ function checkAssertVariableInner(x, func, equal, contains, starts_with, ends_wi
     x.assert(func('(1, 1)'), {
         'error': 'expected first argument to be an ident, found a number (`1`)',
     });
-    x.assert(func('(a, {"a": "b"})'), {
-        'error': 'expected second argument to be a number or a string, found a json (`{"a": "b"}`)',
-    });
-    x.assert(func('(a, "b", "a")'), {
-        'error': 'expected an identifier or an array of identifiers (among `CONTAINS`, ' +
-            '`STARTS_WITH`, `ENDS_WITH`) as third argument or nothing, found `a` (a string)',
+    x.assert(func('(a, b)'), {
+        'error': 'expected second argument to be a number, a string or a JSON dict, found an ' +
+            'ident (`b`)',
     });
 
+    x.assert(func('(a, {"b": "a"})'), {
+        'instructions': [`\
+function stringifyValue(value) {
+    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
+        return String(value);
+    }
+    return JSON.stringify(value);
+}
+const value1 = stringifyValue(arg.variables["a"]);
+const value2 = stringifyValue({"b": "a"});
+const errors = [];
+${equal}
+if (errors.length !== 0) {
+    const errs = errors.join(", ");
+    throw "The following errors happened: [" + errs + "]";
+}`,
+        ],
+        'wait': false,
+    });
     x.assert(func('(VAR, "a")'), {
         'instructions': [`\
-let value1 = String(arg.variables["VAR"]);
-let value2 = String("a");
+function stringifyValue(value) {
+    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
+        return String(value);
+    }
+    return JSON.stringify(value);
+}
+const value1 = stringifyValue(arg.variables["VAR"]);
+const value2 = stringifyValue("a");
 const errors = [];
 ${equal}
 if (errors.length !== 0) {
@@ -1075,8 +1097,14 @@ if (errors.length !== 0) {
 
     x.assert(func('(VAR, "\'a")'), {
         'instructions': [`\
-let value1 = String(arg.variables["VAR"]);
-let value2 = String("'a");
+function stringifyValue(value) {
+    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
+        return String(value);
+    }
+    return JSON.stringify(value);
+}
+const value1 = stringifyValue(arg.variables["VAR"]);
+const value2 = stringifyValue("\\'a");
 const errors = [];
 ${equal}
 if (errors.length !== 0) {
@@ -1088,8 +1116,14 @@ if (errors.length !== 0) {
     });
     x.assert(func('(VAR, 1)'), {
         'instructions': [`\
-let value1 = String(arg.variables["VAR"]);
-let value2 = String(1);
+function stringifyValue(value) {
+    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
+        return String(value);
+    }
+    return JSON.stringify(value);
+}
+const value1 = stringifyValue(arg.variables["VAR"]);
+const value2 = stringifyValue(1);
 const errors = [];
 ${equal}
 if (errors.length !== 0) {
@@ -1101,8 +1135,14 @@ if (errors.length !== 0) {
     });
     x.assert(func('(VAR, 1.28)'), {
         'instructions': [`\
-let value1 = String(arg.variables["VAR"]);
-let value2 = String(1.28);
+function stringifyValue(value) {
+    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
+        return String(value);
+    }
+    return JSON.stringify(value);
+}
+const value1 = stringifyValue(arg.variables["VAR"]);
+const value2 = stringifyValue(1.28);
 const errors = [];
 ${equal}
 if (errors.length !== 0) {
@@ -1115,8 +1155,14 @@ if (errors.length !== 0) {
 
     x.assert(func('(VAR, "a", [CONTAINS])'), {
         'instructions': [`\
-let value1 = String(arg.variables["VAR"]);
-let value2 = String("a");
+function stringifyValue(value) {
+    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
+        return String(value);
+    }
+    return JSON.stringify(value);
+}
+const value1 = stringifyValue(arg.variables["VAR"]);
+const value2 = stringifyValue("a");
 const errors = [];
 ${contains}
 if (errors.length !== 0) {
@@ -1128,8 +1174,14 @@ if (errors.length !== 0) {
     });
     x.assert(func('(VAR, "a", [STARTS_WITH])'), {
         'instructions': [`\
-let value1 = String(arg.variables["VAR"]);
-let value2 = String("a");
+function stringifyValue(value) {
+    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
+        return String(value);
+    }
+    return JSON.stringify(value);
+}
+const value1 = stringifyValue(arg.variables["VAR"]);
+const value2 = stringifyValue("a");
 const errors = [];
 ${starts_with}
 if (errors.length !== 0) {
@@ -1141,8 +1193,14 @@ if (errors.length !== 0) {
     });
     x.assert(func('(VAR, "a", [ENDS_WITH])'), {
         'instructions': [`\
-let value1 = String(arg.variables["VAR"]);
-let value2 = String("a");
+function stringifyValue(value) {
+    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
+        return String(value);
+    }
+    return JSON.stringify(value);
+}
+const value1 = stringifyValue(arg.variables["VAR"]);
+const value2 = stringifyValue("a");
 const errors = [];
 ${ends_with}
 if (errors.length !== 0) {
@@ -1154,8 +1212,14 @@ if (errors.length !== 0) {
     });
     x.assert(func('(VAR, "a", [STARTS_WITH, CONTAINS, ENDS_WITH])'), {
         'instructions': [`\
-let value1 = String(arg.variables["VAR"]);
-let value2 = String("a");
+function stringifyValue(value) {
+    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
+        return String(value);
+    }
+    return JSON.stringify(value);
+}
+const value1 = stringifyValue(arg.variables["VAR"]);
+const value2 = stringifyValue("a");
 const errors = [];
 ${contains}
 ${starts_with}
@@ -5180,7 +5244,7 @@ function checkCompareElementsPropertyInner(x, func, before, after) {
             'if (parseCompareElementsProp1 === null) { throw \'"a" not found\'; }\n' +
             'let parseCompareElementsProp2 = await page.$("b");\n' +
             'if (parseCompareElementsProp2 === null) { throw \'"b" not found\'; }\n' +
-            'const parseCompareElementsProps = [\n"margin"];\n' +
+            'const parseCompareElementsProps = ["margin"];\n' +
             'for (const property of parseCompareElementsProps) {\n' +
             before +
             'const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {\n' +
@@ -6231,7 +6295,7 @@ function checkPermissions(x, func) {
     });
     x.assert(func('[\n"camera"\n, "push"]'), {
         'instructions': [
-            'arg.permissions = [\n"camera"\n, "push"];',
+            'arg.permissions = ["camera", "push"];',
             'await arg.browser.overridePermissions(page.url(), arg.permissions);',
         ],
     });
@@ -6549,10 +6613,10 @@ arg.variables["VAR"] = await jsHandle.jsonValue();`,
 let parseStoreAttribute = await page.$("a");
 if (parseStoreAttribute === null) { throw '"a" not found'; }
 const jsHandle = await parseStoreAttribute.evaluateHandle(e => {
-    if (!e.hasAttribute("\\"'b")) {
-        throw "No attribute name \`" + "\\"'b" + "\`";
+    if (!e.hasAttribute("\\"\\'b")) {
+        throw "No attribute name \`" + "\\"\\'b" + "\`";
     }
-    return String(e.getAttribute("\\"'b"));
+    return String(e.getAttribute("\\"\\'b"));
 });
 arg.variables["VAR"] = await jsHandle.jsonValue();`,
         ],
@@ -6707,7 +6771,7 @@ arg.variables["VAR"] = await jsHandle.jsonValue();`,
 let parseStoreProperty = await page.$("a");
 if (parseStoreProperty === null) { throw '"a" not found'; }
 const jsHandle = await parseStoreProperty.evaluateHandle(e => {
-    return String(e["\\"'b"]);
+    return String(e["\\"\\'b"]);
 });
 arg.variables["VAR"] = await jsHandle.jsonValue();`,
         ],
@@ -6806,8 +6870,9 @@ function checkStoreValue(x, func) {
     x.assert(func('(1, 1)'), {
         'error': 'expected first argument to be an ident, found a number (`1`)',
     });
-    x.assert(func('(a, {"a": "b"})'), {
-        'error': 'expected second argument to be a number or a string, found a json (`{"a": "b"}`)',
+    x.assert(func('(a, b)'), {
+        'error': 'expected second argument to be a number, a string or a JSON dict, found ' +
+            'an ident (`b`)',
     });
 
     x.assert(func('(VAR, "a")'), {
@@ -6820,6 +6885,10 @@ function checkStoreValue(x, func) {
     });
     x.assert(func('(VAR, 1.28)'), {
         'instructions': ['arg.variables["VAR"] = 1.28;'],
+        'wait': false,
+    });
+    x.assert(func('(a, {"a": "b"})'), {
+        'instructions': ['arg.variables["a"] = {"a": "b"};'],
         'wait': false,
     });
 }

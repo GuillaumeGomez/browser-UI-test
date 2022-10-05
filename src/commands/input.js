@@ -77,17 +77,17 @@ function parseClickWithOffset(parser) {
     if (tuple.length !== 2) {
         return {
             'error': 'expected `(["CSS Selector"|"XPath"], [JSON])`, ' +
-                `found \`${elems[0].getText()}\``,
+                `found \`${elems[0].getErrorText()}\``,
         };
     } else if (tuple[0].kind !== 'string') {
         return {
             'error': 'expected first argument of tuple to be a "CSS selector" or ' +
-                `an "XPath", found \`${tuple[0].getText()}\``,
+                `an "XPath", found \`${tuple[0].getErrorText()}\``,
         };
     } else if (tuple[1].kind !== 'json') {
         return {
             'error': 'expected second argument of tuple to be a JSON dictionary, found ' +
-                `\`${tuple[1].getText()}\``,
+                `\`${tuple[1].getErrorText()}\``,
         };
     }
 
@@ -430,7 +430,7 @@ function parseDragAndDrop(parser) {
         if (arg.kind !== 'tuple' && arg.kind !== 'string') {
             return {
                 'error': 'expected tuple with two elements being either a position `(x, y)` or a ' +
-                    `CSS selector or an XPath, found \`${arg.getText()}\``,
+                    `CSS selector or an XPath, found \`${arg.getErrorText()}\``,
             };
         } else if (arg.kind === 'tuple') {
             const ret = checkIntegerTuple(arg, 'X position', 'Y position', true);

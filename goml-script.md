@@ -1199,12 +1199,13 @@ For more information about variables, read the [variables section](#variables).
 
 #### store-value
 
-**store-value** command stores a value into a variable. The value can be a number of a string. Examples:
+**store-value** command stores a value into a variable. The value can be a number, a string or a JSON dictionary. Examples:
 
 ```
 store-value: (variable_name, "hello")
 store-value: (variable_name, 1)
 store-value: (variable_name, 1.45)
+store-value: (variable_name, {"key": "value"})
 ```
 
 For more information about variables, read the [variables section](#variables).
