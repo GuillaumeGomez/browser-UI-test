@@ -17,12 +17,19 @@ function isLetter(c) {
 }
 
 function matchInteger(s) {
-    for (let i = s.length - 1; i >= 0; --i) {
-        if (!isNumber(s.charAt(i))) {
-            return false;
+    if (typeof s === 'number' || s instanceof Number) {
+        return true;
+    } else if (typeof s === 'string' || s instanceof String) {
+        for (let i = s.length - 1; i >= 0; --i) {
+            if (!isNumber(s.charAt(i))) {
+                return false;
+            }
         }
+        return true;
+    } else {
+        // Very likely a JSON dict.
+        return false;
     }
-    return true;
 }
 
 function cleanString(s) {
@@ -724,8 +731,11 @@ ${elems[i - 1].getText()}\`) cannot be used before a \`+\` token`;
         const start = this.pos;
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
-            // Check if it is a latin letter.
-            if (c !== '_' && !isLetter(c) && specialChars.indexOf(c) === -1) {
+            // Check if it is a latin letter or a number.
+            if (c !== '_' &&
+                !isLetter(c) &&
+                specialChars.indexOf(c) === -1 &&
+                (!isNumber(c) || this.pos === start)) {
                 break;
             }
             this.increasePos();
