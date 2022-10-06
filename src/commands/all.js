@@ -5,6 +5,7 @@ const compare = require('./compare.js');
 const context_setters = require('./context_setters.js');
 const dom_modifiers = require('./dom_modifiers.js');
 const emulation = require('./emulation.js');
+const functions = require('./functions.js');
 const general = require('./general.js');
 const input = require('./input.js');
 const navigation = require('./navigation.js');
@@ -50,6 +51,7 @@ module.exports = {
     'parseCompareElementsTextFalse': compare.parseCompareElementsTextFalse,
     'parseCss': dom_modifiers.parseCss,
     'parseDebug': context_setters.parseDebug,
+    'parseDefineFunction': functions.parseDefineFunction,
     'parseDragAndDrop': input.parseDragAndDrop,
     'parseEmulate': emulation.parseEmulate,
     'parseFail': context_setters.parseFail,

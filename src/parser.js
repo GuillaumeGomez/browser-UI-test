@@ -311,6 +311,7 @@ class Parser {
         this.argsStart = 0;
         this.argsEnd = 0;
         this.forceVariableAsString = false;
+        this.definedFunctions = {};
     }
 
     getRawArgs() {
@@ -322,6 +323,10 @@ class Parser {
 
     getOriginalCommand() {
         return this.text.slice(this.commandStart, this.argsEnd);
+    }
+
+    getOriginalWithIndexes(start, end) {
+        return this.text.slice(start, end);
     }
 
     parseNextCommand() {
@@ -654,9 +659,10 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
             );
         } else if (this.pos >= this.text.length || this.text.charAt(this.pos) !== endChar) {
             if (elems.length === 0) {
-                this.push(new constructor(elems, start, this.pos, full, this.currentLine,
-                    `expected ${showChar(endChar)} at the end`),
-                pushTo);
+                this.push(
+                    new constructor(elems, start, this.pos, full, this.currentLine,
+                        `expected ${showChar(endChar)} at the end`),
+                    pushTo);
             } else {
                 let err;
 
@@ -672,20 +678,8 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
                     pushTo,
                 );
             }
-        } else if (elems.length > 0 && elems[elems.length - 1].error !== null) {
-            this.push(
-                new constructor(
-                    elems,
-                    start,
-                    this.pos,
-                    full,
-                    this.currentLine,
-                    elems[elems.length - 1].error,
-                ),
-                pushTo,
-            );
         } else {
-            this.push(new constructor(elems, start, this.pos, full, this.currentLine), pushTo);
+            this.push(new constructor(elems, start, this.pos + 1, full, this.currentLine), pushTo);
         }
     }
 
@@ -871,10 +865,10 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
         if (pushTo !== null) {
             pushTo.push(e);
         } else {
-            if (e.error !== null) {
-                this.error = e.error;
-            }
             this.elems.push(e);
+        }
+        if (e.error !== null) {
+            this.error = e.error;
         }
     }
 
@@ -1004,7 +998,6 @@ found \`${elems[1].getErrorText()}\``);
             new JsonElement(json, start, this.pos, fullText, startLine, error),
             pushTo,
         );
-        this.error = error;
     }
 }
 
