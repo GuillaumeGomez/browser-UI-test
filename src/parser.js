@@ -292,7 +292,7 @@ class VariableElement extends Element {
 }
 
 class Parser {
-    constructor(text, variables) {
+    constructor(text, variables, functionArgs) {
         this.text = text;
         this.pos = 0;
         this.elems = [];
@@ -311,7 +311,8 @@ class Parser {
         this.argsStart = 0;
         this.argsEnd = 0;
         this.forceVariableAsString = false;
-        this.definedFunctions = {};
+        this.definedFunctions = Object.create(null);
+        this.functionArgs = functionArgs;
     }
 
     getRawArgs() {
@@ -822,7 +823,7 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
     }
 
     getVariableValue(variableName) {
-        return getVariableValue(this.variables, variableName);
+        return getVariableValue(this.variables, variableName, this.functionArgs);
     }
 
     parseNumber(pushTo = null) {

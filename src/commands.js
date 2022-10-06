@@ -29,6 +29,7 @@ const ORDERS = {
     'attribute': commands.parseAttribute,
     'click': commands.parseClick,
     'click-with-offset': commands.parseClickWithOffset,
+    'call-function': commands.parseCallFunction,
     'compare-elements-attribute': commands.parseCompareElementsAttribute,
     'compare-elements-attribute-false': commands.parseCompareElementsAttributeFalse,
     'compare-elements-css': commands.parseCompareElementsCss,
@@ -130,26 +131,53 @@ class ParserWithContext {
         this.parser = new Parser(content, options.variables);
         this.firstGotoParsed = false;
         this.options = options;
+        this.callingFunc = [];
     }
 
     variables() {
         return this.parser.variables;
     }
 
-    get_next_command() {
-        if (!this.parser.parseNextCommand()) {
-            if (this.parser.error) {
-                return {
-                    'error': this.parser.error,
-                    'line': this.parser.currentLine,
-                };
-            }
-            // We reached the end of the file!
-            return null;
+    get_current_line() {
+        if (this.callingFunc.length === 0) {
+            return this.parser.currentLine;
         }
-        const order = this.parser.command.getRaw().toLowerCase();
-        if (!Object.prototype.hasOwnProperty.call(ORDERS, order)) {
-            return {'error': `Unknown command "${order}"`, 'line': this.parser.currentLine};
+        const last = this.callingFunc[this.callingFunc.length - 1];
+        return `${last.currentLine} from ${this.parser.currentLine}`;
+    }
+
+    get_current_command_line() {
+        if (this.callingFunc.length === 0) {
+            return this.parser.command.line;
+        }
+        const last = this.callingFunc[this.callingFunc.length - 1];
+        return `${last.command.line} from ${this.parser.command.line}`;
+    }
+
+    setup_user_function_call() {
+        const ret = commands.parseCallFunction(this.parser);
+        if (ret.error !== undefined) {
+            return ret;
+        }
+        const args = Object.create(null);
+        const func = this.parser.definedFunctions[ret['function']];
+        for (let i = 0; i < ret['args'].length; ++i) {
+            args[func['arguments'][i]] = ret['args'][i];
+        }
+        this.callingFunc.push(new Parser(func['content'], this.options.variables, args));
+        // FIXME: allow to change max call stack?
+        if (this.callingFunc.length > 100) {
+            return {'error': 'reached maximum stack size (100)'};
+        }
+        return this.handle_user_function_call();
+    }
+
+    run_order(order) {
+        if (order === 'call-function') {
+            // We need to special-case `call-function` since it needs to be interpreted when called.
+            return this.setup_user_function_call();
+        } else if (!Object.prototype.hasOwnProperty.call(ORDERS, order)) {
+            return {'error': `Unknown command "${order}"`, 'line': this.get_current_line()};
         }
         if (this.firstGotoParsed === false) {
             if (order !== 'goto' && NO_INTERACTION_COMMANDS.indexOf(order) === -1) {
@@ -158,14 +186,14 @@ class ParserWithContext {
                 const text = cmds.join(', ') + ` or ${last}`;
                 return {
                     'error': `First command must be \`goto\` (${text} can be used before)!`,
-                    'line': this.parser.currentLine,
+                    'line': this.get_current_line(),
                 };
             }
             this.firstGotoParsed = order === 'goto';
         } else if (BEFORE_GOTO.indexOf(order) !== -1) {
             return {
                 'error': `Command ${order} must be used before first goto!`,
-                'line': this.parser.currentLine,
+                'line': this.get_current_line(),
             };
         }
         const res = ORDERS[order](this.parser, this.options);
@@ -178,11 +206,39 @@ class ParserWithContext {
             'wait': res['wait'],
             'checkResult': res['checkResult'],
             'original': this.parser.getOriginalCommand(),
-            'line_number': this.parser.command.line,
+            'line_number': this.get_current_command_line(),
             'instructions': res['instructions'],
             'infos': res['infos'],
             'warnings': res['warnings'],
         };
+    }
+
+    get_current_parser() {
+        if (this.callingFunc.length === 0) {
+            return this.parser;
+        }
+        return this.callingFunc[this.callingFunc.length - 1];
+    }
+
+    get_next_command() {
+        const parser = this.get_current_parser();
+        if (!parser.parseNextCommand()) {
+            if (parser.error) {
+                return {
+                    'error': parser.error,
+                    'line': this.get_current_line(),
+                };
+            }
+            if (this.callingFunc.length !== 0) {
+                // We reached the end of this function!
+                this.callingFunc.pop();
+                return this.get_next_command();
+            } else {
+                // We reached the end of the file!
+                return null;
+            }
+        }
+        return this.run_order(parser.command.getRaw().toLowerCase());
     }
 }
 

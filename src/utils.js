@@ -66,9 +66,12 @@ function add_log(output, level) {
     disp(output);
 }
 
-function getVariableValue(variables, variableName) {
+function getVariableValue(variables, variableName, functionArgs = null) {
     if (variableName === 'CURRENT_DIR') {
         return getCurrentDir();
+    } else if (functionArgs !== null &&
+        Object.prototype.hasOwnProperty.call(functionArgs, variableName)) {
+        return functionArgs[variableName];
     } else if (Object.prototype.hasOwnProperty.call(variables, variableName)) {
         return variables[variableName];
     } else if (Object.prototype.hasOwnProperty.call(process.env, variableName)) {

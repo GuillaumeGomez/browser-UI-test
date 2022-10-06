@@ -35,6 +35,7 @@ module.exports = {
     'parseAssertWindowProperty': assert.parseAssertWindowProperty,
     'parseAssertWindowPropertyFalse': assert.parseAssertWindowPropertyFalse,
     'parseAttribute': dom_modifiers.parseAttribute,
+    'parseCallFunction': functions.parseCallFunction,
     'parseClick': input.parseClick,
     'parseClickWithOffset': input.parseClickWithOffset,
     'parseCompareElementsAttribute': compare.parseCompareElementsAttribute,

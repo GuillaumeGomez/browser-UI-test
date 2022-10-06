@@ -11,7 +11,7 @@ function parseDefineFunction(parser) {
     if (elems.length === 0) {
         return {'error': 'expected a tuple of 3 elements, found nothing'};
     } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {'error': `expected a tuple of 3 elements value, found \
+        return {'error': `expected a tuple of 3 elements, found \
 ${elems[0].getArticleKind()} (\`${parser.getRawArgs()}\`)`};
     }
     const tuple = elems[0].getRaw();
@@ -22,8 +22,8 @@ ${elems[0].getArticleKind()} (\`${parser.getRawArgs()}\`)`};
 ${tuple[0].getArticleKind()} \`${tuple[0].getErrorText()}\``};
     } else if (tuple[0].value.length === 0) {
         return {'error': 'expected a non-empty string as first element of the tuple'};
-    } else if (tuple[1].kind !== 'array') {
-        return {'error': `expected an array as second element of the tuple, found \
+    } else if (tuple[1].kind !== 'tuple') {
+        return {'error': `expected a tuple as second element of the tuple, found \
 ${tuple[1].getArticleKind()} \`${tuple[1].getErrorText()}\``};
     } else if (tuple[2].kind !== 'array') {
         return {'error': `expected a string as third element of the tuple, found \
@@ -32,11 +32,15 @@ ${tuple[2].getArticleKind()} \`${tuple[2].getErrorText()}\``};
 
     // Checking the arrays now.
     const args = tuple[1].getRaw();
-    if (args.length > 0 && args[0].kind !== 'ident') {
-        return {
-            'error': `expected an array of idents as second argument, found an array \
-of ${args[0].kind}`,
-        };
+    if (args.length > 0) {
+        for (const arg of args) {
+            if (arg.kind !== 'ident') {
+                return {
+                    'error': `expected a tuple of idents as second argument, found \
+${args[0].getArticleKind()} (\`${arg.getErrorText()}\`)`,
+                };
+            }
+        }
     }
     const functions = tuple[2].getRaw();
     const calls = [];
@@ -71,7 +75,7 @@ ${func_tuple[0].getArticleKind()} (\`${func_tuple[0].getErrorText()}\` from \
                 const end = func_tuple[func_tuple.length - 1].endPos;
                 code = parser.getOriginalWithIndexes(start, end);
             }
-            calls.push({'func_name': func_tuple[0].value, 'code': code});
+            calls.push(`${func_tuple[0].value}: ${code}`);
         }
     }
 
@@ -82,15 +86,62 @@ ${func_tuple[0].getArticleKind()} (\`${func_tuple[0].getErrorText()}\` from \
     }
     parser.definedFunctions[func_name] = {
         'arguments': args.map(e => e.value),
-        'calls': calls,
+        'content': calls.join('\n'),
     };
     return {
         'instructions': [],
         'wait': false,
-        'warnigs': warnings,
+        'warnings': warnings,
+    };
+}
+
+// This function is only to get parsing errors, function name and arguments.
+//
+// Possible inputs:
+//
+// * ("function name", [ident arguments], [("command name", command_args)])
+function parseCallFunction(parser) {
+    const elems = parser.elems;
+    if (elems.length === 0) {
+        return {'error': 'expected a tuple of 1 or 2 elements, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
+        return {'error': `expected a tuple of 1 or 2 elements, found \
+${elems[0].getArticleKind()} (\`${parser.getRawArgs()}\`)`};
+    }
+    const tuple = elems[0].getRaw();
+    if (tuple.length !== 1 && tuple.length !== 2) {
+        return {'error': `expected a tuple of 1 or 2 elements, found ${tuple.length}`};
+    } else if (tuple[0].kind !== 'string') {
+        return {'error': `expected a string as first element of the tuple, found \
+${tuple[0].getArticleKind()} \`${tuple[0].getErrorText()}\``};
+    } else if (tuple.length === 2 && tuple[1].kind !== 'tuple') {
+        return {'error': `expected a tuple as second element of the tuple or nothing, found \
+${tuple[1].getArticleKind()} \`${tuple[1].getErrorText()}\``};
+    }
+
+    const func_name = tuple[0].value;
+    if (!Object.prototype.hasOwnProperty.call(parser.definedFunctions, func_name)) {
+        return {
+            'error': `no function called \`${func_name}\`. To define a function, use \
+the \`define-function\` command`,
+        };
+    }
+    const args = tuple.length === 2 ? tuple[1].getRaw() : [];
+    const expected_args = parser.definedFunctions[func_name]['arguments'].length;
+    if (args.length !== expected_args) {
+        const extra = expected_args > 1 ? 's' : '';
+        return {
+            'error': `function \`${func_name}\` expected ${expected_args} argument${extra}, \
+found ${args.length}`,
+        };
+    }
+    return {
+        'function': func_name,
+        'args': args,
     };
 }
 
 module.exports = {
     'parseDefineFunction': parseDefineFunction,
+    'parseCallFunction': parseCallFunction,
 };
