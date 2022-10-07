@@ -5686,8 +5686,9 @@ function checkDefineFunction(x, func) {
             '`[(1)]`)',
     });
     x.assert(func('("a",(a),[("b")])')[0], {'error': 'unknown function `b` (in `[("b")]`)'});
-    x.assert(func('("a",(DOC_PATH),[("assert-css")])')[0], {
-        'error': '`DOC_PATH` is a reserved name, so a function argument cannot be named like this',
+    x.assert(func('("a",(CURRENT_DIR),[("assert-css")])')[0], {
+        'error': '`CURRENT_DIR` is a reserved name, so a function argument cannot be ' +
+            'named like this',
     });
 
     const [res, parser] = func('("a",(a),[("assert-css")])');
