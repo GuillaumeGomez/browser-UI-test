@@ -147,16 +147,22 @@ class ParserWithContext {
     }
 
     get_current_command_line() {
-        if (this.callingFunc.length === 0) {
-            return this.parser.command.line;
+        if (this.callingFunc.length !== 0) {
+            for (let i = this.callingFunc.length - 1; i >= 0; --i) {
+                const parser = this.callingFunc[i];
+                if (parser.command !== null) {
+                    return `${parser.command.line} from ${this.parser.command.line}`;
+                }
+            }
         }
-        const last = this.callingFunc[this.callingFunc.length - 1];
-        return `${last.command.line} from ${this.parser.command.line}`;
+        return this.parser.command.line;
     }
 
     setup_user_function_call() {
-        const ret = commands.parseCallFunction(this.parser);
+        const parser = this.get_current_parser();
+        const ret = commands.parseCallFunction(parser);
         if (ret.error !== undefined) {
+            ret.line = this.get_current_line();
             return ret;
         }
         const args = Object.create(null);
@@ -164,12 +170,17 @@ class ParserWithContext {
         for (let i = 0; i < ret['args'].length; ++i) {
             args[func['arguments'][i]] = ret['args'][i];
         }
-        this.callingFunc.push(new Parser(func['content'], this.options.variables, args));
+        this.callingFunc.push(
+            new Parser(func['content'], parser.variables, args, this.parser.definedFunctions),
+        );
         // FIXME: allow to change max call stack?
         if (this.callingFunc.length > 100) {
-            return {'error': 'reached maximum stack size (100)'};
+            return {
+                'error': 'reached maximum stack size (100)',
+                'line': this.get_current_command_line(),
+            };
         }
-        return this.handle_user_function_call();
+        return this.get_next_command();
     }
 
     run_order(order) {
@@ -179,6 +190,7 @@ class ParserWithContext {
         } else if (!Object.prototype.hasOwnProperty.call(ORDERS, order)) {
             return {'error': `Unknown command "${order}"`, 'line': this.get_current_line()};
         }
+        const parser = this.get_current_parser();
         if (this.firstGotoParsed === false) {
             if (order !== 'goto' && NO_INTERACTION_COMMANDS.indexOf(order) === -1) {
                 const cmds = NO_INTERACTION_COMMANDS.map(x => `\`${x}\``);
@@ -196,17 +208,18 @@ class ParserWithContext {
                 'line': this.get_current_line(),
             };
         }
-        const res = ORDERS[order](this.parser, this.options);
+
+        const res = ORDERS[order](parser, this.options);
         if (res.error !== undefined) {
-            res.line = this.parser.currentLine;
+            res.line = this.get_current_line();
             return res;
         }
         return {
             'fatal_error': FATAL_ERROR_COMMANDS.indexOf(order) !== -1,
             'wait': res['wait'],
             'checkResult': res['checkResult'],
-            'original': this.parser.getOriginalCommand(),
-            'line_number': this.get_current_command_line(),
+            'original': parser.getOriginalCommand(),
+            'line': this.get_current_command_line(),
             'instructions': res['instructions'],
             'infos': res['infos'],
             'warnings': res['warnings'],
@@ -245,6 +258,7 @@ class ParserWithContext {
 const EXPORTS = {
     'ParserWithContext': ParserWithContext,
     'COLOR_CHECK_ERROR': consts.COLOR_CHECK_ERROR,
+    'ORDERS': ORDERS,
 };
 
 for (const func of Object.values(ORDERS)) {
@@ -252,7 +266,6 @@ for (const func of Object.values(ORDERS)) {
 }
 
 if (process.env.debug_tests === '1') {
-    EXPORTS['ORDERS'] = ORDERS;
     EXPORTS['FATAL_ERROR_COMMANDS'] = FATAL_ERROR_COMMANDS;
     EXPORTS['NO_INTERACTION_COMMANDS'] = NO_INTERACTION_COMMANDS;
     EXPORTS['BEFORE_GOTO'] = BEFORE_GOTO;

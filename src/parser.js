@@ -292,7 +292,7 @@ class VariableElement extends Element {
 }
 
 class Parser {
-    constructor(text, variables, functionArgs) {
+    constructor(text, variables, functionArgs = null, definedFunctions = null) {
         this.text = text;
         this.pos = 0;
         this.elems = [];
@@ -311,8 +311,9 @@ class Parser {
         this.argsStart = 0;
         this.argsEnd = 0;
         this.forceVariableAsString = false;
-        this.definedFunctions = Object.create(null);
+        this.definedFunctions = definedFunctions === null ? Object.create(null) : definedFunctions;
         this.functionArgs = functionArgs;
+        this.inferVariablesValue = true;
     }
 
     getRawArgs() {
@@ -339,8 +340,12 @@ class Parser {
         if (this.command === null || this.error !== null) {
             return false;
         }
+        // If the command we're parsing is `define-function`, we need to keep the code "as is".
+        this.inferVariablesValue = this.command.value !== 'define-function';
         // Now that we have the command, let's get its arguments!
         this.parse();
+        // We set it back to its default value;
+        this.inferVariablesValue = true;
         return this.error === null;
     }
 
@@ -689,8 +694,6 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
         this.parseList(')', TupleElement, tmp);
         if (tmp[0].error !== null) {
             // nothing to do
-        } else if (tmp[0].getRaw().length === 0) {
-            tmp[0].error = 'unexpected `()`: tuples need at least one argument';
         }
         this.push(tmp[0], pushTo);
     }
@@ -778,6 +781,13 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
             const c = this.text.charAt(this.pos);
             if (c === '|') {
                 const variableName = this.text.substring(start + 1, this.pos);
+                if (!this.inferVariablesValue) {
+                    this.push(
+                        new VariableElement(variableName, start, this.pos, this.currentLine),
+                        pushTo,
+                    );
+                    return;
+                }
                 const associatedValue = this.getVariableValue(variableName);
                 if (associatedValue === null) {
                     this.pos = this.text.length + 1;
@@ -786,7 +796,10 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
                     pushTo);
                     return;
                 }
-                if (['number', 'string'].indexOf(typeof associatedValue) !== -1) {
+                if (associatedValue instanceof Element) {
+                    // Nothing to be done in here.
+                    this.push(associatedValue, pushTo);
+                } else if (['number', 'string'].indexOf(typeof associatedValue) !== -1) {
                     if (typeof associatedValue === 'number' ||
                         // eslint-disable-next-line no-extra-parens
                         (!this.forceVariableAsString && matchInteger(associatedValue) === true)) {

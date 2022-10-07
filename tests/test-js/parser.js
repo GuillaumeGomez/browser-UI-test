@@ -5,10 +5,11 @@ const {Assert, plural, print} = require('./utils.js');
 function checkTuple(x) {
     let p = new Parser('()');
     p.parse();
-    x.assert(p.error, 'unexpected `()`: tuples need at least one argument');
+    x.assert(p.error, null);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
-    x.assert(p.elems[0].error, 'unexpected `()`: tuples need at least one argument');
+    x.assert(p.elems[0].isRecursive(), true);
+    x.assert(p.elems[0].getRaw().length, 0);
 
 
     p = new Parser('("hello",');

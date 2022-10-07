@@ -39,6 +39,11 @@ ${tuple[2].getArticleKind()} \`${tuple[2].getErrorText()}\``};
                     'error': `expected a tuple of idents as second argument, found \
 ${args[0].getArticleKind()} (\`${arg.getErrorText()}\`)`,
                 };
+            } else if (arg.value === 'DOC_PATH') {
+                return {
+                    'error': '`DOC_PATH` is a reserved name, so a function argument cannot ' +
+                        'be named like this',
+                };
             }
         }
     }
@@ -51,12 +56,14 @@ ${args[0].getArticleKind()} (\`${arg.getErrorText()}\`)`,
 of ${functions[0].kind}`,
             };
         }
+
+        let previousLine = functions[0].line - 1;
         for (const func of functions) {
             const func_tuple = func.getRaw();
             if (func_tuple.length < 1) {
                 return {
                     'error': `expected at least one element in function tuple: \`\
-${func_tuple.getErrorText()}\` (from \`${tuple[2].getErrorText()}\`)`};
+${func.getErrorText()}\` (from \`${tuple[2].getErrorText()}\`)`};
             } else if (func_tuple[0].kind !== 'string') {
                 return {
                     'error': `expected first argument of tuple to be a string, found \
@@ -69,6 +76,12 @@ ${func_tuple[0].getArticleKind()} (\`${func_tuple[0].getErrorText()}\` from \
 \`${tuple[2].getErrorText()}\`)`,
                 };
             }
+            // We need this to keep the lines number correct when calling the function commands.
+            for (let i = func.line - (previousLine + 1); i > 0; --i) {
+                calls.push('// removed comment');
+            }
+            previousLine = func.line;
+
             let code = '';
             if (func_tuple.length > 1) {
                 const start = func_tuple[1].startPos;
@@ -103,18 +116,18 @@ ${func_tuple[0].getArticleKind()} (\`${func_tuple[0].getErrorText()}\` from \
 function parseCallFunction(parser) {
     const elems = parser.elems;
     if (elems.length === 0) {
-        return {'error': 'expected a tuple of 1 or 2 elements, found nothing'};
+        return {'error': 'expected a tuple of 2 elements, found nothing'};
     } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {'error': `expected a tuple of 1 or 2 elements, found \
+        return {'error': `expected a tuple of 2 elements, found \
 ${elems[0].getArticleKind()} (\`${parser.getRawArgs()}\`)`};
     }
     const tuple = elems[0].getRaw();
-    if (tuple.length !== 1 && tuple.length !== 2) {
-        return {'error': `expected a tuple of 1 or 2 elements, found ${tuple.length}`};
+    if (tuple.length !== 2) {
+        return {'error': `expected a tuple of 2 elements, found ${tuple.length}`};
     } else if (tuple[0].kind !== 'string') {
         return {'error': `expected a string as first element of the tuple, found \
 ${tuple[0].getArticleKind()} \`${tuple[0].getErrorText()}\``};
-    } else if (tuple.length === 2 && tuple[1].kind !== 'tuple') {
+    } else if (tuple[1].kind !== 'tuple') {
         return {'error': `expected a tuple as second element of the tuple or nothing, found \
 ${tuple[1].getArticleKind()} \`${tuple[1].getErrorText()}\``};
     }
@@ -126,7 +139,7 @@ ${tuple[1].getArticleKind()} \`${tuple[1].getErrorText()}\``};
 the \`define-function\` command`,
         };
     }
-    const args = tuple.length === 2 ? tuple[1].getRaw() : [];
+    const args = tuple[1].getRaw();
     const expected_args = parser.definedFunctions[func_name]['arguments'].length;
     if (args.length !== expected_args) {
         const extra = expected_args > 1 ? 's' : '';
