@@ -38,6 +38,19 @@ function wrapperParseContent(arg, options) {
     return res;
 }
 
+function wrapperDefineFunction(callback, arg, options) {
+    if (typeof options === 'undefined') {
+        options = new Options();
+    }
+
+    const p = new Parser(arg, options.variables);
+    p.parse();
+    if (p.error !== null) {
+        return [{'error': p.error}, p];
+    }
+    return [callback(p, options), p];
+}
+
 function checkAssertInner(x, func, before, after) {
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
     x.assert(func('1'), {'error': 'expected a tuple, a CSS selector or an XPath, found `1`'});
@@ -48,7 +61,9 @@ function checkAssertInner(x, func, before, after) {
     x.assert(func('("a", 2)'), {
         'error': 'expected only a CSS selector or an XPath in the tuple, found 2 elements',
     });
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('()'), {
+        'error': 'expected only a CSS selector or an XPath in the tuple, found 0 elements',
+    });
 
     x.assert(func('"a"'),
         {
@@ -3608,18 +3623,18 @@ function checkClick(x, func) {
     x.assert(func('hello'), {
         'error': 'expected a position or a CSS selector or an XPath, found `hello`',
     });
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('()'), {'error': 'expected "([number], [number])", found `()`'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
     x.assert(func('(1)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(1)`',
+        'error': 'expected "([number], [number])", found `(1)`',
     });
     x.assert(func('(1,)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(1,)`',
+        'error': 'expected "([number], [number])", found `(1,)`',
     });
     x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
     x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
     x.assert(func('(a,2)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(a,2)`',
+        'error': 'expected "([number], [number])", found `(a,2)`',
     });
     x.assert(func('(-1.0,2)'), {'error': 'expected integer for X position, found float: `-1.0`'});
     x.assert(func('(1.0,2)'), {'error': 'expected integer for X position, found float: `1.0`'});
@@ -3694,7 +3709,7 @@ function checkClick(x, func) {
 
     // Multiline
     x.assert(func('(a\n,\n2)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(a\n,\n2)`',
+        'error': 'expected "([number], [number])", found `(a\n,\n2)`',
     });
     x.assert(func('(\n-2\n,\n1)'), {'instructions': ['await page.mouse.click(-2, 1);']});
 }
@@ -3704,7 +3719,7 @@ function checkClickWithOffset(x, func) {
     x.assert(func('hello'), {
         'error': 'expected a tuple, found `hello`',
     });
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('()'), {'error': 'expected `(["CSS Selector"|"XPath"], [JSON])`, found `()`'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
     x.assert(func('(1)'), {
         'error': 'expected `(["CSS Selector"|"XPath"], [JSON])`, found `(1)`',
@@ -3817,7 +3832,7 @@ await parseClickWithOffsetVar.click({
 function checkCompareElementsAttributeInner(x, func, before, after) {
     x.assert(
         func('("a", "b", ())'),
-        {'error': 'unexpected `()`: tuples need at least one argument'},
+        {'error': 'expected third argument to be an array of string, found a string'},
     );
     x.assert(
         func('("a", "b", (1))'),
@@ -3829,7 +3844,7 @@ function checkCompareElementsAttributeInner(x, func, before, after) {
     );
     x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
     x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('()'), {'error': 'expected 3 or 4 elements in the tuple, found 0 element'});
     x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
     x.assert(func('("a")'), {'error': 'expected 3 or 4 elements in the tuple, found 1 element'});
     x.assert(func('("a", 1)'),
@@ -4140,7 +4155,7 @@ function checkCompareElementsAttributeFalse(x, func) {
 function checkCompareElementsCssInner(x, func, before, after) {
     x.assert(
         func('("a", "b", ())'),
-        {'error': 'unexpected `()`: tuples need at least one argument'},
+        {'error': 'expected third argument to be an array of string, found a tuple'},
     );
     x.assert(
         func('("a", "b", (1))'),
@@ -4148,7 +4163,7 @@ function checkCompareElementsCssInner(x, func, before, after) {
     );
     x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
     x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('()'), {'error': 'expected 3 elements in the tuple, found 0 element'});
     x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
     x.assert(func('("a")'), {'error': 'expected 3 elements in the tuple, found 1 element'});
     x.assert(func('("a", 1, [])'),
@@ -4357,7 +4372,7 @@ function checkCompareElementsCssFalse(x, func) {
 function checkCompareElementsPositionInner(x, func, before, after) {
     x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
     x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('()'), {'error': 'expected 3 elements in the tuple, found 0 element'});
     x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
     x.assert(func('("a")'), {'error': 'expected 3 elements in the tuple, found 1 element'});
     x.assert(func('("a", 1)'),
@@ -4376,10 +4391,6 @@ function checkCompareElementsPositionInner(x, func, before, after) {
         'error': 'expected third argument to be a tuple, found a number',
     });
     x.assert(
-        func('("a", "b", ())'),
-        {'error': 'unexpected `()`: tuples need at least one argument'},
-    );
-    x.assert(
         func('("a", "b", (1))'),
         {'error': 'expected an array of strings, found `(1)`'},
     );
@@ -4394,6 +4405,20 @@ function checkCompareElementsPositionInner(x, func, before, after) {
     x.assert(
         func('("a", "b", ("x", "y", "y"))'),
         {'error': 'Duplicated "y" value in `("x", "y", "y")`'},
+    );
+
+    x.assert(
+        func('("a", "b", ())'), {
+            'instructions': [`\
+let parseCompareElementsPos1 = await page.$("a");
+if (parseCompareElementsPos1 === null) { throw '"a" not found'; }
+let parseCompareElementsPos2 = await page.$("b");
+if (parseCompareElementsPos2 === null) { throw '"b" not found'; }
+`,
+            ],
+            'wait': false,
+            'checkResult': true,
+        },
     );
 
     x.assert(func('("a", "b", ("x"))'), {
@@ -4745,7 +4770,7 @@ function checkCompareElementsPositionFalse(x, func) {
 function checkCompareElementsPositionNearInner(x, func, before, after) {
     x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
     x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('()'), {'error': 'expected 3 elements in the tuple, found 0 element'});
     x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
     x.assert(func('("a")'), {'error': 'expected 3 elements in the tuple, found 1 element'});
     x.assert(func('("a", 1)'),
@@ -4765,7 +4790,7 @@ function checkCompareElementsPositionNearInner(x, func, before, after) {
     });
     x.assert(
         func('("a", "b", ())'),
-        {'error': 'unexpected `()`: tuples need at least one argument'},
+        {'error': 'expected third argument to be a JSON dict, found a tuple'},
     );
     x.assert(
         func('("a", "b", (1))'),
@@ -5108,7 +5133,7 @@ function checkCompareElementsPositionNearFalse(x, func) {
 function checkCompareElementsPropertyInner(x, func, before, after) {
     x.assert(
         func('("a", "b", ())'),
-        {'error': 'unexpected `()`: tuples need at least one argument'},
+        {'error': 'expected third argument to be an array of string, found a tuple'},
     );
     x.assert(
         func('("a", "b", (1))'),
@@ -5116,7 +5141,7 @@ function checkCompareElementsPropertyInner(x, func, before, after) {
     );
     x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
     x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('()'), {'error': 'expected 3 elements in the tuple, found 0 element'});
     x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
     x.assert(func('("a")'), {'error': 'expected 3 elements in the tuple, found 1 element'});
     x.assert(func('("a", 1, [])'),
@@ -5279,9 +5304,13 @@ function checkCompareElementsPropertyFalse(x, func) {
 function checkCompareElementsTextInner(x, func, before, after) {
     x.assert(func('"a"'), {'error': 'expected a tuple of CSS selector/XPath, found `"a"`'});
     x.assert(func('1'), {'error': 'expected a tuple of CSS selector/XPath, found `1`'});
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('()'), {
+        'error': 'expected a tuple with 2 CSS selectors/XPathes, found 0 element',
+    });
     x.assert(func('[]'), {'error': 'expected a tuple of CSS selector/XPath, found `[]`'});
-    x.assert(func('("a")'), {'error': 'expected 2 CSS selectors/XPathes, found 1 element'});
+    x.assert(func('("a")'), {
+        'error': 'expected a tuple with 2 CSS selectors/XPathes, found 1 element',
+    });
     x.assert(func('("a", 1)'),
         {'error': 'expected second argument to be a CSS selector or an XPath, found a number'},
     );
@@ -5292,10 +5321,10 @@ function checkCompareElementsTextInner(x, func, before, after) {
         {'error': 'expected first argument to be a CSS selector or an XPath, found a tuple'},
     );
     x.assert(func('("a", "a", "b", "c")'), {
-        'error': 'expected 2 CSS selectors/XPathes, found 4 elements',
+        'error': 'expected a tuple with 2 CSS selectors/XPathes, found 4 elements',
     });
     x.assert(func('("a", "b", 1)'), {
-        'error': 'expected 2 CSS selectors/XPathes, found 3 elements',
+        'error': 'expected a tuple with 2 CSS selectors/XPathes, found 3 elements',
     });
 
     x.assert(func('("a", "b")'), {
@@ -5407,7 +5436,7 @@ function checkCompareElementsTextInner(x, func, before, after) {
 
     // Multiline
     x.assert(func('("a"\n,\n "b", 1)'), {
-        'error': 'expected 2 CSS selectors/XPathes, found 3 elements',
+        'error': 'expected a tuple with 2 CSS selectors/XPathes, found 3 elements',
     });
     x.assert(func('("a"\n, \n"b")'), {
         'instructions': [
@@ -5578,6 +5607,108 @@ function checkDebug(x, func) {
     });
 }
 
+function checkCallFunction(x, func) {
+    x.assert(func('')[0], {'error': 'expected a tuple of 2 elements, found nothing'});
+    x.assert(func('hello')[0], {
+        'error': 'expected a tuple of 2 elements, found an ident (`hello`)',
+    });
+    x.assert(func('(a)')[0], {
+        'error': 'expected a tuple of 2 elements, found 1',
+    });
+    x.assert(func('(1,1)')[0], {
+        'error': 'expected a string as first element of the tuple, found a number `1`',
+    });
+    x.assert(func('("1",1)')[0], {
+        'error': 'expected a tuple as second element of the tuple or nothing, found a number `1`',
+    });
+    x.assert(func('("1",(1))')[0], {
+        'error': 'no function called `1`. To define a function, use the `define-function` command',
+    });
+
+    let p = new Parser('("hello",())', {});
+    p.parse();
+    p.definedFunctions['hello'] = {'arguments': ['a'], 'content': 'a'};
+
+    x.assert(parserFuncs.parseCallFunction(p), {
+        'error': 'function `hello` expected 1 argument, found 0',
+    });
+
+    p = new Parser('("hello",("1"))', {});
+    p.parse();
+    p.definedFunctions['hello'] = {'arguments': ['a'], 'content': 'a'};
+
+    x.assert(parserFuncs.parseCallFunction(p), {
+        'function': 'hello',
+        'args': [
+            {
+                'kind': 'string',
+                'value': '1',
+                'startPos': 10,
+                'endPos': 12,
+                'error': null,
+                'line': 1,
+                'fullText': '"1"',
+            },
+        ],
+    });
+
+}
+
+function checkDefineFunction(x, func) {
+    x.assert(func('')[0], {'error': 'expected a tuple of 3 elements, found nothing'});
+    x.assert(func('hello')[0], {
+        'error': 'expected a tuple of 3 elements, found an ident (`hello`)',
+    });
+    x.assert(func('(a)')[0], {'error': 'expected a tuple of 3 elements, found 1'});
+    x.assert(func('(1,1,1)')[0], {
+        'error': 'expected a non-empty string as first element of the tuple, found a number `1`',
+    });
+    x.assert(func('("",1,1)')[0], {
+        'error': 'expected a non-empty string as first element of the tuple',
+    });
+    x.assert(func('("a",1,1)')[0], {
+        'error': 'expected a tuple as second element of the tuple, found a number `1`',
+    });
+    x.assert(func('("a",(1),1)')[0], {
+        'error': 'expected a string as third element of the tuple, found a number `1`',
+    });
+    x.assert(func('("a",(1),[1])')[0], {
+        'error': 'expected a tuple of idents as second argument, found a number (`1`)',
+    });
+    x.assert(func('("a",(a),[1])')[0], {
+        'error': 'expected an array of tuples as third argument, found an array of number',
+    });
+    x.assert(func('("a",(a),[()])')[0], {
+        'error': 'expected at least one element in function tuple: `()` (from `[()]`)',
+    });
+    x.assert(func('("a",(a),[(1)])')[0], {
+        'error': 'expected first argument of tuple to be a string, found a number (`1` from ' +
+            '`[(1)]`)',
+    });
+    x.assert(func('("a",(a),[("b")])')[0], {'error': 'unknown function `b` (in `[("b")]`)'});
+    x.assert(func('("a",(DOC_PATH),[("assert-css")])')[0], {
+        'error': '`DOC_PATH` is a reserved name, so a function argument cannot be named like this',
+    });
+
+    const [res, parser] = func('("a",(a),[("assert-css")])');
+    x.assert(res, {'instructions': [], 'wait': false});
+    x.assert(parser.definedFunctions, {
+        'a': {
+            'arguments': ['a'],
+            'content': 'assert-css: ',
+        },
+    });
+
+    const [res2, parser2] = func('("a",(a),[("assert-css", ("a", c))])');
+    x.assert(res2, {'instructions': [], 'wait': false});
+    x.assert(parser2.definedFunctions, {
+        'a': {
+            'arguments': ['a'],
+            'content': 'assert-css: ("a", c)',
+        },
+    });
+}
+
 function checkDragAndDrop(x, func) {
     // check tuple argument
     x.assert(func('true'), {
@@ -5605,10 +5736,10 @@ function checkDragAndDrop(x, func) {
             'selector or an XPath, found `1`',
     });
     x.assert(func('((1,2,3),"a")'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(1,2,3)`',
+        'error': 'expected "([number], [number])", found `(1,2,3)`',
     });
     x.assert(func('((1,"a"),"a")'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(1,"a")`',
+        'error': 'expected "([number], [number])", found `(1,"a")`',
     });
     x.assert(func('((1,2),"")'), {
         'error': 'CSS selector (second argument) cannot be empty',
@@ -6072,18 +6203,18 @@ function checkMoveCursorTo(x, func) {
     x.assert(func('hello'), {
         'error': 'expected a position or a CSS selector or an XPath, found `hello`',
     });
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('()'), {'error': 'expected "([number], [number])", found `()`'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
     x.assert(func('(1)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(1)`',
+        'error': 'expected "([number], [number])", found `(1)`',
     });
     x.assert(func('(1,)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(1,)`',
+        'error': 'expected "([number], [number])", found `(1,)`',
     });
     x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
     x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
     x.assert(func('(a,2)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(a,2)`',
+        'error': 'expected "([number], [number])", found `(a,2)`',
     });
     x.assert(func('(-1,2)'), {'error': 'X position cannot be negative: `-1`'});
     x.assert(func('(1,-2)'), {'error': 'Y position cannot be negative: `-2`'});
@@ -6133,7 +6264,7 @@ function checkParseContent(x, func) {
         {
             'fatal_error': true,
             'original': 'goto: "file:///home"',
-            'line_number': 1,
+            'line': 1,
             'instructions': [
                 'await page.goto("file:///home");',
                 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
@@ -6142,7 +6273,7 @@ function checkParseContent(x, func) {
     ]);
     x.assert(func('focus: "#foo"'), [{
         'error': 'First command must be `goto` (`assert-variable`, `assert-variable-false`, ' +
-            '`debug`, `emulate`, `fail`, `fail-on-js-error`, ' +
+            '`debug`, `define-function`, `emulate`, `fail`, `fail-on-js-error`, ' +
             '`javascript`, `screenshot-comparison`, `store-value` or `timeout` can be used ' +
             'before)!',
         'line': 1,
@@ -6152,13 +6283,13 @@ function checkParseContent(x, func) {
             'fatal_error': false,
             'wait': false,
             'original': 'fail: true',
-            'line_number': 1,
+            'line': 1,
             'instructions': ['arg.expectedToFail = true;'],
         },
         {
             'fatal_error': true,
             'original': 'goto: "file:///home"',
-            'line_number': 2,
+            'line': 2,
             'instructions': [
                 'await page.goto("file:///home");',
                 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
@@ -6169,7 +6300,7 @@ function checkParseContent(x, func) {
         {
             'fatal_error': true,
             'original': 'goto: "file:///home"',
-            'line_number': 1,
+            'line': 1,
             'instructions': [
                 'await page.goto("file:///home");',
                 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
@@ -6178,7 +6309,7 @@ function checkParseContent(x, func) {
         {
             'fatal_error': false,
             'original': 'reload:',
-            'line_number': 2,
+            'line': 2,
             'instructions': [`\
 const ret = page.reload({'waitUntil': 'domcontentloaded', 'timeout': 30000});
 await ret;`,
@@ -6187,7 +6318,7 @@ await ret;`,
         {
             'fatal_error': true,
             'original': 'goto: "file:///home"',
-            'line_number': 3,
+            'line': 3,
             'instructions': [
                 'await page.goto("file:///home");',
                 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
@@ -6199,7 +6330,7 @@ await ret;`,
         {
             'fatal_error': true,
             'original': 'goto: "file:///home"',
-            'line_number': 1,
+            'line': 1,
             'instructions': [
                 'await page.goto("file:///home");',
                 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
@@ -6214,7 +6345,7 @@ await ret;`,
         {
             'fatal_error': true,
             'original': 'goto: "file:///home"',
-            'line_number': 1,
+            'line': 1,
             'instructions': [
                 'await page.goto("file:///home");',
                 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
@@ -6225,7 +6356,7 @@ await ret;`,
             'wait': false,
             'checkResult': true,
             'original': 'assert-text: ("a", "b")',
-            'line_number': 2,
+            'line': 2,
             'instructions': [`\
 let parseAssertElemStr = await page.$("a");
 if (parseAssertElemStr === null) { throw '"a" not found'; }
@@ -6468,18 +6599,18 @@ function checkScrollTo(x, func) {
     x.assert(func('hello'), {
         'error': 'expected a position or a CSS selector or an XPath, found `hello`',
     });
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('()'), {'error': 'expected "([number], [number])", found `()`'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
     x.assert(func('(1)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(1)`',
+        'error': 'expected "([number], [number])", found `(1)`',
     });
     x.assert(func('(1,)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(1,)`',
+        'error': 'expected "([number], [number])", found `(1,)`',
     });
     x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
     x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
     x.assert(func('(a,2)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(a,2)`',
+        'error': 'expected "([number], [number])", found `(a,2)`',
     });
     x.assert(func('(-1,2)'), {'error': 'X position cannot be negative: `-1`'});
     x.assert(func('(1,-2)'), {'error': 'Y position cannot be negative: `-2`'});
@@ -6516,7 +6647,7 @@ function checkScrollTo(x, func) {
 
     // Multiline
     x.assert(func('(a,\n2\n)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(a,\n2\n)`',
+        'error': 'expected "([number], [number])", found `(a,\n2\n)`',
     });
     x.assert(func('(1\n,\n2)'), {'instructions': ['await page.mouse.move(1, 2);']});
 }
@@ -6548,18 +6679,18 @@ function checkShowText(x, func) {
 function checkSize(x, func) {
     x.assert(func(''), {'error': 'expected `([number], [number])`, found nothing'});
     x.assert(func('hello'), {'error': 'expected `([number], [number])`, found `hello`'});
-    x.assert(func('()'), {'error': 'unexpected `()`: tuples need at least one argument'});
+    x.assert(func('()'), {'error': 'expected "([number], [number])", found `()`'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
     x.assert(func('(1)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(1)`',
+        'error': 'expected "([number], [number])", found `(1)`',
     });
     x.assert(func('(1,)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(1,)`',
+        'error': 'expected "([number], [number])", found `(1,)`',
     });
     x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
     x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
     x.assert(func('(a,2)'), {
-        'error': 'invalid syntax: expected "([number], [number])", found `(a,2)`',
+        'error': 'expected "([number], [number])", found `(a,2)`',
     });
     x.assert(func('(-1,2)'), {'error': 'width cannot be negative: `-1`'});
     x.assert(func('(1,-2)'), {'error': 'height cannot be negative: `-2`'});
@@ -8360,6 +8491,11 @@ const TO_CHECK = [
         'toCall': (e, o) => wrapper(parserFuncs.parseAttribute, e, o),
     },
     {
+        'name': 'call-function',
+        'func': checkCallFunction,
+        'toCall': (e, o) => wrapperDefineFunction(parserFuncs.parseCallFunction, e, o),
+    },
+    {
         'name': 'click',
         'func': checkClick,
         'toCall': (e, o) => wrapper(parserFuncs.parseClick, e, o),
@@ -8438,6 +8574,11 @@ const TO_CHECK = [
         'name': 'debug',
         'func': checkDebug,
         'toCall': (e, o) => wrapper(parserFuncs.parseDebug, e, o),
+    },
+    {
+        'name': 'define-function',
+        'func': checkDefineFunction,
+        'toCall': (e, o) => wrapperDefineFunction(parserFuncs.parseDefineFunction, e, o),
     },
     {
         'name': 'drag-and-drop',

@@ -15,7 +15,7 @@ function parseCompareElementsTextInner(parser, assertFalse) {
     }
     const tuple = elems[0].getRaw();
     if (tuple.length !== 2) {
-        let err = `expected 2 CSS selectors/XPathes, found ${tuple.length} element`;
+        let err = `expected a tuple with 2 CSS selectors/XPathes, found ${tuple.length} element`;
         if (tuple.length > 1) {
             err += 's';
         }

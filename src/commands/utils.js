@@ -22,8 +22,7 @@ function checkIntegerTuple(tuple, text1, text2, negativeCheck = false) {
     const value = tuple.getRaw();
     if (value.length !== 2 || value[0].kind !== 'number' || value[1].kind !== 'number') {
         return {
-            'error': 'invalid syntax: expected "([number], [number])", ' +
-                `found \`${tuple.getErrorText()}\``,
+            'error': `expected "([number], [number])", found \`${tuple.getErrorText()}\``,
         };
     }
     const ret = value[0].getIntegerValue(text1, negativeCheck);

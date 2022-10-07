@@ -241,7 +241,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             //
             // (It is needed because we cannot break from inside the `await.catch`.)
             let stopLoop = false;
-            line_number = command['line_number'];
+            line_number = command['line'];
             const instructions = command['instructions'];
             let stopInnerLoop = false;
 

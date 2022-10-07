@@ -97,6 +97,7 @@ Here's the command list:
  * [`assert-window-property`](#assert-window-property)
  * [`assert-window-property-false`](#assert-window-property-false)
  * [`attribute`](#attribute)
+ * [`call-function`](#call-function)
  * [`click`](#click)
  * [`click-with-offset`](#click-with-offset)
  * [`compare-elements-attribute`](#compare-elements-attribute)
@@ -113,6 +114,7 @@ Here's the command list:
  * [`compare-elements-text-false`](#compare-elements-text-false)
  * [`css`](#css)
  * [`debug`](#debug)
+ * [`define-function`](#define-function)
  * [`drag-and-drop`](#drag-and-drop)
  * [`emulate`](#emulate)
  * [`fail`](#fail)
@@ -631,6 +633,30 @@ attribute: ("#button", {"attribute name": "attribute value", "another": "x"})
 attribute: ("//*[@id='button']", {"attribute name": "attribute value", "another": "x"})
 ```
 
+#### call-function
+
+**call-function** command allows you to call a function defined with `define-function`. It expects a tuple containing the name of the function to call and its arguments (if any). Example:
+
+```
+define-function: (
+    "fn1",
+    (background_color, whole_check),
+    [
+        ("assert-css", ("header", {"background-color": |background_color|, "color": "red"})),
+        ("assert-attribute", ("header", |whole_check|)),
+    ],
+)
+
+call-function: (
+    "fn1", // the function name
+    ("yellow", {"class": "the-header"}), // the arguments
+)
+```
+
+If you want more information about how functions work, take a look at [`define-function`](#define-function).
+
+Important to note: the arguments of the function take precedence over the variables defined with the `store-*` commands and over the environment variables.
+
 #### click
 
 **click** command send a click event on an element or at the specified position. It expects a CSS selector or an XPath or a position. Examples:
@@ -855,6 +881,70 @@ css: ("//*[@id='button']", {"background-color": "red", "border": "1px solid"})
 debug: false // disabling debug in case it was enabled
 debug: true // enabling it again
 ```
+
+#### define-function
+
+**define-function** command creates a function. It's quite useful when you want to test the same things with different parameters. Example:
+
+```
+define-function: (
+    "fn1", // The function name.
+    (background_color, whole_check), // The names of the arguments of the function.
+    // And below the commands to be called.
+    [
+        // First is the command-name, then its arguments like you would pass them normally to the command.
+        ("assert-css", ("header", {"background-color": |background_color|, "color": "blue"})),
+        ("assert-attribute", ("header", |whole_check|)),
+    ],
+)
+
+// Then you can call the function like this:
+call-function: ("fn1", ("yellow", {"class": "the-header"}))
+```
+
+As you can see, a few variables are used inside `define-function`. However, they are only interpreted when the function is actually called with `call-function` and not when the function is declared! So if you use a variable that is declared after the function, it's completely fine.
+
+About variables, the function has access to all variables ever defined before it was called, however there are precedence rules:
+
+ 1. First it looks inside function arguments.
+ 2. Second it looks inside declared variables.
+ 3. Lastly it looks inside environment.
+
+If you call `define-function` inside the function to overwrite it, it will not overwrite the current instance, only the following ones. Example:
+
+```
+define-function: (
+    "fn1",
+    (),
+    [
+        // We overwrite "fn1".
+        ("define-function": (
+            "fn1",
+            (),
+            [
+                ("assert-attribute", ("header", {"class": "blue"})),
+            ],
+        )),
+        // A "normal" command.
+        ("assert-css", ("header", {"color": "red"})),
+        // Then we call again "fn1".
+        ("call-function", ("fn1", ())),
+        ("assert-position", ("header", {"y": 12})),
+    ],
+)
+
+call-function: ("fn1", ())
+```
+
+So in this case, here is what will happen:
+
+ 1. `fn1` is created with `define-function`.
+ 2. `fn1` is called with `call-function`.
+ 3. `fn1` is overwritten with `define-function`.
+ 4. `assert-css` is called.
+ 5. `fn1` is called again with `define-function`.
+ 6. `assert-attribute` is called.
+ 7. `assert-position` is called.
 
 #### drag-and-drop
 
