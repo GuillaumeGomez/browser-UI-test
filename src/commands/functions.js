@@ -1,5 +1,7 @@
 // Commands related to setting script functions.
 
+const { RESERVED_VARIABLE_NAME } = require('../utils.js');
+
 // Possible inputs:
 //
 // * ("function name", [ident arguments], [("command name", command_args)])
@@ -39,10 +41,10 @@ ${tuple[2].getArticleKind()} \`${tuple[2].getErrorText()}\``};
                     'error': `expected a tuple of idents as second argument, found \
 ${args[0].getArticleKind()} (\`${arg.getErrorText()}\`)`,
                 };
-            } else if (arg.value === 'DOC_PATH') {
+            } else if (arg.value === RESERVED_VARIABLE_NAME) {
                 return {
-                    'error': '`DOC_PATH` is a reserved name, so a function argument cannot ' +
-                        'be named like this',
+                    'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so a function \
+argument cannot be named like this`,
                 };
             }
         }

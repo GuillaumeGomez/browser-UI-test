@@ -3,6 +3,8 @@ const config = require('./config.js');
 const process = require('process');
 const {PuppeteerWrapper} = require('./puppeteer-wrapper.js');
 
+const RESERVED_VARIABLE_NAME = 'CURRENT_DIR';
+
 String.prototype.replaceAll = function(search, replace_with) {
     return this.split(search).join(replace_with);
 };
@@ -67,7 +69,7 @@ function add_log(output, level) {
 }
 
 function getVariableValue(variables, variableName, functionArgs = null) {
-    if (variableName === 'CURRENT_DIR') {
+    if (variableName === RESERVED_VARIABLE_NAME) {
         return getCurrentDir();
     } else if (functionArgs !== null &&
         Object.prototype.hasOwnProperty.call(functionArgs, variableName)) {
@@ -103,4 +105,5 @@ module.exports = {
     'getVariableValue': getVariableValue,
     'loadPuppeteer': loadPuppeteer,
     'loadPuppeteerWrapper': loadPuppeteerWrapper,
+    'RESERVED_VARIABLE_NAME': RESERVED_VARIABLE_NAME,
 };
