@@ -43,7 +43,8 @@ function wrapperDefineFunction(callback, arg, options) {
         options = new Options();
     }
 
-    const p = new Parser(arg, options.variables);
+    const p = new Parser(arg, options.variables, null);
+    p.inferVariablesValue = false;
     p.parse();
     if (p.error !== null) {
         return [{'error': p.error}, p];
@@ -5651,7 +5652,6 @@ function checkCallFunction(x, func) {
             },
         ],
     });
-
 }
 
 function checkDefineFunction(x, func) {
@@ -5708,6 +5708,39 @@ function checkDefineFunction(x, func) {
             'content': 'assert-css: ("a", c)',
         },
     });
+
+    const [res3, parser3] = func(`(
+    "check-result",
+    (result_kind, color, hover_color),
+    [
+        (
+            "assert-css",
+            (".result-" + |result_kind| + " ." + |result_kind|, {"color": |color|}, ALL),
+        ),
+        // hello
+        (
+            "assert-attribute",
+            (
+                ".result-" + |result_kind|,
+                {"color": |entry_color|, "background-color": |background_color|},
+            ),
+        )
+    ],
+)`);
+    x.assert(res3, {'instructions': [], 'wait': false});
+    x.assert(parser3.definedFunctions, {
+        'check-result': {
+            'arguments': ['result_kind', 'color', 'hover_color'],
+            'content': `\
+assert-css: (".result-" + |result_kind| + " ." + |result_kind|, {"color": |color|}, ALL)
+// removed comment
+assert-attribute: (
+                ".result-" + |result_kind|,
+                {"color": |entry_color|, "background-color": |background_color|},
+            )`,
+        },
+    });
+
 }
 
 function checkDragAndDrop(x, func) {
