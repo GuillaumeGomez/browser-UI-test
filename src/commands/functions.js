@@ -82,7 +82,7 @@ ${func_tuple[0].getArticleKind()} (\`${func_tuple[0].getErrorText()}\` from \
             for (let i = func.line - (previousLine + 1); i > 0; --i) {
                 calls.push('// removed comment');
             }
-            previousLine = func.line;
+            previousLine = func.line + func.getErrorText().split('\n').length - 1;
 
             let code = '';
             if (func_tuple.length > 1) {

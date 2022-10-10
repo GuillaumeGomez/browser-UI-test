@@ -119,7 +119,7 @@ function getSelector(value, text = '') {
 }
 
 function isAdditionable(elem) {
-    return ['string', 'number'].indexOf(elem.kind) !== -1;
+    return ['string', 'number', 'variable'].indexOf(elem.kind) !== -1;
 }
 
 class Element {
@@ -316,6 +316,12 @@ class Parser {
         this.inferVariablesValue = true;
     }
 
+    setError(error) {
+        if (this.error === null) {
+            this.error = error;
+        }
+    }
+
     getRawArgs() {
         if (this.argsEnd - this.argsStart > 100) {
             return this.text.slice(this.argsStart, this.argsStart + 100) + '…';
@@ -365,7 +371,7 @@ class Parser {
             if (c === '/') {
                 this.parseComment(tmp);
                 if (tmp.length !== 0) {
-                    this.error = 'Unexpected `/` when parsing command';
+                    this.setError('Unexpected `/` when parsing command');
                     return null;
                 }
             } else if (isWhiteSpace(c)) {
@@ -375,7 +381,7 @@ class Parser {
                 this.parseIdent(tmp, ['-']);
                 command = tmp.pop();
             } else {
-                this.error = `Unexpected ${showChar(c)} when parsing command`;
+                this.setError(`Unexpected ${showChar(c)} when parsing command`);
                 return null;
             }
             this.increasePos();
@@ -393,25 +399,25 @@ class Parser {
             if (c === '/') {
                 // No need to check anything, if there is a comment, it means it'll be on two lines,
                 // which isn't allowed.
-                this.error = 'Unexpected `/` when parsing command ' +
-                    `(after \`${command.getRaw()}\`)`;
+                this.setError('Unexpected `/` when parsing command ' +
+                    `(after \`${command.getRaw()}\`)`);
                 return null;
             } else if (c === '\n') {
-                this.error = 'Backlines are not allowed between command identifier and `:`';
+                this.setError('Backlines are not allowed between command identifier and `:`');
                 return null;
             } else if (isWhiteSpace(c)) {
                 // Do nothing...
             } else if (c === ':') {
                 stop = true;
             } else {
-                this.error = `Unexpected ${showChar(c)} when parsing command ` +
-                    `(after \`${command.getRaw()}\`)`;
+                this.setError(`Unexpected ${showChar(c)} when parsing command ` +
+                    `(after \`${command.getRaw()}\`)`);
                 return null;
             }
             this.increasePos();
         }
         if (!stop) {
-            this.error = `Missing \`:\` after command identifier (after \`${command.getRaw()}\`)`;
+            this.setError(`Missing \`:\` after command identifier (after \`${command.getRaw()}\`)`);
             return null;
         }
         return command;
@@ -485,7 +491,8 @@ class Parser {
                     } else {
                         const elems = this.getElems(pushTo);
                         elems[elems.length - 1].error = 'Missing element after `+` token';
-                        this.error = elems[elems.length - 1].error;
+                        this.setError(elems[elems.length - 1].error);
+                        break;
                     }
                 } else {
                     // No special case to handle!
@@ -536,7 +543,7 @@ class Parser {
                     const elems = this.getElems(pushTo);
                     const el = elems[elems.length - 1];
                     el.error = 'unexpected `+` after `+`';
-                    this.error = el.error;
+                    this.setError(el.error);
                 }
             } else {
                 checker(this, c, 'parseIdent');
@@ -550,7 +557,7 @@ class Parser {
                         const prevElem = elems[elems.length - 2].getErrorText();
                         el.error = `unexpected token \`${token}\` after \`${prevElem}\``;
                     }
-                    this.error = el.error;
+                    this.setError(el.error);
                     this.pos = this.text.length;
                 }
             }
@@ -572,13 +579,13 @@ class Parser {
             }
             if (i + 1 >= elems.length) {
                 elems[i].error = '`+` token should be followed by something';
-                this.error = elems[i].error;
+                this.setError(elems[i].error);
                 return;
             }
             if (!isAdditionable(elems[i + 1])) {
                 elems[i + 1].error = `${elems[i + 1].getArticleKind()} (\`\
 ${elems[i + 1].getErrorText()}\`) cannot be used after a \`+\` token`;
-                this.error = elems[i + 1].error;
+                this.setError(elems[i + 1].error);
                 return;
             }
 
@@ -591,7 +598,7 @@ ${elems[i + 1].getErrorText()}\`) cannot be used after a \`+\` token`;
                 if (!isAdditionable(elems[i - 1])) {
                     elems[i - 1].error = `${elems[i - 1].getArticleKind()} (\`\
 ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
-                    this.error = elems[i - 1].error;
+                    this.setError(elems[i - 1].error);
                     return;
                 }
                 subs.push(elems[i - 1]);
@@ -647,9 +654,10 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
     parseList(endChar, constructor, pushTo = null) {
         const start = this.pos;
         const elems = [];
+        const startLine = this.currentLine;
 
         this.increasePos();
-        const prev = this.parse([endChar], elems, ',')[0];
+        const [prev, ender] = this.parse([endChar], elems, ',');
         const full = this.text.substring(start, this.pos + 1);
         if (elems.length > 0 && elems[elems.length - 1].error !== null) {
             this.push(
@@ -663,10 +671,10 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
                 ),
                 pushTo,
             );
-        } else if (this.pos >= this.text.length || this.text.charAt(this.pos) !== endChar) {
+        } else if (this.pos >= this.text.length || ender !== endChar) {
             if (elems.length === 0) {
                 this.push(
-                    new constructor(elems, start, this.pos, full, this.currentLine,
+                    new constructor(elems, start, this.pos, full, startLine,
                         `expected ${showChar(endChar)} at the end`),
                     pushTo);
             } else {
@@ -680,21 +688,18 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
                         `\`${elems[elems.length - 1].getErrorText()}\``;
                 }
                 this.push(
-                    new constructor(elems, start, this.pos, full, this.currentLine, err),
+                    new constructor(elems, start, this.pos, full, startLine, err),
                     pushTo,
                 );
             }
         } else {
-            this.push(new constructor(elems, start, this.pos + 1, full, this.currentLine), pushTo);
+            this.push(new constructor(elems, start, this.pos + 1, full, startLine), pushTo);
         }
     }
 
     parseTuple(pushTo = null) {
         const tmp = [];
         this.parseList(')', TupleElement, tmp);
-        if (tmp[0].error !== null) {
-            // nothing to do
-        }
         this.push(tmp[0], pushTo);
     }
 
@@ -882,7 +887,7 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
             this.elems.push(e);
         }
         if (e.error !== null) {
-            this.error = e.error;
+            this.setError(e.error);
         }
     }
 
