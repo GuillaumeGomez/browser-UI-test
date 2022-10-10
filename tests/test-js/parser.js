@@ -284,6 +284,65 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw()[1].getRaw()[0].getRaw(), '1');
     x.assert(p.elems[0].getRaw()[1].getRaw()[1].kind, 'number');
     x.assert(p.elems[0].getRaw()[1].getRaw()[1].getRaw(), '2');
+
+    p = new Parser('(".result-" + |result_kind| + " ." + |result_kind|, {"color": |color|}, ALL)',
+        {
+            'result_kind': 'a',
+            'color': 'b',
+        },
+    );
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'tuple');
+    x.assert(
+        p.elems[0].getErrorText(),
+        '(".result-" + |result_kind| + " ." + |result_kind|, {"color": |color|}, ALL)',
+    );
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw().length, 3);
+    x.assert(p.elems[0].getRaw()[0].error, null);
+    x.assert(p.elems[0].getRaw()[0].kind, 'string');
+    x.assert(p.elems[0].getRaw()[0].value, '.result-a .a');
+    x.assert(p.elems[0].getRaw()[1].error, null);
+    x.assert(p.elems[0].getRaw()[1].kind, 'json');
+    x.assert(p.elems[0].getRaw()[1].getRaw().length, 1);
+    x.assert(p.elems[0].getRaw()[1].getRaw()[0].key.value, 'color');
+    x.assert(p.elems[0].getRaw()[1].getRaw()[0].value.value, 'b');
+    x.assert(p.elems[0].getRaw()[2].error, null);
+    x.assert(p.elems[0].getRaw()[2].kind, 'ident');
+    x.assert(p.elems[0].getRaw()[2].value, 'ALL');
+
+    p = new Parser('(1, ".result-" + |result_kind|, {"color": |color|}, ALL)',
+        {
+            'result_kind': 'a',
+            'color': 'b',
+        },
+    );
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'tuple');
+    x.assert(
+        p.elems[0].getErrorText(),
+        '(1, ".result-" + |result_kind|, {"color": |color|}, ALL)',
+    );
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw().length, 4);
+    x.assert(p.elems[0].getRaw()[0].error, null);
+    x.assert(p.elems[0].getRaw()[0].kind, 'number');
+    x.assert(p.elems[0].getRaw()[0].value, '1');
+    x.assert(p.elems[0].getRaw()[1].error, null);
+    x.assert(p.elems[0].getRaw()[1].kind, 'string');
+    x.assert(p.elems[0].getRaw()[1].value, '.result-a');
+    x.assert(p.elems[0].getRaw()[2].error, null);
+    x.assert(p.elems[0].getRaw()[2].kind, 'json');
+    x.assert(p.elems[0].getRaw()[2].getRaw().length, 1);
+    x.assert(p.elems[0].getRaw()[2].getRaw()[0].key.value, 'color');
+    x.assert(p.elems[0].getRaw()[2].getRaw()[0].value.value, 'b');
+    x.assert(p.elems[0].getRaw()[3].error, null);
+    x.assert(p.elems[0].getRaw()[3].kind, 'ident');
+    x.assert(p.elems[0].getRaw()[3].value, 'ALL');
 }
 
 function checkArray(x) {
@@ -833,7 +892,7 @@ function checkJson(x) {
 
 
     process.env['variable'] = '1';
-    process.env['variable value'] = 'a';
+    process.env['variable_value'] = 'a';
     p = new Parser('{|variable|: 2}');
     p.parse();
     x.assert(p.error, null);
@@ -862,18 +921,21 @@ function checkJson(x) {
 
     p = new Parser('{|variable value|: |variable|}');
     p.parse();
-    x.assert(p.error, null);
+    x.assert(p.error, 'unexpected character ` ` after `variable`');
+
+    p = new Parser('{|variable_value|: |variable|}');
+    p.parse();
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getErrorText(), '{|variable value|: |variable|}');
+    x.assert(p.elems[0].getErrorText(), '{|variable_value|: |variable|}');
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
     x.assert(p.elems[0].getRaw()[0].key.getErrorText(), '"a"');
     x.assert(p.elems[0].getRaw()[0].value.kind, 'number');
     x.assert(p.elems[0].getRaw()[0].value.getRaw(), '1');
     process.env['variable'] = undefined;
-    process.env['variable value'] = undefined;
+    process.env['variable_value'] = undefined;
 
 
     p = new Parser('{true: 1}');
@@ -1130,13 +1192,13 @@ function checkJson(x) {
     x.assert(p.elems[0].getRaw().length, 0);
 
 
-    p = new Parser('{"x": 2,|"y": "a"}');
+    p = new Parser('{"x": 2,|y: "a"}');
     p.parse();
-    x.assert(p.error, 'expected `|` after the variable name `"y": "a"}`');
+    x.assert(p.error, 'unexpected character `:` after `y`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'expected `|` after the variable name `"y": "a"}`');
-    x.assert(p.elems[0].getErrorText(), '{"x": 2,|"y": "a"}');
+    x.assert(p.elems[0].error, 'unexpected character `:` after `y`');
+    x.assert(p.elems[0].getErrorText(), '{"x": 2,|y:');
     x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
     x.assert(p.elems[0].getRaw()[0].key.getErrorText(), '"x"');
     x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
