@@ -163,6 +163,9 @@ class ParserWithContext {
         const ret = commands.parseCallFunction(parser);
         if (ret.error !== undefined) {
             ret.line = this.get_current_line();
+            if (parser.elems.length !== 0) {
+                ret.error += ` (from command \`${parser.elems[0].getErrorText()}\`)`;
+            }
             return ret;
         }
         const args = Object.create(null);
@@ -211,7 +214,10 @@ class ParserWithContext {
 
         const res = ORDERS[order](parser, this.options);
         if (res.error !== undefined) {
-            res.line = this.get_current_line();
+            res.line = this.get_current_command_line();
+            if (parser.elems.length !== 0) {
+                res.error += ` (from command \`${parser.elems[0].getErrorText()}\`)`;
+            }
             return res;
         }
         return {

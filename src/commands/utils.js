@@ -114,8 +114,10 @@ function getAssertSelector(parser) {
     }
     const tuple = elems[0].getRaw();
     if (tuple.length < 2 || tuple.length > 3) {
-        return {'error': 'invalid number of values in the tuple, read the documentation to see ' +
-                    'the accepted inputs'};
+        return {
+            'error': 'invalid number of values in the tuple: expected 2 or 3, found ' +
+                tuple.length,
+        };
     } else if (tuple[0].kind !== 'string') {
         return {
             'error': 'expected first argument to be a CSS selector or an XPath, ' +

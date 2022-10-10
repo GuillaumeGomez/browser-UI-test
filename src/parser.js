@@ -102,6 +102,14 @@ function getCssValue(value, text = '') {
     return css;
 }
 
+function isIdentChar(c, start, pos, specialChars = []) {
+    return c === '_' ||
+        isLetter(c) ||
+        specialChars.indexOf(c) !== -1 ||
+        // eslint-disable-next-line no-extra-parens
+        (isNumber(c) && pos !== start);
+}
+
 function getSelector(value, text = '') {
     if (value.startsWith('//')) {
         return {
@@ -636,7 +644,7 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
                 );
             }
             // We remove the two elements that are not needed anymore.
-            elems.splice(last, last + subs.length * 2 + 1);
+            elems.splice(last, subs.length * 2 - 2);
         }
     }
 
@@ -733,7 +741,7 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
             if (c === endChar) {
                 const value = this.text.substring(start + 1, this.pos);
                 const full = this.text.substring(start, this.pos + 1);
-                const e = new StringElement(value, start, this.pos, full, this.currentLine);
+                const e = new StringElement(value, start, this.pos + 1, full, this.currentLine);
                 this.push(e, pushTo);
                 return;
             } else if (c === '\\') {
@@ -758,10 +766,7 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
             // Check if it is a latin letter or a number.
-            if (c !== '_' &&
-                !isLetter(c) &&
-                specialChars.indexOf(c) === -1 &&
-                (!isNumber(c) || this.pos === start)) {
+            if (!isIdentChar(c, start, this.pos, specialChars)) {
                 break;
             }
             this.increasePos();
@@ -788,7 +793,7 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
                 const variableName = this.text.substring(start + 1, this.pos);
                 if (!this.inferVariablesValue) {
                     this.push(
-                        new VariableElement(variableName, start, this.pos, this.currentLine),
+                        new VariableElement(variableName, start, this.pos + 1, this.currentLine),
                         pushTo,
                     );
                     return;
@@ -796,9 +801,11 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
                 const associatedValue = this.getVariableValue(variableName);
                 if (associatedValue === null) {
                     this.pos = this.text.length + 1;
-                    this.push(new VariableElement(variableName, start, this.pos, this.currentLine,
-                        `variable \`${variableName}\` not found in options nor environment`),
-                    pushTo);
+                    this.push(
+                        new VariableElement(variableName, start, this.pos + 1, this.currentLine,
+                            `variable \`${variableName}\` not found in options nor environment`),
+                        pushTo,
+                    );
                     return;
                 }
                 if (associatedValue instanceof Element) {
@@ -830,6 +837,12 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
                     p.parseJson();
                     this.push(p.elems[0], pushTo);
                 }
+                return;
+            } else if (!isIdentChar(c, start, this.pos)) {
+                const variableName = this.text.substring(start + 1, this.pos);
+                const e = new VariableElement(variableName, start, this.pos, this.currentLine,
+                    `unexpected character \`${c}\` after \`${variableName}\``);
+                this.push(e, pushTo);
                 return;
             }
             this.increasePos();

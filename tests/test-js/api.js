@@ -746,7 +746,7 @@ if (attr.startsWith(parseAssertElemAttrValue)) {
 }
 
 function checkAssertCountInner(x, func, before, after) {
-    x.assert(func('("a", 1, "c")'), {'error': 'unexpected argument after number of occurences'});
+    x.assert(func('("a", 1, "c")'), {'error': 'expected 2 elements in the tuple, found 3'});
     x.assert(func('("a", 1 2)'), {'error': 'expected `,` or `)`, found `2` after `1`'});
     x.assert(func('("a", 1 a)'), {'error': 'expected `,` or `)`, found `a` after `1`'});
     x.assert(func('("a", -1)'), {'error': 'number of occurences cannot be negative: `-1`'});
@@ -3037,14 +3037,12 @@ if (v === value || roundedV === Math.round(value)) {
 
 function checkAssertTextInner(x, func, compare, contains, startsWith, endsWith) {
     x.assert(func('("a", )'), {
-        'error': 'invalid number of values in the tuple, read the documentation to see the ' +
-            'accepted inputs',
+        'error': 'invalid number of values in the tuple: expected 2 or 3, found 1',
     });
     x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('("a", 2)'), {'error': 'expected second argument to be a string, found `2`'});
     x.assert(func('("a")'), {
-        'error': 'invalid number of values in the tuple, read the documentation to see the ' +
-            'accepted inputs',
+        'error': 'invalid number of values in the tuple: expected 2 or 3, found 1',
     });
     x.assert(func('("a", "b", ALLO)'), {
         'error': 'unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
@@ -5645,7 +5643,7 @@ function checkCallFunction(x, func) {
                 'kind': 'string',
                 'value': '1',
                 'startPos': 10,
-                'endPos': 12,
+                'endPos': 13,
                 'error': null,
                 'line': 1,
                 'fullText': '"1"',
@@ -5741,6 +5739,29 @@ assert-attribute: (
         },
     });
 
+    const [res4, parser4] = func(`(
+    "check-result",
+    (result_kind),
+    [
+        (
+            "move-cursor-to",
+            ".result-" + |result_kind|,
+        ),
+        (
+            "move-cursor-to",
+            ".result-",
+        ),
+    ]
+)`);
+    x.assert(res4, {'instructions': [], 'wait': false});
+    x.assert(parser4.definedFunctions, {
+        'check-result': {
+            'arguments': ['result_kind'],
+            'content': `\
+move-cursor-to: ".result-" + |result_kind|
+move-cursor-to: ".result-"`,
+        },
+    });
 }
 
 function checkDragAndDrop(x, func) {
