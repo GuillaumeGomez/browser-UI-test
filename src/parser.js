@@ -431,11 +431,14 @@ class Parser {
         return command;
     }
 
-    increasePos(increaseIfNothing = true) {
+    increasePos(increaseIfNothing = true, skipBackline = true) {
         const start = this.pos;
         while (this.pos < this.text.length && isWhiteSpace(this.text.charAt(this.pos))) {
             if (this.text.charAt(this.pos) === '\n') {
                 this.currentLine += 1;
+                if (!skipBackline) {
+                    break;
+                }
             }
             this.pos += 1;
         }
@@ -455,6 +458,7 @@ class Parser {
         let prev = '';
         let endChar = null;
         let foundPlus = false;
+        const skipBackline = endChars.indexOf('\n') === -1;
 
         const checker = (t, c, toCall) => {
             const elems = t.getElems(pushTo);
@@ -569,7 +573,7 @@ class Parser {
                     this.pos = this.text.length;
                 }
             }
-            this.increasePos();
+            this.increasePos(true, skipBackline);
         }
         if (pushTo === null) {
             this.argsEnd = this.pos;
@@ -672,7 +676,7 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
                 new constructor(
                     elems,
                     start,
-                    this.pos,
+                    this.pos + 1,
                     full,
                     this.currentLine,
                     elems[elems.length - 1].error,
