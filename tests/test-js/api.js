@@ -5762,6 +5762,47 @@ move-cursor-to: ".result-" + |result_kind|
 move-cursor-to: ".result-"`,
         },
     });
+
+    // It checks two things: that the json is kept entirely and that the first comment is discarded
+    // because there is no way to know if it's just empty lines or lines with comments.
+    const [res5, parser5] = func(`(
+    "check-result",
+    (theme, color),
+    [
+        // hello
+        ("local-storage", {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}),
+    ],
+)`);
+    x.assert(res5, {'instructions': [], 'wait': false});
+    x.assert(parser5.definedFunctions, {
+        'check-result': {
+            'arguments': ['theme', 'color'],
+            'content': 'local-storage: {"rustdoc-theme": |theme|, ' +
+                '"rustdoc-use-system-theme": "false"}',
+        },
+    });
+
+    const [res6, parser6] = func(`(
+    "check-result",
+    (),
+    [
+        ("local-storage", ["a"]),
+        ("local-storage", 12),
+        ("local-storage", ALL),
+        ("local-storage", "ab"),
+    ],
+)`);
+    x.assert(res6, {'instructions': [], 'wait': false});
+    x.assert(parser6.definedFunctions, {
+        'check-result': {
+            'arguments': [],
+            'content': `\
+local-storage: ["a"]
+local-storage: 12
+local-storage: ALL
+local-storage: "ab"`,
+        },
+    });
 }
 
 function checkDragAndDrop(x, func) {
