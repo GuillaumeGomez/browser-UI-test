@@ -937,6 +937,30 @@ function checkJson(x) {
     process.env['variable'] = undefined;
     process.env['variable_value'] = undefined;
 
+    p = new Parser(`local-storage: {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}
+// removed comment
+reload: 
+reload://hello
+assert-css: (".item-left sup", {"color": |color|})`);
+    p.variables = {'theme': 'a'};
+    p.parseNextCommand();
+    x.assert(p.command.value, 'local-storage');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    p.parseNextCommand();
+    x.assert(p.command.value, 'reload');
+    x.assert(p.elems, []);
+    p.parseNextCommand();
+    x.assert(p.command.value, 'reload');
+    x.assert(p.elems, []);
+    p.parseNextCommand();
+    x.assert(p.command.value, 'assert-css');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].getRaw().length, 2);
+    x.assert(p.elems[0].getRaw()[0].kind, 'string');
+    x.assert(p.elems[0].getRaw()[1].kind, 'json');
+
 
     p = new Parser('{true: 1}');
     p.parse();

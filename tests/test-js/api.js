@@ -5771,14 +5771,20 @@ move-cursor-to: ".result-"`,
     [
         // hello
         ("local-storage", {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}),
+        // We reload the page so the local storage settings are being used.
+        ("reload"),
+        ("assert-css", (".item-left sup", {"color": |color|})),
     ],
 )`);
     x.assert(res5, {'instructions': [], 'wait': false});
     x.assert(parser5.definedFunctions, {
         'check-result': {
             'arguments': ['theme', 'color'],
-            'content': 'local-storage: {"rustdoc-theme": |theme|, ' +
-                '"rustdoc-use-system-theme": "false"}',
+            'content': `\
+local-storage: {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}
+// removed comment
+reload: 
+assert-css: (".item-left sup", {"color": |color|})`,
         },
     });
 
