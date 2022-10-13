@@ -1027,7 +1027,7 @@ found \`${elems[1].getErrorText()}\``);
         const extra = error === null ? 1 : 0;
         const fullText = this.text.substring(start, this.pos + extra);
         this.push(
-            new JsonElement(json, start, this.pos, fullText, startLine, error),
+            new JsonElement(json, start, this.pos + extra, fullText, startLine, error),
             pushTo,
         );
     }
