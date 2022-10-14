@@ -214,6 +214,7 @@ async function runAllCommands(loaded, logs, options, browser) {
 
         let error_log = '';
         const warnings = [];
+        let current_url = '';
 
         command_loop:
         for (let nb_commands = 0;; ++nb_commands) {
@@ -304,7 +305,14 @@ async function runAllCommands(loaded, logs, options, browser) {
             logs.info(command['infos']);
             if (shouldWait) {
                 // We wait a bit between each command to be sure the browser can follow.
-                await new Promise(r => setTimeout(r, 100));
+                await new Promise(r => setTimeout(r, 50));
+            }
+            // If the URL changed, we wait for the document to be fully loaded before running other
+            // commands.
+            const url = page.url();
+            if (url !== current_url) {
+                current_url = url;
+                await page.waitForFunction('document.readyState === "complete"');
             }
             if (checkJsErrors()) {
                 break command_loop;
