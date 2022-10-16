@@ -1,0 +1,6 @@
+=> Starting doc-ui tests...
+
+call-function-before-goto... FAILED
+[ERROR] line 1 from 21: First command must be `goto` (`assert-variable`, `assert-variable-false`, `call-function`, `debug`, `define-function`, `emulate`, `fail`, `fail-on-js-error`, `javascript`, `screenshot-comparison`, `store-value` or `timeout` can be used before)!
+
+<= doc-ui tests done: 0 succeeded, 1 failed

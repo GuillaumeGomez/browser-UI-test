@@ -1,0 +1,22 @@
+// This test ensures that you can call "call-function" before "goto" and that the commands
+// inside will fail if needed.
+define-function: (
+    "fn1",
+    (background_color, whole_check),
+    [
+        ("assert-css", ("header", {"background-color": |background_color|, "color": |color|})),
+        ("assert-css", ("header", |whole_check|)),
+        // We overwrite the existing function.
+        ("define-function", ("fn1", (), [("assert-attribute", ("header", {"color": "blue"}))])),
+        // Then we call it again. If it works as expected, it shouldn't loop infinitely.
+        ("call-function", ("fn1", ())),
+        ("assert-css", ("header", {"color": "red"})),
+    ],
+)
+// We define this variable to ensure that it will use the argument in the function call.
+store-value: (whole_check, {"color": "yellow"})
+store-value: (color, "y")
+// Calling "call-function" before "goto" is valid but then it's the instructions inside
+// that are checked.
+call-function: ("fn1", ("a", {"color": "a"}))
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"

@@ -6375,7 +6375,7 @@ function checkParseContent(x, func) {
     ]);
     x.assert(func('focus: "#foo"'), [{
         'error': 'First command must be `goto` (`assert-variable`, `assert-variable-false`, ' +
-            '`debug`, `define-function`, `emulate`, `fail`, `fail-on-js-error`, ' +
+            '`call-function`, `debug`, `define-function`, `emulate`, `fail`, `fail-on-js-error`, ' +
             '`javascript`, `screenshot-comparison`, `store-value` or `timeout` can be used ' +
             'before)!',
         'line': 1,
