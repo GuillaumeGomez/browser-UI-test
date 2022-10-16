@@ -86,6 +86,9 @@ const ORDERS = {
 // very likely be broken.
 const FATAL_ERROR_COMMANDS = [
     'attribute',
+    // If calling a function fails, no need to go any further as it could have contained many
+    // important things.
+    'call-function',
     'click',
     'css',
     'drag-and-drop',
@@ -110,6 +113,7 @@ const FATAL_ERROR_COMMANDS = [
 const NO_INTERACTION_COMMANDS = [
     'assert-variable',
     'assert-variable-false',
+    'call-function', // Calling this instruction itself doesn't do anything so we can put it here.
     'debug',
     'define-function',
     'emulate',
