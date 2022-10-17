@@ -1360,6 +1360,10 @@ assert-css: (".item-left sup", {"color": |color|})`);
     p = new Parser('({"x": 1}}');
     p.parse();
     x.assert(p.error, 'expected `,` or `)`, found `}` after `{"x": 1}`');
+
+    p = new Parser('("hello",{"a": "1"))');
+    p.parse();
+    x.assert(p.error, 'expected `,` or `}` after `"1"`, found `)`');
 }
 
 function checkComment(x) {

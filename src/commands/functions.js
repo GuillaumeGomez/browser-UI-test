@@ -129,9 +129,9 @@ ${elems[0].getArticleKind()} (\`${parser.getRawArgs()}\`)`};
     } else if (tuple[0].kind !== 'string') {
         return {'error': `expected a string as first element of the tuple, found \
 ${tuple[0].getArticleKind()} \`${tuple[0].getErrorText()}\``};
-    } else if (tuple[1].kind !== 'tuple') {
-        return {'error': `expected a tuple as second element of the tuple or nothing, found \
-${tuple[1].getArticleKind()} \`${tuple[1].getErrorText()}\``};
+    } else if (tuple[1].kind !== 'tuple' && tuple[1].kind !== 'json') {
+        return {'error': `expected a tuple or a JSON dictionary as second element of the tuple or \
+nothing, found ${tuple[1].getArticleKind()} \`${tuple[1].getErrorText()}\``};
     }
 
     const func_name = tuple[0].value;
@@ -153,6 +153,7 @@ found ${args.length}`,
     return {
         'function': func_name,
         'args': args,
+        'args_kind': tuple[1].kind,
     };
 }
 

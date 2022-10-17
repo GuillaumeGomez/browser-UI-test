@@ -651,6 +651,16 @@ call-function: (
     "fn1", // the function name
     ("yellow", {"class": "the-header"}), // the arguments
 )
+
+// If you prefer named arguments:
+call-function: (
+    "fn1", // the function name
+    // the arguments
+    {
+        "background_color": "yellow",
+        "whole_check": {"class": "the-header"},
+    },
+)
 ```
 
 If you want more information about how functions work, take a look at [`define-function`](#define-function).
