@@ -18,3 +18,15 @@ define-function: (
 store-value: (whole_check, {"color": "yellow"})
 store-value: (color, "y")
 call-function: ("fn1", ("a", {"color": "a"}))
+define-function: (
+    "fn1",
+    (background_color, whole_check),
+    [
+        ("assert-css", ("header", {"background-color": |background_color|})),
+        ("assert-css", ("header", |whole_check|)),
+    ],
+)
+// Same but with named arguments
+call-function: ("fn1", {"background_color": "a", "whole_check": {"color": "a"}})
+// Error because there is a missing argument.
+call-function: ("fn1", {"background_color": "a", "k": {"color": "a"}})

@@ -5618,7 +5618,8 @@ function checkCallFunction(x, func) {
         'error': 'expected a string as first element of the tuple, found a number `1`',
     });
     x.assert(func('("1",1)')[0], {
-        'error': 'expected a tuple as second element of the tuple or nothing, found a number `1`',
+        'error': 'expected a tuple or a JSON dictionary as second element of the tuple or nothing' +
+            ', found a number `1`',
     });
     x.assert(func('("1",(1))')[0], {
         'error': 'no function called `1`. To define a function, use the `define-function` command',
@@ -5649,6 +5650,38 @@ function checkCallFunction(x, func) {
                 'fullText': '"1"',
             },
         ],
+        'args_kind': 'tuple',
+    });
+
+    p = new Parser('("hello",{"a": "1"})', {});
+    p.parse();
+    p.definedFunctions['hello'] = {'arguments': ['a'], 'content': 'a'};
+
+    x.assert(parserFuncs.parseCallFunction(p), {
+        'function': 'hello',
+        'args': [
+            {
+                'key': {
+                    'kind': 'string',
+                    'value': 'a',
+                    'startPos': 10,
+                    'endPos': 13,
+                    'error': null,
+                    'line': 1,
+                    'fullText': '"a"',
+                },
+                'value': {
+                    'kind': 'string',
+                    'value': '1',
+                    'startPos': 15,
+                    'endPos': 18,
+                    'error': null,
+                    'line': 1,
+                    'fullText': '"1"',
+                },
+            },
+        ],
+        'args_kind': 'json',
     });
 }
 
