@@ -231,10 +231,8 @@ async function runAllCommands(loaded, logs, options, browser) {
                 warnings.push.apply(warnings, command['warnings']);
             }
             if (Object.prototype.hasOwnProperty.call(command, 'error')) {
-                logs.append('FAILED', true);
-                logs.warn(warnings);
-                logs.append(`[ERROR] line ${command['line']}: ${command['error']}`);
-                return Status.Failure;
+                error_log += `[ERROR] line ${command['line']}: ${command['error']}`;
+                break;
             }
             let failed = false;
             // In case we have some unrecoverable error which cannot be caught in `fail: true`, like

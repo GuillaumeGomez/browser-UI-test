@@ -174,8 +174,22 @@ class ParserWithContext {
         }
         const args = Object.create(null);
         const func = this.parser.definedFunctions[ret['function']];
-        for (let i = 0; i < ret['args'].length; ++i) {
-            args[func['arguments'][i]] = ret['args'][i];
+        if (ret['args_kind'] === 'tuple') {
+            for (let i = 0; i < ret['args'].length; ++i) {
+                args[func['arguments'][i]] = ret['args'][i];
+            }
+        } else {
+            for (const arg_name of func['arguments']) {
+                const index = ret['args'].findIndex(arg => arg.key.value === arg_name);
+                if (index === -1) {
+                    return {
+                        'error': `Missing argument "${arg_name}"`,
+                        'line': this.get_current_command_line(),
+                        'fatal_error': true,
+                    };
+                }
+                args[arg_name] = ret['args'][index].value;
+            }
         }
         this.callingFunc.push(
             new Parser(func['content'], parser.variables, args, this.parser.definedFunctions),
@@ -185,6 +199,7 @@ class ParserWithContext {
             return {
                 'error': 'reached maximum stack size (100)',
                 'line': this.get_current_command_line(),
+                'fatal_error': true,
             };
         }
         return this.get_next_command();
