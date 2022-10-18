@@ -10,6 +10,8 @@ store... FAILED
 [ERROR] (line 34) The following errors happened: [`a value` isn't equal to `a key`]: for command `assert-variable: (local, "a key")`
 [ERROR] (line 39) The following errors happened: [`hey` isn't equal to `hoy`]: for command `assert-variable: (text, "hoy")`
 [ERROR] (line 46) The following errors happened: [`{"background-color":"rgb(17, 17, 17)"}` isn't equal to `a`]: for command `assert-variable: (css_checks, "a")`
+[ERROR] (line 48) The following errors happened: [`Other page` isn't equal to `Other`]: for command `assert-variable: (document_v, "Other")`
+[ERROR] (line 50) The following errors happened: [`0` isn't equal to `Other`]: for command `assert-variable: (window_v, "Other")`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

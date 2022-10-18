@@ -6979,6 +6979,56 @@ arg.variables["VAR"] = await jsHandle.jsonValue();`,
     });
 }
 
+function checkStoreDocumentProperty(x, func) {
+    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
+    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {'error': 'expected 2 elements in the tuple, found 1 element'});
+    x.assert(func('(1, 1)'), {
+        'error': 'expected first argument to be an ident, found a number (`1`)',
+    });
+    x.assert(func('(a1, 1)'), {
+        'error': 'expected second argument to be a property name (a string), found a number (`1`)',
+    });
+
+    x.assert(func('(a1, "1")'), {
+        'instructions': [`\
+const jsHandle = await page.evaluateHandle(() => {
+    if (document["1"] === undefined) {
+        throw "document doesn't have a property named \`1\`";
+    }
+    return document["1"];
+});
+arg.variables["a1"] = await jsHandle.jsonValue();`],
+        'wait': false,
+    });
+}
+
+function checkStoreWindowProperty(x, func) {
+    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
+    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
+    x.assert(func('('), {'error': 'expected `)` at the end'});
+    x.assert(func('(1)'), {'error': 'expected 2 elements in the tuple, found 1 element'});
+    x.assert(func('(1, 1)'), {
+        'error': 'expected first argument to be an ident, found a number (`1`)',
+    });
+    x.assert(func('(a1, 1)'), {
+        'error': 'expected second argument to be a property name (a string), found a number (`1`)',
+    });
+
+    x.assert(func('(a1, "1")'), {
+        'instructions': [`\
+const jsHandle = await page.evaluateHandle(() => {
+    if (window["1"] === undefined) {
+        throw "window doesn't have a property named \`1\`";
+    }
+    return window["1"];
+});
+arg.variables["a1"] = await jsHandle.jsonValue();`],
+        'wait': false,
+    });
+}
+
 function checkStoreLocalStorage(x, func) {
     x.assert(func(''), {'error': 'expected a tuple, found nothing'});
     x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
@@ -8836,6 +8886,11 @@ const TO_CHECK = [
         'toCall': (e, o) => wrapper(parserFuncs.parseStoreCss, e, o),
     },
     {
+        'name': 'store-document-property',
+        'func': checkStoreDocumentProperty,
+        'toCall': (e, o) => wrapper(parserFuncs.parseStoreDocumentProperty, e, o),
+    },
+    {
         'name': 'store-local-storage',
         'func': checkStoreLocalStorage,
         'toCall': (e, o) => wrapper(parserFuncs.parseStoreLocalStorage, e, o),
@@ -8854,6 +8909,11 @@ const TO_CHECK = [
         'name': 'store-value',
         'func': checkStoreValue,
         'toCall': (e, o) => wrapper(parserFuncs.parseStoreValue, e, o),
+    },
+    {
+        'name': 'store-window-property',
+        'func': checkStoreWindowProperty,
+        'toCall': (e, o) => wrapper(parserFuncs.parseStoreWindowProperty, e, o),
     },
     {
         'name': 'text',
