@@ -345,13 +345,18 @@ class Parser {
         return this.text.slice(start, end);
     }
 
-    parseNextCommand() {
+    parseNextCommand(orderChecker) {
         this.elems = [];
         this.error = null;
         // First, we skip all unneeded characters...
         this.skipWhiteSpaceCharacters();
         this.command = this.extractNextCommandName();
         if (this.command === null || this.error !== null) {
+            return false;
+        }
+        const order = this.command.getRaw().toLowerCase();
+        if (!orderChecker(order)) {
+            this.error = `Unknown command "${order}"`;
             return false;
         }
         // If the command we're parsing is `define-function`, we need to keep the code "as is".

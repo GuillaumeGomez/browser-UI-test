@@ -260,7 +260,9 @@ class ParserWithContext {
 
     get_next_command() {
         const parser = this.get_current_parser();
-        if (!parser.parseNextCommand()) {
+        if (!parser.parseNextCommand(
+            order => Object.prototype.hasOwnProperty.call(ORDERS, order),
+        )) {
             if (parser.error) {
                 return {
                     'error': parser.error,
