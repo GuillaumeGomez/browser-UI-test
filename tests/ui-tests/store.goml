@@ -44,3 +44,7 @@ assert-css: ("header", |css_checks|)
 assert-variable: (css_checks, {"background-color": "rgb(17, 17, 17)"})
 // Should fail
 assert-variable: (css_checks, "a")
+store-document-property: (document_v, "title")
+assert-variable: (document_v, "Other")
+store-window-property: (window_v, "pageYOffset")
+assert-variable: (window_v, "Other")

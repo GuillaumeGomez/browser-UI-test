@@ -269,7 +269,6 @@ arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`,
     };
 }
 
-
 // Possible inputs:
 //
 // * (ident, "CSS selector" | "XPath"
@@ -328,11 +327,72 @@ arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`;
     };
 }
 
+function parseStoreObjectInner(parser, objName) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {'error': 'expected a tuple, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
+        return {
+            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
+        };
+    }
+    const tuple = elems[0].getRaw();
+    if (tuple.length !== 2) {
+        let err = `expected 2 elements in the tuple, found ${tuple.length} element`;
+        if (tuple.length > 1) {
+            err += 's';
+        }
+        return {'error': err};
+    } else if (tuple[0].kind !== 'ident') {
+        return {
+            'error': `expected first argument to be an ident, found ${tuple[0].getArticleKind()} \
+(\`${tuple[0].getErrorText()}\`)`,
+        };
+    } else if (tuple[1].kind !== 'string') {
+        return {
+            'error': `expected second argument to be a property name (a string), found \
+${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
+        };
+    }
+
+    const propertyName = tuple[1].getStringValue();
+    const code = `\
+const jsHandle = await page.evaluateHandle(() => {
+    if (${objName}["${propertyName}"] === undefined) {
+        throw "${objName} doesn't have a property named \`${propertyName}\`";
+    }
+    return ${objName}["${propertyName}"];
+});
+arg.variables["${tuple[0].getStringValue()}"] = await jsHandle.jsonValue();`;
+
+    return {
+        'instructions': [code],
+        'wait': false,
+    };
+}
+
+// Possible inputs:
+//
+// * (ident, "property name")
+function parseStoreDocumentProperty(parser) {
+    return parseStoreObjectInner(parser, 'document');
+}
+
+// Possible inputs:
+//
+// * (ident, "property name")
+function parseStoreWindowProperty(parser) {
+    return parseStoreObjectInner(parser, 'window');
+}
+
 module.exports = {
     'parseStoreAttribute': parseStoreAttribute,
     'parseStoreCss': parseStoreCss,
+    'parseStoreDocumentProperty': parseStoreDocumentProperty,
     'parseStoreLocalStorage': parseStoreLocalStorage,
     'parseStoreProperty': parseStoreProperty,
     'parseStoreText': parseStoreText,
     'parseStoreValue': parseStoreValue,
+    'parseStoreWindowProperty': parseStoreWindowProperty,
 };

@@ -139,9 +139,11 @@ Here's the command list:
  * [`size`](#size)
  * [`store-attribute`](#store-attribute)
  * [`store-css`](#store-css)
+ * [`store-document-property`](#store-document-property)
  * [`store-local-variable`](#store-local-variable)
  * [`store-property`](#store-property)
  * [`store-value`](#store-value)
+ * [`store-window-property`](#store-window-property)
  * [`text`](#text)
  * [`timeout`](#timeout)
  * [`wait-for`](#wait-for)
@@ -1261,6 +1263,17 @@ assert-variable: (variable_name, "rgb(255, 0, 0)")
 
 For more information about variables, read the [variables section](#variables).
 
+#### store-document-property
+
+**store-document-property** command stores a property of the `document` object into a variable. Examples:
+
+```
+store-document-property: (variable_name, "title")
+store-document-property: (variable_name, "URL")
+```
+
+For more information about variables, read the [variables section](#variables).
+
 #### store-local-variable
 
 **store-local-variable** command stores a value from the local storage into a variable. Examples:
@@ -1306,6 +1319,17 @@ store-value: (variable_name, "hello")
 store-value: (variable_name, 1)
 store-value: (variable_name, 1.45)
 store-value: (variable_name, {"key": "value"})
+```
+
+For more information about variables, read the [variables section](#variables).
+
+#### store-window-property
+
+**store-window-property** command stores a property of the `window` object into a variable. Examples:
+
+```
+store-window-property: (variable_name, "pageYOffset")
+store-window-property: (variable_name, "devicePixelRatio")
 ```
 
 For more information about variables, read the [variables section](#variables).
