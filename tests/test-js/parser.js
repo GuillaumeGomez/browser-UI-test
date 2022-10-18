@@ -943,17 +943,17 @@ reload:
 reload://hello
 assert-css: (".item-left sup", {"color": |color|})`);
     p.variables = {'theme': 'a'};
-    p.parseNextCommand();
+    p.parseNextCommand(() => true);
     x.assert(p.command.value, 'local-storage');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    p.parseNextCommand();
+    p.parseNextCommand(() => true);
     x.assert(p.command.value, 'reload');
     x.assert(p.elems, []);
-    p.parseNextCommand();
+    p.parseNextCommand(() => true);
     x.assert(p.command.value, 'reload');
     x.assert(p.elems, []);
-    p.parseNextCommand();
+    p.parseNextCommand(() => true);
     x.assert(p.command.value, 'assert-css');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
