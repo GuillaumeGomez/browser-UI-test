@@ -92,8 +92,8 @@ async function checkRunTestCode(x, func) {
 
     // Check a failing code
     await x.assertTry(func, ['test',
-        'fail: true\ngoto: "file://" + |CURRENT_DIR| + "/tests/scripts/basic.html"\n' +
-        'assert-text: ("#button", "Go somewhere else!")'], ['test... ok', 0]);
+        'fail: true\ngoto: "file://" + |CURRENT_DIR| + "/tests/html_files/basic.html"\n' +
+        'assert-text: ("#button", "Go somewhere els!")'], ['test... ok', 0]);
 
     // check if test-folder option is ignored
     const options = new Options();

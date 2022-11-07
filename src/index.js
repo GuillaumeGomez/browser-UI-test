@@ -160,10 +160,15 @@ async function runAllCommands(loaded, logs, options, browser) {
             'getImageFolder': () => options.getImageFolder(),
             'failOnJsError': options.failOnJsError,
             'jsErrors': [],
+            'requestErrors': [],
             'variables': context_parser.variables(),
         };
         page.on('pageerror', message => {
             extras.jsErrors.push(message);
+        });
+        page.on('requestfailed', request => {
+            extras.requestErrors.push(
+                `[${request.method()} ${request.url()}]: ${request.failure().errorText}`);
         });
 
         await page.exposeFunction('BrowserUiStyleInserter', () => {
@@ -200,17 +205,28 @@ async function runAllCommands(loaded, logs, options, browser) {
 
         let line_number;
 
-        // Defined here because I need `error_log` to be updated without being returned.
-        const checkJsErrors = () => {
-            if (!extras.failOnJsError || extras.jsErrors.length === 0) {
+        // Defined here because we need `error_log` to be updated without being returned.
+        // `checkPageErrors` shouldn't be called directly.
+        const checkPageErrors = (field, message) => {
+            if (extras[field].length === 0) {
                 return false;
             }
-            error_log += `[ERROR] (around line ${line_number}): JS errors occurred: ` +
-                extras.jsErrors.join('\n');
+            error_log += `[ERROR] (around line ${line_number}): ${message}: ` +
+                extras[field].join('\n');
             // We empty the errors to prevent having it duplicated.
-            extras.jsErrors.splice(0, extras.jsErrors.length);
+            extras[field].splice(0, extras[field].length);
             return true;
         };
+        const checkJsErrors = () => {
+            if (!extras.failOnJsError) {
+                return false;
+            }
+            return checkPageErrors('jsErrors', 'JS errors occurred');
+        };
+        const checkRequestErrors = () => {
+            return checkPageErrors('requestErrors', 'request failed');
+        };
+
 
         let error_log = '';
         const warnings = [];
@@ -279,7 +295,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                     }
                 }
                 debug_log.append('Done!');
-                if (stopLoop || checkJsErrors()) {
+                if (stopLoop || checkJsErrors() || checkRequestErrors()) {
                     break command_loop;
                 } else if (stopInnerLoop) {
                     break;
@@ -312,11 +328,11 @@ async function runAllCommands(loaded, logs, options, browser) {
                 current_url = url;
                 await page.waitForFunction('document.readyState === "complete"');
             }
-            if (checkJsErrors()) {
+            if (checkJsErrors() || checkRequestErrors()) {
                 break command_loop;
             }
         }
-        if (error_log.length > 0 || checkJsErrors()) {
+        if (error_log.length > 0 || checkJsErrors() || checkRequestErrors()) {
             logs.append('FAILED', true);
             logs.warn(warnings);
             logs.append(error_log);
