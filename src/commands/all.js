@@ -57,6 +57,7 @@ module.exports = {
     'parseEmulate': emulation.parseEmulate,
     'parseFail': context_setters.parseFail,
     'parseFailOnJsError': context_setters.parseFailOnJsError,
+    'parseFailOnRequestError': context_setters.parseFailOnRequestError,
     'parseFocus': input.parseFocus,
     'parseFontSize': emulation.parseFontSize,
     'parseGeolocation': emulation.parseGeolocation,
