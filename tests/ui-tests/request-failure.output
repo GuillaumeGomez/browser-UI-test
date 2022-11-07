@@ -1,0 +1,6 @@
+=> Starting doc-ui tests...
+
+request-failure... FAILED
+[ERROR] (around line $LINE): request failed: [GET file://$CURRENT_DIR/tests/html_files/non-existent.css]: net::ERR_FILE_NOT_FOUND
+
+<= doc-ui tests done: 0 succeeded, 1 failed
