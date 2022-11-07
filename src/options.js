@@ -11,24 +11,27 @@ function helper() {
 
     print('Available options:');
     print('');
+    print('  --allow-file-access-from-files: Disable CORS errors when testing with local files');
     print(`  --browser [BROWSER NAME]      : Run tests on given browser (${browsers})`);
     print('                                  /!\\ Only testing on chrome is stable!');
     print('  --debug                       : Display more information');
+    print('  --disable-fail-on-request-error: If a request failed, it won\'t fail the test');
     print('  --emulate [DEVICE NAME]       : Emulate the given device');
-    print('  --extension [PATH]            : Add an extension to load from the given path');
-    print('  --failure-folder [PATH]       : Path of the folder where failed tests image will');
-    print('                                  be placed (same as `image-folder` if not provided)');
-    print('  --image-folder [PATH]         : Path of the folder where screenshots will be put ' +
-        '(same as');
-    print('                                  `test-folder` if not provided)');
-    print('  --incognito                   : Enable incognito mode');
-    print('  --generate-images             : If provided, it\'ll generate missing test images');
-    print('  --no-headless                 : Disable headless mode');
-    print('  --enable-screenshot-comparison: Enable screenshot comparisons at the end of the ' +
-        'scripts by the end');
+    print('  --enable-screenshot-comparison: Enable screenshot comparisons at the end of the ');
+    print('                                  scripts by the end');
     print('  --enable-fail-on-js-error     : If a JS error occurs on a web page, the test will ' +
         'fail');
     print('  --executable-path [PATH]      : Path of the browser\'s executable you want to use');
+    print('  --extension [PATH]            : Add an extension to load from the given path');
+    print('  --failure-folder [PATH]       : Path of the folder where failed tests image will');
+    print('                                  be placed (same as `image-folder` if not provided)');
+    print('  --generate-images             : If provided, it\'ll generate missing test images');
+    print('  --image-folder [PATH]         : Path of the folder where screenshots will be ' +
+        'generated');
+    print('                                  (same as `test-folder` if not provided)');
+    print('  --incognito                   : Enable incognito mode');
+    print('  --no-headless                 : Disable headless mode');
+    print('  --no-sandbox                  : Disable the sandbox (use with caution!)');
     print('  --pause-on-error [true|false] : Add a permission to enable');
     print('  --permission [PERMISSION]     : Add a permission to enable');
     print('  --run-id [id]                 : Id to be used for failed images extension (\'test\'');
@@ -86,6 +89,7 @@ class Options {
         this.debug = false;
         this.screenshotComparison = false;
         this.noSandbox = false;
+        this.allowFileAccessFromFiles = false;
         this.testFiles = [];
         this.variables = {};
         this.extensions = [];
@@ -97,6 +101,8 @@ class Options {
         this.permissions = [];
         this.onPageCreatedCallback = async function() {};
         this.failOnJsError = false;
+        // Enabled by default!
+        this.failOnRequestError = true;
         this.executablePath = null;
     }
 
@@ -114,6 +120,7 @@ class Options {
         copy.debug = this.debug;
         copy.screenshotComparison = this.screenshotComparison;
         copy.noSandbox = this.noSandbox;
+        copy.allowFileAccessFromFiles = this.allowFileAccessFromFiles;
         copy.testFiles = JSON.parse(JSON.stringify(this.testFiles));
         copy.variables = JSON.parse(JSON.stringify(this.variables));
         copy.extensions = JSON.parse(JSON.stringify(this.extensions));
@@ -125,6 +132,7 @@ class Options {
         copy.permissions = JSON.parse(JSON.stringify(this.permissions));
         copy.onPageCreatedCallback = this.onPageCreatedCallback;
         copy.failOnJsError = this.failOnJsError;
+        copy.failOnRequestError = this.failOnRequestError;
         copy.executablePath = this.executablePath !== null ? this.executablePath.slice() : null;
         return copy;
     }
@@ -180,6 +188,8 @@ class Options {
                 this.screenshotComparison = true;
             } else if (args[it] === '--no-sandbox') {
                 this.noSandbox = true;
+            } else if (args[it] === '--allow-file-access-from-files') {
+                this.allowFileAccessFromFiles = true;
             } else if (args[it] === '--incognito') {
                 this.incognito = true;
             } else if (args[it] === '--help' || args[it] === '-h') {
@@ -268,6 +278,8 @@ class Options {
                 }
             } else if (args[it] === '--enable-fail-on-js-error') {
                 this.failOnJsError = true;
+            } else if (args[it] === '--disable-fail-on-request-error') {
+                this.failOnRequestError = false;
             } else if (args[it] === '--version') {
                 showVersion();
             } else {
@@ -345,6 +357,9 @@ class Options {
         validateField('permissions', 'array');
         validateField('onPageCreatedCallback', 'function');
         validateField('failOnJsError', 'boolean');
+        validateField('failOnRequestError', 'boolean');
+        validateField('noSandbox', 'boolean');
+        validateField('allowFileAccessFromFiles', 'boolean');
         // eslint-disable-next-line eqeqeq
         if (this.variables.constructor != Object) {
             throw new Error('`Options.variables` field is supposed to be a dictionary-like!');

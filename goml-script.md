@@ -119,6 +119,7 @@ Here's the command list:
  * [`emulate`](#emulate)
  * [`fail`](#fail)
  * [`fail-on-js-error`](#fail-on-js-error)
+ * [`fail-on-request-error`](#fail-on-request-error)
  * [`focus`](#focus)
  * [`font-size`](#font-size)
  * [`geolocation`](#geolocation)
@@ -1008,6 +1009,15 @@ assert: ("#elem", "not hello")
 ```
 # To enable the check:
 fail-on-js-error: true
+```
+
+#### fail-on-request-error
+
+**fail-on-request-error** command sets changes the behaviour of `browser-ui-test` when a request fails on the web page. By default, this option is enabled. It overloads the value from the `--disable-on-request-error-fail` option. Example:
+
+```
+# To disable the check:
+fail-on-request-error: false
 ```
 
 #### focus

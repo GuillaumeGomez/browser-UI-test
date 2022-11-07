@@ -179,14 +179,17 @@ want to build the `Options` object yourself, you might be interested by what fol
 
 The list of fields of the `Options` class is the following:
 
+ * `allowFileAccessFromFiles`: if set to `true`, it will disable CORS errors for local files
  * `debug`: display more information
  * `emulate`: name of the device you want to emulate (list of available devices is [here](https://github.com/puppeteer/puppeteer/blob/b5020dc04121b265c77662237dfb177d6de06053/src/common/DeviceDescriptors.ts) or you can use `--show-devices` option)
  * `executablePath`: browser's executable path to be used
  * `extensions`: extensions to be loaded by the browser
  * `failOnJsError`: if set to `true`, if a web page has a JS error, the test will fail
+ * `failOnRequestError`: if set to `true` (its default value), if a request fails, the test will fail
  * `failureFolder`: path of the folder where failed tests image will be placed (`testFolder` value by default)
  * `generateImages`: if provided, it'll generate test images and won't run comparison tests
  * `imageFolder`: path of the folder where screenshots are and where they are generated (`testFolder` value by default)
+ * `incognito`: whether or not the browser is running in incognito mode
  * `noHeadless`: disable headless mode
  * `screenshotComparison`: enable screenshots generation and comparison at the end of the scripts
  * `onPageCreatedCallback`: callback which is called when a new puppeteer page is created. It provides the puppeteer `page` and the test name as arguments

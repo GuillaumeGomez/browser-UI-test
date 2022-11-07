@@ -179,10 +179,31 @@ if (oldValue !== true) {
     };
 }
 
+function parseFailOnRequestError(parser) {
+    const elems = parser.elems;
+    if (elems.length === 0) {
+        return {'error': 'expected `true` or `false` value, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'bool') {
+        return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
+    }
+    const instructions = [
+        `const oldValue = arg.failOnRequestError;
+arg.failOnRequestError = ${elems[0].getRaw()};
+if (oldValue !== true) {
+    arg.requestErrors.splice(0, arg.requestErrors.length);
+}`];
+
+    return {
+        'instructions': instructions,
+        'wait': false,
+    };
+}
+
 module.exports = {
     'parseDebug': parseDebug,
     'parseFail': parseFail,
     'parseFailOnJsError': parseFailOnJsError,
+    'parseFailOnRequestError': parseFailOnRequestError,
     'parsePauseOnError': parsePauseOnError,
     'parseScreenshotComparison': parseScreenshotComparison,
     'parseShowText': parseShowText,

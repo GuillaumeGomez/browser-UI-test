@@ -6086,6 +6086,33 @@ function checkFailOnJsError(x, func) {
     });
 }
 
+function checkFailOnRequestError(x, func) {
+    x.assert(func(''), {'error': 'expected `true` or `false` value, found nothing'});
+    x.assert(func('hello'), {'error': 'expected `true` or `false` value, found `hello`'});
+    x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
+    x.assert(func('tru'), {'error': 'expected `true` or `false` value, found `tru`'});
+    x.assert(func('false'), {
+        'instructions': [
+            'const oldValue = arg.failOnRequestError;\n' +
+            'arg.failOnRequestError = false;\n' +
+            'if (oldValue !== true) {\n' +
+            '    arg.requestErrors.splice(0, arg.requestErrors.length);\n' +
+            '}',
+        ],
+        'wait': false,
+    });
+    x.assert(func('true'), {
+        'instructions': [
+            'const oldValue = arg.failOnRequestError;\n' +
+            'arg.failOnRequestError = true;\n' +
+            'if (oldValue !== true) {\n' +
+            '    arg.requestErrors.splice(0, arg.requestErrors.length);\n' +
+            '}',
+        ],
+        'wait': false,
+    });
+}
+
 function checkFocus(x, func) {
     x.assert(func('a'), {'error': 'expected a CSS selector or an XPath, found `a`'});
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
@@ -6409,8 +6436,8 @@ function checkParseContent(x, func) {
     x.assert(func('focus: "#foo"'), [{
         'error': 'First command must be `goto` (`assert-variable`, `assert-variable-false`, ' +
             '`call-function`, `debug`, `define-function`, `emulate`, `fail`, `fail-on-js-error`, ' +
-            '`javascript`, `screenshot-comparison`, `store-value` or `timeout` can be used ' +
-            'before)!',
+            '`fail-on-request-error`, `javascript`, `screenshot-comparison`, `store-value` or ' +
+            '`timeout` can be used before)!',
         'line': 1,
     }]);
     x.assert(func('fail: true\ngoto: "file:///home"'), [
@@ -8784,6 +8811,11 @@ const TO_CHECK = [
         'name': 'fail-on-js-error',
         'func': checkFailOnJsError,
         'toCall': (e, o) => wrapper(parserFuncs.parseFailOnJsError, e, o),
+    },
+    {
+        'name': 'fail-on-request-error',
+        'func': checkFailOnRequestError,
+        'toCall': (e, o) => wrapper(parserFuncs.parseFailOnRequestError, e, o),
     },
     {
         'name': 'focus',

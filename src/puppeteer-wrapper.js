@@ -12,6 +12,9 @@ function buildPuppeteerOptions(options) {
         // Highly unsafe! Only use it when you know what you're doing!
         puppeteer_options['args'].push('--no-sandbox');
     }
+    if (options.allowFileAccessFromFiles === true) {
+        puppeteer_options['args'].push('--allow-file-access-from-files');
+    }
     if (options.executablePath !== null) {
         puppeteer_options['executablePath'] = options.executablePath;
     }
