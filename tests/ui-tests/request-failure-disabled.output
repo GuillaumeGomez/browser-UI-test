@@ -1,0 +1,5 @@
+=> Starting doc-ui tests...
+
+request-failure-disabled... ok
+
+<= doc-ui tests done: 1 succeeded, 0 failed

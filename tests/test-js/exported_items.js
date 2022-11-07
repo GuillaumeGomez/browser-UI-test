@@ -301,8 +301,15 @@ async function checkOptions(x) {
     await x.assert(options.incognito, false);
     await x.assertTry(() => options.parseArguments(['--incognito']), [], true);
     await x.assert(options.incognito, true);
+    await x.assert(options.failOnJsError, false);
     await x.assertTry(() => options.parseArguments(['--enable-fail-on-js-error']), [], true);
     await x.assert(options.failOnJsError, true);
+    await x.assert(options.failOnRequestError, true);
+    await x.assertTry(() => options.parseArguments(['--disable-fail-on-request-error']), [], true);
+    await x.assert(options.failOnRequestError, false);
+    await x.assert(options.allowFileAccessFromFiles, false);
+    await x.assertTry(() => options.parseArguments(['--allow-file-access-from-files']), [], true);
+    await x.assert(options.allowFileAccessFromFiles, true);
 
     await x.assertTry(() => options.parseArguments(['--browser']), [],
         'Missing browser name after `--browser` option');
@@ -423,6 +430,21 @@ async function checkOptions(x) {
     options21.failOnJsError = '';
     await x.assertTry(() => options21.validateFields(), [],
         '`Options.failOnJsError` field is supposed to be a boolean!');
+
+    const options22 = new Options();
+    options22.noSandbox = '';
+    await x.assertTry(() => options22.validateFields(), [],
+        '`Options.noSandbox` field is supposed to be a boolean!');
+
+    const options23 = new Options();
+    options23.failOnRequestError = '';
+    await x.assertTry(() => options23.validateFields(), [],
+        '`Options.failOnRequestError` field is supposed to be a boolean!');
+
+    const options24 = new Options();
+    options24.allowFileAccessFromFiles = '';
+    await x.assertTry(() => options24.validateFields(), [],
+        '`Options.allowFileAccessFromFiles` field is supposed to be a boolean!');
 }
 
 const TO_CHECK = [
