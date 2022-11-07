@@ -159,6 +159,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             'pauseOnError': options.shouldPauseOnError(),
             'getImageFolder': () => options.getImageFolder(),
             'failOnJsError': options.failOnJsError,
+            'failOnRequestError': options.failOnRequestError,
             'jsErrors': [],
             'requestErrors': [],
             'variables': context_parser.variables(),
@@ -207,8 +208,8 @@ async function runAllCommands(loaded, logs, options, browser) {
 
         // Defined here because we need `error_log` to be updated without being returned.
         // `checkPageErrors` shouldn't be called directly.
-        const checkPageErrors = (field, message) => {
-            if (extras[field].length === 0) {
+        const checkPageErrors = (option, field, message) => {
+            if (!extras[option] || extras[field].length === 0) {
                 return false;
             }
             error_log += `[ERROR] (around line ${line_number}): ${message}: ` +
@@ -218,13 +219,10 @@ async function runAllCommands(loaded, logs, options, browser) {
             return true;
         };
         const checkJsErrors = () => {
-            if (!extras.failOnJsError) {
-                return false;
-            }
-            return checkPageErrors('jsErrors', 'JS errors occurred');
+            return checkPageErrors('failOnJsError', 'jsErrors', 'JS errors occurred');
         };
         const checkRequestErrors = () => {
-            return checkPageErrors('requestErrors', 'request failed');
+            return checkPageErrors('failOnRequestError', 'requestErrors', 'request failed');
         };
 
 

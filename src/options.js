@@ -86,6 +86,7 @@ class Options {
         this.debug = false;
         this.screenshotComparison = false;
         this.noSandbox = false;
+        this.allowFileAccessFromFiles = false;
         this.testFiles = [];
         this.variables = {};
         this.extensions = [];
@@ -97,6 +98,8 @@ class Options {
         this.permissions = [];
         this.onPageCreatedCallback = async function() {};
         this.failOnJsError = false;
+        // Enabled by default!
+        this.failOnRequestError = true;
         this.executablePath = null;
     }
 
@@ -114,6 +117,7 @@ class Options {
         copy.debug = this.debug;
         copy.screenshotComparison = this.screenshotComparison;
         copy.noSandbox = this.noSandbox;
+        copy.allowFileAccessFromFiles = this.allowFileAccessFromFiles;
         copy.testFiles = JSON.parse(JSON.stringify(this.testFiles));
         copy.variables = JSON.parse(JSON.stringify(this.variables));
         copy.extensions = JSON.parse(JSON.stringify(this.extensions));
@@ -125,6 +129,7 @@ class Options {
         copy.permissions = JSON.parse(JSON.stringify(this.permissions));
         copy.onPageCreatedCallback = this.onPageCreatedCallback;
         copy.failOnJsError = this.failOnJsError;
+        copy.failOnRequestError = this.failOnRequestError;
         copy.executablePath = this.executablePath !== null ? this.executablePath.slice() : null;
         return copy;
     }
@@ -180,6 +185,8 @@ class Options {
                 this.screenshotComparison = true;
             } else if (args[it] === '--no-sandbox') {
                 this.noSandbox = true;
+            } else if (args[it] === '--allow-file-access-from-files') {
+                this.allowFileAccessFromFiles = true;
             } else if (args[it] === '--incognito') {
                 this.incognito = true;
             } else if (args[it] === '--help' || args[it] === '-h') {
@@ -268,6 +275,8 @@ class Options {
                 }
             } else if (args[it] === '--enable-fail-on-js-error') {
                 this.failOnJsError = true;
+            } else if (args[it] === '--disable-fail-on-request-error') {
+                this.failOnRequestError = false;
             } else if (args[it] === '--version') {
                 showVersion();
             } else {
@@ -345,6 +354,9 @@ class Options {
         validateField('permissions', 'array');
         validateField('onPageCreatedCallback', 'function');
         validateField('failOnJsError', 'boolean');
+        validateField('failOnRequestError', 'boolean');
+        validateField('noSandbox', 'boolean');
+        validateField('allowFileAccessFromFiles', 'boolean');
         // eslint-disable-next-line eqeqeq
         if (this.variables.constructor != Object) {
             throw new Error('`Options.variables` field is supposed to be a dictionary-like!');
