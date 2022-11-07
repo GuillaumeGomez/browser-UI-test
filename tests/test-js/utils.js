@@ -143,6 +143,7 @@ class Assert {
                 for (const part of parts) {
                     const toCheck = ret.slice(startIndex, startIndex + part.length);
                     if (!this.assert(toCheck, part, pos, extraInfo, toJson)) {
+                        print(`===full output===\n${ret}\n==end of output==`);
                         return false;
                     }
                     startIndex = part.length;
