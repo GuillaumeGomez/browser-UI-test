@@ -168,6 +168,10 @@ async function runAllCommands(loaded, logs, options, browser) {
             extras.jsErrors.push(message);
         });
         page.on('requestfailed', request => {
+            if (request.failure().errorText.toLowerCase() === 'net::err_aborted') {
+                // We ignore the requests that were aborted.
+                return;
+            }
             extras.requestErrors.push(
                 `[${request.method()} ${request.url()}]: ${request.failure().errorText}`);
         });
