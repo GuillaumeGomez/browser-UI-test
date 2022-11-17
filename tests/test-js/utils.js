@@ -33,13 +33,13 @@ function plural(x, nb) {
     return x;
 }
 
-function printDiff(i, value) {
+function printDiff(i, value, out) {
     let s = '=> ';
     for (let count = 0; count < 34 && i < value.length; ++count) {
         s += value[i];
         i += 1;
     }
-    print(s);
+    print(s, out);
 }
 
 class Assert {
@@ -48,7 +48,7 @@ class Assert {
     }
 
     // `extraInfo` is used as an additional message in case the test fails.
-    assert(value1, value2, pos, extraInfo, toJson = true) {
+    assert(value1, value2, pos, extraInfo, toJson = true, out = undefined) {
         this._addTest();
         if (typeof value2 !== 'undefined') {
             if (toJson === true) {
@@ -60,20 +60,20 @@ class Assert {
                     pos = getStackInfo(new Error().stack);
                 }
                 if (typeof extraInfo === 'undefined') {
-                    print(`[${pos.file}:${pos.line}] failed:`);
+                    print(`[${pos.file}:${pos.line}] failed:`, out);
                 } else {
-                    print(`[${pos.file}:${pos.line}] failed (in ${extraInfo}):`);
+                    print(`[${pos.file}:${pos.line}] failed (in ${extraInfo}):`, out);
                 }
-                print(`EXPECTED: \`${value2}\`\n===============\n   FOUND: \`${value1}\``);
+                print(`EXPECTED: \`${value2}\`\n===============\n   FOUND: \`${value1}\``, out);
                 for (let i = 0; i < value1.length && i < value2.length; ++i) {
                     if (value1[i] !== value2[i]) {
                         i -= 8;
                         if (i < 0) {
                             i = 0;
                         }
-                        print('|||||> Error happened around there:');
-                        printDiff(i, value2);
-                        printDiff(i, value1);
+                        print('|||||> Error happened around there:', out);
+                        printDiff(i, value2, out);
+                        printDiff(i, value1, out);
                         break;
                     }
                 }
@@ -84,7 +84,7 @@ class Assert {
             if (typeof pos === 'undefined') {
                 pos = getStackInfo(new Error().stack);
             }
-            print(`[${pos.file}:${pos.line}] failed: \`${value1}\` is evalued to false`);
+            print(`[${pos.file}:${pos.line}] failed: \`${value1}\` is evalued to false`, out);
             this._incrError();
             return false;
         }
@@ -133,7 +133,7 @@ class Assert {
     }
 
     // Same as `assertTry` but handle some corner cases linked to UI tests.
-    async assertTryUi(callback, args, expectedValue, extraInfo, toJson = true) {
+    async assertTryUi(callback, args, expectedValue, extraInfo, toJson = true, out = undefined) {
         const pos = getStackInfo(new Error().stack, 2);
         try {
             const ret = await callback(...args);
@@ -153,9 +153,9 @@ class Assert {
                 }
                 return true;
             }
-            return this.assert(ret, expectedValue, pos, extraInfo, toJson);
+            return this.assert(ret, expectedValue, pos, extraInfo, toJson, out);
         } catch (err) {
-            return this.assert(err.message, expectedValue, pos, extraInfo, toJson);
+            return this.assert(err.message, expectedValue, pos, extraInfo, toJson, out);
         }
     }
 
