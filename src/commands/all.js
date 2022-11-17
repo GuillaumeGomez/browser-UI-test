@@ -53,6 +53,7 @@ module.exports = {
     'parseCss': dom_modifiers.parseCss,
     'parseDebug': context_setters.parseDebug,
     'parseDefineFunction': functions.parseDefineFunction,
+    'parseDevicePixelRatio': emulation.parseDevicePixelRatio,
     'parseDragAndDrop': input.parseDragAndDrop,
     'parseEmulate': emulation.parseEmulate,
     'parseFail': context_setters.parseFail,
