@@ -115,6 +115,7 @@ Here's the command list:
  * [`css`](#css)
  * [`debug`](#debug)
  * [`define-function`](#define-function)
+ * [`device-pixel-ratio`](#device-pixel-ratio)
  * [`drag-and-drop`](#drag-and-drop)
  * [`emulate`](#emulate)
  * [`fail`](#fail)
@@ -958,6 +959,23 @@ So in this case, here is what will happen:
  5. `fn1` is called again with `define-function`.
  6. `assert-attribute` is called.
  7. `assert-position` is called.
+
+#### device-pixel-ratio
+
+**device-pixel-ratio** commands allows you to change the device scale factor. You can find more information about it [here](https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio). It expected a positive non-null number (can be a float). Example:
+
+```
+device-pixel-ratio: 1 // the default value
+device-pixel-ratio: 0.5
+```
+
+You can check its value like this:
+
+```
+// We use `STARTS_WITH` because otherwise the check would very likely fail
+// because of floating numbers rounding.
+assert-window-property: ({"devicePixelRatio": "0.5"}, [STARTS_WITH])
+```
 
 #### drag-and-drop
 

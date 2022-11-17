@@ -12,7 +12,9 @@ function parseSize(parser) {
     if (elems.length === 0) {
         return {'error': 'expected `([number], [number])`, found nothing'};
     } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {'error': `expected \`([number], [number])\`, found \`${parser.getRawArgs()}\``};
+        return {
+            'error': `expected \`([number], [number])\`, found \`${parser.getRawArgs()}\``,
+        };
     }
     const ret = checkIntegerTuple(elems[0], 'width', 'height', true);
     if (ret.error !== undefined) {
@@ -21,7 +23,36 @@ function parseSize(parser) {
     const [width, height] = ret.value;
     return {
         'instructions': [
-            `await page.setViewport({width: ${width}, height: ${height}})`,
+            `\
+const viewport = page.viewport();
+viewport.width = ${width};
+viewport.height = ${height};
+await page.setViewport(viewport);`,
+        ],
+    };
+}
+
+// Possible inputs:
+//
+// * number
+function parseDevicePixelRatio(parser) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {'error': 'expected a number, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'number') {
+        return {'error': `expected a number, found \`${parser.getRawArgs()}\``};
+    }
+    const ratio = elems[0].getRaw();
+    if (Math.ceil(ratio) <= 0) {
+        return {'error': 'device pixel ratio cannot be less than or equal to 0'};
+    }
+    return {
+        'instructions': [
+            `\
+const viewport = page.viewport();
+viewport.deviceScaleFactor = ${ratio};
+await page.setViewport(viewport);`,
         ],
     };
 }
@@ -158,6 +189,7 @@ function parseFontSize(parser) {
 }
 
 module.exports = {
+    'parseDevicePixelRatio': parseDevicePixelRatio,
     'parseEmulate': parseEmulate,
     'parseFontSize': parseFontSize,
     'parseGeolocation': parseGeolocation,

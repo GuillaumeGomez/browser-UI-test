@@ -5844,6 +5844,24 @@ local-storage: "ab"`,
     });
 }
 
+function checkDevicePixelRatio(x, func) {
+    x.assert(func(''), {'error': 'expected a number, found nothing'});
+    x.assert(func('hello'), {'error': 'expected a number, found `hello`'});
+    x.assert(func('0.'), {'error': 'device pixel ratio cannot be less than or equal to 0'});
+    x.assert(func('-1.2'), {'error': 'device pixel ratio cannot be less than or equal to 0'});
+
+    x.assert(func('1.2'), {'instructions': [`\
+const viewport = page.viewport();
+viewport.deviceScaleFactor = 1.2;
+await page.setViewport(viewport);`,
+    ]});
+    x.assert(func('0.2'), {'instructions': [`\
+const viewport = page.viewport();
+viewport.deviceScaleFactor = 0.2;
+await page.setViewport(viewport);`,
+    ]});
+}
+
 function checkDragAndDrop(x, func) {
     // check tuple argument
     x.assert(func('true'), {
@@ -6860,12 +6878,27 @@ function checkSize(x, func) {
     x.assert(func('(-1.0,2)'), {'error': 'expected integer for width, found float: `-1.0`'});
     x.assert(func('(1,2.0)'), {'error': 'expected integer for height, found float: `2.0`'});
     x.assert(func('(1,-2.0)'), {'error': 'expected integer for height, found float: `-2.0`'});
-    x.assert(func('(1,2)'), {'instructions': ['await page.setViewport({width: 1, height: 2})']});
 
-    x.assert(func('(1,2,)'), {'instructions': ['await page.setViewport({width: 1, height: 2})']});
+    x.assert(func('(1,2)'), {'instructions': [`\
+const viewport = page.viewport();
+viewport.width = 1;
+viewport.height = 2;
+await page.setViewport(viewport);`,
+    ]});
+    x.assert(func('(1,2,)'), {'instructions': [`\
+const viewport = page.viewport();
+viewport.width = 1;
+viewport.height = 2;
+await page.setViewport(viewport);`,
+    ]});
     // Multiline
     x.assert(func('(1,\n-2.0)'), {'error': 'expected integer for height, found float: `-2.0`'});
-    x.assert(func('(1\n,2)'), {'instructions': ['await page.setViewport({width: 1, height: 2})']});
+    x.assert(func('(1\n,2)'), {'instructions': [`\
+const viewport = page.viewport();
+viewport.width = 1;
+viewport.height = 2;
+await page.setViewport(viewport);`,
+    ]});
 }
 
 function checkStoreAttribute(x, func) {
@@ -8791,6 +8824,11 @@ const TO_CHECK = [
         'name': 'define-function',
         'func': checkDefineFunction,
         'toCall': (e, o) => wrapperDefineFunction(parserFuncs.parseDefineFunction, e, o),
+    },
+    {
+        'name': 'device-pixel-ratio',
+        'func': checkDevicePixelRatio,
+        'toCall': (e, o) => wrapper(parserFuncs.parseDevicePixelRatio, e, o),
     },
     {
         'name': 'drag-and-drop',
