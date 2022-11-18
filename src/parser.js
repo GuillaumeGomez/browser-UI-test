@@ -260,6 +260,7 @@ class IdentElement extends Element {
 class NumberElement extends Element {
     constructor(value, startPos, endPos, line, error = null) {
         super('number', value, startPos, endPos, line, error);
+        value = String(value);
         this.isFloat = value.indexOf('.') !== -1;
         this.isNegative = value.startsWith('-');
     }
