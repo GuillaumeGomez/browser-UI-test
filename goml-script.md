@@ -150,6 +150,7 @@ Here's the command list:
  * [`timeout`](#timeout)
  * [`wait-for`](#wait-for)
  * [`wait-for-attribute`](#wait-for-attribute)
+ * [`wait-for-count`](#wait-for-count)
  * [`wait-for-css`](#wait-for-css)
  * [`wait-for-text`](#wait-for-text)
  * [`write`](#write)
@@ -1414,6 +1415,19 @@ wait-for-attribute: ("#element", {"class": "hello", "id": "some-id"})
 // Same with an XPath:
 wait-for-attribute: ("//*[@id='element']", {"class": "hello"})
 wait-for-attribute: ("//*[@id='element']", {"class": "hello", "id": "some-id"})
+```
+
+#### wait-for-count
+
+**wait-for-count** command waits for the page to contain exactly the number of elements which match the provided selector. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+
+Examples:
+
+```
+wait-for-count: ("#element", 1)
+
+// Same with an XPath:
+wait-for-count: ("//*[@id='element']", 1)
 ```
 
 #### wait-for-css
