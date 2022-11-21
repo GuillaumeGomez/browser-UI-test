@@ -71,7 +71,7 @@ function innerParseCssAttribute(parser, argName, varName, callback) {
         if (entry['value'] === undefined) {
             warnings.push(`No value for key \`${entry['key'].getErrorText()}\``);
             continue;
-        } else if (entry['key'].isRecursive() === true) {
+        } else if (entry['value'].isRecursive() === true) {
             warnings.push(`Ignoring recursive entry with key \`${entry['key'].getErrorText()}\``);
             continue;
         }
@@ -103,8 +103,8 @@ function innerParseCssAttribute(parser, argName, varName, callback) {
 //
 // * ("CSS selector", "attribute name", "attribute value")
 // * ("XPath", "attribute name", "attribute value")
-// * ("CSS selector", [JSON object])
-// * ("XPath", [JSON object])
+// * ("CSS selector", JSON dict)
+// * ("XPath", JSON dict)
 function parseAttribute(parser) {
     return innerParseCssAttribute(parser, 'attribute', 'parseAttributeElem',
         (key, value) => `e.setAttribute("${key}","${value}");`);
@@ -114,8 +114,8 @@ function parseAttribute(parser) {
 //
 // * ("CSS selector", "CSS property name", "CSS property value")
 // * ("XPath", "CSS property name", "CSS property value")
-// * ("CSS selector", [JSON object])
-// * ("XPath", [JSON object])
+// * ("CSS selector", JSON dict)
+// * ("XPath", JSON dict)
 function parseCss(parser) {
     return innerParseCssAttribute(parser, 'CSS property', 'parseCssElem',
         (key, value) => `e.style["${key}"] = "${value}";`);

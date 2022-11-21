@@ -2064,6 +2064,11 @@ function checkAssertLocalStorageInner(x, func, comp) {
     x.assert(func('hello'), {'error': 'expected JSON, found `hello`'});
     x.assert(func('{').error !== undefined); // JSON syntax error
     x.assert(func('{"a": x}'), {'error': 'Only `null` ident is allowed, found `x`'});
+    x.assert(func('{"a": {"a": "x"}}'), {
+        'instructions': [],
+        'warnings': ['Ignoring recursive entry with key `"a"`'],
+        'wait': false,
+    });
 
     x.assert(func('{"a": 1}'), {
         'instructions': [`\
@@ -3523,6 +3528,11 @@ function checkAttribute(x, func) {
     x.assert(func('("a", "b", "c", ALL)'), {
         'error': 'expected `("CSS selector" or "XPath", "attribute name", "attribute value")` or ' +
             '`("CSS selector" or "XPath", [JSON object])`',
+    });
+    x.assert(func('("x", {"a": {"a": "x"}})'), {
+        'instructions': [],
+        'wait': false,
+        'warnings': ['Ignoring recursive entry with key `"a"`'],
     });
 
     x.assert(func('("a", "b", "c")'), {
@@ -5503,6 +5513,11 @@ function checkCss(x, func) {
             'a string',
     });
     x.assert(func('("a", "", "c")'), {'error': 'attribute name (second argument) cannot be empty'});
+    x.assert(func('("x", {"a": {"a": "x"}})'), {
+        'instructions': [],
+        'wait': false,
+        'warnings': ['Ignoring recursive entry with key `"a"`'],
+    });
 
     x.assert(func('("a", "b", "c")'), {
         'instructions': [
@@ -6330,6 +6345,10 @@ function checkLocalStorage(x, func) {
     x.assert(func('hello'), {'error': 'expected JSON, found `hello`'});
     x.assert(func('{').error !== undefined); // JSON syntax error
     x.assert(func('{"a": x}'), {'error': 'Only `null` ident is allowed, found `x`'});
+    x.assert(func('{"a": {"a": "x"}}'), {
+        'instructions': [],
+        'warnings': ['Ignoring recursive entry with key `"a"`'],
+    });
 
     x.assert(func('{"a": 1}'), {
         'instructions': [
@@ -8461,6 +8480,65 @@ parseWaitForCssValue + "\`)");
     });
 }
 
+function checkWaitForLocalStorage(x, func) {
+    x.assert(func(''), {
+        'error': 'expected JSON, found nothing',
+    });
+    x.assert(func('hello'), {
+        'error': 'expected JSON, found `hello`',
+    });
+    x.assert(func('{"a": b}'), {
+        'error': 'Only `null` ident is allowed, found `b`',
+    });
+
+    x.assert(func('{}'), {
+        'instructions': [],
+        'wait': false,
+    });
+    x.assert(func('{"a": {"b": "c"}}'), {
+        'instructions': [],
+        'warnings': ['Ignoring recursive entry with key `"a"`'],
+        'wait': false,
+    });
+    x.assert(func('{"a": "b"}'), {
+        'instructions': [`\
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForLocalStorage = null;
+while (true) {
+    parseWaitForLocalStorage = await page.evaluate(() => {
+        const errors = [];
+        const parseWaitForLocalStorageDict = {"a":"b"};
+        for (const [parseWaitForLocalStorageKey, parseWaitForLocalStorageValue] of Object.entries(\
+parseWaitForLocalStorageDict)) {
+            let parseWaitForLocalStorage = window.localStorage.getItem(parseWaitForLocalStorageKey);
+            if (parseWaitForLocalStorage != parseWaitForLocalStorageValue) {
+                errors.push("localStorage item \\"" + parseWaitForLocalStorageKey + "\\" (of value \
+\\"" + parseWaitForLocalStorageValue + "\\") != \\"" + parseWaitForLocalStorage + "\\"");
+            }
+        }
+        return errors;
+    });
+    if (parseWaitForLocalStorage.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const errs = parseWaitForLocalStorage.join(", ");
+        throw new Error("The following local storage entries still don't match: [" + errs + "]");
+    }
+}`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+}
+
 function checkWaitForText(x, func) {
     x.assert(func(''), {
         'error': 'expected a tuple with two strings, found nothing',
@@ -9088,6 +9166,11 @@ const TO_CHECK = [
         'name': 'wait-for-css',
         'func': checkWaitForCss,
         'toCall': (e, o) => wrapper(parserFuncs.parseWaitForCss, e, o),
+    },
+    {
+        'name': 'wait-for-local-storage',
+        'func': checkWaitForLocalStorage,
+        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForLocalStorage, e, o),
     },
     {
         'name': 'wait-for-text',

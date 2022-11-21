@@ -1161,7 +1161,7 @@ function parseAssertLocalStorageInner(parser, assertFalse) {
         if (entry['value'] === undefined) {
             warnings.push(`No value for key \`${entry['key'].getErrorText()}\``);
             continue;
-        } else if (entry['key'].isRecursive() === true) {
+        } else if (entry['value'].isRecursive() === true) {
             warnings.push(`Ignoring recursive entry with key \`${entry['key'].getErrorText()}\``);
             continue;
         }
