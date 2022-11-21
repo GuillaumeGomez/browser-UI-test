@@ -28,7 +28,7 @@ function runAsyncUiTest(x, file, output, tests_queue) {
         output.replaceAll('$CURRENT_DIR', utils.getCurrentDir()),
         file,
         false,
-        s => testOutput += s,
+        s => testOutput += s + '\n',
     ).finally(() => {
         print(`Finished testing "${file}"`);
         if (testOutput.length > 0) {
