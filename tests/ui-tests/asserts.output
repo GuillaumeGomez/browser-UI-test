@@ -1,6 +1,6 @@
 => Starting doc-ui tests...
 
-assert-text... FAILED
+asserts... FAILED
 [ERROR] (line 5) Error: Evaluation failed: The following errors happened: [`Another page!` starts with `Another` (for STARTS_WITH check)]: for command `assert-text-false: ("header", "Another", [ENDS_WITH, STARTS_WITH])`
 [ERROR] (line 6) Error: Evaluation failed: The following errors happened: [`Another page!` starts with `Another` (for STARTS_WITH check)]: for command `assert-text-false: ("header", "Another", STARTS_WITH)`
 [ERROR] (line 9) Error: Evaluation failed: The following errors happened (for selector `.content`): [Property `className` (`content`) does not end with `con`]: for command `assert-property: (".content", {"className": "con"}, [ENDS_WITH, STARTS_WITH])`
