@@ -1,0 +1,12 @@
+// This test ensures that the `wait-for-count` command is behaving like expected.
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+timeout: 500
+// Shouldn't wait here since it's already the case.
+wait-for-count: ("#js-create-elem", 1)
+click: "#js-create-elem"
+// Should wait for 250ms here.
+wait-for-count: (".random-class", 2)
+// This next one should fail.
+wait-for-count: (".random-class", 3)
+// Check that the script won't stop running anything after the previous command failed.
+wait-for-count: ("//*[@class='random-class']", 2)

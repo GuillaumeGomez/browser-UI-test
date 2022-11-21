@@ -7490,10 +7490,10 @@ function checkWaitForAttribute(x, func) {
         'error': 'expected a tuple with a string and a JSON dict, found `(1)`',
     });
     x.assert(func('(1, 2)'), {
-        'error': 'expected a CSS selector or an XPath as first tuple element, found `a number`',
+        'error': 'expected a CSS selector or an XPath as first tuple element, found `1` (a number)',
     });
     x.assert(func('("a", 2)'), {
-        'error': 'expected a JSON dict as second tuple element, found `a number`',
+        'error': 'expected a JSON dict as second tuple element, found `2` (a number)',
     });
     x.assert(func('("a", {"b": {"a": 2}})'), {
         'error': 'only string and number types are allowed as value, found `{"a": 2}` (a json)',
@@ -7882,6 +7882,80 @@ parseWaitForAttrValue + "\`)");
     });
 }
 
+function checkWaitForCount(x, func) {
+    x.assert(func(''), {
+        'error': 'expected a tuple with a string and a number, found nothing',
+    });
+    x.assert(func('hello'), {
+        'error': 'expected a tuple with a string and a number, found `hello`',
+    });
+    x.assert(func('(1)'), {
+        'error': 'expected a tuple with a string and a number, found `(1)`',
+    });
+    x.assert(func('(1, 2)'), {
+        'error': 'expected a CSS selector or an XPath as first tuple element, found `1` (a number)',
+    });
+    x.assert(func('("a", "a")'), {
+        'error': 'expected a number as second tuple element, found `"a"` (a string)',
+    });
+
+    x.assert(func('("a", 3)'), {
+        'instructions': [
+            `\
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForCount = null;
+while (true) {
+    parseWaitForCount = await page.$$("a");
+    parseWaitForCount = parseWaitForCount.length;
+    if (parseWaitForCount === 3) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error("Still didn't find 3 instance of \\"a\\" (found " + parseWaitForCount \
++ ")");
+    }
+}`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    x.assert(func('("//*[@class=\'a\']", 3)'), {
+        'instructions': [
+            `\
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForCount = null;
+while (true) {
+    parseWaitForCount = await page.$x("//*[@class=\\'a\\']");
+    parseWaitForCount = parseWaitForCount.length;
+    if (parseWaitForCount === 3) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error("Still didn't find 3 instance of \\"//*[@class=\\'a\\']\\" (found " + \
+parseWaitForCount + ")");
+    }
+}`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+}
+
 function checkWaitForCss(x, func) {
     x.assert(func(''), {
         'error': 'expected a tuple with a string and a JSON dict, found nothing',
@@ -7893,10 +7967,10 @@ function checkWaitForCss(x, func) {
         'error': 'expected a tuple with a string and a JSON dict, found `(1)`',
     });
     x.assert(func('(1, 2)'), {
-        'error': 'expected a CSS selector or an XPath as first tuple element, found `a number`',
+        'error': 'expected a CSS selector or an XPath as first tuple element, found `1` (a number)',
     });
     x.assert(func('("a", 2)'), {
-        'error': 'expected a JSON dict as second tuple element, found `a number`',
+        'error': 'expected a JSON dict as second tuple element, found `2` (a number)',
     });
     x.assert(func('("a", {"b": {"a": 2}})'), {
         'error': 'only string and number types are allowed as value, found `{"a": 2}` (a json)',
@@ -8398,10 +8472,10 @@ function checkWaitForText(x, func) {
         'error': 'expected a tuple with two strings, found `(1)`',
     });
     x.assert(func('(1, 2)'), {
-        'error': 'expected a CSS selector or an XPath as first tuple element, found `a number`',
+        'error': 'expected a CSS selector or an XPath as first tuple element, found `1` (a number)',
     });
     x.assert(func('("a", 2)'), {
-        'error': 'expected a string as second tuple element, found `a number`',
+        'error': 'expected a string as second tuple element, found `2` (a number)',
     });
 
     // Check CSS selector.
@@ -9004,6 +9078,11 @@ const TO_CHECK = [
         'name': 'wait-for-attribute',
         'func': checkWaitForAttribute,
         'toCall': (e, o) => wrapper(parserFuncs.parseWaitForAttribute, e, o),
+    },
+    {
+        'name': 'wait-for-count',
+        'func': checkWaitForCount,
+        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForCount, e, o),
     },
     {
         'name': 'wait-for-css',

@@ -52,7 +52,7 @@ header {
 				<div>Some text2</div>
 			</div>
 		</div>
-		<input id="the-input" style="height:10px;">
+		<input id="the-input" style="height:10px;" class="random-class">
 		<input id="useless.input" style="height:10px;">
 		<p id="another-one" style="font-size:14px;">hey</p>
 		<button id="js-call" onclick="change_style()">hey</button>
@@ -79,6 +79,7 @@ setTimeout(() => {
     document.getElementById("created-one").setAttribute("data-a", "x");
     document.getElementById("created-one").style.height = "20px";
     document.getElementById("created-one").innerText = "ding";
+    document.getElementById("created-one").className = "random-class";
   }, 50);
 }, 50);
 }
