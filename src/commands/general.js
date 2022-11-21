@@ -9,6 +9,27 @@ const {
     indentString,
 } = require('./utils.js');
 
+function getWaitForElems(varName, code, error) {
+    return [`\
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let ${varName} = null;`,
+    `\
+while (true) {
+${indentString(code, 1)}
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+${indentString(error, 2)}
+    }
+}`,
+    ];
+}
+
 function waitForElement(selector, varName) {
     let code;
     let kind;
@@ -30,25 +51,11 @@ if (${varName} !== null) {
 }`;
     }
 
-    // `page._timeoutSettings.timeout` is an internal thing so better be careful at any puppeteer
-    // version update!
-    return [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let ${varName} = null;`,
-    `\
-while (true) {
-${indentString(code, 1)}
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        throw new Error("The following ${kind} \\"${selector.value}\\" was not found");
-    }
-}`];
+    return getWaitForElems(
+        varName,
+        code,
+        `throw new Error("The following ${kind} \\"${selector.value}\\" was not found");`,
+    );
 }
 
 // Possible inputs:
@@ -116,12 +123,12 @@ function waitForInitializer(parser, errorMessage, allowEmptyValues) {
     } else if (tuple[0].kind !== 'string') {
         return {
             'error': 'expected a CSS selector or an XPath as first tuple element, ' +
-                `found \`${tuple[0].getArticleKind()}\``,
+                `found \`${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
         };
     } else if (tuple[1].kind !== 'json') {
         return {
             'error': 'expected a JSON dict as second tuple element, ' +
-                `found \`${tuple[1].getArticleKind()}\``,
+                `found \`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
         };
     }
     const selector = tuple[0].getSelector();
@@ -145,6 +152,72 @@ function waitForInitializer(parser, errorMessage, allowEmptyValues) {
         'warnings': entries.warnings,
         'pseudo': !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '',
         'propertyDict': propertyDict,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector", number)
+// * ("XPath", number)
+function parseWaitForCount(parser) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {
+            'error': 'expected a tuple with a string and a number, found nothing',
+        };
+    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
+        return {
+            'error': 'expected a tuple with a string and a number, ' +
+                `found \`${parser.getRawArgs()}\``,
+        };
+    }
+    const tuple = elems[0].getRaw();
+    if (tuple.length !== 2) {
+        return {
+            'error': 'expected a tuple with a string and a number, ' +
+                `found \`${parser.getRawArgs()}\``,
+        };
+    } else if (tuple[0].kind !== 'string') {
+        return {
+            'error': 'expected a CSS selector or an XPath as first tuple element, ' +
+                `found \`${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
+        };
+    } else if (tuple[1].kind !== 'number') {
+        return {
+            'error': 'expected a number as second tuple element, ' +
+                `found \`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
+        };
+    }
+    const selector = tuple[0].getSelector();
+    if (selector.error !== undefined) {
+        return selector;
+    }
+
+    const count = tuple[1].getRaw();
+    const varName = 'parseWaitForCount';
+    let method = '$$';
+
+    if (selector.isXPath) {
+        method = '$x';
+    }
+
+    const instructions = getWaitForElems(
+        varName,
+        `\
+${varName} = await page.${method}("${selector.value}");
+${varName} = ${varName}.length;
+if (${varName} === ${count}) {
+    break;
+}`,
+        `throw new Error("Still didn't find ${count} instance of \\"${selector.value}\\" (found " \
++ ${varName} + ")");`,
+    );
+
+    return {
+        'instructions': [instructions.join('\n')],
+        'wait': false,
+        'checkResult': true,
     };
 }
 
@@ -320,12 +393,12 @@ function parseWaitForText(parser) {
     } else if (tuple[0].kind !== 'string') {
         return {
             'error': 'expected a CSS selector or an XPath as first tuple element, ' +
-                `found \`${tuple[0].getArticleKind()}\``,
+                `found \`${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
         };
     } else if (tuple[1].kind !== 'string') {
         return {
             'error': 'expected a string as second tuple element, ' +
-                `found \`${tuple[1].getArticleKind()}\``,
+                `found \`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
         };
     }
     const selector = tuple[0].getSelector();
@@ -507,6 +580,7 @@ module.exports = {
     'parseLocalStorage': parseLocalStorage,
     'parseWaitFor': parseWaitFor,
     'parseWaitForAttribute': parseWaitForAttribute,
+    'parseWaitForCount': parseWaitForCount,
     'parseWaitForCss': parseWaitForCss,
     'parseWaitForText': parseWaitForText,
     'parseScreenshot': parseScreenshot,

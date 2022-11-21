@@ -1,0 +1,7 @@
+=> Starting doc-ui tests...
+
+wait-for-count... FAILED
+[ERROR] (line 10) Error: Still didn't find 3 instance of ".random-class" (found 2): for command `wait-for-count: (".random-class", 3)`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed
