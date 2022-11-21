@@ -223,6 +223,90 @@ if (${varName} === ${count}) {
 
 // Possible inputs:
 //
+// * JSON dict
+function parseWaitForLocalStorage(parser) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {'error': 'expected JSON, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'json') {
+        return {'error': `expected JSON, found \`${parser.getRawArgs()}\``};
+    }
+
+    const json = elems[0].getRaw();
+    let warnings = [];
+
+    let d = '';
+    for (const entry of json) {
+        if (entry['value'] === undefined) {
+            warnings.push(`No value for key \`${entry['key'].getErrorText()}\``);
+            continue;
+        } else if (entry['value'].isRecursive() === true) {
+            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getErrorText()}\``);
+            continue;
+        }
+        const key_s = entry['key'].getStringValue();
+        let value_s;
+        if (entry['value'].kind === 'ident') {
+            value_s = entry['value'].getStringValue();
+            if (value_s !== 'null') {
+                return {'error': `Only \`null\` ident is allowed, found \`${value_s}\``};
+            }
+        } else {
+            value_s = `"${entry['value'].getStringValue()}"`;
+        }
+        if (d.length > 0) {
+            d += ',';
+        }
+        d += `"${key_s}":${value_s}`;
+    }
+    warnings = warnings.length > 0 ? warnings : undefined;
+    if (d.length === 0) {
+        return {
+            'instructions': [],
+            'warnings': warnings,
+            'wait': false,
+        };
+    }
+
+    const varName = 'parseWaitForLocalStorage';
+    const varDict = `${varName}Dict`;
+    const varKey = `${varName}Key`;
+    const varValue = `${varName}Value`;
+
+    const instructions = getWaitForElems(
+        varName,
+        `\
+${varName} = await page.evaluate(() => {
+    const errors = [];
+    const ${varDict} = {${d}};
+    for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+        let ${varName} = window.localStorage.getItem(${varKey});
+        if (${varName} != ${varValue}) {
+            errors.push("localStorage item \\"" + ${varKey} + "\\" (of value \\"" + ${varValue} + \
+"\\") != \\"" + ${varName} + "\\"");
+        }
+    }
+    return errors;
+});
+if (${varName}.length === 0) {
+    break;
+}`,
+        `\
+const errs = ${varName}.join(", ");
+throw new Error("The following local storage entries still don't match: [" + errs + "]");`,
+    );
+
+    return {
+        'instructions': [instructions.join('\n')],
+        'wait': false,
+        'checkResult': true,
+        'warnings': warnings,
+    };
+}
+
+// Possible inputs:
+//
 // * ("CSS selector", {"CSS property name": "expected CSS property value"})
 // * ("XPath", {"CSS property name": "expected CSS property value"})
 function parseWaitForCss(parser) {
@@ -470,7 +554,7 @@ function parseLocalStorage(parser) {
         if (entry['value'] === undefined) {
             warnings.push(`No value for key \`${entry['key'].getErrorText()}\``);
             continue;
-        } else if (entry['key'].isRecursive() === true) {
+        } else if (entry['value'].isRecursive() === true) {
             warnings.push(`Ignoring recursive entry with key \`${entry['key'].getErrorText()}\``);
             continue;
         }
@@ -582,6 +666,7 @@ module.exports = {
     'parseWaitForAttribute': parseWaitForAttribute,
     'parseWaitForCount': parseWaitForCount,
     'parseWaitForCss': parseWaitForCss,
+    'parseWaitForLocalStorage': parseWaitForLocalStorage,
     'parseWaitForText': parseWaitForText,
     'parseScreenshot': parseScreenshot,
     'innerParseScreenshot': innerParseScreenshot,
