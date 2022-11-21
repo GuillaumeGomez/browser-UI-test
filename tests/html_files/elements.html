@@ -60,6 +60,7 @@ header {
 		<button id="invalid-js-call" onclick="invalid_js()">hey</button>
 		<button id="js-create-elem" onclick="addElem()">hey</button>
 		<button id="js-local-storage" onclick="updateLocalStorage()">hey</button>
+		<button id="js-wait-local-storage" onclick="updateWaitLocalStorage()">hey</button>
 		<script>
 function change_style() {
 setTimeout(() => { document.getElementById("js-call").style.marginTop = "12px"; }, 250);
@@ -88,6 +89,11 @@ null.hello();
 }
 function updateLocalStorage() {
 window.localStorage.setItem("something", "hello");
+}
+function updateWaitLocalStorage() {
+setTimeout(() => {
+  window.localStorage.setItem("something2", "hello hi");
+}, 100);
 }</script>
 	</body>
 </html>

@@ -9,4 +9,4 @@ wait-for-count: (".random-class", 2)
 // This next one should fail.
 wait-for-count: (".random-class", 3)
 // Check that the script won't stop running anything after the previous command failed.
-wait-for-count: ("//*[@class='random-class']", 2)
+assert-count: ("//*[@class='random-class']", 3)
