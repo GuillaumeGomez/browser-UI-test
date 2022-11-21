@@ -19,6 +19,7 @@
         "all-test": "node tests/test-js/all.js",
         "api-test": "node tests/test-js/api.js",
         "ui-test": "node tests/test-js/ui.js",
+        "doc-test": "node tests/test-js/doc.js",
         "parser-test": "node tests/test-js/parser.js",
         "exported-test": "node tests/test-js/exported_items.js",
         "lint": "eslint src tests/test-js",

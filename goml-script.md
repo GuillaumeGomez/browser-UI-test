@@ -144,6 +144,7 @@ Here's the command list:
  * [`store-document-property`](#store-document-property)
  * [`store-local-storage`](#store-local-storage)
  * [`store-property`](#store-property)
+ * [`store-text`](#store-text)
  * [`store-value`](#store-value)
  * [`store-window-property`](#store-window-property)
  * [`text`](#text)
@@ -152,6 +153,7 @@ Here's the command list:
  * [`wait-for-attribute`](#wait-for-attribute)
  * [`wait-for-count`](#wait-for-count)
  * [`wait-for-css`](#wait-for-css)
+ * [`wait-for-local-storage`](#wait-for-local-storage)
  * [`wait-for-text`](#wait-for-text)
  * [`write`](#write)
 
@@ -1373,7 +1375,7 @@ text: ("#button", "hello")
 text: ("//*[@id='button']", "hello")
 ```
 
-### timeout
+#### timeout
 
 **timeout** command allows you to update the timeout of pages' operations. The value is in milliseconds. If you set it to `0`, it'll wait indefinitely (so use it cautiously!). The default value is 30 seconds. Example:
 
@@ -1443,6 +1445,17 @@ wait-for-css: ("#element", {"font-size": "12px", "margin-top": "12px"})
 // Same with an XPath:
 wait-for-css: ("//*[@id='element']", {"font-size": "12px"})
 wait-for-css: ("//*[@id='element']", {"font-size": "12px", "margin-top": "12px"})
+```
+
+#### wait-for-local-storage
+
+**wait-for-local-storage** command waits for the local storage keys to have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+
+Examples:
+
+```
+wait-for-local-storage: {"key": "value"}
+wait-for-local-storage: {"key": "value", "key2": "value2"}
 ```
 
 #### wait-for-text
