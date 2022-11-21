@@ -142,7 +142,7 @@ Here's the command list:
  * [`store-attribute`](#store-attribute)
  * [`store-css`](#store-css)
  * [`store-document-property`](#store-document-property)
- * [`store-local-variable`](#store-local-variable)
+ * [`store-local-storage`](#store-local-storage)
  * [`store-property`](#store-property)
  * [`store-value`](#store-value)
  * [`store-window-property`](#store-window-property)
@@ -1303,9 +1303,9 @@ store-document-property: (variable_name, "URL")
 
 For more information about variables, read the [variables section](#variables).
 
-#### store-local-variable
+#### store-local-storage
 
-**store-local-variable** command stores a value from the local storage into a variable. Examples:
+**store-local-storage** command stores a value from the local storage into a variable. Examples:
 
 ```
 local-storage: {"key": "value"}

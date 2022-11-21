@@ -1,0 +1,14 @@
+// This test ensures that the `text` command works as expected.
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+// Checking for input.
+assert-text: ("#the-input", "")
+text: ("#the-input", "a")
+assert-text: ("#the-input", "a")
+text: ("#the-input", "")
+assert-text: ("#the-input", "")
+// Checking for non-input.
+assert-text: ("header", "Another page!")
+text: ("header", "a")
+assert-text: ("header", "a")
+text: ("header", "")
+assert-text: ("header", "")
