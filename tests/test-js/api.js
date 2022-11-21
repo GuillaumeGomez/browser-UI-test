@@ -2064,6 +2064,11 @@ function checkAssertLocalStorageInner(x, func, comp) {
     x.assert(func('hello'), {'error': 'expected JSON, found `hello`'});
     x.assert(func('{').error !== undefined); // JSON syntax error
     x.assert(func('{"a": x}'), {'error': 'Only `null` ident is allowed, found `x`'});
+    x.assert(func('{"a": {"a": "x"}}'), {
+        'instructions': [],
+        'warnings': ['Ignoring recursive entry with key `"a"`'],
+        'wait': false,
+    });
 
     x.assert(func('{"a": 1}'), {
         'instructions': [`\
@@ -3523,6 +3528,11 @@ function checkAttribute(x, func) {
     x.assert(func('("a", "b", "c", ALL)'), {
         'error': 'expected `("CSS selector" or "XPath", "attribute name", "attribute value")` or ' +
             '`("CSS selector" or "XPath", [JSON object])`',
+    });
+    x.assert(func('("x", {"a": {"a": "x"}})'), {
+        'instructions': [],
+        'wait': false,
+        'warnings': ['Ignoring recursive entry with key `"a"`'],
     });
 
     x.assert(func('("a", "b", "c")'), {
@@ -5503,6 +5513,11 @@ function checkCss(x, func) {
             'a string',
     });
     x.assert(func('("a", "", "c")'), {'error': 'attribute name (second argument) cannot be empty'});
+    x.assert(func('("x", {"a": {"a": "x"}})'), {
+        'instructions': [],
+        'wait': false,
+        'warnings': ['Ignoring recursive entry with key `"a"`'],
+    });
 
     x.assert(func('("a", "b", "c")'), {
         'instructions': [
@@ -6330,6 +6345,10 @@ function checkLocalStorage(x, func) {
     x.assert(func('hello'), {'error': 'expected JSON, found `hello`'});
     x.assert(func('{').error !== undefined); // JSON syntax error
     x.assert(func('{"a": x}'), {'error': 'Only `null` ident is allowed, found `x`'});
+    x.assert(func('{"a": {"a": "x"}}'), {
+        'instructions': [],
+        'warnings': ['Ignoring recursive entry with key `"a"`'],
+    });
 
     x.assert(func('{"a": 1}'), {
         'instructions': [
