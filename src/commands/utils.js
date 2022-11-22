@@ -251,6 +251,22 @@ function indentString(s, indentLevel) {
     }).join('\n');
 }
 
+function checkJsonEntry(json, callback) {
+    const warnings = [];
+
+    for (const entry of json) {
+        if (entry['value'] === undefined) {
+            warnings.push(`No value for key \`${entry['key'].getErrorText()}\``);
+            continue;
+        } else if (entry['value'].isRecursive() === true) {
+            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getErrorText()}\``);
+            continue;
+        }
+        callback(entry);
+    }
+    return warnings.length > 0 ? warnings : undefined;
+}
+
 module.exports = {
     'getAndSetElements': getAndSetElements,
     'checkIntegerTuple': checkIntegerTuple,
@@ -260,4 +276,5 @@ module.exports = {
     'fillEnabledChecks': fillEnabledChecks,
     'buildPropertyDict': buildPropertyDict,
     'indentString': indentString,
+    'checkJsonEntry': checkJsonEntry,
 };

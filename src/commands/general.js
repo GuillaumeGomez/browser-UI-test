@@ -1,7 +1,7 @@
 // Contains commands which don't really have a "category".
 
 const path = require('path');
-const { getAndSetElements } = require('./utils.js');
+const { getAndSetElements, checkJsonEntry } = require('./utils.js');
 
 // Possible inputs:
 //
@@ -14,33 +14,29 @@ function parseLocalStorage(parser) {
     } else if (elems.length !== 1 || elems[0].kind !== 'json') {
         return {'error': `expected JSON, found \`${parser.getRawArgs()}\``};
     }
+
     const json = elems[0].getRaw();
     const content = [];
-    let warnings = [];
+    let error = null;
 
-    for (let i = 0; i < json.length; ++i) {
-        const entry = json[i];
-
-        if (entry['value'] === undefined) {
-            warnings.push(`No value for key \`${entry['key'].getErrorText()}\``);
-            continue;
-        } else if (entry['value'].isRecursive() === true) {
-            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getErrorText()}\``);
-            continue;
+    const warnings = checkJsonEntry(json, entry => {
+        if (error !== null) {
+            return;
         }
         const key_s = entry['key'].getStringValue();
         const value_s = entry['value'].getStringValue();
         if (entry['value'].kind === 'ident') {
             if (value_s !== 'null') {
-                return {'error': `Only \`null\` ident is allowed, found \`${value_s}\``};
+                error = `Only \`null\` ident is allowed, found \`${value_s}\``;
             }
             content.push(`localStorage.removeItem("${key_s}");`);
         } else {
             content.push(`localStorage.setItem("${key_s}", "${value_s}");`);
         }
-    }
-    warnings = warnings.length > 0 ? warnings : undefined;
-    if (content.length === 0) {
+    });
+    if (error !== null) {
+        return {'error': error};
+    } else if (content.length === 0) {
         return {
             'instructions': [],
             'warnings': warnings,

@@ -8,6 +8,7 @@ const {
     getInsertStrings,
     validateJson,
     indentString,
+    checkJsonEntry,
 } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 
@@ -1153,24 +1154,21 @@ function parseAssertLocalStorageInner(parser, assertFalse) {
     } else if (elems.length !== 1 || elems[0].kind !== 'json') {
         return {'error': `expected JSON, found \`${parser.getRawArgs()}\``};
     }
-    const json = elems[0].getRaw();
-    let warnings = [];
 
+    const json = elems[0].getRaw();
     let d = '';
-    for (const entry of json) {
-        if (entry['value'] === undefined) {
-            warnings.push(`No value for key \`${entry['key'].getErrorText()}\``);
-            continue;
-        } else if (entry['value'].isRecursive() === true) {
-            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getErrorText()}\``);
-            continue;
+    let error = null;
+
+    const warnings = checkJsonEntry(json, entry => {
+        if (error !== null) {
+            return;
         }
         const key_s = entry['key'].getStringValue();
         let value_s;
         if (entry['value'].kind === 'ident') {
             value_s = entry['value'].getStringValue();
             if (value_s !== 'null') {
-                return {'error': `Only \`null\` ident is allowed, found \`${value_s}\``};
+                error = `Only \`null\` ident is allowed, found \`${value_s}\``;
             }
         } else {
             value_s = `"${entry['value'].getStringValue()}"`;
@@ -1179,9 +1177,10 @@ function parseAssertLocalStorageInner(parser, assertFalse) {
             d += ',';
         }
         d += `"${key_s}":${value_s}`;
-    }
-    warnings = warnings.length > 0 ? warnings : undefined;
-    if (d.length === 0) {
+    });
+    if (error !== null) {
+        return {'error': error};
+    } else if (d.length === 0) {
         return {
             'instructions': [],
             'warnings': warnings,
