@@ -1,6 +1,6 @@
 // Commands making changes the current page's DOM.
 
-const { getAndSetElements } = require('./utils.js');
+const { getAndSetElements, checkJsonEntry } = require('./utils.js');
 
 function innerParseCssAttribute(parser, argName, varName, callback) {
     const elems = parser.elems;
@@ -60,29 +60,19 @@ function innerParseCssAttribute(parser, argName, varName, callback) {
                 `found ${tuple[1].getArticleKind()}`,
         };
     }
+
     let code = '';
-    let warnings = [];
     const json = tuple[1].getRaw();
     varName += 'Json';
 
-    for (let i = 0; i < json.length; ++i) {
-        const entry = json[i];
-
-        if (entry['value'] === undefined) {
-            warnings.push(`No value for key \`${entry['key'].getErrorText()}\``);
-            continue;
-        } else if (entry['value'].isRecursive() === true) {
-            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getErrorText()}\``);
-            continue;
-        }
+    const warnings = checkJsonEntry(json, entry => {
         const key_s = entry['key'].getStringValue();
         const value_s = entry['value'].getStringValue();
         if (code.length !== 0) {
             code += '\n';
         }
         code += `await page.evaluate(e => {\n${callback(key_s, value_s)}\n}, ${varName});`;
-    }
-    warnings = warnings.length > 0 ? warnings : undefined;
+    });
     if (code.length === 0) {
         return {
             'instructions': [],
