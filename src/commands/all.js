@@ -92,7 +92,9 @@ module.exports = {
     'parseWaitForAttribute': wait.parseWaitForAttribute,
     'parseWaitForCss': wait.parseWaitForCss,
     'parseWaitForCount': wait.parseWaitForCount,
+    'parseWaitForDocumentProperty': wait.parseWaitForDocumentProperty,
     'parseWaitForLocalStorage': wait.parseWaitForLocalStorage,
     'parseWaitForText': wait.parseWaitForText,
+    'parseWaitForWindowProperty': wait.parseWaitForWindowProperty,
     'parseWrite': input.parseWrite,
 };

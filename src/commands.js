@@ -83,8 +83,10 @@ const ORDERS = {
     'wait-for-attribute': commands.parseWaitForAttribute,
     'wait-for-css': commands.parseWaitForCss,
     'wait-for-count': commands.parseWaitForCount,
+    'wait-for-document-property': commands.parseWaitForDocumentProperty,
     'wait-for-local-storage': commands.parseWaitForLocalStorage,
     'wait-for-text': commands.parseWaitForText,
+    'wait-for-window-property': commands.parseWaitForWindowProperty,
     'write': commands.parseWrite,
 };
 

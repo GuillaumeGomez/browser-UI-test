@@ -8480,6 +8480,114 @@ parseWaitForCssValue + "\`)");
     });
 }
 
+function checkWaitForObjectProperty(x, func, name) {
+    x.assert(func(''), {
+        'error': 'expected JSON, found nothing',
+    });
+    x.assert(func('hello'), {
+        'error': 'expected JSON, found `hello`',
+    });
+    x.assert(func('{"a": b}'), {
+        'error': 'Only `null` ident is allowed, found `b`',
+    });
+
+    x.assert(func('{}'), {
+        'instructions': [],
+        'wait': false,
+    });
+    x.assert(func('{"a": {"b": "c"}}'), {
+        'instructions': [],
+        'warnings': ['Ignoring recursive entry with key `"a"`'],
+        'wait': false,
+    });
+    x.assert(func('{"a": "b"}'), {
+        'instructions': [`\
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let property = null;
+while (true) {
+    property = await page.evaluate(() => {
+        const errors = [];
+        const propertyDict = {"a":"b"};
+        for (const [propertyKey, propertyValue] of Object.entries(propertyDict)) {
+            if (${name}[propertyKey] === undefined) {
+                errors.push("${name} doesn't have a property named \`" + propertyKey + "\`");
+            }
+            let property = ${name}[propertyKey];
+            if (property != propertyValue) {
+                errors.push("${name} item \\"" + propertyKey + "\\" (of value \\"" + \
+propertyValue + "\\") != \\"" + property + "\\"");
+            }
+        }
+        return errors;
+    });
+    if (property.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const errs = property.join(", ");
+        throw new Error("The following ${name} properties still don't match: [" + errs + "]");
+    }
+}`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('{\'"a\':\n"\'b"\n}'), {
+        'instructions': [`\
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let property = null;
+while (true) {
+    property = await page.evaluate(() => {
+        const errors = [];
+        const propertyDict = {"\\"a":"\\'b"};
+        for (const [propertyKey, propertyValue] of Object.entries(propertyDict)) {
+            if (${name}[propertyKey] === undefined) {
+                errors.push("${name} doesn't have a property named \`" + propertyKey + "\`");
+            }
+            let property = ${name}[propertyKey];
+            if (property != propertyValue) {
+                errors.push("${name} item \\"" + propertyKey + "\\" (of value \\"" + \
+propertyValue + "\\") != \\"" + property + "\\"");
+            }
+        }
+        return errors;
+    });
+    if (property.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const errs = property.join(", ");
+        throw new Error("The following ${name} properties still don't match: [" + errs + "]");
+    }
+}`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+}
+
+function checkWaitForDocumentProperty(x, func) {
+    checkWaitForObjectProperty(x, func, 'document');
+}
+
+function checkWaitForWindowProperty(x, func) {
+    checkWaitForObjectProperty(x, func, 'window');
+}
+
 function checkWaitForLocalStorage(x, func) {
     x.assert(func(''), {
         'error': 'expected JSON, found nothing',
@@ -9168,6 +9276,16 @@ const TO_CHECK = [
         'toCall': (e, o) => wrapper(parserFuncs.parseWaitForCss, e, o),
     },
     {
+        'name': 'wait-for-css',
+        'func': checkWaitForCss,
+        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForCss, e, o),
+    },
+    {
+        'name': 'wait-for-document-property',
+        'func': checkWaitForDocumentProperty,
+        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForDocumentProperty, e, o),
+    },
+    {
         'name': 'wait-for-local-storage',
         'func': checkWaitForLocalStorage,
         'toCall': (e, o) => wrapper(parserFuncs.parseWaitForLocalStorage, e, o),
@@ -9176,6 +9294,11 @@ const TO_CHECK = [
         'name': 'wait-for-text',
         'func': checkWaitForText,
         'toCall': (e, o) => wrapper(parserFuncs.parseWaitForText, e, o),
+    },
+    {
+        'name': 'wait-for-window-property',
+        'func': checkWaitForWindowProperty,
+        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForWindowProperty, e, o),
     },
     {
         'name': 'write',

@@ -301,6 +301,101 @@ throw new Error("The following local storage entries still don't match: [" + err
     };
 }
 
+function parseWaitForObjectProperty(parser, objName) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {'error': 'expected JSON, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'json') {
+        return {'error': `expected JSON, found \`${parser.getRawArgs()}\``};
+    }
+
+    const json = elems[0].getRaw();
+    let d = '';
+    let error = null;
+
+    const warnings = checkJsonEntry(json, entry => {
+        if (error !== null) {
+            return;
+        }
+        const key_s = entry['key'].getStringValue();
+        let value_s;
+        if (entry['value'].kind === 'ident') {
+            value_s = entry['value'].getStringValue();
+            if (value_s !== 'null') {
+                error = `Only \`null\` ident is allowed, found \`${value_s}\``;
+            }
+        } else {
+            value_s = `"${entry['value'].getStringValue()}"`;
+        }
+        if (d.length > 0) {
+            d += ',';
+        }
+        d += `"${key_s}":${value_s}`;
+    });
+    if (error !== null) {
+        return {'error': error};
+    } else if (d.length === 0) {
+        return {
+            'instructions': [],
+            'warnings': warnings,
+            'wait': false,
+        };
+    }
+
+    const varName = 'property';
+    const varDict = `${varName}Dict`;
+    const varKey = `${varName}Key`;
+    const varValue = `${varName}Value`;
+
+    const instructions = getWaitForElems(
+        varName,
+        `\
+${varName} = await page.evaluate(() => {
+    const errors = [];
+    const ${varDict} = {${d}};
+    for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+        if (${objName}[${varKey}] === undefined) {
+            errors.push("${objName} doesn't have a property named \`" + ${varKey} + "\`");
+        }
+        let ${varName} = ${objName}[${varKey}];
+        if (${varName} != ${varValue}) {
+            errors.push("${objName} item \\"" + ${varKey} + "\\" (of value \\"" + ${varValue} + \
+"\\") != \\"" + ${varName} + "\\"");
+        }
+    }
+    return errors;
+});
+if (${varName}.length === 0) {
+    break;
+}`,
+        `\
+const errs = ${varName}.join(", ");
+throw new Error("The following ${objName} properties still don't match: [" + errs + "]");`,
+    );
+
+    return {
+        'instructions': [instructions.join('\n')],
+        'wait': false,
+        'checkResult': true,
+        'warnings': warnings,
+    };
+}
+
+// Possible inputs:
+//
+// * JSON dict
+function parseWaitForDocumentProperty(parser) {
+    return parseWaitForObjectProperty(parser, 'document');
+}
+
+// Possible inputs:
+//
+// * JSON dict
+function parseWaitForWindowProperty(parser) {
+    return parseWaitForObjectProperty(parser, 'window');
+}
+
 // Possible inputs:
 //
 // * ("CSS selector", {"CSS property name": "expected CSS property value"})
@@ -534,6 +629,8 @@ module.exports = {
     'parseWaitForAttribute': parseWaitForAttribute,
     'parseWaitForCount': parseWaitForCount,
     'parseWaitForCss': parseWaitForCss,
+    'parseWaitForDocumentProperty': parseWaitForDocumentProperty,
     'parseWaitForLocalStorage': parseWaitForLocalStorage,
     'parseWaitForText': parseWaitForText,
+    'parseWaitForWindowProperty': parseWaitForWindowProperty,
 };
