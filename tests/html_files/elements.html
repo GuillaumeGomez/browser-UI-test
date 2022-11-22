@@ -61,7 +61,11 @@ header {
 		<button id="js-create-elem" onclick="addElem()">hey</button>
 		<button id="js-local-storage" onclick="updateLocalStorage()">hey</button>
 		<button id="js-wait-local-storage" onclick="updateWaitLocalStorage()">hey</button>
+		<button id="js-wait-window-prop" onclick="updateWaitWindowProp()">hey</button>
+		<button id="js-wait-document-prop" onclick="updateWaitDocumentProp()">hey</button>
 		<script>
+window.windowProp = null;
+document.windowProp = null;
 function change_style() {
 setTimeout(() => { document.getElementById("js-call").style.marginTop = "12px"; }, 250);
 }
@@ -94,6 +98,17 @@ function updateWaitLocalStorage() {
 setTimeout(() => {
   window.localStorage.setItem("something2", "hello hi");
 }, 100);
-}</script>
+}
+function updateWaitWindowProp() {
+setTimeout(() => {
+  window["windowProp"] = "hello";
+}, 100);
+}
+function updateWaitDocumentProp() {
+setTimeout(() => {
+  document["windowProp"] = "hello";
+}, 100);
+}
+</script>
 	</body>
 </html>

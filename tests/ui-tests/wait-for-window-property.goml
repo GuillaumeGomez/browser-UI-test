@@ -1,0 +1,12 @@
+// This test ensures that the `wait-for-window-property` command is behaving like expected.
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+timeout: 500
+// Shouldn't wait here since it's already the case.
+wait-for-window-property: {"windowProp": null}
+click: "#js-wait-window-prop"
+// Should wait for 100ms here.
+wait-for-window-property: {"windowProp": "hello"}
+// This next one should fail.
+wait-for-window-property: {"windowProp": "tadam"}
+// Check that the script won't stop running anything after the previous command failed.
+assert-window-property: {"windowProp": "tadam"}
