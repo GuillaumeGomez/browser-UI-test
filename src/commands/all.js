@@ -10,6 +10,7 @@ const general = require('./general.js');
 const input = require('./input.js');
 const navigation = require('./navigation.js');
 const store = require('./store.js');
+const wait = require('./wait.js');
 
 module.exports = {
     'parseAssert': assert.parseAssert,
@@ -87,11 +88,11 @@ module.exports = {
     'parseStoreWindowProperty': store.parseStoreWindowProperty,
     'parseText': dom_modifiers.parseText,
     'parseTimeout': context_setters.parseTimeout,
-    'parseWaitFor': general.parseWaitFor,
-    'parseWaitForAttribute': general.parseWaitForAttribute,
-    'parseWaitForCss': general.parseWaitForCss,
-    'parseWaitForCount': general.parseWaitForCount,
-    'parseWaitForLocalStorage': general.parseWaitForLocalStorage,
-    'parseWaitForText': general.parseWaitForText,
+    'parseWaitFor': wait.parseWaitFor,
+    'parseWaitForAttribute': wait.parseWaitForAttribute,
+    'parseWaitForCss': wait.parseWaitForCss,
+    'parseWaitForCount': wait.parseWaitForCount,
+    'parseWaitForLocalStorage': wait.parseWaitForLocalStorage,
+    'parseWaitForText': wait.parseWaitForText,
     'parseWrite': input.parseWrite,
 };
