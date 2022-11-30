@@ -116,6 +116,7 @@ Here's the command list:
  * [`debug`](#debug)
  * [`define-function`](#define-function)
  * [`device-pixel-ratio`](#device-pixel-ratio)
+ * [`document-property`](#document-property)
  * [`drag-and-drop`](#drag-and-drop)
  * [`emulate`](#emulate)
  * [`fail`](#fail)
@@ -157,6 +158,7 @@ Here's the command list:
  * [`wait-for-local-storage`](#wait-for-local-storage)
  * [`wait-for-text`](#wait-for-text)
  * [`wait-for-window-property`](#wait-for-window-property)
+ * [`window-property`](#window-property)
  * [`write`](#write)
 
 #### assert
@@ -982,6 +984,14 @@ You can check its value like this:
 assert-window-property: ({"devicePixelRatio": "0.5"}, [STARTS_WITH])
 ```
 
+#### document-property
+
+**document-property** command sets the given values to the `document` object properties. Example:
+
+```
+document-property: {"title": "a", "linkColor": "blue"}
+```
+
 #### drag-and-drop
 
 **drag-and-drop** command allows to move an element to another place (assuming it implements the necessary JS and is draggable). It expects a tuple of two elements. Each element can be a position or a CSS selector or an XPath. Example:
@@ -1493,6 +1503,14 @@ Examples:
 ```
 wait-for-window-property: {"key": "value"}
 wait-for-window-property: {"key": "value", "key2": "value2"}
+```
+
+#### window-property
+
+**window-property** command sets the given values to the `window` object properties. Example:
+
+```
+window-property: {"scrollX": 12, "screenLeft": "a"}
 ```
 
 #### write

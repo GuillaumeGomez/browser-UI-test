@@ -55,6 +55,7 @@ module.exports = {
     'parseDebug': context_setters.parseDebug,
     'parseDefineFunction': functions.parseDefineFunction,
     'parseDevicePixelRatio': emulation.parseDevicePixelRatio,
+    'parseDocumentProperty': general.parseDocumentProperty,
     'parseDragAndDrop': input.parseDragAndDrop,
     'parseEmulate': emulation.parseEmulate,
     'parseFail': context_setters.parseFail,
@@ -96,5 +97,6 @@ module.exports = {
     'parseWaitForLocalStorage': wait.parseWaitForLocalStorage,
     'parseWaitForText': wait.parseWaitForText,
     'parseWaitForWindowProperty': wait.parseWaitForWindowProperty,
+    'parseWindowProperty': general.parseWindowProperty,
     'parseWrite': input.parseWrite,
 };

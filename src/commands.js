@@ -46,6 +46,7 @@ const ORDERS = {
     'debug': commands.parseDebug,
     'device-pixel-ratio': commands.parseDevicePixelRatio,
     'define-function': commands.parseDefineFunction,
+    'document-property': commands.parseDocumentProperty,
     'drag-and-drop': commands.parseDragAndDrop,
     'emulate': commands.parseEmulate,
     'fail': commands.parseFail,
@@ -87,6 +88,7 @@ const ORDERS = {
     'wait-for-local-storage': commands.parseWaitForLocalStorage,
     'wait-for-text': commands.parseWaitForText,
     'wait-for-window-property': commands.parseWaitForWindowProperty,
+    'window-property': commands.parseWindowProperty,
     'write': commands.parseWrite,
 };
 

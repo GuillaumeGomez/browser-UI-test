@@ -1,7 +1,7 @@
 // Contains commands which don't really have a "category".
 
 const path = require('path');
-const { getAndSetElements, checkJsonEntry } = require('./utils.js');
+const { getAndSetElements, checkJsonEntry, validateJson } = require('./utils.js');
 
 // Possible inputs:
 //
@@ -126,8 +126,87 @@ ${el.getErrorText()}\``,
     return innerParseScreenshot(options, filename, selector);
 }
 
+function parseObjPropertyInner(parser, objName) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {'error': 'expected a tuple or a JSON dict, found nothing'};
+    // eslint-disable-next-line no-extra-parens
+    } else if (elems.length !== 1) {
+        return {'error': `expected a JSON dict, found \`${parser.getRawArgs()}\``};
+    } else if (elems[0].kind !== 'json') {
+        return {
+            'error': `expected a JSON dict, found \`${elems[0].getErrorText()}\` \
+(${elems[0].getArticleKind()})`,
+        };
+    }
+
+    let warnings = [];
+    const entries = validateJson(elems[0].getRaw(), ['string', 'number'], 'property');
+    if (entries.error !== undefined) {
+        return entries;
+    } else if (entries.warnings !== undefined) {
+        warnings = entries.warnings;
+    }
+
+    if (Object.entries(entries.values).length === 0) {
+        return {
+            'instructions': [],
+            'wait': false,
+            'warnings': warnings.length > 0 ? warnings : undefined,
+            'checkResult': true,
+        };
+    }
+
+    const varName = 'parseProp';
+
+    const varDict = varName + 'Dict';
+    const varKey = varName + 'Key';
+    const varValue = varName + 'Value';
+    // JSON.stringify produces a problematic output so instead we use this.
+    let d = '';
+    for (const [k, v] of Object.entries(entries.values)) {
+        if (d.length > 0) {
+            d += ',';
+        }
+        d += `"${k}":"${v}"`;
+    }
+
+    const instructions = [`\
+await page.evaluate(() => {
+    const ${varDict} = {${d}};
+    for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+        ${objName}[${varKey}] = ${varValue};
+    }
+});`,
+    ];
+
+    return {
+        'instructions': instructions,
+        'wait': false,
+        'warnings': warnings.length > 0 ? warnings : undefined,
+        'checkResult': true,
+    };
+}
+
+// Possible inputs:
+//
+// * JSON object (for example: {"key": "value", "another key": "another value"})
+function parseDocumentProperty(parser) {
+    return parseObjPropertyInner(parser, 'document');
+}
+
+// Possible inputs:
+//
+// * JSON object (for example: {"key": "value", "another key": "another value"})
+function parseWindowProperty(parser) {
+    return parseObjPropertyInner(parser, 'window');
+}
+
 module.exports = {
     'parseLocalStorage': parseLocalStorage,
     'parseScreenshot': parseScreenshot,
     'innerParseScreenshot': innerParseScreenshot,
+    'parseDocumentProperty': parseDocumentProperty,
+    'parseWindowProperty': parseWindowProperty,
 };
