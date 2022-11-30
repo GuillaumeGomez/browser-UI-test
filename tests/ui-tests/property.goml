@@ -1,0 +1,11 @@
+// This test ensures that the `document-property` and `window-property` commands are working
+// as expected.
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+
+assert-window-property-false: {"size": "a"}
+window-property: {"size": "a"}
+assert-window-property: {"size": "a"}
+
+assert-document-property-false: {"size": "a"}
+document-property: {"size": "a"}
+assert-document-property: {"size": "a"}

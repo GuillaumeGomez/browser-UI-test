@@ -8800,6 +8800,50 @@ value + "\`");
     });
 }
 
+function checkObjPropertyInner(x, func, objName) {
+    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
+    x.assert(func(''), {'error': 'expected a tuple or a JSON dict, found nothing'});
+    x.assert(func('"a"'), {'error': 'expected a JSON dict, found `"a"` (a string)'});
+    x.assert(func('{"a": 2} 2'), {'error': 'expected nothing, found `2` after `{"a": 2}`'});
+    x.assert(func('{"a": "2", "a": {"b": 1}}'), {
+        'error': 'only string and number types are allowed as value, found `{"b": 1}` (a json)',
+    });
+
+    x.assert(func('{"a": 2}'), {
+        'instructions': [`\
+await page.evaluate(() => {
+    const parsePropDict = {"a":"2"};
+    for (const [parsePropKey, parsePropValue] of Object.entries(parsePropDict)) {
+        ${objName}[parsePropKey] = parsePropValue;
+    }
+});`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    x.assert(func('{"a": "2", "\\"b": "\'b"}'), {
+        'instructions': [`\
+await page.evaluate(() => {
+    const parsePropDict = {"a":"2","\\"b":"\\'b"};
+    for (const [parsePropKey, parsePropValue] of Object.entries(parsePropDict)) {
+        ${objName}[parsePropKey] = parsePropValue;
+    }
+});`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+}
+
+function checkDocumentProperty(x, func) {
+    checkObjPropertyInner(x, func, 'document');
+}
+
+function checkWindowProperty(x, func) {
+    checkObjPropertyInner(x, func, 'window');
+}
+
 function checkWrite(x, func) {
     // check tuple argument
     x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
@@ -9091,6 +9135,11 @@ const TO_CHECK = [
         'toCall': (e, o) => wrapper(parserFuncs.parseDevicePixelRatio, e, o),
     },
     {
+        'name': 'document-property',
+        'func': checkDocumentProperty,
+        'toCall': (e, o) => wrapper(parserFuncs.parseDocumentProperty, e, o),
+    },
+    {
         'name': 'drag-and-drop',
         'func': checkDragAndDrop,
         'toCall': (e, o) => wrapper(parserFuncs.parseDragAndDrop, e, o),
@@ -9299,6 +9348,11 @@ const TO_CHECK = [
         'name': 'wait-for-window-property',
         'func': checkWaitForWindowProperty,
         'toCall': (e, o) => wrapper(parserFuncs.parseWaitForWindowProperty, e, o),
+    },
+    {
+        'name': 'window-property',
+        'func': checkWindowProperty,
+        'toCall': (e, o) => wrapper(parserFuncs.parseWindowProperty, e, o),
     },
     {
         'name': 'write',
