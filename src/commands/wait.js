@@ -540,6 +540,74 @@ ${indentString(incr, 1)}
 
 // Possible inputs:
 //
+// * ("CSS selector", {"property name": "expected property value"})
+// * ("XPath", {"property name": "expected property value"})
+function parseWaitForProperty(parser) {
+    const data = waitForInitializer(parser, 'attribute', true);
+    if (data.error !== undefined) {
+        return data;
+    }
+
+    const isPseudo = !data.selector.isXPath && data.selector.pseudo !== null;
+    if (isPseudo) {
+        if (data.warnings === undefined) {
+            data.warnings = [];
+        }
+        data.warnings.push(`Pseudo-elements (\`${data.selector.pseudo}\`) don't have properties so \
+the check will be performed on the element itself`);
+    }
+
+    const varName = 'parseWaitForProp';
+    const varDict = varName + 'Dict';
+    const varKey = varName + 'Key';
+    const varValue = varName + 'Value';
+
+    const instructions = [];
+    const check = `\
+if (e[${varKey}] === undefined) {
+    nonMatchingProps.push("No property \`" + ${varKey} + "\`");
+    continue;
+}
+computedEntry = e[${varKey}];
+if (computedEntry !== ${varValue}) {
+    nonMatchingProps.push(${varKey} + ": (\`" + computedEntry + "\` != \`" + ${varValue} + "\`)");
+}`;
+
+    const [init, looper] = waitForElement(data['selector'], varName);
+    const incr = incrWait(`\
+const props = nonMatchingProps.join(", ");
+throw new Error("The following properties still don't match: [" + props + "]");`);
+
+    instructions.push(`\
+${init}
+let nonMatchingProps;
+while (true) {
+${indentString(looper, 1)}
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const ${varDict} = {${data['propertyDict']['dict']}};
+        for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+${indentString(check, 3)}
+        }
+        return nonMatchingProps;
+    }, ${varName});
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+${indentString(incr, 1)}
+}`);
+
+    return {
+        'instructions': instructions,
+        'wait': false,
+        'warnings': data['warnings'],
+        'checkResult': true,
+    };
+}
+
+// Possible inputs:
+//
 // * ("CSS selector", "text")
 // * ("XPath", "text")
 function parseWaitForText(parser) {
@@ -621,6 +689,7 @@ module.exports = {
     'parseWaitForCss': parseWaitForCss,
     'parseWaitForDocumentProperty': parseWaitForDocumentProperty,
     'parseWaitForLocalStorage': parseWaitForLocalStorage,
+    'parseWaitForProperty': parseWaitForProperty,
     'parseWaitForText': parseWaitForText,
     'parseWaitForWindowProperty': parseWaitForWindowProperty,
 };
