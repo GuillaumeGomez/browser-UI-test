@@ -63,6 +63,7 @@ header {
 		<button id="js-wait-local-storage" onclick="updateWaitLocalStorage()">hey</button>
 		<button id="js-wait-window-prop" onclick="updateWaitWindowProp()">hey</button>
 		<button id="js-wait-document-prop" onclick="updateWaitDocumentProp()">hey</button>
+		<button id="js-wait-prop" onclick="updateWaitElementProp()">hey</button>
 		<script>
 window.windowProp = null;
 document.windowProp = null;
@@ -85,6 +86,7 @@ setTimeout(() => {
     document.getElementById("created-one").style.height = "20px";
     document.getElementById("created-one").innerText = "ding";
     document.getElementById("created-one").className = "random-class";
+    document.getElementById("created-one")["hehe"] = "hoho";
   }, 50);
 }, 50);
 }
@@ -109,6 +111,12 @@ setTimeout(() => {
   document["windowProp"] = "hello";
 }, 100);
 }
+function updateWaitElementProp() {
+setTimeout(() => {
+  document.getElementById("js-wait-prop")["someProp"] = "hello";
+}, 250);
+}
+document.getElementById("js-wait-prop")["hehe"] = "hoho";
 </script>
 	</body>
 </html>

@@ -1,0 +1,16 @@
+// This test ensures that the `wait-for-property` command is behaving like expected.
+screenshot-comparison: false
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+timeout: 500
+// Shouldn't wait here since it's already the case.
+wait-for-property: ("#js-wait-prop", {"hehe": "hoho"})
+click: "#js-wait-prop"
+// Should wait for 250ms here.
+wait-for-property: ("#js-wait-prop", {"someProp": "hello"})
+click: "#js-create-elem"
+// Should wait for 100ms here (the element is created first).
+wait-for-property: ("#created-one", {"hehe": "hoho"})
+// This next one should fail.
+wait-for-property: ("#js-wait-prop", {"data-a": "c"})
+// Check that the script won't run anything after the previous command failed.
+assert-property: ("#js-wait-prop", {"data-a": "c"})
