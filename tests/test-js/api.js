@@ -7907,6 +7907,438 @@ parseWaitForAttrValue + "\`)");
     });
 }
 
+function checkWaitForProperty(x, func) {
+    // Check integer
+    x.assert(func(''), {
+        'error': 'expected a tuple with a string and a JSON dict, found nothing',
+    });
+    x.assert(func('hello'), {
+        'error': 'expected a tuple with a string and a JSON dict, found `hello`',
+    });
+    x.assert(func('(1)'), {
+        'error': 'expected a tuple with a string and a JSON dict, found `(1)`',
+    });
+    x.assert(func('(1, 2)'), {
+        'error': 'expected a CSS selector or an XPath as first tuple element, found `1` (a number)',
+    });
+    x.assert(func('("a", 2)'), {
+        'error': 'expected a JSON dict as second tuple element, found `2` (a number)',
+    });
+    x.assert(func('("a", {"b": {"a": 2}})'), {
+        'error': 'only string and number types are allowed as value, found `{"a": 2}` (a json)',
+    });
+
+    // Check css selector
+    x.assert(func('("a", {})'), {
+        'instructions': [`\
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForProp = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForProp = await page.$("a");
+        if (parseWaitForProp !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForPropDict = {};
+        for (const [parseWaitForPropKey, parseWaitForPropValue] of \
+Object.entries(parseWaitForPropDict)) {
+            if (e[parseWaitForPropKey] === undefined) {
+                nonMatchingProps.push("No property \`" + parseWaitForPropKey + "\`");
+                continue;
+            }
+            computedEntry = e[parseWaitForPropKey];
+            if (computedEntry !== parseWaitForPropValue) {
+                nonMatchingProps.push(parseWaitForPropKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForPropValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForProp);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following properties still don't match: [" + props + "]");
+    }
+}`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"x": 1})'), {
+        'instructions': [`\
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForProp = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForProp = await page.$("a");
+        if (parseWaitForProp !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForPropDict = {"x":"1"};
+        for (const [parseWaitForPropKey, parseWaitForPropValue] of \
+Object.entries(parseWaitForPropDict)) {
+            if (e[parseWaitForPropKey] === undefined) {
+                nonMatchingProps.push("No property \`" + parseWaitForPropKey + "\`");
+                continue;
+            }
+            computedEntry = e[parseWaitForPropKey];
+            if (computedEntry !== parseWaitForPropValue) {
+                nonMatchingProps.push(parseWaitForPropKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForPropValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForProp);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following properties still don't match: [" + props + "]");
+    }
+}`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"x": 1, "y": "2"})'), {
+        'instructions': [`\
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForProp = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForProp = await page.$("a");
+        if (parseWaitForProp !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForPropDict = {"x":"1","y":"2"};
+        for (const [parseWaitForPropKey, parseWaitForPropValue] of \
+Object.entries(parseWaitForPropDict)) {
+            if (e[parseWaitForPropKey] === undefined) {
+                nonMatchingProps.push("No property \`" + parseWaitForPropKey + "\`");
+                continue;
+            }
+            computedEntry = e[parseWaitForPropKey];
+            if (computedEntry !== parseWaitForPropValue) {
+                nonMatchingProps.push(parseWaitForPropKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForPropValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForProp);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following properties still don't match: [" + props + "]");
+    }
+}`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    // Check pseudo element.
+    x.assert(func('("a::after", {"x": 1, "y": "2"})'), {
+        'instructions': [`\
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForProp = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForProp = await page.$("a");
+        if (parseWaitForProp !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForPropDict = {"x":"1","y":"2"};
+        for (const [parseWaitForPropKey, parseWaitForPropValue] of \
+Object.entries(parseWaitForPropDict)) {
+            if (e[parseWaitForPropKey] === undefined) {
+                nonMatchingProps.push("No property \`" + parseWaitForPropKey + "\`");
+                continue;
+            }
+            computedEntry = e[parseWaitForPropKey];
+            if (computedEntry !== parseWaitForPropValue) {
+                nonMatchingProps.push(parseWaitForPropKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForPropValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForProp);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following properties still don't match: [" + props + "]");
+    }
+}`,
+        ],
+        'wait': false,
+        'warnings': ['Pseudo-elements (`::after`) don\'t have properties so the check will be \
+performed on the element itself'],
+        'checkResult': true,
+    });
+    // Ensures that there is no "show-text" check (because of "color").
+    x.assert(func('("a", {"color": "blue"})'), {
+        'instructions': [`\
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForProp = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForProp = await page.$("a");
+        if (parseWaitForProp !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following CSS selector \\"a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForPropDict = {"color":"blue"};
+        for (const [parseWaitForPropKey, parseWaitForPropValue] of \
+Object.entries(parseWaitForPropDict)) {
+            if (e[parseWaitForPropKey] === undefined) {
+                nonMatchingProps.push("No property \`" + parseWaitForPropKey + "\`");
+                continue;
+            }
+            computedEntry = e[parseWaitForPropKey];
+            if (computedEntry !== parseWaitForPropValue) {
+                nonMatchingProps.push(parseWaitForPropKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForPropValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForProp);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following properties still don't match: [" + props + "]");
+    }
+}`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+
+    // XPath
+    x.assert(func('("/a", {"x": "1"})'), { 'error': 'XPath must start with `//`'});
+    x.assert(func('("//a", {})'), {
+        'instructions': [`\
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForProp = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForProp = await page.$x("//a");
+        if (parseWaitForProp.length !== 0) {
+            parseWaitForProp = parseWaitForProp[0];
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following XPath \\"//a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForPropDict = {};
+        for (const [parseWaitForPropKey, parseWaitForPropValue] of \
+Object.entries(parseWaitForPropDict)) {
+            if (e[parseWaitForPropKey] === undefined) {
+                nonMatchingProps.push("No property \`" + parseWaitForPropKey + "\`");
+                continue;
+            }
+            computedEntry = e[parseWaitForPropKey];
+            if (computedEntry !== parseWaitForPropValue) {
+                nonMatchingProps.push(parseWaitForPropKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForPropValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForProp);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following properties still don't match: [" + props + "]");
+    }
+}`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+    x.assert(func('("//a", {"x": "1"})'), {
+        'instructions': [`\
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForProp = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForProp = await page.$x("//a");
+        if (parseWaitForProp.length !== 0) {
+            parseWaitForProp = parseWaitForProp[0];
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error("The following XPath \\"//a\\" was not found");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForPropDict = {"x":"1"};
+        for (const [parseWaitForPropKey, parseWaitForPropValue] of \
+Object.entries(parseWaitForPropDict)) {
+            if (e[parseWaitForPropKey] === undefined) {
+                nonMatchingProps.push("No property \`" + parseWaitForPropKey + "\`");
+                continue;
+            }
+            computedEntry = e[parseWaitForPropKey];
+            if (computedEntry !== parseWaitForPropValue) {
+                nonMatchingProps.push(parseWaitForPropKey + ": (\`" + computedEntry + "\` != \`" + \
+parseWaitForPropValue + "\`)");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForProp);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(", ");
+        throw new Error("The following properties still don't match: [" + props + "]");
+    }
+}`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
+}
+
 function checkWaitForCount(x, func) {
     x.assert(func(''), {
         'error': 'expected a tuple with a string and a number, found nothing',
@@ -9344,6 +9776,11 @@ const TO_CHECK = [
         'name': 'wait-for-local-storage',
         'func': checkWaitForLocalStorage,
         'toCall': (e, o) => wrapper(parserFuncs.parseWaitForLocalStorage, e, o),
+    },
+    {
+        'name': 'wait-for-property',
+        'func': checkWaitForProperty,
+        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForProperty, e, o),
     },
     {
         'name': 'wait-for-text',

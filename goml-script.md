@@ -156,6 +156,7 @@ Here's the command list:
  * [`wait-for-css`](#wait-for-css)
  * [`wait-for-document-property`](#wait-for-document-property)
  * [`wait-for-local-storage`](#wait-for-local-storage)
+ * [`wait-for-property`](#wait-for-property)
  * [`wait-for-text`](#wait-for-text)
  * [`wait-for-window-property`](#wait-for-window-property)
  * [`window-property`](#window-property)
@@ -1418,7 +1419,7 @@ wait-for: "//*[@id='element']/a"
 
 #### wait-for-attribute
 
-**wait-for-attribute** command waits for the given element to have the expected values for the attributes. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-attribute** command waits for the given element to have the expected values for the given attributes. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
 
 Examples:
 
@@ -1479,6 +1480,21 @@ Examples:
 ```
 wait-for-local-storage: {"key": "value"}
 wait-for-local-storage: {"key": "value", "key2": "value2"}
+```
+
+#### wait-for-property
+
+**wait-for-property** command waits for the given element to have the expected values for the given properties. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+
+Examples:
+
+```
+wait-for-property: ("#element", {"scrollTop": 10})
+wait-for-property: ("#element", {"scrollTop": 10, "name": "hello"})
+
+// Same with an XPath:
+wait-for-property: ("//*[@id='element']", {"scrollTop": 10})
+wait-for-property: ("//*[@id='element']", {"scrollTop": 10, "name": "hello"})
 ```
 
 #### wait-for-text
