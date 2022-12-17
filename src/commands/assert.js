@@ -771,19 +771,20 @@ function parseAssertCountInner(parser, assertFalse) {
     if (occurences.error !== undefined) {
         return occurences;
     }
-    const varName = 'parseAssertElemInt';
+    const varName = 'parseAssertElemCount';
     let start;
     if (selector.isXPath) {
         start = `let ${varName} = await page.$x("${selector.value}");\n`;
     } else {
         start = `let ${varName} = await page.$$("${selector.value}");\n`;
     }
+    start += `${varName} = ${varName}.length;\n`;
     return {
         'instructions': [
             start +
             // TODO: maybe check differently depending on the tag kind?
-            `${insertBefore}if (${varName}.length !== ${occurences.value}) {\n` +
-            `throw 'expected ${occurences.value} elements, found ' + ${varName}.length;\n` +
+            `${insertBefore}if (${varName} !== ${occurences.value}) {\n` +
+            `throw 'expected ${occurences.value} elements, found ' + ${varName};\n` +
             `}${insertAfter}`,
         ],
         'wait': false,

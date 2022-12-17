@@ -8,6 +8,18 @@ const {
     checkJsonEntry,
 } = require('./utils.js');
 
+function incrWait(error) {
+    return `\
+await new Promise(r => setTimeout(r, timeAdd));
+if (timeLimit === 0) {
+    continue;
+}
+allTime += timeAdd;
+if (allTime >= timeLimit) {
+${indentString(error, 1)}
+}`;
+}
+
 function getWaitForElems(varName, code, error) {
     return [`\
 const timeLimit = page.getDefaultTimeout();
@@ -17,14 +29,7 @@ let ${varName} = null;`,
     `\
 while (true) {
 ${indentString(code, 1)}
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-${indentString(error, 2)}
-    }
+${indentString(incrWait(error), 1)}
 }`,
     ];
 }
@@ -434,6 +439,10 @@ if (e.style[${varKey}] != ${varValue} && computedEntry != ${varValue}) {
     nonMatchingProps.push(${varKey} + ": (\`" + computedEntry + "\` != \`" + ${varValue} + "\`)");
 }`;
 
+    const incr = incrWait(`\
+const props = nonMatchingProps.join(", ");
+throw new Error("The following CSS properties still don't match: [" + props + "]");`);
+
     const [init, looper] = waitForElement(data['selector'], varName);
     instructions.push(`\
 ${init}
@@ -454,15 +463,7 @@ ${indentString(check, 3)}
     if (nonMatchingProps.length === 0) {
         break;
     }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following CSS properties still don't match: [" + props + "]");
-    }
+${indentString(incr, 1)}
 }`);
 
     return {
@@ -505,6 +506,9 @@ if (computedEntry !== ${varValue}) {
 }`;
 
     const [init, looper] = waitForElement(data['selector'], varName);
+    const incr = incrWait(`\
+const props = nonMatchingProps.join(", ");
+throw new Error("The following attributes still don't match: [" + props + "]");`);
 
     instructions.push(`\
 ${init}
@@ -523,15 +527,7 @@ ${indentString(check, 3)}
     if (nonMatchingProps.length === 0) {
         break;
     }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following attributes still don't match: [" + props + "]");
-    }
+${indentString(incr, 1)}
 }`);
 
     return {
@@ -592,6 +588,8 @@ the check will be performed on the element itself`];
     const varName = 'parseWaitForText';
 
     const [init, looper] = waitForElement(selector, varName);
+    const incr = incrWait('\
+throw new Error("The text still doesn\'t match: `" + computedEntry + "` != `" + value + "`");');
 
     const instructions = `\
 ${init}
@@ -605,15 +603,7 @@ ${indentString(looper, 1)}
     if (computedEntry === value) {
         break;
     }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        throw new Error("The text still doesn't match: \`" + computedEntry + "\` != \
-\`" + value + "\`");
-    }
+${indentString(incr, 1)}
 }`;
 
     return {
