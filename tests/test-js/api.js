@@ -759,10 +759,11 @@ function checkAssertCountInner(x, func, before, after) {
 
     x.assert(func('("a", 1)'), {
         'instructions': [
-            'let parseAssertElemInt = await page.$$("a");\n' +
+            'let parseAssertElemCount = await page.$$("a");\n' +
+            'parseAssertElemCount = parseAssertElemCount.length;\n' +
             before +
-            'if (parseAssertElemInt.length !== 1) {\n' +
-            'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+            'if (parseAssertElemCount !== 1) {\n' +
+            'throw \'expected 1 elements, found \' + parseAssertElemCount;\n' +
             '}' +
             after,
         ],
@@ -773,10 +774,11 @@ function checkAssertCountInner(x, func, before, after) {
     // Check the handling of pseudo elements
     x.assert(func('("a::after", 1)'), {
         'instructions': [
-            'let parseAssertElemInt = await page.$$("a");\n' +
+            'let parseAssertElemCount = await page.$$("a");\n' +
+            'parseAssertElemCount = parseAssertElemCount.length;\n' +
             before +
-            'if (parseAssertElemInt.length !== 1) {\n' +
-            'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+            'if (parseAssertElemCount !== 1) {\n' +
+            'throw \'expected 1 elements, found \' + parseAssertElemCount;\n' +
             '}' +
             after,
         ],
@@ -785,10 +787,11 @@ function checkAssertCountInner(x, func, before, after) {
     });
     x.assert(func('("a:focus", 1)'), {
         'instructions': [
-            'let parseAssertElemInt = await page.$$("a:focus");\n' +
+            'let parseAssertElemCount = await page.$$("a:focus");\n' +
+            'parseAssertElemCount = parseAssertElemCount.length;\n' +
             before +
-            'if (parseAssertElemInt.length !== 1) {\n' +
-            'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+            'if (parseAssertElemCount !== 1) {\n' +
+            'throw \'expected 1 elements, found \' + parseAssertElemCount;\n' +
             '}' +
             after,
         ],
@@ -797,10 +800,11 @@ function checkAssertCountInner(x, func, before, after) {
     });
     x.assert(func('("a :focus", 1)'), {
         'instructions': [
-            'let parseAssertElemInt = await page.$$("a :focus");\n' +
+            'let parseAssertElemCount = await page.$$("a :focus");\n' +
+            'parseAssertElemCount = parseAssertElemCount.length;\n' +
             before +
-            'if (parseAssertElemInt.length !== 1) {\n' +
-            'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+            'if (parseAssertElemCount !== 1) {\n' +
+            'throw \'expected 1 elements, found \' + parseAssertElemCount;\n' +
             '}' +
             after,
         ],
@@ -809,10 +813,11 @@ function checkAssertCountInner(x, func, before, after) {
     });
     x.assert(func('("a ::after", 1)'), {
         'instructions': [
-            'let parseAssertElemInt = await page.$$("a ::after");\n' +
+            'let parseAssertElemCount = await page.$$("a ::after");\n' +
+            'parseAssertElemCount = parseAssertElemCount.length;\n' +
             before +
-            'if (parseAssertElemInt.length !== 1) {\n' +
-            'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+            'if (parseAssertElemCount !== 1) {\n' +
+            'throw \'expected 1 elements, found \' + parseAssertElemCount;\n' +
             '}' +
             after,
         ],
@@ -824,10 +829,11 @@ function checkAssertCountInner(x, func, before, after) {
     x.assert(func('("a", \n-1)'), {'error': 'number of occurences cannot be negative: `-1`'});
     x.assert(func('("a ::after"\n,\n 1)'), {
         'instructions': [
-            'let parseAssertElemInt = await page.$$("a ::after");\n' +
+            'let parseAssertElemCount = await page.$$("a ::after");\n' +
+            'parseAssertElemCount = parseAssertElemCount.length;\n' +
             before +
-            'if (parseAssertElemInt.length !== 1) {\n' +
-            'throw \'expected 1 elements, found \' + parseAssertElemInt.length;\n' +
+            'if (parseAssertElemCount !== 1) {\n' +
+            'throw \'expected 1 elements, found \' + parseAssertElemCount;\n' +
             '}' +
             after,
         ],
