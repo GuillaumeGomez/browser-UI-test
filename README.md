@@ -98,7 +98,7 @@ Then we tell it to run the "browser-ui" image.
 
 For the rest, `--test-folder`, `--failure-folder` and `--variable` are `browser-UI-test` options.
 You'll note that I prepended them with "/data" because this is where we mounted the volume in the
-docker instance. To know what the options are for, please refer to the [Options][#Options] part of
+docker instance. To know what the options are for, please refer to the [Options](#Options) part of
 this README.
 
 #### Docker hub
