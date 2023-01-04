@@ -65,7 +65,7 @@ $ browser-ui-test --help
 
 ### Using Docker
 
-This repository provides a `Dockerfile` in case you want to make your like easier when running
+This repository provides a `Dockerfile` in case you want to make your life easier when running
 tests. For example, the equivalent of running `npm run test` is:
 
 ```bash
