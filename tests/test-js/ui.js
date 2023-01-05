@@ -56,8 +56,7 @@ async function compareOutput(x) {
     process.setMaxListeners(cpuCount);
     const tests_queue = [];
 
-    for (let i = 0; i < filesToTest.length; ++i) {
-        const file = filesToTest[i];
+    for (const file of filesToTest) {
         const outputFile = file.replace('.goml', '.output');
         let output;
 
