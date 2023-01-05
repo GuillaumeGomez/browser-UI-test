@@ -1593,6 +1593,30 @@ function checkConcat(x) {
     x.assert(p.elems[0].getRaw()[0].value.getRaw(), '1');
 }
 
+function checkBlock(x) {
+    let p = new Parser('block { reload:\n');
+    p.parse();
+    x.assert(p.error, 'Missing `}` to end the block');
+
+    p = new Parser('block { reload:\n }');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'block');
+    x.assert(p.elems[0].line, 1);
+    x.assert(p.elems[0].blockCode, ' reload:\n ');
+    x.assert(p.elems[0].value, 'block { reload:\n }');
+
+    p = new Parser('block{reload:\n}');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'block');
+    x.assert(p.elems[0].line, 1);
+    x.assert(p.elems[0].blockCode, 'reload:\n');
+    x.assert(p.elems[0].value, 'block{reload:\n}');
+}
+
 const TO_CHECK = [
     {'name': 'tuple', 'func': checkTuple},
     {'name': 'array', 'func': checkArray},
@@ -1602,6 +1626,7 @@ const TO_CHECK = [
     {'name': 'json', 'func': checkJson},
     {'name': 'comment', 'func': checkComment},
     {'name': 'concatenation', 'func': checkConcat},
+    {'name': 'block', 'func': checkBlock},
 ];
 
 async function checkParsers(x = new Assert()) {

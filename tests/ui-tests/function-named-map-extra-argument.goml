@@ -1,13 +1,14 @@
-// This test ensures that the `define-function` and `call-function` produces an error when an extra, unexpected argument is supplied.
+// This test ensures that the `define-function` and `call-function` produces an error when an extra,
+// unexpected argument is supplied.
 goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 
 define-function: (
     "fn1",
     (background_color, whole_check),
-    [
-        ("assert-css", ("header", {"background-color": |background_color|})),
-        ("assert-css", ("header", |whole_check|)),
-    ],
+    block {
+        assert-css: ("header", {"background-color": |background_color|})
+        assert-css: ("header", |whole_check|)
+    },
 )
 // Error because there is an extra argument.
 call-function: ("fn1", {"background_color": "a", "whole_check": {"color": "a"}, "k": {"color": "a"}})

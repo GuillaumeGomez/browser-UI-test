@@ -206,9 +206,12 @@ class ParserWithContext {
                 args[arg_name] = ret['args'][index].value;
             }
         }
-        this.callingFunc.push(
-            new Parser(func['content'], parser.variables, args, this.parser.definedFunctions),
-        );
+        const newParser = new Parser(
+            func['content'], parser.variables, args, this.parser.definedFunctions);
+        // We change the "currentLine" of the parser so it points to the right place when an error
+        // occurs.
+        newParser.currentLine = func['start_line'];
+        this.callingFunc.push(newParser);
         // FIXME: allow to change max call stack?
         if (this.callingFunc.length > 100) {
             return {
@@ -275,9 +278,7 @@ class ParserWithContext {
 
     get_next_command() {
         const parser = this.get_current_parser();
-        if (!parser.parseNextCommand(
-            order => Object.prototype.hasOwnProperty.call(ORDERS, order),
-        )) {
+        if (!parser.parseNextCommand()) {
             if (parser.error) {
                 return {
                     'error': parser.error,

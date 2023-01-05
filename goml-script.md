@@ -653,10 +653,10 @@ attribute: ("//*[@id='button']", {"attribute name": "attribute value", "another"
 define-function: (
     "fn1",
     (background_color, whole_check),
-    [
-        ("assert-css", ("header", {"background-color": |background_color|, "color": "red"})),
-        ("assert-attribute", ("header", |whole_check|)),
-    ],
+    block {
+        assert-css: ("header", {"background-color": |background_color|, "color": "red"})
+        assert-attribute: ("header", |whole_check|)
+    },
 )
 
 call-function: (
@@ -913,11 +913,11 @@ define-function: (
     "fn1", // The function name.
     (background_color, whole_check), // The names of the arguments of the function.
     // And below the commands to be called.
-    [
+    block {
         // First is the command-name, then its arguments like you would pass them normally to the command.
-        ("assert-css", ("header", {"background-color": |background_color|, "color": "blue"})),
-        ("assert-attribute", ("header", |whole_check|)),
-    ],
+        assert-css: ("header", {"background-color": |background_color|, "color": "blue"})
+        assert-attribute: ("header", |whole_check|)
+    },
 )
 
 // Then you can call the function like this:
@@ -938,21 +938,21 @@ If you call `define-function` inside the function to overwrite it, it will not o
 define-function: (
     "fn1",
     (),
-    [
+    block {
         // We overwrite "fn1".
-        ("define-function": (
+        define-function: (
             "fn1",
             (),
-            [
-                ("assert-attribute", ("header", {"class": "blue"})),
-            ],
-        )),
+            block {
+                assert-attribute: ("header", {"class": "blue"})
+            },
+        )
         // A "normal" command.
-        ("assert-css", ("header", {"color": "red"})),
+        assert-css: ("header", {"color": "red"})
         // Then we call again "fn1".
-        ("call-function", ("fn1", ())),
-        ("assert-position", ("header", {"y": 12})),
-    ],
+        call-function: ("fn1", ())
+        assert-position: ("header", {"y": 12})
+    },
 )
 
 call-function: ("fn1", ())

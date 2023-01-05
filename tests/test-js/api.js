@@ -5722,98 +5722,81 @@ function checkDefineFunction(x, func) {
         'error': 'expected a tuple as second element of the tuple, found a number `1`',
     });
     x.assert(func('("a",(1),1)')[0], {
-        'error': 'expected a string as third element of the tuple, found a number `1`',
+        'error': 'expected a block as third element of the tuple, found a number `1`',
     });
-    x.assert(func('("a",(1),[1])')[0], {
-        'error': 'expected a tuple of idents as second argument, found a number (`1`)',
+    x.assert(func('("a",(a),block {b:\n})')[0], {
+        'error': 'Unknown command "b" (in `block { ... }`)',
     });
-    x.assert(func('("a",(a),[1])')[0], {
-        'error': 'expected an array of tuples as third argument, found an array of number',
-    });
-    x.assert(func('("a",(a),[()])')[0], {
-        'error': 'expected at least one element in function tuple: `()` (from `[()]`)',
-    });
-    x.assert(func('("a",(a),[(1)])')[0], {
-        'error': 'expected first argument of tuple to be a string, found a number (`1` from ' +
-            '`[(1)]`)',
-    });
-    x.assert(func('("a",(a),[("b")])')[0], {'error': 'unknown function `b` (in `[("b")]`)'});
-    x.assert(func('("a",(CURRENT_DIR),[("assert-css")])')[0], {
+    x.assert(func('("a",(CURRENT_DIR), block { assert-css:\n})')[0], {
         'error': '`CURRENT_DIR` is a reserved name, so a function argument cannot be ' +
             'named like this',
     });
 
-    const [res, parser] = func('("a",(a),[("assert-css")])');
+    const [res, parser] = func('("a",(a), block { assert-css:\n})');
     x.assert(res, {'instructions': [], 'wait': false});
     x.assert(parser.definedFunctions, {
         'a': {
             'arguments': ['a'],
-            'content': 'assert-css: ',
+            'content': ' assert-css:\n',
+            'start_line': 1,
         },
     });
 
-    const [res2, parser2] = func('("a",(a),[("assert-css", ("a", c))])');
+    const [res2, parser2] = func('("a",(a), block { assert-css: ("a", c)\n})');
     x.assert(res2, {'instructions': [], 'wait': false});
     x.assert(parser2.definedFunctions, {
         'a': {
             'arguments': ['a'],
-            'content': 'assert-css: ("a", c)',
+            'content': ' assert-css: ("a", c)\n',
+            'start_line': 1,
         },
     });
 
     const [res3, parser3] = func(`(
     "check-result",
     (result_kind, color, hover_color),
-    [
-        (
-            "assert-css",
-            (".result-" + |result_kind| + " ." + |result_kind|, {"color": |color|}, ALL),
-        ),
+    block {
+        assert-css: (".result-" + |result_kind| + " ." + |result_kind|, {"color": |color|}, ALL)
         // hello
-        (
-            "assert-attribute",
-            (
-                ".result-" + |result_kind|,
-                {"color": |entry_color|, "background-color": |background_color|},
-            ),
+        assert-attribute: (
+            ".result-" + |result_kind|,
+            {"color": |entry_color|, "background-color": |background_color|},
         )
-    ],
+    },
 )`);
     x.assert(res3, {'instructions': [], 'wait': false});
     x.assert(parser3.definedFunctions, {
         'check-result': {
             'arguments': ['result_kind', 'color', 'hover_color'],
-            'content': `\
-assert-css: (".result-" + |result_kind| + " ." + |result_kind|, {"color": |color|}, ALL)
-// removed comment
-assert-attribute: (
-                ".result-" + |result_kind|,
-                {"color": |entry_color|, "background-color": |background_color|},
-            )`,
+            'content': `
+        assert-css: (".result-" + |result_kind| + " ." + |result_kind|, {"color": |color|}, ALL)
+        // hello
+        assert-attribute: (
+            ".result-" + |result_kind|,
+            {"color": |entry_color|, "background-color": |background_color|},
+        )
+    `,
+            'start_line': 4,
         },
     });
 
     const [res4, parser4] = func(`(
     "check-result",
     (result_kind),
-    [
-        (
-            "move-cursor-to",
-            ".result-" + |result_kind|,
-        ),
-        (
-            "move-cursor-to",
-            ".result-",
-        ),
-    ]
+    block {
+        move-cursor-to: ".result-" + |result_kind|
+        move-cursor-to: ".result-"
+    },
 )`);
     x.assert(res4, {'instructions': [], 'wait': false});
     x.assert(parser4.definedFunctions, {
         'check-result': {
             'arguments': ['result_kind'],
-            'content': `\
-move-cursor-to: ".result-" + |result_kind|
-move-cursor-to: ".result-"`,
+            'content': `
+        move-cursor-to: ".result-" + |result_kind|
+        move-cursor-to: ".result-"
+    `,
+            'start_line': 4,
         },
     });
 
@@ -5822,45 +5805,50 @@ move-cursor-to: ".result-"`,
     const [res5, parser5] = func(`(
     "check-result",
     (theme, color),
-    [
+    block {
         // hello
-        ("local-storage", {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}),
+        local-storage: {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}
         // We reload the page so the local storage settings are being used.
-        ("reload"),
-        ("assert-css", (".item-left sup", {"color": |color|})),
-    ],
+        reload:
+        assert-css: (".item-left sup", {"color": |color|})
+    },
 )`);
     x.assert(res5, {'instructions': [], 'wait': false});
     x.assert(parser5.definedFunctions, {
         'check-result': {
             'arguments': ['theme', 'color'],
-            'content': `\
-local-storage: {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}
-// removed comment
-reload: 
-assert-css: (".item-left sup", {"color": |color|})`,
+            'content': `
+        // hello
+        local-storage: {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}
+        // We reload the page so the local storage settings are being used.
+        reload:
+        assert-css: (".item-left sup", {"color": |color|})
+    `,
+            'start_line': 4,
         },
     });
 
     const [res6, parser6] = func(`(
     "check-result",
     (),
-    [
-        ("local-storage", ["a"]),
-        ("local-storage", 12),
-        ("local-storage", ALL),
-        ("local-storage", "ab"),
-    ],
+    block {
+        local-storage: ["a"]
+        local-storage: 12
+        local-storage: ALL
+        local-storage: "ab"
+    },
 )`);
     x.assert(res6, {'instructions': [], 'wait': false});
     x.assert(parser6.definedFunctions, {
         'check-result': {
             'arguments': [],
-            'content': `\
-local-storage: ["a"]
-local-storage: 12
-local-storage: ALL
-local-storage: "ab"`,
+            'content': `
+        local-storage: ["a"]
+        local-storage: 12
+        local-storage: ALL
+        local-storage: "ab"
+    `,
+            'start_line': 4,
         },
     });
 }
