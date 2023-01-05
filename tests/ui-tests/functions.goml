@@ -4,15 +4,17 @@ show-text: true
 define-function: (
     "fn1",
     (background_color, whole_check),
-    [
-        ("assert-css", ("header", {"background-color": |background_color|, "color": |color|})),
-        ("assert-css", ("header", |whole_check|)),
+    block {
+        assert-css: ("header", {"background-color": |background_color|, "color": |color|})
+        assert-css: ("header", |whole_check|)
         // We overwrite the existing function.
-        ("define-function", ("fn1", (), [("assert-attribute", ("header", {"color": "blue"}))])),
+        define-function: ("fn1", (), block {
+            assert-attribute: ("header", {"color": "blue"})
+        })
         // Then we call it again. If it works as expected, it shouldn't loop infinitely.
-        ("call-function", ("fn1", ())),
-        ("assert-css", ("header", {"color": "red"})),
-    ],
+        call-function: ("fn1", ())
+        assert-css: ("header", {"color": "red"})
+    },
 )
 // We define this variable to ensure that it will use the argument in the function call.
 store-value: (whole_check, {"color": "yellow"})
@@ -21,10 +23,10 @@ call-function: ("fn1", ("a", {"color": "a"}))
 define-function: (
     "fn1",
     (background_color, whole_check),
-    [
-        ("assert-css", ("header", {"background-color": |background_color|})),
-        ("assert-css", ("header", |whole_check|)),
-    ],
+    block {
+        assert-css: ("header", {"background-color": |background_color|})
+        assert-css: ("header", |whole_check|)
+    },
 )
 // Same but with named arguments
 call-function: ("fn1", {"background_color": "a", "whole_check": {"color": "a"}})
