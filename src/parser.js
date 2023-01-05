@@ -9,11 +9,11 @@ function isStringChar(c) {
 }
 
 function isNumber(c) {
-    return c >= '0' && c <= '9' || c === '-';
+    return c !== null && (c >= '0' && c <= '9' || c === '-');
 }
 
 function isLetter(c) {
-    return c.toLowerCase() !== c.toUpperCase();
+    return c !== null && c.toLowerCase() !== c.toUpperCase();
 }
 
 function matchInteger(s) {
@@ -300,12 +300,90 @@ class VariableElement extends Element {
     }
 }
 
+class BlockElement extends Element {
+    constructor(startPos, endPos, line, parser, error = null) {
+        if (error !== null) {
+            super(
+                'block',
+                parser.text.slice(startPos, parser.pos),
+                startPos,
+                parser.pos,
+                line,
+                error,
+            );
+            return;
+        }
+        parser.skipWhiteSpaceCharacters();
+        let c = parser.getCurrentChar();
+        if (c !== '{') {
+            const kind = c === null ? 'nothing' : `\`${c}\``;
+            super(
+                'block',
+                parser.text.slice(startPos, parser.pos),
+                startPos,
+                parser.pos,
+                line,
+                `Expected \`{\` after \`block\` keyword, found ${kind}`,
+            );
+            return;
+        }
+        const blockLine = parser.currentLine;
+        // We go after the `{`.
+        parser.increasePos();
+        // We save the current command and elems to prevent them to be overwrote when parsing
+        // the `block` content.
+        const elems = parser.elems;
+        const command = parser.command;
+        // We disable the variables inferrence so we can keep the code "as is".
+        parser.inferVariablesValue = false;
+        const blockStart = parser.pos;
+        while (c !== '}') {
+            if (parser.parseNextCommand() !== true) {
+                parser.error += ' (in `block { ... }`)';
+                error = parser.error;
+                break;
+            }
+            parser.skipWhiteSpaceCharacters();
+            c = parser.getCurrentChar();
+            if (c === null) {
+                parser.error = 'Missing `}` to end the block';
+                error = parser.error;
+                break;
+            }
+        }
+        // We re-enable the variables inference now that we're done with this parsing.
+        parser.inferVariablesValue = true;
+        // We set back the values before the `block` parsing.
+        parser.elems = elems;
+        parser.command = command;
+
+        super(
+            'block', parser.text.slice(startPos, parser.pos + 1), startPos, parser.pos, line, error,
+        );
+        this.blockCode = parser.text.slice(blockStart, parser.pos);
+        this.blockLine = blockLine;
+    }
+
+    getErrorText() {
+        // Because it'd be too long to display the full block.
+        return 'block { ... }';
+    }
+
+    getBlockCode() {
+        return this.blockCode;
+    }
+}
+
 class Parser {
     constructor(text, variables, functionArgs = null, definedFunctions = null) {
+        // We have to put this import here and not at the top of the file to avoid circular import.
+        const { ORDERS } = require('./commands.js');
+
         this.text = text;
         this.pos = 0;
         this.elems = [];
         this.error = null;
+        this.orders = ORDERS;
         if (typeof variables === 'undefined' || variables === null) {
             variables = {};
         }
@@ -346,7 +424,14 @@ class Parser {
         return this.text.slice(start, end);
     }
 
-    parseNextCommand(orderChecker) {
+    getCurrentChar() {
+        if (this.pos < this.text.length) {
+            return this.text.charAt(this.pos);
+        }
+        return null;
+    }
+
+    parseNextCommand() {
         this.elems = [];
         this.error = null;
         // First, we skip all unneeded characters...
@@ -356,21 +441,17 @@ class Parser {
             return false;
         }
         const order = this.command.getRaw().toLowerCase();
-        if (!orderChecker(order)) {
+        if (!Object.prototype.hasOwnProperty.call(this.orders, order)) {
             this.error = `Unknown command "${order}"`;
             return false;
         }
-        // If the command we're parsing is `define-function`, we need to keep the code "as is".
-        this.inferVariablesValue = this.command.value !== 'define-function';
         // Now that we have the command, let's get its arguments!
         this.parse();
-        // We set it back to its default value;
-        this.inferVariablesValue = true;
         return this.error === null;
     }
 
     skipWhiteSpaceCharacters() {
-        while (this.pos < this.text.length && isWhiteSpace(this.text.charAt(this.pos))) {
+        while (isWhiteSpace(this.getCurrentChar())) {
             this.increasePos(false);
         }
     }
@@ -378,8 +459,11 @@ class Parser {
     extractNextCommandName() {
         let command = null;
 
-        while (this.pos < this.text.length && command === null) {
-            const c = this.text.charAt(this.pos);
+        while (command === null) {
+            const c = this.getCurrentChar();
+            if (c === null) {
+                break;
+            }
             const tmp = [];
 
             if (c === '/') {
@@ -407,8 +491,11 @@ class Parser {
 
         let stop = false;
         // Now we have the command ident, let's reach the `:` before moving on!
-        while (this.pos < this.text.length && !stop) {
-            const c = this.text.charAt(this.pos);
+        while (!stop) {
+            const c = this.getCurrentChar();
+            if (c === null) {
+                break;
+            }
 
             if (c === '/') {
                 // No need to check anything, if there is a comment, it means it'll be on two lines,
@@ -439,7 +526,7 @@ class Parser {
 
     increasePos(increaseIfNothing = true, skipBackline = true) {
         const start = this.pos;
-        while (this.pos < this.text.length && isWhiteSpace(this.text.charAt(this.pos))) {
+        while (isWhiteSpace(this.getCurrentChar())) {
             if (this.text.charAt(this.pos) === '\n') {
                 this.currentLine += 1;
                 if (!skipBackline) {
@@ -498,8 +585,11 @@ class Parser {
             }
         };
 
-        while (this.pos < this.text.length && this.error === null) {
-            const c = this.text.charAt(this.pos);
+        while (this.error === null) {
+            const c = this.getCurrentChar();
+            if (c === null) {
+                break;
+            }
 
             if (endChars.indexOf(c) !== -1) {
                 endChar = c;
@@ -773,23 +863,23 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
             throw new Error('`specialChars` variable should be an array!');
         }
         const start = this.pos;
-        while (this.pos < this.text.length) {
-            const c = this.text.charAt(this.pos);
-            // Check if it is a latin letter or a number.
-            if (!isIdentChar(c, start, this.pos, specialChars)) {
-                break;
-            }
+        // Loop as long as it is a latin letter or a number.
+        while (isIdentChar(this.getCurrentChar(), start, this.pos, specialChars)) {
             this.increasePos();
         }
         const ident = this.text.substring(start, this.pos);
-        if (ident.length !== 0) {
-            this.push(new IdentElement(ident, start, this.pos, this.currentLine), pushTo);
-            this.pos -= 1; // Need to go back to last "good" letter.
-        } else {
+        if (ident.length === 0) {
             this.push(
                 new UnknownElement(this.text.charAt(start), start, this.pos, this.currentLine),
                 pushTo,
             );
+            return;
+        }
+        if (ident === 'block') {
+            this.push(new BlockElement(start, this.pos, this.currentLine, this), pushTo);
+        } else {
+            this.push(new IdentElement(ident, start, this.pos, this.currentLine), pushTo);
+            this.pos -= 1; // Need to go back to last "good" letter.
         }
     }
 
