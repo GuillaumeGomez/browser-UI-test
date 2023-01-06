@@ -82,6 +82,9 @@ function showEnd(elem) {
 }
 
 function showChar(c) {
+    if (c === '\n') {
+        return 'backline';
+    }
     const separator = c === '`' ? '\'' : '`';
     return `${separator}${c}${separator}`;
 }
@@ -338,7 +341,7 @@ class BlockElement extends Element {
         parser.inferVariablesValue = false;
         const blockStart = parser.pos;
         while (c !== '}') {
-            if (parser.parseNextCommand() !== true) {
+            if (parser.parseNextCommand(['\n', '}']) !== true) {
                 parser.error += ' (in `block { ... }`)';
                 error = parser.error;
                 break;
@@ -431,7 +434,7 @@ class Parser {
         return null;
     }
 
-    parseNextCommand() {
+    parseNextCommand(endChars = ['\n']) {
         this.elems = [];
         this.error = null;
         // First, we skip all unneeded characters...
@@ -446,7 +449,7 @@ class Parser {
             return false;
         }
         // Now that we have the command, let's get its arguments!
-        this.parse();
+        this.parse(endChars);
         return this.error === null;
     }
 
