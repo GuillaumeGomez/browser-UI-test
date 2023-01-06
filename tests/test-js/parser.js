@@ -943,17 +943,17 @@ reload:
 reload://hello
 assert-css: (".item-left sup", {"color": |color|})`);
     p.variables = {'theme': 'a'};
-    p.parseNextCommand(() => true);
+    p.parseNextCommand();
     x.assert(p.command.value, 'local-storage');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    p.parseNextCommand(() => true);
+    p.parseNextCommand();
     x.assert(p.command.value, 'reload');
     x.assert(p.elems, []);
-    p.parseNextCommand(() => true);
+    p.parseNextCommand();
     x.assert(p.command.value, 'reload');
     x.assert(p.elems, []);
-    p.parseNextCommand(() => true);
+    p.parseNextCommand();
     x.assert(p.command.value, 'assert-css');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'tuple');
@@ -1598,6 +1598,10 @@ function checkBlock(x) {
     p.parse();
     x.assert(p.error, 'Missing `}` to end the block');
 
+    p = new Parser('block { hello: }');
+    p.parse();
+    x.assert(p.error, 'Unknown command "hello" (in `block { ... }`)');
+
     p = new Parser('block { reload:\n }');
     p.parse();
     x.assert(p.error, null);
@@ -1615,6 +1619,59 @@ function checkBlock(x) {
     x.assert(p.elems[0].line, 1);
     x.assert(p.elems[0].blockCode, 'reload:\n');
     x.assert(p.elems[0].value, 'block{reload:\n}');
+
+    p = new Parser('block{assert:\nreload:\n}');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'block');
+    x.assert(p.elems[0].line, 1);
+    x.assert(p.elems[0].blockCode, 'assert:\nreload:\n');
+    x.assert(p.elems[0].value, 'block{assert:\nreload:\n}');
+
+    // Without backline.
+    p = new Parser('block{reload: { "a": 1 }');
+    p.parse();
+    x.assert(p.error, 'Missing `}` to end the block');
+
+    p = new Parser('block{reload: { "a": "x }');
+    p.parse();
+    x.assert(p.error, 'expected `"` at the end of the string (in `block { ... }`)');
+
+    p = new Parser('block{reload: ("a"), }');
+    p.parse();
+    x.assert(p.error, 'expected backline or `}`, found `,` after `("a")` (in `block { ... }`)');
+
+    p = new Parser('block{assert:,reload: ("a") }');
+    p.parse();
+    x.assert(p.error, 'unexpected `,` as first token (in `block { ... }`)');
+
+    p = new Parser('block{reload:}');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'block');
+    x.assert(p.elems[0].line, 1);
+    x.assert(p.elems[0].blockCode, 'reload:');
+    x.assert(p.elems[0].value, 'block{reload:}');
+
+    p = new Parser('block{assert:\nreload:}');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'block');
+    x.assert(p.elems[0].line, 1);
+    x.assert(p.elems[0].blockCode, 'assert:\nreload:');
+    x.assert(p.elems[0].value, 'block{assert:\nreload:}');
+
+    p = new Parser('block{reload: {"a":1}}');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'block');
+    x.assert(p.elems[0].line, 1);
+    x.assert(p.elems[0].blockCode, 'reload: {"a":1}');
+    x.assert(p.elems[0].value, 'block{reload: {"a":1}}');
 }
 
 const TO_CHECK = [
