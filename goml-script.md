@@ -943,9 +943,7 @@ define-function: (
         define-function: (
             "fn1",
             (),
-            block {
-                assert-attribute: ("header", {"class": "blue"})
-            },
+            block { assert-attribute: ("header", {"class": "blue"}) },
         )
         // A "normal" command.
         assert-css: ("header", {"color": "red"})
