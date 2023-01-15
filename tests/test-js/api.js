@@ -146,11 +146,11 @@ function checkAssertAttributeInner(x, func, notFound, equal, contains, startsWit
     });
     x.assert(func('("a::after", {"a": 1}, all)'), {
         'error': 'unknown identifier `all`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
-            '`STARTS_WITH`, `ENDS_WITH`]',
+            '`STARTS_WITH`, `ENDS_WITH`, `NEAR`]',
     });
     x.assert(func('("a::after", {"a": 1}, ALLO)'), {
         'error': 'unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
-            '`STARTS_WITH`, `ENDS_WITH`]',
+            '`STARTS_WITH`, `ENDS_WITH`, `NEAR`]',
     });
     x.assert(func('("a", {"b": "c", "b": "d"})'), {'error': 'attribute `b` is duplicated'});
 
@@ -667,7 +667,7 @@ ${equal(3)}
     // Multiline
     x.assert(func('("a::after", \n {"a": 1}, \n ALLO)'), {
         'error': 'unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
-            '`STARTS_WITH`, `ENDS_WITH`]',
+            '`STARTS_WITH`, `ENDS_WITH`, `NEAR`]',
     });
     x.assert(func('("//a",\n    \n{"b": "c"}, \n ALL)'), {
         'instructions': [`\
@@ -878,7 +878,7 @@ function checkAssertObjPropertyInner(
     x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
     x.assert(func('({"a": "b"}, all)'), {
         'error': 'unknown identifier `all`. Available identifiers are: [`CONTAINS`, `ENDS_WITH`, ' +
-            '`STARTS_WITH`]',
+            '`STARTS_WITH`, `NEAR`]',
     });
     x.assert(func('("a::after", {"a": 1}, ALLO)'), {
         'error': 'expected a tuple of one or two elements, found 3 elements',
@@ -2186,11 +2186,11 @@ function checkAssertPropertyInner(x, func, exists, equal, startsWith, endsWith) 
     });
     x.assert(func('("a::after", {"a": 1}, all)'), {
         'error': 'unknown identifier `all`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
-            '`STARTS_WITH`, `ENDS_WITH`]',
+            '`STARTS_WITH`, `ENDS_WITH`, `NEAR`]',
     });
     x.assert(func('("a::after", {"a": 1}, ALLO)'), {
         'error': 'unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
-            '`STARTS_WITH`, `ENDS_WITH`]',
+            '`STARTS_WITH`, `ENDS_WITH`, `NEAR`]',
     });
     x.assert(func('("a", {"b": "c", "b": "d"})'), {'error': 'property `b` is duplicated'});
     x.assert(func('("a", {"b": []})'), {

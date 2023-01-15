@@ -137,7 +137,7 @@ function parseAssertCssFalse(parser) {
 
 function parseAssertObjPropertyInner(parser, assertFalse, objName) {
     const elems = parser.elems;
-    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH'];
+    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH', 'NEAR'];
 
     if (elems.length === 0) {
         return {'error': 'expected a tuple or a JSON dict, found nothing'};
@@ -257,6 +257,27 @@ if (!String(${objName}[${varKey}]).endsWith(${varValue})) {
 }`);
         }
     }
+    if (enabled_checks['NEAR']) {
+        if (assertFalse) {
+            checks.push(`\
+if (Number.isNaN(${objName}[${varKey}])) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
+\`) is NaN');
+} else if (Math.abs(${objName}[${varKey}] - ${varValue}) <= 1) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
+\`) is within 1 of \`' + ${varValue} + '\`');
+}`);
+        } else {
+            checks.push(`\
+if (Number.isNaN(${objName}[${varKey}])) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
+\`) is NaN');
+} else if (Math.abs(${objName}[${varKey}] - ${varValue}) > 1) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
+\`) is not within 1 of \`' + ${varValue} + '\`');
+}`);
+        }
+    }
     // If no check was enabled.
     if (checks.length === 0) {
         if (assertFalse) {
@@ -308,8 +329,8 @@ ${indentString(checks.join('\n'), 2)}
 //
 // * {"DOM property": "value"}
 // * ({"DOM property": "value"})
-// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH)
-// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH])
+// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH|NEAR)
+// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH|NEAR])
 function parseAssertDocumentProperty(parser) {
     return parseAssertObjPropertyInner(parser, false, 'document');
 }
@@ -318,8 +339,8 @@ function parseAssertDocumentProperty(parser) {
 //
 // * {"DOM property": "value"}
 // * ({"DOM property": "value"})
-// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH)
-// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH])
+// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH|NEAR)
+// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH|NEAR])
 function parseAssertDocumentPropertyFalse(parser) {
     return parseAssertObjPropertyInner(parser, true, 'document');
 }
@@ -328,8 +349,8 @@ function parseAssertDocumentPropertyFalse(parser) {
 //
 // * {"DOM property": "value"}
 // * ({"DOM property": "value"})
-// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH)
-// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH])
+// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH|NEAR)
+// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH|NEAR])
 function parseAssertWindowProperty(parser) {
     return parseAssertObjPropertyInner(parser, false, 'window');
 }
@@ -338,8 +359,8 @@ function parseAssertWindowProperty(parser) {
 //
 // * {"DOM property": "value"}
 // * ({"DOM property": "value"})
-// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH)
-// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH])
+// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH|NEAR)
+// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH|NEAR])
 function parseAssertWindowPropertyFalse(parser) {
     return parseAssertObjPropertyInner(parser, true, 'window');
 }
@@ -347,7 +368,7 @@ function parseAssertWindowPropertyFalse(parser) {
 function parseAssertPropertyInner(parser, assertFalse) {
     const err = 'Read the documentation to see the accepted inputs';
     const elems = parser.elems;
-    const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
+    const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH', 'NEAR'];
     const warnings = [];
     const enabled_checks = Object.create(null);
 
@@ -432,6 +453,27 @@ ENDS_WITH check)');
 if (!String(e[${varKey}]).endsWith(${varValue})) {
     nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
 \`) does not end with \`' + ${varValue} + '\`');
+}`);
+        }
+    }
+    if (enabled_checks['NEAR']) {
+        if (assertFalse) {
+            checks.push(`\
+if (Number.isNaN(e[${varKey}])) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
+\`) is NaN');
+} else if (Math.abs(e[${varKey}] - ${varValue}) <= 1) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
+\`) is within 1 of \`' + ${varValue} + '\`');
+}`);
+        } else {
+            checks.push(`\
+if (Number.isNaN(e[${varKey}])) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
+\`) is NaN');
+} else if (Math.abs(e[${varKey}] - ${varValue}) > 1) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
+\`) is not within 1 of \`' + ${varValue} + '\`');
 }`);
         }
     }
@@ -544,7 +586,7 @@ function parseAssertPropertyFalse(parser) {
 function parseAssertAttributeInner(parser, assertFalse) {
     const err = 'Read the documentation to see the accepted inputs';
     const elems = parser.elems;
-    const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
+    const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH', 'NEAR'];
     const warnings = [];
     const enabled_checks = Object.create(null);
 
@@ -629,6 +671,27 @@ if (attr.endsWith(${varValue})) {
 if (!attr.endsWith(${varValue})) {
     nonMatchingAttrs.push("attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't end with \`"\
  + ${varValue} + "\`");
+}`);
+        }
+    }
+    if (enabled_checks['NEAR']) {
+        if (assertFalse) {
+            checks.push(`\
+if (Number.isNaN(attr)) {
+    nonMatchingProps.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
+\`) is NaN');
+} else if (Math.abs(attr] - ${varValue}) <= 1) {
+    nonMatchingProps.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
+\`) is within 1 of \`' + ${varValue} '\`');
+}`);
+        } else {
+            checks.push(`\
+if (Number.isNaN(attr)) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + attr + '\
+\`) is NaN');
+} else if (Math.abs(attr - ${varValue}) > 1) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + attr + '\
+\`) is not within 1 of \`' + ${varValue} '\`');
 }`);
         }
     }
@@ -1264,7 +1327,7 @@ function parseAssertVariableInner(parser, assertFalse) {
 ${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
         };
     } else if (tuple.length > 2) {
-        const identifiers = ['CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
+        const identifiers = ['CONTAINS', 'STARTS_WITH', 'ENDS_WITH', 'NEAR'];
         const ret = fillEnabledChecks(tuple[2], identifiers, enabled_checks, warnings, 'third');
         if (ret !== null) {
             return ret;
@@ -1309,6 +1372,23 @@ if (value1.endsWith(value2)) {
             checks.push(`\
 if (!value1.endsWith(value2)) {
     errors.push("\`" + value1 + "\` doesn't end with \`" + value2 + "\` (for ENDS_WITH check)");
+}`);
+        }
+    }
+    if (enabled_checks['NEAR']) {
+        if (assertFalse) {
+            checks.push(`\
+if (Number.isNaN(value1])) {
+    nonMatchingProps.push('\`' + value1 + '\` is NaN');
+} else if (Math.abs(value1 - value2) <= 1) {
+    nonMatchingProps.push('\`' + value1 + '\` is within 1 of \`' + value2 '\`');
+}`);
+        } else {
+            checks.push(`\
+if (Number.isNaN(value1])) {
+    nonMatchingProps.push('\`' + value1 + '\` is NaN');
+} else if (Math.abs(value1 - value2) > 1) {
+    nonMatchingProps.push('\`' + value1 + '\` is not within 1 of \`' + value2 '\`');
 }`);
         }
     }
