@@ -199,7 +199,7 @@ assert-attribute: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
 assert-attribute: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
 ```
 
-You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
 
 ```
 assert-attribute: (
@@ -235,7 +235,7 @@ assert-attribute-false: ("#id > .class", {"attribute-name": "attribute-value"}, 
 assert-attribute-false: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
 ```
 
-You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
 
 ```
 assert-attribute-false: (
@@ -321,7 +321,7 @@ assert-document-property: ({"URL": "https://some.where", "title": "a title"})
 assert-document-property: {"URL": "https://some.where", "title": "a title"}
 ```
 
-You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
 
 ```
 assert-document-property: ({"URL": "https://some.where", "title": "a title"}, STARTS_WITH)
@@ -343,7 +343,8 @@ assert-document-property-false: ({"URL": "https://some.where", "title": "a title
 assert-document-property-false: {"URL": "https://some.where", "title": "a title"}
 ```
 
-You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH",
+"STARTS_WITH" or "NEAR".
 
 ```
 assert-document-property-false: ({"URL": "https://some.where", "title": "a title"}, STARTS_WITH)
@@ -422,7 +423,7 @@ assert-property: ("#id > .class", { "offsetParent": "null" }, ALL)
 assert-property: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" }, ALL)
 ```
 
-You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH", "STARTS_WITH" or "NEAR".
 
 ```
 assert-property: (
@@ -457,7 +458,7 @@ assert-property-false: ("#id > .class", { "offsetParent": "null" }, ALL)
 assert-property-false: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" }, ALL)
 ```
 
-You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
 
 ```
 assert-property-false: (
@@ -544,10 +545,25 @@ assert-variable: (variable_name, 12)
 assert-variable: (variable_name, 12.1)
 ```
 
-Apart from "CONTAINS", you can also use "ENDS_WITH" and "STARTS_WITH" and even combine them if you want. Example:
+Apart from "CONTAINS", you can also use "ENDS_WITH", "STARTS_WITH" or "NEAR" and even combine them if you want. Example:
 
 ```
 assert-variable: (variable_name, "hel", [CONTAINS, STARTS_WITH])
+```
+
+The `ENDS_WITH` and `STARTS_WITH` interpret the variable as a string, while `NEAR` interprets it as a number and asserts that the difference between the variable and the tested value is less than or equal to 1. This check is useful in cases where the browser rounds a potentially-fractional value to an integer, and may not always do it consistently from run to run:
+
+```
+// all of these assertions will pass
+store-value: (variable_name, "hello")
+assert-variable: (variable_name, "he", STARTS_WITH)
+assert-variable: (variable_name, "o", ENDS_WITH)
+store-value: (variable_name, 10)
+assert-variable: (variable_name, 10, NEAR)
+assert-variable: (variable_name, 9, NEAR)
+assert-variable: (variable_name, 11, NEAR)
+assert-variable-false: (variable_name, 8, NEAR)
+assert-variable-false: (variable_name, 12, NEAR)
 ```
 
 For more information about variables, read the [variables section](#variables).
@@ -563,7 +579,7 @@ assert-variable-false: (variable_name, 12)
 assert-variable-false: (variable_name, 12.1)
 ```
 
-Apart from "CONTAINS", you can also use "ENDS_WITH" and "STARTS_WITH" and even combine them if you want. Example:
+Apart from "CONTAINS", you can also use "ENDS_WITH", "STARTS_WITH" or "NEAR" and even combine them if you want. Example:
 
 ```
 assert-variable-false: (variable_name, "hel", [CONTAINS, ENDS_WITH])
@@ -581,7 +597,7 @@ assert-window-property: ({"pageYOffset": "0", "location": "https://some.where"})
 assert-window-property: {"pageYOffset": "0", "location": "https://some.where"}
 ```
 
-You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
 
 ```
 assert-window-property: (
@@ -609,7 +625,7 @@ assert-window-property-false: ({"location": "https://some.where", "pageYOffset":
 assert-window-property-false: {"location": "https://some.where", "pageYOffset": "10"}
 ```
 
-You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH" or "STARTS_WITH".
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH", "STARTS_WITH" or "NEAR".
 
 ```
 assert-window-property-false: (
