@@ -262,19 +262,19 @@ if (!String(${objName}[${varKey}]).endsWith(${varValue})) {
             checks.push(`\
 if (Number.isNaN(${objName}[${varKey}])) {
     nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
-\`) is NaN');
+\`) is NaN (for NEAR check)');
 } else if (Math.abs(${objName}[${varKey}] - ${varValue}) <= 1) {
     nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
-\`) is within 1 of \`' + ${varValue} + '\`');
+\`) is within 1 of \`' + ${varValue} + '\` (for NEAR check)');
 }`);
         } else {
             checks.push(`\
 if (Number.isNaN(${objName}[${varKey}])) {
     nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
-\`) is NaN');
+\`) is NaN (for NEAR check)');
 } else if (Math.abs(${objName}[${varKey}] - ${varValue}) > 1) {
     nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
-\`) is not within 1 of \`' + ${varValue} + '\`');
+\`) is not within 1 of \`' + ${varValue} + '\` (for NEAR check)');
 }`);
         }
     }
@@ -461,19 +461,19 @@ if (!String(e[${varKey}]).endsWith(${varValue})) {
             checks.push(`\
 if (Number.isNaN(e[${varKey}])) {
     nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
-\`) is NaN');
+\`) is NaN (for NEAR check)');
 } else if (Math.abs(e[${varKey}] - ${varValue}) <= 1) {
     nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
-\`) is within 1 of \`' + ${varValue} + '\`');
+\`) is within 1 of \`' + ${varValue} + '\` (for NEAR check)');
 }`);
         } else {
             checks.push(`\
 if (Number.isNaN(e[${varKey}])) {
     nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
-\`) is NaN');
+\`) is NaN (for NEAR check)');
 } else if (Math.abs(e[${varKey}] - ${varValue}) > 1) {
     nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
-\`) is not within 1 of \`' + ${varValue} + '\`');
+\`) is not within 1 of \`' + ${varValue} + '\` (for NEAR check)');
 }`);
         }
     }
@@ -679,19 +679,19 @@ if (!attr.endsWith(${varValue})) {
             checks.push(`\
 if (Number.isNaN(attr)) {
     nonMatchingProps.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
-\`) is NaN');
-} else if (Math.abs(attr] - ${varValue}) <= 1) {
+\`) is NaN (for NEAR check)');
+} else if (Math.abs(attr - ${varValue}) <= 1) {
     nonMatchingProps.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
-\`) is within 1 of \`' + ${varValue} '\`');
+\`) is within 1 of \`' + ${varValue} + '\` (for NEAR check)');
 }`);
         } else {
             checks.push(`\
 if (Number.isNaN(attr)) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + attr + '\
-\`) is NaN');
+    nonMatchingProps.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
+\`) is NaN (for NEAR check)');
 } else if (Math.abs(attr - ${varValue}) > 1) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + attr + '\
-\`) is not within 1 of \`' + ${varValue} '\`');
+    nonMatchingProps.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
+\`) is not within 1 of \`' + ${varValue} + '\` (for NEAR check)');
 }`);
         }
     }
@@ -1378,17 +1378,18 @@ if (!value1.endsWith(value2)) {
     if (enabled_checks['NEAR']) {
         if (assertFalse) {
             checks.push(`\
-if (Number.isNaN(value1])) {
-    nonMatchingProps.push('\`' + value1 + '\` is NaN');
+if (Number.isNaN(value1)) {
+    errors.push('\`' + value1 + '\` is NaN (for NEAR check)');
 } else if (Math.abs(value1 - value2) <= 1) {
-    nonMatchingProps.push('\`' + value1 + '\` is within 1 of \`' + value2 '\`');
+    errors.push('\`' + value1 + '\` is within 1 of \`' + value2 + '\` (for NEAR check)');
 }`);
         } else {
             checks.push(`\
-if (Number.isNaN(value1])) {
-    nonMatchingProps.push('\`' + value1 + '\` is NaN');
+if (Number.isNaN(value1)) {
+    errors.push('\`' + value1 + '\` is NaN (for NEAR check)');
 } else if (Math.abs(value1 - value2) > 1) {
-    nonMatchingProps.push('\`' + value1 + '\` is not within 1 of \`' + value2 '\`');
+    errors.push('\`' + value1 + '\` is not within 1 of \`' + value2 + '\` (for NEAR \
+check)');
 }`);
         }
     }
