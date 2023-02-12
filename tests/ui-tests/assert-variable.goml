@@ -1,0 +1,13 @@
+// Checking variables values
+store-value: (variable_name, "hello")
+assert-variable: (variable_name, "he", STARTS_WITH)
+assert-variable: (variable_name, "o", ENDS_WITH)
+assert-variable: (variable_name, 10, NEAR) // should fail
+store-value: (variable_name, 10)
+assert-variable: (variable_name, 10, NEAR)
+assert-variable: (variable_name, 9, NEAR)
+assert-variable-false: (variable_name, 9, NEAR) // should fail
+assert-variable: (variable_name, 11, NEAR)
+assert-variable-false: (variable_name, 8, NEAR)
+assert-variable: (variable_name, 8, NEAR) // Should fail
+assert-variable-false: (variable_name, 12, NEAR)
