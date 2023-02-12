@@ -132,7 +132,7 @@ function checkAssertFalse(x, func) {
     checkAssertInner(x, func, 'try {\n', '\n} catch(e) { return; } throw "assert didn\'t fail";');
 }
 
-function checkAssertAttributeInner(x, func, notFound, equal, contains, startsWith) {
+function checkAssertAttributeInner(x, func, notFound, equal, contains, startsWith, near) {
     x.assert(func('("a", "b", )'), {
         'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
     });
@@ -585,6 +585,31 @@ ${startsWith(3)}
         'wait': false,
         'checkResult': true,
     });
+    x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, NEAR])'), {
+        'instructions': [`\
+let parseAssertElemAttr = await page.$("a");
+if (parseAssertElemAttr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {"\\"b":"c"};
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${contains(2)}
+${near(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
 
     // XPath
     x.assert(func('("//a", {})'), {
@@ -719,6 +744,14 @@ if (!attr.startsWith(parseAssertElemAttrValue)) {
     nonMatchingAttrs.push("attribute \`" + parseAssertElemAttrAttribute + "\` (\`" + attr + "\`) \
 doesn't start with \`" + parseAssertElemAttrValue + "\` (for STARTS_WITH check)");
 }`, indent),
+        indent => indentString(`\
+if (Number.isNaN(attr)) {
+    nonMatchingProps.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
+\`) is NaN (for NEAR check)');
+} else if (Math.abs(attr - parseAssertElemAttrValue) > 1) {
+    nonMatchingProps.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
+\`) is not within 1 of \`' + parseAssertElemAttrValue + '\` (for NEAR check)');
+}`, indent),
     );
 }
 
@@ -741,6 +774,14 @@ if (attr.indexOf(parseAssertElemAttrValue) !== -1) {
 if (attr.startsWith(parseAssertElemAttrValue)) {
     nonMatchingAttrs.push("assert didn't fail for attribute \`" + parseAssertElemAttrAttribute + \
 "\` (\`" + attr + "\`) (for STARTS_WITH check)");
+}`, indent),
+        indent => indentString(`\
+if (Number.isNaN(attr)) {
+    nonMatchingProps.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
+\`) is NaN (for NEAR check)');
+} else if (Math.abs(attr - parseAssertElemAttrValue) <= 1) {
+    nonMatchingProps.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
+\`) is within 1 of \`' + parseAssertElemAttrValue + '\` (for NEAR check)');
 }`, indent),
     );
 }
@@ -864,6 +905,7 @@ function checkAssertObjPropertyInner(
     containsCheck,
     startsWithCheck,
     endsWithCheck,
+    nearCheck,
 ) {
     x.assert(func('["a"]'), {
         'error': 'expected a tuple or a JSON dict, found `["a"]`',
@@ -1010,6 +1052,27 @@ parseAssertDictPropDict)) {
         'wait': false,
         'checkResult': true,
     });
+    x.assert(func('({"a": "b"}, [STARTS_WITH, NEAR])'), {
+        'instructions': [`await page.evaluate(() => {
+    const nonMatchingProps = [];
+    const parseAssertDictPropDict = {"a":"b"};
+    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
+parseAssertDictPropDict)) {
+        if (${objName}[parseAssertDictPropKey] === undefined) {${noProp()}
+            continue;
+        }
+        ${startsWithCheck()}
+        ${nearCheck()}
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(", ");
+        throw "The following errors happened: [" + props + "]";
+    }
+});`,
+        ],
+        'wait': false,
+        'checkResult': true,
+    });
 }
 
 function checkAssertDocumentProperty(x, func) {
@@ -1035,6 +1098,14 @@ document[parseAssertDictPropKey] + '\`) does not start with \`' + parseAssertDic
         () => `if (!String(document[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) {
             nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
 document[parseAssertDictPropKey] + '\`) does not end with \`' + parseAssertDictPropValue + '\`');
+        }`,
+        () => `if (Number.isNaN(document[parseAssertDictPropKey])) {
+            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
+document[parseAssertDictPropKey] + '\`) is NaN (for NEAR check)');
+        } else if (Math.abs(document[parseAssertDictPropKey] - parseAssertDictPropValue) > 1) {
+            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
+document[parseAssertDictPropKey] + '\`) is not within 1 of \`' + parseAssertDictPropValue + '\` \
+(for NEAR check)');
         }`,
     );
 }
@@ -1062,10 +1133,18 @@ if (String(document[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) !
             nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
 '\` (for ENDS_WITH check)');
         }`,
+        () => `if (Number.isNaN(document[parseAssertDictPropKey])) {
+            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
+document[parseAssertDictPropKey] + '\`) is NaN (for NEAR check)');
+        } else if (Math.abs(document[parseAssertDictPropKey] - parseAssertDictPropValue) <= 1) {
+            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
+document[parseAssertDictPropKey] + '\`) is within 1 of \`' + parseAssertDictPropValue + '\` \
+(for NEAR check)');
+        }`,
     );
 }
 
-function checkAssertVariableInner(x, func, equal, contains, starts_with, ends_with) {
+function checkAssertVariableInner(x, func, equal, contains, starts_with, ends_with, near) {
     x.assert(func(''), {'error': 'expected a tuple, found nothing'});
     x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
     x.assert(func('('), {'error': 'expected `)` at the end'});
@@ -1253,6 +1332,26 @@ if (errors.length !== 0) {
         ],
         'wait': false,
     });
+    x.assert(func('(VAR, "a", [STARTS_WITH, NEAR])'), {
+        'instructions': [`\
+function stringifyValue(value) {
+    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
+        return String(value);
+    }
+    return JSON.stringify(value);
+}
+const value1 = stringifyValue(arg.variables["VAR"]);
+const value2 = stringifyValue("a");
+const errors = [];
+${starts_with}
+${near}
+if (errors.length !== 0) {
+    const errs = errors.join(", ");
+    throw "The following errors happened: [" + errs + "]";
+}`,
+        ],
+        'wait': false,
+    });
 }
 
 function checkAssertVariable(x, func) {
@@ -1272,6 +1371,13 @@ if (!value1.startsWith(value2)) {
         `\
 if (!value1.endsWith(value2)) {
     errors.push("\`" + value1 + "\` doesn't end with \`" + value2 + "\` (for ENDS_WITH check)");
+}`,
+        `\
+if (Number.isNaN(value1)) {
+    errors.push('\`' + value1 + '\` is NaN (for NEAR check)');
+} else if (Math.abs(value1 - value2) > 1) {
+    errors.push('\`' + value1 + '\` is not within 1 of \`' + value2 + '\` (for \
+NEAR check)');
 }`,
     );
 }
@@ -1293,6 +1399,12 @@ if (value1.startsWith(value2)) {
         `\
 if (value1.endsWith(value2)) {
     errors.push("\`" + value1 + "\` ends with \`" + value2 + "\` (for ENDS_WITH check)");
+}`,
+        `\
+if (Number.isNaN(value1)) {
+    errors.push('\`' + value1 + '\` is NaN (for NEAR check)');
+} else if (Math.abs(value1 - value2) <= 1) {
+    errors.push('\`' + value1 + '\` is within 1 of \`' + value2 + '\` (for NEAR check)');
 }`,
     );
 }
@@ -1321,6 +1433,14 @@ window[parseAssertDictPropKey] + '\`) does not start with \`' + parseAssertDictP
             nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
 window[parseAssertDictPropKey] + '\`) does not end with \`' + parseAssertDictPropValue + '\`');
         }`,
+        () => `if (Number.isNaN(window[parseAssertDictPropKey])) {
+            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
+window[parseAssertDictPropKey] + '\`) is NaN (for NEAR check)');
+        } else if (Math.abs(window[parseAssertDictPropKey] - parseAssertDictPropValue) > 1) {
+            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
+window[parseAssertDictPropKey] + '\`) is not within 1 of \`' + parseAssertDictPropValue + '\` \
+(for NEAR check)');
+        }`,
     );
 }
 
@@ -1346,6 +1466,14 @@ if (String(window[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) !==
         () => `if (String(window[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) {
             nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
 '\` (for ENDS_WITH check)');
+        }`,
+        () => `if (Number.isNaN(window[parseAssertDictPropKey])) {
+            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
+window[parseAssertDictPropKey] + '\`) is NaN (for NEAR check)');
+        } else if (Math.abs(window[parseAssertDictPropKey] - parseAssertDictPropValue) <= 1) {
+            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
+window[parseAssertDictPropKey] + '\`) is within 1 of \`' + parseAssertDictPropValue + '\` \
+(for NEAR check)');
         }`,
     );
 }
