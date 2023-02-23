@@ -136,6 +136,25 @@ function waitUntilEnterPressed(error_log) {
     readline.question('Press ENTER to continue...');
 }
 
+async function runInstruction(loadedInstruction, page, extras) {
+    try {
+        await loadedInstruction(page, extras);
+        return;
+    } catch (err) { // execution error
+        if (err.message && err.message.indexOf
+            && err.message.indexOf('Execution context was destroyed') === 0) {
+            // Puppeteer error so this time we wait until the document is ready before trying
+            // again.
+            await page.waitForFunction('document.readyState === "complete"');
+        } else {
+            // Not a context error because of navigation, throwing it again.
+            throw err;
+        }
+    }
+    // We give it another chance...
+    await loadedInstruction(page, extras);
+}
+
 async function runAllCommands(loaded, logs, options, browser) {
     logs.append(loaded['file'] + '... ');
     const context_parser = loaded['parser'];
@@ -229,7 +248,6 @@ async function runAllCommands(loaded, logs, options, browser) {
             return checkPageErrors('failOnRequestError', 'requestErrors', 'request failed');
         };
 
-
         let error_log = '';
         const warnings = [];
         let current_url = '';
@@ -276,7 +294,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                     break command_loop;
                 }
                 try {
-                    await loadedInstruction(page, extras);
+                    await runInstruction(loadedInstruction, page, extras);
                 } catch (err) { // execution error
                     if (err === commands_parser.COLOR_CHECK_ERROR) {
                         error_log += `[ERROR] (line ${line_number}): ${err}\n`;
