@@ -92,7 +92,7 @@ function parseClickWithOffset(parser) {
     }
 
     const json = tuple[1].getRaw();
-    const entries = validateJson(json, ['number'], 'JSON dict key', ['x', 'y']);
+    const entries = validateJson(json, {'number': []}, 'JSON dict key', ['x', 'y']);
     if (entries.error !== undefined) {
         return entries;
     }
@@ -107,9 +107,6 @@ function parseClickWithOffset(parser) {
     const varName = 'parseClickWithOffsetVar';
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
-        if (entries.warnings === undefined) {
-            entries.warnings = [];
-        }
         entries.warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) can't be retrieved so \
 \`click\` will be performed on the element directly`);
     }

@@ -614,7 +614,7 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
     }
 
     const json = tuple[2].getRaw();
-    const entries = validateJson(json, ['number'], 'JSON dict key');
+    const entries = validateJson(json, {'number': []}, 'JSON dict key');
 
     if (entries.error !== undefined) {
         return entries;
@@ -634,15 +634,16 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
     const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
         getAndSetElements(selector2, varName + '2', false) + '\n';
 
-    const warnings = [];
+    const warnings = entries.warnings;
     let code = '';
     for (const [key, value] of Object.entries(entries.values)) {
+        const v = value.value;
         if (key === 'x') {
-            if (value < 0) {
+            if (v < 0) {
                 return {
-                    'error': `Delta cannot be negative (in \`"x": ${value}\`)`,
+                    'error': `Delta cannot be negative (in \`"x": ${v}\`)`,
                 };
-            } else if (value === '0') {
+            } else if (v === '0') {
                 warnings.push(
                     'Delta is 0 for "X", maybe try to use `compare-elements-position` instead?');
             }
@@ -651,18 +652,18 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
                 'let x1 = e1.getBoundingClientRect().left;\n' +
                 'let x2 = e2.getBoundingClientRect().left;\n' +
                 'let delta = Math.abs(x1 - x2);\n' +
-                `if (delta > ${value}) {\n` +
-                `throw "delta X values too large: " + delta + " > ${value}";\n` +
+                `if (delta > ${v}) {\n` +
+                `throw "delta X values too large: " + delta + " > ${v}";\n` +
                 '}\n' +
                 insertAfter +
                 '}\n' +
                 'checkX(elem1, elem2);\n';
         } else if (key === 'y') {
-            if (value < 0) {
+            if (v < 0) {
                 return {
-                    'error': `Delta cannot be negative (in \`"y": ${value}\`)`,
+                    'error': `Delta cannot be negative (in \`"y": ${v}\`)`,
                 };
-            } else if (value === '0') {
+            } else if (v === '0') {
                 warnings.push(
                     'Delta is 0 for "Y", maybe try to use `compare-elements-position` instead?');
             }
@@ -671,8 +672,8 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
                 'let y1 = e1.getBoundingClientRect().top;\n' +
                 'let y2 = e2.getBoundingClientRect().top;\n' +
                 'let delta = Math.abs(y1 - y2);\n' +
-                `if (delta > ${value}) {\n` +
-                `throw "delta Y values too large: " + delta + " > ${value}";\n` +
+                `if (delta > ${v}) {\n` +
+                `throw "delta Y values too large: " + delta + " > ${v}";\n` +
                 '}\n' +
                 insertAfter +
                 '}\n' +
@@ -694,7 +695,7 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
         'instructions': [instructions],
         'wait': false,
         'checkResult': true,
-        'warnings': warnings.length > 0 ? warnings : undefined,
+        'warnings': warnings,
     };
 }
 

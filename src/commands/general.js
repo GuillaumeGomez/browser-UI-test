@@ -141,19 +141,16 @@ function parseObjPropertyInner(parser, objName) {
         };
     }
 
-    let warnings = [];
-    const entries = validateJson(elems[0].getRaw(), ['string', 'number'], 'property');
+    const entries = validateJson(elems[0].getRaw(), {'string': [], 'number': []}, 'property');
     if (entries.error !== undefined) {
         return entries;
-    } else if (entries.warnings !== undefined) {
-        warnings = entries.warnings;
     }
 
     if (Object.entries(entries.values).length === 0) {
         return {
             'instructions': [],
             'wait': false,
-            'warnings': warnings.length > 0 ? warnings : undefined,
+            'warnings': entries.warnings,
             'checkResult': true,
         };
     }
@@ -164,17 +161,14 @@ function parseObjPropertyInner(parser, objName) {
     const varKey = varName + 'Key';
     const varValue = varName + 'Value';
     // JSON.stringify produces a problematic output so instead we use this.
-    let d = '';
+    const props = [];
     for (const [k, v] of Object.entries(entries.values)) {
-        if (d.length > 0) {
-            d += ',';
-        }
-        d += `"${k}":"${v}"`;
+        props.push(`"${k}":"${v.value}"`);
     }
 
     const instructions = [`\
 await page.evaluate(() => {
-    const ${varDict} = {${d}};
+    const ${varDict} = {${props.join(',')}};
     for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
         ${objName}[${varKey}] = ${varValue};
     }
@@ -184,7 +178,7 @@ await page.evaluate(() => {
     return {
         'instructions': instructions,
         'wait': false,
-        'warnings': warnings.length > 0 ? warnings : undefined,
+        'warnings': entries.warnings,
         'checkResult': true,
     };
 }
