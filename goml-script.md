@@ -199,6 +199,13 @@ assert-attribute: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
 assert-attribute: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
 ```
 
+If you want to check that an attribute doesn't exist, you can use `null`:
+
+```
+// Checking that "attribute-name" doesn't exist.
+assert-attribute: ("#id > .class", {"attribute-name": null})
+```
+
 You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
 
 ```
@@ -233,6 +240,13 @@ assert-attribute-false: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "
 // If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-attribute-false: ("#id > .class", {"attribute-name": "attribute-value"}, ALL)
 assert-attribute-false: ("//*[@id='id']/*[@class='class']", {"key1": "value1", "key2": "value2"}, ALL)
+```
+
+If you want to check that an attribute does exist, you can use `null`:
+
+```
+// Checking that "attribute-name" does exist.
+assert-attribute-false: ("#id > .class", {"attribute-name": null})
 ```
 
 You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".

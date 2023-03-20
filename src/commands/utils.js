@@ -44,20 +44,21 @@ function validateJson(json, allowedValueTypes, keyName, allowedKeys = null) {
         if (entry['value'] === undefined) {
             warnings.push(`No value for key \`${entry['key'].getErrorText()}\``);
             continue;
-        } else if (allowedValueTypes.indexOf(entry['value'].kind) === -1) {
+        } else if (!Object.prototype.hasOwnProperty.call(allowedValueTypes, entry['value'].kind)) {
             let allowed = '';
-            for (let i = 0; i < allowedValueTypes.length - 1; ++i) {
+            const types = Object.keys(allowedValueTypes);
+            for (let i = 0; i < types.length - 1; ++i) {
                 if (allowed.length !== 0) {
                     allowed += ', ';
                 }
-                allowed += allowedValueTypes[i];
+                allowed += types[i];
             }
             if (allowed.length !== 0) {
                 allowed += ' and ';
             }
-            allowed += allowedValueTypes[allowedValueTypes.length - 1];
-            const article = allowedValueTypes.length > 1 ? 'are' : 'is';
-            const extra = allowedValueTypes.length > 1 ? 's' : '';
+            allowed += types[types.length - 1];
+            const article = types.length > 1 ? 'are' : 'is';
+            const extra = types.length > 1 ? 's' : '';
             return {
                 'error': `only ${allowed} type${extra} ${article} allowed as value, found \`` +
                     `${entry['value'].getErrorText()}\` (${entry['value'].getArticleKind()})`,
@@ -69,6 +70,17 @@ function validateJson(json, allowedValueTypes, keyName, allowedKeys = null) {
                 'error': 'empty name of properties ("" or \'\') are not allowed',
             };
         }
+        const kind = entry['value'].kind;
+        const value_s = entry['value'].getStringValue();
+        const allowedValues = allowedValueTypes[kind];
+        // If `allowedValues` is empty, all values are allowed. Otherwise, only the provided values
+        // can be used.
+        if (allowedValues.length !== 0 && allowedValues.indexOf(value_s) === -1) {
+            return {
+                'error': `Forbidden \`${kind}\` used (\`${value_s}\`). Allowed values: \
+${allowedValues}`,
+            };
+        }
         if (Object.prototype.hasOwnProperty.call(entries, key_s)) {
             return {
                 'error': `${keyName} \`${key_s}\` is duplicated`,
@@ -78,12 +90,14 @@ function validateJson(json, allowedValueTypes, keyName, allowedKeys = null) {
                 'error': `Unexpected key \`${key_s}\`, allowed keys: [${allowedKeys.join(', ')}]`,
             };
         }
-        const value_s = entry['value'].getStringValue();
-        entries[key_s] = value_s;
+        entries[key_s] = {
+            'value': value_s,
+            'kind': kind,
+        };
     }
     return {
         'values': entries,
-        'warnings': warnings.length > 0 ? warnings : undefined,
+        'warnings': warnings,
     };
 }
 
@@ -208,7 +222,7 @@ function buildPropertyDict(entries, errorText, allowEmptyValues, valuesAsStrings
 
     // JSON.stringify produces a problematic output so instead we use this.
     for (const [k, v] of Object.entries(entries.values)) {
-        if (v.length === 0 && allowEmptyValues !== true) {
+        if (v.value.length === 0 && allowEmptyValues !== true) {
             return {
                 'error': `Empty values are not allowed: \`${k}\` has an empty value`,
             };
@@ -224,9 +238,9 @@ function buildPropertyDict(entries, errorText, allowEmptyValues, valuesAsStrings
             ret['dict'] += ',';
         }
         if (valuesAsStrings === true) {
-            ret['dict'] += `"${k}":"${v}"`;
+            ret['dict'] += `"${k}":"${v.value}"`;
         } else {
-            ret['dict'] += `"${k}":${v}`;
+            ret['dict'] += `"${k}":${v.value}`;
         }
     }
     return ret;

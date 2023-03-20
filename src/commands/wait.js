@@ -140,7 +140,7 @@ function waitForInitializer(parser, errorMessage, allowEmptyValues) {
         return selector;
     }
     const json = tuple[1].getRaw();
-    const entries = validateJson(json, ['string', 'number'], errorMessage);
+    const entries = validateJson(json, {'string': [], 'number': []}, errorMessage);
 
     if (entries.error !== undefined) {
         return entries;

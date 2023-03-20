@@ -23,7 +23,7 @@ function parseAssertCssInner(parser, assertFalse) {
     const pseudo = !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '';
 
     const json = selector.tuple[1].getRaw();
-    const entries = validateJson(json, ['string', 'number'], 'CSS property');
+    const entries = validateJson(json, {'string': [], 'number': []}, 'CSS property');
 
     if (entries.error !== undefined) {
         return entries;
@@ -179,14 +179,11 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
         json_dict = elems[0].getRaw();
     }
 
-    const entries = validateJson(json_dict, ['string', 'number'], 'property');
+    const entries = validateJson(json_dict, {'string': [], 'number': []}, 'property');
     if (entries.error !== undefined) {
         return entries;
-    } else if (entries.warnings !== undefined) {
-        for (const warning of entries.warnings) {
-            warnings.push(warning);
-        }
     }
+    warnings.push(...entries.warnings);
 
     if (Object.entries(entries.values).length === 0) {
         return {
@@ -203,12 +200,9 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
     const varKey = varName + 'Key';
     const varValue = varName + 'Value';
     // JSON.stringify produces a problematic output so instead we use this.
-    let d = '';
+    const values = [];
     for (const [k, v] of Object.entries(entries.values)) {
-        if (d.length > 0) {
-            d += ',';
-        }
-        d += `"${k}":"${v}"`;
+        values.push(`"${k}":"${v.value}"`);
     }
 
     const checks = [];
@@ -304,7 +298,7 @@ if (String(${objName}[${varKey}]) != ${varValue}) {
     const instructions = [`\
 await page.evaluate(() => {
     const nonMatchingProps = [];
-    const ${varDict} = {${d}};
+    const ${varDict} = {${values.join(',')}};
     for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
         if (${objName}[${varKey}] === undefined) {${err}
             continue;
@@ -494,27 +488,21 @@ if (String(e[${varKey}]) != ${varValue}) {
     }
 
     const json = tuple[1].getRaw();
-    const entries = validateJson(json, ['string', 'number'], 'property');
+    const entries = validateJson(json, {'string': [], 'number': []}, 'property');
     if (entries.error !== undefined) {
         return entries;
     }
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
-        if (entries.warnings === undefined) {
-            entries.warnings = [];
-        }
         entries.warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
 the check will be performed on the element itself`);
     }
 
 
     // JSON.stringify produces a problematic output so instead we use this.
-    let d = '';
+    const props = [];
     for (const [k, v] of Object.entries(entries.values)) {
-        if (d.length > 0) {
-            d += ',';
-        }
-        d += `"${k}":"${v}"`;
+        props.push(`"${k}":"${v.value}"`);
     }
 
     let unknown = '';
@@ -533,7 +521,7 @@ the check will be performed on the element itself`);
     whole += indentString(`\
 await page.evaluate(e => {
     const nonMatchingProps = [];
-    const ${varDict} = {${d}};
+    const ${varDict} = {${props.join(',')}};
     for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
         if (e[${varKey}] === undefined) {${unknown}
             continue;
@@ -678,23 +666,25 @@ if (!attr.endsWith(${varValue})) {
         if (assertFalse) {
             checks.push(`\
 if (Number.isNaN(attr)) {
-    nonMatchingProps.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
+    nonMatchingAttrs.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
 \`) is NaN (for NEAR check)');
 } else if (Math.abs(attr - ${varValue}) <= 1) {
-    nonMatchingProps.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
+    nonMatchingAttrs.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
 \`) is within 1 of \`' + ${varValue} + '\` (for NEAR check)');
 }`);
         } else {
             checks.push(`\
 if (Number.isNaN(attr)) {
-    nonMatchingProps.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
+    nonMatchingAttrs.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
 \`) is NaN (for NEAR check)');
 } else if (Math.abs(attr - ${varValue}) > 1) {
-    nonMatchingProps.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
+    nonMatchingAttrs.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
 \`) is not within 1 of \`' + ${varValue} + '\` (for NEAR check)');
 }`);
         }
     }
+    // eslint-disable-next-line no-extra-parens
+    const hasSpecialChecks = (enabled_checks['ALL'] && checks.length > 1) || checks.length !== 0;
     if (checks.length === 0) {
         if (assertFalse) {
             checks.push(`\
@@ -712,36 +702,60 @@ if (attr !== ${varValue}) {
     }
 
     const json = tuple[1].getRaw();
-    const entries = validateJson(json, ['string', 'number'], 'attribute');
+    const entries = validateJson(
+        json,
+        {'string': [], 'number': [], 'ident': ['null']},
+        'attribute',
+    );
     if (entries.error !== undefined) {
         return entries;
     }
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
-        if (entries.warnings === undefined) {
-            entries.warnings = [];
-        }
         entries.warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
 the check will be performed on the element itself`);
     }
 
     // JSON.stringify produces a problematic output so instead we use this.
-    let d = '';
+    const tests = [];
+    const nullAttributes = [];
     for (const [k, v] of Object.entries(entries.values)) {
-        if (d.length > 0) {
-            d += ',';
+        if (v.kind !== 'ident') {
+            tests.push(`"${k}":"${v.value}"`);
+        } else {
+            nullAttributes.push(`"${k}"`);
         }
-        d += `"${k}":"${v}"`;
+    }
+
+    if (nullAttributes.length > 0 && hasSpecialChecks) {
+        const k = Object.entries(enabled_checks)
+            .filter(([k, v]) => v && k !== 'ALL')
+            .map(([k, _]) => k);
+        entries.warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
     }
 
     let noAttrError = '';
+    let unexpectedAttrError = '';
+    let expectedAttrError = '';
     if (!assertFalse) {
         noAttrError = `
         nonMatchingAttrs.push("No attribute named \`" + ${varKey} + "\`");`;
+        unexpectedAttrError = `
+        nonMatchingAttrs.push("Expected \`null\` for attribute \`" + attr + "\`, found: \`" + \
+e.getAttribute(attr) + "\`");`;
+    } else {
+        expectedAttrError = `
+    nonMatchingAttrs.push("Attribute named \`" + attr + "\` doesn't exist");`;
     }
 
     const code = `const nonMatchingAttrs = [];
-const ${varDict} = {${d}};
+const ${varDict} = {${tests.join(',')}};
+const nullAttributes = [${nullAttributes.join(',')}];
+for (const attr of nullAttributes) {
+    if (e.hasAttribute(attr)) {${unexpectedAttrError}
+        continue;
+    }${expectedAttrError}
+}
 for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
     if (!e.hasAttribute(${varKey})) {${noAttrError}
         continue;
@@ -1113,7 +1127,7 @@ function parseAssertPositionInner(parser, assertFalse) {
 
     const json = selector.tuple[1].getRaw();
 
-    const entries = validateJson(json, ['number'], 'JSON dict key');
+    const entries = validateJson(json, {'number': []}, 'JSON dict key');
 
     if (entries.error !== undefined) {
         return entries;
@@ -1124,9 +1138,11 @@ function parseAssertPositionInner(parser, assertFalse) {
     let checks = '';
     for (const [key, value] of Object.entries(entries.values)) {
         if (key === 'x') {
-            checks += `\ncheckAssertPosBrowser(elem, 'left', 'marginLeft', 'X', ${value}, errors);`;
+            checks += `
+checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', ${value.value}, errors);`;
         } else if (key === 'y') {
-            checks += `\ncheckAssertPosBrowser(elem, 'top', 'marginTop', 'Y', ${value}, errors);`;
+            checks += `
+checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', ${value.value}, errors);`;
         } else {
             return {
                 'error': 'Only accepted keys are "x" and "y", found `' +
@@ -1189,6 +1205,7 @@ ${indentString(code, 1)}
 
     return {
         'instructions': [whole],
+        'warnings': entries.warnings,
         'wait': false,
         'checkResult': true,
     };

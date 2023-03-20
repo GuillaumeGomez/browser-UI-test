@@ -132,7 +132,8 @@ function checkAssertFalse(x, func) {
     checkAssertInner(x, func, 'try {\n', '\n} catch(e) { return; } throw "assert didn\'t fail";');
 }
 
-function checkAssertAttributeInner(x, func, notFound, equal, contains, startsWith, near) {
+function checkAssertAttributeInner(
+    x, func, notFound, unexpectedNull, expectedNull, equal, contains, startsWith, near) {
     x.assert(func('("a", "b", )'), {
         'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
     });
@@ -161,6 +162,12 @@ if (parseAssertElemAttr === null) { throw '"a" not found'; }
 await page.evaluate(e => {
     const nonMatchingAttrs = [];
     const parseAssertElemAttrDict = {};
+    const nullAttributes = [];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
     for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
         if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
@@ -176,6 +183,7 @@ ${equal(2)}
 }, parseAssertElemAttr);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"a": 1})'), {
@@ -185,6 +193,12 @@ if (parseAssertElemAttr === null) { throw '"a" not found'; }
 await page.evaluate(e => {
     const nonMatchingAttrs = [];
     const parseAssertElemAttrDict = {"a":"1"};
+    const nullAttributes = [];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
     for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
         if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
@@ -200,6 +214,7 @@ ${equal(2)}
 }, parseAssertElemAttr);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"a": 1}, ALL)'), {
@@ -210,6 +225,12 @@ for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
     await page.evaluate(e => {
         const nonMatchingAttrs = [];
         const parseAssertElemAttrDict = {"a":"1"};
+        const nullAttributes = [];
+        for (const attr of nullAttributes) {
+            if (e.hasAttribute(attr)) {${expectedNull(4)}
+                continue;
+            }${unexpectedNull(3)}
+        }
         for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
             if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
@@ -226,6 +247,7 @@ ${equal(3)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -237,6 +259,12 @@ if (parseAssertElemAttr === null) { throw '"a" not found'; }
 await page.evaluate(e => {
     const nonMatchingAttrs = [];
     const parseAssertElemAttrDict = {"a":"1"};
+    const nullAttributes = [];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
     for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
         if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
@@ -264,6 +292,12 @@ for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
     await page.evaluate(e => {
         const nonMatchingAttrs = [];
         const parseAssertElemAttrDict = {"a":"1"};
+        const nullAttributes = [];
+        for (const attr of nullAttributes) {
+            if (e.hasAttribute(attr)) {${expectedNull(4)}
+                continue;
+            }${unexpectedNull(3)}
+        }
         for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
             if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
@@ -291,6 +325,12 @@ if (parseAssertElemAttr === null) { throw '"b:after" not found'; }
 await page.evaluate(e => {
     const nonMatchingAttrs = [];
     const parseAssertElemAttrDict = {"a":"1"};
+    const nullAttributes = [];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
     for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
         if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
@@ -306,6 +346,7 @@ ${equal(2)}
 }, parseAssertElemAttr);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("b:after", {"a": 1}, ALL)'), {
@@ -316,6 +357,12 @@ for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
     await page.evaluate(e => {
         const nonMatchingAttrs = [];
         const parseAssertElemAttrDict = {"a":"1"};
+        const nullAttributes = [];
+        for (const attr of nullAttributes) {
+            if (e.hasAttribute(attr)) {${expectedNull(4)}
+                continue;
+            }${unexpectedNull(3)}
+        }
         for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
             if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
@@ -332,6 +379,7 @@ ${equal(3)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a ::after", {"a": 1})'), {
@@ -341,6 +389,12 @@ if (parseAssertElemAttr === null) { throw '"a ::after" not found'; }
 await page.evaluate(e => {
     const nonMatchingAttrs = [];
     const parseAssertElemAttrDict = {"a":"1"};
+    const nullAttributes = [];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
     for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
         if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
@@ -356,6 +410,7 @@ ${equal(2)}
 }, parseAssertElemAttr);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a ::after", {"a": 1}, ALL)'), {
@@ -366,6 +421,12 @@ for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
     await page.evaluate(e => {
         const nonMatchingAttrs = [];
         const parseAssertElemAttrDict = {"a":"1"};
+        const nullAttributes = [];
+        for (const attr of nullAttributes) {
+            if (e.hasAttribute(attr)) {${expectedNull(4)}
+                continue;
+            }${unexpectedNull(3)}
+        }
         for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
             if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
@@ -382,6 +443,7 @@ ${equal(3)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -392,6 +454,12 @@ if (parseAssertElemAttr === null) { throw '"a" not found'; }
 await page.evaluate(e => {
     const nonMatchingAttrs = [];
     const parseAssertElemAttrDict = {"b":"c","d":"e"};
+    const nullAttributes = [];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
     for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
         if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
@@ -407,6 +475,7 @@ ${equal(2)}
 }, parseAssertElemAttr);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"b": "c", "d": "e"}, ALL)'), {
@@ -417,6 +486,12 @@ for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
     await page.evaluate(e => {
         const nonMatchingAttrs = [];
         const parseAssertElemAttrDict = {"b":"c","d":"e"};
+        const nullAttributes = [];
+        for (const attr of nullAttributes) {
+            if (e.hasAttribute(attr)) {${expectedNull(4)}
+                continue;
+            }${unexpectedNull(3)}
+        }
         for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
             if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
@@ -433,6 +508,7 @@ ${equal(3)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"\\"b": "c"})'), {
@@ -442,6 +518,12 @@ if (parseAssertElemAttr === null) { throw '"a" not found'; }
 await page.evaluate(e => {
     const nonMatchingAttrs = [];
     const parseAssertElemAttrDict = {"\\"b":"c"};
+    const nullAttributes = [];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
     for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
         if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
@@ -457,6 +539,7 @@ ${equal(2)}
 }, parseAssertElemAttr);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"\\"b": "c"}, ALL)'), {
@@ -467,6 +550,12 @@ for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
     await page.evaluate(e => {
         const nonMatchingAttrs = [];
         const parseAssertElemAttrDict = {"\\"b":"c"};
+        const nullAttributes = [];
+        for (const attr of nullAttributes) {
+            if (e.hasAttribute(attr)) {${expectedNull(4)}
+                continue;
+            }${unexpectedNull(3)}
+        }
         for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
             if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
@@ -483,6 +572,7 @@ ${equal(3)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"\\"b": "c"}, CONTAINS)'), {
@@ -492,6 +582,12 @@ if (parseAssertElemAttr === null) { throw '"a" not found'; }
 await page.evaluate(e => {
     const nonMatchingAttrs = [];
     const parseAssertElemAttrDict = {"\\"b":"c"};
+    const nullAttributes = [];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
     for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
         if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
@@ -507,6 +603,7 @@ ${contains(2)}
 }, parseAssertElemAttr);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, CONTAINS])'), {
@@ -516,6 +613,12 @@ if (parseAssertElemAttr === null) { throw '"a" not found'; }
 await page.evaluate(e => {
     const nonMatchingAttrs = [];
     const parseAssertElemAttrDict = {"\\"b":"c"};
+    const nullAttributes = [];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
     for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
         if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
@@ -531,6 +634,7 @@ ${contains(2)}
 }, parseAssertElemAttr);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, STARTS_WITH])'), {
@@ -540,6 +644,12 @@ if (parseAssertElemAttr === null) { throw '"a" not found'; }
 await page.evaluate(e => {
     const nonMatchingAttrs = [];
     const parseAssertElemAttrDict = {"\\"b":"c"};
+    const nullAttributes = [];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
     for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
         if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
@@ -556,6 +666,7 @@ ${startsWith(2)}
 }, parseAssertElemAttr);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, STARTS_WITH, ALL])'), {
@@ -566,6 +677,12 @@ for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
     await page.evaluate(e => {
         const nonMatchingAttrs = [];
         const parseAssertElemAttrDict = {"\\"b":"c"};
+        const nullAttributes = [];
+        for (const attr of nullAttributes) {
+            if (e.hasAttribute(attr)) {${expectedNull(4)}
+                continue;
+            }${unexpectedNull(3)}
+        }
         for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
             if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
@@ -583,6 +700,7 @@ ${startsWith(3)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, NEAR])'), {
@@ -592,6 +710,12 @@ if (parseAssertElemAttr === null) { throw '"a" not found'; }
 await page.evaluate(e => {
     const nonMatchingAttrs = [];
     const parseAssertElemAttrDict = {"\\"b":"c"};
+    const nullAttributes = [];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
     for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
         if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
@@ -608,6 +732,138 @@ ${near(2)}
 }, parseAssertElemAttr);`,
         ],
         'wait': false,
+        'warnings': [],
+        'checkResult': true,
+    });
+
+    // null checks
+    x.assert(func('("a", {"\\"b": null, "a": "c"})'), {
+        'instructions': [`\
+let parseAssertElemAttr = await page.$("a");
+if (parseAssertElemAttr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {"a":"c"};
+    const nullAttributes = ["\\"b"];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
+        ],
+        'wait': false,
+        'warnings': [],
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"\\"b": null, "a": "c"}, [ALL])'), {
+        'instructions': [`\
+let parseAssertElemAttr = await page.$$("a");
+if (parseAssertElemAttr.length === 0) { throw '"a" not found'; }
+for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const nonMatchingAttrs = [];
+        const parseAssertElemAttrDict = {"a":"c"};
+        const nullAttributes = ["\\"b"];
+        for (const attr of nullAttributes) {
+            if (e.hasAttribute(attr)) {${expectedNull(4)}
+                continue;
+            }${unexpectedNull(3)}
+        }
+        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
+                continue;
+            }
+            const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${equal(3)}
+        }
+        if (nonMatchingAttrs.length !== 0) {
+            const props = nonMatchingAttrs.join(", ");
+            throw "The following errors happened (for selector \`a\`): [" + props + "]";
+        }
+    }, parseAssertElemAttr[i]);
+}`,
+        ],
+        'wait': false,
+        'warnings': [],
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"\\"b": null, "a": "c"}, CONTAINS)'), {
+        'instructions': [`\
+let parseAssertElemAttr = await page.$("a");
+if (parseAssertElemAttr === null) { throw '"a" not found'; }
+await page.evaluate(e => {
+    const nonMatchingAttrs = [];
+    const parseAssertElemAttrDict = {"a":"c"};
+    const nullAttributes = ["\\"b"];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
+    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
+            continue;
+        }
+        const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${contains(2)}
+    }
+    if (nonMatchingAttrs.length !== 0) {
+        const props = nonMatchingAttrs.join(", ");
+        throw "The following errors happened (for selector \`a\`): [" + props + "]";
+    }
+}, parseAssertElemAttr);`,
+        ],
+        'wait': false,
+        'warnings': ['Special checks (CONTAINS) will be ignored for `null`'],
+        'checkResult': true,
+    });
+    x.assert(func('("a", {"\\"b": null, "a": "c"}, [CONTAINS, STARTS_WITH, ALL])'), {
+        'instructions': [`\
+let parseAssertElemAttr = await page.$$("a");
+if (parseAssertElemAttr.length === 0) { throw '"a" not found'; }
+for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
+    await page.evaluate(e => {
+        const nonMatchingAttrs = [];
+        const parseAssertElemAttrDict = {"a":"c"};
+        const nullAttributes = ["\\"b"];
+        for (const attr of nullAttributes) {
+            if (e.hasAttribute(attr)) {${expectedNull(4)}
+                continue;
+            }${unexpectedNull(3)}
+        }
+        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
+parseAssertElemAttrDict)) {
+            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
+                continue;
+            }
+            const attr = e.getAttribute(parseAssertElemAttrAttribute);
+${contains(3)}
+${startsWith(3)}
+        }
+        if (nonMatchingAttrs.length !== 0) {
+            const props = nonMatchingAttrs.join(", ");
+            throw "The following errors happened (for selector \`a\`): [" + props + "]";
+        }
+    }, parseAssertElemAttr[i]);
+}`,
+        ],
+        'wait': false,
+        'warnings': ['Special checks (CONTAINS, STARTS_WITH) will be ignored for `null`'],
         'checkResult': true,
     });
 
@@ -620,6 +876,12 @@ parseAssertElemAttr = parseAssertElemAttr[0];
 await page.evaluate(e => {
     const nonMatchingAttrs = [];
     const parseAssertElemAttrDict = {};
+    const nullAttributes = [];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
     for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
         if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
@@ -635,6 +897,7 @@ ${equal(2)}
 }, parseAssertElemAttr);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("//a", {"b": "c"})'), {
@@ -645,6 +908,12 @@ parseAssertElemAttr = parseAssertElemAttr[0];
 await page.evaluate(e => {
     const nonMatchingAttrs = [];
     const parseAssertElemAttrDict = {"b":"c"};
+    const nullAttributes = [];
+    for (const attr of nullAttributes) {
+        if (e.hasAttribute(attr)) {${expectedNull(3)}
+            continue;
+        }${unexpectedNull(2)}
+    }
     for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
         if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
@@ -660,6 +929,7 @@ ${equal(2)}
 }, parseAssertElemAttr);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("//a", {"b": "c"}, ALL)'), {
@@ -670,6 +940,12 @@ for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
     await page.evaluate(e => {
         const nonMatchingAttrs = [];
         const parseAssertElemAttrDict = {"b":"c"};
+        const nullAttributes = [];
+        for (const attr of nullAttributes) {
+            if (e.hasAttribute(attr)) {${expectedNull(4)}
+                continue;
+            }${unexpectedNull(3)}
+        }
         for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
             if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
@@ -686,6 +962,7 @@ ${equal(3)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -702,6 +979,12 @@ for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
     await page.evaluate(e => {
         const nonMatchingAttrs = [];
         const parseAssertElemAttrDict = {"b":"c"};
+        const nullAttributes = [];
+        for (const attr of nullAttributes) {
+            if (e.hasAttribute(attr)) {${expectedNull(4)}
+                continue;
+            }${unexpectedNull(3)}
+        }
         for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
 parseAssertElemAttrDict)) {
             if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
@@ -718,6 +1001,7 @@ ${equal(3)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 }
@@ -729,6 +1013,10 @@ function checkAssertAttribute(x, func) {
         indent => '\n' +
             indentString('nonMatchingAttrs.push("No attribute named `" + ' +
                 'parseAssertElemAttrAttribute + "`");', indent),
+        () => '',
+        indent => '\n' +
+            indentString('nonMatchingAttrs.push("Expected `null` for attribute `" + attr + "`, \
+found: `" + e.getAttribute(attr) + "`");', indent),
         indent => indentString(`\
 if (attr !== parseAssertElemAttrValue) {
     nonMatchingAttrs.push("attribute \`" + parseAssertElemAttrAttribute + "\` isn't equal to \`" + \
@@ -746,10 +1034,10 @@ doesn't start with \`" + parseAssertElemAttrValue + "\` (for STARTS_WITH check)"
 }`, indent),
         indent => indentString(`\
 if (Number.isNaN(attr)) {
-    nonMatchingProps.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
+    nonMatchingAttrs.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
 \`) is NaN (for NEAR check)');
 } else if (Math.abs(attr - parseAssertElemAttrValue) > 1) {
-    nonMatchingProps.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
+    nonMatchingAttrs.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
 \`) is not within 1 of \`' + parseAssertElemAttrValue + '\` (for NEAR check)');
 }`, indent),
     );
@@ -759,6 +1047,12 @@ function checkAssertAttributeFalse(x, func) {
     checkAssertAttributeInner(
         x,
         func,
+        () => '',
+        indent => '\n' +
+            indentString(
+                'nonMatchingAttrs.push("Attribute named `" + attr + "` doesn\'t exist");',
+                indent,
+            ),
         () => '',
         indent => indentString(`\
 if (attr === parseAssertElemAttrValue) {
@@ -777,10 +1071,10 @@ if (attr.startsWith(parseAssertElemAttrValue)) {
 }`, indent),
         indent => indentString(`\
 if (Number.isNaN(attr)) {
-    nonMatchingProps.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
+    nonMatchingAttrs.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
 \`) is NaN (for NEAR check)');
 } else if (Math.abs(attr - parseAssertElemAttrValue) <= 1) {
-    nonMatchingProps.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
+    nonMatchingAttrs.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
 \`) is within 1 of \`' + parseAssertElemAttrValue + '\` (for NEAR check)');
 }`, indent),
     );
@@ -1542,6 +1836,7 @@ ${assertCall(0)}
 }, parseAssertElemCss);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"a": 1})'), {
@@ -1582,6 +1877,7 @@ ${assertCall(0)}
 }, parseAssertElemCss);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"a": 1}, ALL)'), {
@@ -1624,6 +1920,7 @@ ${assertCall(1)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -1666,6 +1963,7 @@ ${assertCall(0)}
 }, parseAssertElemCss);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a::after", {"a": 1}, ALL)'), {
@@ -1708,6 +2006,7 @@ ${assertCall(1)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a:focus", {"a": 1})'), {
@@ -1748,6 +2047,7 @@ ${assertCall(0)}
 }, parseAssertElemCss);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a:focus", {"a": 1}, ALL)'), {
@@ -1790,6 +2090,7 @@ ${assertCall(1)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a ::after", {"a": 1})'), {
@@ -1830,6 +2131,7 @@ ${assertCall(0)}
 }, parseAssertElemCss);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a ::after", {"a": 1}, ALL)'), {
@@ -1872,6 +2174,7 @@ ${assertCall(1)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -1915,6 +2218,7 @@ ${assertCall(0)}
 }, parseAssertElemCss);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("//a", {"a": 1})'), {
@@ -1956,6 +2260,7 @@ ${assertCall(0)}
 }, parseAssertElemCss);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("//a", {"a": 1}, ALL)'), {
@@ -1998,6 +2303,7 @@ ${assertCall(1)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("//a", {"a": 1, "b": 2})'), {
@@ -2039,6 +2345,7 @@ ${assertCall(0)}
 }, parseAssertElemCss);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("//a", {"a": 1, "b": 2}, ALL)'), {
@@ -2081,6 +2388,7 @@ ${assertCall(1)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -2126,6 +2434,7 @@ ${assertCall(1)}
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -2172,6 +2481,7 @@ ${assertCall(0)}
 }, parseAssertElemCss);`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 }
@@ -2346,6 +2656,7 @@ ${equal(2)}
     }
 }, parseAssertElemProp);`],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"a": 1})'), {
@@ -2366,6 +2677,7 @@ ${equal(2)}
     }
 }, parseAssertElemProp);`],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"a": 1}, ALL)'), {
@@ -2388,6 +2700,7 @@ ${equal(3)}
     }, parseAssertElemProp[i]);
 }`],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -2456,6 +2769,7 @@ ${equal(2)}
     }
 }, parseAssertElemProp);`],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a:focus", {"a": 1}, ALL)'), {
@@ -2478,6 +2792,7 @@ ${equal(3)}
     }, parseAssertElemProp[i]);
 }`],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a ::after", {"a": 1})'), {
@@ -2498,6 +2813,7 @@ ${equal(2)}
     }
 }, parseAssertElemProp);`],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a ::after", {"a": 1}, ALL)'), {
@@ -2520,6 +2836,7 @@ ${equal(3)}
     }, parseAssertElemProp[i]);
 }`],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -2543,6 +2860,7 @@ ${equal(2)}
     }
 }, parseAssertElemProp);`],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("//a", {"a": 1})'), {
@@ -2564,6 +2882,7 @@ ${equal(2)}
     }
 }, parseAssertElemProp);`],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("//a", {"a": 1}, ALL)'), {
@@ -2586,6 +2905,7 @@ ${equal(3)}
     }, parseAssertElemProp[i]);
 }`],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -2613,6 +2933,7 @@ ${equal(3)}
     }, parseAssertElemProp[i]);
 }`],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -2635,6 +2956,7 @@ ${startsWith(2)}
     }
 }, parseAssertElemProp);`],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"a": 1}, [STARTS_WITH, STARTS_WITH])'), {
@@ -2655,6 +2977,7 @@ ${startsWith(2)}
     }
 }, parseAssertElemProp);`],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"a": 1}, [STARTS_WITH, ENDS_WITH])'), {
@@ -2676,6 +2999,7 @@ ${endsWith(2)}
     }
 }, parseAssertElemProp);`],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 }
@@ -2777,6 +3101,7 @@ ${indentString(cond, 2)}
     }
 }, parseAssertPosition);`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -2798,6 +3123,7 @@ ${indentString(cond, 2)}
     }
 }, parseAssertPosition);`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -2821,6 +3147,7 @@ ${indentString(cond, 3)}
     }, parseAssertPosition[i]);
 }`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -2842,6 +3169,7 @@ ${indentString(cond, 2)}
     }
 }, parseAssertPosition);`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -2869,6 +3197,7 @@ ${indentString(cond, 2)}
     }
 }, parseAssertPosition);`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -2894,6 +3223,7 @@ ${indentString(cond, 2)}
     }
 }, parseAssertPosition);`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -2915,6 +3245,7 @@ ${indentString(cond, 2)}
     }
 }, parseAssertPosition);`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -2938,6 +3269,7 @@ ${indentString(cond, 3)}
     }, parseAssertPosition[i]);
 }`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -2959,6 +3291,7 @@ ${indentString(cond, 2)}
     }
 }, parseAssertPosition);`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -2982,6 +3315,7 @@ ${indentString(cond, 3)}
     }, parseAssertPosition[i]);
 }`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -3006,6 +3340,7 @@ ${indentString(cond, 3)}
     }, parseAssertPosition[i]);
 }`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -3029,6 +3364,7 @@ ${indentString(cond, 2)}
     }
 }, parseAssertPosition);`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -3051,6 +3387,7 @@ ${indentString(cond, 2)}
     }
 }, parseAssertPosition);`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -3074,6 +3411,7 @@ ${indentString(cond, 3)}
     }, parseAssertPosition[i]);
 }`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -3097,6 +3435,7 @@ ${indentString(cond, 2)}
     }
 }, parseAssertPosition);`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -3121,6 +3460,7 @@ ${indentString(cond, 3)}
     }, parseAssertPosition[i]);
 }`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -3148,6 +3488,7 @@ ${indentString(cond, 3)}
     }, parseAssertPosition[i]);
 }`,
         ],
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     });
@@ -3901,6 +4242,7 @@ await parseClickWithOffsetVar.click({
     "offset": {"x":1},
 });`,
         ],
+        'warnings': [],
     });
     x.assert(func('("a", {"y": 2})'), {
         'instructions': [`\
@@ -3910,6 +4252,7 @@ await parseClickWithOffsetVar.click({
     "offset": {"y":2},
 });`,
         ],
+        'warnings': [],
     });
     x.assert(func('("a", {})'), {
         'instructions': [`\
@@ -3919,6 +4262,7 @@ await parseClickWithOffsetVar.click({
     "offset": {},
 });`,
         ],
+        'warnings': [],
     });
     x.assert(func('("a", {"x": 1, "y": 2})'), {
         'instructions': [`\
@@ -3928,6 +4272,7 @@ await parseClickWithOffsetVar.click({
     "offset": {"x":1,"y":2},
 });`,
         ],
+        'warnings': [],
     });
 
     x.assert(func('("a::before", {"x": 1})'), {
@@ -3955,6 +4300,7 @@ await parseClickWithOffsetVar.click({
     "offset": {"x":1},
 });`,
         ],
+        'warnings': [],
     });
 
     // Multiline
@@ -3969,6 +4315,7 @@ await parseClickWithOffsetVar.click({
     "offset": {"x":1},
 });`,
         ],
+        'warnings': [],
     });
 }
 
@@ -4969,6 +5316,7 @@ function checkCompareElementsPositionNearInner(x, func, before, after) {
         ],
         'wait': false,
         'checkResult': true,
+        'warnings': [],
     });
     x.assert(func('("a", "b", {"x": 1})'), {
         'instructions': [
@@ -4992,6 +5340,7 @@ function checkCompareElementsPositionNearInner(x, func, before, after) {
         ],
         'wait': false,
         'checkResult': true,
+        'warnings': [],
     });
     x.assert(func('("a", "b", {"y": 1})'), {
         'instructions': [
@@ -5015,6 +5364,7 @@ function checkCompareElementsPositionNearInner(x, func, before, after) {
         ],
         'wait': false,
         'checkResult': true,
+        'warnings': [],
     });
     x.assert(func('("a", "b", {"x": 1, "y": 2})'), {
         'instructions': [
@@ -5049,6 +5399,7 @@ function checkCompareElementsPositionNearInner(x, func, before, after) {
         ],
         'wait': false,
         'checkResult': true,
+        'warnings': [],
     });
     x.assert(func('("a", "b", {"y": 2, "x": 1})'), {
         'instructions': [
@@ -5083,6 +5434,7 @@ function checkCompareElementsPositionNearInner(x, func, before, after) {
         ],
         'wait': false,
         'checkResult': true,
+        'warnings': [],
     });
 
     // warnings
@@ -5170,6 +5522,7 @@ function checkCompareElementsPositionNearInner(x, func, before, after) {
         ],
         'wait': false,
         'checkResult': true,
+        'warnings': [],
     });
     x.assert(func('("a", "//b", {"y": 2, "x": 1})'), {
         'instructions': [
@@ -5205,6 +5558,7 @@ function checkCompareElementsPositionNearInner(x, func, before, after) {
         ],
         'wait': false,
         'checkResult': true,
+        'warnings': [],
     });
     x.assert(func('("//a", "//b", {"y": 2, "x": 1})'), {
         'instructions': [
@@ -5241,6 +5595,7 @@ function checkCompareElementsPositionNearInner(x, func, before, after) {
         ],
         'wait': false,
         'checkResult': true,
+        'warnings': [],
     });
 
     // Multiline
@@ -5257,6 +5612,7 @@ function checkCompareElementsPositionNearInner(x, func, before, after) {
         ],
         'wait': false,
         'checkResult': true,
+        'warnings': [],
     });
 }
 
@@ -7692,6 +8048,7 @@ parseWaitForAttrValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"x": 1})'), {
@@ -7745,6 +8102,7 @@ parseWaitForAttrValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"x": 1, "y": "2"})'), {
@@ -7798,6 +8156,7 @@ parseWaitForAttrValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     // Check pseudo element.
@@ -7908,6 +8267,7 @@ parseWaitForAttrValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -7965,6 +8325,7 @@ parseWaitForAttrValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("//a", {"x": "1"})'), {
@@ -8019,6 +8380,7 @@ parseWaitForAttrValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 }
@@ -8100,6 +8462,7 @@ parseWaitForPropValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"x": 1})'), {
@@ -8157,6 +8520,7 @@ parseWaitForPropValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"x": 1, "y": "2"})'), {
@@ -8214,6 +8578,7 @@ parseWaitForPropValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     // Check pseudo element.
@@ -8332,6 +8697,7 @@ parseWaitForPropValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -8393,6 +8759,7 @@ parseWaitForPropValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("//a", {"x": "1"})'), {
@@ -8451,6 +8818,7 @@ parseWaitForPropValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 }
@@ -8615,6 +8983,7 @@ parseWaitForCssValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"x": 1})'), {
@@ -8682,6 +9051,7 @@ parseWaitForCssValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("a", {"x": 1, "y": "2"})'), {
@@ -8749,6 +9119,7 @@ parseWaitForCssValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     // Check pseudo element.
@@ -8817,6 +9188,7 @@ parseWaitForCssValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     // Checks colors.
@@ -8891,6 +9263,7 @@ parseWaitForCssValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -8962,6 +9335,7 @@ parseWaitForCssValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
     x.assert(func('("//a", {"x": "1"})'), {
@@ -9030,6 +9404,7 @@ parseWaitForCssValue + "\`)");
 }`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 }
@@ -9373,6 +9748,7 @@ await page.evaluate(() => {
 });`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 
@@ -9386,6 +9762,7 @@ await page.evaluate(() => {
 });`,
         ],
         'wait': false,
+        'warnings': [],
         'checkResult': true,
     });
 }
