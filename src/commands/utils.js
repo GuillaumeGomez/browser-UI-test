@@ -77,8 +77,8 @@ function validateJson(json, allowedValueTypes, keyName, allowedKeys = null) {
         // can be used.
         if (allowedValues.length !== 0 && allowedValues.indexOf(value_s) === -1) {
             return {
-                'error': `Forbidden \`${kind}\` used (\`${value_s}\`). Allowed values: \
-${allowedValues}`,
+                'error': `Forbidden \`${kind}\` used (\`${value_s}\`). Allowed idents: \
+[${allowedValues.join(', ')}]`,
             };
         }
         if (Object.prototype.hasOwnProperty.call(entries, key_s)) {

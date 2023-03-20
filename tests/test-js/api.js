@@ -2632,10 +2632,10 @@ function checkAssertPropertyInner(x, func, exists, equal, startsWith, endsWith) 
     });
     x.assert(func('("a", {"b": "c", "b": "d"})'), {'error': 'property `b` is duplicated'});
     x.assert(func('("a", {"b": []})'), {
-        'error': 'only string and number types are allowed as value, found `[]` (an array)',
+        'error': 'only string, number and ident types are allowed as value, found `[]` (an array)',
     });
     x.assert(func('("a", {"b": gateau})'), {
-        'error': 'only string and number types are allowed as value, found `gateau` (an ident)',
+        'error': 'Forbidden `ident` used (`gateau`). Allowed idents: [null]',
     });
 
     x.assert(func('("a", {})'), {
@@ -2911,7 +2911,7 @@ ${equal(3)}
 
     // Multiline
     x.assert(func('("a", \n{"b"\n:\n []})'), {
-        'error': 'only string and number types are allowed as value, found `[]` (an array)',
+        'error': 'only string, number and ident types are allowed as value, found `[]` (an array)',
     });
     x.assert(func('("//a"\n, \n{"a": \n1},\n ALL)'), {
         'instructions': [`\
