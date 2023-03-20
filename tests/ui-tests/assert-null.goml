@@ -1,0 +1,16 @@
+// This test is meant to ensure that "null" checks are working as expected.
+goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+assert-attribute: ("header", {"whatever": null})
+// Should fail.
+assert-attribute: (".content", {"nb-value": null})
+assert-attribute-false: (".content", {"nb-value": null})
+// Should fail.
+assert-attribute-false: ("header", {"whatever": null})
+
+// Checking the warnings.
+// There should be no warning for this one.
+assert-attribute: ("header", {"whatever": null}, ALL)
+// Should warn.
+assert-attribute: ("header", {"whatever": null}, CONTAINS)
+// Should warn.
+assert-attribute: ("header", {"whatever": null}, [ALL, CONTAINS])

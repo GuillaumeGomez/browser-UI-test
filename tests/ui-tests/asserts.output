@@ -14,8 +14,7 @@ asserts... FAILED
 [ERROR] (line 30) Error: Evaluation failed: The following errors happened (for selector `.content`): [attribute `class` (`content`) doesn't start with `.con` (for STARTS_WITH check), attribute `class` (`content`) doesn't end with `.con`]: for command `assert-attribute: (".content", {"class": ".con"}, [STARTS_WITH, ENDS_WITH])`
 [ERROR] (line 31) Error: Evaluation failed: The following errors happened (for selector `.content`): [attribute `class` (`content`) doesn't start with `.con` (for STARTS_WITH check)]: for command `assert-attribute: (".content", {"class": ".con"}, STARTS_WITH)`
 [ERROR] (line 32) Error: Evaluation failed: The following errors happened (for selector `.content`): [attribute `class` (`content`) doesn't contain `.con` (for CONTAINS check)]: for command `assert-attribute: (".content", {"class": ".con"}, CONTAINS)`
-[ERROR] (line 36) Error: Evaluation failed: ReferenceError: nonMatchingProps is not defined
-    at pptr://__puppeteer_evaluation_script__:13:13: for command `assert-attribute: (".content", {"nb-value": 999}, NEAR)`
+[ERROR] (line 36) Error: Evaluation failed: The following errors happened (for selector `.content`): [attribute `nb-value` (`12`) is not within 1 of `999` (for NEAR check)]: for command `assert-attribute: (".content", {"nb-value": 999}, NEAR)`
 [ERROR] (line 37) Error: Evaluation failed: The following errors happened (for selector `.content`): [No attribute named `"class`]: for command `assert-attribute: (".content", {"\"class": ".con"})`
 [ERROR] (line 46) Error: Evaluation failed: The following errors happened (for selector `.content`): [No attribute named `does-not-exist`]: for command `assert-attribute: (".content", {"does-not-exist": ".con"})`
 [ERROR] (line 52) Error: Evaluation failed: The following errors happened: [`Another page!` doesn't end with `Another` (for ENDS_WITH check)]: for command `assert-text: ("header", "Another", [STARTS_WITH, ENDS_WITH])`
