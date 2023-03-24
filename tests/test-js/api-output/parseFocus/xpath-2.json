@@ -1,0 +1,5 @@
+{
+  "instructions": [
+    "let parseFocusVar = await page.$x(\"//a\");\nif (parseFocusVar.length === 0) { throw 'XPath \"//a\" not found'; }\nparseFocusVar = parseFocusVar[0];\nawait parseFocusVar.focus();"
+  ]
+}

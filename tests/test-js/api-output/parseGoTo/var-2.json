@@ -1,0 +1,6 @@
+{
+  "instructions": [
+    "await page.goto(\"http://foo\");",
+    "await arg.browser.overridePermissions(page.url(), arg.permissions);"
+  ]
+}

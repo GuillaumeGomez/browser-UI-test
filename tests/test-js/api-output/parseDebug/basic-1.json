@@ -1,0 +1,6 @@
+{
+  "instructions": [
+    "if (arg && arg.debug_log && arg.debug_log.setDebugEnabled) {\narg.debug_log.setDebugEnabled(false);\n} else {\nthrow \"`debug` command needs an object with a `debug_log` field of `Debug` type!\";\n}"
+  ],
+  "wait": false
+}

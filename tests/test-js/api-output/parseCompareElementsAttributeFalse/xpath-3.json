@@ -1,0 +1,7 @@
+{
+  "instructions": [
+    "let parseCompareElementsAttr1 = await page.$x(\"//a\");\nif (parseCompareElementsAttr1.length === 0) { throw 'XPath \"//a\" not found'; }\nparseCompareElementsAttr1 = parseCompareElementsAttr1[0];\nlet parseCompareElementsAttr2 = await page.$(\"b\");\nif (parseCompareElementsAttr2 === null) { throw '\"b\" not found'; }\nawait page.evaluate((e1, e2) => {\nconst attributes = [\"\\\"data-whatever\"];\nfor (const attr of attributes) {\n    try {\n    if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n        throw attr + \": \" + e1.getAttribute(attr) + \" !== \" + e2.getAttribute(attr);\n    }\n    } catch(e) { continue; } throw \"assert didn't fail\";\n}\n}, parseCompareElementsAttr1, parseCompareElementsAttr2);"
+  ],
+  "wait": false,
+  "checkResult": true
+}

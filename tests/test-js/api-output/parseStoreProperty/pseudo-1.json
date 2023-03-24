@@ -1,0 +1,9 @@
+{
+  "instructions": [
+    "let parseStoreProperty = await page.$(\"a\");\nif (parseStoreProperty === null) { throw '\"a\" not found'; }\nconst jsHandle = await parseStoreProperty.evaluateHandle(e => {\n    return String(e[\"b\"]);\n});\narg.variables[\"VAR\"] = await jsHandle.jsonValue();"
+  ],
+  "wait": false,
+  "warnings": [
+    "Pseudo-elements (`::after`) don't have attributes so the check will be performed on the element itself"
+  ]
+}

@@ -1,0 +1,5 @@
+{
+  "instructions": [
+    "let parseCssElem = await page.$(\"a\");\nif (parseCssElem === null) { throw '\"a\" not found'; }\nawait page.evaluate(e => {\ne.style[\"b\"] = \"c\";\n}, parseCssElem);"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "instructions": [
+    "let parseDragAndDropElem = await page.$x(\"//a\");\nif (parseDragAndDropElem.length === 0) { throw 'XPath \"//a\" not found'; }\nparseDragAndDropElem = parseDragAndDropElem[0];\nconst parseDragAndDropElem_box = await parseDragAndDropElem.boundingBox();\nconst start = [parseDragAndDropElem_box.x + parseDragAndDropElem_box.width / 2, parseDragAndDropElem_box.y + parseDragAndDropElem_box.height / 2];\nawait page.mouse.move(start[0], start[1]);\nawait page.mouse.down();",
+    "const end = [1, 2];\nawait page.mouse.move(end[0], end[1]);\nawait page.mouse.up();"
+  ]
+}

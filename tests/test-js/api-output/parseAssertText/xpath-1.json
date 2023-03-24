@@ -1,0 +1,7 @@
+{
+  "instructions": [
+    "let parseAssertElemStr = await page.$x(\"//a\");\nif (parseAssertElemStr.length === 0) { throw 'XPath \"//a\" not found'; }\nparseAssertElemStr = parseAssertElemStr[0];\nawait page.evaluate(e => {\n    const errors = [];\n    const value = \"b\";\n    if (!browserUiTestHelpers.compareElemText(e, value)) {\n        errors.push(\"`\" + browserUiTestHelpers.getElemText(e, value) + \"` isn't equal to `\" + value + \"`\");\n    }\n    if (errors.length !== 0) {\n        const errs = errors.join(\", \");\n        throw \"The following errors happened: [\" + errs + \"]\";\n    }\n}, parseAssertElemStr);"
+  ],
+  "wait": false,
+  "checkResult": true
+}

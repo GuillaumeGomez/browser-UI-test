@@ -45,11 +45,23 @@ function printDiff(i, value, out) {
 class Assert {
     constructor() {
         this.testSuite = [];
+        // If `--bless` option is used.
+        this.blessEnabled = false;
+    }
+
+    assertOrBless(value1, value2, errCallback, pos, extraInfo, toJson = true, out = undefined) {
+        let callback = undefined;
+        if (this.blessEnabled) {
+            callback = errCallback;
+        }
+        return this.assert(value1, value2, pos, extraInfo, toJson, out, callback);
     }
 
     // `extraInfo` is used as an additional message in case the test fails.
-    assert(value1, value2, pos, extraInfo, toJson = true, out = undefined) {
+    assert(value1, value2, pos, extraInfo, toJson = true, out = undefined, errCallback = undefined) {
         this._addTest();
+        const ori1 = value1;
+        const ori2 = value2;
         if (typeof value2 !== 'undefined') {
             if (toJson === true) {
                 value1 = toJSON(value1);
@@ -59,25 +71,29 @@ class Assert {
                 if (typeof pos === 'undefined') {
                     pos = getStackInfo(new Error().stack);
                 }
-                if (typeof extraInfo === 'undefined') {
-                    print(`[${pos.file}:${pos.line}] failed:`, out);
+                if (typeof errCallback !== 'undefined') {
+                    errCallback(ori1, ori2);
                 } else {
-                    print(`[${pos.file}:${pos.line}] failed (in ${extraInfo}):`, out);
-                }
-                print(`EXPECTED: \`${value2}\`\n===============\n   FOUND: \`${value1}\``, out);
-                for (let i = 0; i < value1.length && i < value2.length; ++i) {
-                    if (value1[i] !== value2[i]) {
-                        i -= 8;
-                        if (i < 0) {
-                            i = 0;
-                        }
-                        print('|||||> Error happened around there:', out);
-                        printDiff(i, value2, out);
-                        printDiff(i, value1, out);
-                        break;
+                    if (typeof extraInfo === 'undefined') {
+                        print(`[${pos.file}:${pos.line}] failed:`, out);
+                    } else {
+                        print(`[${pos.file}:${pos.line}] failed (in ${extraInfo}):`, out);
                     }
+                    print(`EXPECTED: \`${value2}\`\n===============\n   FOUND: \`${value1}\``, out);
+                    for (let i = 0; i < value1.length && i < value2.length; ++i) {
+                        if (value1[i] !== value2[i]) {
+                            i -= 8;
+                            if (i < 0) {
+                                i = 0;
+                            }
+                            print('|||||> Error happened around there:', out);
+                            printDiff(i, value2, out);
+                            printDiff(i, value1, out);
+                            break;
+                        }
+                    }
+                    this._incrError();
                 }
-                this._incrError();
                 return false;
             }
         } else if (!value1) {

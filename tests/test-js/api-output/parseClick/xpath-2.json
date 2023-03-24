@@ -1,0 +1,5 @@
+{
+  "instructions": [
+    "let parseClickVar = await page.$x(\"//a\");\nif (parseClickVar.length === 0) { throw 'XPath \"//a\" not found'; }\nparseClickVar = parseClickVar[0];\nawait parseClickVar.click();"
+  ]
+}

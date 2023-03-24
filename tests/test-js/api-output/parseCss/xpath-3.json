@@ -1,0 +1,5 @@
+{
+  "instructions": [
+    "let parseCssElemJson = await page.$x(\"//a\");\nif (parseCssElemJson.length === 0) { throw 'XPath \"//a\" not found'; }\nparseCssElemJson = parseCssElemJson[0];\nawait page.evaluate(e => {\ne.style[\"b\"] = \"c\";\n}, parseCssElemJson);"
+  ]
+}

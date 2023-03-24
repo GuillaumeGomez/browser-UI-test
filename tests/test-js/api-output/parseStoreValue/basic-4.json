@@ -1,0 +1,6 @@
+{
+  "instructions": [
+    "arg.variables[\"a\"] = {\"a\": \"b\"};"
+  ],
+  "wait": false
+}

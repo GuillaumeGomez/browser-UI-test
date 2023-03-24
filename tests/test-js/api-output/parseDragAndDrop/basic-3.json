@@ -1,0 +1,6 @@
+{
+  "instructions": [
+    "let parseDragAndDropElem = await page.$(\"a\");\nif (parseDragAndDropElem === null) { throw '\"a\" not found'; }\nconst parseDragAndDropElem_box = await parseDragAndDropElem.boundingBox();\nconst start = [parseDragAndDropElem_box.x + parseDragAndDropElem_box.width / 2, parseDragAndDropElem_box.y + parseDragAndDropElem_box.height / 2];\nawait page.mouse.move(start[0], start[1]);\nawait page.mouse.down();",
+    "let parseDragAndDropElem2 = await page.$(\"b\");\nif (parseDragAndDropElem2 === null) { throw '\"b\" not found'; }\nconst parseDragAndDropElem2_box = await parseDragAndDropElem2.boundingBox();\nconst end = [parseDragAndDropElem2_box.x + parseDragAndDropElem2_box.width / 2, parseDragAndDropElem2_box.y + parseDragAndDropElem2_box.height / 2];\nawait page.mouse.move(end[0], end[1]);\nawait page.mouse.up();"
+  ]
+}

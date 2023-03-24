@@ -9,6 +9,7 @@ utils.print = function() {}; // overwriting the print function to avoid the prin
 async function runAllTests() {
     const files = [];
     const x = new Assert();
+    x.blessEnabled = process.argv.findIndex(arg => arg === '--bless') !== -1;
 
     x.startTestSuite('all', false);
     print('> Starting all tests...');

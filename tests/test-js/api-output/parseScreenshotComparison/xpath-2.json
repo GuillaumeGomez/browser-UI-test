@@ -1,0 +1,6 @@
+{
+  "instructions": [
+    "arg.screenshotComparison = \"//a\";"
+  ],
+  "wait": false
+}

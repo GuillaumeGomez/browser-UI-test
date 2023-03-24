@@ -1,0 +1,6 @@
+{
+  "instructions": [
+    "let parseStoreText = await page.$(\"a\");\nif (parseStoreText === null) { throw '\"a\" not found'; }\nconst jsHandle = await parseStoreText.evaluateHandle(e => {\n    return browserUiTestHelpers.getElemText(e, \"\");\n});\narg.variables[\"VAR\"] = await jsHandle.jsonValue();"
+  ],
+  "wait": false
+}
