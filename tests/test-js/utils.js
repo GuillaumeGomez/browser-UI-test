@@ -149,7 +149,10 @@ class Assert {
     }
 
     // Same as `assertTry` but handle some corner cases linked to UI tests.
-    async assertTryUi(callback, args, expectedValue, extraInfo, toJson = true, out = undefined) {
+    async assertTryUi(callback, args, expectedValue, extraInfo, toJson = true, out = undefined, errCallback = undefined) {
+        if (!this.blessEnabled) {
+            errCallback = undefined;
+        }
         const pos = getStackInfo(new Error().stack, 2);
         try {
             const ret = await callback(...args);
@@ -159,7 +162,11 @@ class Assert {
                 for (const part of parts) {
                     const toCheck = ret.slice(startIndex, startIndex + part.length);
                     if (!this.assert(toCheck, part, pos, extraInfo, toJson)) {
-                        print(`===full output===\n${ret}\n==end of output==`);
+                        if (typeof errCallback !== 'undefined') {
+                            errCallback(ret, expectedValue);
+                        } else {
+                            print(`===full output===\n${ret}\n==end of output==`);
+                        }
                         return false;
                     }
                     startIndex = part.length;
@@ -169,9 +176,9 @@ class Assert {
                 }
                 return true;
             }
-            return this.assert(ret, expectedValue, pos, extraInfo, toJson, out);
+            return this.assert(ret, expectedValue, pos, extraInfo, toJson, out, errCallback);
         } catch (err) {
-            return this.assert(err.message, expectedValue, pos, extraInfo, toJson, out);
+            return this.assert(err.message, expectedValue, pos, extraInfo, toJson, out, errCallback);
         }
     }
 

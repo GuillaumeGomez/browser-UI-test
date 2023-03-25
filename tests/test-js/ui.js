@@ -29,6 +29,11 @@ function runAsyncUiTest(x, file, output, tests_queue) {
         file,
         false,
         s => testOutput += s + '\n',
+        (value1, _) => {
+            const filePath = file.replace('.goml', '.output');
+            fs.writeFileSync(filePath, value1);
+            print(`Blessed \`${filePath}\``);
+        },
     ).finally(() => {
         print(`Finished testing "${file}"`);
         if (testOutput.length > 0) {
@@ -63,8 +68,7 @@ async function compareOutput(x) {
         try {
             output = fs.readFileSync(outputFile, 'utf8');
         } catch (_) {
-            x.addError(`Cannot open file \`${outputFile}\``);
-            continue;
+            output = `Cannot open file \`${outputFile}\``;
         }
 
         runAsyncUiTest(x, file, output, tests_queue);
@@ -77,7 +81,7 @@ async function compareOutput(x) {
     }
 }
 
-async function checkUi(x = new Assert()) {
+async function checkUi(x) {
     x.startTestSuite('ui items', false);
     print('=> Starting UI tests...');
     print('');
@@ -108,7 +112,9 @@ async function checkUi(x = new Assert()) {
 }
 
 if (require.main === module) {
-    checkUi().then(nbErrors => {
+    const x = new Assert();
+    x.blessEnabled = process.argv.findIndex(arg => arg === '--bless') !== -1;
+    checkUi(x).then(nbErrors => {
         process.exit(nbErrors !== 0 ? 1 : 0);
     });
 } else {
