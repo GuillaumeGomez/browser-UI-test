@@ -1,0 +1,8 @@
+{
+  "instructions": [
+    "let parseAssertElemProp = await page.$x(\"//a\");\nif (parseAssertElemProp.length === 0) { throw 'XPath \"//a\" not found'; }\nparseAssertElemProp = parseAssertElemProp[0];\nawait page.evaluate(e => {\n    const nonMatchingProps = [];\n    const parseAssertElemPropDict = {\"a\":\"1\"};\n    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(parseAssertElemPropDict)) {\n        if (e[parseAssertElemPropKey] === undefined) {\n            continue;\n        }\n        if (String(e[parseAssertElemPropKey]) == parseAssertElemPropValue) {\n            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey + '`');\n        }\n    }\n    if (nonMatchingProps.length !== 0) {\n        const props = nonMatchingProps.join(\", \");\n        throw \"The following errors happened (for XPath `//a`): [\" + props + \"]\";\n    }\n}, parseAssertElemProp);"
+  ],
+  "wait": false,
+  "warnings": [],
+  "checkResult": true
+}

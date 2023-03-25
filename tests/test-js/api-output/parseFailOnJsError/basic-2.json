@@ -1,0 +1,6 @@
+{
+  "instructions": [
+    "const oldValue = arg.failOnJsError;\narg.failOnJsError = true;\nif (oldValue !== true) {\n    arg.jsErrors.splice(0, arg.jsErrors.length);\n}"
+  ],
+  "wait": false
+}

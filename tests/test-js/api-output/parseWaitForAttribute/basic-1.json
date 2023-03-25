@@ -1,0 +1,8 @@
+{
+  "instructions": [
+    "const timeLimit = page.getDefaultTimeout();\nconst timeAdd = 50;\nlet allTime = 0;\nlet parseWaitForAttr = null;\nlet nonMatchingProps;\nwhile (true) {\n    while (true) {\n        parseWaitForAttr = await page.$(\"a\");\n        if (parseWaitForAttr !== null) {\n            break;\n        }\n        await new Promise(r => setTimeout(r, timeAdd));\n        if (timeLimit === 0) {\n            continue;\n        }\n        allTime += timeAdd;\n        if (allTime >= timeLimit) {\n            throw new Error(\"The following CSS selector \\\"a\\\" was not found\");\n        }\n    }\n    nonMatchingProps = await page.evaluate(e => {\n        const nonMatchingProps = [];\n        let computedEntry;\n        const parseWaitForAttrDict = {};\n        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(parseWaitForAttrDict)) {\n            computedEntry = e.getAttribute(parseWaitForAttrKey);\n            if (computedEntry !== parseWaitForAttrValue) {\n                nonMatchingProps.push(parseWaitForAttrKey + \": (`\" + computedEntry + \"` != `\" + parseWaitForAttrValue + \"`)\");\n            }\n        }\n        return nonMatchingProps;\n    }, parseWaitForAttr);\n    if (nonMatchingProps.length === 0) {\n        break;\n    }\n    await new Promise(r => setTimeout(r, timeAdd));\n    if (timeLimit === 0) {\n        continue;\n    }\n    allTime += timeAdd;\n    if (allTime >= timeLimit) {\n        const props = nonMatchingProps.join(\", \");\n        throw new Error(\"The following attributes still don't match: [\" + props + \"]\");\n    }\n}"
+  ],
+  "wait": false,
+  "warnings": [],
+  "checkResult": true
+}

@@ -1,0 +1,3 @@
+{
+  "error": "only number type is allowed as value, found `\"a\"` (a string)"
+}

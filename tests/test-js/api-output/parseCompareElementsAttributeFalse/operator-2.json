@@ -1,0 +1,7 @@
+{
+  "instructions": [
+    "let parseCompareElementsAttr1 = await page.$(\"a\");\nif (parseCompareElementsAttr1 === null) { throw '\"a\" not found'; }\nlet parseCompareElementsAttr2 = await page.$(\"b\");\nif (parseCompareElementsAttr2 === null) { throw '\"b\" not found'; }\nawait page.evaluate((e1, e2) => {\nconst attributes = [\"\\\"data-whatever\"];\nfor (const attr of attributes) {\n    let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));\n    if (value1 === null) {\n        throw attr + \" (\" + e1.getAttribute(attr) + \") from `a` isn't a number so comparison cannot be performed\";\n    }\n    let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));\n    if (value2 === null) {\n        throw attr + \" (\" + e2.getAttribute(attr) + \") from `b` isn't a number so comparison cannot be performed\";\n    }\n    try {\n    if (value1 <= value2) {\n        throw attr + \": \" + e1.getAttribute(attr) + \" <= \" + e2.getAttribute(attr);\n    }\n    } catch(e) { continue; } throw \"assert didn't fail\";\n}\n}, parseCompareElementsAttr1, parseCompareElementsAttr2);"
+  ],
+  "wait": false,
+  "checkResult": true
+}

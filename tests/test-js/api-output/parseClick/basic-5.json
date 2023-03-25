@@ -1,0 +1,8 @@
+{
+  "instructions": [
+    "let parseClickVar = await page.$(\"a\");\nif (parseClickVar === null) { throw '\"a\" not found'; }\nawait parseClickVar.click();"
+  ],
+  "warnings": [
+    "Pseudo-elements (`::before`) can't be retrieved so `click` will be performed on the element directly"
+  ]
+}

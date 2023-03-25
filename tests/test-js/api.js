@@ -1,22 +1,58 @@
 const process = require('process');
 process.env.debug_tests = '1'; // We enable this to get all items from `commands.js`.
 const parserFuncs = require('../../src/commands.js');
-const {indentString} = require('../../src/commands/utils.js');
 const {Parser} = require('../../src/parser.js');
 const Options = require('../../src/options.js').Options;
 const {Assert, plural, print} = require('./utils.js');
+const path = require('path');
+const fs = require('fs');
 
-function wrapper(callback, arg, options) {
+const uniqueFileOutput = Object.create(null);
+
+function wrapper(callback, x, arg, name, options) {
+    if (typeof name === 'undefined') {
+        x.addError(`Missing \`name\` argument in \`${callback.name}\``);
+        return;
+    }
     if (typeof options === 'undefined') {
         options = new Options();
     }
+    let expected;
+    const parent = path.join(__dirname, 'api-output', callback.name);
+    const filePath = path.join(parent, `${name}.json`);
+    if (!Object.prototype.hasOwnProperty.call(uniqueFileOutput, callback.name)) {
+        uniqueFileOutput[callback.name] = Object.create(null);
+    }
+    if (Object.prototype.hasOwnProperty.call(uniqueFileOutput[callback.name], name)) {
+        x.addError(`There is already a test named \`${name}\` in \`${callback.name}\``);
+        return;
+    }
+    uniqueFileOutput[callback.name][name] = true;
 
+    if (fs.existsSync(filePath)) {
+        try {
+            expected = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        } catch (err) {
+            expected = err;
+        }
+    } else {
+        expected = `no file \`${filePath}\``;
+    }
     const p = new Parser(arg, options.variables);
     p.parse();
+    let res;
     if (p.error !== null) {
-        return {'error': p.error};
+        res = {'error': p.error};
+    } else {
+        res = callback(p, options);
     }
-    return callback(p, options);
+    x.assertOrBless(res, expected, (value1, _) => {
+        if (!fs.existsSync(parent)) {
+            fs.mkdirSync(parent, { recursive: true });
+        }
+        fs.writeFileSync(filePath, JSON.stringify(value1, null, 2) + '\n');
+        print(`Blessed \`${filePath}\``);
+    });
 }
 
 function wrapperParseContent(arg, options) {
@@ -52,6063 +88,646 @@ function wrapperDefineFunction(callback, arg, options) {
     return [callback(p, options), p];
 }
 
-function checkAssertInner(x, func, before, after) {
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('1'), {'error': 'expected a tuple, a CSS selector or an XPath, found `1`'});
-    x.assert(func('1.1'), {'error': 'expected a tuple, a CSS selector or an XPath, found `1.1`'});
-    x.assert(func('(a, "b")'), {
-        'error': 'expected only a CSS selector or an XPath in the tuple, found 2 elements',
-    });
-    x.assert(func('("a", 2)'), {
-        'error': 'expected only a CSS selector or an XPath in the tuple, found 2 elements',
-    });
-    x.assert(func('()'), {
-        'error': 'expected only a CSS selector or an XPath in the tuple, found 0 elements',
-    });
+function checkAssert(x, func) {
+    func('"', 'err-quote');
+    func('1', 'err-int');
+    func('1.1', 'err-float');
+    func('(a, "b")', 'err-tuple');
+    func('("a", 2)', 'err-tuple-2');
+    func('()', 'err-tuple-3');
 
-    x.assert(func('"a"'),
-        {
-            'instructions': [
-                before +
-                'if ((await page.$("a")) === null) { throw \'"a" not found\'; }' +
-                after,
-            ],
-            'wait': false,
-            'checkResult': true,
-        });
-    x.assert(func('("a")'),
-        {
-            'instructions': [
-                before +
-                'if ((await page.$("a")) === null) { throw \'"a" not found\'; }' +
-                after,
-            ],
-            'wait': false,
-            'checkResult': true,
-        });
+    func('"a"', 'css-1');
+    func('("a")', 'css-2');
 
     // XPath
-    x.assert(func('"/a"'), {'error': 'XPath must start with `//`'});
-    x.assert(func('"//a"'),
-        {
-            'instructions': [
-                before +
-                'if ((await page.$x("//a")).length === 0) { throw \'XPath "//a" not found\'; }' +
-                after,
-            ],
-            'wait': false,
-            'checkResult': true,
-        });
+    func('"/a"', 'xpath-1');
+    func('"//a"', 'xpath-2');
 
     // Multiline
-    x.assert(func('(\n"//a")'), {
-        'instructions': [
-            before +
-            'if ((await page.$x("//a")).length === 0) { throw \'XPath "//a" not found\'; }' +
-            after,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('(\n"//a")', 'multiline');
 
     // Multiline string.
-    x.assert(func('"//a\nhello"'), {
-        'instructions': [
-            before +
-            'if ((await page.$x("//a\\nhello")).length === 0) { ' +
-            'throw \'XPath "//a\\nhello" not found\'; }' +
-            after,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-}
-
-function checkAssert(x, func) {
-    checkAssertInner(x, func, '', '');
-}
-
-function checkAssertFalse(x, func) {
-    checkAssertInner(x, func, 'try {\n', '\n} catch(e) { return; } throw "assert didn\'t fail";');
-}
-
-function checkAssertAttributeInner(
-    x, func, notFound, unexpectedNull, expectedNull, equal, contains, startsWith, near) {
-    x.assert(func('("a", "b", )'), {
-        'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
-    });
-    x.assert(func('("a", "b")'), {
-        'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
-    });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('("a", "b", "c")'), {
-        'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
-    });
-    x.assert(func('("a::after", {"a": 1}, all)'), {
-        'error': 'unknown identifier `all`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
-            '`STARTS_WITH`, `ENDS_WITH`, `NEAR`]',
-    });
-    x.assert(func('("a::after", {"a": 1}, ALLO)'), {
-        'error': 'unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
-            '`STARTS_WITH`, `ENDS_WITH`, `NEAR`]',
-    });
-    x.assert(func('("a", {"b": "c", "b": "d"})'), {'error': 'attribute `b` is duplicated'});
-
-    x.assert(func('("a", {})'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$("a");
-if (parseAssertElemAttr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {};
-    const nullAttributes = [];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"a": 1})'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$("a");
-if (parseAssertElemAttr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {"a":"1"};
-    const nullAttributes = [];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"a": 1}, ALL)'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$$("a");
-if (parseAssertElemAttr.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingAttrs = [];
-        const parseAssertElemAttrDict = {"a":"1"};
-        const nullAttributes = [];
-        for (const attr of nullAttributes) {
-            if (e.hasAttribute(attr)) {${expectedNull(4)}
-                continue;
-            }${unexpectedNull(3)}
-        }
-        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
-                continue;
-            }
-            const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(3)}
-        }
-        if (nonMatchingAttrs.length !== 0) {
-            const props = nonMatchingAttrs.join(", ");
-            throw "The following errors happened (for selector \`a\`): [" + props + "]";
-        }
-    }, parseAssertElemAttr[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-
-    // Check the handling of pseudo elements
-    x.assert(func('("a::after", {"a": 1})'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$("a");
-if (parseAssertElemAttr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {"a":"1"};
-    const nullAttributes = [];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': ['Pseudo-elements (`::after`) don\'t have attributes so the check will be ' +
-            'performed on the element itself'],
-        'checkResult': true,
-    });
-    x.assert(func('("a::after", {"a": 1}, ALL)'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$$("a");
-if (parseAssertElemAttr.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingAttrs = [];
-        const parseAssertElemAttrDict = {"a":"1"};
-        const nullAttributes = [];
-        for (const attr of nullAttributes) {
-            if (e.hasAttribute(attr)) {${expectedNull(4)}
-                continue;
-            }${unexpectedNull(3)}
-        }
-        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
-                continue;
-            }
-            const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(3)}
-        }
-        if (nonMatchingAttrs.length !== 0) {
-            const props = nonMatchingAttrs.join(", ");
-            throw "The following errors happened (for selector \`a\`): [" + props + "]";
-        }
-    }, parseAssertElemAttr[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': ['Pseudo-elements (`::after`) don\'t have attributes so the check will be ' +
-            'performed on the element itself'],
-        'checkResult': true,
-    });
-    x.assert(func('("b:after", {"a": 1})'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$("b:after");
-if (parseAssertElemAttr === null) { throw '"b:after" not found'; }
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {"a":"1"};
-    const nullAttributes = [];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for selector \`b:after\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("b:after", {"a": 1}, ALL)'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$$("b:after");
-if (parseAssertElemAttr.length === 0) { throw '"b:after" not found'; }
-for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingAttrs = [];
-        const parseAssertElemAttrDict = {"a":"1"};
-        const nullAttributes = [];
-        for (const attr of nullAttributes) {
-            if (e.hasAttribute(attr)) {${expectedNull(4)}
-                continue;
-            }${unexpectedNull(3)}
-        }
-        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
-                continue;
-            }
-            const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(3)}
-        }
-        if (nonMatchingAttrs.length !== 0) {
-            const props = nonMatchingAttrs.join(", ");
-            throw "The following errors happened (for selector \`b:after\`): [" + props + "]";
-        }
-    }, parseAssertElemAttr[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a ::after", {"a": 1})'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$("a ::after");
-if (parseAssertElemAttr === null) { throw '"a ::after" not found'; }
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {"a":"1"};
-    const nullAttributes = [];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for selector \`a ::after\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a ::after", {"a": 1}, ALL)'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$$("a ::after");
-if (parseAssertElemAttr.length === 0) { throw '"a ::after" not found'; }
-for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingAttrs = [];
-        const parseAssertElemAttrDict = {"a":"1"};
-        const nullAttributes = [];
-        for (const attr of nullAttributes) {
-            if (e.hasAttribute(attr)) {${expectedNull(4)}
-                continue;
-            }${unexpectedNull(3)}
-        }
-        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
-                continue;
-            }
-            const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(3)}
-        }
-        if (nonMatchingAttrs.length !== 0) {
-            const props = nonMatchingAttrs.join(", ");
-            throw "The following errors happened (for selector \`a ::after\`): [" + props + "]";
-        }
-    }, parseAssertElemAttr[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-
-    x.assert(func('("a", {"b": "c", "d": "e"})'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$("a");
-if (parseAssertElemAttr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {"b":"c","d":"e"};
-    const nullAttributes = [];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"b": "c", "d": "e"}, ALL)'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$$("a");
-if (parseAssertElemAttr.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingAttrs = [];
-        const parseAssertElemAttrDict = {"b":"c","d":"e"};
-        const nullAttributes = [];
-        for (const attr of nullAttributes) {
-            if (e.hasAttribute(attr)) {${expectedNull(4)}
-                continue;
-            }${unexpectedNull(3)}
-        }
-        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
-                continue;
-            }
-            const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(3)}
-        }
-        if (nonMatchingAttrs.length !== 0) {
-            const props = nonMatchingAttrs.join(", ");
-            throw "The following errors happened (for selector \`a\`): [" + props + "]";
-        }
-    }, parseAssertElemAttr[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"\\"b": "c"})'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$("a");
-if (parseAssertElemAttr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {"\\"b":"c"};
-    const nullAttributes = [];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"\\"b": "c"}, ALL)'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$$("a");
-if (parseAssertElemAttr.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingAttrs = [];
-        const parseAssertElemAttrDict = {"\\"b":"c"};
-        const nullAttributes = [];
-        for (const attr of nullAttributes) {
-            if (e.hasAttribute(attr)) {${expectedNull(4)}
-                continue;
-            }${unexpectedNull(3)}
-        }
-        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
-                continue;
-            }
-            const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(3)}
-        }
-        if (nonMatchingAttrs.length !== 0) {
-            const props = nonMatchingAttrs.join(", ");
-            throw "The following errors happened (for selector \`a\`): [" + props + "]";
-        }
-    }, parseAssertElemAttr[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"\\"b": "c"}, CONTAINS)'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$("a");
-if (parseAssertElemAttr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {"\\"b":"c"};
-    const nullAttributes = [];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${contains(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, CONTAINS])'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$("a");
-if (parseAssertElemAttr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {"\\"b":"c"};
-    const nullAttributes = [];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${contains(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, STARTS_WITH])'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$("a");
-if (parseAssertElemAttr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {"\\"b":"c"};
-    const nullAttributes = [];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${contains(2)}
-${startsWith(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, STARTS_WITH, ALL])'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$$("a");
-if (parseAssertElemAttr.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingAttrs = [];
-        const parseAssertElemAttrDict = {"\\"b":"c"};
-        const nullAttributes = [];
-        for (const attr of nullAttributes) {
-            if (e.hasAttribute(attr)) {${expectedNull(4)}
-                continue;
-            }${unexpectedNull(3)}
-        }
-        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
-                continue;
-            }
-            const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${contains(3)}
-${startsWith(3)}
-        }
-        if (nonMatchingAttrs.length !== 0) {
-            const props = nonMatchingAttrs.join(", ");
-            throw "The following errors happened (for selector \`a\`): [" + props + "]";
-        }
-    }, parseAssertElemAttr[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"\\"b": "c"}, [CONTAINS, NEAR])'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$("a");
-if (parseAssertElemAttr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {"\\"b":"c"};
-    const nullAttributes = [];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${contains(2)}
-${near(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-
-    // null checks
-    x.assert(func('("a", {"\\"b": null, "a": "c"})'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$("a");
-if (parseAssertElemAttr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {"a":"c"};
-    const nullAttributes = ["\\"b"];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"\\"b": null, "a": "c"}, [ALL])'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$$("a");
-if (parseAssertElemAttr.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingAttrs = [];
-        const parseAssertElemAttrDict = {"a":"c"};
-        const nullAttributes = ["\\"b"];
-        for (const attr of nullAttributes) {
-            if (e.hasAttribute(attr)) {${expectedNull(4)}
-                continue;
-            }${unexpectedNull(3)}
-        }
-        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
-                continue;
-            }
-            const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(3)}
-        }
-        if (nonMatchingAttrs.length !== 0) {
-            const props = nonMatchingAttrs.join(", ");
-            throw "The following errors happened (for selector \`a\`): [" + props + "]";
-        }
-    }, parseAssertElemAttr[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"\\"b": null, "a": "c"}, CONTAINS)'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$("a");
-if (parseAssertElemAttr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {"a":"c"};
-    const nullAttributes = ["\\"b"];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${contains(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': ['Special checks (CONTAINS) will be ignored for `null`'],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"\\"b": null, "a": "c"}, [CONTAINS, STARTS_WITH, ALL])'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$$("a");
-if (parseAssertElemAttr.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingAttrs = [];
-        const parseAssertElemAttrDict = {"a":"c"};
-        const nullAttributes = ["\\"b"];
-        for (const attr of nullAttributes) {
-            if (e.hasAttribute(attr)) {${expectedNull(4)}
-                continue;
-            }${unexpectedNull(3)}
-        }
-        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
-                continue;
-            }
-            const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${contains(3)}
-${startsWith(3)}
-        }
-        if (nonMatchingAttrs.length !== 0) {
-            const props = nonMatchingAttrs.join(", ");
-            throw "The following errors happened (for selector \`a\`): [" + props + "]";
-        }
-    }, parseAssertElemAttr[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': ['Special checks (CONTAINS, STARTS_WITH) will be ignored for `null`'],
-        'checkResult': true,
-    });
-
-    // XPath
-    x.assert(func('("//a", {})'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$x("//a");
-if (parseAssertElemAttr.length === 0) { throw 'XPath "//a" not found'; }
-parseAssertElemAttr = parseAssertElemAttr[0];
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {};
-    const nullAttributes = [];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"b": "c"})'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$x("//a");
-if (parseAssertElemAttr.length === 0) { throw 'XPath "//a" not found'; }
-parseAssertElemAttr = parseAssertElemAttr[0];
-await page.evaluate(e => {
-    const nonMatchingAttrs = [];
-    const parseAssertElemAttrDict = {"b":"c"};
-    const nullAttributes = [];
-    for (const attr of nullAttributes) {
-        if (e.hasAttribute(attr)) {${expectedNull(3)}
-            continue;
-        }${unexpectedNull(2)}
-    }
-    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(3)}
-            continue;
-        }
-        const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(2)}
-    }
-    if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(", ");
-        throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
-    }
-}, parseAssertElemAttr);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"b": "c"}, ALL)'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$x("//a");
-if (parseAssertElemAttr.length === 0) { throw 'XPath "//a" not found'; }
-for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingAttrs = [];
-        const parseAssertElemAttrDict = {"b":"c"};
-        const nullAttributes = [];
-        for (const attr of nullAttributes) {
-            if (e.hasAttribute(attr)) {${expectedNull(4)}
-                continue;
-            }${unexpectedNull(3)}
-        }
-        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
-                continue;
-            }
-            const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(3)}
-        }
-        if (nonMatchingAttrs.length !== 0) {
-            const props = nonMatchingAttrs.join(", ");
-            throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
-        }
-    }, parseAssertElemAttr[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-
-    // Multiline
-    x.assert(func('("a::after", \n {"a": 1}, \n ALLO)'), {
-        'error': 'unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
-            '`STARTS_WITH`, `ENDS_WITH`, `NEAR`]',
-    });
-    x.assert(func('("//a",\n    \n{"b": "c"}, \n ALL)'), {
-        'instructions': [`\
-let parseAssertElemAttr = await page.$x("//a");
-if (parseAssertElemAttr.length === 0) { throw 'XPath "//a" not found'; }
-for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingAttrs = [];
-        const parseAssertElemAttrDict = {"b":"c"};
-        const nullAttributes = [];
-        for (const attr of nullAttributes) {
-            if (e.hasAttribute(attr)) {${expectedNull(4)}
-                continue;
-            }${unexpectedNull(3)}
-        }
-        for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(\
-parseAssertElemAttrDict)) {
-            if (!e.hasAttribute(parseAssertElemAttrAttribute)) {${notFound(4)}
-                continue;
-            }
-            const attr = e.getAttribute(parseAssertElemAttrAttribute);
-${equal(3)}
-        }
-        if (nonMatchingAttrs.length !== 0) {
-            const props = nonMatchingAttrs.join(", ");
-            throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
-        }
-    }, parseAssertElemAttr[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
+    func('"//a\nhello"', 'multiline-2');
 }
 
 function checkAssertAttribute(x, func) {
-    checkAssertAttributeInner(
-        x,
-        func,
-        indent => '\n' +
-            indentString('nonMatchingAttrs.push("No attribute named `" + ' +
-                'parseAssertElemAttrAttribute + "`");', indent),
-        () => '',
-        indent => '\n' +
-            indentString('nonMatchingAttrs.push("Expected `null` for attribute `" + attr + "`, \
-found: `" + e.getAttribute(attr) + "`");', indent),
-        indent => indentString(`\
-if (attr !== parseAssertElemAttrValue) {
-    nonMatchingAttrs.push("attribute \`" + parseAssertElemAttrAttribute + "\` isn't equal to \`" + \
-parseAssertElemAttrValue + "\` (\`" + attr + "\`)");
-}`, indent),
-        indent => indentString(`\
-if (attr.indexOf(parseAssertElemAttrValue) === -1) {
-    nonMatchingAttrs.push("attribute \`" + parseAssertElemAttrAttribute + "\` (\`" + attr + "\`) \
-doesn't contain \`" + parseAssertElemAttrValue + "\` (for CONTAINS check)");
-}`, indent),
-        indent => indentString(`\
-if (!attr.startsWith(parseAssertElemAttrValue)) {
-    nonMatchingAttrs.push("attribute \`" + parseAssertElemAttrAttribute + "\` (\`" + attr + "\`) \
-doesn't start with \`" + parseAssertElemAttrValue + "\` (for STARTS_WITH check)");
-}`, indent),
-        indent => indentString(`\
-if (Number.isNaN(attr)) {
-    nonMatchingAttrs.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
-\`) is NaN (for NEAR check)');
-} else if (Math.abs(attr - parseAssertElemAttrValue) > 1) {
-    nonMatchingAttrs.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
-\`) is not within 1 of \`' + parseAssertElemAttrValue + '\` (for NEAR check)');
-}`, indent),
-    );
-}
+    func('("a", "b", )', 'err-1');
+    func('("a", "b")', 'err-2');
+    func('("a", "b" "c")', 'err-3');
+    func('("a", "b" "c", ALL)', 'err-4');
+    func('("a", "b", "c")', 'err-5');
+    func('("a::after", {"a": 1}, all)', 'err-6');
+    func('("a::after", {"a": 1}, ALLO)', 'err-7');
+    func('("a", {"b": "c", "b": "d"})', 'err-8');
 
-function checkAssertAttributeFalse(x, func) {
-    checkAssertAttributeInner(
-        x,
-        func,
-        () => '',
-        indent => '\n' +
-            indentString(
-                'nonMatchingAttrs.push("Attribute named `" + attr + "` doesn\'t exist");',
-                indent,
-            ),
-        () => '',
-        indent => indentString(`\
-if (attr === parseAssertElemAttrValue) {
-    nonMatchingAttrs.push("assert didn't fail for attribute \`" + parseAssertElemAttrAttribute + \
-"\` (\`" + attr + "\`)");
-}`, indent),
-        indent => indentString(`\
-if (attr.indexOf(parseAssertElemAttrValue) !== -1) {
-    nonMatchingAttrs.push("assert didn't fail for attribute \`" + parseAssertElemAttrAttribute + \
-"\` (\`" + attr + "\`) (for CONTAINS check)");
-}`, indent),
-        indent => indentString(`\
-if (attr.startsWith(parseAssertElemAttrValue)) {
-    nonMatchingAttrs.push("assert didn't fail for attribute \`" + parseAssertElemAttrAttribute + \
-"\` (\`" + attr + "\`) (for STARTS_WITH check)");
-}`, indent),
-        indent => indentString(`\
-if (Number.isNaN(attr)) {
-    nonMatchingAttrs.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
-\`) is NaN (for NEAR check)');
-} else if (Math.abs(attr - parseAssertElemAttrValue) <= 1) {
-    nonMatchingAttrs.push('attribute \`' + parseAssertElemAttrAttribute + '\` (\`' + attr + '\
-\`) is within 1 of \`' + parseAssertElemAttrValue + '\` (for NEAR check)');
-}`, indent),
-    );
-}
-
-function checkAssertCountInner(x, func, before, after) {
-    x.assert(func('("a", 1, "c")'), {'error': 'expected 2 elements in the tuple, found 3'});
-    x.assert(func('("a", 1 2)'), {'error': 'expected `,` or `)`, found `2` after `1`'});
-    x.assert(func('("a", 1 a)'), {'error': 'expected `,` or `)`, found `a` after `1`'});
-    x.assert(func('("a", -1)'), {'error': 'number of occurences cannot be negative: `-1`'});
-    x.assert(func('("a", -1.0)'), {
-        'error': 'expected integer for number of occurences, found float: `-1.0`',
-    });
-    x.assert(func('("a", 1.0)'), {
-        'error': 'expected integer for number of occurences, found float: `1.0`',
-    });
-
-    x.assert(func('("a", 1)'), {
-        'instructions': [
-            'let parseAssertElemCount = await page.$$("a");\n' +
-            'parseAssertElemCount = parseAssertElemCount.length;\n' +
-            before +
-            'if (parseAssertElemCount !== 1) {\n' +
-            'throw \'expected 1 elements, found \' + parseAssertElemCount;\n' +
-            '}' +
-            after,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("a", {})', 'css-empty');
+    func('("a", {"a": 1})', 'basic-1');
+    func('("a", {"a": 1}, ALL)', 'basic-2');
 
     // Check the handling of pseudo elements
-    x.assert(func('("a::after", 1)'), {
-        'instructions': [
-            'let parseAssertElemCount = await page.$$("a");\n' +
-            'parseAssertElemCount = parseAssertElemCount.length;\n' +
-            before +
-            'if (parseAssertElemCount !== 1) {\n' +
-            'throw \'expected 1 elements, found \' + parseAssertElemCount;\n' +
-            '}' +
-            after,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a:focus", 1)'), {
-        'instructions': [
-            'let parseAssertElemCount = await page.$$("a:focus");\n' +
-            'parseAssertElemCount = parseAssertElemCount.length;\n' +
-            before +
-            'if (parseAssertElemCount !== 1) {\n' +
-            'throw \'expected 1 elements, found \' + parseAssertElemCount;\n' +
-            '}' +
-            after,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a :focus", 1)'), {
-        'instructions': [
-            'let parseAssertElemCount = await page.$$("a :focus");\n' +
-            'parseAssertElemCount = parseAssertElemCount.length;\n' +
-            before +
-            'if (parseAssertElemCount !== 1) {\n' +
-            'throw \'expected 1 elements, found \' + parseAssertElemCount;\n' +
-            '}' +
-            after,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a ::after", 1)'), {
-        'instructions': [
-            'let parseAssertElemCount = await page.$$("a ::after");\n' +
-            'parseAssertElemCount = parseAssertElemCount.length;\n' +
-            before +
-            'if (parseAssertElemCount !== 1) {\n' +
-            'throw \'expected 1 elements, found \' + parseAssertElemCount;\n' +
-            '}' +
-            after,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("a::after", {"a": 1})', 'pseudo-1');
+    func('("a::after", {"a": 1}, ALL)', 'pseudo-2');
+    func('("b:after", {"a": 1})', 'pseudo-3');
+    func('("b:after", {"a": 1}, ALL)', 'pseudo-4');
+    func('("a ::after", {"a": 1})', 'pseudo-5');
+    func('("a ::after", {"a": 1}, ALL)', 'pseudo-6');
+
+    func('("a", {"b": "c", "d": "e"})', 'css-1');
+    func('("a", {"b": "c", "d": "e"}, ALL)', 'css-all');
+    func('("a", {"\\"b": "c"})', 'css-quote-1');
+    func('("a", {"\\"b": "c"}, ALL)', 'css-quote-2');
+    func('("a", {"\\"b": "c"}, CONTAINS)', 'css-quote-3');
+    func('("a", {"\\"b": "c"}, [CONTAINS, CONTAINS])', 'css-quote-4');
+    func('("a", {"\\"b": "c"}, [CONTAINS, STARTS_WITH])', 'css-quote-5');
+    func('("a", {"\\"b": "c"}, [CONTAINS, STARTS_WITH, ALL])', 'css-quote-6');
+    func('("a", {"\\"b": "c"}, [CONTAINS, NEAR])', 'css-quote-7');
+
+    // null checks
+    func('("a", {"\\"b": null, "a": "c"})', 'null-1');
+    func('("a", {"\\"b": null, "a": "c"}, [ALL])', 'null-2');
+    func('("a", {"\\"b": null, "a": "c"}, CONTAINS)', 'null-3');
+    func('("a", {"\\"b": null, "a": "c"}, [CONTAINS, STARTS_WITH, ALL])', 'null-4');
+
+    // XPath
+    func('("//a", {})', 'xpath-1');
+    func('("//a", {"b": "c"})', 'xpath-2');
+    func('("//a", {"b": "c"}, ALL)', 'xpath-3');
 
     // Multiline
-    x.assert(func('("a", \n-1)'), {'error': 'number of occurences cannot be negative: `-1`'});
-    x.assert(func('("a ::after"\n,\n 1)'), {
-        'instructions': [
-            'let parseAssertElemCount = await page.$$("a ::after");\n' +
-            'parseAssertElemCount = parseAssertElemCount.length;\n' +
-            before +
-            'if (parseAssertElemCount !== 1) {\n' +
-            'throw \'expected 1 elements, found \' + parseAssertElemCount;\n' +
-            '}' +
-            after,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("a::after", \n {"a": 1}, \n ALLO)', 'multiline-1');
+    func('("//a",\n    \n{"b": "c"}, \n ALL)', 'multiline-2');
 }
 
 function checkAssertCount(x, func) {
-    checkAssertCountInner(x, func, '', '');
+    func('("a", 1, "c")', 'err-1');
+    func('("a", 1 2)', 'err-2');
+    func('("a", 1 a)', 'err-3');
+    func('("a", -1)', 'err-4');
+    func('("a", -1.0)', 'err-5');
+    func('("a", 1.0)', 'err-6');
+
+    func('("a", 1)', 'css-1');
+
+    // Check the handling of pseudo elements
+    func('("a::after", 1)', 'pseudo-1');
+    func('("a:focus", 1)', 'pseudo-2');
+    func('("a :focus", 1)', 'pseudo-3');
+    func('("a ::after", 1)', 'pseudo-4');
+
+    // Multiline
+    func('("a", \n-1)', 'multiline-1');
+    func('("a ::after"\n,\n 1)', 'multiline-2');
 }
 
-function checkAssertCountFalse(x, func) {
-    checkAssertCountInner(
-        x,
-        func,
-        'try {\n',
-        '\n} catch(e) { return; } throw "assert didn\'t fail";',
-    );
-}
+function checkAssertObjProperty(x, func) {
+    func('["a"]', 'err-1');
+    func('("a", "b", )', 'err-2');
+    func('("a", "b")', 'err-3');
+    func('("a", "b" "c")', 'err-4');
+    func('("a", "b" "c", ALL)', 'err-5');
+    func('({"a": "b"}, all)', 'err-6');
+    func('("a::after", {"a": 1}, ALLO)', 'err-7');
+    func('({"b": "c", "b": "d"})', 'err-8');
+    func('({"": "b"})', 'err-9');
 
-function checkAssertObjPropertyInner(
-    x,
-    func,
-    objName,
-    noProp,
-    defaultCheck,
-    containsCheck,
-    startsWithCheck,
-    endsWithCheck,
-    nearCheck,
-) {
-    x.assert(func('["a"]'), {
-        'error': 'expected a tuple or a JSON dict, found `["a"]`',
-    });
-    x.assert(func('("a", "b", )'), {
-        'error': 'expected first element of the tuple to be a JSON dict, found `"a"` (a string)',
-    });
-    x.assert(func('("a", "b")'), {
-        'error': 'expected first element of the tuple to be a JSON dict, found `"a"` (a string)',
-    });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('({"a": "b"}, all)'), {
-        'error': 'unknown identifier `all`. Available identifiers are: [`CONTAINS`, `ENDS_WITH`, ' +
-            '`STARTS_WITH`, `NEAR`]',
-    });
-    x.assert(func('("a::after", {"a": 1}, ALLO)'), {
-        'error': 'expected a tuple of one or two elements, found 3 elements',
-    });
-    x.assert(func('({"b": "c", "b": "d"})'), {'error': 'property `b` is duplicated'});
-    x.assert(func('({"": "b"})'), {
-        'error': 'empty name of properties ("" or \'\') are not allowed',
-    });
+    func('{"a": "b"}', 'basic-1');
+    func('({"a": "b"})', 'basic-2');
 
-    x.assert(func('{"a": "b"}'), {
-        'instructions': [`await page.evaluate(() => {
-    const nonMatchingProps = [];
-    const parseAssertDictPropDict = {"a":"b"};
-    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
-parseAssertDictPropDict)) {
-        if (${objName}[parseAssertDictPropKey] === undefined) {${noProp()}
-            continue;
-        }
-        ${defaultCheck()}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened: [" + props + "]";
-    }
-});`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('({"a": "b"})'), {
-        'instructions': [`await page.evaluate(() => {
-    const nonMatchingProps = [];
-    const parseAssertDictPropDict = {"a":"b"};
-    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
-parseAssertDictPropDict)) {
-        if (${objName}[parseAssertDictPropKey] === undefined) {${noProp()}
-            continue;
-        }
-        ${defaultCheck()}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened: [" + props + "]";
-    }
-});`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-
-    x.assert(func('({"a": "b"}, CONTAINS)'), {
-        'instructions': [`await page.evaluate(() => {
-    const nonMatchingProps = [];
-    const parseAssertDictPropDict = {"a":"b"};
-    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
-parseAssertDictPropDict)) {
-        if (${objName}[parseAssertDictPropKey] === undefined) {${noProp()}
-            continue;
-        }
-        ${containsCheck()}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened: [" + props + "]";
-    }
-});`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('({"a": "b"}, STARTS_WITH)'), {
-        'instructions': [`await page.evaluate(() => {
-    const nonMatchingProps = [];
-    const parseAssertDictPropDict = {"a":"b"};
-    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
-parseAssertDictPropDict)) {
-        if (${objName}[parseAssertDictPropKey] === undefined) {${noProp()}
-            continue;
-        }
-        ${startsWithCheck()}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened: [" + props + "]";
-    }
-});`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('({"a": "b"}, ENDS_WITH)'), {
-        'instructions': [`await page.evaluate(() => {
-    const nonMatchingProps = [];
-    const parseAssertDictPropDict = {"a":"b"};
-    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
-parseAssertDictPropDict)) {
-        if (${objName}[parseAssertDictPropKey] === undefined) {${noProp()}
-            continue;
-        }
-        ${endsWithCheck()}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened: [" + props + "]";
-    }
-});`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('({"a": "b"}, [STARTS_WITH, ENDS_WITH])'), {
-        'instructions': [`await page.evaluate(() => {
-    const nonMatchingProps = [];
-    const parseAssertDictPropDict = {"a":"b"};
-    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
-parseAssertDictPropDict)) {
-        if (${objName}[parseAssertDictPropKey] === undefined) {${noProp()}
-            continue;
-        }
-        ${startsWithCheck()}
-        ${endsWithCheck()}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened: [" + props + "]";
-    }
-});`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('({"a": "b"}, [STARTS_WITH, NEAR])'), {
-        'instructions': [`await page.evaluate(() => {
-    const nonMatchingProps = [];
-    const parseAssertDictPropDict = {"a":"b"};
-    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(\
-parseAssertDictPropDict)) {
-        if (${objName}[parseAssertDictPropKey] === undefined) {${noProp()}
-            continue;
-        }
-        ${startsWithCheck()}
-        ${nearCheck()}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened: [" + props + "]";
-    }
-});`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-}
-
-function checkAssertDocumentProperty(x, func) {
-    checkAssertObjPropertyInner(
-        x,
-        func,
-        'document',
-        () => '\n            nonMatchingProps.push(\'Unknown document property `\' + ' +
-            'parseAssertDictPropKey + \'`\');',
-        () => `if (String(document[parseAssertDictPropKey]) != parseAssertDictPropValue) {
-            nonMatchingProps.push('Expected \`' + parseAssertDictPropValue + '\` for property \`' \
-+ parseAssertDictPropKey + '\`, found \`' + document[parseAssertDictPropKey] + '\`');
-        }`,
-        () => `\
-if (String(document[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) === -1) {
-            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
-document[parseAssertDictPropKey] + '\`) does not contain \`' + parseAssertDictPropValue + '\`');
-        }`,
-        () => `if (!String(document[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) {
-            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
-document[parseAssertDictPropKey] + '\`) does not start with \`' + parseAssertDictPropValue + '\`');
-        }`,
-        () => `if (!String(document[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) {
-            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
-document[parseAssertDictPropKey] + '\`) does not end with \`' + parseAssertDictPropValue + '\`');
-        }`,
-        () => `if (Number.isNaN(document[parseAssertDictPropKey])) {
-            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
-document[parseAssertDictPropKey] + '\`) is NaN (for NEAR check)');
-        } else if (Math.abs(document[parseAssertDictPropKey] - parseAssertDictPropValue) > 1) {
-            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
-document[parseAssertDictPropKey] + '\`) is not within 1 of \`' + parseAssertDictPropValue + '\` \
-(for NEAR check)');
-        }`,
-    );
-}
-
-function checkAssertDocumentPropertyFalse(x, func) {
-    checkAssertObjPropertyInner(
-        x,
-        func,
-        'document',
-        () => '',
-        () => `if (String(document[parseAssertDictPropKey]) == parseAssertDictPropValue) {
-            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey \
-+ '\`');
-        }`,
-        () => `\
-if (String(document[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) !== -1) {
-            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
-'\` (for CONTAINS check)');
-        }`,
-        () => `if (String(document[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) {
-            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
-'\` (for STARTS_WITH check)');
-        }`,
-        () => `if (String(document[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) {
-            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
-'\` (for ENDS_WITH check)');
-        }`,
-        () => `if (Number.isNaN(document[parseAssertDictPropKey])) {
-            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
-document[parseAssertDictPropKey] + '\`) is NaN (for NEAR check)');
-        } else if (Math.abs(document[parseAssertDictPropKey] - parseAssertDictPropValue) <= 1) {
-            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
-document[parseAssertDictPropKey] + '\`) is within 1 of \`' + parseAssertDictPropValue + '\` \
-(for NEAR check)');
-        }`,
-    );
-}
-
-function checkAssertVariableInner(x, func, equal, contains, starts_with, ends_with, near) {
-    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
-    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {'error': 'expected 2 or 3 elements in the tuple, found 1 element'});
-    x.assert(func('(1, 1)'), {
-        'error': 'expected first argument to be an ident, found a number (`1`)',
-    });
-    x.assert(func('(a, b)'), {
-        'error': 'expected second argument to be a number, a string or a JSON dict, found an ' +
-            'ident (`b`)',
-    });
-
-    x.assert(func('(a, {"b": "a"})'), {
-        'instructions': [`\
-function stringifyValue(value) {
-    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
-        return String(value);
-    }
-    return JSON.stringify(value);
-}
-const value1 = stringifyValue(arg.variables["a"]);
-const value2 = stringifyValue({"b": "a"});
-const errors = [];
-${equal}
-if (errors.length !== 0) {
-    const errs = errors.join(", ");
-    throw "The following errors happened: [" + errs + "]";
-}`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('(VAR, "a")'), {
-        'instructions': [`\
-function stringifyValue(value) {
-    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
-        return String(value);
-    }
-    return JSON.stringify(value);
-}
-const value1 = stringifyValue(arg.variables["VAR"]);
-const value2 = stringifyValue("a");
-const errors = [];
-${equal}
-if (errors.length !== 0) {
-    const errs = errors.join(", ");
-    throw "The following errors happened: [" + errs + "]";
-}`,
-        ],
-        'wait': false,
-    });
-
-    x.assert(func('(VAR, "\'a")'), {
-        'instructions': [`\
-function stringifyValue(value) {
-    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
-        return String(value);
-    }
-    return JSON.stringify(value);
-}
-const value1 = stringifyValue(arg.variables["VAR"]);
-const value2 = stringifyValue("\\'a");
-const errors = [];
-${equal}
-if (errors.length !== 0) {
-    const errs = errors.join(", ");
-    throw "The following errors happened: [" + errs + "]";
-}`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('(VAR, 1)'), {
-        'instructions': [`\
-function stringifyValue(value) {
-    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
-        return String(value);
-    }
-    return JSON.stringify(value);
-}
-const value1 = stringifyValue(arg.variables["VAR"]);
-const value2 = stringifyValue(1);
-const errors = [];
-${equal}
-if (errors.length !== 0) {
-    const errs = errors.join(", ");
-    throw "The following errors happened: [" + errs + "]";
-}`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('(VAR, 1.28)'), {
-        'instructions': [`\
-function stringifyValue(value) {
-    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
-        return String(value);
-    }
-    return JSON.stringify(value);
-}
-const value1 = stringifyValue(arg.variables["VAR"]);
-const value2 = stringifyValue(1.28);
-const errors = [];
-${equal}
-if (errors.length !== 0) {
-    const errs = errors.join(", ");
-    throw "The following errors happened: [" + errs + "]";
-}`,
-        ],
-        'wait': false,
-    });
-
-    x.assert(func('(VAR, "a", [CONTAINS])'), {
-        'instructions': [`\
-function stringifyValue(value) {
-    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
-        return String(value);
-    }
-    return JSON.stringify(value);
-}
-const value1 = stringifyValue(arg.variables["VAR"]);
-const value2 = stringifyValue("a");
-const errors = [];
-${contains}
-if (errors.length !== 0) {
-    const errs = errors.join(", ");
-    throw "The following errors happened: [" + errs + "]";
-}`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('(VAR, "a", [STARTS_WITH])'), {
-        'instructions': [`\
-function stringifyValue(value) {
-    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
-        return String(value);
-    }
-    return JSON.stringify(value);
-}
-const value1 = stringifyValue(arg.variables["VAR"]);
-const value2 = stringifyValue("a");
-const errors = [];
-${starts_with}
-if (errors.length !== 0) {
-    const errs = errors.join(", ");
-    throw "The following errors happened: [" + errs + "]";
-}`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('(VAR, "a", [ENDS_WITH])'), {
-        'instructions': [`\
-function stringifyValue(value) {
-    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
-        return String(value);
-    }
-    return JSON.stringify(value);
-}
-const value1 = stringifyValue(arg.variables["VAR"]);
-const value2 = stringifyValue("a");
-const errors = [];
-${ends_with}
-if (errors.length !== 0) {
-    const errs = errors.join(", ");
-    throw "The following errors happened: [" + errs + "]";
-}`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('(VAR, "a", [STARTS_WITH, CONTAINS, ENDS_WITH])'), {
-        'instructions': [`\
-function stringifyValue(value) {
-    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
-        return String(value);
-    }
-    return JSON.stringify(value);
-}
-const value1 = stringifyValue(arg.variables["VAR"]);
-const value2 = stringifyValue("a");
-const errors = [];
-${contains}
-${starts_with}
-${ends_with}
-if (errors.length !== 0) {
-    const errs = errors.join(", ");
-    throw "The following errors happened: [" + errs + "]";
-}`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('(VAR, "a", [STARTS_WITH, NEAR])'), {
-        'instructions': [`\
-function stringifyValue(value) {
-    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
-        return String(value);
-    }
-    return JSON.stringify(value);
-}
-const value1 = stringifyValue(arg.variables["VAR"]);
-const value2 = stringifyValue("a");
-const errors = [];
-${starts_with}
-${near}
-if (errors.length !== 0) {
-    const errs = errors.join(", ");
-    throw "The following errors happened: [" + errs + "]";
-}`,
-        ],
-        'wait': false,
-    });
+    func('({"a": "b"}, CONTAINS)', 'extra-1');
+    func('({"a": "b"}, STARTS_WITH)', 'extra-2');
+    func('({"a": "b"}, ENDS_WITH)', 'extra-3');
+    func('({"a": "b"}, [STARTS_WITH, ENDS_WITH])', 'extra-4');
+    func('({"a": "b"}, [STARTS_WITH, NEAR])', 'extra-5');
 }
 
 function checkAssertVariable(x, func) {
-    checkAssertVariableInner(x, func,
-        `\
-if (value1 !== value2) {
-    errors.push("\`" + value1 + "\` isn't equal to \`" + value2 + "\`");
-}`,
-        `\
-if (value1.indexOf(value2) === -1) {
-    errors.push("\`" + value1 + "\` doesn't contain \`" + value2 + "\` (for CONTAINS check)");
-}`,
-        `\
-if (!value1.startsWith(value2)) {
-    errors.push("\`" + value1 + "\` doesn't start with \`" + value2 + "\` (for STARTS_WITH check)");
-}`,
-        `\
-if (!value1.endsWith(value2)) {
-    errors.push("\`" + value1 + "\` doesn't end with \`" + value2 + "\` (for ENDS_WITH check)");
-}`,
-        `\
-if (Number.isNaN(value1)) {
-    errors.push('\`' + value1 + '\` is NaN (for NEAR check)');
-} else if (Math.abs(value1 - value2) > 1) {
-    errors.push('\`' + value1 + '\` is not within 1 of \`' + value2 + '\` (for \
-NEAR check)');
-}`,
-    );
-}
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1, 1)', 'err-5');
+    func('(a, b)', 'err-6');
 
-function checkAssertVariableFalse(x, func) {
-    checkAssertVariableInner(x, func,
-        `\
-if (value1 === value2) {
-    errors.push("\`" + value1 + "\` is equal to \`" + value2 + "\`");
-}`,
-        `\
-if (value1.indexOf(value2) !== -1) {
-    errors.push("\`" + value1 + "\` contains \`" + value2 + "\` (for CONTAINS check)");
-}`,
-        `\
-if (value1.startsWith(value2)) {
-    errors.push("\`" + value1 + "\` starts with \`" + value2 + "\` (for STARTS_WITH check)");
-}`,
-        `\
-if (value1.endsWith(value2)) {
-    errors.push("\`" + value1 + "\` ends with \`" + value2 + "\` (for ENDS_WITH check)");
-}`,
-        `\
-if (Number.isNaN(value1)) {
-    errors.push('\`' + value1 + '\` is NaN (for NEAR check)');
-} else if (Math.abs(value1 - value2) <= 1) {
-    errors.push('\`' + value1 + '\` is within 1 of \`' + value2 + '\` (for NEAR check)');
-}`,
-    );
-}
+    func('(a, {"b": "a"})', 'basic-1');
+    func('(VAR, "a")', 'basic-2');
 
-function checkAssertWindowProperty(x, func) {
-    checkAssertObjPropertyInner(
-        x,
-        func,
-        'window',
-        () => '\n            nonMatchingProps.push(\'Unknown window property `\' + ' +
-            'parseAssertDictPropKey + \'`\');',
-        () => `if (String(window[parseAssertDictPropKey]) != parseAssertDictPropValue) {
-            nonMatchingProps.push('Expected \`' + parseAssertDictPropValue + '\` for property \`' \
-+ parseAssertDictPropKey + '\`, found \`' + window[parseAssertDictPropKey] + '\`');
-        }`,
-        () => `\
-if (String(window[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) === -1) {
-            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
-window[parseAssertDictPropKey] + '\`) does not contain \`' + parseAssertDictPropValue + '\`');
-        }`,
-        () => `if (!String(window[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) {
-            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
-window[parseAssertDictPropKey] + '\`) does not start with \`' + parseAssertDictPropValue + '\`');
-        }`,
-        () => `if (!String(window[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) {
-            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
-window[parseAssertDictPropKey] + '\`) does not end with \`' + parseAssertDictPropValue + '\`');
-        }`,
-        () => `if (Number.isNaN(window[parseAssertDictPropKey])) {
-            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
-window[parseAssertDictPropKey] + '\`) is NaN (for NEAR check)');
-        } else if (Math.abs(window[parseAssertDictPropKey] - parseAssertDictPropValue) > 1) {
-            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
-window[parseAssertDictPropKey] + '\`) is not within 1 of \`' + parseAssertDictPropValue + '\` \
-(for NEAR check)');
-        }`,
-    );
-}
+    func('(VAR, "\'a")', 'basic-3');
+    func('(VAR, 1)', 'basic-4');
+    func('(VAR, 1.28)', 'basic-5');
 
-function checkAssertWindowPropertyFalse(x, func) {
-    checkAssertObjPropertyInner(
-        x,
-        func,
-        'window',
-        () => '',
-        () => `if (String(window[parseAssertDictPropKey]) == parseAssertDictPropValue) {
-            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey \
-+ '\`');
-        }`,
-        () => `\
-if (String(window[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) !== -1) {
-            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
-'\` (for CONTAINS check)');
-        }`,
-        () => `if (String(window[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) {
-            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
-'\` (for STARTS_WITH check)');
-        }`,
-        () => `if (String(window[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) {
-            nonMatchingProps.push("assert didn't fail for property \`" + parseAssertDictPropKey + \
-'\` (for ENDS_WITH check)');
-        }`,
-        () => `if (Number.isNaN(window[parseAssertDictPropKey])) {
-            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
-window[parseAssertDictPropKey] + '\`) is NaN (for NEAR check)');
-        } else if (Math.abs(window[parseAssertDictPropKey] - parseAssertDictPropValue) <= 1) {
-            nonMatchingProps.push('Property \`' + parseAssertDictPropKey + '\` (\`' + \
-window[parseAssertDictPropKey] + '\`) is within 1 of \`' + parseAssertDictPropValue + '\` \
-(for NEAR check)');
-        }`,
-    );
-}
-
-function checkAssertCssInner(x, func, assertCall) {
-    x.assert(func('("a", "b", )'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
-    });
-    x.assert(func('("a", "b")'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
-    });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('("a", "b", "c")'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
-    });
-    x.assert(func('("a::after", {"a": 1}, all)'), {
-        'error': 'expected identifier `ALL` as third argument or nothing, found `all`',
-    });
-    x.assert(func('("a::after", {"a": 1}, ALLO)'), {
-        'error': 'expected identifier `ALL` as third argument or nothing, found `ALLO`',
-    });
-    x.assert(func('("a", {"b": "c", "b": "d"})'), {'error': 'CSS property `b` is duplicated'});
-    x.assert(func('("a", {"b": ""})'), {
-        'error': 'Empty values are not allowed: `b` has an empty value',
-    });
-    x.assert(func('("a", {"": "b"})'), {
-        'error': 'empty name of properties ("" or \'\') are not allowed',
-    });
-
-    x.assert(func('("a", {})'), {
-        'instructions': [`let parseAssertElemCss = await page.$("a");
-if (parseAssertElemCss === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    let assertComputedStyle = getComputedStyle(e);
-    const parseAssertElemCssDict = {};
-    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-        const localErr = [];
-        let succeeded = false;
-        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloatOrZero(\
-assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                }
-                succeeded = true;
-            }
-            if (!succeeded) {
-                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-            }
-        }
-${assertCall(0)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemCss);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"a": 1})'), {
-        'instructions': [`let parseAssertElemCss = await page.$("a");
-if (parseAssertElemCss === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    let assertComputedStyle = getComputedStyle(e);
-    const parseAssertElemCssDict = {"a":"1"};
-    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-        const localErr = [];
-        let succeeded = false;
-        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloatOrZero(\
-assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                }
-                succeeded = true;
-            }
-            if (!succeeded) {
-                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-            }
-        }
-${assertCall(0)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemCss);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"a": 1}, ALL)'), {
-        'instructions': [`let parseAssertElemCss = await page.$$("a");
-if (parseAssertElemCss.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let assertComputedStyle = getComputedStyle(e);
-        const parseAssertElemCssDict = {"a":"1"};
-        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-            const localErr = [];
-            let succeeded = false;
-            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-                if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[\
-parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                        localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                    }
-                    succeeded = true;
-                }
-                if (!succeeded) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-                }
-            }
-${assertCall(1)}
-        }
-        if (nonMatchingProps.length !== 0) {
-            const props = nonMatchingProps.join(", ");
-            throw "The following errors happened (for selector \`a\`): [" + props + "]";
-        }
-    }, parseAssertElemCss[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-
-    // Check the handling of pseudo elements
-    x.assert(func('("a::after", {"a": 1})'), {
-        'instructions': [`let parseAssertElemCss = await page.$("a");
-if (parseAssertElemCss === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    let assertComputedStyle = getComputedStyle(e, "::after");
-    const parseAssertElemCssDict = {"a":"1"};
-    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-        const localErr = [];
-        let succeeded = false;
-        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloatOrZero(\
-assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                }
-                succeeded = true;
-            }
-            if (!succeeded) {
-                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-            }
-        }
-${assertCall(0)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemCss);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a::after", {"a": 1}, ALL)'), {
-        'instructions': [`let parseAssertElemCss = await page.$$("a");
-if (parseAssertElemCss.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let assertComputedStyle = getComputedStyle(e, "::after");
-        const parseAssertElemCssDict = {"a":"1"};
-        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-            const localErr = [];
-            let succeeded = false;
-            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-                if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[\
-parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                        localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                    }
-                    succeeded = true;
-                }
-                if (!succeeded) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-                }
-            }
-${assertCall(1)}
-        }
-        if (nonMatchingProps.length !== 0) {
-            const props = nonMatchingProps.join(", ");
-            throw "The following errors happened (for selector \`a\`): [" + props + "]";
-        }
-    }, parseAssertElemCss[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a:focus", {"a": 1})'), {
-        'instructions': [`let parseAssertElemCss = await page.$("a:focus");
-if (parseAssertElemCss === null) { throw '"a:focus" not found'; }
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    let assertComputedStyle = getComputedStyle(e);
-    const parseAssertElemCssDict = {"a":"1"};
-    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-        const localErr = [];
-        let succeeded = false;
-        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloatOrZero(\
-assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                }
-                succeeded = true;
-            }
-            if (!succeeded) {
-                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-            }
-        }
-${assertCall(0)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for selector \`a:focus\`): [" + props + "]";
-    }
-}, parseAssertElemCss);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a:focus", {"a": 1}, ALL)'), {
-        'instructions': [`let parseAssertElemCss = await page.$$("a:focus");
-if (parseAssertElemCss.length === 0) { throw '"a:focus" not found'; }
-for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let assertComputedStyle = getComputedStyle(e);
-        const parseAssertElemCssDict = {"a":"1"};
-        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-            const localErr = [];
-            let succeeded = false;
-            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-                if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[\
-parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                        localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' +\
- browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                    }
-                    succeeded = true;
-                }
-                if (!succeeded) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-                }
-            }
-${assertCall(1)}
-        }
-        if (nonMatchingProps.length !== 0) {
-            const props = nonMatchingProps.join(", ");
-            throw "The following errors happened (for selector \`a:focus\`): [" + props + "]";
-        }
-    }, parseAssertElemCss[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a ::after", {"a": 1})'), {
-        'instructions': [`let parseAssertElemCss = await page.$("a ::after");
-if (parseAssertElemCss === null) { throw '"a ::after" not found'; }
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    let assertComputedStyle = getComputedStyle(e);
-    const parseAssertElemCssDict = {"a":"1"};
-    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-        const localErr = [];
-        let succeeded = false;
-        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloatOrZero(\
-assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                }
-                succeeded = true;
-            }
-            if (!succeeded) {
-                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-            }
-        }
-${assertCall(0)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for selector \`a ::after\`): [" + props + "]";
-    }
-}, parseAssertElemCss);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a ::after", {"a": 1}, ALL)'), {
-        'instructions': [`let parseAssertElemCss = await page.$$("a ::after");
-if (parseAssertElemCss.length === 0) { throw '"a ::after" not found'; }
-for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let assertComputedStyle = getComputedStyle(e);
-        const parseAssertElemCssDict = {"a":"1"};
-        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-            const localErr = [];
-            let succeeded = false;
-            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-                if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[\
-parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                        localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                    }
-                    succeeded = true;
-                }
-                if (!succeeded) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-                }
-            }
-${assertCall(1)}
-        }
-        if (nonMatchingProps.length !== 0) {
-            const props = nonMatchingProps.join(", ");
-            throw "The following errors happened (for selector \`a ::after\`): [" + props + "]";
-        }
-    }, parseAssertElemCss[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-
-    // XPath
-    x.assert(func('("//a", {})'), {
-        'instructions': [`let parseAssertElemCss = await page.$x("//a");
-if (parseAssertElemCss.length === 0) { throw 'XPath "//a" not found'; }
-parseAssertElemCss = parseAssertElemCss[0];
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    let assertComputedStyle = getComputedStyle(e);
-    const parseAssertElemCssDict = {};
-    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-        const localErr = [];
-        let succeeded = false;
-        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloatOrZero(\
-assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                }
-                succeeded = true;
-            }
-            if (!succeeded) {
-                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-            }
-        }
-${assertCall(0)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
-    }
-}, parseAssertElemCss);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"a": 1})'), {
-        'instructions': [`let parseAssertElemCss = await page.$x("//a");
-if (parseAssertElemCss.length === 0) { throw 'XPath "//a" not found'; }
-parseAssertElemCss = parseAssertElemCss[0];
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    let assertComputedStyle = getComputedStyle(e);
-    const parseAssertElemCssDict = {"a":"1"};
-    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-        const localErr = [];
-        let succeeded = false;
-        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloatOrZero(\
-assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                }
-                succeeded = true;
-            }
-            if (!succeeded) {
-                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-            }
-        }
-${assertCall(0)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
-    }
-}, parseAssertElemCss);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"a": 1}, ALL)'), {
-        'instructions': [`let parseAssertElemCss = await page.$x("//a");
-if (parseAssertElemCss.length === 0) { throw 'XPath "//a" not found'; }
-for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let assertComputedStyle = getComputedStyle(e);
-        const parseAssertElemCssDict = {"a":"1"};
-        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-            const localErr = [];
-            let succeeded = false;
-            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-                if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[\
-parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                        localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                    }
-                    succeeded = true;
-                }
-                if (!succeeded) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-                }
-            }
-${assertCall(1)}
-        }
-        if (nonMatchingProps.length !== 0) {
-            const props = nonMatchingProps.join(", ");
-            throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
-        }
-    }, parseAssertElemCss[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"a": 1, "b": 2})'), {
-        'instructions': [`let parseAssertElemCss = await page.$x("//a");
-if (parseAssertElemCss.length === 0) { throw 'XPath "//a" not found'; }
-parseAssertElemCss = parseAssertElemCss[0];
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    let assertComputedStyle = getComputedStyle(e);
-    const parseAssertElemCssDict = {"a":"1","b":"2"};
-    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-        const localErr = [];
-        let succeeded = false;
-        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloatOrZero(\
-assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                }
-                succeeded = true;
-            }
-            if (!succeeded) {
-                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-            }
-        }
-${assertCall(0)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
-    }
-}, parseAssertElemCss);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"a": 1, "b": 2}, ALL)'), {
-        'instructions': [`let parseAssertElemCss = await page.$x("//a");
-if (parseAssertElemCss.length === 0) { throw 'XPath "//a" not found'; }
-for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let assertComputedStyle = getComputedStyle(e);
-        const parseAssertElemCssDict = {"a":"1","b":"2"};
-        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-            const localErr = [];
-            let succeeded = false;
-            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-                if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[\
-parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                        localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                    }
-                    succeeded = true;
-                }
-                if (!succeeded) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-                }
-            }
-${assertCall(1)}
-        }
-        if (nonMatchingProps.length !== 0) {
-            const props = nonMatchingProps.join(", ");
-            throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
-        }
-    }, parseAssertElemCss[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-
-    // Multiline
-    x.assert(func('("a", {"b": \n"c"\n, "b": "d"})'), {'error': 'CSS property `b` is duplicated'});
-    x.assert(func('("//a"\n, \n{"a": \n1, \n"b": \n2}\n, \nALL)'), {
-        'instructions': [`let parseAssertElemCss = await page.$x("//a");
-if (parseAssertElemCss.length === 0) { throw 'XPath "//a" not found'; }
-for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let assertComputedStyle = getComputedStyle(e);
-        const parseAssertElemCssDict = {"a":"1","b":"2"};
-        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-            const localErr = [];
-            let succeeded = false;
-            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-                if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[\
-parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                        localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                    }
-                    succeeded = true;
-                }
-                if (!succeeded) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-                }
-            }
-${assertCall(1)}
-        }
-        if (nonMatchingProps.length !== 0) {
-            const props = nonMatchingProps.join(", ");
-            throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
-        }
-    }, parseAssertElemCss[i]);
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-
-    // Check the specially added check if "color" is used.
-    x.assert(func('("a", {"color": 1})'), {
-        'instructions': [`if (!arg.showText) {
-    throw "\`show-text: true\` needs to be used before checking for \`color\` (otherwise the \
-browser doesn't compute it)";
-}`,
-        `let parseAssertElemCss = await page.$("a");
-if (parseAssertElemCss === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    let assertComputedStyle = getComputedStyle(e);
-    const parseAssertElemCssDict = {"color":"1"};
-    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of \
-Object.entries(parseAssertElemCssDict)) {
-        const localErr = [];
-        let succeeded = false;
-        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && \
-assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-            if (typeof assertComputedStyle[parseAssertElemCssKey] === "string" && \
-assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                if (browserUiTestHelpers.extractFloatOrZero(\
-assertComputedStyle[parseAssertElemCssKey], true) + "px" !== parseAssertElemCssValue) {
-                    localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\` (or \`' \
-+ browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \
-'px\`)');
-                }
-                succeeded = true;
-            }
-            if (!succeeded) {
-                localErr.push('expected \`' + parseAssertElemCssValue + '\` for key \`' + \
-parseAssertElemCssKey + '\`, found \`' + assertComputedStyle[parseAssertElemCssKey] + '\`');
-            }
-        }
-${assertCall(0)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemCss);`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
+    func('(VAR, "a", [CONTAINS])', 'extra-1');
+    func('(VAR, "a", [STARTS_WITH])', 'extra-2');
+    func('(VAR, "a", [ENDS_WITH])', 'extra-3');
+    func('(VAR, "a", [STARTS_WITH, CONTAINS, ENDS_WITH])', 'extra-4');
+    func('(VAR, "a", [STARTS_WITH, NEAR])', 'extra-5');
 }
 
 function checkAssertCss(x, func) {
-    checkAssertCssInner(
-        x,
-        func,
-        indent => indentString('nonMatchingProps.push(...localErr);', 2 + indent),
-    );
-}
+    func('("a", "b", )', 'err-1');
+    func('("a", "b")', 'err-2');
+    func('("a", "b" "c")', 'err-3');
+    func('("a", "b" "c", ALL)', 'err-4');
+    func('("a", "b", "c")', 'err-5');
+    func('("a::after", {"a": 1}, all)', 'err-6');
+    func('("a::after", {"a": 1}, ALLO)', 'err-7');
+    func('("a", {"b": "c", "b": "d"})', 'err-8');
+    func('("a", {"b": ""})', 'err-9');
+    func('("a", {"": "b"})', 'err-10');
 
-function checkAssertCssFalse(x, func) {
-    checkAssertCssInner(
-        x,
-        func,
-        indent => indentString(`if (localErr.length === 0) {
-    nonMatchingProps.push("assert didn't fail for key \`" + parseAssertElemCssKey + '\`');
-}`, 2 + indent),
-    );
-}
+    func('("a", {})', 'css-1');
+    func('("a", {"a": 1})', 'css-2');
+    func('("a", {"a": 1}, ALL)', 'css-3');
 
-function checkAssertLocalStorageInner(x, func, comp) {
-    x.assert(func('hello'), {'error': 'expected JSON, found `hello`'});
-    x.assert(func('{').error !== undefined); // JSON syntax error
-    x.assert(func('{"a": x}'), {'error': 'Only `null` ident is allowed, found `x`'});
-    x.assert(func('{"a": {"a": "x"}}'), {
-        'instructions': [],
-        'warnings': ['Ignoring recursive entry with key `"a"`'],
-        'wait': false,
-    });
+    // Check the handling of pseudo elements
+    func('("a::after", {"a": 1})', 'pseudo-1');
+    func('("a::after", {"a": 1}, ALL)', 'pseudo-2');
+    func('("a:focus", {"a": 1})', 'pseudo-3');
+    func('("a:focus", {"a": 1}, ALL)', 'pseudo-4');
+    func('("a ::after", {"a": 1})', 'pseudo-5');
+    func('("a ::after", {"a": 1}, ALL)', 'pseudo-6');
 
-    x.assert(func('{"a": 1}'), {
-        'instructions': [`\
-await page.evaluate(() => {
-    const errors = [];
-    const localStorageElemDict = {"a":"1"};
-    for (const [localStorageElemKey, localStorageElemValue] of \
-Object.entries(localStorageElemDict)) {
-        let localStorageElem = window.localStorage.getItem(localStorageElemKey);
-        if (localStorageElem ${comp} localStorageElemValue) {
-            errors.push("localStorage item \\"" + localStorageElemKey + "\\" (of value \\"" + \
-localStorageElemValue + "\\") ${comp} \\"" + localStorageElem + "\\"");
-        }
-    }
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-});`],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('{"a": "1"}'), {
-        'instructions': [`\
-await page.evaluate(() => {
-    const errors = [];
-    const localStorageElemDict = {"a":"1"};
-    for (const [localStorageElemKey, localStorageElemValue] of \
-Object.entries(localStorageElemDict)) {
-        let localStorageElem = window.localStorage.getItem(localStorageElemKey);
-        if (localStorageElem ${comp} localStorageElemValue) {
-            errors.push("localStorage item \\"" + localStorageElemKey + "\\" (of value \\"" + \
-localStorageElemValue + "\\") ${comp} \\"" + localStorageElem + "\\"");
-        }
-    }
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-});`],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('{"a": "1", "b": "2px"}'), {
-        'instructions': [`\
-await page.evaluate(() => {
-    const errors = [];
-    const localStorageElemDict = {"a":"1","b":"2px"};
-    for (const [localStorageElemKey, localStorageElemValue] of \
-Object.entries(localStorageElemDict)) {
-        let localStorageElem = window.localStorage.getItem(localStorageElemKey);
-        if (localStorageElem ${comp} localStorageElemValue) {
-            errors.push("localStorage item \\"" + localStorageElemKey + "\\" (of value \\"" + \
-localStorageElemValue + "\\") ${comp} \\"" + localStorageElem + "\\"");
-        }
-    }
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-});`],
-        'wait': false,
-        'checkResult': true,
-    });
+    // XPath
+    func('("//a", {})', 'xpath-1');
+    func('("//a", {"a": 1})', 'xpath-2');
+    func('("//a", {"a": 1}, ALL)', 'xpath-3');
+    func('("//a", {"a": 1, "b": 2})', 'xpath-4');
+    func('("//a", {"a": 1, "b": 2}, ALL)', 'xpath-5');
 
     // Multiline
-    x.assert(func('{"a"\n: \n"1"}'), {
-        'instructions': [`\
-await page.evaluate(() => {
-    const errors = [];
-    const localStorageElemDict = {"a":"1"};
-    for (const [localStorageElemKey, localStorageElemValue] of \
-Object.entries(localStorageElemDict)) {
-        let localStorageElem = window.localStorage.getItem(localStorageElemKey);
-        if (localStorageElem ${comp} localStorageElemValue) {
-            errors.push("localStorage item \\"" + localStorageElemKey + "\\" (of value \\"" + \
-localStorageElemValue + "\\") ${comp} \\"" + localStorageElem + "\\"");
-        }
-    }
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-});`],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("a", {"b": \n"c"\n, "b": "d"})', 'multiline-1');
+    func('("//a"\n, \n{"a": \n1, \n"b": \n2}\n, \nALL)', 'multiline-2');
+
+    // Check the specially added check if "color" is used.
+    func('("a", {"color": 1})', 'color-1');
 }
 
 function checkAssertLocalStorage(x, func) {
-    checkAssertLocalStorageInner(x, func, '!=');
-}
+    func('hello', 'err-1');
+    // func('{').error !== undefined; // JSON syntax error
+    func('{"a": x}', 'err-3');
+    func('{"a": {"a": "x"}}', 'err-4');
 
-function checkAssertLocalStorageFalse(x, func) {
-    checkAssertLocalStorageInner(x, func, '==');
-}
-
-function checkAssertPropertyInner(x, func, exists, equal, startsWith, endsWith) {
-    x.assert(func('("a", "b", )'), {
-        'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
-    });
-    x.assert(func('("a", "b")'), {
-        'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
-    });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('("a", "b", "c")'), {
-        'error': 'expected a JSON dictionary as second argument, found `"b"` (a string)',
-    });
-    x.assert(func('("a::after", {"a": 1}, all)'), {
-        'error': 'unknown identifier `all`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
-            '`STARTS_WITH`, `ENDS_WITH`, `NEAR`]',
-    });
-    x.assert(func('("a::after", {"a": 1}, ALLO)'), {
-        'error': 'unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
-            '`STARTS_WITH`, `ENDS_WITH`, `NEAR`]',
-    });
-    x.assert(func('("a", {"b": "c", "b": "d"})'), {'error': 'property `b` is duplicated'});
-    x.assert(func('("a", {"b": []})'), {
-        'error': 'only string and number types are allowed as value, found `[]` (an array)',
-    });
-    x.assert(func('("a", {"b": gateau})'), {
-        'error': 'only string and number types are allowed as value, found `gateau` (an ident)',
-    });
-
-    x.assert(func('("a", {})'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$("a");
-if (parseAssertElemProp === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    const parseAssertElemPropDict = {};
-    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(2)}
-${equal(2)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemProp);`],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"a": 1})'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$("a");
-if (parseAssertElemProp === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    const parseAssertElemPropDict = {"a":"1"};
-    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(2)}
-${equal(2)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemProp);`],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"a": 1}, ALL)'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$$("a");
-if (parseAssertElemProp.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        const parseAssertElemPropDict = {"a":"1"};
-        for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(3)}
-${equal(3)}
-        }
-        if (nonMatchingProps.length !== 0) {
-            const props = nonMatchingProps.join(", ");
-            throw "The following errors happened (for selector \`a\`): [" + props + "]";
-        }
-    }, parseAssertElemProp[i]);
-}`],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-
-    // Check the handling of pseudo elements
-    x.assert(func('("a::after", {"a": 1})'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$("a");
-if (parseAssertElemProp === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    const parseAssertElemPropDict = {"a":"1"};
-    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(2)}
-${equal(2)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemProp);`],
-        'wait': false,
-        'warnings': ['Pseudo-elements (`::after`) don\'t have attributes so the check will be \
-performed on the element itself'],
-        'checkResult': true,
-    });
-    x.assert(func('("a::after", {"a": 1}, ALL)'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$$("a");
-if (parseAssertElemProp.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        const parseAssertElemPropDict = {"a":"1"};
-        for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(3)}
-${equal(3)}
-        }
-        if (nonMatchingProps.length !== 0) {
-            const props = nonMatchingProps.join(", ");
-            throw "The following errors happened (for selector \`a\`): [" + props + "]";
-        }
-    }, parseAssertElemProp[i]);
-}`],
-        'wait': false,
-        'warnings': ['Pseudo-elements (`::after`) don\'t have attributes so the check will be \
-performed on the element itself'],
-        'checkResult': true,
-    });
-    x.assert(func('("a:focus", {"a": 1})'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$("a:focus");
-if (parseAssertElemProp === null) { throw '"a:focus" not found'; }
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    const parseAssertElemPropDict = {"a":"1"};
-    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(2)}
-${equal(2)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for selector \`a:focus\`): [" + props + "]";
-    }
-}, parseAssertElemProp);`],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a:focus", {"a": 1}, ALL)'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$$("a:focus");
-if (parseAssertElemProp.length === 0) { throw '"a:focus" not found'; }
-for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        const parseAssertElemPropDict = {"a":"1"};
-        for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(3)}
-${equal(3)}
-        }
-        if (nonMatchingProps.length !== 0) {
-            const props = nonMatchingProps.join(", ");
-            throw "The following errors happened (for selector \`a:focus\`): [" + props + "]";
-        }
-    }, parseAssertElemProp[i]);
-}`],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a ::after", {"a": 1})'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$("a ::after");
-if (parseAssertElemProp === null) { throw '"a ::after" not found'; }
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    const parseAssertElemPropDict = {"a":"1"};
-    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(2)}
-${equal(2)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for selector \`a ::after\`): [" + props + "]";
-    }
-}, parseAssertElemProp);`],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a ::after", {"a": 1}, ALL)'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$$("a ::after");
-if (parseAssertElemProp.length === 0) { throw '"a ::after" not found'; }
-for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        const parseAssertElemPropDict = {"a":"1"};
-        for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(3)}
-${equal(3)}
-        }
-        if (nonMatchingProps.length !== 0) {
-            const props = nonMatchingProps.join(", ");
-            throw "The following errors happened (for selector \`a ::after\`): [" + props + "]";
-        }
-    }, parseAssertElemProp[i]);
-}`],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-
-    // XPath
-    x.assert(func('("//a", {})'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$x("//a");
-if (parseAssertElemProp.length === 0) { throw 'XPath "//a" not found'; }
-parseAssertElemProp = parseAssertElemProp[0];
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    const parseAssertElemPropDict = {};
-    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(2)}
-${equal(2)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
-    }
-}, parseAssertElemProp);`],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"a": 1})'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$x("//a");
-if (parseAssertElemProp.length === 0) { throw 'XPath "//a" not found'; }
-parseAssertElemProp = parseAssertElemProp[0];
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    const parseAssertElemPropDict = {"a":"1"};
-    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(2)}
-${equal(2)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
-    }
-}, parseAssertElemProp);`],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"a": 1}, ALL)'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$x("//a");
-if (parseAssertElemProp.length === 0) { throw 'XPath "//a" not found'; }
-for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        const parseAssertElemPropDict = {"a":"1"};
-        for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(3)}
-${equal(3)}
-        }
-        if (nonMatchingProps.length !== 0) {
-            const props = nonMatchingProps.join(", ");
-            throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
-        }
-    }, parseAssertElemProp[i]);
-}`],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
+    func('{"a": 1}', 'basic-1');
+    func('{"a": "1"}', 'basic-2');
+    func('{"a": "1", "b": "2px"}', 'basic-3');
 
     // Multiline
-    x.assert(func('("a", \n{"b"\n:\n []})'), {
-        'error': 'only string and number types are allowed as value, found `[]` (an array)',
-    });
-    x.assert(func('("//a"\n, \n{"a": \n1},\n ALL)'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$x("//a");
-if (parseAssertElemProp.length === 0) { throw 'XPath "//a" not found'; }
-for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        const parseAssertElemPropDict = {"a":"1"};
-        for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(3)}
-${equal(3)}
-        }
-        if (nonMatchingProps.length !== 0) {
-            const props = nonMatchingProps.join(", ");
-            throw "The following errors happened (for XPath \`//a\`): [" + props + "]";
-        }
-    }, parseAssertElemProp[i]);
-}`],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-
-    // Extended checks.
-    x.assert(func('("a", {"a": 1}, STARTS_WITH)'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$("a");
-if (parseAssertElemProp === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    const parseAssertElemPropDict = {"a":"1"};
-    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(2)}
-${startsWith(2)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemProp);`],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"a": 1}, [STARTS_WITH, STARTS_WITH])'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$("a");
-if (parseAssertElemProp === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    const parseAssertElemPropDict = {"a":"1"};
-    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(2)}
-${startsWith(2)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemProp);`],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"a": 1}, [STARTS_WITH, ENDS_WITH])'), {
-        'instructions': [`\
-let parseAssertElemProp = await page.$("a");
-if (parseAssertElemProp === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    const parseAssertElemPropDict = {"a":"1"};
-    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(\
-parseAssertElemPropDict)) {
-${exists(2)}
-${startsWith(2)}
-${endsWith(2)}
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
-        throw "The following errors happened (for selector \`a\`): [" + props + "]";
-    }
-}, parseAssertElemProp);`],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
+    func('{"a"\n: \n"1"}', 'multiline-1');
 }
 
 function checkAssertProperty(x, func) {
-    checkAssertPropertyInner(
-        x,
-        func,
-        indent => indentString(`\
-if (e[parseAssertElemPropKey] === undefined) {
-    nonMatchingProps.push('Unknown property \`' + parseAssertElemPropKey + '\`');
-    continue;
-}`, indent),
-        indent => indentString(`\
-if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {
-    nonMatchingProps.push('Expected \`' + parseAssertElemPropValue + '\` for property \`' \
-+ parseAssertElemPropKey + '\`, found \`' + e[parseAssertElemPropKey] + '\`');
-}`, indent),
-        indent => indentString(`\
-if (!String(e[parseAssertElemPropKey]).startsWith(parseAssertElemPropValue)) {
-    nonMatchingProps.push('Property \`' + parseAssertElemPropKey + '\` (\`' + \
-e[parseAssertElemPropKey] + '\`) does not start with \`' + parseAssertElemPropValue + '\`');
-}`, indent),
-        indent => indentString(`\
-if (!String(e[parseAssertElemPropKey]).endsWith(parseAssertElemPropValue)) {
-    nonMatchingProps.push('Property \`' + parseAssertElemPropKey + '\` (\`' + \
-e[parseAssertElemPropKey] + '\`) does not end with \`' + parseAssertElemPropValue + '\`');
-}`, indent),
-    );
-}
+    func('("a", "b", )', 'err-1');
+    func('("a", "b")', 'err-2');
+    func('("a", "b" "c")', 'err-3');
+    func('("a", "b" "c", ALL)', 'err-4');
+    func('("a", "b", "c")', 'err-5');
+    func('("a::after", {"a": 1}, all)', 'err-6');
+    func('("a::after", {"a": 1}, ALLO)', 'err-7');
+    func('("a", {"b": "c", "b": "d"})', 'err-8');
+    func('("a", {"b": []})', 'err-9');
+    func('("a", {"b": gateau})', 'err-10');
 
-function checkAssertPropertyFalse(x, func) {
-    checkAssertPropertyInner(
-        x,
-        func,
-        indent => indentString(`\
-if (e[parseAssertElemPropKey] === undefined) {
-    continue;
-}`, indent),
-        indent => indentString(`\
-if (String(e[parseAssertElemPropKey]) == parseAssertElemPropValue) {
-    nonMatchingProps.push("assert didn't fail for property \`" + parseAssertElemPropKey + '\`');
-}`, indent),
-        indent => indentString(`\
-if (String(e[parseAssertElemPropKey]).startsWith(parseAssertElemPropValue)) {
-    nonMatchingProps.push("assert didn't fail for property \`" + parseAssertElemPropKey + '\` (for \
-STARTS_WITH check)');
-}`, indent),
-        indent => indentString(`\
-if (String(e[parseAssertElemPropKey]).endsWith(parseAssertElemPropValue)) {
-    nonMatchingProps.push("assert didn't fail for property \`" + parseAssertElemPropKey + '\` (for \
-ENDS_WITH check)');
-}`, indent),
-    );
-}
-
-function checkAssertPositionInner(x, func, cond) {
-    x.assert(func('("a", "b", )'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
-    });
-    x.assert(func('("a", "b")'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
-    });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('("a", "b" "c", ALL)'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('("a", "b", "c")'), {
-        'error': 'expected JSON dictionary as second argument, found `"b"`',
-    });
-    x.assert(func('("a::after", {"a": 1}, all)'), {
-        'error': 'expected identifier `ALL` as third argument or nothing, found `all`',
-    });
-    x.assert(func('("a::after", {"a": 1}, ALLO)'), {
-        'error': 'expected identifier `ALL` as third argument or nothing, found `ALLO`',
-    });
-    x.assert(func('("a", {"b": "c", "b": "d"})'), {
-        'error': 'only number type is allowed as value, found `"c"` (a string)',
-    });
-    x.assert(func('("a", {"b": ""})'), {
-        'error': 'only number type is allowed as value, found `""` (a string)',
-    });
-    x.assert(func('("a", {"z": 12})'), {
-        'error': 'Only accepted keys are "x" and "y", found `"z"` (in `{"z": 12}`)',
-    });
-
-    x.assert(func('("a", {})'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$("a");
-if (parseAssertPosition === null) { throw '"a" not found'; }
-await page.evaluate(elem => {
-    const errors = [];
-    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-        let v = e.getBoundingClientRect()[field];
-        let roundedV = Math.round(v);
-${indentString(cond, 2)}
-    }
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertPosition);`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"x": 1})'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$("a");
-if (parseAssertPosition === null) { throw '"a" not found'; }
-await page.evaluate(elem => {
-    const errors = [];
-    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-        let v = e.getBoundingClientRect()[field];
-        let roundedV = Math.round(v);
-${indentString(cond, 2)}
-    }
-    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertPosition);`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"x": 1}, ALL)'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$$("a");
-if (parseAssertPosition.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
-    await page.evaluate(elem => {
-        const errors = [];
-        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-            let v = e.getBoundingClientRect()[field];
-            let roundedV = Math.round(v);
-${indentString(cond, 3)}
-        }
-        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertPosition[i]);
-}`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"y": 1})'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$("a");
-if (parseAssertPosition === null) { throw '"a" not found'; }
-await page.evaluate(elem => {
-    const errors = [];
-    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-        let v = e.getBoundingClientRect()[field];
-        let roundedV = Math.round(v);
-${indentString(cond, 2)}
-    }
-    checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 1, errors);
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertPosition);`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("a", {})', 'basic-1');
+    func('("a", {"a": 1})', 'basic-2');
+    func('("a", {"a": 1}, ALL)', 'basic-3');
 
     // Check the handling of pseudo elements
-    x.assert(func('("a::after", {"x": 1})'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$("a");
-if (parseAssertPosition === null) { throw '"a" not found'; }
-await page.evaluate(elem => {
-    const errors = [];
-    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-        let v = e.getBoundingClientRect()[field];
-        let pseudoStyle = window.getComputedStyle(e, "::after");
-        let style = window.getComputedStyle(e);
-        v += browserUiTestHelpers.extractFloatOrZero(pseudoStyle[field]) - \
-browserUiTestHelpers.extractFloatOrZero(style[styleField]);
-        let roundedV = Math.round(v);
-${indentString(cond, 2)}
-    }
-    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertPosition);`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a::after", {"y": 1})'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$("a");
-if (parseAssertPosition === null) { throw '"a" not found'; }
-await page.evaluate(elem => {
-    const errors = [];
-    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-        let v = e.getBoundingClientRect()[field];
-        let pseudoStyle = window.getComputedStyle(e, "::after");
-        let style = window.getComputedStyle(e);
-        v += browserUiTestHelpers.extractFloatOrZero(pseudoStyle[field]) - \
-browserUiTestHelpers.extractFloatOrZero(style[styleField]);
-        let roundedV = Math.round(v);
-${indentString(cond, 2)}
-    }
-    checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 1, errors);
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertPosition);`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a:focus", {"x": 1})'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$("a:focus");
-if (parseAssertPosition === null) { throw '"a:focus" not found'; }
-await page.evaluate(elem => {
-    const errors = [];
-    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-        let v = e.getBoundingClientRect()[field];
-        let roundedV = Math.round(v);
-${indentString(cond, 2)}
-    }
-    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertPosition);`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a:focus", {"x": 1}, ALL)'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$$("a:focus");
-if (parseAssertPosition.length === 0) { throw '"a:focus" not found'; }
-for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
-    await page.evaluate(elem => {
-        const errors = [];
-        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-            let v = e.getBoundingClientRect()[field];
-            let roundedV = Math.round(v);
-${indentString(cond, 3)}
-        }
-        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertPosition[i]);
-}`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a ::after", {"x": 1})'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$("a ::after");
-if (parseAssertPosition === null) { throw '"a ::after" not found'; }
-await page.evaluate(elem => {
-    const errors = [];
-    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-        let v = e.getBoundingClientRect()[field];
-        let roundedV = Math.round(v);
-${indentString(cond, 2)}
-    }
-    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertPosition);`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a ::after", {"x": 1}, ALL)'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$$("a ::after");
-if (parseAssertPosition.length === 0) { throw '"a ::after" not found'; }
-for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
-    await page.evaluate(elem => {
-        const errors = [];
-        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-            let v = e.getBoundingClientRect()[field];
-            let roundedV = Math.round(v);
-${indentString(cond, 3)}
-        }
-        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertPosition[i]);
-}`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
-    // With decimal.
-    x.assert(func('("a ::after", {"x": 1.14}, ALL)'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$$("a ::after");
-if (parseAssertPosition.length === 0) { throw '"a ::after" not found'; }
-for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
-    await page.evaluate(elem => {
-        const errors = [];
-        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-            let v = e.getBoundingClientRect()[field];
-            let roundedV = Math.round(v);
-${indentString(cond, 3)}
-        }
-        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1.14, errors);
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertPosition[i]);
-}`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("a::after", {"a": 1})', 'pseudo-1');
+    func('("a::after", {"a": 1}, ALL)', 'pseudo-2');
+    func('("a:focus", {"a": 1})', 'pseudo-3');
+    func('("a:focus", {"a": 1}, ALL)', 'pseudo-4');
+    func('("a ::after", {"a": 1})', 'pseudo-5');
+    func('("a ::after", {"a": 1}, ALL)', 'pseudo-6');
 
     // XPath
-    x.assert(func('("//a", {})'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$x("//a");
-if (parseAssertPosition.length === 0) { throw 'XPath "//a" not found'; }
-parseAssertPosition = parseAssertPosition[0];
-await page.evaluate(elem => {
-    const errors = [];
-    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-        let v = e.getBoundingClientRect()[field];
-        let roundedV = Math.round(v);
-${indentString(cond, 2)}
-    }
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertPosition);`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"x": 1})'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$x("//a");
-if (parseAssertPosition.length === 0) { throw 'XPath "//a" not found'; }
-parseAssertPosition = parseAssertPosition[0];
-await page.evaluate(elem => {
-    const errors = [];
-    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-        let v = e.getBoundingClientRect()[field];
-        let roundedV = Math.round(v);
-${indentString(cond, 2)}
-    }
-    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertPosition);`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"x": 1}, ALL)'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$x("//a");
-if (parseAssertPosition.length === 0) { throw 'XPath "//a" not found'; }
-for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
-    await page.evaluate(elem => {
-        const errors = [];
-        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-            let v = e.getBoundingClientRect()[field];
-            let roundedV = Math.round(v);
-${indentString(cond, 3)}
-        }
-        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertPosition[i]);
-}`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"x": 1, "y": 2})'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$x("//a");
-if (parseAssertPosition.length === 0) { throw 'XPath "//a" not found'; }
-parseAssertPosition = parseAssertPosition[0];
-await page.evaluate(elem => {
-    const errors = [];
-    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-        let v = e.getBoundingClientRect()[field];
-        let roundedV = Math.round(v);
-${indentString(cond, 2)}
-    }
-    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
-    checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 2, errors);
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertPosition);`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"x": 1, "y": 2}, ALL)'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$x("//a");
-if (parseAssertPosition.length === 0) { throw 'XPath "//a" not found'; }
-for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
-    await page.evaluate(elem => {
-        const errors = [];
-        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-            let v = e.getBoundingClientRect()[field];
-            let roundedV = Math.round(v);
-${indentString(cond, 3)}
-        }
-        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
-        checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 2, errors);
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertPosition[i]);
-}`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("//a", {})', 'xpath-1');
+    func('("//a", {"a": 1})', 'xpath-2');
+    func('("//a", {"a": 1}, ALL)', 'xpath-3');
 
     // Multiline
-    x.assert(func('("a", {"x": \n1\n, "x": 2})'), {'error': 'JSON dict key `x` is duplicated'});
-    x.assert(func('("//a"\n, \n{"x": \n1, \n"y": \n2}\n, \nALL)'), {
-        'instructions': [`\
-let parseAssertPosition = await page.$x("//a");
-if (parseAssertPosition.length === 0) { throw 'XPath "//a" not found'; }
-for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
-    await page.evaluate(elem => {
-        const errors = [];
-        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-            let v = e.getBoundingClientRect()[field];
-            let roundedV = Math.round(v);
-${indentString(cond, 3)}
-        }
-        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
-        checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 2, errors);
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertPosition[i]);
-}`,
-        ],
-        'warnings': [],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("a", \n{"b"\n:\n []})', 'multiline-1');
+    func('("//a"\n, \n{"a": \n1},\n ALL)', 'multiline-2');
+
+    // Extended checks.
+    func('("a", {"a": 1}, STARTS_WITH)', 'extra-1');
+    func('("a", {"a": 1}, [STARTS_WITH, STARTS_WITH])', 'extra-2');
+    func('("a", {"a": 1}, [STARTS_WITH, ENDS_WITH])', 'extra-3');
 }
 
 function checkAssertPosition(x, func) {
-    checkAssertPositionInner(
-        x,
-        func,
-        `\
-if (v !== value && roundedV !== Math.round(value)) {
-    errors.push("different " + kind + " values: " + v + " (or " + roundedV + ") != " + value);
-}`);
-}
+    func('("a", "b", )', 'err-1');
+    func('("a", "b")', 'err-2');
+    func('("a", "b" "c")', 'err-3');
+    func('("a", "b" "c", ALL)', 'err-4');
+    func('("a", "b", "c")', 'err-5');
+    func('("a::after", {"a": 1}, all)', 'err-6');
+    func('("a::after", {"a": 1}, ALLO)', 'err-7');
+    func('("a", {"b": "c", "b": "d"})', 'err-8');
+    func('("a", {"b": ""})', 'err-9');
+    func('("a", {"z": 12})', 'err-10');
 
-function checkAssertPositionFalse(x, func) {
-    checkAssertPositionInner(
-        x,
-        func,
-        `\
-if (v === value || roundedV === Math.round(value)) {
-    errors.push("same " + kind + " values (whereas it shouldn't): " + v + " (or " + roundedV + ") \
-!= " + value);
-}`);
-}
+    func('("a", {})', 'basic-1');
+    func('("a", {"x": 1})', 'basic-2');
+    func('("a", {"x": 1}, ALL)', 'basic-3');
+    func('("a", {"y": 1})', 'basic-4');
 
-function checkAssertTextInner(x, func, compare, contains, startsWith, endsWith) {
-    x.assert(func('("a", )'), {
-        'error': 'invalid number of values in the tuple: expected 2 or 3, found 1',
-    });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('("a", 2)'), {'error': 'expected second argument to be a string, found `2`'});
-    x.assert(func('("a")'), {
-        'error': 'invalid number of values in the tuple: expected 2 or 3, found 1',
-    });
-    x.assert(func('("a", "b", ALLO)'), {
-        'error': 'unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
-            '`STARTS_WITH`, `ENDS_WITH`]',
-    });
-    x.assert(func('("a", "b", [ALLO])'), {
-        'error': 'unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, ' +
-            '`STARTS_WITH`, `ENDS_WITH`]',
-    });
-    x.assert(func('("a", "b", "c")'), {
-        'error': 'expected an identifier or an array of identifiers (among `ALL`, `CONTAINS`, ' +
-            '`STARTS_WITH`, `ENDS_WITH`) as third argument or nothing, found `c` (a string)',
-    });
-    x.assert(func('("a", "b", ["c"])'), {
-        'error': 'expected an identifier or an array of identifiers as third argument (among `ALL' +
-            '`, `CONTAINS`, `STARTS_WITH`, `ENDS_WITH`), found an array of `string` (in `["c"]`)',
-    });
-
-    // Checking pseudo element.
-    x.assert(func('("a::after", "\'b")'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$("a");
-if (parseAssertElemStr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const errors = [];
-    const value = "\\'b";
-${compare(1)}
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertElemStr);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-        'warnings': ['Pseudo-elements (`::after`) don\'t have text so the check will be performed' +
-            ' on the element itself'],
-    });
-
-    // Checking that having a pending comma is valid.
-    x.assert(func('("a", "\'b",)'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$("a");
-if (parseAssertElemStr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const errors = [];
-    const value = "\\'b";
-${compare(1)}
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertElemStr);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "\'b")'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$("a");
-if (parseAssertElemStr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const errors = [];
-    const value = "\\'b";
-${compare(1)}
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertElemStr);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "\'b", ALL)'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$$("a");
-if (parseAssertElemStr.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const errors = [];
-        const value = "\\'b";
-${compare(2)}
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertElemStr[i]);
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    // Ensure that wrapping `ALL` into an array is also accepted.
-    x.assert(func('("a", "\'b", [ALL])'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$$("a");
-if (parseAssertElemStr.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const errors = [];
-        const value = "\\'b";
-${compare(2)}
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertElemStr[i]);
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b")'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$("a");
-if (parseAssertElemStr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const errors = [];
-    const value = "b";
-${compare(1)}
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertElemStr);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", ALL)'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$$("a");
-if (parseAssertElemStr.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const errors = [];
-        const value = "b";
-${compare(2)}
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertElemStr[i]);
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", CONTAINS)'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$("a");
-if (parseAssertElemStr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const errors = [];
-    const value = "b";
-${contains(1)}
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertElemStr);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", STARTS_WITH)'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$("a");
-if (parseAssertElemStr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const errors = [];
-    const value = "b";
-${startsWith(1)}
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertElemStr);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", ENDS_WITH)'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$("a");
-if (parseAssertElemStr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const errors = [];
-    const value = "b";
-${endsWith(1)}
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertElemStr);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", [CONTAINS, ENDS_WITH])'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$("a");
-if (parseAssertElemStr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const errors = [];
-    const value = "b";
-${contains(1)}
-${endsWith(1)}
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertElemStr);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    // If an identifier is present more than once, we check that there is a warning about it.
-    x.assert(func('("a", "b", [CONTAINS, ENDS_WITH, CONTAINS])'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$("a");
-if (parseAssertElemStr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const errors = [];
-    const value = "b";
-${contains(1)}
-${endsWith(1)}
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertElemStr);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-        'warnings': ['`CONTAINS` is present more than once in the third argument array'],
-    });
-    // Checking that the warning is not duplicated.
-    x.assert(func('("a", "b", [CONTAINS, ENDS_WITH, CONTAINS, CONTAINS])'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$("a");
-if (parseAssertElemStr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const errors = [];
-    const value = "b";
-${contains(1)}
-${endsWith(1)}
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertElemStr);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-        'warnings': ['`CONTAINS` is present more than once in the third argument array'],
-    });
-    x.assert(func('("a", "b", [ALL, CONTAINS])'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$$("a");
-if (parseAssertElemStr.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const errors = [];
-        const value = "b";
-${contains(2)}
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertElemStr[i]);
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", [ALL, CONTAINS, STARTS_WITH])'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$$("a");
-if (parseAssertElemStr.length === 0) { throw '"a" not found'; }
-for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const errors = [];
-        const value = "b";
-${contains(2)}
-${startsWith(2)}
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertElemStr[i]);
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    // Check the handling of pseudo elements
+    func('("a::after", {"x": 1})', 'pseudo-1');
+    func('("a::after", {"y": 1})', 'pseudo-2');
+    func('("a:focus", {"x": 1})', 'pseudo-3');
+    func('("a:focus", {"x": 1}, ALL)', 'pseudo-4');
+    func('("a ::after", {"x": 1})', 'pseudo-5');
+    func('("a ::after", {"x": 1}, ALL)', 'pseudo-6');
+    // With decimal.
+    func('("a ::after", {"x": 1.14}, ALL)', 'pseudo-7');
 
     // XPath
-    x.assert(func('("//a", "b")'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$x("//a");
-if (parseAssertElemStr.length === 0) { throw 'XPath "//a" not found'; }
-parseAssertElemStr = parseAssertElemStr[0];
-await page.evaluate(e => {
-    const errors = [];
-    const value = "b";
-${compare(1)}
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertElemStr);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", "b", ALL)'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$x("//a");
-if (parseAssertElemStr.length === 0) { throw 'XPath "//a" not found'; }
-for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const errors = [];
-        const value = "b";
-${compare(2)}
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertElemStr[i]);
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", "b", [ALL])'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$x("//a");
-if (parseAssertElemStr.length === 0) { throw 'XPath "//a" not found'; }
-for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const errors = [];
-        const value = "b";
-${compare(2)}
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertElemStr[i]);
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-
-    // Check correct escape of `'`.
-    x.assert(func('("//a[text()=\'l\']", "b", [ALL])'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$x("//a[text()=\\'l\\']");
-if (parseAssertElemStr.length === 0) { throw 'XPath "//a[text()=\\'l\\']" not found'; }
-for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const errors = [];
-        const value = "b";
-${compare(2)}
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertElemStr[i]);
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("//a", {})', 'xpath-1');
+    func('("//a", {"x": 1})', 'xpath-2');
+    func('("//a", {"x": 1}, ALL)', 'xpath-3');
+    func('("//a", {"x": 1, "y": 2})', 'xpath-4');
+    func('("//a", {"x": 1, "y": 2}, ALL)', 'xpath-5');
 
     // Multiline
-    x.assert(func('("a", \n2\n)'), {'error': 'expected second argument to be a string, found `2`'});
-    x.assert(func('("//a"\n, \n"b",\n ALL)'), {
-        'instructions': [`\
-let parseAssertElemStr = await page.$x("//a");
-if (parseAssertElemStr.length === 0) { throw 'XPath "//a" not found'; }
-for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const errors = [];
-        const value = "b";
-${compare(2)}
-        if (errors.length !== 0) {
-            const errs = errors.join(", ");
-            throw "The following errors happened: [" + errs + "]";
-        }
-    }, parseAssertElemStr[i]);
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("a", {"x": \n1\n, "x": 2})', 'multiline-1');
+    func('("//a"\n, \n{"x": \n1, \n"y": \n2}\n, \nALL)', 'multiline-2');
 }
 
 function checkAssertText(x, func) {
-    checkAssertTextInner(
-        x,
-        func,
-        indent => indentString(`\
-if (!browserUiTestHelpers.compareElemText(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` isn't equal to \`" + \
-value + "\`");
-}`, indent),
-        indent => indentString(`\
-if (!browserUiTestHelpers.elemTextContains(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` doesn't contain \`" + \
-value + "\` (for CONTAINS check)");
-}`, indent),
-        indent => indentString(`\
-if (!browserUiTestHelpers.elemTextStartsWith(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` doesn't start with \`" + \
-value + "\` (for STARTS_WITH check)");
-}`, indent),
-        indent => indentString(`\
-if (!browserUiTestHelpers.elemTextEndsWith(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` doesn't end with \`" + \
-value + "\` (for ENDS_WITH check)");
-}`, indent),
-    );
-}
+    func('("a", )', 'err-1');
+    func('("a", "b" "c")', 'err-2');
+    func('("a", 2)', 'err-3');
+    func('("a")', 'err-4');
+    func('("a", "b", ALLO)', 'err-5');
+    func('("a", "b", [ALLO])', 'err-6');
+    func('("a", "b", "c")', 'err-7');
+    func('("a", "b", ["c"])', 'err-8');
 
-function checkAssertTextFalse(x, func) {
-    checkAssertTextInner(
-        x,
-        func,
-        indent => indentString(`\
-if (browserUiTestHelpers.compareElemText(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` is equal to \`" + \
-value + "\`");
-}`, indent),
-        indent => indentString(`\
-if (browserUiTestHelpers.elemTextContains(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` contains \`" + \
-value + "\` (for CONTAINS check)");
-}`, indent),
-        indent => indentString(`\
-if (browserUiTestHelpers.elemTextStartsWith(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` starts with \`" + \
-value + "\` (for STARTS_WITH check)");
-}`, indent),
-        indent => indentString(`\
-if (browserUiTestHelpers.elemTextEndsWith(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` ends with \`" + \
-value + "\` (for ENDS_WITH check)");
-}`, indent),
-    );
+    // Checking pseudo element.
+    func('("a::after", "\'b")', 'pseudo-1');
+
+    // Checking that having a pending comma is valid.
+    func('("a", "\'b",)', 'basic-1');
+    func('("a", "\'b")', 'basic-2');
+    func('("a", "\'b", ALL)', 'basic-3');
+    // Ensure that wrapping `ALL` into an array is also accepted.
+    func('("a", "\'b", [ALL])', 'basic-4');
+    func('("a", "b")', 'basic-5');
+    func('("a", "b", ALL)', 'basic-6');
+    func('("a", "b", CONTAINS)', 'basic-7');
+    func('("a", "b", STARTS_WITH)', 'basic-8');
+    func('("a", "b", ENDS_WITH)', 'basic-9');
+    func('("a", "b", [CONTAINS, ENDS_WITH])', 'basic-10');
+    // If an identifier is present more than once, we check that there is a warning about it.
+    func('("a", "b", [CONTAINS, ENDS_WITH, CONTAINS])', 'basic-11');
+    // Checking that the warning is not duplicated.
+    func('("a", "b", [CONTAINS, ENDS_WITH, CONTAINS, CONTAINS])', 'basic-12');
+    func('("a", "b", [ALL, CONTAINS])', 'basic-13');
+    func('("a", "b", [ALL, CONTAINS, STARTS_WITH])', 'basic-14');
+
+    // XPath
+    func('("//a", "b")', 'xpath-1');
+    func('("//a", "b", ALL)', 'xpath-2');
+    func('("//a", "b", [ALL])', 'xpath-3');
+
+    // Check correct escape of `'`.
+    func('("//a[text()=\'l\']", "b", [ALL])', 'xpath-4');
+
+    // Multiline
+    func('("a", \n2\n)', 'multiline-1');
+    func('("//a"\n, \n"b",\n ALL)', 'multiline-2');
 }
 
 function checkAttribute(x, func) {
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('("a", "b"'), {'error': 'expected `)` or `,` after `"b"`'});
-    x.assert(func('("a")'),
-        {'error': 'expected `("CSS selector" or "XPath", "attribute name", "attribute value")` or' +
-        ' `("CSS selector" or "XPath", [JSON object])`'});
-    x.assert(func('("a", )'), {
-        'error': 'expected `("CSS selector" or "XPath", "attribute name", "attribute value")` or ' +
-            '`("CSS selector" or "XPath", [JSON object])`',
-    });
-    x.assert(func('("a", "b", )'), {
-        'error': 'expected json as second argument (since there are only two arguments), found a ' +
-            'string',
-    });
-    x.assert(func('("a", )'), {
-        'error': 'expected `("CSS selector" or "XPath", "attribute name", "attribute value")` or ' +
-            '`("CSS selector" or "XPath", [JSON object])`',
-    });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('("a", "b")'), {
-        'error': 'expected json as second argument (since there are only two arguments), found ' +
-            'a string',
-    });
-    x.assert(func('("a", "b", "c", ALL)'), {
-        'error': 'expected `("CSS selector" or "XPath", "attribute name", "attribute value")` or ' +
-            '`("CSS selector" or "XPath", [JSON object])`',
-    });
-    x.assert(func('("x", {"a": {"a": "x"}})'), {
-        'instructions': [],
-        'wait': false,
-        'warnings': ['Ignoring recursive entry with key `"a"`'],
-    });
+    func('"', 'err-1');
+    func('("a", "b"', 'err-2');
+    func('("a")', 'err-3');
+    func('("a", )', 'err-4');
+    func('("a", "b", )', 'err-5');
+    func('("a", )', 'err-6');
+    func('("a", "b" "c")', 'err-7');
+    func('("a", "b")', 'err-8');
+    func('("a", "b", "c", ALL)', 'err-9');
+    func('("x", {"a": {"a": "x"}})', 'err-10');
 
-    x.assert(func('("a", "b", "c")'), {
-        'instructions': [
-            'let parseAttributeElem = await page.$("a");\n' +
-            'if (parseAttributeElem === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'e.setAttribute("b","c");\n' +
-            '}, parseAttributeElem);',
-        ],
-    });
-    x.assert(func('("a", "\\"b", "c")'), {
-        'instructions': [
-            'let parseAttributeElem = await page.$("a");\n' +
-            'if (parseAttributeElem === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'e.setAttribute("\\"b","c");\n' +
-            '}, parseAttributeElem);',
-        ],
-    });
-    x.assert(func('("a", {"b": "c"})'), {
-        'instructions': [
-            'let parseAttributeElemJson = await page.$("a");\n' +
-            'if (parseAttributeElemJson === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'e.setAttribute("b","c");\n' +
-            '}, parseAttributeElemJson);',
-        ],
-    });
-    x.assert(func('("a", {"b": "c", "d": "e"})'), {
-        'instructions': [
-            'let parseAttributeElemJson = await page.$("a");\n' +
-            'if (parseAttributeElemJson === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'e.setAttribute("b","c");\n' +
-            '}, parseAttributeElemJson);\n' +
-            'await page.evaluate(e => {\n' +
-            'e.setAttribute("d","e");\n' +
-            '}, parseAttributeElemJson);',
-        ],
-    });
+    func('("a", "b", "c")', 'basic-1');
+    func('("a", "\\"b", "c")', 'basic-2');
+    func('("a", {"b": "c"})', 'basic-3');
+    func('("a", {"b": "c", "d": "e"})', 'basic-4');
 
     // XPath
-    x.assert(func('("/a", "b", "c")'), { 'error': 'XPath must start with `//`' });
-    x.assert(func('("//a", "b", "c")'), {
-        'instructions': [
-            'let parseAttributeElem = await page.$x("//a");\n' +
-            'if (parseAttributeElem.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseAttributeElem = parseAttributeElem[0];\n' +
-            'await page.evaluate(e => {\n' +
-            'e.setAttribute("b","c");\n' +
-            '}, parseAttributeElem);',
-        ],
-    });
-    x.assert(func('("//a", {"b": "c"})'), {
-        'instructions': [
-            'let parseAttributeElemJson = await page.$x("//a");\n' +
-            'if (parseAttributeElemJson.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseAttributeElemJson = parseAttributeElemJson[0];\n' +
-            'await page.evaluate(e => {\n' +
-            'e.setAttribute("b","c");\n' +
-            '}, parseAttributeElemJson);',
-        ],
-    });
+    func('("/a", "b", "c")', 'xpath-1');
+    func('("//a", "b", "c")', 'xpath-2');
+    func('("//a", {"b": "c"})', 'xpath-3');
 
     // Multiline
-    x.assert(func('("a"\n,\n "b\n"\n)'), {
-        'error': 'expected json as second argument (since there are only two arguments), found ' +
-            'a string',
-    });
-    x.assert(func('("//a"\n,\n {"b":\n "c"})'), {
-        'instructions': [
-            'let parseAttributeElemJson = await page.$x("//a");\n' +
-            'if (parseAttributeElemJson.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseAttributeElemJson = parseAttributeElemJson[0];\n' +
-            'await page.evaluate(e => {\n' +
-            'e.setAttribute("b","c");\n' +
-            '}, parseAttributeElemJson);',
-        ],
-    });
+    func('("a"\n,\n "b\n"\n)', 'multiline-1');
+    func('("//a"\n,\n {"b":\n "c"})', 'multiline-2');
 
     // Multiline string.
-    x.assert(func('("//a", {"b": "c\n"})'), {
-        'instructions': [
-            'let parseAttributeElemJson = await page.$x("//a");\n' +
-            'if (parseAttributeElemJson.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseAttributeElemJson = parseAttributeElemJson[0];\n' +
-            'await page.evaluate(e => {\n' +
-            'e.setAttribute("b","c\\n");\n' +
-            '}, parseAttributeElemJson);',
-        ],
-    });
+    func('("//a", {"b": "c\n"})', 'multiline-3');
 }
 
 function checkClick(x, func) {
     // Check position
-    x.assert(func('hello'), {
-        'error': 'expected a position or a CSS selector or an XPath, found `hello`',
-    });
-    x.assert(func('()'), {'error': 'expected "([number], [number])", found `()`'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {
-        'error': 'expected "([number], [number])", found `(1)`',
-    });
-    x.assert(func('(1,)'), {
-        'error': 'expected "([number], [number])", found `(1,)`',
-    });
-    x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
-    x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
-    x.assert(func('(a,2)'), {
-        'error': 'expected "([number], [number])", found `(a,2)`',
-    });
-    x.assert(func('(-1.0,2)'), {'error': 'expected integer for X position, found float: `-1.0`'});
-    x.assert(func('(1.0,2)'), {'error': 'expected integer for X position, found float: `1.0`'});
-    x.assert(func('(2,-1.0)'), {'error': 'expected integer for Y position, found float: `-1.0`'});
-    x.assert(func('(2,1.0)'), {'error': 'expected integer for Y position, found float: `1.0`'});
-    x.assert(func('(1,2)'), {'instructions': ['await page.mouse.click(1, 2);']});
-    x.assert(func('(-1,2)'), {'instructions': ['await page.mouse.click(-1, 2);']});
-    x.assert(func('(-2,1)'), {'instructions': ['await page.mouse.click(-2, 1);']});
+    func('hello', 'err-1');
+    func('()', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1,)', 'err-5');
+    func('(1,,2)', 'err-6');
+    func('(,2)', 'err-7');
+    func('(a,2)', 'err-8');
+    func('(-1.0,2)', 'err-9');
+    func('(1.0,2)', 'err-10');
+    func('(2,-1.0)', 'err-11');
+    func('(2,1.0)', 'err-12');
+    func('(1,2)', 'err-13');
+    func('(-1,2)', 'err-14');
+    func('(-2,1)', 'err-15');
 
 
-    x.assert(func('(1,2,)'), {'instructions': ['await page.mouse.click(1, 2);']});
+    func('(1,2,)', 'pos-1');
 
     // Check css selector
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
-    x.assert(func('\'\''), {'error': 'CSS selector cannot be empty', 'isXPath': false});
-    x.assert(func('"a"'), {
-        'instructions': [
-            'let parseClickVar = await page.$("a");\n' +
-            'if (parseClickVar === null) { throw \'"a" not found\'; }\n' +
-            'await parseClickVar.click();',
-        ],
-    });
-    x.assert(func('"a::before"'), {
-        'instructions': [
-            'let parseClickVar = await page.$("a");\n' +
-            'if (parseClickVar === null) { throw \'"a" not found\'; }\n' +
-            'await parseClickVar.click();',
-        ],
-        'warnings': [
-            'Pseudo-elements (`::before`) can\'t be retrieved so `click` will be ' +
-                'performed on the element directly',
-        ],
-    });
-    x.assert(func('\'a\''), {
-        'instructions': [
-            'let parseClickVar = await page.$("a");\n' +
-            'if (parseClickVar === null) { throw \'"a" not found\'; }\n' +
-            'await parseClickVar.click();',
-        ],
-    });
-    x.assert(func('\'"a\''), {
-        'instructions': [
-            'let parseClickVar = await page.$("\\"a");\n' +
-            'if (parseClickVar === null) { throw \'"\\"a" not found\'; }\n' +
-            'await parseClickVar.click();',
-        ],
-    });
+    func('"', 'basic-1');
+    func('\'', 'basic-2');
+    func('\'\'', 'basic-3');
+    func('"a"', 'basic-4');
+    func('"a::before"', 'basic-5');
+    func('\'a\'', 'basic-6');
+    func('\'"a\'', 'basic-7');
     // On pseudo element.
-    x.assert(func('"a::after"'), {
-        'instructions': [
-            'let parseClickVar = await page.$("a");\n' +
-            'if (parseClickVar === null) { throw \'"a" not found\'; }\n' +
-            'await parseClickVar.click();',
-        ],
-        'warnings': [
-            'Pseudo-elements (`::after`) can\'t be retrieved so `click` will be performed' +
-                ' on the element directly',
-        ],
-    });
+    func('"a::after"', 'basic-8');
 
     // XPath
-    x.assert(func('"/a"'), {'error': 'XPath must start with `//`'});
-    x.assert(func('"//a"'), {
-        'instructions': [
-            'let parseClickVar = await page.$x("//a");\n' +
-            'if (parseClickVar.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseClickVar = parseClickVar[0];\n' +
-            'await parseClickVar.click();',
-        ],
-    });
+    func('"/a"', 'xpath-1');
+    func('"//a"', 'xpath-2');
 
     // Multiline
-    x.assert(func('(a\n,\n2)'), {
-        'error': 'expected "([number], [number])", found `(a\n,\n2)`',
-    });
-    x.assert(func('(\n-2\n,\n1)'), {'instructions': ['await page.mouse.click(-2, 1);']});
+    func('(a\n,\n2)', 'multiline-1');
+    func('(\n-2\n,\n1)', 'multiline-2');
 }
 
 function checkClickWithOffset(x, func) {
     // Check position
-    x.assert(func('hello'), {
-        'error': 'expected a tuple, found `hello`',
-    });
-    x.assert(func('()'), {'error': 'expected `(["CSS Selector"|"XPath"], [JSON])`, found `()`'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {
-        'error': 'expected `(["CSS Selector"|"XPath"], [JSON])`, found `(1)`',
-    });
-    x.assert(func('(1,)'), {
-        'error': 'expected `(["CSS Selector"|"XPath"], [JSON])`, found `(1,)`',
-    });
-    x.assert(func('("a",)'), {
-        'error': 'expected `(["CSS Selector"|"XPath"], [JSON])`, found `("a",)`',
-    });
-    x.assert(func('(1,2)'), {
-        'error': 'expected first argument of tuple to be a "CSS selector" or an "XPath", found `1`',
-    });
-    x.assert(func('("a",{"a":"b"})'), {
-        'error': 'only number type is allowed as value, found `"b"` (a string)',
-    });
-    x.assert(func('("a",{"a":{"a": "b"}})'), {
-        'error': 'only number type is allowed as value, found `{"a": "b"}` (a json)',
-    });
-    x.assert(func('("a",{"a":b})'), {
-        'error': 'only number type is allowed as value, found `b` (an ident)',
-    });
-    x.assert(func('("a",{"a":2})'), {
-        'error': 'Unexpected key `a`, allowed keys: [x, y]',
-    });
-    x.assert(func('("a", {"x": 1, "x": 2})'), {
-        'error': 'JSON dict key `x` is duplicated',
-    });
+    func('hello', 'err-1');
+    func('()', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1,)', 'err-5');
+    func('("a",)', 'err-6');
+    func('(1,2)', 'err-7');
+    func('("a",{"a":"b"})', 'err-8');
+    func('("a",{"a":{"a": "b"}})', 'err-9');
+    func('("a",{"a":b})', 'err-10');
+    func('("a",{"a":2})', 'err-11');
+    func('("a", {"x": 1, "x": 2})', 'err-12');
 
     // CSS selector
-    x.assert(func('("a", {"x": 1})'), {
-        'instructions': [`\
-let parseClickWithOffsetVar = await page.$("a");
-if (parseClickWithOffsetVar === null) { throw '"a" not found'; }
-await parseClickWithOffsetVar.click({
-    "offset": {"x":1},
-});`,
-        ],
-        'warnings': [],
-    });
-    x.assert(func('("a", {"y": 2})'), {
-        'instructions': [`\
-let parseClickWithOffsetVar = await page.$("a");
-if (parseClickWithOffsetVar === null) { throw '"a" not found'; }
-await parseClickWithOffsetVar.click({
-    "offset": {"y":2},
-});`,
-        ],
-        'warnings': [],
-    });
-    x.assert(func('("a", {})'), {
-        'instructions': [`\
-let parseClickWithOffsetVar = await page.$("a");
-if (parseClickWithOffsetVar === null) { throw '"a" not found'; }
-await parseClickWithOffsetVar.click({
-    "offset": {},
-});`,
-        ],
-        'warnings': [],
-    });
-    x.assert(func('("a", {"x": 1, "y": 2})'), {
-        'instructions': [`\
-let parseClickWithOffsetVar = await page.$("a");
-if (parseClickWithOffsetVar === null) { throw '"a" not found'; }
-await parseClickWithOffsetVar.click({
-    "offset": {"x":1,"y":2},
-});`,
-        ],
-        'warnings': [],
-    });
+    func('("a", {"x": 1})', 'basic-1');
+    func('("a", {"y": 2})', 'basic-2');
+    func('("a", {})', 'basic-3');
+    func('("a", {"x": 1, "y": 2})', 'basic-4');
 
-    x.assert(func('("a::before", {"x": 1})'), {
-        'instructions': [`\
-let parseClickWithOffsetVar = await page.$("a");
-if (parseClickWithOffsetVar === null) { throw '"a" not found'; }
-await parseClickWithOffsetVar.click({
-    "offset": {"x":1},
-});`,
-        ],
-        'warnings': [
-            'Pseudo-elements (`::before`) can\'t be retrieved so `click` will be performed on the' +
-                ' element directly',
-        ],
-    });
+    func('("a::before", {"x": 1})', 'pseudo-1');
 
     // XPath
-    x.assert(func('("/a", {"x": 1})'), {'error': 'XPath must start with `//`'});
-    x.assert(func('("//a", {"x": 1})'), {
-        'instructions': [`\
-let parseClickWithOffsetVar = await page.$x("//a");
-if (parseClickWithOffsetVar.length === 0) { throw 'XPath "//a" not found'; }
-parseClickWithOffsetVar = parseClickWithOffsetVar[0];
-await parseClickWithOffsetVar.click({
-    "offset": {"x":1},
-});`,
-        ],
-        'warnings': [],
-    });
+    func('("/a", {"x": 1})', 'xpath-1');
+    func('("//a", {"x": 1})', 'xpath-2');
 
     // Multiline
-    x.assert(func('(a\n,\n2)'), {
-        'error': 'expected first argument of tuple to be a "CSS selector" or an "XPath", found `a`',
-    });
-    x.assert(func('(\n"a"\n,\n{\n"x":\n1})'), {
-        'instructions': [`\
-let parseClickWithOffsetVar = await page.$("a");
-if (parseClickWithOffsetVar === null) { throw '"a" not found'; }
-await parseClickWithOffsetVar.click({
-    "offset": {"x":1},
-});`,
-        ],
-        'warnings': [],
-    });
-}
-
-function checkCompareElementsAttributeInner(x, func, before, after) {
-    x.assert(
-        func('("a", "b", ())'),
-        {'error': 'expected third argument to be an array of string, found a string'},
-    );
-    x.assert(
-        func('("a", "b", (1))'),
-        {'error': 'expected third argument to be an array of string, found a string'},
-    );
-    x.assert(
-        func('("a", "b", ("x", "yo"))'),
-        {'error': 'expected third argument to be an array of string, found a string'},
-    );
-    x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
-    x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
-    x.assert(func('()'), {'error': 'expected 3 or 4 elements in the tuple, found 0 element'});
-    x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
-    x.assert(func('("a")'), {'error': 'expected 3 or 4 elements in the tuple, found 1 element'});
-    x.assert(func('("a", 1)'),
-        {'error': 'expected 3 or 4 elements in the tuple, found 2 elements'},
-    );
-    x.assert(func('("a", "a", "b", "c")'), {
-        'error': 'expected third argument to be an array of string, found a string',
-    });
-    x.assert(func('("a", "b", 1)'), {
-        'error': 'expected third argument to be an array of string, found a string',
-    });
-    x.assert(func('("a", "b", ["a"], 1)'), {
-        'error': 'expected fourth argument to be a string of an operator (one of `<`, `<=`, `>`, ' +
-            '`>=`, `=`), found a number',
-    });
-    x.assert(func('("a", "b", ["a"], "a")'), {
-        'error': 'Unknown operator `a` in fourth argument. Expected one of [`<`, `<=`, `>`, ' +
-            '`>=`, `=`]',
-    });
-
-    x.assert(func('("a", "b", [])'), {
-        'instructions': [`\
-let parseCompareElementsAttr1 = await page.$("a");
-if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
-let parseCompareElementsAttr2 = await page.$("b");
-if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
-await page.evaluate((e1, e2) => {
-const attributes = [];
-for (const attr of attributes) {
-    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
-        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
-    }${after}
-}
-}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", [\'"data-whatever\'])'), {
-        'instructions': [`\
-let parseCompareElementsAttr1 = await page.$("a");
-if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
-let parseCompareElementsAttr2 = await page.$("b");
-if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
-await page.evaluate((e1, e2) => {
-const attributes = ["\\"data-whatever"];
-for (const attr of attributes) {
-    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
-        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
-    }${after}
-}
-}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    // Checking operators.
-    x.assert(func('("a", "b", [\'"data-whatever\'], "=")'), {
-        'instructions': [`\
-let parseCompareElementsAttr1 = await page.$("a");
-if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
-let parseCompareElementsAttr2 = await page.$("b");
-if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
-await page.evaluate((e1, e2) => {
-const attributes = ["\\"data-whatever"];
-for (const attr of attributes) {
-    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
-        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
-    }${after}
-}
-}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", [\'"data-whatever\'], ">")'), {
-        'instructions': [`\
-let parseCompareElementsAttr1 = await page.$("a");
-if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
-let parseCompareElementsAttr2 = await page.$("b");
-if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
-await page.evaluate((e1, e2) => {
-const attributes = ["\\"data-whatever"];
-for (const attr of attributes) {
-    let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
-    if (value1 === null) {
-        throw attr + " (" + e1.getAttribute(attr) + ") from \`a\` isn't a number so \
-comparison cannot be performed";
-    }
-    let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
-    if (value2 === null) {
-        throw attr + " (" + e2.getAttribute(attr) + ") from \`b\` isn't a number so \
-comparison cannot be performed";
-    }
-    ${before}if (value1 <= value2) {
-        throw attr + ": " + e1.getAttribute(attr) + " <= " + e2.getAttribute(attr);
-    }${after}
-}
-}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", [\'"data-whatever\'], ">=")'), {
-        'instructions': [`\
-let parseCompareElementsAttr1 = await page.$("a");
-if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
-let parseCompareElementsAttr2 = await page.$("b");
-if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
-await page.evaluate((e1, e2) => {
-const attributes = ["\\"data-whatever"];
-for (const attr of attributes) {
-    let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
-    if (value1 === null) {
-        throw attr + " (" + e1.getAttribute(attr) + ") from \`a\` isn't a number so \
-comparison cannot be performed";
-    }
-    let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
-    if (value2 === null) {
-        throw attr + " (" + e2.getAttribute(attr) + ") from \`b\` isn't a number so \
-comparison cannot be performed";
-    }
-    ${before}if (value1 < value2) {
-        throw attr + ": " + e1.getAttribute(attr) + " < " + e2.getAttribute(attr);
-    }${after}
-}
-}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", [\'"data-whatever\'], "<")'), {
-        'instructions': [`\
-let parseCompareElementsAttr1 = await page.$("a");
-if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
-let parseCompareElementsAttr2 = await page.$("b");
-if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
-await page.evaluate((e1, e2) => {
-const attributes = ["\\"data-whatever"];
-for (const attr of attributes) {
-    let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
-    if (value1 === null) {
-        throw attr + " (" + e1.getAttribute(attr) + ") from \`a\` isn't a number so \
-comparison cannot be performed";
-    }
-    let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
-    if (value2 === null) {
-        throw attr + " (" + e2.getAttribute(attr) + ") from \`b\` isn't a number so \
-comparison cannot be performed";
-    }
-    ${before}if (value1 >= value2) {
-        throw attr + ": " + e1.getAttribute(attr) + " >= " + e2.getAttribute(attr);
-    }${after}
-}
-}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", [\'"data-whatever\'], "<=")'), {
-        'instructions': [`\
-let parseCompareElementsAttr1 = await page.$("a");
-if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
-let parseCompareElementsAttr2 = await page.$("b");
-if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
-await page.evaluate((e1, e2) => {
-const attributes = ["\\"data-whatever"];
-for (const attr of attributes) {
-    let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
-    if (value1 === null) {
-        throw attr + " (" + e1.getAttribute(attr) + ") from \`a\` isn't a number so \
-comparison cannot be performed";
-    }
-    let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
-    if (value2 === null) {
-        throw attr + " (" + e2.getAttribute(attr) + ") from \`b\` isn't a number so \
-comparison cannot be performed";
-    }
-    ${before}if (value1 > value2) {
-        throw attr + ": " + e1.getAttribute(attr) + " > " + e2.getAttribute(attr);
-    }${after}
-}
-}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-
-    // XPath
-    x.assert(func('("/a", "b", [\'"data-whatever\'])'), {'error': 'XPath must start with `//`'});
-    x.assert(func('("//a", "b", [])'), {
-        'instructions': [`\
-let parseCompareElementsAttr1 = await page.$x("//a");
-if (parseCompareElementsAttr1.length === 0) { throw 'XPath "//a" not found'; }
-parseCompareElementsAttr1 = parseCompareElementsAttr1[0];
-let parseCompareElementsAttr2 = await page.$("b");
-if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
-await page.evaluate((e1, e2) => {
-const attributes = [];
-for (const attr of attributes) {
-    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
-        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
-    }${after}
-}
-}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", "b", [\'"data-whatever\'])'), {
-        'instructions': [`\
-let parseCompareElementsAttr1 = await page.$x("//a");
-if (parseCompareElementsAttr1.length === 0) { throw 'XPath "//a" not found'; }
-parseCompareElementsAttr1 = parseCompareElementsAttr1[0];
-let parseCompareElementsAttr2 = await page.$("b");
-if (parseCompareElementsAttr2 === null) { throw '"b" not found'; }
-await page.evaluate((e1, e2) => {
-const attributes = ["\\"data-whatever"];
-for (const attr of attributes) {
-    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
-        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
-    }${after}
-}
-}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "//b", [\'"data-whatever\'])'), {
-        'instructions': [`\
-let parseCompareElementsAttr1 = await page.$("a");
-if (parseCompareElementsAttr1 === null) { throw '"a" not found'; }
-let parseCompareElementsAttr2 = await page.$x("//b");
-if (parseCompareElementsAttr2.length === 0) { throw 'XPath "//b" not found'; }
-parseCompareElementsAttr2 = parseCompareElementsAttr2[0];
-await page.evaluate((e1, e2) => {
-const attributes = ["\\"data-whatever"];
-for (const attr of attributes) {
-    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
-        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
-    }${after}
-}
-}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", "//b", [\'"data-whatever\'])'), {
-        'instructions': [`\
-let parseCompareElementsAttr1 = await page.$x("//a");
-if (parseCompareElementsAttr1.length === 0) { throw 'XPath "//a" not found'; }
-parseCompareElementsAttr1 = parseCompareElementsAttr1[0];
-let parseCompareElementsAttr2 = await page.$x("//b");
-if (parseCompareElementsAttr2.length === 0) { throw 'XPath "//b" not found'; }
-parseCompareElementsAttr2 = parseCompareElementsAttr2[0];
-await page.evaluate((e1, e2) => {
-const attributes = ["\\"data-whatever"];
-for (const attr of attributes) {
-    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
-        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
-    }${after}
-}
-}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-
-    // Multiline
-    x.assert(func('("a"\n,\n "b", 1)'), {
-        'error': 'expected third argument to be an array of string, found a string',
-    });
-    x.assert(func('("//a"\n,\n "//b", [\'"data-whatever\'])'), {
-        'instructions': [`\
-let parseCompareElementsAttr1 = await page.$x("//a");
-if (parseCompareElementsAttr1.length === 0) { throw 'XPath "//a" not found'; }
-parseCompareElementsAttr1 = parseCompareElementsAttr1[0];
-let parseCompareElementsAttr2 = await page.$x("//b");
-if (parseCompareElementsAttr2.length === 0) { throw 'XPath "//b" not found'; }
-parseCompareElementsAttr2 = parseCompareElementsAttr2[0];
-await page.evaluate((e1, e2) => {
-const attributes = ["\\"data-whatever"];
-for (const attr of attributes) {
-    ${before}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
-        throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
-    }${after}
-}
-}, parseCompareElementsAttr1, parseCompareElementsAttr2);`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('(a\n,\n2)', 'multiline-1');
+    func('(\n"a"\n,\n{\n"x":\n1})', 'multiline-2');
 }
 
 function checkCompareElementsAttribute(x, func) {
-    checkCompareElementsAttributeInner(x, func, '', '');
-}
+    func('("a", "b", ())', 'err-1');
+    func('("a", "b", (1))', 'err-2');
+    func('("a", "b", ("x", "yo"))', 'err-3');
+    func('"a"', 'err-4');
+    func('1', 'err-5');
+    func('()', 'err-6');
+    func('[]', 'err-7');
+    func('("a")', 'err-8');
+    func('("a", 1)', 'err-9');
+    func('("a", "a", "b", "c")', 'err-10');
+    func('("a", "b", 1)', 'err-11');
+    func('("a", "b", ["a"], 1)', 'err-12');
+    func('("a", "b", ["a"], "a")', 'err-13');
 
-function checkCompareElementsAttributeFalse(x, func) {
-    checkCompareElementsAttributeInner(
-        x,
-        func,
-        'try {\n    ',
-        '\n    } catch(e) { continue; } throw "assert didn\'t fail";',
-    );
-}
+    func('("a", "b", [])', 'basic-1');
+    func('("a", "b", [\'"data-whatever\'])', 'basic-2');
+    // Checking operators.
+    func('("a", "b", [\'"data-whatever\'], "=")', 'operator-1');
+    func('("a", "b", [\'"data-whatever\'], ">")', 'operator-2');
+    func('("a", "b", [\'"data-whatever\'], ">=")', 'operator-3');
+    func('("a", "b", [\'"data-whatever\'], "<")', 'operator-4');
+    func('("a", "b", [\'"data-whatever\'], "<=")', 'operator-5');
 
-function checkCompareElementsCssInner(x, func, before, after) {
-    x.assert(
-        func('("a", "b", ())'),
-        {'error': 'expected third argument to be an array of string, found a tuple'},
-    );
-    x.assert(
-        func('("a", "b", (1))'),
-        {'error': 'expected third argument to be an array of string, found a tuple'},
-    );
-    x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
-    x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
-    x.assert(func('()'), {'error': 'expected 3 elements in the tuple, found 0 element'});
-    x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
-    x.assert(func('("a")'), {'error': 'expected 3 elements in the tuple, found 1 element'});
-    x.assert(func('("a", 1, [])'),
-        {'error': 'expected second argument to be a CSS selector or an XPath, found a number'},
-    );
-    x.assert(func('(1, "a", [])'),
-        {'error': 'expected first argument to be a CSS selector or an XPath, found a number'},
-    );
-    x.assert(func('((), "a", [])'),
-        {'error': 'expected first argument to be a CSS selector or an XPath, found a tuple'},
-    );
-    x.assert(func('("a", "a", "b", "c")'), {
-        'error': 'expected 3 elements in the tuple, found 4 elements',
-    });
-    x.assert(func('("a", "b", 1)'), {
-        'error': 'expected third argument to be an array of string, found a number',
-    });
-    x.assert(func('("a", "b", [""])'), {
-        'error': 'Empty CSS property keys ("" or \'\') are not allowed',
-    });
-
-    x.assert(func('("a", "b", ["margin"])'), {
-        'instructions': [
-            'let parseCompareElementsCss1 = await page.$("a");\n' +
-            'if (parseCompareElementsCss1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsCss2 = await page.$("b");\n' +
-            'if (parseCompareElementsCss2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
-            'let computed_style2 = getComputedStyle(e2);\n' +
-            'const properties = ["margin"];\n' +
-            'for (const css_property of properties) {\n' +
-            before +
-            'let style1_1 = e1.style[css_property];\n' +
-            'let style1_2 = computed_style1[css_property];\n' +
-            'let style2_1 = e2.style[css_property];\n' +
-            'let style2_2 = computed_style2[css_property];\n' +
-            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 ' +
-            '&& style1_2 != style2_2) {\n' +
-            'throw \'CSS property `\' + css_property + \'` did not match: \' + style1_2 + \' ' +
-            '!= \' + style2_2; }' + after + '\n' +
-            '}\n' +
-            '}, parseCompareElementsCss1, parseCompareElementsCss2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-
-    // Xpath
-    x.assert(func('("//a", "b", ["margin"])'), {
-        'instructions': [
-            'let parseCompareElementsCss1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsCss1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElementsCss1 = parseCompareElementsCss1[0];\n' +
-            'let parseCompareElementsCss2 = await page.$("b");\n' +
-            'if (parseCompareElementsCss2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
-            'let computed_style2 = getComputedStyle(e2);\n' +
-            'const properties = ["margin"];\n' +
-            'for (const css_property of properties) {\n' +
-            before +
-            'let style1_1 = e1.style[css_property];\n' +
-            'let style1_2 = computed_style1[css_property];\n' +
-            'let style2_1 = e2.style[css_property];\n' +
-            'let style2_2 = computed_style2[css_property];\n' +
-            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 ' +
-            '&& style1_2 != style2_2) {\n' +
-            'throw \'CSS property `\' + css_property + \'` did not match: \' + style1_2 + \' ' +
-            '!= \' + style2_2; }' + after + '\n' +
-            '}\n' +
-            '}, parseCompareElementsCss1, parseCompareElementsCss2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "//b", ["margin"])'), {
-        'instructions': [
-            'let parseCompareElementsCss1 = await page.$("a");\n' +
-            'if (parseCompareElementsCss1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsCss2 = await page.$x("//b");\n' +
-            'if (parseCompareElementsCss2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElementsCss2 = parseCompareElementsCss2[0];\n' +
-            'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
-            'let computed_style2 = getComputedStyle(e2);\n' +
-            'const properties = ["margin"];\n' +
-            'for (const css_property of properties) {\n' +
-            before +
-            'let style1_1 = e1.style[css_property];\n' +
-            'let style1_2 = computed_style1[css_property];\n' +
-            'let style2_1 = e2.style[css_property];\n' +
-            'let style2_2 = computed_style2[css_property];\n' +
-            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 ' +
-            '&& style1_2 != style2_2) {\n' +
-            'throw \'CSS property `\' + css_property + \'` did not match: \' + style1_2 + \' ' +
-            '!= \' + style2_2; }' + after + '\n' +
-            '}\n' +
-            '}, parseCompareElementsCss1, parseCompareElementsCss2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", "//b", ["margin"])'), {
-        'instructions': [
-            'let parseCompareElementsCss1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsCss1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElementsCss1 = parseCompareElementsCss1[0];\n' +
-            'let parseCompareElementsCss2 = await page.$x("//b");\n' +
-            'if (parseCompareElementsCss2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElementsCss2 = parseCompareElementsCss2[0];\n' +
-            'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
-            'let computed_style2 = getComputedStyle(e2);\n' +
-            'const properties = ["margin"];\n' +
-            'for (const css_property of properties) {\n' +
-            before +
-            'let style1_1 = e1.style[css_property];\n' +
-            'let style1_2 = computed_style1[css_property];\n' +
-            'let style2_1 = e2.style[css_property];\n' +
-            'let style2_2 = computed_style2[css_property];\n' +
-            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 ' +
-            '&& style1_2 != style2_2) {\n' +
-            'throw \'CSS property `\' + css_property + \'` did not match: \' + style1_2 + \' ' +
-            '!= \' + style2_2; }' + after + '\n' +
-            '}\n' +
-            '}, parseCompareElementsCss1, parseCompareElementsCss2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    // XPath
+    func('("/a", "b", [\'"data-whatever\'])', 'xpath-1');
+    func('("//a", "b", [])', 'xpath-2');
+    func('("//a", "b", [\'"data-whatever\'])', 'xpath-3');
+    func('("a", "//b", [\'"data-whatever\'])', 'xpath-4');
+    func('("//a", "//b", [\'"data-whatever\'])', 'xpath-5');
 
     // Multiline
-    x.assert(func('("a"\n, \n"b", 1)'), {
-        'error': 'expected third argument to be an array of string, found a number',
-    });
-    x.assert(func('("//a"\n,\n "//b",\n [\n"margin"])'), {
-        'instructions': [
-            'let parseCompareElementsCss1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsCss1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElementsCss1 = parseCompareElementsCss1[0];\n' +
-            'let parseCompareElementsCss2 = await page.$x("//b");\n' +
-            'if (parseCompareElementsCss2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElementsCss2 = parseCompareElementsCss2[0];\n' +
-            'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
-            'let computed_style2 = getComputedStyle(e2);\n' +
-            'const properties = ["margin"];\n' +
-            'for (const css_property of properties) {\n' +
-            before +
-            'let style1_1 = e1.style[css_property];\n' +
-            'let style1_2 = computed_style1[css_property];\n' +
-            'let style2_1 = e2.style[css_property];\n' +
-            'let style2_2 = computed_style2[css_property];\n' +
-            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 ' +
-            '&& style1_2 != style2_2) {\n' +
-            'throw \'CSS property `\' + css_property + \'` did not match: \' + style1_2 + \' ' +
-            '!= \' + style2_2; }' + after + '\n' +
-            '}\n' +
-            '}, parseCompareElementsCss1, parseCompareElementsCss2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-
-    // Check the specially added check if "color" is used.
-    x.assert(func('("a", "b", ["color"])'), {
-        'instructions': [
-            'if (!arg.showText) {\n' +
-            'throw "`show-text: true` needs to be used before checking for `color` (otherwise ' +
-            'the browser doesn\'t compute it)";\n' +
-            '}',
-            'let parseCompareElementsCss1 = await page.$("a");\n' +
-            'if (parseCompareElementsCss1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsCss2 = await page.$("b");\n' +
-            'if (parseCompareElementsCss2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);\n' +
-            'let computed_style2 = getComputedStyle(e2);\n' +
-            'const properties = ["color"];\n' +
-            'for (const css_property of properties) {\n' +
-            before +
-            'let style1_1 = e1.style[css_property];\n' +
-            'let style1_2 = computed_style1[css_property];\n' +
-            'let style2_1 = e2.style[css_property];\n' +
-            'let style2_2 = computed_style2[css_property];\n' +
-            'if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 ' +
-            '&& style1_2 != style2_2) {\n' +
-            'throw \'CSS property `\' + css_property + \'` did not match: \' + style1_2 + \' ' +
-            '!= \' + style2_2; }' + after + '\n' +
-            '}\n' +
-            '}, parseCompareElementsCss1, parseCompareElementsCss2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("a"\n,\n "b", 1)', 'multiline-1');
+    func('("//a"\n,\n "//b", [\'"data-whatever\'])', 'multiline-2');
 }
 
 function checkCompareElementsCss(x, func) {
-    checkCompareElementsCssInner(x, func, '', '');
-}
+    func('("a", "b", ())', 'err-1');
+    func('("a", "b", (1))', 'err-2');
+    func('"a"', 'err-3');
+    func('1', 'err-4');
+    func('()', 'err-5');
+    func('[]', 'err-6');
+    func('("a")', 'err-7');
+    func('("a", 1, [])', 'err-8');
+    func('(1, "a", [])', 'err-9');
+    func('((), "a", [])', 'err-10');
+    func('("a", "a", "b", "c")', 'err-11');
+    func('("a", "b", 1)', 'err-12');
+    func('("a", "b", [""])', 'err-13');
 
-function checkCompareElementsCssFalse(x, func) {
-    checkCompareElementsCssInner(
-        x,
-        func,
-        'try {\n',
-        '\n} catch(e) { continue; } throw "assert didn\'t fail";',
-    );
-}
+    func('("a", "b", ["margin"])', 'basic-1');
 
-function checkCompareElementsPositionInner(x, func, before, after) {
-    x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
-    x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
-    x.assert(func('()'), {'error': 'expected 3 elements in the tuple, found 0 element'});
-    x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
-    x.assert(func('("a")'), {'error': 'expected 3 elements in the tuple, found 1 element'});
-    x.assert(func('("a", 1)'),
-        {'error': 'expected 3 elements in the tuple, found 2 elements'},
-    );
-    x.assert(func('(1, "a", ("a"))'),
-        {'error': 'expected first argument to be a CSS selector or an XPath, found a number'},
-    );
-    x.assert(func('((), "a", ("a"))'),
-        {'error': 'expected first argument to be a CSS selector or an XPath, found a tuple'},
-    );
-    x.assert(func('("a", "a", "b", "c")'), {
-        'error': 'expected 3 elements in the tuple, found 4 elements',
-    });
-    x.assert(func('("a", "b", 1)'), {
-        'error': 'expected third argument to be a tuple, found a number',
-    });
-    x.assert(
-        func('("a", "b", (1))'),
-        {'error': 'expected an array of strings, found `(1)`'},
-    );
-    x.assert(
-        func('("a", "b", ("x", "yo"))'),
-        {'error': 'Only accepted values are "x" and "y", found `"yo"` (in `("x", "yo")`)'},
-    );
-    x.assert(
-        func('("a", "b", ("x", "y", "x"))'),
-        {'error': 'Duplicated "x" value in `("x", "y", "x")`'},
-    );
-    x.assert(
-        func('("a", "b", ("x", "y", "y"))'),
-        {'error': 'Duplicated "y" value in `("x", "y", "y")`'},
-    );
-
-    x.assert(
-        func('("a", "b", ())'), {
-            'instructions': [`\
-let parseCompareElementsPos1 = await page.$("a");
-if (parseCompareElementsPos1 === null) { throw '"a" not found'; }
-let parseCompareElementsPos2 = await page.$("b");
-if (parseCompareElementsPos2 === null) { throw '"b" not found'; }
-`,
-            ],
-            'wait': false,
-            'checkResult': true,
-        },
-    );
-
-    x.assert(func('("a", "b", ("x"))'), {
-        'instructions': [
-            'let parseCompareElementsPos1 = await page.$("a");\n' +
-            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPos2 = await page.$("b");\n' +
-            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", ("y"))'), {
-        'instructions': [
-            'let parseCompareElementsPos1 = await page.$("a");\n' +
-            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPos2 = await page.$("b");\n' +
-            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", ("x", "y"))'), {
-        'instructions': [
-            'let parseCompareElementsPos1 = await page.$("a");\n' +
-            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPos2 = await page.$("b");\n' +
-            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b", ("y", "x"))'), {
-        'instructions': [
-            'let parseCompareElementsPos1 = await page.$("a");\n' +
-            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPos2 = await page.$("b");\n' +
-            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-
-    // Pseudo element
-    x.assert(func('("a::after", "b", ("y", "x"))'), {
-        'instructions': [
-            'let parseCompareElementsPos1 = await page.$("a");\n' +
-            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPos2 = await page.$("b");\n' +
-            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
-            'let style1 = window.getComputedStyle(e1);\n' +
-            'y1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1.top) - ' +
-                'browserUiTestHelpers.extractFloatOrZero(style1.marginTop);\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
-            'let style1 = window.getComputedStyle(e1);\n' +
-            'x1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1.left) - ' +
-                'browserUiTestHelpers.extractFloatOrZero(style1.marginLeft);\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "b::after", ("y", "x"))'), {
-        'instructions': [
-            'let parseCompareElementsPos1 = await page.$("a");\n' +
-            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPos2 = await page.$("b");\n' +
-            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
-            'let style2 = window.getComputedStyle(e2);\n' +
-            'y2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2.top) - ' +
-                'browserUiTestHelpers.extractFloatOrZero(style2.marginTop);\n' +
-            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
-            'let style2 = window.getComputedStyle(e2);\n' +
-            'x2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2.left) - ' +
-                'browserUiTestHelpers.extractFloatOrZero(style2.marginLeft);\n' +
-            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a::after", "b::after", ("y", "x"))'), {
-        'instructions': [
-            'let parseCompareElementsPos1 = await page.$("a");\n' +
-            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPos2 = await page.$("b");\n' +
-            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
-            'let style1 = window.getComputedStyle(e1);\n' +
-            'y1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1.top) - ' +
-                'browserUiTestHelpers.extractFloatOrZero(style1.marginTop);\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
-            'let style2 = window.getComputedStyle(e2);\n' +
-            'y2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2.top) - ' +
-                'browserUiTestHelpers.extractFloatOrZero(style2.marginTop);\n' +
-            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let pseudoStyle1 = window.getComputedStyle(e1, "::after");\n' +
-            'let style1 = window.getComputedStyle(e1);\n' +
-            'x1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1.left) - ' +
-                'browserUiTestHelpers.extractFloatOrZero(style1.marginLeft);\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'let pseudoStyle2 = window.getComputedStyle(e2, "::after");\n' +
-            'let style2 = window.getComputedStyle(e2);\n' +
-            'x2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2.left) - ' +
-                'browserUiTestHelpers.extractFloatOrZero(style2.marginLeft);\n' +
-            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-
-    // XPath
-    x.assert(func('("//a", "b", ("y", "x"))'), {
-        'instructions': [
-            'let parseCompareElementsPos1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsPos1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElementsPos1 = parseCompareElementsPos1[0];\n' +
-            'let parseCompareElementsPos2 = await page.$("b");\n' +
-            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "//b", ("y", "x"))'), {
-        'instructions': [
-            'let parseCompareElementsPos1 = await page.$("a");\n' +
-            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPos2 = await page.$x("//b");\n' +
-            'if (parseCompareElementsPos2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElementsPos2 = parseCompareElementsPos2[0];\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", "//b", ("y", "x"))'), {
-        'instructions': [
-            'let parseCompareElementsPos1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsPos1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElementsPos1 = parseCompareElementsPos1[0];\n' +
-            'let parseCompareElementsPos2 = await page.$x("//b");\n' +
-            'if (parseCompareElementsPos2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElementsPos2 = parseCompareElementsPos2[0];\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    // Xpath
+    func('("//a", "b", ["margin"])', 'xpath-1');
+    func('("a", "//b", ["margin"])', 'xpath-2');
+    func('("//a", "//b", ["margin"])', 'xpath-3');
 
     // Multiline
-    x.assert(
-        func('("a", \n"b", \n("x",\n "y", "y"))'),
-        {'error': 'Duplicated "y" value in `("x",\n "y", "y")`'},
-    );
+    func('("a"\n, \n"b", 1)', 'multiline-1');
+    func('("//a"\n,\n "//b",\n [\n"margin"])', 'multiline-2');
 
-    x.assert(func('("a",\n "b", (\n"x"))'), {
-        'instructions': [
-            'let parseCompareElementsPos1 = await page.$("a");\n' +
-            'if (parseCompareElementsPos1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPos2 = await page.$("b");\n' +
-            'if (parseCompareElementsPos2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPos1, parseCompareElementsPos2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    // Check the specially added check if "color" is used.
+    func('("a", "b", ["color"])', 'color-1');
 }
 
 function checkCompareElementsPosition(x, func) {
-    checkCompareElementsPositionInner(x, func, '', '');
-}
+    func('"a"', 'err-1');
+    func('1', 'err-2');
+    func('()', 'err-3');
+    func('[]', 'err-4');
+    func('("a")', 'err-5');
+    func('("a", 1)', 'err-6');
+    func('(1, "a", ("a"))', 'err-7');
+    func('((), "a", ("a"))', 'err-8');
+    func('("a", "a", "b", "c")', 'err-9');
+    func('("a", "b", 1)', 'err-10');
+    func('("a", "b", (1))', 'err-11');
+    func('("a", "b", ("x", "yo"))', 'err-12');
+    func('("a", "b", ("x", "y", "x"))', 'err-13');
+    func('("a", "b", ("x", "y", "y"))', 'err-14');
 
-function checkCompareElementsPositionFalse(x, func) {
-    checkCompareElementsPositionInner(
-        x,
-        func,
-        'try {\n',
-        '\n} catch(e) { return; } throw "assert didn\'t fail";',
-    );
-}
+    func('("a", "b", ())', 'basic-1');
+    func('("a", "b", ("x"))', 'basic-2');
+    func('("a", "b", ("y"))', 'basic-3');
+    func('("a", "b", ("x", "y"))', 'basic-4');
+    func('("a", "b", ("y", "x"))', 'basic-5');
 
-function checkCompareElementsPositionNearInner(x, func, before, after) {
-    x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
-    x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
-    x.assert(func('()'), {'error': 'expected 3 elements in the tuple, found 0 element'});
-    x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
-    x.assert(func('("a")'), {'error': 'expected 3 elements in the tuple, found 1 element'});
-    x.assert(func('("a", 1)'),
-        {'error': 'expected 3 elements in the tuple, found 2 elements'},
-    );
-    x.assert(func('(1, "a", ("a"))'),
-        {'error': 'expected first argument to be a CSS selector or an XPath, found a number'},
-    );
-    x.assert(func('((), "a", ("a"))'),
-        {'error': 'expected first argument to be a CSS selector or an XPath, found a tuple'},
-    );
-    x.assert(func('("a", "a", "b", "c")'), {
-        'error': 'expected 3 elements in the tuple, found 4 elements',
-    });
-    x.assert(func('("a", "b", 1)'), {
-        'error': 'expected third argument to be a JSON dict, found a number',
-    });
-    x.assert(
-        func('("a", "b", ())'),
-        {'error': 'expected third argument to be a JSON dict, found a tuple'},
-    );
-    x.assert(
-        func('("a", "b", (1))'),
-        {'error': 'expected third argument to be a JSON dict, found a tuple'},
-    );
-    x.assert(
-        func('("a", "b", {"x": 1, "yo": 2})'),
-        {'error': 'Only accepted keys are "x" and "y", found `"yo"` (in `{"x": 1, "yo": 2}`)'},
-    );
-    x.assert(
-        func('("a", "b", {"x": 1, "x": 2})'),
-        {'error': 'JSON dict key `x` is duplicated'},
-    );
-    x.assert(
-        func('("a", "b", {"x": "a", "y": 2})'),
-        {'error': 'only number type is allowed as value, found `"a"` (a string)'},
-    );
-    x.assert(
-        func('("a", "b", {"x": -1})'),
-        {'error': 'Delta cannot be negative (in `"x": -1`)'},
-    );
-    x.assert(
-        func('("a", "b", {"y": -1})'),
-        {'error': 'Delta cannot be negative (in `"y": -1`)'},
-    );
-
-    x.assert(func('("a", "b", {})'), {
-        'instructions': [
-            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
-            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
-            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n',
-        ],
-        'wait': false,
-        'checkResult': true,
-        'warnings': [],
-    });
-    x.assert(func('("a", "b", {"x": 1})'), {
-        'instructions': [
-            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
-            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
-            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'let delta = Math.abs(x1 - x2);\n' +
-            'if (delta > 1) {\n' +
-            'throw "delta X values too large: " + delta + " > 1";\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-        'warnings': [],
-    });
-    x.assert(func('("a", "b", {"y": 1})'), {
-        'instructions': [
-            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
-            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
-            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'let delta = Math.abs(y1 - y2);\n' +
-            'if (delta > 1) {\n' +
-            'throw "delta Y values too large: " + delta + " > 1";\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-        'warnings': [],
-    });
-    x.assert(func('("a", "b", {"x": 1, "y": 2})'), {
-        'instructions': [
-            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
-            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
-            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'let delta = Math.abs(x1 - x2);\n' +
-            'if (delta > 1) {\n' +
-            'throw "delta X values too large: " + delta + " > 1";\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'let delta = Math.abs(y1 - y2);\n' +
-            'if (delta > 2) {\n' +
-            'throw "delta Y values too large: " + delta + " > 2";\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-        'warnings': [],
-    });
-    x.assert(func('("a", "b", {"y": 2, "x": 1})'), {
-        'instructions': [
-            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
-            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
-            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'let delta = Math.abs(y1 - y2);\n' +
-            'if (delta > 2) {\n' +
-            'throw "delta Y values too large: " + delta + " > 2";\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'let delta = Math.abs(x1 - x2);\n' +
-            'if (delta > 1) {\n' +
-            'throw "delta X values too large: " + delta + " > 1";\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-        'warnings': [],
-    });
-
-    // warnings
-    x.assert(func('("a", "b", {"x": 0})'), {
-        'instructions': [
-            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
-            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
-            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'let delta = Math.abs(x1 - x2);\n' +
-            'if (delta > 0) {\n' +
-            'throw "delta X values too large: " + delta + " > 0";\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-        'warnings': ['Delta is 0 for "X", maybe try to use `compare-elements-position` instead?'],
-    });
-    x.assert(func('("a", "b", {"y": 0})'), {
-        'instructions': [
-            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
-            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
-            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'let delta = Math.abs(y1 - y2);\n' +
-            'if (delta > 0) {\n' +
-            'throw "delta Y values too large: " + delta + " > 0";\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-        'warnings': ['Delta is 0 for "Y", maybe try to use `compare-elements-position` instead?'],
-    });
+    // Pseudo element
+    func('("a::after", "b", ("y", "x"))', 'pseudo-1');
+    func('("a", "b::after", ("y", "x"))', 'pseudo-2');
+    func('("a::after", "b::after", ("y", "x"))', 'pseudo-3');
 
     // XPath
-    x.assert(func('("//a", "b", {"y": 2, "x": 1})'), {
-        'instructions': [
-            'let parseCompareElementsPosNear1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsPosNear1.length === 0) { throw \'XPath "//a" not found\'; }\n'
-            + 'parseCompareElementsPosNear1 = parseCompareElementsPosNear1[0];\n' +
-            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
-            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'let delta = Math.abs(y1 - y2);\n' +
-            'if (delta > 2) {\n' +
-            'throw "delta Y values too large: " + delta + " > 2";\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'let delta = Math.abs(x1 - x2);\n' +
-            'if (delta > 1) {\n' +
-            'throw "delta X values too large: " + delta + " > 1";\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-        'warnings': [],
-    });
-    x.assert(func('("a", "//b", {"y": 2, "x": 1})'), {
-        'instructions': [
-            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
-            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPosNear2 = await page.$x("//b");\n' +
-            'if (parseCompareElementsPosNear2.length === 0) { throw \'XPath "//b" not found\'; }\n'
-            + 'parseCompareElementsPosNear2 = parseCompareElementsPosNear2[0];\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'let delta = Math.abs(y1 - y2);\n' +
-            'if (delta > 2) {\n' +
-            'throw "delta Y values too large: " + delta + " > 2";\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'let delta = Math.abs(x1 - x2);\n' +
-            'if (delta > 1) {\n' +
-            'throw "delta X values too large: " + delta + " > 1";\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-        'warnings': [],
-    });
-    x.assert(func('("//a", "//b", {"y": 2, "x": 1})'), {
-        'instructions': [
-            'let parseCompareElementsPosNear1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsPosNear1.length === 0) { throw \'XPath "//a" not found\'; }\n'
-            + 'parseCompareElementsPosNear1 = parseCompareElementsPosNear1[0];\n' +
-            'let parseCompareElementsPosNear2 = await page.$x("//b");\n' +
-            'if (parseCompareElementsPosNear2.length === 0) { throw \'XPath "//b" not found\'; }\n'
-            + 'parseCompareElementsPosNear2 = parseCompareElementsPosNear2[0];\n' +
-            'await page.evaluate((elem1, elem2) => {\n' +
-            'function checkY(e1, e2) {\n' +
-            before +
-            'let y1 = e1.getBoundingClientRect().top;\n' +
-            'let y2 = e2.getBoundingClientRect().top;\n' +
-            'let delta = Math.abs(y1 - y2);\n' +
-            'if (delta > 2) {\n' +
-            'throw "delta Y values too large: " + delta + " > 2";\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkY(elem1, elem2);\n' +
-            'function checkX(e1, e2) {\n' +
-            before +
-            'let x1 = e1.getBoundingClientRect().left;\n' +
-            'let x2 = e2.getBoundingClientRect().left;\n' +
-            'let delta = Math.abs(x1 - x2);\n' +
-            'if (delta > 1) {\n' +
-            'throw "delta X values too large: " + delta + " > 1";\n' +
-            '}\n' +
-            after +
-            '}\n' +
-            'checkX(elem1, elem2);\n' +
-            '}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);',
-        ],
-        'wait': false,
-        'checkResult': true,
-        'warnings': [],
-    });
+    func('("//a", "b", ("y", "x"))', 'xpath-1');
+    func('("a", "//b", ("y", "x"))', 'xpath-2');
+    func('("//a", "//b", ("y", "x"))', 'xpath-3');
 
     // Multiline
-    x.assert(
-        func('("a", \n"b", {\n"y":\n -1})'),
-        {'error': 'Delta cannot be negative (in `"y": -1`)'},
-    );
-    x.assert(func('("a", \n"b",\n {\n})'), {
-        'instructions': [
-            'let parseCompareElementsPosNear1 = await page.$("a");\n' +
-            'if (parseCompareElementsPosNear1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsPosNear2 = await page.$("b");\n' +
-            'if (parseCompareElementsPosNear2 === null) { throw \'"b" not found\'; }\n',
-        ],
-        'wait': false,
-        'checkResult': true,
-        'warnings': [],
-    });
+    func('("a", \n"b", \n("x",\n "y", "y"))', 'multiline-1');
+    func('("a",\n "b", (\n"x"))', 'multiline-2');
 }
 
 function checkCompareElementsPositionNear(x, func) {
-    checkCompareElementsPositionNearInner(x, func, '', '');
-}
+    func('"a"', 'err-1');
+    func('1', 'err-2');
+    func('()', 'err-3');
+    func('[]', 'err-4');
+    func('("a")', 'err-5');
+    func('("a", 1)', 'err-6');
+    func('(1, "a", ("a"))', 'err-7');
+    func('((), "a", ("a"))', 'err-8');
+    func('("a", "a", "b", "c")', 'err-9');
+    func('("a", "b", 1)', 'err-10');
 
-function checkCompareElementsPositionNearFalse(x, func) {
-    checkCompareElementsPositionNearInner(
-        x,
-        func,
-        'try {\n',
-        '\n} catch(e) { return; } throw "assert didn\'t fail";',
-    );
-}
+    func('("a", "b", ())', 'basic-1');
+    func('("a", "b", (1))', 'basic-2');
+    func('("a", "b", {"x": 1, "yo": 2})', 'basic-3');
+    func('("a", "b", {"x": 1, "x": 2})', 'basic-4');
+    func('("a", "b", {"x": "a", "y": 2})', 'basic-5');
+    func('("a", "b", {"x": -1})', 'basic-6');
+    func('("a", "b", {"y": -1})', 'basic-7');
+    func('("a", "b", {})', 'basic-8');
+    func('("a", "b", {"x": 1})', 'basic-9');
+    func('("a", "b", {"y": 1})', 'basic-10');
+    func('("a", "b", {"x": 1, "y": 2})', 'basic-11');
+    func('("a", "b", {"y": 2, "x": 1})', 'basic-12');
 
-function checkCompareElementsPropertyInner(x, func, before, after) {
-    x.assert(
-        func('("a", "b", ())'),
-        {'error': 'expected third argument to be an array of string, found a tuple'},
-    );
-    x.assert(
-        func('("a", "b", (1))'),
-        {'error': 'expected third argument to be an array of string, found a tuple'},
-    );
-    x.assert(func('"a"'), {'error': 'expected a tuple, found `"a"`'});
-    x.assert(func('1'), {'error': 'expected a tuple, found `1`'});
-    x.assert(func('()'), {'error': 'expected 3 elements in the tuple, found 0 element'});
-    x.assert(func('[]'), {'error': 'expected a tuple, found `[]`'});
-    x.assert(func('("a")'), {'error': 'expected 3 elements in the tuple, found 1 element'});
-    x.assert(func('("a", 1, [])'),
-        {'error': 'expected second argument to be a CSS selector or an XPath, found a number'},
-    );
-    x.assert(func('(1, "a", [])'),
-        {'error': 'expected first argument to be a CSS selector or an XPath, found a number'},
-    );
-    x.assert(func('((), "a", [])'),
-        {'error': 'expected first argument to be a CSS selector or an XPath, found a tuple'},
-    );
-    x.assert(func('("a", "a", "b", "c")'), {
-        'error': 'expected 3 elements in the tuple, found 4 elements',
-    });
-    x.assert(func('("a", "b", 1)'), {
-        'error': 'expected third argument to be an array of string, found a number',
-    });
+    // warnings
+    func('("a", "b", {"x": 0})', 'warn-1');
+    func('("a", "b", {"y": 0})', 'warn-2');
 
-    x.assert(func('("a", "b", ["margin"])'), {
-        'instructions': [
-            'let parseCompareElementsProp1 = await page.$("a");\n' +
-            'if (parseCompareElementsProp1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsProp2 = await page.$("b");\n' +
-            'if (parseCompareElementsProp2 === null) { throw \'"b" not found\'; }\n' +
-            'const parseCompareElementsProps = ["margin"];\n' +
-            'for (const property of parseCompareElementsProps) {\n' +
-            before +
-            'const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {\n' +
-            'return String(e[p]);\n' +
-            '}, property);\n' +
-            'await parseCompareElementsProp2.evaluate((e, v, p) => {\n' +
-            'if (v !== String(e[p])) {\n' +
-            'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
-            '}\n' +
-            '}, value, property);\n' +
-            after +
-            '}',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-
-    // Xpath
-    x.assert(func('("//a", "b", ["margin"])'), {
-        'instructions': [
-            'let parseCompareElementsProp1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsProp1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElementsProp1 = parseCompareElementsProp1[0];\n' +
-            'let parseCompareElementsProp2 = await page.$("b");\n' +
-            'if (parseCompareElementsProp2 === null) { throw \'"b" not found\'; }\n' +
-            'const parseCompareElementsProps = ["margin"];\n' +
-            'for (const property of parseCompareElementsProps) {\n' +
-            before +
-            'const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {\n' +
-            'return String(e[p]);\n' +
-            '}, property);\n' +
-            'await parseCompareElementsProp2.evaluate((e, v, p) => {\n' +
-            'if (v !== String(e[p])) {\n' +
-            'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
-            '}\n' +
-            '}, value, property);\n' +
-            after +
-            '}',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "//b", ["margin"])'), {
-        'instructions': [
-            'let parseCompareElementsProp1 = await page.$("a");\n' +
-            'if (parseCompareElementsProp1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsProp2 = await page.$x("//b");\n' +
-            'if (parseCompareElementsProp2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElementsProp2 = parseCompareElementsProp2[0];\n' +
-            'const parseCompareElementsProps = ["margin"];\n' +
-            'for (const property of parseCompareElementsProps) {\n' +
-            before +
-            'const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {\n' +
-            'return String(e[p]);\n' +
-            '}, property);\n' +
-            'await parseCompareElementsProp2.evaluate((e, v, p) => {\n' +
-            'if (v !== String(e[p])) {\n' +
-            'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
-            '}\n' +
-            '}, value, property);\n' +
-            after +
-            '}',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", "//b", ["margin"])'), {
-        'instructions': [
-            'let parseCompareElementsProp1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsProp1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElementsProp1 = parseCompareElementsProp1[0];\n' +
-            'let parseCompareElementsProp2 = await page.$x("//b");\n' +
-            'if (parseCompareElementsProp2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElementsProp2 = parseCompareElementsProp2[0];\n' +
-            'const parseCompareElementsProps = ["margin"];\n' +
-            'for (const property of parseCompareElementsProps) {\n' +
-            before +
-            'const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {\n' +
-            'return String(e[p]);\n' +
-            '}, property);\n' +
-            'await parseCompareElementsProp2.evaluate((e, v, p) => {\n' +
-            'if (v !== String(e[p])) {\n' +
-            'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
-            '}\n' +
-            '}, value, property);\n' +
-            after +
-            '}',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    // XPath
+    func('("//a", "b", {"y": 2, "x": 1})', 'xpath-1');
+    func('("a", "//b", {"y": 2, "x": 1})', 'xpath-2');
+    func('("//a", "//b", {"y": 2, "x": 1})', 'xpath-3');
 
     // Multiline
-    x.assert(func('("a"\n, "b", \n1)'), {
-        'error': 'expected third argument to be an array of string, found a number',
-    });
-    x.assert(func('("a",\n "b",\n [\n"margin"])'), {
-        'instructions': [
-            'let parseCompareElementsProp1 = await page.$("a");\n' +
-            'if (parseCompareElementsProp1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsProp2 = await page.$("b");\n' +
-            'if (parseCompareElementsProp2 === null) { throw \'"b" not found\'; }\n' +
-            'const parseCompareElementsProps = ["margin"];\n' +
-            'for (const property of parseCompareElementsProps) {\n' +
-            before +
-            'const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {\n' +
-            'return String(e[p]);\n' +
-            '}, property);\n' +
-            'await parseCompareElementsProp2.evaluate((e, v, p) => {\n' +
-            'if (v !== String(e[p])) {\n' +
-            'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
-            '}\n' +
-            '}, value, property);\n' +
-            after +
-            '}',
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("a", \n"b", {\n"y":\n -1})', 'multiline-1');
+    func('("a", \n"b",\n {\n})', 'multiline-2');
 }
 
 function checkCompareElementsProperty(x, func) {
-    checkCompareElementsPropertyInner(x, func, '', '');
-}
+    func('("a", "b", ())', 'err-1');
+    func('("a", "b", (1))', 'err-2');
+    func('"a"', 'err-3');
+    func('1', 'err-4');
+    func('()', 'err-5');
+    func('[]', 'err-6');
+    func('("a")', 'err-7');
+    func('("a", 1, [])', 'err-8');
+    func('(1, "a", [])', 'err-9');
+    func('((), "a", [])', 'err-10');
+    func('("a", "a", "b", "c")', 'err-11');
+    func('("a", "b", 1)', 'err-12');
 
-function checkCompareElementsPropertyFalse(x, func) {
-    checkCompareElementsPropertyInner(
-        x,
-        func,
-        'try {\n',
-        '} catch(e) { continue; } throw "assert didn\'t fail";\n',
-    );
-}
+    func('("a", "b", ["margin"])', 'basic-1');
 
-function checkCompareElementsTextInner(x, func, before, after) {
-    x.assert(func('"a"'), {'error': 'expected a tuple of CSS selector/XPath, found `"a"`'});
-    x.assert(func('1'), {'error': 'expected a tuple of CSS selector/XPath, found `1`'});
-    x.assert(func('()'), {
-        'error': 'expected a tuple with 2 CSS selectors/XPathes, found 0 element',
-    });
-    x.assert(func('[]'), {'error': 'expected a tuple of CSS selector/XPath, found `[]`'});
-    x.assert(func('("a")'), {
-        'error': 'expected a tuple with 2 CSS selectors/XPathes, found 1 element',
-    });
-    x.assert(func('("a", 1)'),
-        {'error': 'expected second argument to be a CSS selector or an XPath, found a number'},
-    );
-    x.assert(func('(1, "a")'),
-        {'error': 'expected first argument to be a CSS selector or an XPath, found a number'},
-    );
-    x.assert(func('((), "a")'),
-        {'error': 'expected first argument to be a CSS selector or an XPath, found a tuple'},
-    );
-    x.assert(func('("a", "a", "b", "c")'), {
-        'error': 'expected a tuple with 2 CSS selectors/XPathes, found 4 elements',
-    });
-    x.assert(func('("a", "b", 1)'), {
-        'error': 'expected a tuple with 2 CSS selectors/XPathes, found 3 elements',
-    });
-
-    x.assert(func('("a", "b")'), {
-        'instructions': [
-            'let parseCompareElementsText1 = await page.$("a");\n' +
-            'if (parseCompareElementsText1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsText2 = await page.$("b");\n' +
-            'if (parseCompareElementsText2 === null) { throw \'"b" not found\'; }\n' +
-            before +
-            'await page.evaluate((e1, e2) => {\n' +
-            'let e1value;\n' +
-            'if (e1.tagName.toLowerCase() === "input") {\n' +
-            'e1value = e1.value;\n' +
-            '} else {\n' +
-            'e1value = e1.textContent;\n' +
-            '}\n' +
-            'if (e2.tagName.toLowerCase() === "input") {\n' +
-            'if (e2.value !== e1value) {\n' +
-            'throw \'"\' + e1value + \'" !== "\' + e2.value + \'"\';\n' +
-            '}\n' +
-            '} else if (e2.textContent !== e1value) {\n' +
-            'throw \'"\' + e1value + \'" !== "\' + e2.textContent + \'"\';\n' +
-            '}\n}, parseCompareElementsText1, parseCompareElementsText2);' + after,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-
-    // XPath
-    x.assert(func('("//a", "b")'), {
-        'instructions': [
-            'let parseCompareElementsText1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsText1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElementsText1 = parseCompareElementsText1[0];\n' +
-            'let parseCompareElementsText2 = await page.$("b");\n' +
-            'if (parseCompareElementsText2 === null) { throw \'"b" not found\'; }\n' +
-            before +
-            'await page.evaluate((e1, e2) => {\n' +
-            'let e1value;\n' +
-            'if (e1.tagName.toLowerCase() === "input") {\n' +
-            'e1value = e1.value;\n' +
-            '} else {\n' +
-            'e1value = e1.textContent;\n' +
-            '}\n' +
-            'if (e2.tagName.toLowerCase() === "input") {\n' +
-            'if (e2.value !== e1value) {\n' +
-            'throw \'"\' + e1value + \'" !== "\' + e2.value + \'"\';\n' +
-            '}\n' +
-            '} else if (e2.textContent !== e1value) {\n' +
-            'throw \'"\' + e1value + \'" !== "\' + e2.textContent + \'"\';\n' +
-            '}\n}, parseCompareElementsText1, parseCompareElementsText2);' + after,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a", "//b")'), {
-        'instructions': [
-            'let parseCompareElementsText1 = await page.$("a");\n' +
-            'if (parseCompareElementsText1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsText2 = await page.$x("//b");\n' +
-            'if (parseCompareElementsText2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElementsText2 = parseCompareElementsText2[0];\n' +
-            before +
-            'await page.evaluate((e1, e2) => {\n' +
-            'let e1value;\n' +
-            'if (e1.tagName.toLowerCase() === "input") {\n' +
-            'e1value = e1.value;\n' +
-            '} else {\n' +
-            'e1value = e1.textContent;\n' +
-            '}\n' +
-            'if (e2.tagName.toLowerCase() === "input") {\n' +
-            'if (e2.value !== e1value) {\n' +
-            'throw \'"\' + e1value + \'" !== "\' + e2.value + \'"\';\n' +
-            '}\n' +
-            '} else if (e2.textContent !== e1value) {\n' +
-            'throw \'"\' + e1value + \'" !== "\' + e2.textContent + \'"\';\n' +
-            '}\n}, parseCompareElementsText1, parseCompareElementsText2);' + after,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("//a", "//b")'), {
-        'instructions': [
-            'let parseCompareElementsText1 = await page.$x("//a");\n' +
-            'if (parseCompareElementsText1.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCompareElementsText1 = parseCompareElementsText1[0];\n' +
-            'let parseCompareElementsText2 = await page.$x("//b");\n' +
-            'if (parseCompareElementsText2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseCompareElementsText2 = parseCompareElementsText2[0];\n' +
-            before +
-            'await page.evaluate((e1, e2) => {\n' +
-            'let e1value;\n' +
-            'if (e1.tagName.toLowerCase() === "input") {\n' +
-            'e1value = e1.value;\n' +
-            '} else {\n' +
-            'e1value = e1.textContent;\n' +
-            '}\n' +
-            'if (e2.tagName.toLowerCase() === "input") {\n' +
-            'if (e2.value !== e1value) {\n' +
-            'throw \'"\' + e1value + \'" !== "\' + e2.value + \'"\';\n' +
-            '}\n' +
-            '} else if (e2.textContent !== e1value) {\n' +
-            'throw \'"\' + e1value + \'" !== "\' + e2.textContent + \'"\';\n' +
-            '}\n}, parseCompareElementsText1, parseCompareElementsText2);' + after,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    // Xpath
+    func('("//a", "b", ["margin"])', 'xpath-1');
+    func('("a", "//b", ["margin"])', 'xpath-2');
+    func('("//a", "//b", ["margin"])', 'xpath-3');
 
     // Multiline
-    x.assert(func('("a"\n,\n "b", 1)'), {
-        'error': 'expected a tuple with 2 CSS selectors/XPathes, found 3 elements',
-    });
-    x.assert(func('("a"\n, \n"b")'), {
-        'instructions': [
-            'let parseCompareElementsText1 = await page.$("a");\n' +
-            'if (parseCompareElementsText1 === null) { throw \'"a" not found\'; }\n' +
-            'let parseCompareElementsText2 = await page.$("b");\n' +
-            'if (parseCompareElementsText2 === null) { throw \'"b" not found\'; }\n' +
-            before +
-            'await page.evaluate((e1, e2) => {\n' +
-            'let e1value;\n' +
-            'if (e1.tagName.toLowerCase() === "input") {\n' +
-            'e1value = e1.value;\n' +
-            '} else {\n' +
-            'e1value = e1.textContent;\n' +
-            '}\n' +
-            'if (e2.tagName.toLowerCase() === "input") {\n' +
-            'if (e2.value !== e1value) {\n' +
-            'throw \'"\' + e1value + \'" !== "\' + e2.value + \'"\';\n' +
-            '}\n' +
-            '} else if (e2.textContent !== e1value) {\n' +
-            'throw \'"\' + e1value + \'" !== "\' + e2.textContent + \'"\';\n' +
-            '}\n}, parseCompareElementsText1, parseCompareElementsText2);' + after,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("a"\n, "b", \n1)', 'multiline-1');
+    func('("a",\n "b",\n [\n"margin"])', 'multiline-2');
 }
 
 function checkCompareElementsText(x, func) {
-    checkCompareElementsTextInner(x, func, '', '');
-}
+    func('"a"', 'err-1');
+    func('1', 'err-2');
+    func('()', 'err-3');
+    func('[]', 'err-4');
+    func('("a")', 'err-5');
+    func('("a", 1)', 'err-6');
+    func('(1, "a")', 'err-7');
+    func('((), "a")', 'err-8');
+    func('("a", "a", "b", "c")', 'err-9');
+    func('("a", "b", 1)', 'err-10');
 
-function checkCompareElementsTextFalse(x, func) {
-    checkCompareElementsTextInner(
-        x,
-        func,
-        'try {\n',
-        '\n} catch(e) { return; } throw "assert didn\'t fail";',
-    );
+    func('("a", "b")', 'basic-1');
+
+    // XPath
+    func('("//a", "b")', 'xpath-1');
+    func('("a", "//b")', 'xpath-2');
+    func('("//a", "//b")', 'xpath-3');
+
+    // Multiline
+    func('("a"\n,\n "b", 1)', 'multiline-1');
+    func('("a"\n, \n"b")', 'multiline-2');
 }
 
 function checkCss(x, func) {
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('("a", "b"'), {'error': 'expected `)` or `,` after `"b"`'});
-    x.assert(func('("a")'), {
-        'error': 'expected `("CSS selector" or "XPath", "CSS property name", "CSS property value"' +
-            ')` or `("CSS selector" or "XPath", [JSON object])`',
-    });
-    x.assert(func('("a", )'), {
-        'error': 'expected `("CSS selector" or "XPath", "CSS property name", "CSS property value"' +
-            ')` or `("CSS selector" or "XPath", [JSON object])`',
-    });
-    x.assert(func('("a", "b", )'), {
-        'error': 'expected json as second argument (since there are only two arguments), found a ' +
-            'string',
-    });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('("a", )'), {
-        'error': 'expected `("CSS selector" or "XPath", "CSS property name", "CSS property value"' +
-            ')` or `("CSS selector" or "XPath", [JSON object])`',
-    });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('("a", "b")'), {
-        'error': 'expected json as second argument (since there are only two arguments), found ' +
-            'a string',
-    });
-    x.assert(func('("a", "", "c")'), {'error': 'attribute name (second argument) cannot be empty'});
-    x.assert(func('("x", {"a": {"a": "x"}})'), {
-        'instructions': [],
-        'wait': false,
-        'warnings': ['Ignoring recursive entry with key `"a"`'],
-    });
+    func('"', 'err-1');
+    func('("a", "b"', 'err-2');
+    func('("a")', 'err-3');
+    func('("a", )', 'err-4');
+    func('("a", "b", )', 'err-5');
+    func('("a", "b" "c")', 'err-6');
+    func('("a", )', 'err-7');
+    func('("a", "b" "c")', 'err-8');
+    func('("a", "b")', 'err-9');
+    func('("a", "", "c")', 'err-10');
+    func('("x", {"a": {"a": "x"}})', 'err-11');
 
-    x.assert(func('("a", "b", "c")'), {
-        'instructions': [
-            'let parseCssElem = await page.$("a");\n' +
-            'if (parseCssElem === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'e.style["b"] = "c";\n' +
-            '}, parseCssElem);',
-        ],
-    });
-    x.assert(func('("a", "\\"b", "c")'), {
-        'instructions': [
-            'let parseCssElem = await page.$("a");\n' +
-            'if (parseCssElem === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'e.style["\\"b"] = "c";\n' +
-            '}, parseCssElem);',
-        ],
-    });
-    x.assert(func('("a", {"b": "c"})'), {
-        'instructions': [
-            'let parseCssElemJson = await page.$("a");\n' +
-            'if (parseCssElemJson === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'e.style["b"] = "c";\n' +
-            '}, parseCssElemJson);',
-        ],
-    });
-    x.assert(func('("a", {"b": "c", "d": "e"})'), {
-        'instructions': [
-            'let parseCssElemJson = await page.$("a");\n' +
-            'if (parseCssElemJson === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'e.style["b"] = "c";\n' +
-            '}, parseCssElemJson);\n' +
-            'await page.evaluate(e => {\n' +
-            'e.style["d"] = "e";\n' +
-            '}, parseCssElemJson);',
-        ],
-    });
+    func('("a", "b", "c")', 'basic-1');
+    func('("a", "\\"b", "c")', 'basic-2');
+    func('("a", {"b": "c"})', 'basic-3');
+    func('("a", {"b": "c", "d": "e"})', 'basic-4');
 
     // XPath
-    x.assert(func('("/a", "b", "c")'), { 'error': 'XPath must start with `//`'});
-    x.assert(func('("//a", "b", "c")'), {
-        'instructions': [
-            'let parseCssElem = await page.$x("//a");\n' +
-            'if (parseCssElem.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCssElem = parseCssElem[0];\n' +
-            'await page.evaluate(e => {\n' +
-            'e.style["b"] = "c";\n' +
-            '}, parseCssElem);',
-        ],
-    });
-    x.assert(func('("//a", {"b": "c"})'), {
-        'instructions': [
-            'let parseCssElemJson = await page.$x("//a");\n' +
-            'if (parseCssElemJson.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseCssElemJson = parseCssElemJson[0];\n' +
-            'await page.evaluate(e => {\n' +
-            'e.style["b"] = "c";\n' +
-            '}, parseCssElemJson);',
-        ],
-    });
+    func('("/a", "b", "c")', 'xpath-1');
+    func('("//a", "b", "c")', 'xpath-2');
+    func('("//a", {"b": "c"})', 'xpath-3');
 
     // Multiline
-    x.assert(func('("a", \n""\n, "c")'), {
-        'error': 'attribute name (second argument) cannot be empty',
-    });
-    x.assert(func('("a", \n"b", \n"c")'), {
-        'instructions': [
-            'let parseCssElem = await page.$("a");\n' +
-            'if (parseCssElem === null) { throw \'"a" not found\'; }\n' +
-            'await page.evaluate(e => {\n' +
-            'e.style["b"] = "c";\n' +
-            '}, parseCssElem);',
-        ],
-    });
+    func('("a", \n""\n, "c")', 'multiline-1');
+    func('("a", \n"b", \n"c")', 'multiline-2');
 }
 
 function checkDebug(x, func) {
-    x.assert(func('hello'), {'error': 'expected `true` or `false` value, found `hello`'});
-    x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
-    x.assert(func('tru'), {'error': 'expected `true` or `false` value, found `tru`'});
-    x.assert(func('false'), {
-        'instructions': [
-            'if (arg && arg.debug_log && arg.debug_log.setDebugEnabled) {\n' +
-            'arg.debug_log.setDebugEnabled(false);\n' +
-            '} else {\n' +
-            'throw "`debug` command needs an object with a `debug_log` field of `Debug` type!";\n}',
-        ],
-        'wait': false,
-    });
-    x.assert(func('true'), {
-        'instructions': [
-            'if (arg && arg.debug_log && arg.debug_log.setDebugEnabled) {\n' +
-            'arg.debug_log.setDebugEnabled(true);\n' +
-            '} else {\n' +
-            'throw "`debug` command needs an object with a `debug_log` field of `Debug` type!";\n}',
-        ],
-        'wait': false,
-    });
+    func('hello', 'err-1');
+    func('"true"', 'err-2');
+    func('tru', 'err-3');
+
+    func('false', 'basic-1');
+    func('true', 'basic-2');
 }
 
 function checkCallFunction(x, func) {
@@ -6338,596 +957,221 @@ function checkDefineFunction(x, func) {
 }
 
 function checkDevicePixelRatio(x, func) {
-    x.assert(func(''), {'error': 'expected a number, found nothing'});
-    x.assert(func('hello'), {'error': 'expected a number, found `hello`'});
-    x.assert(func('0.'), {'error': 'device pixel ratio cannot be less than or equal to 0'});
-    x.assert(func('-1.2'), {'error': 'device pixel ratio cannot be less than or equal to 0'});
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('0.', 'err-3');
+    func('-1.2', 'err-4');
 
-    x.assert(func('1.2'), {'instructions': [`\
-const viewport = page.viewport();
-viewport.deviceScaleFactor = 1.2;
-await page.setViewport(viewport);`,
-    ]});
-    x.assert(func('0.2'), {'instructions': [`\
-const viewport = page.viewport();
-viewport.deviceScaleFactor = 0.2;
-await page.setViewport(viewport);`,
-    ]});
+    func('1.2', 'basic-1');
+    func('0.2', 'basic-2');
 }
 
 function checkDragAndDrop(x, func) {
     // check tuple argument
-    x.assert(func('true'), {
-        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
-            'selector or an XPath, found `true`',
-    });
-    x.assert(func('(true)'), {
-        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
-            'selector or an XPath',
-    });
-    x.assert(func('(1,2)'), {
-        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
-            'selector or an XPath, found `1`',
-    });
-    x.assert(func('(1,2,3)'), {
-        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
-            'selector or an XPath',
-    });
-    x.assert(func('("a",2)'), {
-        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
-            'selector or an XPath, found `2`',
-    });
-    x.assert(func('(1,"a")'), {
-        'error': 'expected tuple with two elements being either a position `(x, y)` or a CSS ' +
-            'selector or an XPath, found `1`',
-    });
-    x.assert(func('((1,2,3),"a")'), {
-        'error': 'expected "([number], [number])", found `(1,2,3)`',
-    });
-    x.assert(func('((1,"a"),"a")'), {
-        'error': 'expected "([number], [number])", found `(1,"a")`',
-    });
-    x.assert(func('((1,2),"")'), {
-        'error': 'CSS selector (second argument) cannot be empty',
-        'isXPath': false,
-    });
-    x.assert(func('("", (1,2))'), {
-        'error': 'CSS selector (first argument) cannot be empty',
-        'isXPath': false,
-    });
-    x.assert(func('((-1,2),"")'), {'error': 'X position cannot be negative: `-1`'});
-    x.assert(func('((1,-2),"")'), {'error': 'Y position cannot be negative: `-2`'});
-    x.assert(func('((1.0,2),"")'), {
-        'error': 'expected integer for X position, found float: `1.0`',
-    });
-    x.assert(func('((-1.0,2),"")'), {
-        'error': 'expected integer for X position, found float: `-1.0`',
-    });
-    x.assert(func('((1,2.0),"")'), {
-        'error': 'expected integer for Y position, found float: `2.0`',
-    });
-    x.assert(func('((1,-2.0),"")'), {
-        'error': 'expected integer for Y position, found float: `-2.0`',
-    });
-    x.assert(func('("a",(-1,2))'), {'error': 'X position cannot be negative: `-1`'});
-    x.assert(func('("a",(1,-2))'), {'error': 'Y position cannot be negative: `-2`'});
-    x.assert(func('("a",(1.0,2))'), {
-        'error': 'expected integer for X position, found float: `1.0`',
-    });
-    x.assert(func('("a",(-1.0,2))'), {
-        'error': 'expected integer for X position, found float: `-1.0`',
-    });
-    x.assert(func('("a",(1,2.0))'), {
-        'error': 'expected integer for Y position, found float: `2.0`',
-    });
-    x.assert(func('("a",(1,-2.0))'), {
-        'error': 'expected integer for Y position, found float: `-2.0`',
-    });
+    func('true', 'err-1');
+    func('(true)', 'err-2');
+    func('(1,2)', 'err-3');
+    func('(1,2,3)', 'err-4');
+    func('("a",2)', 'err-5');
+    func('(1,"a")', 'err-6');
+    func('((1,2,3),"a")', 'err-7');
+    func('((1,"a"),"a")', 'err-8');
+    func('((1,2),"")', 'err-9');
+    func('("", (1,2))', 'err-10');
+    func('((-1,2),"")', 'err-11');
+    func('((1,-2),"")', 'err-12');
+    func('((1.0,2),"")', 'err-13');
+    func('((-1.0,2),"")', 'err-14');
+    func('((1,2.0),"")', 'err-15');
+    func('((1,-2.0),"")', 'err-16');
+    func('("a",(-1,2))', 'err-17');
+    func('("a",(1,-2))', 'err-18');
+    func('("a",(1.0,2))', 'err-19');
+    func('("a",(-1.0,2))', 'err-20');
+    func('("a",(1,2.0))', 'err-21');
+    func('("a",(1,-2.0))', 'err-22');
 
-    x.assert(func('((1,2),"a")'), {
-        'instructions': [
-            'const start = [1, 2];\n' +
-            'await page.mouse.move(start[0], start[1]);\n' +
-            'await page.mouse.down();',
-            'let parseDragAndDropElem2 = await page.$("a");\n' +
-            'if (parseDragAndDropElem2 === null) { throw \'"a" not found\'; }\n' +
-            'const parseDragAndDropElem2_box = await parseDragAndDropElem2.boundingBox();\n' +
-            'const end = [parseDragAndDropElem2_box.x + ' +
-            'parseDragAndDropElem2_box.width / 2, parseDragAndDropElem2_box.y + ' +
-            'parseDragAndDropElem2_box.height / 2];\n' +
-            'await page.mouse.move(end[0], end[1]);\n' +
-            'await page.mouse.up();',
-        ],
-    });
-    x.assert(func('("a", (1,2))'), {
-        'instructions': [
-            'let parseDragAndDropElem = await page.$("a");\n' +
-            'if (parseDragAndDropElem === null) { throw \'"a" not found\'; }\n' +
-            'const parseDragAndDropElem_box = await parseDragAndDropElem.boundingBox();\n' +
-            'const start = [parseDragAndDropElem_box.x + ' +
-            'parseDragAndDropElem_box.width / 2, parseDragAndDropElem_box.y + ' +
-            'parseDragAndDropElem_box.height / 2];\n' +
-            'await page.mouse.move(start[0], start[1]);\n' +
-            'await page.mouse.down();',
-            'const end = [1, 2];\n' +
-            'await page.mouse.move(end[0], end[1]);\n' +
-            'await page.mouse.up();',
-        ],
-    });
-    x.assert(func('("a", "b")'), {
-        'instructions': [
-            'let parseDragAndDropElem = await page.$("a");\n' +
-            'if (parseDragAndDropElem === null) { throw \'"a" not found\'; }\n' +
-            'const parseDragAndDropElem_box = await parseDragAndDropElem.boundingBox();\n' +
-            'const start = [parseDragAndDropElem_box.x + parseDragAndDropElem_box.width / 2, ' +
-            'parseDragAndDropElem_box.y + parseDragAndDropElem_box.height / 2];\n' +
-            'await page.mouse.move(start[0], start[1]);\n' +
-            'await page.mouse.down();',
-            'let parseDragAndDropElem2 = await page.$("b");\n' +
-            'if (parseDragAndDropElem2 === null) { throw \'"b" not found\'; }\n' +
-            'const parseDragAndDropElem2_box = await parseDragAndDropElem2.boundingBox();\n' +
-            'const end = [parseDragAndDropElem2_box.x + parseDragAndDropElem2_box.width / 2, ' +
-            'parseDragAndDropElem2_box.y + parseDragAndDropElem2_box.height / 2];\n' +
-            'await page.mouse.move(end[0], end[1]);\n' +
-            'await page.mouse.up();',
-        ],
-    });
+    func('((1,2),"a")', 'basic-1');
+    func('("a", (1,2))', 'basic-2');
+    func('("a", "b")', 'basic-3');
 
     // XPath
-    x.assert(func('("/a",(1,2))'), { 'error': 'XPath must start with `//`'});
-    x.assert(func('((1,2),"//a")'), {
-        'instructions': [
-            'const start = [1, 2];\n' +
-            'await page.mouse.move(start[0], start[1]);\n' +
-            'await page.mouse.down();',
-            'let parseDragAndDropElem2 = await page.$x("//a");\n' +
-            'if (parseDragAndDropElem2.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseDragAndDropElem2 = parseDragAndDropElem2[0];\n' +
-            'const parseDragAndDropElem2_box = await parseDragAndDropElem2.boundingBox();\n' +
-            'const end = [parseDragAndDropElem2_box.x + ' +
-            'parseDragAndDropElem2_box.width / 2, parseDragAndDropElem2_box.y + ' +
-            'parseDragAndDropElem2_box.height / 2];\n' +
-            'await page.mouse.move(end[0], end[1]);\n' +
-            'await page.mouse.up();',
-        ],
-    });
-    x.assert(func('("//a", (1,2))'), {
-        'instructions': [
-            'let parseDragAndDropElem = await page.$x("//a");\n' +
-            'if (parseDragAndDropElem.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseDragAndDropElem = parseDragAndDropElem[0];\n' +
-            'const parseDragAndDropElem_box = await parseDragAndDropElem.boundingBox();\n' +
-            'const start = [parseDragAndDropElem_box.x + parseDragAndDropElem_box.width / 2, ' +
-            'parseDragAndDropElem_box.y + parseDragAndDropElem_box.height / 2];\n' +
-            'await page.mouse.move(start[0], start[1]);\n' +
-            'await page.mouse.down();',
-            'const end = [1, 2];\n' +
-            'await page.mouse.move(end[0], end[1]);\n' +
-            'await page.mouse.up();',
-        ],
-    });
-    x.assert(func('("//a", "//b")'), {
-        'instructions': [
-            'let parseDragAndDropElem = await page.$x("//a");\n' +
-            'if (parseDragAndDropElem.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseDragAndDropElem = parseDragAndDropElem[0];\n' +
-            'const parseDragAndDropElem_box = await parseDragAndDropElem.boundingBox();\n' +
-            'const start = [parseDragAndDropElem_box.x + parseDragAndDropElem_box.width / 2, ' +
-            'parseDragAndDropElem_box.y + parseDragAndDropElem_box.height / 2];\n' +
-            'await page.mouse.move(start[0], start[1]);\n' +
-            'await page.mouse.down();',
-            'let parseDragAndDropElem2 = await page.$x("//b");\n' +
-            'if (parseDragAndDropElem2.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'parseDragAndDropElem2 = parseDragAndDropElem2[0];\n' +
-            'const parseDragAndDropElem2_box = await parseDragAndDropElem2.boundingBox();\n' +
-            'const end = [parseDragAndDropElem2_box.x + parseDragAndDropElem2_box.width / 2, ' +
-            'parseDragAndDropElem2_box.y + parseDragAndDropElem2_box.height / 2];\n' +
-            'await page.mouse.move(end[0], end[1]);\n' +
-            'await page.mouse.up();',
-        ],
-    });
+    func('("/a",(1,2))', 'xpath-1');
+    func('((1,2),"//a")', 'xpath-2');
+    func('("//a", (1,2))', 'xpath-3');
+    func('("//a", "//b")', 'xpath-4');
 
     // Multiline
-    x.assert(func('("a",\n(1,\n-2.0))'), {
-        'error': 'expected integer for Y position, found float: `-2.0`',
-    });
-    x.assert(func('((1\n,2),\n"a")'), {
-        'instructions': [
-            'const start = [1, 2];\n' +
-            'await page.mouse.move(start[0], start[1]);\n' +
-            'await page.mouse.down();',
-            'let parseDragAndDropElem2 = await page.$("a");\n' +
-            'if (parseDragAndDropElem2 === null) { throw \'"a" not found\'; }\n' +
-            'const parseDragAndDropElem2_box = await parseDragAndDropElem2.boundingBox();\n' +
-            'const end = [parseDragAndDropElem2_box.x + ' +
-            'parseDragAndDropElem2_box.width / 2, parseDragAndDropElem2_box.y + ' +
-            'parseDragAndDropElem2_box.height / 2];\n' +
-            'await page.mouse.move(end[0], end[1]);\n' +
-            'await page.mouse.up();',
-        ],
-    });
+    func('("a",\n(1,\n-2.0))', 'multiline-1');
+    func('((1\n,2),\n"a")', 'multiline-2');
 }
 
 function checkEmulate(x, func) {
-    x.assert(func(''), {'error': 'expected string for "device name", found nothing'});
-    x.assert(func('12'), {'error': 'expected string for "device name", found `12`'});
-    x.assert(func('"a"'), {
-        'instructions': [
-            'if (arg.puppeteer.devices["a"] === undefined) { throw \'Unknown device `a`. List of ' +
-            'available devices can be found there: ' +
-            'https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js or ' +
-            'you can use `--show-devices` option\'; } ' +
-            'else { await page.emulate(arg.puppeteer.devices["a"]); }',
-        ]});
+    func('', 'err-1');
+    func('12', 'err-2');
+
+    func('"a"', 'basic-1');
 }
 
 function checkFail(x, func) {
-    x.assert(func(''), {'error': 'expected `true` or `false` value, found nothing'});
-    x.assert(func('hello'), {'error': 'expected `true` or `false` value, found `hello`'});
-    x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
-    x.assert(func('tru'), {'error': 'expected `true` or `false` value, found `tru`'});
-    x.assert(func('false'), {'instructions': ['arg.expectedToFail = false;'], 'wait': false});
-    x.assert(func('true'), {'instructions': ['arg.expectedToFail = true;'], 'wait': false});
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('"true"', 'err-3');
+    func('tru', 'err-4');
+
+    func('false', 'basic-1');
+    func('true', 'basic-2');
 }
 
 function checkFailOnJsError(x, func) {
-    x.assert(func(''), {'error': 'expected `true` or `false` value, found nothing'});
-    x.assert(func('hello'), {'error': 'expected `true` or `false` value, found `hello`'});
-    x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
-    x.assert(func('tru'), {'error': 'expected `true` or `false` value, found `tru`'});
-    x.assert(func('false'), {
-        'instructions': [
-            'const oldValue = arg.failOnJsError;\n' +
-            'arg.failOnJsError = false;\n' +
-            'if (oldValue !== true) {\n' +
-            '    arg.jsErrors.splice(0, arg.jsErrors.length);\n' +
-            '}',
-        ],
-        'wait': false,
-    });
-    x.assert(func('true'), {
-        'instructions': [
-            'const oldValue = arg.failOnJsError;\n' +
-            'arg.failOnJsError = true;\n' +
-            'if (oldValue !== true) {\n' +
-            '    arg.jsErrors.splice(0, arg.jsErrors.length);\n' +
-            '}',
-        ],
-        'wait': false,
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('"true"', 'err-3');
+    func('tru', 'err-4');
+
+    func('false', 'basic-1');
+    func('true', 'basic-2');
 }
 
 function checkFailOnRequestError(x, func) {
-    x.assert(func(''), {'error': 'expected `true` or `false` value, found nothing'});
-    x.assert(func('hello'), {'error': 'expected `true` or `false` value, found `hello`'});
-    x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
-    x.assert(func('tru'), {'error': 'expected `true` or `false` value, found `tru`'});
-    x.assert(func('false'), {
-        'instructions': [
-            'const oldValue = arg.failOnRequestError;\n' +
-            'arg.failOnRequestError = false;\n' +
-            'if (oldValue !== true) {\n' +
-            '    arg.requestErrors.splice(0, arg.requestErrors.length);\n' +
-            '}',
-        ],
-        'wait': false,
-    });
-    x.assert(func('true'), {
-        'instructions': [
-            'const oldValue = arg.failOnRequestError;\n' +
-            'arg.failOnRequestError = true;\n' +
-            'if (oldValue !== true) {\n' +
-            '    arg.requestErrors.splice(0, arg.requestErrors.length);\n' +
-            '}',
-        ],
-        'wait': false,
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('"true"', 'err-3');
+    func('tru', 'err-4');
+
+    func('false', 'basic-1');
+    func('true', 'basic-2');
 }
 
 function checkFocus(x, func) {
-    x.assert(func('a'), {'error': 'expected a CSS selector or an XPath, found `a`'});
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
-    x.assert(func('\'\''), {
-        'error': 'CSS selector cannot be empty',
-        'isXPath': false,
-    });
-    x.assert(func('"a"'), {'instructions': ['await page.focus("a");']});
-    x.assert(func('\'a\''), {'instructions': ['await page.focus("a");']});
-    x.assert(func('\'"a\''), {'instructions': ['await page.focus("\\"a");']});
+    func('a', 'err-1');
+    func('"', 'err-2');
+    func('\'', 'err-3');
+    func('\'\'', 'err-4');
+
+    func('"a"', 'basic-1');
+    func('\'a\'', 'basic-2');
+    func('\'"a\'', 'basic-3');
 
     // XPath
-    x.assert(func('"/a"'), { 'error': 'XPath must start with `//`'});
-    x.assert(func('"//a"'), {
-        'instructions': [
-            'let parseFocusVar = await page.$x("//a");\n' +
-            'if (parseFocusVar.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseFocusVar = parseFocusVar[0];\n' +
-            'await parseFocusVar.focus();',
-        ],
-    });
+    func('"/a"', 'xpath-1');
+    func('"//a"', 'xpath-2');
 }
 
 function checkFontSize(x, func) {
-    x.assert(func(''), {'error': 'expected a font size (in pixels), found nothing'});
-    x.assert(func('hello'), {'error': 'expected a font size (in pixels), found `hello`'});
-    x.assert(func('"12"'), {'error': 'expected a font size (in pixels), found `"12"`'});
-    x.assert(func('tru'), {'error': 'expected a font size (in pixels), found `tru`'});
-    x.assert(func('12'), {
-        'instructions': [
-            'const client = await page.target().createCDPSession();\n' +
-            'await client.send("Page.enable");\n' +
-            'await client.send("Page.setFontSizes", {\n' +
-                'fontSizes: {\n' +
-                    'standard: 12,\n' +
-                    'fixed: 12,\n' +
-                '}\n' +
-            '});',
-        ],
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('"12"', 'err-3');
+    func('tru', 'err-4');
+
+    func('12', 'basic-1');
 }
 
 function checkGeolocation(x, func) {
-    x.assert(func(''), {
-        'error': 'expected (longitude [number], latitude [number]), found nothing',
-    });
-    x.assert(func('"a"'), {
-        'error': 'expected (longitude [number], latitude [number]), found `"a"`',
-    });
-    x.assert(func('("a", "b")'), {
-        'error': 'expected number for longitude (first argument), found `"a"`',
-    });
-    x.assert(func('("12", 13)'), {
-        'error': 'expected number for longitude (first argument), found `"12"`',
-    });
-    x.assert(func('(12, "13")'), {
-        'error': 'expected number for latitude (second argument), found `"13"`',
-    });
+    func('', 'err-1');
+    func('"a"', 'err-2');
+    func('("a", "b")', 'err-3');
+    func('("12", 13)', 'err-4');
+    func('(12, "13")', 'err-5');
 
-    x.assert(func('(12, 13)'), {'instructions': ['await page.setGeolocation(12, 13);']});
+    func('(12, 13)', 'basic-1');
 
     // Multiline
-    x.assert(func('(12\n,\n "13")'), {
-        'error': 'expected number for latitude (second argument), found `"13"`',
-    });
-    x.assert(func('(12\n,\n 13)'), {'instructions': ['await page.setGeolocation(12, 13);']});
+    func('(12\n,\n "13")', 'multiline-1');
+    func('(12\n,\n 13)', 'multiline-2');
 }
 
 function checkGoTo(x, func) {
-    x.assert(func('"a"'), {'error': 'a relative path or a full URL was expected, found `a`'});
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('"http:/a"'),
-        {'error': 'a relative path or a full URL was expected, found `http:/a`'});
-    x.assert(func('"https:/a"'),
-        {'error': 'a relative path or a full URL was expected, found `https:/a`'});
-    x.assert(func('"https://a"'), {
-        'instructions': [
-            'await page.goto("https://a");',
-            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-        ],
-    });
-    x.assert(func('"www.x"'), {
-        'instructions': [
-            'await page.goto("www.x");',
-            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-        ],
-    });
-    x.assert(func('"/a"'), {
-        'instructions': [
-            'await page.goto(page.url().split("/").slice(0, -1).join("/") + "/a");',
-            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-        ],
-    });
-    x.assert(func('"./a"'), {
-        'instructions': [
-            'await page.goto(page.url().split("/").slice(0, -1).join("/") + "/./a");',
-            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-        ],
-    });
-    x.assert(func('"file:///a"'), {
-        'instructions': [
-            'await page.goto("file:///a");',
-            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-        ],
-    });
+    func('"a"', 'err-1');
+    func('"', 'err-2');
+    func('"http:/a"', 'err-3');
+    func('"https:/a"', 'err-4');
+    func('"http://foo/" + |url| + "/fa"', 'err-5');
+
+    func('"https://a"', 'basic-1');
+    func('"www.x"', 'basic-2');
+    func('"/a"', 'basic-3');
+    func('"./a"', 'basic-4');
+    func('"file:///a"', 'basic-5');
+
     // `docPath` parameter always ends with '/'
-    x.assert(func('"file://" + |doc_path| + "/a"', {'variables': {'doc_path': 'foo'}}), {
-        'instructions': [
-            'await page.goto("file://foo/a");',
-            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-        ],
-    });
-    x.assert(func('|url|', {'variables': {'url': 'http://foo'}}), {
-        'instructions': [
-            'await page.goto("http://foo");',
-            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-        ],
-    });
-    x.assert(func('"http://foo/" + |url| + "fa"', {'variables': {'url': 'tadam/'}}), {
-        'instructions': [
-            'await page.goto("http://foo/tadam/fa");',
-            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-        ],
-    });
-    x.assert(func('"http://foo/" + |url| + "/fa"', {'variables': {'url': 'tadam'}}), {
-        'instructions': [
-            'await page.goto("http://foo/tadam/fa");',
-            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-        ],
-    });
-    x.assert(func('"http://foo/" + |url| + "/fa"'), {
-        'error': 'variable `url` not found in options nor environment',
-    });
+    func('"file://" + |doc_path| + "/a"', 'var-1', {'variables': {'doc_path': 'foo'}});
+    func('|url|', 'var-2', {'variables': {'url': 'http://foo'}});
+    func('"http://foo/" + |url| + "fa"', 'var-3', {'variables': {'url': 'tadam/'}});
+    func('"http://foo/" + |url| + "/fa"', 'var-4', {'variables': {'url': 'tadam'}});
 }
 
-function checkHistoryInner(x, func, name) {
+function checkHistory(x, func) {
+    func('"a"', 'err-1');
+    func('-12', 'err-2');
+    func('-12.0', 'err-3');
+    func('12.0', 'err-4');
+
     // check tuple argument
-    x.assert(func(''), {
-        'instructions': [
-            `const ret = page.go${name}({'waitUntil': 'domcontentloaded', ` +
-                '\'timeout\': 30000});\n' +
-            'if (ret === null) {\n' +
-            `throw "cannot go ${name.toLowerCase()} in history";\n` +
-            '}\n' +
-            'await ret;',
-        ],
-    });
-    x.assert(func('"a"'), {'error': 'expected either [integer] or no arguments, found a string'});
-    x.assert(func('12'), {
-        'instructions': [
-            `const ret = page.go${name}({'waitUntil': 'domcontentloaded', ` +
-                '\'timeout\': 12});\n' +
-            'if (ret === null) {\n' +
-            `throw "cannot go ${name.toLowerCase()} in history";\n` +
-            '}\n' +
-            'await ret;',
-        ],
-    });
-    x.assert(func('12 24'), {'error': 'expected nothing, found `2` after `12`'});
-    x.assert(func('0'), {
-        'instructions': [
-            `const ret = page.go${name}({'waitUntil': 'domcontentloaded', ` +
-                '\'timeout\': 0});\n' +
-            'if (ret === null) {\n' +
-            `throw "cannot go ${name.toLowerCase()} in history";\n` +
-            '}\n' +
-            'await ret;',
-        ],
-        'warnings': 'You passed 0 as timeout, it means the timeout has been disabled on ' +
-            `this history-go-${name.toLowerCase()}`,
-    });
-    x.assert(func('-12'), {'error': 'timeout cannot be negative: `-12`'});
-    x.assert(func('-12.0'), {'error': 'expected integer for timeout, found float: `-12.0`'});
-    x.assert(func('12.0'), {'error': 'expected integer for timeout, found float: `12.0`'});
-}
-
-function checkHistoryGoBack(x, func) {
-    checkHistoryInner(x, func, 'Back');
-}
-
-function checkHistoryGoForward(x, func) {
-    checkHistoryInner(x, func, 'Forward');
+    func('', 'basic-1');
+    func('12', 'basic-2');
+    func('12 24', 'basic-3');
+    func('0', 'basic-4');
 }
 
 function checkJavascript(x, func) {
-    x.assert(func(''), {'error': 'expected `true` or `false` value, found nothing'});
-    x.assert(func('"a"'), {'error': 'expected `true` or `false` value, found `"a"`'});
-    x.assert(func('true'), {
-        'instructions': [
-            'await page.setJavaScriptEnabled(true);',
-        ],
-    });
+    func('', 'err-1');
+    func('"a"', 'err-2');
+
+    func('true', 'basic-1');
 }
 
 function checkLocalStorage(x, func) {
-    x.assert(func('hello'), {'error': 'expected JSON, found `hello`'});
-    x.assert(func('{').error !== undefined); // JSON syntax error
-    x.assert(func('{"a": x}'), {'error': 'Only `null` ident is allowed, found `x`'});
-    x.assert(func('{"a": {"a": "x"}}'), {
-        'instructions': [],
-        'warnings': ['Ignoring recursive entry with key `"a"`'],
-    });
+    func('hello', 'err-1');
+    // func('{').error !== undefined); // JSON syntax error
+    func('{"a": x}', 'err-3');
+    func('{"a": {"a": "x"}}', 'err-4');
 
-    x.assert(func('{"a": 1}'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'localStorage.setItem("a", "1");\n' +
-            '})',
-        ],
-    });
-    x.assert(func('{"a": "1"}'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'localStorage.setItem("a", "1");\n' +
-            '})',
-        ],
-    });
-    x.assert(func('{"a": "1", "b": "2px"}'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'localStorage.setItem("a", "1");\n' +
-            'localStorage.setItem("b", "2px");\n' +
-            '})',
-        ],
-    });
-    x.assert(func('{"a": "1"}'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'localStorage.setItem("a", "1");\n' +
-            '})',
-        ],
-    });
-    x.assert(func('{"a": null}'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'localStorage.removeItem("a");\n' +
-            '})',
-        ],
-    });
+    func('{"a": 1}', 'basic-1');
+    func('{"a": "1"}', 'basic-2');
+    func('{"a": "1", "b": "2px"}', 'basic-3');
+    func('{"a": "1"}', 'basic-4');
+    func('{"a": null}', 'basic-5');
 
     // Multiline
-    x.assert(func('{"a"\n: \n"1"}'), {
-        'instructions': [
-            'await page.evaluate(() => {\n' +
-            'localStorage.setItem("a", "1");\n' +
-            '})',
-        ],
-    });
+    func('{"a"\n: \n"1"}', 'multiline-1');
 }
 
 function checkMoveCursorTo(x, func) {
     // Check position
-    x.assert(func('hello'), {
-        'error': 'expected a position or a CSS selector or an XPath, found `hello`',
-    });
-    x.assert(func('()'), {'error': 'expected "([number], [number])", found `()`'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {
-        'error': 'expected "([number], [number])", found `(1)`',
-    });
-    x.assert(func('(1,)'), {
-        'error': 'expected "([number], [number])", found `(1,)`',
-    });
-    x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
-    x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
-    x.assert(func('(a,2)'), {
-        'error': 'expected "([number], [number])", found `(a,2)`',
-    });
-    x.assert(func('(-1,2)'), {'error': 'X position cannot be negative: `-1`'});
-    x.assert(func('(1,-2)'), {'error': 'Y position cannot be negative: `-2`'});
-    x.assert(func('(1.0,2)'), {'error': 'expected integer for X position, found float: `1.0`'});
-    x.assert(func('(-1.0,2)'), {'error': 'expected integer for X position, found float: `-1.0`'});
-    x.assert(func('(2,1.0)'), {'error': 'expected integer for Y position, found float: `1.0`'});
-    x.assert(func('(2,-1.0)'), {'error': 'expected integer for Y position, found float: `-1.0`'});
+    func('hello', 'err-1');
+    func('()', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1,)', 'err-5');
+    func('(1,,2)', 'err-6');
+    func('(,2)', 'err-7');
+    func('(a,2)', 'err-8');
+    func('(-1,2)', 'err-9');
+    func('(1,-2)', 'err-10');
+    func('(1.0,2)', 'err-11');
+    func('(-1.0,2)', 'err-12');
+    func('(2,1.0)', 'err-13');
+    func('(2,-1.0)', 'err-14');
+    func('\'\'', 'err-15');
 
-    x.assert(func('(1,2,)'), {'instructions': ['await page.mouse.move(1, 2);']});
-    x.assert(func('(1,2)'), {'instructions': ['await page.mouse.move(1, 2);']});
+    func('(1,2,)', 'pos-1');
+    func('(1,2)', 'pos-2');
 
     // Check css selector
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
-    x.assert(func('\'\''), {
-        'error': 'CSS selector cannot be empty',
-        'isXPath': false,
-    });
-    x.assert(func('"a"'), {'instructions': ['await page.hover("a");']});
-    x.assert(func('\'a\''), {'instructions': ['await page.hover("a");']});
-    x.assert(func('\'"a\''), {'instructions': ['await page.hover("\\"a");']});
+    func('"', 'basic-1');
+    func('\'', 'basic-2');
+    func('"a"', 'basic-3');
+    func('\'a\'', 'basic-4');
+    func('\'"a\'', 'basic-5');
 
     // XPath
-    x.assert(func('"/a"'), { 'error': 'XPath must start with `//`'});
-    x.assert(func('"//a"'), {
-        'instructions': [
-            'let parseMoveCursorToVar = await page.$x("//a");\n' +
-            'if (parseMoveCursorToVar.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseMoveCursorToVar = parseMoveCursorToVar[0];\n' +
-            'await parseMoveCursorToVar.hover();',
-        ],
-    });
+    func('"//a"', 'xpath-1');
+    func('"/a"', 'xpath-2');
 
     // Multiline
-    x.assert(func('(\n-1\n,2)'), {'error': 'X position cannot be negative: `-1`'});
-    x.assert(func('(1\n,\n2)'), {'instructions': ['await page.mouse.move(1, 2);']});
+    func('(\n-1\n,2)', 'multiline-1');
+    func('(1\n,\n2)', 'multiline-2');
 }
 
 function checkParseContent(x, func) {
@@ -7055,3251 +1299,985 @@ value + "\`");
 }
 
 function checkPauseOnError(x, func) {
-    x.assert(func('hello'), {'error': 'expected `true` or `false` value, found `hello`'});
-    x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
-    x.assert(func('tru'), {'error': 'expected `true` or `false` value, found `tru`'});
-    x.assert(func('false'), {
-        'instructions': [
-            'arg.pauseOnError = false;',
-        ],
-        'wait': false,
-    });
-    x.assert(func('true'), {
-        'instructions': [
-            'arg.pauseOnError = true;',
-        ],
-        'wait': false,
-    });
+    func('hello', 'err-1');
+    func('"true"', 'err-2');
+    func('tru', 'err-3');
+
+    func('false', 'basic-1');
+    func('true', 'basic-2');
 }
 
 function checkPermissions(x, func) {
-    x.assert(func(''), {'error': 'expected an array of strings, found nothing'});
-    x.assert(func('"a"'), {'error': 'expected an array of strings, found `"a"`'});
-    x.assert(func('("a", "b")'), {'error': 'expected an array of strings, found `("a", "b")`'});
-    x.assert(func('["12", 13]'), {
-        'error': 'all array\'s elements must be of the same kind: expected array of `string` ' +
-            '(because the first element is of this kind), found `number` at position 1',
-    });
-    x.assert(func('[12, "13"]'), {
-        'error': 'all array\'s elements must be of the same kind: expected array of `number` ' +
-            '(because the first element is of this kind), found `string` at position 1',
-    });
-    x.assert(func('["12"]'), {
-        'error': '`"12"` is an unknown permission, you can see the list of available permissions ' +
-            'with the `--show-permissions` option',
-    });
+    func('', 'err-1');
+    func('"a"', 'err-2');
+    func('("a", "b")', 'err-3');
+    func('["12", 13]', 'err-4');
+    func('[12, "13"]', 'err-5');
+    func('["12"]', 'err-6');
 
-    x.assert(func('["camera", "push"]'), {
-        'instructions': [
-            'arg.permissions = ["camera", "push"];',
-            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-        ],
-    });
+    func('["camera", "push"]', 'basic-1');
 
     // Multiline
-    x.assert(func('[\n"12"\n]'), {
-        'error': '`"12"` is an unknown permission, you can see the list of available permissions ' +
-            'with the `--show-permissions` option',
-    });
-    x.assert(func('[\n"camera"\n, "push"]'), {
-        'instructions': [
-            'arg.permissions = ["camera", "push"];',
-            'await arg.browser.overridePermissions(page.url(), arg.permissions);',
-        ],
-    });
+    func('[\n"12"\n]', 'multiline-1');
+    func('[\n"camera"\n, "push"]', 'multiline-2');
 }
 
 function checkPressKey(x, func) {
     // check tuple argument
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('("a", "b"'), {'error': 'expected `)` or `,` after `"b"`'});
-    x.assert(func('("a")'),
-        {'error': 'invalid number of arguments in tuple, expected [string] or [integer] or ' +
-                  '([string], [integer]) or ([integer], [integer])'});
-    x.assert(func('("a", )'), {
-        'error': 'invalid number of arguments in tuple, expected [string] or [integer] or ' +
-            '([string], [integer]) or ([integer], [integer])',
-    });
-    x.assert(func('("a", "b", "c")'),
-        {'error': 'invalid number of arguments in tuple, expected [string] or [integer] or ' +
-                  '([string], [integer]) or ([integer], [integer])'});
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('(\'\', "b")'),
-        {'error': 'expected an integer as tuple second argument, found a string'});
-    x.assert(func('("a", "b")'),
-        {'error': 'expected an integer as tuple second argument, found a string'});
-    x.assert(func('("", 13)'), {'error': 'key cannot be empty'});
-    x.assert(func('("a", 13.2)'), {'error': 'expected integer for delay, found float: `13.2`'});
-    x.assert(func('("a", -13.2)'), {'error': 'expected integer for delay, found float: `-13.2`'});
-    x.assert(func('("a", -13)'), {'error': 'delay cannot be negative: `-13`'});
-    x.assert(func('("a", 13)'), {
-        'instructions': [
-            'await page.keyboard.press("a", 13)',
-        ],
-    });
-    x.assert(func('(13, "a")'),
-        {'error': 'expected an integer as tuple second argument, found a string'});
-    x.assert(func('(-13, 13)'), {'error': 'keycode cannot be negative: `-13`'});
-    x.assert(func('(-13.2, 13)'), {'error': 'expected integer for keycode, found float: `-13.2`'});
-    x.assert(func('(13.2, 13)'), {'error': 'expected integer for keycode, found float: `13.2`'});
-    x.assert(func('(13, 13)'), {
-        'instructions': [
-            'await page.keyboard.press(String.fromCharCode(13), 13)',
-        ],
-    });
+    func('"', 'err-1');
+    func('("a", "b"', 'err-2');
+    func('("a")', 'err-3');
+    func('("a", )', 'err-4');
+    func('("a", "b", "c")', 'err-5');
+    func('("a", "b" "c")', 'err-6');
+    func('(\'\', "b")', 'err-7');
+    func('("a", "b")', 'err-8');
+    func('("", 13)', 'err-9');
+    func('("a", 13.2)', 'err-10');
+    func('("a", -13.2)', 'err-11');
+    func('("a", -13)', 'err-12');
+    func('(13, "a")', 'err-13');
+    func('(-13, 13)', 'err-14');
+    func('(-13.2, 13)', 'err-15');
+    func('(13.2, 13)', 'err-16');
+
+    func('("a", 13)', 'basic-1');
+    func('(13, 13)', 'basic-2');
 
     // check string argument
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
-    x.assert(func('\'\''), {'error': 'key cannot be empty'});
-    x.assert(func('"a"'), {'instructions': ['await page.keyboard.press("a")']});
-    x.assert(func('\'a\''), {'instructions': ['await page.keyboard.press("a")']});
-    x.assert(func('\'"a\''), {'instructions': ['await page.keyboard.press("\\"a")']});
+    func('"', 'str-1');
+    func('\'', 'str-2');
+    func('\'\'', 'str-3');
+    func('"a"', 'str-4');
+    func('\'a\'', 'str-5');
+    func('\'"a\'', 'str-6');
 
     // check integer argument
-    x.assert(func('13.2'), {'error': 'expected integer for keycode, found float: `13.2`'});
-    x.assert(func('-13.2'), {'error': 'expected integer for keycode, found float: `-13.2`'});
-    x.assert(func('-13'), {'error': 'keycode cannot be negative: `-13`'});
-    x.assert(func('13'), {'instructions': ['await page.keyboard.press(String.fromCharCode(13))']});
+    func('13.2', 'int-1');
+    func('-13.2', 'int-2');
+    func('-13', 'int-3');
+    func('13', 'int-4');
 
     // Multiline
-    x.assert(func('(\n"a", \n-13)'), {'error': 'delay cannot be negative: `-13`'});
-    x.assert(func('(\n13\n, 13)'), {
-        'instructions': [
-            'await page.keyboard.press(String.fromCharCode(13), 13)',
-        ],
-    });
+    func('(\n"a", \n-13)', 'multiline-1');
+    func('(\n13\n, 13)', 'multiline-2');
 }
 
 function checkReload(x, func) {
+    func('"a"', 'err-1');
+    func('12 24', 'err-2');
+    func('-12', 'err-3');
+    func('-12.0', 'err-4');
+    func('12.0', 'err-5');
+
     // check tuple argument
-    x.assert(func(''), {
-        'instructions': [
-            'const ret = page.reload({\'waitUntil\': \'domcontentloaded\', ' +
-                '\'timeout\': 30000});\n' +
-            'await ret;',
-        ],
-    });
-    x.assert(func('"a"'), {'error': 'expected either [integer] or no arguments, found a string'});
-    x.assert(func('12'), {
-        'instructions': [
-            'const ret = page.reload({\'waitUntil\': \'domcontentloaded\', ' +
-                '\'timeout\': 12});\n' +
-            'await ret;',
-        ],
-    });
-    x.assert(func('12 24'), {'error': 'expected nothing, found `2` after `12`'});
-    x.assert(func('0'), {
-        'instructions': [
-            'const ret = page.reload({\'waitUntil\': \'domcontentloaded\', ' +
-                '\'timeout\': 0});\n' +
-            'await ret;',
-        ],
-        'warnings': 'You passed 0 as timeout, it means the timeout has been disabled on ' +
-            'this reload',
-    });
-    x.assert(func('-12'), {'error': 'timeout cannot be negative: `-12`'});
-    x.assert(func('-12.0'), {'error': 'expected integer for timeout, found float: `-12.0`'});
-    x.assert(func('12.0'), {'error': 'expected integer for timeout, found float: `12.0`'});
+    func('', 'basic-1');
+    func('12', 'basic-2');
+    func('0', 'basic-3');
 }
 
 function checkScreenshot(x, func) {
-    x.assert(func(''), {'error': 'expected a string or a tuple, found nothing'});
-    x.assert(func('hello'), {'error': 'expected a string or a tuple, found `hello`'});
-    x.assert(func('"a"'), {
-        'instructions': [
-            'const screenshotElem = page;\n' +
-            'await screenshotElem.screenshot({"path":"a.png","fullPage":true});',
-        ],
-        'wait': false,
-        'infos': ['Generating screenshot into `a.png`'],
-    });
-    x.assert(func('("a")'), {
-        'instructions': [
-            'const screenshotElem = page;\n' +
-            'await screenshotElem.screenshot({"path":"a.png","fullPage":true});',
-        ],
-        'wait': false,
-        'infos': ['Generating screenshot into `a.png`'],
-    });
-    x.assert(func('("a", "b")'), {
-        'instructions': [
-            'let screenshotElem = await page.$("b");\n' +
-            'if (screenshotElem === null) { throw \'"b" not found\'; }\n' +
-            'await screenshotElem.screenshot({"path":"a.png","fullPage":false});',
-        ],
-        'wait': false,
-        'infos': ['Generating screenshot for CSS selector `b` into `a.png`'],
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+
+    func('"a"', 'basic-1');
+    func('("a")', 'basic-2');
+    func('("a", "b")', 'basic-3');
 
     // XPath
-    x.assert(func('("a", "//b")'), {
-        'instructions': [
-            'let screenshotElem = await page.$x("//b");\n' +
-            'if (screenshotElem.length === 0) { throw \'XPath "//b" not found\'; }\n' +
-            'screenshotElem = screenshotElem[0];\n' +
-            'await screenshotElem.screenshot({"path":"a.png","fullPage":false});',
-        ],
-        'wait': false,
-        'infos': ['Generating screenshot for XPath `//b` into `a.png`'],
-    });
+    func('("a", "//b")', 'xpath-1');
 }
 
 function checkScreenshotComparison(x, func) {
-    x.assert(func(''), {'error': 'expected boolean or CSS selector or XPath, found nothing'});
-    x.assert(func('hello'), {'error': 'expected boolean or CSS selector or XPath, found `hello`'});
-    x.assert(func('"true"'), {
-        'instructions': ['arg.screenshotComparison = "true";'],
-        'wait': false,
-        'warnings': '`"true"` is a string and will be used as CSS selector. If you want to ' +
-            'set `true` or `false` value, remove quotes.',
-    });
-    x.assert(func('tru'), {'error': 'expected boolean or CSS selector or XPath, found `tru`'});
-    x.assert(func('false'), {'instructions': ['arg.screenshotComparison = false;'], 'wait': false});
-    x.assert(func('true'), {'instructions': ['arg.screenshotComparison = true;'], 'wait': false});
-    x.assert(func('\'\''), {
-        'error': 'CSS selector cannot be empty',
-        'isXPath': false,
-    });
-    x.assert(func('"test"'), {
-        'instructions': ['arg.screenshotComparison = "test";'],
-        'wait': false,
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('tru', 'err-3');
+
+    func('"true"', 'basic-1');
+    func('false', 'basic-2');
+    func('true', 'basic-3');
+    func('\'\'', 'basic-4');
+    func('"test"', 'basic-5');
 
     // XPath
-    x.assert(func('"/a"'), { 'error': 'XPath must start with `//`'});
-    x.assert(func('"//a"'), {'instructions': ['arg.screenshotComparison = "//a";'], 'wait': false});
+    func('"/a"', 'xpath-1');
+    func('"//a"', 'xpath-2');
 }
 
 function checkScrollTo(x, func) {
     // Check position
-    x.assert(func('hello'), {
-        'error': 'expected a position or a CSS selector or an XPath, found `hello`',
-    });
-    x.assert(func('()'), {'error': 'expected "([number], [number])", found `()`'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {
-        'error': 'expected "([number], [number])", found `(1)`',
-    });
-    x.assert(func('(1,)'), {
-        'error': 'expected "([number], [number])", found `(1,)`',
-    });
-    x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
-    x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
-    x.assert(func('(a,2)'), {
-        'error': 'expected "([number], [number])", found `(a,2)`',
-    });
-    x.assert(func('(-1,2)'), {'error': 'X position cannot be negative: `-1`'});
-    x.assert(func('(1,-2)'), {'error': 'Y position cannot be negative: `-2`'});
-    x.assert(func('(-1.0,2)'), {'error': 'expected integer for X position, found float: `-1.0`'});
-    x.assert(func('(1.0,2)'), {'error': 'expected integer for X position, found float: `1.0`'});
-    x.assert(func('(2,-1.0)'), {'error': 'expected integer for Y position, found float: `-1.0`'});
-    x.assert(func('(2,1.0)'), {'error': 'expected integer for Y position, found float: `1.0`'});
-    x.assert(func('(1,2)'), {'instructions': ['await page.mouse.move(1, 2);']});
+    func('hello', 'err-1');
+    func('()', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1,)', 'err-5');
+    func('(1,,2)', 'err-6');
+    func('(,2)', 'err-7');
+    func('(a,2)', 'err-8');
+    func('(-1,2)', 'err-9');
+    func('(1,-2)', 'err-10');
+    func('(-1.0,2)', 'err-11');
+    func('(1.0,2)', 'err-12');
+    func('(2,-1.0)', 'err-13');
+    func('(2,1.0)', 'err-14');
 
-
-    x.assert(func('(1,2,)'), {'instructions': ['await page.mouse.move(1, 2);']});
+    func('(1,2)', 'pos-1');
+    func('(1,2,)', 'pos-2');
 
     // Check css selector
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
-    x.assert(func('\'\''), {
-        'error': 'CSS selector cannot be empty',
-        'isXPath': false,
-    });
-    x.assert(func('"a"'), {'instructions': ['await page.hover("a");']});
-    x.assert(func('\'a\''), {'instructions': ['await page.hover("a");']});
-    x.assert(func('\'"a\''), {'instructions': ['await page.hover("\\"a");']});
+    func('"', 'basic-1');
+    func('\'', 'basic-2');
+    func('\'\'', 'basic-3');
+    func('"a"', 'basic-4');
+    func('\'a\'', 'basic-5');
+    func('\'"a\'', 'basic-6');
 
     // XPath
-    x.assert(func('"/a"'), { 'error': 'XPath must start with `//`'});
-    x.assert(func('"//a"'), {
-        'instructions': [
-            'let parseMoveCursorToVar = await page.$x("//a");\n' +
-            'if (parseMoveCursorToVar.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseMoveCursorToVar = parseMoveCursorToVar[0];\n' +
-            'await parseMoveCursorToVar.hover();',
-        ],
-    });
+    func('"/a"', 'xpath-1');
+    func('"//a"', 'xpath-2');
 
     // Multiline
-    x.assert(func('(a,\n2\n)'), {
-        'error': 'expected "([number], [number])", found `(a,\n2\n)`',
-    });
-    x.assert(func('(1\n,\n2)'), {'instructions': ['await page.mouse.move(1, 2);']});
+    func('(a,\n2\n)', 'multiline-1');
+    func('(1\n,\n2)', 'multiline-2');
 }
 
 function checkShowText(x, func) {
-    x.assert(func('hello'), {'error': 'expected `true` or `false` value, found `hello`'});
-    x.assert(func('"true"'), {'error': 'expected `true` or `false` value, found `"true"`'});
-    x.assert(func('tru'), {'error': 'expected `true` or `false` value, found `tru`'});
-    x.assert(func('false'), {
-        'instructions': [
-            'arg.showText = false;',
-            'await page.evaluate(() => {\n' +
-            'window.browserUiCreateNewStyleElement(\'* { color: ' +
-            'rgba(0,0,0,0) !important; }\', \'browser-ui-test-style-text-hide\');\n' +
-            '});',
-        ],
-    });
-    x.assert(func('true'), {
-        'instructions': [
-            'arg.showText = true;',
-            'await page.evaluate(() => {\n' +
-            'let tmp = document.getElementById(\'browser-ui-test-style-text-hide\');\n' +
-            'if (tmp) { tmp.remove(); }\n' +
-            '});',
-        ],
-    });
+    func('hello', 'err-1');
+    func('"true"', 'err-2');
+    func('tru', 'err-3');
+
+    func('false', 'basic-1');
+    func('true', 'basic-2');
 }
 
 function checkSize(x, func) {
-    x.assert(func(''), {'error': 'expected `([number], [number])`, found nothing'});
-    x.assert(func('hello'), {'error': 'expected `([number], [number])`, found `hello`'});
-    x.assert(func('()'), {'error': 'expected "([number], [number])", found `()`'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {
-        'error': 'expected "([number], [number])", found `(1)`',
-    });
-    x.assert(func('(1,)'), {
-        'error': 'expected "([number], [number])", found `(1,)`',
-    });
-    x.assert(func('(1,,2)'), {'error': 'unexpected `,` after `,`'});
-    x.assert(func('(,2)'), {'error': 'unexpected `,` as first element'});
-    x.assert(func('(a,2)'), {
-        'error': 'expected "([number], [number])", found `(a,2)`',
-    });
-    x.assert(func('(-1,2)'), {'error': 'width cannot be negative: `-1`'});
-    x.assert(func('(1,-2)'), {'error': 'height cannot be negative: `-2`'});
-    x.assert(func('(1.0,2)'), {'error': 'expected integer for width, found float: `1.0`'});
-    x.assert(func('(-1.0,2)'), {'error': 'expected integer for width, found float: `-1.0`'});
-    x.assert(func('(1,2.0)'), {'error': 'expected integer for height, found float: `2.0`'});
-    x.assert(func('(1,-2.0)'), {'error': 'expected integer for height, found float: `-2.0`'});
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('()', 'err-3');
+    func('(', 'err-4');
+    func('(1)', 'err-5');
+    func('(1,)', 'err-6');
+    func('(1,,2)', 'err-7');
+    func('(,2)', 'err-8');
+    func('(a,2)', 'err-9');
+    func('(-1,2)', 'err-10');
+    func('(1,-2)', 'err-11');
+    func('(1.0,2)', 'err-12');
+    func('(-1.0,2)', 'err-13');
+    func('(1,2.0)', 'err-14');
+    func('(1,-2.0)', 'err-15');
 
-    x.assert(func('(1,2)'), {'instructions': [`\
-const viewport = page.viewport();
-viewport.width = 1;
-viewport.height = 2;
-await page.setViewport(viewport);`,
-    ]});
-    x.assert(func('(1,2,)'), {'instructions': [`\
-const viewport = page.viewport();
-viewport.width = 1;
-viewport.height = 2;
-await page.setViewport(viewport);`,
-    ]});
+    func('(1,2)', 'basic-1');
+    func('(1,2,)', 'basic-2');
     // Multiline
-    x.assert(func('(1,\n-2.0)'), {'error': 'expected integer for height, found float: `-2.0`'});
-    x.assert(func('(1\n,2)'), {'instructions': [`\
-const viewport = page.viewport();
-viewport.width = 1;
-viewport.height = 2;
-await page.setViewport(viewport);`,
-    ]});
+    func('(1,\n-2.0)', 'multiline-1');
+    func('(1\n,2)', 'multiline-2');
 }
 
 function checkStoreAttribute(x, func) {
-    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
-    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {'error': 'expected 3 elements in the tuple, found 1 element'});
-    x.assert(func('(1, 1, 1)'), {
-        'error': 'expected first argument to be an ident, found a number (`1`)',
-    });
-    x.assert(func('(a, 1, 1)'), {
-        'error': 'expected second argument to be a CSS selector or an XPath, found a number (`1`)',
-    });
-    x.assert(func('(a, "1", 1)'), {
-        'error': 'expected third argument to be a string, found a number (`1`)',
-    });
-    x.assert(func('(VAR, \'\', "b")'), {
-        'error': 'CSS selector cannot be empty',
-        'isXPath': false,
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1, 1, 1)', 'err-5');
+    func('(a, 1, 1)', 'err-6');
+    func('(a, "1", 1)', 'err-7');
+    func('(VAR, \'\', "b")', 'err-8');
 
-    x.assert(func('(VAR, "a", "b")'), {
-        'instructions': [`\
-let parseStoreAttribute = await page.$("a");
-if (parseStoreAttribute === null) { throw '"a" not found'; }
-const jsHandle = await parseStoreAttribute.evaluateHandle(e => {
-    if (!e.hasAttribute("b")) {
-        throw "No attribute name \`" + "b" + "\`";
-    }
-    return String(e.getAttribute("b"));
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('(VAR, "a", "\\"\'b")'), {
-        'instructions': [`\
-let parseStoreAttribute = await page.$("a");
-if (parseStoreAttribute === null) { throw '"a" not found'; }
-const jsHandle = await parseStoreAttribute.evaluateHandle(e => {
-    if (!e.hasAttribute("\\"\\'b")) {
-        throw "No attribute name \`" + "\\"\\'b" + "\`";
-    }
-    return String(e.getAttribute("\\"\\'b"));
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('(VAR, "//a", "b")'), {
-        'instructions': [`\
-let parseStoreAttribute = await page.$x("//a");
-if (parseStoreAttribute.length === 0) { throw 'XPath "//a" not found'; }
-parseStoreAttribute = parseStoreAttribute[0];
-const jsHandle = await parseStoreAttribute.evaluateHandle(e => {
-    if (!e.hasAttribute("b")) {
-        throw "No attribute name \`" + "b" + "\`";
-    }
-    return String(e.getAttribute("b"));
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-    });
+    func('(VAR, "a", "b")', 'basic-1');
+    func('(VAR, "a", "\\"\'b")', 'basic-2');
+    func('(VAR, "//a", "b")', 'basic-3');
 
-    x.assert(func('(VAR, "a::after", "b")'), {
-        'instructions': [`\
-let parseStoreAttribute = await page.$("a");
-if (parseStoreAttribute === null) { throw '"a" not found'; }
-const jsHandle = await parseStoreAttribute.evaluateHandle(e => {
-    if (!e.hasAttribute("b")) {
-        throw "No attribute name \`" + "b" + "\`";
-    }
-    return String(e.getAttribute("b"));
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-        'warnings': [
-            'Pseudo-elements (`::after`) don\'t have attributes so the check will be performed ' +
-            'on the element itself'],
-    });
+    func('(VAR, "a::after", "b")', 'pseudo-1');
 }
 
 function checkStoreCss(x, func) {
-    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
-    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {'error': 'expected 3 elements in the tuple, found 1 element'});
-    x.assert(func('(1, 1, 1)'), {
-        'error': 'expected first argument to be an ident, found a number (`1`)',
-    });
-    x.assert(func('(a, 1, 1)'), {
-        'error': 'expected second argument to be a CSS selector or an XPath, found a number (`1`)',
-    });
-    x.assert(func('(a, "1", 1)'), {
-        'error': 'expected third argument to be a string, found a number (`1`)',
-    });
-    x.assert(func('(VAR, \'\', "b")'), {
-        'error': 'CSS selector cannot be empty',
-        'isXPath': false,
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1, 1, 1)', 'err-5');
+    func('(a, 1, 1)', 'err-6');
+    func('(a, "1", 1)', 'err-7');
+    func('(VAR, \'\', "b")', 'err-8');
 
-    x.assert(func('(VAR, "a", "b")'), {
-        'instructions': [`\
-let parseStoreCss = await page.$("a");
-if (parseStoreCss === null) { throw '"a" not found'; }
-const jsHandle = await parseStoreCss.evaluateHandle(e => {
-    return String(getComputedStyle(e)["b"]);
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('(VAR, "//a", "b")'), {
-        'instructions': [`\
-let parseStoreCss = await page.$x("//a");
-if (parseStoreCss.length === 0) { throw 'XPath "//a" not found'; }
-parseStoreCss = parseStoreCss[0];
-const jsHandle = await parseStoreCss.evaluateHandle(e => {
-    return String(getComputedStyle(e)["b"]);
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-    });
+    func('(VAR, "a", "b")', 'basic-1');
+    func('(VAR, "//a", "b")', 'basic-2');
 
-    x.assert(func('(VAR, "a::after", "b")'), {
-        'instructions': [`\
-let parseStoreCss = await page.$("a");
-if (parseStoreCss === null) { throw '"a" not found'; }
-const jsHandle = await parseStoreCss.evaluateHandle(e => {
-    return String(getComputedStyle(e, "::after")["b"]);
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-    });
+    func('(VAR, "a::after", "b")', 'pseudo-1');
 }
 
 function checkStoreDocumentProperty(x, func) {
-    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
-    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {'error': 'expected 2 elements in the tuple, found 1 element'});
-    x.assert(func('(1, 1)'), {
-        'error': 'expected first argument to be an ident, found a number (`1`)',
-    });
-    x.assert(func('(a1, 1)'), {
-        'error': 'expected second argument to be a property name (a string), found a number (`1`)',
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1, 1)', 'err-5');
+    func('(a1, 1)', 'err-6');
 
-    x.assert(func('(a1, "1")'), {
-        'instructions': [`\
-const jsHandle = await page.evaluateHandle(() => {
-    if (document["1"] === undefined) {
-        throw "document doesn't have a property named \`1\`";
-    }
-    return document["1"];
-});
-arg.variables["a1"] = await jsHandle.jsonValue();`],
-        'wait': false,
-    });
+    func('(a1, "1")', 'basic-1');
 }
 
 function checkStoreWindowProperty(x, func) {
-    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
-    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {'error': 'expected 2 elements in the tuple, found 1 element'});
-    x.assert(func('(1, 1)'), {
-        'error': 'expected first argument to be an ident, found a number (`1`)',
-    });
-    x.assert(func('(a1, 1)'), {
-        'error': 'expected second argument to be a property name (a string), found a number (`1`)',
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1, 1)', 'err-5');
+    func('(a1, 1)', 'err-6');
 
-    x.assert(func('(a1, "1")'), {
-        'instructions': [`\
-const jsHandle = await page.evaluateHandle(() => {
-    if (window["1"] === undefined) {
-        throw "window doesn't have a property named \`1\`";
-    }
-    return window["1"];
-});
-arg.variables["a1"] = await jsHandle.jsonValue();`],
-        'wait': false,
-    });
+    func('(a1, "1")', 'basic-1');
 }
 
 function checkStoreLocalStorage(x, func) {
-    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
-    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {'error': 'expected 2 elements in the tuple, found 1 element'});
-    x.assert(func('(1, 1)'), {
-        'error': 'expected first argument to be an ident, found a number (`1`)',
-    });
-    x.assert(func('(a, 1)'), {
-        'error': 'expected second argument to be a string, found a number (`1`)',
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1, 1)', 'err-5');
+    func('(a, 1)', 'err-6');
 
-    x.assert(func('(VAR, "a")'), {
-        'instructions': [`\
-const jsHandle = await page.evaluateHandle(() => {
-    return window.localStorage.getItem("a");
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-    });
+    func('(VAR, "a")', 'basic-1');
 }
 
 function checkStoreProperty(x, func) {
-    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
-    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {'error': 'expected 3 elements in the tuple, found 1 element'});
-    x.assert(func('(1, 1, 1)'), {
-        'error': 'expected first argument to be an ident, found a number (`1`)',
-    });
-    x.assert(func('(a, 1, 1)'), {
-        'error': 'expected second argument to be a CSS selector or an XPath, found a number (`1`)',
-    });
-    x.assert(func('(a, "1", 1)'), {
-        'error': 'expected third argument to be a string, found a number (`1`)',
-    });
-    x.assert(func('(VAR, \'\', "b")'), {
-        'error': 'CSS selector cannot be empty',
-        'isXPath': false,
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1, 1, 1)', 'err-5');
+    func('(a, 1, 1)', 'err-6');
+    func('(a, "1", 1)', 'err-7');
+    func('(VAR, \'\', "b")', 'err-8');
 
-    x.assert(func('(VAR, "a", "b")'), {
-        'instructions': [`\
-let parseStoreProperty = await page.$("a");
-if (parseStoreProperty === null) { throw '"a" not found'; }
-const jsHandle = await parseStoreProperty.evaluateHandle(e => {
-    return String(e["b"]);
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('(VAR, "a", "\\"\'b")'), {
-        'instructions': [`\
-let parseStoreProperty = await page.$("a");
-if (parseStoreProperty === null) { throw '"a" not found'; }
-const jsHandle = await parseStoreProperty.evaluateHandle(e => {
-    return String(e["\\"\\'b"]);
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('(VAR, "//a", "b")'), {
-        'instructions': [`\
-let parseStoreProperty = await page.$x("//a");
-if (parseStoreProperty.length === 0) { throw 'XPath "//a" not found'; }
-parseStoreProperty = parseStoreProperty[0];
-const jsHandle = await parseStoreProperty.evaluateHandle(e => {
-    return String(e["b"]);
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-    });
+    func('(VAR, "a", "b")', 'basic-1');
+    func('(VAR, "a", "\\"\'b")', 'basic-2');
+    func('(VAR, "//a", "b")', 'basic-3');
 
-    x.assert(func('(VAR, "a::after", "b")'), {
-        'instructions': [`\
-let parseStoreProperty = await page.$("a");
-if (parseStoreProperty === null) { throw '"a" not found'; }
-const jsHandle = await parseStoreProperty.evaluateHandle(e => {
-    return String(e["b"]);
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-        'warnings': [
-            'Pseudo-elements (`::after`) don\'t have attributes so the check will be performed ' +
-            'on the element itself'],
-    });
+    func('(VAR, "a::after", "b")', 'pseudo-1');
 }
 
 function checkStoreText(x, func) {
-    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
-    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {'error': 'expected 2 elements in the tuple, found 1 element'});
-    x.assert(func('(1, 1)'), {
-        'error': 'expected first argument to be an ident, found a number (`1`)',
-    });
-    x.assert(func('(a, 1)'), {
-        'error': 'expected second argument to be a CSS selector or an XPath, found a number (`1`)',
-    });
-    x.assert(func('(VAR, \'\')'), {
-        'error': 'CSS selector cannot be empty',
-        'isXPath': false,
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1, 1)', 'err-5');
+    func('(a, 1)', 'err-6');
+    func('(VAR, \'\')', 'err-7');
 
-    x.assert(func('(VAR, "a")'), {
-        'instructions': [`\
-let parseStoreText = await page.$("a");
-if (parseStoreText === null) { throw '"a" not found'; }
-const jsHandle = await parseStoreText.evaluateHandle(e => {
-    return browserUiTestHelpers.getElemText(e, "");
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('(VAR, "//a")'), {
-        'instructions': [`\
-let parseStoreText = await page.$x("//a");
-if (parseStoreText.length === 0) { throw 'XPath "//a" not found'; }
-parseStoreText = parseStoreText[0];
-const jsHandle = await parseStoreText.evaluateHandle(e => {
-    return browserUiTestHelpers.getElemText(e, "");
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-    });
+    func('(VAR, "a")', 'basic-1');
+    func('(VAR, "//a")', 'basic-2');
 
-    x.assert(func('(VAR, "a::after")'), {
-        'instructions': [`\
-let parseStoreText = await page.$("a");
-if (parseStoreText === null) { throw '"a" not found'; }
-const jsHandle = await parseStoreText.evaluateHandle(e => {
-    return browserUiTestHelpers.getElemText(e, "");
-});
-arg.variables["VAR"] = await jsHandle.jsonValue();`,
-        ],
-        'wait': false,
-        'warnings': [
-            'Pseudo-elements (`::after`) don\'t have attributes so the check will be performed ' +
-            'on the element itself'],
-    });
+    func('(VAR, "a::after")', 'pseudo-1');
 }
 
 function checkStoreValue(x, func) {
-    x.assert(func(''), {'error': 'expected a tuple, found nothing'});
-    x.assert(func('hello'), {'error': 'expected a tuple, found `hello`'});
-    x.assert(func('('), {'error': 'expected `)` at the end'});
-    x.assert(func('(1)'), {'error': 'expected 2 elements in the tuple, found 1 element'});
-    x.assert(func('(1, 1)'), {
-        'error': 'expected first argument to be an ident, found a number (`1`)',
-    });
-    x.assert(func('(a, b)'), {
-        'error': 'expected second argument to be a number, a string or a JSON dict, found ' +
-            'an ident (`b`)',
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1, 1)', 'err-5');
+    func('(a, b)', 'err-6');
 
-    x.assert(func('(VAR, "a")'), {
-        'instructions': ['arg.variables["VAR"] = "a";'],
-        'wait': false,
-    });
-    x.assert(func('(VAR, 1)'), {
-        'instructions': ['arg.variables["VAR"] = 1;'],
-        'wait': false,
-    });
-    x.assert(func('(VAR, 1.28)'), {
-        'instructions': ['arg.variables["VAR"] = 1.28;'],
-        'wait': false,
-    });
-    x.assert(func('(a, {"a": "b"})'), {
-        'instructions': ['arg.variables["a"] = {"a": "b"};'],
-        'wait': false,
-    });
+    func('(VAR, "a")', 'basic-1');
+    func('(VAR, 1)', 'basic-2');
+    func('(VAR, 1.28)', 'basic-3');
+    func('(a, {"a": "b"})', 'basic-4');
 }
 
 function checkText(x, func) {
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('("a", "b"'), {'error': 'expected `)` or `,` after `"b"`'});
-    x.assert(func('("a")'), {'error': 'expected `("CSS selector" or "XPath", "text")`'});
-    x.assert(func('("a", )'), {'error': 'expected `("CSS selector" or "XPath", "text")`'});
-    x.assert(func('("a", "b", "c")'), {'error': 'expected `("CSS selector" or "XPath", "text")`'});
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('(\'\', "b")'), {
-        'error': 'CSS selector cannot be empty',
-        'isXPath': false,
-    });
+    func('"', 'err-1');
+    func('("a", "b"', 'err-2');
+    func('("a")', 'err-3');
+    func('("a", )', 'err-4');
+    func('("a", "b", "c")', 'err-5');
+    func('("a", "b" "c")', 'err-6');
+    func('(\'\', "b")', 'err-7');
 
-    x.assert(func('("a", "b")'),
-        {
-            'instructions': [
-                'let parseTextElem = await page.$("a");\n' +
-                'if (parseTextElem === null) { throw \'"a" not found\'; }\n' +
-                'await page.evaluate(e => {\n' +
-                'if (["input", "textarea"].indexOf(e.tagName.toLowerCase()) !== -1) {\n' +
-                'e.value = "b";\n' +
-                '} else {\n' +
-                'e.innerText = "b";\n' +
-                '}\n' +
-                '}, parseTextElem);',
-            ],
-        });
-    x.assert(func('("//a", "b")'),
-        {
-            'instructions': [
-                'let parseTextElem = await page.$x("//a");\n' +
-                'if (parseTextElem.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-                'parseTextElem = parseTextElem[0];\n' +
-                'await page.evaluate(e => {\n' +
-                'if (["input", "textarea"].indexOf(e.tagName.toLowerCase()) !== -1) {\n' +
-                'e.value = "b";\n' +
-                '} else {\n' +
-                'e.innerText = "b";\n' +
-                '}\n' +
-                '}, parseTextElem);',
-            ],
-        });
+    func('("a", "b")', 'basic-1');
+    func('("//a", "b")', 'basic-2');
 
     // Multiline
-    x.assert(func('("a"\n)'), {'error': 'expected `("CSS selector" or "XPath", "text")`'});
-    x.assert(func('("a"\n,\n "b")'),
-        {
-            'instructions': [
-                'let parseTextElem = await page.$("a");\n' +
-                'if (parseTextElem === null) { throw \'"a" not found\'; }\n' +
-                'await page.evaluate(e => {\n' +
-                'if (["input", "textarea"].indexOf(e.tagName.toLowerCase()) !== -1) {\n' +
-                'e.value = "b";\n' +
-                '} else {\n' +
-                'e.innerText = "b";\n' +
-                '}\n' +
-                '}, parseTextElem);',
-            ],
-        });
+    func('("a"\n)', 'multiline-1');
+    func('("a"\n,\n "b")', 'multiline-2');
 }
 
 function checkTimeout(x, func) {
-    x.assert(func(''), {'error': 'expected integer for number of milliseconds, found nothing'});
-    x.assert(func('"a"'), {'error': 'expected integer for number of milliseconds, found `"a"`'});
-    x.assert(func('12'), {'instructions': ['page.setDefaultTimeout(12)'], 'wait': false});
+    func('', 'err-1');
+    func('"a"', 'err-2');
+    func('12', 'err-3');
+
     // In case I add a check over no timeout some day...
-    x.assert(func('0'), {
-        'instructions': ['page.setDefaultTimeout(0)'],
-        'wait': false,
-        'warnings': [
-            'You passed 0 as timeout, it means the timeout has been disabled on this reload',
-        ],
-    });
-    x.assert(func('0.1'), {
-        'error': 'expected integer for number of milliseconds, found float: `0.1`',
-    });
-    x.assert(func('-0.1'), {
-        'error': 'expected integer for number of milliseconds, found float: `-0.1`',
-    });
-    x.assert(func('-1'), {
-        'error': 'number of milliseconds cannot be negative: `-1`',
-    });
+    func('0', 'basic-1');
+    func('0.1', 'basic-2');
+    func('-0.1', 'basic-3');
+    func('-1', 'basic-4');
 }
 
 function checkWaitFor(x, func) {
     // Check integer
-    x.assert(func(''), {
-        'error': 'expected an integer or a CSS selector or an XPath, found nothing',
-    });
-    x.assert(func('hello'), {
-        'error': 'expected an integer or a CSS selector or an XPath, found `hello`',
-    });
-    x.assert(func('1 2'), {'error': 'expected nothing, found `2` after `1`'});
-    x.assert(func('1'), {
-        'instructions': ['await new Promise(r => setTimeout(r, 1));'],
-        'wait': false,
-    });
-    x.assert(func('-1'), {'error': 'number of milliseconds cannot be negative: `-1`'});
-    x.assert(func('-1.0'), {
-        'error': 'expected integer for number of milliseconds, found float: `-1.0`',
-    });
-    x.assert(func('1.0'), {
-        'error': 'expected integer for number of milliseconds, found float: `1.0`',
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('1 2', 'err-3');
+    func('1', 'err-4');
+    func('-1', 'err-5');
+    func('-1.0', 'err-6');
+    func('1.0', 'err-7');
 
     // Check css selector
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
-    x.assert(func('\'\''), {
-        'error': 'CSS selector cannot be empty',
-        'isXPath': false,
-    });
-    x.assert(func('"a"'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitFor = null;
-while (true) {
-    parseWaitFor = await page.$("a");
-    if (parseWaitFor !== null) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        throw new Error("The following CSS selector \\"a\\" was not found");
-    }
-}`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('\'a\''), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitFor = null;
-while (true) {
-    parseWaitFor = await page.$("a");
-    if (parseWaitFor !== null) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        throw new Error("The following CSS selector \\"a\\" was not found");
-    }
-}`,
-        ],
-        'wait': false,
-    });
-    x.assert(func('\'"a\''), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitFor = null;
-while (true) {
-    parseWaitFor = await page.$("\\"a");
-    if (parseWaitFor !== null) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        throw new Error("The following CSS selector \\"\\"a\\" was not found");
-    }
-}`,
-        ],
-        'wait': false,
-    });
+    func('"', 'basic-1');
+    func('\'', 'basic-2');
+    func('\'\'', 'basic-3');
+    func('"a"', 'basic-4');
+    func('\'a\'', 'basic-5');
+    func('\'"a\'', 'basic-6');
 
     // XPath
-    x.assert(func('"/a"'), { 'error': 'XPath must start with `//`'});
-    x.assert(func('"//a"'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitFor = null;
-while (true) {
-    parseWaitFor = await page.$x("//a");
-    if (parseWaitFor.length !== 0) {
-        parseWaitFor = parseWaitFor[0];
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        throw new Error("The following XPath \\"//a\\" was not found");
-    }
-}`,
-        ],
-        'wait': false,
-    });
+    func('"/a"', 'xpath-1');
+    func('"//a"', 'xpath-2');
 }
 
 function checkWaitForAttribute(x, func) {
     // Check integer
-    x.assert(func(''), {
-        'error': 'expected a tuple with a string and a JSON dict, found nothing',
-    });
-    x.assert(func('hello'), {
-        'error': 'expected a tuple with a string and a JSON dict, found `hello`',
-    });
-    x.assert(func('(1)'), {
-        'error': 'expected a tuple with a string and a JSON dict, found `(1)`',
-    });
-    x.assert(func('(1, 2)'), {
-        'error': 'expected a CSS selector or an XPath as first tuple element, found `1` (a number)',
-    });
-    x.assert(func('("a", 2)'), {
-        'error': 'expected a JSON dict as second tuple element, found `2` (a number)',
-    });
-    x.assert(func('("a", {"b": {"a": 2}})'), {
-        'error': 'only string and number types are allowed as value, found `{"a": 2}` (a json)',
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(1)', 'err-3');
+    func('(1, 2)', 'err-4');
+    func('("a", 2)', 'err-5');
+    func('("a", {"b": {"a": 2}})', 'err-6');
 
     // Check css selector
-    x.assert(func('("a", {})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForAttr = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForAttr = await page.$("a");
-        if (parseWaitForAttr !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForAttrDict = {};
-        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of \
-Object.entries(parseWaitForAttrDict)) {
-            computedEntry = e.getAttribute(parseWaitForAttrKey);
-            if (computedEntry !== parseWaitForAttrValue) {
-                nonMatchingProps.push(parseWaitForAttrKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForAttrValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForAttr);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following attributes still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"x": 1})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForAttr = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForAttr = await page.$("a");
-        if (parseWaitForAttr !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForAttrDict = {"x":"1"};
-        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of \
-Object.entries(parseWaitForAttrDict)) {
-            computedEntry = e.getAttribute(parseWaitForAttrKey);
-            if (computedEntry !== parseWaitForAttrValue) {
-                nonMatchingProps.push(parseWaitForAttrKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForAttrValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForAttr);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following attributes still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"x": 1, "y": "2"})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForAttr = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForAttr = await page.$("a");
-        if (parseWaitForAttr !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForAttrDict = {"x":"1","y":"2"};
-        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of \
-Object.entries(parseWaitForAttrDict)) {
-            computedEntry = e.getAttribute(parseWaitForAttrKey);
-            if (computedEntry !== parseWaitForAttrValue) {
-                nonMatchingProps.push(parseWaitForAttrKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForAttrValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForAttr);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following attributes still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
+    func('("a", {})', 'basic-1');
+    func('("a", {"x": 1})', 'basic-2');
+    func('("a", {"x": 1, "y": "2"})', 'basic-3');
     // Check pseudo element.
-    x.assert(func('("a::after", {"x": 1, "y": "2"})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForAttr = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForAttr = await page.$("a");
-        if (parseWaitForAttr !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForAttrDict = {"x":"1","y":"2"};
-        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of \
-Object.entries(parseWaitForAttrDict)) {
-            computedEntry = e.getAttribute(parseWaitForAttrKey);
-            if (computedEntry !== parseWaitForAttrValue) {
-                nonMatchingProps.push(parseWaitForAttrKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForAttrValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForAttr);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following attributes still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': ['Pseudo-elements (`::after`) don\'t have attributes so the check will be \
-performed on the element itself'],
-        'checkResult': true,
-    });
+    func('("a::after", {"x": 1, "y": "2"})', 'pseudo-1');
     // Ensures that there is no "show-text" check (because of "color").
-    x.assert(func('("a", {"color": "blue"})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForAttr = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForAttr = await page.$("a");
-        if (parseWaitForAttr !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForAttrDict = {"color":"blue"};
-        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of \
-Object.entries(parseWaitForAttrDict)) {
-            computedEntry = e.getAttribute(parseWaitForAttrKey);
-            if (computedEntry !== parseWaitForAttrValue) {
-                nonMatchingProps.push(parseWaitForAttrKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForAttrValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForAttr);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following attributes still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
+    func('("a", {"color": "blue"})', 'color-1');
 
     // XPath
-    x.assert(func('("/a", {"x": "1"})'), { 'error': 'XPath must start with `//`'});
-    x.assert(func('("//a", {})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForAttr = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForAttr = await page.$x("//a");
-        if (parseWaitForAttr.length !== 0) {
-            parseWaitForAttr = parseWaitForAttr[0];
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following XPath \\"//a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForAttrDict = {};
-        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of \
-Object.entries(parseWaitForAttrDict)) {
-            computedEntry = e.getAttribute(parseWaitForAttrKey);
-            if (computedEntry !== parseWaitForAttrValue) {
-                nonMatchingProps.push(parseWaitForAttrKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForAttrValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForAttr);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following attributes still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"x": "1"})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForAttr = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForAttr = await page.$x("//a");
-        if (parseWaitForAttr.length !== 0) {
-            parseWaitForAttr = parseWaitForAttr[0];
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following XPath \\"//a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForAttrDict = {"x":"1"};
-        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of \
-Object.entries(parseWaitForAttrDict)) {
-            computedEntry = e.getAttribute(parseWaitForAttrKey);
-            if (computedEntry !== parseWaitForAttrValue) {
-                nonMatchingProps.push(parseWaitForAttrKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForAttrValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForAttr);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following attributes still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
+    func('("/a", {"x": "1"})', 'xpath-1');
+    func('("//a", {})', 'xpath-2');
+    func('("//a", {"x": "1"})', 'xpath-3');
 }
 
 function checkWaitForProperty(x, func) {
     // Check integer
-    x.assert(func(''), {
-        'error': 'expected a tuple with a string and a JSON dict, found nothing',
-    });
-    x.assert(func('hello'), {
-        'error': 'expected a tuple with a string and a JSON dict, found `hello`',
-    });
-    x.assert(func('(1)'), {
-        'error': 'expected a tuple with a string and a JSON dict, found `(1)`',
-    });
-    x.assert(func('(1, 2)'), {
-        'error': 'expected a CSS selector or an XPath as first tuple element, found `1` (a number)',
-    });
-    x.assert(func('("a", 2)'), {
-        'error': 'expected a JSON dict as second tuple element, found `2` (a number)',
-    });
-    x.assert(func('("a", {"b": {"a": 2}})'), {
-        'error': 'only string and number types are allowed as value, found `{"a": 2}` (a json)',
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(1)', 'err-3');
+    func('(1, 2)', 'err-4');
+    func('("a", 2)', 'err-5');
+    func('("a", {"b": {"a": 2}})', 'err-6');
 
     // Check css selector
-    x.assert(func('("a", {})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForProp = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForProp = await page.$("a");
-        if (parseWaitForProp !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForPropDict = {};
-        for (const [parseWaitForPropKey, parseWaitForPropValue] of \
-Object.entries(parseWaitForPropDict)) {
-            if (e[parseWaitForPropKey] === undefined) {
-                nonMatchingProps.push("No property \`" + parseWaitForPropKey + "\`");
-                continue;
-            }
-            computedEntry = e[parseWaitForPropKey];
-            if (computedEntry !== parseWaitForPropValue) {
-                nonMatchingProps.push(parseWaitForPropKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForPropValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForProp);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following properties still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"x": 1})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForProp = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForProp = await page.$("a");
-        if (parseWaitForProp !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForPropDict = {"x":"1"};
-        for (const [parseWaitForPropKey, parseWaitForPropValue] of \
-Object.entries(parseWaitForPropDict)) {
-            if (e[parseWaitForPropKey] === undefined) {
-                nonMatchingProps.push("No property \`" + parseWaitForPropKey + "\`");
-                continue;
-            }
-            computedEntry = e[parseWaitForPropKey];
-            if (computedEntry !== parseWaitForPropValue) {
-                nonMatchingProps.push(parseWaitForPropKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForPropValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForProp);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following properties still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"x": 1, "y": "2"})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForProp = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForProp = await page.$("a");
-        if (parseWaitForProp !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForPropDict = {"x":"1","y":"2"};
-        for (const [parseWaitForPropKey, parseWaitForPropValue] of \
-Object.entries(parseWaitForPropDict)) {
-            if (e[parseWaitForPropKey] === undefined) {
-                nonMatchingProps.push("No property \`" + parseWaitForPropKey + "\`");
-                continue;
-            }
-            computedEntry = e[parseWaitForPropKey];
-            if (computedEntry !== parseWaitForPropValue) {
-                nonMatchingProps.push(parseWaitForPropKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForPropValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForProp);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following properties still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
+    func('("a", {})', 'basic-1');
+    func('("a", {"x": 1})', 'basic-2');
+    func('("a", {"x": 1, "y": "2"})', 'basic-3');
     // Check pseudo element.
-    x.assert(func('("a::after", {"x": 1, "y": "2"})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForProp = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForProp = await page.$("a");
-        if (parseWaitForProp !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForPropDict = {"x":"1","y":"2"};
-        for (const [parseWaitForPropKey, parseWaitForPropValue] of \
-Object.entries(parseWaitForPropDict)) {
-            if (e[parseWaitForPropKey] === undefined) {
-                nonMatchingProps.push("No property \`" + parseWaitForPropKey + "\`");
-                continue;
-            }
-            computedEntry = e[parseWaitForPropKey];
-            if (computedEntry !== parseWaitForPropValue) {
-                nonMatchingProps.push(parseWaitForPropKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForPropValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForProp);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following properties still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': ['Pseudo-elements (`::after`) don\'t have properties so the check will be \
-performed on the element itself'],
-        'checkResult': true,
-    });
+    func('("a::after", {"x": 1, "y": "2"})', 'pseudo-1');
     // Ensures that there is no "show-text" check (because of "color").
-    x.assert(func('("a", {"color": "blue"})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForProp = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForProp = await page.$("a");
-        if (parseWaitForProp !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForPropDict = {"color":"blue"};
-        for (const [parseWaitForPropKey, parseWaitForPropValue] of \
-Object.entries(parseWaitForPropDict)) {
-            if (e[parseWaitForPropKey] === undefined) {
-                nonMatchingProps.push("No property \`" + parseWaitForPropKey + "\`");
-                continue;
-            }
-            computedEntry = e[parseWaitForPropKey];
-            if (computedEntry !== parseWaitForPropValue) {
-                nonMatchingProps.push(parseWaitForPropKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForPropValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForProp);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following properties still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
+    func('("a", {"color": "blue"})', 'color-1');
 
     // XPath
-    x.assert(func('("/a", {"x": "1"})'), { 'error': 'XPath must start with `//`'});
-    x.assert(func('("//a", {})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForProp = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForProp = await page.$x("//a");
-        if (parseWaitForProp.length !== 0) {
-            parseWaitForProp = parseWaitForProp[0];
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following XPath \\"//a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForPropDict = {};
-        for (const [parseWaitForPropKey, parseWaitForPropValue] of \
-Object.entries(parseWaitForPropDict)) {
-            if (e[parseWaitForPropKey] === undefined) {
-                nonMatchingProps.push("No property \`" + parseWaitForPropKey + "\`");
-                continue;
-            }
-            computedEntry = e[parseWaitForPropKey];
-            if (computedEntry !== parseWaitForPropValue) {
-                nonMatchingProps.push(parseWaitForPropKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForPropValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForProp);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following properties still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"x": "1"})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForProp = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForProp = await page.$x("//a");
-        if (parseWaitForProp.length !== 0) {
-            parseWaitForProp = parseWaitForProp[0];
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following XPath \\"//a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForPropDict = {"x":"1"};
-        for (const [parseWaitForPropKey, parseWaitForPropValue] of \
-Object.entries(parseWaitForPropDict)) {
-            if (e[parseWaitForPropKey] === undefined) {
-                nonMatchingProps.push("No property \`" + parseWaitForPropKey + "\`");
-                continue;
-            }
-            computedEntry = e[parseWaitForPropKey];
-            if (computedEntry !== parseWaitForPropValue) {
-                nonMatchingProps.push(parseWaitForPropKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForPropValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForProp);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following properties still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
+    func('("/a", {"x": "1"})', 'xpath-1');
+    func('("//a", {})', 'xpath-2');
+    func('("//a", {"x": "1"})', 'xpath-3');
 }
 
 function checkWaitForCount(x, func) {
-    x.assert(func(''), {
-        'error': 'expected a tuple with a string and a number, found nothing',
-    });
-    x.assert(func('hello'), {
-        'error': 'expected a tuple with a string and a number, found `hello`',
-    });
-    x.assert(func('(1)'), {
-        'error': 'expected a tuple with a string and a number, found `(1)`',
-    });
-    x.assert(func('(1, 2)'), {
-        'error': 'expected a CSS selector or an XPath as first tuple element, found `1` (a number)',
-    });
-    x.assert(func('("a", "a")'), {
-        'error': 'expected a number as second tuple element, found `"a"` (a string)',
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(1)', 'err-3');
+    func('(1, 2)', 'err-4');
+    func('("a", "a")', 'err-5');
 
-    x.assert(func('("a", 3)'), {
-        'instructions': [
-            `\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForCount = null;
-while (true) {
-    parseWaitForCount = await page.$$("a");
-    parseWaitForCount = parseWaitForCount.length;
-    if (parseWaitForCount === 3) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        throw new Error("Still didn't find 3 instance of \\"a\\" (found " + parseWaitForCount \
-+ ")");
-    }
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("a", 3)', 'basic-1');
 
-    x.assert(func('("//*[@class=\'a\']", 3)'), {
-        'instructions': [
-            `\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForCount = null;
-while (true) {
-    parseWaitForCount = await page.$x("//*[@class=\\'a\\']");
-    parseWaitForCount = parseWaitForCount.length;
-    if (parseWaitForCount === 3) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        throw new Error("Still didn't find 3 instance of \\"//*[@class=\\'a\\']\\" (found " + \
-parseWaitForCount + ")");
-    }
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("//*[@class=\'a\']", 3)', 'xpath-1');
 }
 
 function checkWaitForCss(x, func) {
-    x.assert(func(''), {
-        'error': 'expected a tuple with a string and a JSON dict, found nothing',
-    });
-    x.assert(func('hello'), {
-        'error': 'expected a tuple with a string and a JSON dict, found `hello`',
-    });
-    x.assert(func('(1)'), {
-        'error': 'expected a tuple with a string and a JSON dict, found `(1)`',
-    });
-    x.assert(func('(1, 2)'), {
-        'error': 'expected a CSS selector or an XPath as first tuple element, found `1` (a number)',
-    });
-    x.assert(func('("a", 2)'), {
-        'error': 'expected a JSON dict as second tuple element, found `2` (a number)',
-    });
-    x.assert(func('("a", {"b": {"a": 2}})'), {
-        'error': 'only string and number types are allowed as value, found `{"a": 2}` (a json)',
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(1)', 'err-3');
+    func('(1, 2)', 'err-4');
+    func('("a", 2)', 'err-5');
+    func('("a", {"b": {"a": 2}})', 'err-6');
 
     // Check css selector
-    x.assert(func('("a", {})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForCss = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForCss = await page.$("a");
-        if (parseWaitForCss !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        let extractedFloat;
-        const parseWaitForCssDict = {};
-        const computedStyle = getComputedStyle(e);
-        for (const [parseWaitForCssKey, parseWaitForCssValue] of \
-Object.entries(parseWaitForCssDict)) {
-            computedEntry = computedStyle[parseWaitForCssKey];
-            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != \
-parseWaitForCssValue) {
-                if (typeof computedEntry === "string" && \
-computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) \
-+ "px";
-                    if (extractedFloat !== parseWaitForCssValue) {
-                        nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
-&& \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
-                    } else {
-                        continue;
-                    }
-                }
-                nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForCssValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForCss);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following CSS properties still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"x": 1})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForCss = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForCss = await page.$("a");
-        if (parseWaitForCss !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        let extractedFloat;
-        const parseWaitForCssDict = {"x":"1"};
-        const computedStyle = getComputedStyle(e);
-        for (const [parseWaitForCssKey, parseWaitForCssValue] of \
-Object.entries(parseWaitForCssDict)) {
-            computedEntry = computedStyle[parseWaitForCssKey];
-            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != \
-parseWaitForCssValue) {
-                if (typeof computedEntry === "string" && \
-computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) \
-+ "px";
-                    if (extractedFloat !== parseWaitForCssValue) {
-                        nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
-&& \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
-                    } else {
-                        continue;
-                    }
-                }
-                nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForCssValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForCss);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following CSS properties still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("a", {"x": 1, "y": "2"})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForCss = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForCss = await page.$("a");
-        if (parseWaitForCss !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        let extractedFloat;
-        const parseWaitForCssDict = {"x":"1","y":"2"};
-        const computedStyle = getComputedStyle(e);
-        for (const [parseWaitForCssKey, parseWaitForCssValue] of \
-Object.entries(parseWaitForCssDict)) {
-            computedEntry = computedStyle[parseWaitForCssKey];
-            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != \
-parseWaitForCssValue) {
-                if (typeof computedEntry === "string" && \
-computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) \
-+ "px";
-                    if (extractedFloat !== parseWaitForCssValue) {
-                        nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
-&& \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
-                    } else {
-                        continue;
-                    }
-                }
-                nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForCssValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForCss);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following CSS properties still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
+    func('("a", {})', 'basic-1');
+    func('("a", {"x": 1})', 'basic-2');
+    func('("a", {"x": 1, "y": "2"})', 'basic-3');
     // Check pseudo element.
-    x.assert(func('("a::after", {"x": 1, "y": "2"})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForCss = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForCss = await page.$("a");
-        if (parseWaitForCss !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        let extractedFloat;
-        const parseWaitForCssDict = {"x":"1","y":"2"};
-        const computedStyle = getComputedStyle(e, "::after");
-        for (const [parseWaitForCssKey, parseWaitForCssValue] of \
-Object.entries(parseWaitForCssDict)) {
-            computedEntry = computedStyle[parseWaitForCssKey];
-            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != \
-parseWaitForCssValue) {
-                if (typeof computedEntry === "string" && \
-computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) \
-+ "px";
-                    if (extractedFloat !== parseWaitForCssValue) {
-                        nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
-&& \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
-                    } else {
-                        continue;
-                    }
-                }
-                nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForCssValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForCss);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following CSS properties still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
+    func('("a::after", {"x": 1, "y": "2"})', 'pseudo-1');
     // Checks colors.
-    x.assert(func('("a", {"color": "blue"})'), {
-        'instructions': [
-            `\
-if (!arg.showText) {
-    throw "\`show-text: true\` needs to be used before checking for \`color\` (otherwise the \
-browser doesn't compute it)";
-}`,
-            `\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForCss = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForCss = await page.$("a");
-        if (parseWaitForCss !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        let extractedFloat;
-        const parseWaitForCssDict = {"color":"blue"};
-        const computedStyle = getComputedStyle(e);
-        for (const [parseWaitForCssKey, parseWaitForCssValue] of \
-Object.entries(parseWaitForCssDict)) {
-            computedEntry = computedStyle[parseWaitForCssKey];
-            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != \
-parseWaitForCssValue) {
-                if (typeof computedEntry === "string" && \
-computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) \
-+ "px";
-                    if (extractedFloat !== parseWaitForCssValue) {
-                        nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
-&& \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
-                    } else {
-                        continue;
-                    }
-                }
-                nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForCssValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForCss);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following CSS properties still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
+    func('("a", {"color": "blue"})', 'color-1');
 
     // XPath
-    x.assert(func('("/a", {"x": "1"})'), { 'error': 'XPath must start with `//`'});
-    x.assert(func('("//a", {})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForCss = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForCss = await page.$x("//a");
-        if (parseWaitForCss.length !== 0) {
-            parseWaitForCss = parseWaitForCss[0];
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following XPath \\"//a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        let extractedFloat;
-        const parseWaitForCssDict = {};
-        const computedStyle = getComputedStyle(e);
-        for (const [parseWaitForCssKey, parseWaitForCssValue] of \
-Object.entries(parseWaitForCssDict)) {
-            computedEntry = computedStyle[parseWaitForCssKey];
-            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != \
-parseWaitForCssValue) {
-                if (typeof computedEntry === "string" && \
-computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) \
-+ "px";
-                    if (extractedFloat !== parseWaitForCssValue) {
-                        nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
-&& \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
-                    } else {
-                        continue;
-                    }
-                }
-                nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForCssValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForCss);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following CSS properties still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-    x.assert(func('("//a", {"x": "1"})'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForCss = null;
-let nonMatchingProps;
-while (true) {
-    while (true) {
-        parseWaitForCss = await page.$x("//a");
-        if (parseWaitForCss.length !== 0) {
-            parseWaitForCss = parseWaitForCss[0];
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following XPath \\"//a\\" was not found");
-        }
-    }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        let extractedFloat;
-        const parseWaitForCssDict = {"x":"1"};
-        const computedStyle = getComputedStyle(e);
-        for (const [parseWaitForCssKey, parseWaitForCssValue] of \
-Object.entries(parseWaitForCssDict)) {
-            computedEntry = computedStyle[parseWaitForCssKey];
-            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != \
-parseWaitForCssValue) {
-                if (typeof computedEntry === "string" && \
-computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) \
-+ "px";
-                    if (extractedFloat !== parseWaitForCssValue) {
-                        nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` \
-&& \`" + extractedFloat + "\`) != \`" + parseWaitForCssValue + "\`)");
-                    } else {
-                        continue;
-                    }
-                }
-                nonMatchingProps.push(parseWaitForCssKey + ": (\`" + computedEntry + "\` != \`" + \
-parseWaitForCssValue + "\`)");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForCss);
-    if (nonMatchingProps.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(", ");
-        throw new Error("The following CSS properties still don't match: [" + props + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
+    func('("/a", {"x": "1"})', 'xpath-1');
+    func('("//a", {})', 'xpath-2');
+    func('("//a", {"x": "1"})', 'xpath-3');
 }
 
-function checkWaitForObjectProperty(x, func, name) {
-    x.assert(func(''), {
-        'error': 'expected JSON, found nothing',
-    });
-    x.assert(func('hello'), {
-        'error': 'expected JSON, found `hello`',
-    });
-    x.assert(func('{"a": b}'), {
-        'error': 'Only `null` ident is allowed, found `b`',
-    });
+function checkWaitForObjectProperty(x, func) {
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('{"a": b}', 'err-3');
 
-    x.assert(func('{}'), {
-        'instructions': [],
-        'wait': false,
-    });
-    x.assert(func('{"a": {"b": "c"}}'), {
-        'instructions': [],
-        'warnings': ['Ignoring recursive entry with key `"a"`'],
-        'wait': false,
-    });
-    x.assert(func('{"a": "b"}'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let property = null;
-while (true) {
-    property = await page.evaluate(() => {
-        const errors = [];
-        const propertyDict = {"a":"b"};
-        for (const [propertyKey, propertyValue] of Object.entries(propertyDict)) {
-            if (${name}[propertyKey] === undefined) {
-                errors.push("${name} doesn't have a property named \`" + propertyKey + "\`");
-            }
-            let property = ${name}[propertyKey];
-            if (property != propertyValue) {
-                errors.push("${name} item \\"" + propertyKey + "\\" (of value \\"" + \
-propertyValue + "\\") != \\"" + property + "\\"");
-            }
-        }
-        return errors;
-    });
-    if (property.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const errs = property.join(", ");
-        throw new Error("The following ${name} properties still don't match: [" + errs + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('{\'"a\':\n"\'b"\n}'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let property = null;
-while (true) {
-    property = await page.evaluate(() => {
-        const errors = [];
-        const propertyDict = {"\\"a":"\\'b"};
-        for (const [propertyKey, propertyValue] of Object.entries(propertyDict)) {
-            if (${name}[propertyKey] === undefined) {
-                errors.push("${name} doesn't have a property named \`" + propertyKey + "\`");
-            }
-            let property = ${name}[propertyKey];
-            if (property != propertyValue) {
-                errors.push("${name} item \\"" + propertyKey + "\\" (of value \\"" + \
-propertyValue + "\\") != \\"" + property + "\\"");
-            }
-        }
-        return errors;
-    });
-    if (property.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const errs = property.join(", ");
-        throw new Error("The following ${name} properties still don't match: [" + errs + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-}
-
-function checkWaitForDocumentProperty(x, func) {
-    checkWaitForObjectProperty(x, func, 'document');
-}
-
-function checkWaitForWindowProperty(x, func) {
-    checkWaitForObjectProperty(x, func, 'window');
+    func('{}', 'basic-1');
+    func('{"a": {"b": "c"}}', 'basic-2');
+    func('{"a": "b"}', 'basic-3');
+    func('{\'"a\':\n"\'b"\n}', 'basic-4');
 }
 
 function checkWaitForLocalStorage(x, func) {
-    x.assert(func(''), {
-        'error': 'expected JSON, found nothing',
-    });
-    x.assert(func('hello'), {
-        'error': 'expected JSON, found `hello`',
-    });
-    x.assert(func('{"a": b}'), {
-        'error': 'Only `null` ident is allowed, found `b`',
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('{"a": b}', 'err-3');
 
-    x.assert(func('{}'), {
-        'instructions': [],
-        'wait': false,
-    });
-    x.assert(func('{"a": {"b": "c"}}'), {
-        'instructions': [],
-        'warnings': ['Ignoring recursive entry with key `"a"`'],
-        'wait': false,
-    });
-    x.assert(func('{"a": "b"}'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForLocalStorage = null;
-while (true) {
-    parseWaitForLocalStorage = await page.evaluate(() => {
-        const errors = [];
-        const parseWaitForLocalStorageDict = {"a":"b"};
-        for (const [parseWaitForLocalStorageKey, parseWaitForLocalStorageValue] of Object.entries(\
-parseWaitForLocalStorageDict)) {
-            let parseWaitForLocalStorage = window.localStorage.getItem(parseWaitForLocalStorageKey);
-            if (parseWaitForLocalStorage != parseWaitForLocalStorageValue) {
-                errors.push("localStorage item \\"" + parseWaitForLocalStorageKey + "\\" (of value \
-\\"" + parseWaitForLocalStorageValue + "\\") != \\"" + parseWaitForLocalStorage + "\\"");
-            }
-        }
-        return errors;
-    });
-    if (parseWaitForLocalStorage.length === 0) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        const errs = parseWaitForLocalStorage.join(", ");
-        throw new Error("The following local storage entries still don't match: [" + errs + "]");
-    }
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('{}', 'basic-1');
+    func('{"a": {"b": "c"}}', 'basic-2');
+    func('{"a": "b"}', 'basic-3');
 }
 
 function checkWaitForText(x, func) {
-    x.assert(func(''), {
-        'error': 'expected a tuple with two strings, found nothing',
-    });
-    x.assert(func('hello'), {
-        'error': 'expected a tuple with two strings, found `hello`',
-    });
-    x.assert(func('(1)'), {
-        'error': 'expected a tuple with two strings, found `(1)`',
-    });
-    x.assert(func('(1, 2)'), {
-        'error': 'expected a CSS selector or an XPath as first tuple element, found `1` (a number)',
-    });
-    x.assert(func('("a", 2)'), {
-        'error': 'expected a string as second tuple element, found `2` (a number)',
-    });
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(1)', 'err-3');
+    func('(1, 2)', 'err-4');
+    func('("a", 2)', 'err-5');
 
     // Check CSS selector.
-    x.assert(func('("a", "b")'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForText = null;
-const value = "b";
-let computedEntry;
-while (true) {
-    while (true) {
-        parseWaitForText = await page.$("a");
-        if (parseWaitForText !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    computedEntry = await page.evaluate(e => {
-        return browserUiTestHelpers.getElemText(e, "b");
-    }, parseWaitForText);
-    if (computedEntry === value) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        throw new Error("The text still doesn't match: \`" + computedEntry + "\` != \`" + \
-value + "\`");
-    }
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
-    x.assert(func('("a::after", "b")'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForText = null;
-const value = "b";
-let computedEntry;
-while (true) {
-    while (true) {
-        parseWaitForText = await page.$("a");
-        if (parseWaitForText !== null) {
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following CSS selector \\"a\\" was not found");
-        }
-    }
-    computedEntry = await page.evaluate(e => {
-        return browserUiTestHelpers.getElemText(e, "b");
-    }, parseWaitForText);
-    if (computedEntry === value) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        throw new Error("The text still doesn't match: \`" + computedEntry + "\` != \`" + \
-value + "\`");
-    }
-}`,
-        ],
-        'wait': false,
-        'warnings': ['Pseudo-elements (`::after`) don\'t have attributes so the check will be \
-performed on the element itself'],
-        'checkResult': true,
-    });
+    func('("a", "b")', 'basic-1');
+    func('("a::after", "b")', 'basic-2');
 
-    x.assert(func('("//a", "b")'), {
-        'instructions': [`\
-const timeLimit = page.getDefaultTimeout();
-const timeAdd = 50;
-let allTime = 0;
-let parseWaitForText = null;
-const value = "b";
-let computedEntry;
-while (true) {
-    while (true) {
-        parseWaitForText = await page.$x("//a");
-        if (parseWaitForText.length !== 0) {
-            parseWaitForText = parseWaitForText[0];
-            break;
-        }
-        await new Promise(r => setTimeout(r, timeAdd));
-        if (timeLimit === 0) {
-            continue;
-        }
-        allTime += timeAdd;
-        if (allTime >= timeLimit) {
-            throw new Error("The following XPath \\"//a\\" was not found");
-        }
-    }
-    computedEntry = await page.evaluate(e => {
-        return browserUiTestHelpers.getElemText(e, "b");
-    }, parseWaitForText);
-    if (computedEntry === value) {
-        break;
-    }
-    await new Promise(r => setTimeout(r, timeAdd));
-    if (timeLimit === 0) {
-        continue;
-    }
-    allTime += timeAdd;
-    if (allTime >= timeLimit) {
-        throw new Error("The text still doesn't match: \`" + computedEntry + "\` != \`" + \
-value + "\`");
-    }
-}`,
-        ],
-        'wait': false,
-        'checkResult': true,
-    });
+    func('("//a", "b")', 'xpath-1');
 }
 
-function checkObjPropertyInner(x, func, objName) {
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func(''), {'error': 'expected a tuple or a JSON dict, found nothing'});
-    x.assert(func('"a"'), {'error': 'expected a JSON dict, found `"a"` (a string)'});
-    x.assert(func('{"a": 2} 2'), {'error': 'expected nothing, found `2` after `{"a": 2}`'});
-    x.assert(func('{"a": "2", "a": {"b": 1}}'), {
-        'error': 'only string and number types are allowed as value, found `{"b": 1}` (a json)',
-    });
+function checkObjProperty(x, func) {
+    func('"', 'err-1');
+    func('', 'err-2');
+    func('"a"', 'err-3');
+    func('{"a": 2} 2', 'err-4');
+    func('{"a": "2", "a": {"b": 1}}', 'err-5');
 
-    x.assert(func('{"a": 2}'), {
-        'instructions': [`\
-await page.evaluate(() => {
-    const parsePropDict = {"a":"2"};
-    for (const [parsePropKey, parsePropValue] of Object.entries(parsePropDict)) {
-        ${objName}[parsePropKey] = parsePropValue;
-    }
-});`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-
-    x.assert(func('{"a": "2", "\\"b": "\'b"}'), {
-        'instructions': [`\
-await page.evaluate(() => {
-    const parsePropDict = {"a":"2","\\"b":"\\'b"};
-    for (const [parsePropKey, parsePropValue] of Object.entries(parsePropDict)) {
-        ${objName}[parsePropKey] = parsePropValue;
-    }
-});`,
-        ],
-        'wait': false,
-        'warnings': [],
-        'checkResult': true,
-    });
-}
-
-function checkDocumentProperty(x, func) {
-    checkObjPropertyInner(x, func, 'document');
-}
-
-function checkWindowProperty(x, func) {
-    checkObjPropertyInner(x, func, 'window');
+    func('{"a": 2}', 'basic-1');
+    func('{"a": "2", "\\"b": "\'b"}', 'escape-1');
 }
 
 function checkWrite(x, func) {
     // check tuple argument
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('("a", "b"'), {'error': 'expected `)` or `,` after `"b"`'});
-    x.assert(func('("a")'), {
-        'error': 'invalid number of arguments in tuple, expected "string" or integer or ' +
-            '("CSS selector" or "XPath", "string") or ("CSS selector" or "XPath", integer)',
-    });
-    x.assert(func('("a", )'), {
-        'error': 'invalid number of arguments in tuple, expected "string" or integer or ' +
-            '("CSS selector" or "XPath", "string") or ("CSS selector" or "XPath", integer)',
-    });
-    x.assert(func('("a", "b", "c")'), {
-        'error': 'invalid number of arguments in tuple, expected "string" or integer or ' +
-            '("CSS selector" or "XPath", "string") or ("CSS selector" or "XPath", integer)',
-    });
-    x.assert(func('("a", "b" "c")'), {'error': 'expected `,` or `)`, found `"` after `"b"`'});
-    x.assert(func('(\'\', "b")'), {
-        'error': 'CSS selector cannot be empty',
-        'isXPath': false,
-    });
-    x.assert(func('("a", 13.2)'), {'error': 'expected integer for keycode, found float: `13.2`'});
-    x.assert(func('("a", -13.2)'), {'error': 'expected integer for keycode, found float: `-13.2`'});
-    x.assert(func('("a", -13)'), {'error': 'keycode cannot be negative: `-13`'});
-    x.assert(func('("a", "b")'), {'instructions': ['await page.type("a", "b");']});
-    x.assert(func('("a", 13)'), {
-        'instructions': [
-            'await page.focus("a");',
-            'await page.keyboard.press(String.fromCharCode(13));',
-        ],
-    });
+    func('"', 'err-1');
+    func('("a", "b"', 'err-2');
+    func('("a")', 'err-3');
+    func('("a", )', 'err-4');
+    func('("a", "b", "c")', 'err-5');
+    func('("a", "b" "c")', 'err-6');
+    func('(\'\', "b")', 'err-7');
+    func('("a", 13.2)', 'err-8');
+    func('("a", -13.2)', 'err-9');
+    func('("a", -13)', 'err-10');
+
+    func('("a", "b")', 'basic-1');
+    func('("a", 13)', 'basic-2');
 
     // check string argument
-    x.assert(func('"'), {'error': 'expected `"` at the end of the string'});
-    x.assert(func('\''), {'error': 'expected `\'` at the end of the string'});
-    x.assert(func('\'\''), {'instructions': ['await page.keyboard.type("");']});
-    x.assert(func('"a"'), {'instructions': ['await page.keyboard.type("a");']});
-    x.assert(func('\'a\''), {'instructions': ['await page.keyboard.type("a");']});
-    x.assert(func('\'"a\''), {'instructions': ['await page.keyboard.type("\\"a");']});
+    func('"', 'str-1');
+    func('\'', 'str-2');
+    func('\'\'', 'str-3');
+    func('"a"', 'str-4');
+    func('\'a\'', 'str-5');
+    func('\'"a\'', 'str-6');
 
     // check integer argument
-    x.assert(func('13.2'), {'error': 'expected integer for keycode, found float: `13.2`'});
-    x.assert(func('-13.2'), {'error': 'expected integer for keycode, found float: `-13.2`'});
-    x.assert(func('-13'), {'error': 'keycode cannot be negative: `-13`'});
-    x.assert(func('13'), {'instructions': ['await page.keyboard.press(String.fromCharCode(13));']});
+    func('13.2', 'int-1');
+    func('-13.2', 'int-2');
+    func('-13', 'int-3');
+    func('13', 'int-4');
 
     // XPath
-    x.assert(func('("/a", 13)'), { 'error': 'XPath must start with `//`'});
-    x.assert(func('("//a", "b")'), {
-        'instructions': [
-            'let parseWriteVar = await page.$x("//a");\n' +
-            'if (parseWriteVar.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseWriteVar = parseWriteVar[0];\n' +
-            'await parseWriteVar.type("b");',
-        ],
-    });
-    x.assert(func('("//a", 13)'), {
-        'instructions': [
-            'let parseWriteVar = await page.$x("//a");\n' +
-            'if (parseWriteVar.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseWriteVar = parseWriteVar[0];\n' +
-            'parseWriteVar.focus();',
-            'await page.keyboard.press(String.fromCharCode(13));',
-        ],
-    });
+    func('("/a", 13)', 'xpath-1');
+    func('("//a", "b")', 'xpath-2');
+    func('("//a", 13)', 'xpath-3');
 
     // Multiline
-    x.assert(func('("a", \n13.2)'), {'error': 'expected integer for keycode, found float: `13.2`'});
-    x.assert(func('(\n"//a", \n13)'), {
-        'instructions': [
-            'let parseWriteVar = await page.$x("//a");\n' +
-            'if (parseWriteVar.length === 0) { throw \'XPath "//a" not found\'; }\n' +
-            'parseWriteVar = parseWriteVar[0];\n' +
-            'parseWriteVar.focus();',
-            'await page.keyboard.press(String.fromCharCode(13));',
-        ],
-    });
+    func('("a", \n13.2)', 'multiline-1');
+    func('(\n"//a", \n13)', 'multiline-2');
 }
 
 const TO_CHECK = [
     {
         'name': 'assert',
         'func': checkAssert,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssert, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssert, x, e, name, o),
     },
     {
         'name': 'assert-false',
-        'func': checkAssertFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertFalse, e, o),
+        'func': checkAssert,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertFalse, x, e, name, o),
     },
     {
         'name': 'assert-attribute',
         'func': checkAssertAttribute,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertAttribute, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertAttribute, x, e, name, o),
     },
     {
         'name': 'assert-attribute-false',
-        'func': checkAssertAttributeFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertAttributeFalse, e, o),
+        'func': checkAssertAttribute,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertAttributeFalse, x, e, name, o),
     },
     {
         'name': 'assert-css',
         'func': checkAssertCss,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertCss, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertCss, x, e, name, o),
     },
     {
         'name': 'assert-css-false',
-        'func': checkAssertCssFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertCssFalse, e, o),
+        'func': checkAssertCss,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertCssFalse, x, e, name, o),
     },
     {
         'name': 'assert-document-property',
-        'func': checkAssertDocumentProperty,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertDocumentProperty, e, o),
+        'func': checkAssertObjProperty,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseAssertDocumentProperty, x, e, name, o);
+        },
     },
     {
         'name': 'assert-document-property-false',
-        'func': checkAssertDocumentPropertyFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertDocumentPropertyFalse, e, o),
+        'func': checkAssertObjProperty,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseAssertDocumentPropertyFalse, x, e, name, o);
+        },
     },
     {
         'name': 'assert-count',
         'func': checkAssertCount,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertCount, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertCount, x, e, name, o),
     },
     {
         'name': 'assert-count-false',
-        'func': checkAssertCountFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertCountFalse, e, o),
+        'func': checkAssertCount,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertCountFalse, x, e, name, o),
     },
     {
         'name': 'assert-local-storage',
         'func': checkAssertLocalStorage,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertLocalStorage, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertLocalStorage, x, e, name, o),
     },
     {
         'name': 'assert-local-storage-false',
-        'func': checkAssertLocalStorageFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertLocalStorageFalse, e, o),
+        'func': checkAssertLocalStorage,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseAssertLocalStorageFalse, x, e, name, o);
+        },
     },
     {
         'name': 'assert-property',
         'func': checkAssertProperty,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertProperty, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertProperty, x, e, name, o),
     },
     {
         'name': 'assert-property-false',
-        'func': checkAssertPropertyFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertPropertyFalse, e, o),
+        'func': checkAssertProperty,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertPropertyFalse, x, e, name, o),
     },
     {
         'name': 'assert-position',
         'func': checkAssertPosition,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertPosition, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertPosition, x, e, name, o),
     },
     {
         'name': 'assert-position-false',
-        'func': checkAssertPositionFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertPositionFalse, e, o),
+        'func': checkAssertPosition,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertPositionFalse, x, e, name, o),
     },
     {
         'name': 'assert-text',
         'func': checkAssertText,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertText, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertText, x, e, name, o),
     },
     {
         'name': 'assert-text-false',
-        'func': checkAssertTextFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertTextFalse, e, o),
+        'func': checkAssertText,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertTextFalse, x, e, name, o),
     },
     {
         'name': 'assert-variable',
         'func': checkAssertVariable,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertVariable, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertVariable, x, e, name, o),
     },
     {
         'name': 'assert-variable-false',
-        'func': checkAssertVariableFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertVariableFalse, e, o),
+        'func': checkAssertVariable,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertVariableFalse, x, e, name, o),
     },
     {
         'name': 'assert-window-property',
-        'func': checkAssertWindowProperty,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertWindowProperty, e, o),
+        'func': checkAssertObjProperty,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertWindowProperty, x, e, name, o),
     },
     {
         'name': 'assert-window-property-false',
-        'func': checkAssertWindowPropertyFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAssertWindowPropertyFalse, e, o),
+        'func': checkAssertObjProperty,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseAssertWindowPropertyFalse, x, e, name, o);
+        },
     },
     {
         'name': 'attribute',
         'func': checkAttribute,
-        'toCall': (e, o) => wrapper(parserFuncs.parseAttribute, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAttribute, x, e, name, o),
     },
     {
         'name': 'call-function',
         'func': checkCallFunction,
-        'toCall': (e, o) => wrapperDefineFunction(parserFuncs.parseCallFunction, e, o),
+        'toCall': (_, e, o) => wrapperDefineFunction(parserFuncs.parseCallFunction, e, o),
     },
     {
         'name': 'click',
         'func': checkClick,
-        'toCall': (e, o) => wrapper(parserFuncs.parseClick, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseClick, x, e, name, o),
     },
     {
         'name': 'click-with-offset',
         'func': checkClickWithOffset,
-        'toCall': (e, o) => wrapper(parserFuncs.parseClickWithOffset, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseClickWithOffset, x, e, name, o),
     },
     {
         'name': 'compare-elements-attribute',
         'func': checkCompareElementsAttribute,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsAttribute, e, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsAttribute, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-attribute-false',
-        'func': checkCompareElementsAttributeFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsAttributeFalse, e, o),
+        'func': checkCompareElementsAttribute,
+        'toCall': (x, e, name, o) => {
+            wrapper(parserFuncs.parseCompareElementsAttributeFalse, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-css',
         'func': checkCompareElementsCss,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsCss, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseCompareElementsCss, x, e, name, o),
     },
     {
         'name': 'compare-elements-css-false',
-        'func': checkCompareElementsCssFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsCssFalse, e, o),
+        'func': checkCompareElementsCss,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsCssFalse, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-position',
         'func': checkCompareElementsPosition,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsPosition, e, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsPosition, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-position-false',
-        'func': checkCompareElementsPositionFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsPositionFalse, e, o),
+        'func': checkCompareElementsPosition,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsPositionFalse, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-position-near',
         'func': checkCompareElementsPositionNear,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsPositionNear, e, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsPositionNear, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-position-near-false',
-        'func': checkCompareElementsPositionNearFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsPositionNearFalse, e, o),
+        'func': checkCompareElementsPositionNear,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsPositionNearFalse, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-property',
         'func': checkCompareElementsProperty,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsProperty, e, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsProperty, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-property-false',
-        'func': checkCompareElementsPropertyFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsPropertyFalse, e, o),
+        'func': checkCompareElementsProperty,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsPropertyFalse, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-text',
         'func': checkCompareElementsText,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsText, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseCompareElementsText, x, e, name, o),
     },
     {
         'name': 'compare-elements-text-false',
-        'func': checkCompareElementsTextFalse,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCompareElementsTextFalse, e, o),
+        'func': checkCompareElementsText,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsTextFalse, x, e, name, o);
+        },
     },
     {
         'name': 'css',
         'func': checkCss,
-        'toCall': (e, o) => wrapper(parserFuncs.parseCss, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseCss, x, e, name, o),
     },
     {
         'name': 'debug',
         'func': checkDebug,
-        'toCall': (e, o) => wrapper(parserFuncs.parseDebug, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseDebug, x, e, name, o),
     },
     {
         'name': 'define-function',
         'func': checkDefineFunction,
-        'toCall': (e, o) => wrapperDefineFunction(parserFuncs.parseDefineFunction, e, o),
+        'toCall': (_, e, o) => wrapperDefineFunction(parserFuncs.parseDefineFunction, e, o),
     },
     {
         'name': 'device-pixel-ratio',
         'func': checkDevicePixelRatio,
-        'toCall': (e, o) => wrapper(parserFuncs.parseDevicePixelRatio, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseDevicePixelRatio, x, e, name, o),
     },
     {
         'name': 'document-property',
-        'func': checkDocumentProperty,
-        'toCall': (e, o) => wrapper(parserFuncs.parseDocumentProperty, e, o),
+        'func': checkObjProperty,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseDocumentProperty, x, e, name, o),
     },
     {
         'name': 'drag-and-drop',
         'func': checkDragAndDrop,
-        'toCall': (e, o) => wrapper(parserFuncs.parseDragAndDrop, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseDragAndDrop, x, e, name, o),
     },
     {
         'name': 'emulate',
         'func': checkEmulate,
-        'toCall': (e, o) => wrapper(parserFuncs.parseEmulate, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseEmulate, x, e, name, o),
     },
     {
         'name': 'fail',
         'func': checkFail,
-        'toCall': (e, o) => wrapper(parserFuncs.parseFail, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseFail, x, e, name, o),
     },
     {
         'name': 'fail-on-js-error',
         'func': checkFailOnJsError,
-        'toCall': (e, o) => wrapper(parserFuncs.parseFailOnJsError, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseFailOnJsError, x, e, name, o),
     },
     {
         'name': 'fail-on-request-error',
         'func': checkFailOnRequestError,
-        'toCall': (e, o) => wrapper(parserFuncs.parseFailOnRequestError, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseFailOnRequestError, x, e, name, o),
     },
     {
         'name': 'focus',
         'func': checkFocus,
-        'toCall': (e, o) => wrapper(parserFuncs.parseFocus, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseFocus, x, e, name, o),
     },
     {
         'name': 'font-size',
         'func': checkFontSize,
-        'toCall': (e, o) => wrapper(parserFuncs.parseFontSize, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseFontSize, x, e, name, o),
     },
     {
         'name': 'geolocation',
         'func': checkGeolocation,
-        'toCall': (e, o) => wrapper(parserFuncs.parseGeolocation, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseGeolocation, x, e, name, o),
     },
     {
         'name': 'goto',
         'func': checkGoTo,
-        'toCall': (e, o) => wrapper(parserFuncs.parseGoTo, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseGoTo, x, e, name, o),
     },
     {
         'name': 'history-go-back',
-        'func': checkHistoryGoBack,
-        'toCall': (e, o) => wrapper(parserFuncs.parseHistoryGoBack, e, o),
+        'func': checkHistory,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseHistoryGoBack, x, e, name, o),
     },
     {
         'name': 'history-go-forward',
-        'func': checkHistoryGoForward,
-        'toCall': (e, o) => wrapper(parserFuncs.parseHistoryGoForward, e, o),
+        'func': checkHistory,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseHistoryGoForward, x, e, name, o),
     },
     {
         'name': 'javascript',
         'func': checkJavascript,
-        'toCall': (e, o) => wrapper(parserFuncs.parseJavascript, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseJavascript, x, e, name, o),
     },
     {
         'name': 'local-storage',
         'func': checkLocalStorage,
-        'toCall': (e, o) => wrapper(parserFuncs.parseLocalStorage, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseLocalStorage, x, e, name, o),
     },
     {
         'name': 'move-cursor-to',
         'func': checkMoveCursorTo,
-        'toCall': (e, o) => wrapper(parserFuncs.parseMoveCursorTo, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseMoveCursorTo, x, e, name, o),
     },
     {
         'name': 'pause-on-error',
         'func': checkPauseOnError,
-        'toCall': (e, o) => wrapper(parserFuncs.parsePauseOnError, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parsePauseOnError, x, e, name, o),
     },
     {
         'name': 'permissions',
         'func': checkPermissions,
-        'toCall': (e, o) => wrapper(parserFuncs.parsePermissions, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parsePermissions, x, e, name, o),
     },
     {
         'name': 'press-key',
         'func': checkPressKey,
-        'toCall': (e, o) => wrapper(parserFuncs.parsePressKey, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parsePressKey, x, e, name, o),
     },
     {
         'name': 'reload',
         'func': checkReload,
-        'toCall': (e, o) => wrapper(parserFuncs.parseReload, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseReload, x, e, name, o),
     },
     {
         'name': 'screenshot',
         'func': checkScreenshot,
-        'toCall': (e, o) => wrapper(parserFuncs.parseScreenshot, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseScreenshot, x, e, name, o),
     },
     {
         'name': 'screenshot-comparison',
         'func': checkScreenshotComparison,
-        'toCall': (e, o) => wrapper(parserFuncs.parseScreenshotComparison, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseScreenshotComparison, x, e, name, o),
     },
     {
         'name': 'scroll-to',
         'func': checkScrollTo,
-        'toCall': (e, o) => wrapper(parserFuncs.parseScrollTo, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseScrollTo, x, e, name, o),
     },
     {
         'name': 'show-text',
         'func': checkShowText,
-        'toCall': (e, o) => wrapper(parserFuncs.parseShowText, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseShowText, x, e, name, o),
     },
     {
         'name': 'size',
         'func': checkSize,
-        'toCall': (e, o) => wrapper(parserFuncs.parseSize, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSize, x, e, name, o),
     },
     {
         'name': 'store-attribute',
         'func': checkStoreAttribute,
-        'toCall': (e, o) => wrapper(parserFuncs.parseStoreAttribute, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreAttribute, x, e, name, o),
     },
     {
         'name': 'store-css',
         'func': checkStoreCss,
-        'toCall': (e, o) => wrapper(parserFuncs.parseStoreCss, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreCss, x, e, name, o),
     },
     {
         'name': 'store-document-property',
         'func': checkStoreDocumentProperty,
-        'toCall': (e, o) => wrapper(parserFuncs.parseStoreDocumentProperty, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreDocumentProperty, x, e, name, o),
     },
     {
         'name': 'store-local-storage',
         'func': checkStoreLocalStorage,
-        'toCall': (e, o) => wrapper(parserFuncs.parseStoreLocalStorage, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreLocalStorage, x, e, name, o),
     },
     {
         'name': 'store-property',
         'func': checkStoreProperty,
-        'toCall': (e, o) => wrapper(parserFuncs.parseStoreProperty, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreProperty, x, e, name, o),
     },
     {
         'name': 'store-text',
         'func': checkStoreText,
-        'toCall': (e, o) => wrapper(parserFuncs.parseStoreText, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreText, x, e, name, o),
     },
     {
         'name': 'store-value',
         'func': checkStoreValue,
-        'toCall': (e, o) => wrapper(parserFuncs.parseStoreValue, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreValue, x, e, name, o),
     },
     {
         'name': 'store-window-property',
         'func': checkStoreWindowProperty,
-        'toCall': (e, o) => wrapper(parserFuncs.parseStoreWindowProperty, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreWindowProperty, x, e, name, o),
     },
     {
         'name': 'text',
         'func': checkText,
-        'toCall': (e, o) => wrapper(parserFuncs.parseText, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseText, x, e, name, o),
     },
     {
         'name': 'timeout',
         'func': checkTimeout,
-        'toCall': (e, o) => wrapper(parserFuncs.parseTimeout, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseTimeout, x, e, name, o),
     },
     {
         'name': 'wait-for',
         'func': checkWaitFor,
-        'toCall': (e, o) => wrapper(parserFuncs.parseWaitFor, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitFor, x, e, name, o),
     },
     {
         'name': 'wait-for-attribute',
         'func': checkWaitForAttribute,
-        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForAttribute, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForAttribute, x, e, name, o),
     },
     {
         'name': 'wait-for-count',
         'func': checkWaitForCount,
-        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForCount, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForCount, x, e, name, o),
     },
     {
         'name': 'wait-for-css',
         'func': checkWaitForCss,
-        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForCss, e, o),
-    },
-    {
-        'name': 'wait-for-css',
-        'func': checkWaitForCss,
-        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForCss, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForCss, x, e, name, o),
     },
     {
         'name': 'wait-for-document-property',
-        'func': checkWaitForDocumentProperty,
-        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForDocumentProperty, e, o),
+        'func': checkWaitForObjectProperty,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseWaitForDocumentProperty, x, e, name, o);
+        },
     },
     {
         'name': 'wait-for-local-storage',
         'func': checkWaitForLocalStorage,
-        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForLocalStorage, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForLocalStorage, x, e, name, o),
     },
     {
         'name': 'wait-for-property',
         'func': checkWaitForProperty,
-        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForProperty, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForProperty, x, e, name, o),
     },
     {
         'name': 'wait-for-text',
         'func': checkWaitForText,
-        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForText, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForText, x, e, name, o),
     },
     {
         'name': 'wait-for-window-property',
-        'func': checkWaitForWindowProperty,
-        'toCall': (e, o) => wrapper(parserFuncs.parseWaitForWindowProperty, e, o),
+        'func': checkWaitForObjectProperty,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForWindowProperty, x, e, name, o),
     },
     {
         'name': 'window-property',
-        'func': checkWindowProperty,
-        'toCall': (e, o) => wrapper(parserFuncs.parseWindowProperty, e, o),
+        'func': checkObjProperty,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWindowProperty, x, e, name, o),
     },
     {
         'name': 'write',
         'func': checkWrite,
-        'toCall': (e, o) => wrapper(parserFuncs.parseWrite, e, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWrite, x, e, name, o),
     },
     // This one is a bit "on its own".
     {
         'name': 'parseContent',
         'func': checkParseContent,
-        'toCall': (e, o) => wrapperParseContent(e, o),
+        'toCall': (x, e, o) => wrapperParseContent(e, o),
     },
 ];
 
@@ -10309,7 +2287,7 @@ function checkCommandsSets(x, commands) {
     }
 }
 
-async function checkCommands(x = new Assert()) {
+async function checkCommands(x) {
     x.startTestSuite('API', false);
     print('=> Starting API tests...');
     print('');
@@ -10317,7 +2295,7 @@ async function checkCommands(x = new Assert()) {
     for (let i = 0; i < TO_CHECK.length; ++i) {
         x.startTestSuite(TO_CHECK[i].name);
         try {
-            TO_CHECK[i].func(x, TO_CHECK[i].toCall);
+            TO_CHECK[i].func(x, (e, name, o) => TO_CHECK[i].toCall(x, e, name, o));
             x.endTestSuite();
         } catch (err) {
             x.endTestSuite(false, true);
@@ -10367,7 +2345,9 @@ async function checkCommands(x = new Assert()) {
 }
 
 if (require.main === module) {
-    checkCommands().then(nbErrors => {
+    const x = new Assert();
+    x.blessEnabled = process.argv.findIndex(arg => arg === '--bless') !== -1;
+    checkCommands(x).then(nbErrors => {
         process.exit(nbErrors !== 0 ? 1 : 0);
     });
 } else {

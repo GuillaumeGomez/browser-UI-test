@@ -1,0 +1,6 @@
+{
+  "instructions": [
+    "arg.expectedToFail = false;"
+  ],
+  "wait": false
+}

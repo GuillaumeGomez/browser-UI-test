@@ -1,0 +1,6 @@
+{
+  "instructions": [
+    "let parseClickWithOffsetVar = await page.$x(\"//a\");\nif (parseClickWithOffsetVar.length === 0) { throw 'XPath \"//a\" not found'; }\nparseClickWithOffsetVar = parseClickWithOffsetVar[0];\nawait parseClickWithOffsetVar.click({\n    \"offset\": {\"x\":1},\n});"
+  ],
+  "warnings": []
+}

@@ -1,0 +1,7 @@
+{
+  "instructions": [
+    "await page.evaluate(() => {\n    const errors = [];\n    const localStorageElemDict = {\"a\":\"1\",\"b\":\"2px\"};\n    for (const [localStorageElemKey, localStorageElemValue] of Object.entries(localStorageElemDict)) {\n        let localStorageElem = window.localStorage.getItem(localStorageElemKey);\n        if (localStorageElem == localStorageElemValue) {\n            errors.push(\"localStorage item \\\"\" + localStorageElemKey + \"\\\" (of value \\\"\" + localStorageElemValue + \"\\\") == \\\"\" + localStorageElem + \"\\\"\");\n        }\n    }\n    if (errors.length !== 0) {\n        const errs = errors.join(\", \");\n        throw \"The following errors happened: [\" + errs + \"]\";\n    }\n});"
+  ],
+  "wait": false,
+  "checkResult": true
+}

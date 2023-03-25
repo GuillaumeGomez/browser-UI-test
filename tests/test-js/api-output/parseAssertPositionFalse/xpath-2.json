@@ -1,0 +1,8 @@
+{
+  "instructions": [
+    "let parseAssertPosition = await page.$x(\"//a\");\nif (parseAssertPosition.length === 0) { throw 'XPath \"//a\" not found'; }\nparseAssertPosition = parseAssertPosition[0];\nawait page.evaluate(elem => {\n    const errors = [];\n    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {\n        let v = e.getBoundingClientRect()[field];\n        let roundedV = Math.round(v);\n        if (v === value || roundedV === Math.round(value)) {\n            errors.push(\"same \" + kind + \" values (whereas it shouldn't): \" + v + \" (or \" + roundedV + \") != \" + value);\n        }\n    }\n    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);\n    if (errors.length !== 0) {\n        const errs = errors.join(\", \");\n        throw \"The following errors happened: [\" + errs + \"]\";\n    }\n}, parseAssertPosition);"
+  ],
+  "warnings": [],
+  "wait": false,
+  "checkResult": true
+}

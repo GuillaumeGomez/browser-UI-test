@@ -1,0 +1,10 @@
+{
+  "instructions": [
+    "let parseCompareElementsPosNear1 = await page.$(\"a\");\nif (parseCompareElementsPosNear1 === null) { throw '\"a\" not found'; }\nlet parseCompareElementsPosNear2 = await page.$(\"b\");\nif (parseCompareElementsPosNear2 === null) { throw '\"b\" not found'; }\nawait page.evaluate((elem1, elem2) => {\nfunction checkY(e1, e2) {\ntry {\nlet y1 = e1.getBoundingClientRect().top;\nlet y2 = e2.getBoundingClientRect().top;\nlet delta = Math.abs(y1 - y2);\nif (delta > 0) {\nthrow \"delta Y values too large: \" + delta + \" > 0\";\n}\n\n} catch(e) { return; } throw \"assert didn't fail\";}\ncheckY(elem1, elem2);\n}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);"
+  ],
+  "wait": false,
+  "checkResult": true,
+  "warnings": [
+    "Delta is 0 for \"Y\", maybe try to use `compare-elements-position` instead?"
+  ]
+}

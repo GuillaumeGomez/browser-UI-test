@@ -1,0 +1,5 @@
+{
+  "instructions": [
+    "let parseAttributeElem = await page.$x(\"//a\");\nif (parseAttributeElem.length === 0) { throw 'XPath \"//a\" not found'; }\nparseAttributeElem = parseAttributeElem[0];\nawait page.evaluate(e => {\ne.setAttribute(\"b\",\"c\");\n}, parseAttributeElem);"
+  ]
+}

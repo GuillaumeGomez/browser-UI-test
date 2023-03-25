@@ -1,0 +1,10 @@
+{
+  "instructions": [
+    "const timeLimit = page.getDefaultTimeout();\nconst timeAdd = 50;\nlet allTime = 0;\nlet parseWaitForText = null;\nconst value = \"b\";\nlet computedEntry;\nwhile (true) {\n    while (true) {\n        parseWaitForText = await page.$(\"a\");\n        if (parseWaitForText !== null) {\n            break;\n        }\n        await new Promise(r => setTimeout(r, timeAdd));\n        if (timeLimit === 0) {\n            continue;\n        }\n        allTime += timeAdd;\n        if (allTime >= timeLimit) {\n            throw new Error(\"The following CSS selector \\\"a\\\" was not found\");\n        }\n    }\n    computedEntry = await page.evaluate(e => {\n        return browserUiTestHelpers.getElemText(e, \"b\");\n    }, parseWaitForText);\n    if (computedEntry === value) {\n        break;\n    }\n    await new Promise(r => setTimeout(r, timeAdd));\n    if (timeLimit === 0) {\n        continue;\n    }\n    allTime += timeAdd;\n    if (allTime >= timeLimit) {\n        throw new Error(\"The text still doesn't match: `\" + computedEntry + \"` != `\" + value + \"`\");\n    }\n}"
+  ],
+  "wait": false,
+  "warnings": [
+    "Pseudo-elements (`::after`) don't have attributes so the check will be performed on the element itself"
+  ],
+  "checkResult": true
+}

@@ -1,0 +1,6 @@
+{
+  "instructions": [
+    "arg.pauseOnError = true;"
+  ],
+  "wait": false
+}

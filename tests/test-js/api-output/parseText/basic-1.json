@@ -1,0 +1,5 @@
+{
+  "instructions": [
+    "let parseTextElem = await page.$(\"a\");\nif (parseTextElem === null) { throw '\"a\" not found'; }\nawait page.evaluate(e => {\nif ([\"input\", \"textarea\"].indexOf(e.tagName.toLowerCase()) !== -1) {\ne.value = \"b\";\n} else {\ne.innerText = \"b\";\n}\n}, parseTextElem);"
+  ]
+}

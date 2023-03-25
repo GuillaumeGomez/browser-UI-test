@@ -1,0 +1,6 @@
+{
+  "instructions": [
+    "arg.showText = true;",
+    "await page.evaluate(() => {\nlet tmp = document.getElementById('browser-ui-test-style-text-hide');\nif (tmp) { tmp.remove(); }\n});"
+  ]
+}

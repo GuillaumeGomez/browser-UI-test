@@ -1,0 +1,7 @@
+{
+  "instructions": [
+    "const timeLimit = page.getDefaultTimeout();\nconst timeAdd = 50;\nlet allTime = 0;\nlet parseWaitForLocalStorage = null;\nwhile (true) {\n    parseWaitForLocalStorage = await page.evaluate(() => {\n        const errors = [];\n        const parseWaitForLocalStorageDict = {\"a\":\"b\"};\n        for (const [parseWaitForLocalStorageKey, parseWaitForLocalStorageValue] of Object.entries(parseWaitForLocalStorageDict)) {\n            let parseWaitForLocalStorage = window.localStorage.getItem(parseWaitForLocalStorageKey);\n            if (parseWaitForLocalStorage != parseWaitForLocalStorageValue) {\n                errors.push(\"localStorage item \\\"\" + parseWaitForLocalStorageKey + \"\\\" (of value \\\"\" + parseWaitForLocalStorageValue + \"\\\") != \\\"\" + parseWaitForLocalStorage + \"\\\"\");\n            }\n        }\n        return errors;\n    });\n    if (parseWaitForLocalStorage.length === 0) {\n        break;\n    }\n    await new Promise(r => setTimeout(r, timeAdd));\n    if (timeLimit === 0) {\n        continue;\n    }\n    allTime += timeAdd;\n    if (allTime >= timeLimit) {\n        const errs = parseWaitForLocalStorage.join(\", \");\n        throw new Error(\"The following local storage entries still don't match: [\" + errs + \"]\");\n    }\n}"
+  ],
+  "wait": false,
+  "checkResult": true
+}

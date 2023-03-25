@@ -1,0 +1,6 @@
+{
+  "instructions": [
+    "const jsHandle = await page.evaluateHandle(() => {\n    if (window[\"1\"] === undefined) {\n        throw \"window doesn't have a property named `1`\";\n    }\n    return window[\"1\"];\n});\narg.variables[\"a1\"] = await jsHandle.jsonValue();"
+  ],
+  "wait": false
+}

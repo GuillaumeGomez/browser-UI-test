@@ -488,16 +488,16 @@ if (String(e[${varKey}]) != ${varValue}) {
     }
 
     const json = tuple[1].getRaw();
-    const entries = validateJson(json, {'string': [], 'number': []}, 'property');
+    const entries = validateJson(json, {'string': [], 'number': [], 'ident': ['null']}, 'property');
     if (entries.error !== undefined) {
         return entries;
     }
+    warnings.push(...entries.warnings);
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
-        entries.warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
+        warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
 the check will be performed on the element itself`);
     }
-
 
     // JSON.stringify produces a problematic output so instead we use this.
     const props = [];
@@ -542,7 +542,7 @@ ${indentString(checks.join('\n'), 2)}
     return {
         'instructions': [whole],
         'wait': false,
-        'warnings': entries.warnings,
+        'warnings': warnings,
         'checkResult': true,
     };
 }
@@ -711,8 +711,9 @@ if (attr !== ${varValue}) {
         return entries;
     }
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    warnings.push(...entries.warnings);
     if (isPseudo) {
-        entries.warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
+        warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
 the check will be performed on the element itself`);
     }
 
@@ -731,7 +732,7 @@ the check will be performed on the element itself`);
         const k = Object.entries(enabled_checks)
             .filter(([k, v]) => v && k !== 'ALL')
             .map(([k, _]) => k);
-        entries.warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
+        warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
     }
 
     let noAttrError = '';
@@ -787,7 +788,7 @@ ${indentString(code, 1)}
     return {
         'instructions': [instructions],
         'wait': false,
-        'warnings': entries.warnings,
+        'warnings': warnings,
         'checkResult': true,
     };
 }

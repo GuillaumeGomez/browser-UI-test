@@ -1,0 +1,5 @@
+{
+  "instructions": [
+    "let parseAttributeElemJson = await page.$x(\"//a\");\nif (parseAttributeElemJson.length === 0) { throw 'XPath \"//a\" not found'; }\nparseAttributeElemJson = parseAttributeElemJson[0];\nawait page.evaluate(e => {\ne.setAttribute(\"b\",\"c\\n\");\n}, parseAttributeElemJson);"
+  ]
+}

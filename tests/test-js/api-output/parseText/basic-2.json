@@ -1,0 +1,5 @@
+{
+  "instructions": [
+    "let parseTextElem = await page.$x(\"//a\");\nif (parseTextElem.length === 0) { throw 'XPath \"//a\" not found'; }\nparseTextElem = parseTextElem[0];\nawait page.evaluate(e => {\nif ([\"input\", \"textarea\"].indexOf(e.tagName.toLowerCase()) !== -1) {\ne.value = \"b\";\n} else {\ne.innerText = \"b\";\n}\n}, parseTextElem);"
+  ]
+}
