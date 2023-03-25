@@ -1,7 +1,6 @@
 const process = require('process');
 process.env.debug_tests = '1'; // We enable this to get all items from `commands.js`.
 const parserFuncs = require('../../src/commands.js');
-const {indentString} = require('../../src/commands/utils.js');
 const {Parser} = require('../../src/parser.js');
 const Options = require('../../src/options.js').Options;
 const {Assert, plural, print} = require('./utils.js');
@@ -19,7 +18,7 @@ function wrapper(callback, x, arg, name, options) {
         options = new Options();
     }
     let expected;
-    const parent = path.join(__dirname, "api-output", callback.name);
+    const parent = path.join(__dirname, 'api-output', callback.name);
     const filePath = path.join(parent, `${name}.json`);
     if (!Object.prototype.hasOwnProperty.call(uniqueFileOutput, callback.name)) {
         uniqueFileOutput[callback.name] = Object.create(null);
@@ -1757,7 +1756,7 @@ function checkWaitForText(x, func) {
     func('("//a", "b")', 'xpath-1');
 }
 
-function checkObjProperty(x, func, objName) {
+function checkObjProperty(x, func) {
     func('"', 'err-1');
     func('', 'err-2');
     func('"a"', 'err-3');
@@ -1842,12 +1841,16 @@ const TO_CHECK = [
     {
         'name': 'assert-document-property',
         'func': checkAssertObjProperty,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertDocumentProperty, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseAssertDocumentProperty, x, e, name, o);
+        },
     },
     {
         'name': 'assert-document-property-false',
         'func': checkAssertObjProperty,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertDocumentPropertyFalse, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseAssertDocumentPropertyFalse, x, e, name, o);
+        },
     },
     {
         'name': 'assert-count',
@@ -1867,7 +1870,9 @@ const TO_CHECK = [
     {
         'name': 'assert-local-storage-false',
         'func': checkAssertLocalStorage,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertLocalStorageFalse, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseAssertLocalStorageFalse, x, e, name, o);
+        },
     },
     {
         'name': 'assert-property',
@@ -1917,7 +1922,9 @@ const TO_CHECK = [
     {
         'name': 'assert-window-property-false',
         'func': checkAssertObjProperty,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertWindowPropertyFalse, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseAssertWindowPropertyFalse, x, e, name, o);
+        },
     },
     {
         'name': 'attribute',
@@ -1942,12 +1949,16 @@ const TO_CHECK = [
     {
         'name': 'compare-elements-attribute',
         'func': checkCompareElementsAttribute,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseCompareElementsAttribute, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsAttribute, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-attribute-false',
         'func': checkCompareElementsAttribute,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseCompareElementsAttributeFalse, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            wrapper(parserFuncs.parseCompareElementsAttributeFalse, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-css',
@@ -1957,37 +1968,51 @@ const TO_CHECK = [
     {
         'name': 'compare-elements-css-false',
         'func': checkCompareElementsCss,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseCompareElementsCssFalse, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsCssFalse, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-position',
         'func': checkCompareElementsPosition,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseCompareElementsPosition, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsPosition, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-position-false',
         'func': checkCompareElementsPosition,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseCompareElementsPositionFalse, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsPositionFalse, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-position-near',
         'func': checkCompareElementsPositionNear,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseCompareElementsPositionNear, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsPositionNear, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-position-near-false',
         'func': checkCompareElementsPositionNear,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseCompareElementsPositionNearFalse, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsPositionNearFalse, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-property',
         'func': checkCompareElementsProperty,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseCompareElementsProperty, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsProperty, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-property-false',
         'func': checkCompareElementsProperty,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseCompareElementsPropertyFalse, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsPropertyFalse, x, e, name, o);
+        },
     },
     {
         'name': 'compare-elements-text',
@@ -1997,7 +2022,9 @@ const TO_CHECK = [
     {
         'name': 'compare-elements-text-false',
         'func': checkCompareElementsText,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseCompareElementsTextFalse, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsTextFalse, x, e, name, o);
+        },
     },
     {
         'name': 'css',
@@ -2212,7 +2239,9 @@ const TO_CHECK = [
     {
         'name': 'wait-for-document-property',
         'func': checkWaitForObjectProperty,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForDocumentProperty, x, e, name, o),
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseWaitForDocumentProperty, x, e, name, o);
+        },
     },
     {
         'name': 'wait-for-local-storage',

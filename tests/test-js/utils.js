@@ -58,7 +58,9 @@ class Assert {
     }
 
     // `extraInfo` is used as an additional message in case the test fails.
-    assert(value1, value2, pos, extraInfo, toJson = true, out = undefined, errCallback = undefined) {
+    assert(
+        value1, value2, pos, extraInfo, toJson = true, out = undefined, errCallback = undefined,
+    ) {
         this._addTest();
         const ori1 = value1;
         const ori2 = value2;
@@ -149,7 +151,10 @@ class Assert {
     }
 
     // Same as `assertTry` but handle some corner cases linked to UI tests.
-    async assertTryUi(callback, args, expectedValue, extraInfo, toJson = true, out = undefined, errCallback = undefined) {
+    async assertTryUi(
+        callback, args, expectedValue, extraInfo, toJson = true, out = undefined,
+        errCallback = undefined,
+    ) {
         if (!this.blessEnabled) {
             errCallback = undefined;
         }
@@ -178,7 +183,8 @@ class Assert {
             }
             return this.assert(ret, expectedValue, pos, extraInfo, toJson, out, errCallback);
         } catch (err) {
-            return this.assert(err.message, expectedValue, pos, extraInfo, toJson, out, errCallback);
+            return this.assert(
+                err.message, expectedValue, pos, extraInfo, toJson, out, errCallback);
         }
     }
 
