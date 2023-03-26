@@ -312,6 +312,10 @@ function checkAssertProperty(x, func) {
     func('("a", {"a": 1}, STARTS_WITH)', 'extra-1');
     func('("a", {"a": 1}, [STARTS_WITH, STARTS_WITH])', 'extra-2');
     func('("a", {"a": 1}, [STARTS_WITH, ENDS_WITH])', 'extra-3');
+
+    // 'null' ident
+    func('("a", {"b": null})', 'undef-1');
+    func('("a", {"a": null}, [STARTS_WITH, STARTS_WITH])', 'undef-2');
 }
 
 function checkAssertPosition(x, func) {
