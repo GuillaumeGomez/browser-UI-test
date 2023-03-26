@@ -1,0 +1,3 @@
+{
+  "error": "Forbidden `ident` used (`null`). Allowed idents: [undefined]"
+}
