@@ -471,6 +471,8 @@ if (Number.isNaN(e[${varKey}])) {
 }`);
         }
     }
+    // eslint-disable-next-line no-extra-parens
+    const hasSpecialChecks = (enabled_checks['ALL'] && checks.length > 1) || checks.length !== 0;
     // If no check was enabled.
     if (checks.length === 0) {
         if (assertFalse) {
@@ -488,7 +490,8 @@ if (String(e[${varKey}]) != ${varValue}) {
     }
 
     const json = tuple[1].getRaw();
-    const entries = validateJson(json, {'string': [], 'number': [], 'ident': ['null']}, 'property');
+    const entries = validateJson(
+        json, {'string': [], 'number': [], 'ident': ['null']}, 'property');
     if (entries.error !== undefined) {
         return entries;
     }
@@ -501,15 +504,34 @@ the check will be performed on the element itself`);
 
     // JSON.stringify produces a problematic output so instead we use this.
     const props = [];
+    const undefProps = [];
     for (const [k, v] of Object.entries(entries.values)) {
-        props.push(`"${k}":"${v.value}"`);
+        if (v.kind !== 'ident') {
+            props.push(`"${k}":"${v.value}"`);
+        } else {
+            undefProps.push(`"${k}"`);
+        }
     }
 
+    if (undefProps.length > 0 && hasSpecialChecks) {
+        const k = Object.entries(enabled_checks)
+            .filter(([k, v]) => v && k !== 'ALL')
+            .map(([k, _]) => k);
+        warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
+    }
+
+    let expectedPropError = '';
+    let unexpectedPropError = '';
     let unknown = '';
     if (!assertFalse) {
-        unknown = '\n';
-        unknown += indentString(
+        unknown = '\n' + indentString(
             `nonMatchingProps.push('Unknown property \`' + ${varKey} + '\`');`, 3);
+        unexpectedPropError = `
+            nonMatchingProps.push("Expected property \`" + prop + "\` to not exist, found: \
+\`" + e[prop] + "\`");`;
+    } else {
+        expectedPropError = `
+    nonMatchingProps.push("Property named \`" + prop + "\` doesn't exist");`;
     }
 
     const checkAllElements = enabled_checks['ALL'] === true;
@@ -522,6 +544,12 @@ the check will be performed on the element itself`);
 await page.evaluate(e => {
     const nonMatchingProps = [];
     const ${varDict} = {${props.join(',')}};
+    const undefProps = [${undefProps.join(',')}];
+    for (const prop of undefProps) {
+        if (e[prop] !== undefined) {${unexpectedPropError}
+            continue;
+        }${expectedPropError}
+    }
     for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
         if (e[${varKey}] === undefined) {${unknown}
             continue;
