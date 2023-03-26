@@ -1,5 +1,8 @@
 // This test is meant to ensure that "null" checks are working as expected.
 goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+//
+// assert-attribute
+//
 assert-attribute: ("header", {"whatever": null})
 // Should fail.
 assert-attribute: (".content", {"nb-value": null})
@@ -14,3 +17,21 @@ assert-attribute: ("header", {"whatever": null}, ALL)
 assert-attribute: ("header", {"whatever": null}, CONTAINS)
 // Should warn.
 assert-attribute: ("header", {"whatever": null}, [ALL, CONTAINS])
+
+//
+// assert-property
+//
+assert-property: ("header", {"yolo": null})
+// Should fail.
+assert-property: (".content", {"bgColor": null})
+assert-property-false: ("header", {"bgColor": null})
+// Should fail.
+assert-property-false: ("header", {"yolo": null})
+
+// Checking the warnings.
+// There should be no warning for this one.
+assert-property: ("header", {"yolo": null}, ALL)
+// Should warn.
+assert-property: ("header", {"yolo": null}, CONTAINS)
+// Should warn.
+assert-property: ("header", {"yolo": null}, [ALL, CONTAINS])
