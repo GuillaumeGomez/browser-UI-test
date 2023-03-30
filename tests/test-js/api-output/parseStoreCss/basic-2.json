@@ -1,6 +1,0 @@
-{
-  "instructions": [
-    "let parseStoreCss = await page.$x(\"//a\");\nif (parseStoreCss.length === 0) { throw 'XPath \"//a\" not found'; }\nparseStoreCss = parseStoreCss[0];\nconst jsHandle = await parseStoreCss.evaluateHandle(e => {\n    return String(getComputedStyle(e)[\"b\"]);\n});\narg.variables[\"VAR\"] = await jsHandle.jsonValue();"
-  ],
-  "wait": false
-}

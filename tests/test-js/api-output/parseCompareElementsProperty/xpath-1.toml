@@ -1,0 +1,20 @@
+instructions = [
+  """let parseCompareElementsProp1 = await page.$x(\"//a\");
+if (parseCompareElementsProp1.length === 0) { throw 'XPath \"//a\" not found'; }
+parseCompareElementsProp1 = parseCompareElementsProp1[0];
+let parseCompareElementsProp2 = await page.$(\"b\");
+if (parseCompareElementsProp2 === null) { throw '\"b\" not found'; }
+const parseCompareElementsProps = [\"margin\"];
+for (const property of parseCompareElementsProps) {
+const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {
+return String(e[p]);
+}, property);
+await parseCompareElementsProp2.evaluate((e, v, p) => {
+if (v !== String(e[p])) {
+throw p + \": `\" + v + \"` !== `\" + String(e[p]) + \"`\";
+}
+}, value, property);
+}""",
+]
+wait = false
+checkResult = true

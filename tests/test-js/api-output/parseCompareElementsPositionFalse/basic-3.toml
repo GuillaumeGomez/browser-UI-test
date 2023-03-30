@@ -1,0 +1,18 @@
+instructions = [
+  """let parseCompareElementsPos1 = await page.$(\"a\");
+if (parseCompareElementsPos1 === null) { throw '\"a\" not found'; }
+let parseCompareElementsPos2 = await page.$(\"b\");
+if (parseCompareElementsPos2 === null) { throw '\"b\" not found'; }
+await page.evaluate((elem1, elem2) => {
+function checkY(e1, e2) {
+try {
+let y1 = e1.getBoundingClientRect().top;
+let y2 = e2.getBoundingClientRect().top;
+if (y1 !== y2) { throw \"different Y values: \" + y1 + \" != \" + y2; }
+
+} catch(e) { return; } throw \"assert didn't fail\";}
+checkY(elem1, elem2);
+}, parseCompareElementsPos1, parseCompareElementsPos2);""",
+]
+wait = false
+checkResult = true

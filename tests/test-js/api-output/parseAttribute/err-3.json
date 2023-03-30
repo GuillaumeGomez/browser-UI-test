@@ -1,3 +1,0 @@
-{
-  "error": "expected `(\"CSS selector\" or \"XPath\", \"attribute name\", \"attribute value\")` or `(\"CSS selector\" or \"XPath\", [JSON object])`"
-}

@@ -1,7 +1,0 @@
-{
-  "instructions": [
-    "let parseCompareElementsProp1 = await page.$(\"a\");\nif (parseCompareElementsProp1 === null) { throw '\"a\" not found'; }\nlet parseCompareElementsProp2 = await page.$x(\"//b\");\nif (parseCompareElementsProp2.length === 0) { throw 'XPath \"//b\" not found'; }\nparseCompareElementsProp2 = parseCompareElementsProp2[0];\nconst parseCompareElementsProps = [\"margin\"];\nfor (const property of parseCompareElementsProps) {\ntry {\nconst value = await parseCompareElementsProp1.evaluateHandle((e, p) => {\nreturn String(e[p]);\n}, property);\nawait parseCompareElementsProp2.evaluate((e, v, p) => {\nif (v !== String(e[p])) {\nthrow p + \": `\" + v + \"` !== `\" + String(e[p]) + \"`\";\n}\n}, value, property);\n} catch(e) { continue; } throw \"assert didn't fail\";\n}"
-  ],
-  "wait": false,
-  "checkResult": true
-}

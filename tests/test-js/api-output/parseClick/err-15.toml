@@ -1,0 +1,3 @@
+instructions = [
+  """await page.mouse.click(-2, 1);""",
+]

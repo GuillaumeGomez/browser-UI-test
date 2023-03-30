@@ -1,0 +1,8 @@
+instructions = [
+  """const oldValue = arg.failOnJsError;
+arg.failOnJsError = true;
+if (oldValue !== true) {
+    arg.jsErrors.splice(0, arg.jsErrors.length);
+}""",
+]
+wait = false

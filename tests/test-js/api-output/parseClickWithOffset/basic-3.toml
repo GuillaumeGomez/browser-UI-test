@@ -1,0 +1,9 @@
+instructions = [
+  """let parseClickWithOffsetVar = await page.$(\"a\");
+if (parseClickWithOffsetVar === null) { throw '\"a\" not found'; }
+await parseClickWithOffsetVar.click({
+    \"offset\": {},
+});""",
+]
+warnings = [
+]

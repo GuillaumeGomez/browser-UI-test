@@ -1,3 +1,0 @@
-{
-  "error": "unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, `STARTS_WITH`, `ENDS_WITH`, `NEAR`]"
-}

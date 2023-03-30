@@ -1,0 +1,1 @@
+error = """expected `(\"CSS selector\" or \"XPath\", \"CSS property name\", \"CSS property value\")` or `(\"CSS selector\" or \"XPath\", [JSON object])`"""

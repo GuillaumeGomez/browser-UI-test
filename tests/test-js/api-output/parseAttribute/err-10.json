@@ -1,7 +1,0 @@
-{
-  "instructions": [],
-  "wait": false,
-  "warnings": [
-    "Ignoring recursive entry with key `\"a\"`"
-  ]
-}

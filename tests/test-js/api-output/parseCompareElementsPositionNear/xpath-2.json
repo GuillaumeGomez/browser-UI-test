@@ -1,8 +1,0 @@
-{
-  "instructions": [
-    "let parseCompareElementsPosNear1 = await page.$(\"a\");\nif (parseCompareElementsPosNear1 === null) { throw '\"a\" not found'; }\nlet parseCompareElementsPosNear2 = await page.$x(\"//b\");\nif (parseCompareElementsPosNear2.length === 0) { throw 'XPath \"//b\" not found'; }\nparseCompareElementsPosNear2 = parseCompareElementsPosNear2[0];\nawait page.evaluate((elem1, elem2) => {\nfunction checkY(e1, e2) {\nlet y1 = e1.getBoundingClientRect().top;\nlet y2 = e2.getBoundingClientRect().top;\nlet delta = Math.abs(y1 - y2);\nif (delta > 2) {\nthrow \"delta Y values too large: \" + delta + \" > 2\";\n}\n}\ncheckY(elem1, elem2);\nfunction checkX(e1, e2) {\nlet x1 = e1.getBoundingClientRect().left;\nlet x2 = e2.getBoundingClientRect().left;\nlet delta = Math.abs(x1 - x2);\nif (delta > 1) {\nthrow \"delta X values too large: \" + delta + \" > 1\";\n}\n}\ncheckX(elem1, elem2);\n}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);"
-  ],
-  "wait": false,
-  "checkResult": true,
-  "warnings": []
-}

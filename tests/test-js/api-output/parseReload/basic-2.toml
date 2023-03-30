@@ -1,0 +1,4 @@
+instructions = [
+  """const ret = page.reload({'waitUntil': 'domcontentloaded', 'timeout': 12});
+await ret;""",
+]

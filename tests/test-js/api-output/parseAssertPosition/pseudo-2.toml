@@ -1,0 +1,26 @@
+instructions = [
+  """let parseAssertPosition = await page.$(\"a\");
+if (parseAssertPosition === null) { throw '\"a\" not found'; }
+await page.evaluate(elem => {
+    const errors = [];
+    function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+        let v = e.getBoundingClientRect()[field];
+        let pseudoStyle = window.getComputedStyle(e, \"::after\");
+        let style = window.getComputedStyle(e);
+        v += browserUiTestHelpers.extractFloatOrZero(pseudoStyle[field]) - browserUiTestHelpers.extractFloatOrZero(style[styleField]);
+        let roundedV = Math.round(v);
+        if (v !== value && roundedV !== Math.round(value)) {
+            errors.push(\"different \" + kind + \" values: \" + v + \" (or \" + roundedV + \") != \" + value);
+        }
+    }
+    checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 1, errors);
+    if (errors.length !== 0) {
+        const errs = errors.join(\", \");
+        throw \"The following errors happened: [\" + errs + \"]\";
+    }
+}, parseAssertPosition);""",
+]
+warnings = [
+]
+wait = false
+checkResult = true

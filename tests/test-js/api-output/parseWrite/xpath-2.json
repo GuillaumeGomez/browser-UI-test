@@ -1,5 +1,0 @@
-{
-  "instructions": [
-    "let parseWriteVar = await page.$x(\"//a\");\nif (parseWriteVar.length === 0) { throw 'XPath \"//a\" not found'; }\nparseWriteVar = parseWriteVar[0];\nawait parseWriteVar.type(\"b\");"
-  ]
-}

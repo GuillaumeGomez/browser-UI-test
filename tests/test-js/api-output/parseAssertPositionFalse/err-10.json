@@ -1,3 +1,0 @@
-{
-  "error": "Only accepted keys are \"x\" and \"y\", found `\"z\"` (in `{\"z\": 12}`)"
-}

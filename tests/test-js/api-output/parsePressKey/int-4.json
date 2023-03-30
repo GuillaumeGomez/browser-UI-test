@@ -1,5 +1,0 @@
-{
-  "instructions": [
-    "await page.keyboard.press(String.fromCharCode(13))"
-  ]
-}

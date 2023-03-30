@@ -1,6 +1,0 @@
-{
-  "instructions": [
-    "let parseStoreText = await page.$x(\"//a\");\nif (parseStoreText.length === 0) { throw 'XPath \"//a\" not found'; }\nparseStoreText = parseStoreText[0];\nconst jsHandle = await parseStoreText.evaluateHandle(e => {\n    return browserUiTestHelpers.getElemText(e, \"\");\n});\narg.variables[\"VAR\"] = await jsHandle.jsonValue();"
-  ],
-  "wait": false
-}

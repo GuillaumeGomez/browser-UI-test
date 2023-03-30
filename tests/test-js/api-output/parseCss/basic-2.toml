@@ -1,0 +1,7 @@
+instructions = [
+  """let parseCssElem = await page.$(\"a\");
+if (parseCssElem === null) { throw '\"a\" not found'; }
+await page.evaluate(e => {
+e.style[\"\\\"b\"] = \"c\";
+}, parseCssElem);""",
+]

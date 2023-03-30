@@ -1,0 +1,11 @@
+instructions = [
+  """let parseCompareElementsPosNear1 = await page.$(\"a\");
+if (parseCompareElementsPosNear1 === null) { throw '\"a\" not found'; }
+let parseCompareElementsPosNear2 = await page.$(\"b\");
+if (parseCompareElementsPosNear2 === null) { throw '\"b\" not found'; }
+""",
+]
+wait = false
+checkResult = true
+warnings = [
+]

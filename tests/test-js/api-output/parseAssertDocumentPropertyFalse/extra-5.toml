@@ -1,0 +1,25 @@
+instructions = [
+  """await page.evaluate(() => {
+    const nonMatchingProps = [];
+    const parseAssertDictPropDict = {\"a\":\"b\"};
+    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(parseAssertDictPropDict)) {
+        if (document[parseAssertDictPropKey] === undefined) {
+            continue;
+        }
+        if (String(document[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertDictPropKey + '` (for STARTS_WITH check)');
+        }
+        if (Number.isNaN(document[parseAssertDictPropKey])) {
+            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + document[parseAssertDictPropKey] + '`) is NaN (for NEAR check)');
+        } else if (Math.abs(document[parseAssertDictPropKey] - parseAssertDictPropValue) <= 1) {
+            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + document[parseAssertDictPropKey] + '`) is within 1 of `' + parseAssertDictPropValue + '` (for NEAR check)');
+        }
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(\", \");
+        throw \"The following errors happened: [\" + props + \"]\";
+    }
+});""",
+]
+wait = false
+checkResult = true

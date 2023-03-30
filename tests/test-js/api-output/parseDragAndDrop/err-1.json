@@ -1,3 +1,0 @@
-{
-  "error": "expected tuple with two elements being either a position `(x, y)` or a CSS selector or an XPath, found `true`"
-}

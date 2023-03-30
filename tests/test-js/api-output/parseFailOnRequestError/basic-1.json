@@ -1,6 +1,0 @@
-{
-  "instructions": [
-    "const oldValue = arg.failOnRequestError;\narg.failOnRequestError = false;\nif (oldValue !== true) {\n    arg.requestErrors.splice(0, arg.requestErrors.length);\n}"
-  ],
-  "wait": false
-}

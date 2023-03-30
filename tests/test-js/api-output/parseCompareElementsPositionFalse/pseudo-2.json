@@ -1,7 +1,0 @@
-{
-  "instructions": [
-    "let parseCompareElementsPos1 = await page.$(\"a\");\nif (parseCompareElementsPos1 === null) { throw '\"a\" not found'; }\nlet parseCompareElementsPos2 = await page.$(\"b\");\nif (parseCompareElementsPos2 === null) { throw '\"b\" not found'; }\nawait page.evaluate((elem1, elem2) => {\nfunction checkY(e1, e2) {\ntry {\nlet y1 = e1.getBoundingClientRect().top;\nlet y2 = e2.getBoundingClientRect().top;\nlet pseudoStyle2 = window.getComputedStyle(e2, \"::after\");\nlet style2 = window.getComputedStyle(e2);\ny2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2.top) - browserUiTestHelpers.extractFloatOrZero(style2.marginTop);\nif (y1 !== y2) { throw \"different Y values: \" + y1 + \" != \" + y2; }\n\n} catch(e) { return; } throw \"assert didn't fail\";}\ncheckY(elem1, elem2);\nfunction checkX(e1, e2) {\ntry {\nlet x1 = e1.getBoundingClientRect().left;\nlet x2 = e2.getBoundingClientRect().left;\nlet pseudoStyle2 = window.getComputedStyle(e2, \"::after\");\nlet style2 = window.getComputedStyle(e2);\nx2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2.left) - browserUiTestHelpers.extractFloatOrZero(style2.marginLeft);\nif (x1 !== x2) { throw \"different X values: \" + x1 + \" != \" + x2; }\n\n} catch(e) { return; } throw \"assert didn't fail\";}\ncheckX(elem1, elem2);\n}, parseCompareElementsPos1, parseCompareElementsPos2);"
-  ],
-  "wait": false,
-  "checkResult": true
-}

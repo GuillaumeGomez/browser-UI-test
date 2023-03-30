@@ -1,3 +1,0 @@
-{
-  "error": "all array's elements must be of the same kind: expected array of `string` (because the first element is of this kind), found `number` at position 1"
-}

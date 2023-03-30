@@ -1,6 +1,0 @@
-{
-  "instructions": [
-    "await page.focus(\"a\");",
-    "await page.keyboard.press(String.fromCharCode(13));"
-  ]
-}

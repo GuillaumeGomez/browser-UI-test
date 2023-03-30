@@ -1,5 +1,0 @@
-{
-  "instructions": [
-    "let parseAttributeElemJson = await page.$(\"a\");\nif (parseAttributeElemJson === null) { throw '\"a\" not found'; }\nawait page.evaluate(e => {\ne.setAttribute(\"b\",\"c\");\n}, parseAttributeElemJson);\nawait page.evaluate(e => {\ne.setAttribute(\"d\",\"e\");\n}, parseAttributeElemJson);"
-  ]
-}

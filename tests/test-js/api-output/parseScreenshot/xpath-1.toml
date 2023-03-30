@@ -1,0 +1,10 @@
+instructions = [
+  """let screenshotElem = await page.$x(\"//b\");
+if (screenshotElem.length === 0) { throw 'XPath \"//b\" not found'; }
+screenshotElem = screenshotElem[0];
+await screenshotElem.screenshot({\"path\":\"a.png\",\"fullPage\":false});""",
+]
+wait = false
+infos = [
+  """Generating screenshot for XPath `//b` into `a.png`""",
+]

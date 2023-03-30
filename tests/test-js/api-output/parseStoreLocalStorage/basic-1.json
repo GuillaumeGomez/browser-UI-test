@@ -1,6 +1,0 @@
-{
-  "instructions": [
-    "const jsHandle = await page.evaluateHandle(() => {\n    return window.localStorage.getItem(\"a\");\n});\narg.variables[\"VAR\"] = await jsHandle.jsonValue();"
-  ],
-  "wait": false
-}

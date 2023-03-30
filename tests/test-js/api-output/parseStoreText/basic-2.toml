@@ -1,0 +1,10 @@
+instructions = [
+  """let parseStoreText = await page.$x(\"//a\");
+if (parseStoreText.length === 0) { throw 'XPath \"//a\" not found'; }
+parseStoreText = parseStoreText[0];
+const jsHandle = await parseStoreText.evaluateHandle(e => {
+    return browserUiTestHelpers.getElemText(e, \"\");
+});
+arg.variables[\"VAR\"] = await jsHandle.jsonValue();""",
+]
+wait = false

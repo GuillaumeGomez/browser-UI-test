@@ -1,5 +1,0 @@
-{
-  "instructions": [
-    "await page.mouse.move(1, 2);"
-  ]
-}

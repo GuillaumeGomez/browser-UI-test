@@ -1,5 +1,0 @@
-{
-  "instructions": [
-    "await page.setGeolocation(12, 13);"
-  ]
-}

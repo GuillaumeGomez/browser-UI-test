@@ -1,6 +1,0 @@
-{
-  "instructions": [
-    "let parseStoreProperty = await page.$x(\"//a\");\nif (parseStoreProperty.length === 0) { throw 'XPath \"//a\" not found'; }\nparseStoreProperty = parseStoreProperty[0];\nconst jsHandle = await parseStoreProperty.evaluateHandle(e => {\n    return String(e[\"b\"]);\n});\narg.variables[\"VAR\"] = await jsHandle.jsonValue();"
-  ],
-  "wait": false
-}

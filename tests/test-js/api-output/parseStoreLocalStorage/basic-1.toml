@@ -1,0 +1,7 @@
+instructions = [
+  """const jsHandle = await page.evaluateHandle(() => {
+    return window.localStorage.getItem(\"a\");
+});
+arg.variables[\"VAR\"] = await jsHandle.jsonValue();""",
+]
+wait = false

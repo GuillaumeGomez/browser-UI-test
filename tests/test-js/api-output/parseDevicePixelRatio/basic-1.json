@@ -1,5 +1,0 @@
-{
-  "instructions": [
-    "const viewport = page.viewport();\nviewport.deviceScaleFactor = 1.2;\nawait page.setViewport(viewport);"
-  ]
-}

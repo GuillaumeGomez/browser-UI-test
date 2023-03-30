@@ -1,0 +1,2 @@
+error = """CSS selector (first argument) cannot be empty"""
+isXPath = false

@@ -1,0 +1,16 @@
+instructions = [
+  """let parseCompareElementsAttr1 = await page.$(\"a\");
+if (parseCompareElementsAttr1 === null) { throw '\"a\" not found'; }
+let parseCompareElementsAttr2 = await page.$(\"b\");
+if (parseCompareElementsAttr2 === null) { throw '\"b\" not found'; }
+await page.evaluate((e1, e2) => {
+const attributes = [\"\\\"data-whatever\"];
+for (const attr of attributes) {
+    if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
+        throw attr + \": \" + e1.getAttribute(attr) + \" !== \" + e2.getAttribute(attr);
+    }
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);""",
+]
+wait = false
+checkResult = true

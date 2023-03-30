@@ -1,0 +1,5 @@
+instructions = [
+  """const ret = page.reload({'waitUntil': 'domcontentloaded', 'timeout': 0});
+await ret;""",
+]
+warnings = """You passed 0 as timeout, it means the timeout has been disabled on this reload"""

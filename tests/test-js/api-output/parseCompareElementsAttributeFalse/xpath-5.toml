@@ -1,0 +1,20 @@
+instructions = [
+  """let parseCompareElementsAttr1 = await page.$x(\"//a\");
+if (parseCompareElementsAttr1.length === 0) { throw 'XPath \"//a\" not found'; }
+parseCompareElementsAttr1 = parseCompareElementsAttr1[0];
+let parseCompareElementsAttr2 = await page.$x(\"//b\");
+if (parseCompareElementsAttr2.length === 0) { throw 'XPath \"//b\" not found'; }
+parseCompareElementsAttr2 = parseCompareElementsAttr2[0];
+await page.evaluate((e1, e2) => {
+const attributes = [\"\\\"data-whatever\"];
+for (const attr of attributes) {
+    try {
+    if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
+        throw attr + \": \" + e1.getAttribute(attr) + \" !== \" + e2.getAttribute(attr);
+    }
+    } catch(e) { continue; } throw \"assert didn't fail\";
+}
+}, parseCompareElementsAttr1, parseCompareElementsAttr2);""",
+]
+wait = false
+checkResult = true

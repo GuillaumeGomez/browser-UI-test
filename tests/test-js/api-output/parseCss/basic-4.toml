@@ -1,0 +1,10 @@
+instructions = [
+  """let parseCssElemJson = await page.$(\"a\");
+if (parseCssElemJson === null) { throw '\"a\" not found'; }
+await page.evaluate(e => {
+e.style[\"b\"] = \"c\";
+}, parseCssElemJson);
+await page.evaluate(e => {
+e.style[\"d\"] = \"e\";
+}, parseCssElemJson);""",
+]

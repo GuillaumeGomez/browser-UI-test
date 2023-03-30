@@ -1,0 +1,23 @@
+instructions = [
+  """let parseCompareElementsCss1 = await page.$(\"a\");
+if (parseCompareElementsCss1 === null) { throw '\"a\" not found'; }
+let parseCompareElementsCss2 = await page.$x(\"//b\");
+if (parseCompareElementsCss2.length === 0) { throw 'XPath \"//b\" not found'; }
+parseCompareElementsCss2 = parseCompareElementsCss2[0];
+await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);
+let computed_style2 = getComputedStyle(e2);
+const properties = [\"margin\"];
+for (const css_property of properties) {
+try {
+let style1_1 = e1.style[css_property];
+let style1_2 = computed_style1[css_property];
+let style2_1 = e2.style[css_property];
+let style2_2 = computed_style2[css_property];
+if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 && style1_2 != style2_2) {
+throw 'CSS property `' + css_property + '` did not match: ' + style1_2 + ' != ' + style2_2; }
+} catch(e) { continue; } throw \"assert didn't fail\";
+}
+}, parseCompareElementsCss1, parseCompareElementsCss2);""",
+]
+wait = false
+checkResult = true

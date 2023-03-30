@@ -1,0 +1,1 @@
+error = """expected first argument to be an ident, found a number (`1`)"""

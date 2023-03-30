@@ -1,0 +1,12 @@
+instructions = [
+  """let parseStoreAttribute = await page.$(\"a\");
+if (parseStoreAttribute === null) { throw '\"a\" not found'; }
+const jsHandle = await parseStoreAttribute.evaluateHandle(e => {
+    if (!e.hasAttribute(\"\\\"\\'b\")) {
+        throw \"No attribute name `\" + \"\\\"\\'b\" + \"`\";
+    }
+    return String(e.getAttribute(\"\\\"\\'b\"));
+});
+arg.variables[\"VAR\"] = await jsHandle.jsonValue();""",
+]
+wait = false

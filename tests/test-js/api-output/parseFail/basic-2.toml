@@ -1,0 +1,4 @@
+instructions = [
+  """arg.expectedToFail = true;""",
+]
+wait = false

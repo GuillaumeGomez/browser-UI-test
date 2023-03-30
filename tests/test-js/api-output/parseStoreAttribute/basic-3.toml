@@ -1,0 +1,13 @@
+instructions = [
+  """let parseStoreAttribute = await page.$x(\"//a\");
+if (parseStoreAttribute.length === 0) { throw 'XPath \"//a\" not found'; }
+parseStoreAttribute = parseStoreAttribute[0];
+const jsHandle = await parseStoreAttribute.evaluateHandle(e => {
+    if (!e.hasAttribute(\"b\")) {
+        throw \"No attribute name `\" + \"b\" + \"`\";
+    }
+    return String(e.getAttribute(\"b\"));
+});
+arg.variables[\"VAR\"] = await jsHandle.jsonValue();""",
+]
+wait = false

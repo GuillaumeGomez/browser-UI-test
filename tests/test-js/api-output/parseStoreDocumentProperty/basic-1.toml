@@ -1,0 +1,10 @@
+instructions = [
+  """const jsHandle = await page.evaluateHandle(() => {
+    if (document[\"1\"] === undefined) {
+        throw \"document doesn't have a property named `1`\";
+    }
+    return document[\"1\"];
+});
+arg.variables[\"a1\"] = await jsHandle.jsonValue();""",
+]
+wait = false

@@ -1,0 +1,8 @@
+instructions = [
+  """let parseCssElem = await page.$x(\"//a\");
+if (parseCssElem.length === 0) { throw 'XPath \"//a\" not found'; }
+parseCssElem = parseCssElem[0];
+await page.evaluate(e => {
+e.style[\"b\"] = \"c\";
+}, parseCssElem);""",
+]

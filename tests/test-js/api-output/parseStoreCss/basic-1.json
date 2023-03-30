@@ -1,6 +1,0 @@
-{
-  "instructions": [
-    "let parseStoreCss = await page.$(\"a\");\nif (parseStoreCss === null) { throw '\"a\" not found'; }\nconst jsHandle = await parseStoreCss.evaluateHandle(e => {\n    return String(getComputedStyle(e)[\"b\"]);\n});\narg.variables[\"VAR\"] = await jsHandle.jsonValue();"
-  ],
-  "wait": false
-}

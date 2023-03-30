@@ -1,6 +1,0 @@
-{
-  "instructions": [
-    "await page.goto(\"file:///a\");",
-    "await arg.browser.overridePermissions(page.url(), arg.permissions);"
-  ]
-}

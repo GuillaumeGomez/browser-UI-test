@@ -1,7 +1,0 @@
-{
-  "instructions": [
-    "let parseCompareElementsAttr1 = await page.$(\"a\");\nif (parseCompareElementsAttr1 === null) { throw '\"a\" not found'; }\nlet parseCompareElementsAttr2 = await page.$(\"b\");\nif (parseCompareElementsAttr2 === null) { throw '\"b\" not found'; }\nawait page.evaluate((e1, e2) => {\nconst attributes = [\"\\\"data-whatever\"];\nfor (const attr of attributes) {\n    if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {\n        throw attr + \": \" + e1.getAttribute(attr) + \" !== \" + e2.getAttribute(attr);\n    }\n}\n}, parseCompareElementsAttr1, parseCompareElementsAttr2);"
-  ],
-  "wait": false,
-  "checkResult": true
-}

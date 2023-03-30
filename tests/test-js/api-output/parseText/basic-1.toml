@@ -1,0 +1,11 @@
+instructions = [
+  """let parseTextElem = await page.$(\"a\");
+if (parseTextElem === null) { throw '\"a\" not found'; }
+await page.evaluate(e => {
+if ([\"input\", \"textarea\"].indexOf(e.tagName.toLowerCase()) !== -1) {
+e.value = \"b\";
+} else {
+e.innerText = \"b\";
+}
+}, parseTextElem);""",
+]

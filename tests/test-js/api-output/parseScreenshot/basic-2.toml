@@ -1,0 +1,8 @@
+instructions = [
+  """const screenshotElem = page;
+await screenshotElem.screenshot({\"path\":\"a.png\",\"fullPage\":true});""",
+]
+wait = false
+infos = [
+  """Generating screenshot into `a.png`""",
+]

@@ -1,0 +1,33 @@
+instructions = [
+  """let parseAssertElemCss = await page.$(\"a\");
+if (parseAssertElemCss === null) { throw '\"a\" not found'; }
+await page.evaluate(e => {
+    const nonMatchingProps = [];
+    let assertComputedStyle = getComputedStyle(e);
+    const parseAssertElemCssDict = {\"a\":\"1\"};
+    for (const [parseAssertElemCssKey, parseAssertElemCssValue] of Object.entries(parseAssertElemCssDict)) {
+        const localErr = [];
+        let succeeded = false;
+        if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
+            if (typeof assertComputedStyle[parseAssertElemCssKey] === \"string\" && assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \"px\" !== parseAssertElemCssValue) {
+                    localErr.push('expected `' + parseAssertElemCssValue + '` for key `' + parseAssertElemCssKey + '`, found `' + assertComputedStyle[parseAssertElemCssKey] + '` (or `' + browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + 'px`)');
+                }
+                succeeded = true;
+            }
+            if (!succeeded) {
+                localErr.push('expected `' + parseAssertElemCssValue + '` for key `' + parseAssertElemCssKey + '`, found `' + assertComputedStyle[parseAssertElemCssKey] + '`');
+            }
+        }
+        nonMatchingProps.push(...localErr);
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(\", \");
+        throw \"The following errors happened (for selector `a`): [\" + props + \"]\";
+    }
+}, parseAssertElemCss);""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

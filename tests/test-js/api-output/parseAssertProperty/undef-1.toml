@@ -1,0 +1,32 @@
+instructions = [
+  """let parseAssertElemProp = await page.$(\"a\");
+if (parseAssertElemProp === null) { throw '\"a\" not found'; }
+await page.evaluate(e => {
+    const nonMatchingProps = [];
+    const parseAssertElemPropDict = {};
+    const undefProps = [\"b\"];
+    for (const prop of undefProps) {
+        if (e[prop] !== undefined) {
+            nonMatchingProps.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + e[prop] + \"`\");
+            continue;
+        }
+    }
+    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(parseAssertElemPropDict)) {
+        if (e[parseAssertElemPropKey] === undefined) {
+            nonMatchingProps.push('Unknown property `' + parseAssertElemPropKey + '`');
+            continue;
+        }
+        if (String(e[parseAssertElemPropKey]) != parseAssertElemPropValue) {
+            nonMatchingProps.push('Expected `' + parseAssertElemPropValue + '` for property `' + parseAssertElemPropKey + '`, found `' + e[parseAssertElemPropKey] + '`');
+        }
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(\", \");
+        throw \"The following errors happened (for selector `a`): [\" + props + \"]\";
+    }
+}, parseAssertElemProp);""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

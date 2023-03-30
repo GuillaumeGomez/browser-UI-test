@@ -1,6 +1,0 @@
-{
-  "instructions": [
-    "arg.showText = false;",
-    "await page.evaluate(() => {\nwindow.browserUiCreateNewStyleElement('* { color: rgba(0,0,0,0) !important; }', 'browser-ui-test-style-text-hide');\n});"
-  ]
-}

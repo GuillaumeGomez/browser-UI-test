@@ -1,7 +1,0 @@
-{
-  "instructions": [
-    "if ((await page.$x(\"//a\")).length === 0) { throw 'XPath \"//a\" not found'; }"
-  ],
-  "wait": false,
-  "checkResult": true
-}

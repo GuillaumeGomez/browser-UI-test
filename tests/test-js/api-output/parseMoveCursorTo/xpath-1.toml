@@ -1,0 +1,6 @@
+instructions = [
+  """let parseMoveCursorToVar = await page.$x(\"//a\");
+if (parseMoveCursorToVar.length === 0) { throw 'XPath \"//a\" not found'; }
+parseMoveCursorToVar = parseMoveCursorToVar[0];
+await parseMoveCursorToVar.hover();""",
+]

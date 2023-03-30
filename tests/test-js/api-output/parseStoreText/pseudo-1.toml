@@ -1,0 +1,12 @@
+instructions = [
+  """let parseStoreText = await page.$(\"a\");
+if (parseStoreText === null) { throw '\"a\" not found'; }
+const jsHandle = await parseStoreText.evaluateHandle(e => {
+    return browserUiTestHelpers.getElemText(e, \"\");
+});
+arg.variables[\"VAR\"] = await jsHandle.jsonValue();""",
+]
+wait = false
+warnings = [
+  """Pseudo-elements (`::after`) don't have attributes so the check will be performed on the element itself""",
+]

@@ -1,0 +1,3 @@
+instructions = [
+  """await page.keyboard.type(\"a\");""",
+]

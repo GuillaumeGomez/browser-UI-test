@@ -1,0 +1,24 @@
+instructions = [
+  """let parseCompareElementsText1 = await page.$(\"a\");
+if (parseCompareElementsText1 === null) { throw '\"a\" not found'; }
+let parseCompareElementsText2 = await page.$x(\"//b\");
+if (parseCompareElementsText2.length === 0) { throw 'XPath \"//b\" not found'; }
+parseCompareElementsText2 = parseCompareElementsText2[0];
+await page.evaluate((e1, e2) => {
+let e1value;
+if (e1.tagName.toLowerCase() === \"input\") {
+e1value = e1.value;
+} else {
+e1value = e1.textContent;
+}
+if (e2.tagName.toLowerCase() === \"input\") {
+if (e2.value !== e1value) {
+throw '\"' + e1value + '\" !== \"' + e2.value + '\"';
+}
+} else if (e2.textContent !== e1value) {
+throw '\"' + e1value + '\" !== \"' + e2.textContent + '\"';
+}
+}, parseCompareElementsText1, parseCompareElementsText2);""",
+]
+wait = false
+checkResult = true

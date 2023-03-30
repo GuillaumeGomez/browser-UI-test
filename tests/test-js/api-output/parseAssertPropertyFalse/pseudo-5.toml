@@ -1,0 +1,31 @@
+instructions = [
+  """let parseAssertElemProp = await page.$(\"a ::after\");
+if (parseAssertElemProp === null) { throw '\"a ::after\" not found'; }
+await page.evaluate(e => {
+    const nonMatchingProps = [];
+    const parseAssertElemPropDict = {\"a\":\"1\"};
+    const undefProps = [];
+    for (const prop of undefProps) {
+        if (e[prop] !== undefined) {
+            continue;
+        }
+    nonMatchingProps.push(\"Property named `\" + prop + \"` doesn't exist\");
+    }
+    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(parseAssertElemPropDict)) {
+        if (e[parseAssertElemPropKey] === undefined) {
+            continue;
+        }
+        if (String(e[parseAssertElemPropKey]) == parseAssertElemPropValue) {
+            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey + '`');
+        }
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(\", \");
+        throw \"The following errors happened (for selector `a ::after`): [\" + props + \"]\";
+    }
+}, parseAssertElemProp);""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

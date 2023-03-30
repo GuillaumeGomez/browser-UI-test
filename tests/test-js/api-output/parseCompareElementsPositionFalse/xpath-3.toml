@@ -1,0 +1,28 @@
+instructions = [
+  """let parseCompareElementsPos1 = await page.$x(\"//a\");
+if (parseCompareElementsPos1.length === 0) { throw 'XPath \"//a\" not found'; }
+parseCompareElementsPos1 = parseCompareElementsPos1[0];
+let parseCompareElementsPos2 = await page.$x(\"//b\");
+if (parseCompareElementsPos2.length === 0) { throw 'XPath \"//b\" not found'; }
+parseCompareElementsPos2 = parseCompareElementsPos2[0];
+await page.evaluate((elem1, elem2) => {
+function checkY(e1, e2) {
+try {
+let y1 = e1.getBoundingClientRect().top;
+let y2 = e2.getBoundingClientRect().top;
+if (y1 !== y2) { throw \"different Y values: \" + y1 + \" != \" + y2; }
+
+} catch(e) { return; } throw \"assert didn't fail\";}
+checkY(elem1, elem2);
+function checkX(e1, e2) {
+try {
+let x1 = e1.getBoundingClientRect().left;
+let x2 = e2.getBoundingClientRect().left;
+if (x1 !== x2) { throw \"different X values: \" + x1 + \" != \" + x2; }
+
+} catch(e) { return; } throw \"assert didn't fail\";}
+checkX(elem1, elem2);
+}, parseCompareElementsPos1, parseCompareElementsPos2);""",
+]
+wait = false
+checkResult = true

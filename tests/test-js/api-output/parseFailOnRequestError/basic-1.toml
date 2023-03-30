@@ -1,0 +1,8 @@
+instructions = [
+  """const oldValue = arg.failOnRequestError;
+arg.failOnRequestError = false;
+if (oldValue !== true) {
+    arg.requestErrors.splice(0, arg.requestErrors.length);
+}""",
+]
+wait = false

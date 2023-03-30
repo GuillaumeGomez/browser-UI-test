@@ -1,0 +1,21 @@
+instructions = [
+  """const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitFor = null;
+while (true) {
+    parseWaitFor = await page.$(\"a\");
+    if (parseWaitFor !== null) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error(\"The following CSS selector \\\"a\\\" was not found\");
+    }
+}""",
+]
+wait = false

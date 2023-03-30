@@ -1,0 +1,7 @@
+instructions = [
+  """try {
+if ((await page.$x(\"//a\")).length === 0) { throw 'XPath \"//a\" not found'; }
+} catch(e) { return; } throw \"assert didn't fail\";""",
+]
+wait = false
+checkResult = true

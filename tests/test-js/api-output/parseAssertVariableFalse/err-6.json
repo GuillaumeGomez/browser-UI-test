@@ -1,3 +1,0 @@
-{
-  "error": "expected second argument to be a number, a string or a JSON dict, found an ident (`b`)"
-}
