@@ -1,0 +1,34 @@
+instructions = [
+  """let parseCompareElementsPosNear1 = await page.$(\"a\");
+if (parseCompareElementsPosNear1 === null) { throw '\"a\" not found'; }
+let parseCompareElementsPosNear2 = await page.$(\"b\");
+if (parseCompareElementsPosNear2 === null) { throw '\"b\" not found'; }
+await page.evaluate((elem1, elem2) => {
+function checkX(e1, e2) {
+try {
+let x1 = e1.getBoundingClientRect().left;
+let x2 = e2.getBoundingClientRect().left;
+let delta = Math.abs(x1 - x2);
+if (delta > 1) {
+throw \"delta X values too large: \" + delta + \" > 1\";
+}
+
+} catch(e) { return; } throw \"assert didn't fail\";}
+checkX(elem1, elem2);
+function checkY(e1, e2) {
+try {
+let y1 = e1.getBoundingClientRect().top;
+let y2 = e2.getBoundingClientRect().top;
+let delta = Math.abs(y1 - y2);
+if (delta > 2) {
+throw \"delta Y values too large: \" + delta + \" > 2\";
+}
+
+} catch(e) { return; } throw \"assert didn't fail\";}
+checkY(elem1, elem2);
+}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);""",
+]
+wait = false
+checkResult = true
+warnings = [
+]

@@ -1,0 +1,11 @@
+instructions = [
+  """let parseAssertElemCount = await page.$$(\"a:focus\");
+parseAssertElemCount = parseAssertElemCount.length;
+try {
+if (parseAssertElemCount !== 1) {
+throw 'expected 1 elements, found ' + parseAssertElemCount;
+}
+} catch(e) { return; } throw \"assert didn't fail\";""",
+]
+wait = false
+checkResult = true

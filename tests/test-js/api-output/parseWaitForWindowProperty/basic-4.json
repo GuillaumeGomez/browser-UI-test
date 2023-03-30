@@ -1,7 +1,0 @@
-{
-  "instructions": [
-    "const timeLimit = page.getDefaultTimeout();\nconst timeAdd = 50;\nlet allTime = 0;\nlet property = null;\nwhile (true) {\n    property = await page.evaluate(() => {\n        const errors = [];\n        const propertyDict = {\"\\\"a\":\"\\'b\"};\n        for (const [propertyKey, propertyValue] of Object.entries(propertyDict)) {\n            if (window[propertyKey] === undefined) {\n                errors.push(\"window doesn't have a property named `\" + propertyKey + \"`\");\n            }\n            let property = window[propertyKey];\n            if (property != propertyValue) {\n                errors.push(\"window item \\\"\" + propertyKey + \"\\\" (of value \\\"\" + propertyValue + \"\\\") != \\\"\" + property + \"\\\"\");\n            }\n        }\n        return errors;\n    });\n    if (property.length === 0) {\n        break;\n    }\n    await new Promise(r => setTimeout(r, timeAdd));\n    if (timeLimit === 0) {\n        continue;\n    }\n    allTime += timeAdd;\n    if (allTime >= timeLimit) {\n        const errs = property.join(\", \");\n        throw new Error(\"The following window properties still don't match: [\" + errs + \"]\");\n    }\n}"
-  ],
-  "wait": false,
-  "checkResult": true
-}

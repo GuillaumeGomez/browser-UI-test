@@ -1,0 +1,1 @@
+error = """expected an identifier or an array of identifiers (among `ALL`, `CONTAINS`, `STARTS_WITH`, `ENDS_WITH`) as third argument or nothing, found `c` (a string)"""

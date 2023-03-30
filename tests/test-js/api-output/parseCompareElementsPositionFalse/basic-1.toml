@@ -1,0 +1,9 @@
+instructions = [
+  """let parseCompareElementsPos1 = await page.$(\"a\");
+if (parseCompareElementsPos1 === null) { throw '\"a\" not found'; }
+let parseCompareElementsPos2 = await page.$(\"b\");
+if (parseCompareElementsPos2 === null) { throw '\"b\" not found'; }
+""",
+]
+wait = false
+checkResult = true

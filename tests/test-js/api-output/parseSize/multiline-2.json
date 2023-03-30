@@ -1,5 +1,0 @@
-{
-  "instructions": [
-    "const viewport = page.viewport();\nviewport.width = 1;\nviewport.height = 2;\nawait page.setViewport(viewport);"
-  ]
-}

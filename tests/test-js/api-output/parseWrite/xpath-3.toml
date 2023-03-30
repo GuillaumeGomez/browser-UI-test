@@ -1,0 +1,7 @@
+instructions = [
+  """let parseWriteVar = await page.$x(\"//a\");
+if (parseWriteVar.length === 0) { throw 'XPath \"//a\" not found'; }
+parseWriteVar = parseWriteVar[0];
+parseWriteVar.focus();""",
+  """await page.keyboard.press(String.fromCharCode(13));""",
+]

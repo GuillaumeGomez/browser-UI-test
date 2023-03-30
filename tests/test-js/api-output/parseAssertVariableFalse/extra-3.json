@@ -1,6 +1,0 @@
-{
-  "instructions": [
-    "function stringifyValue(value) {\n    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {\n        return String(value);\n    }\n    return JSON.stringify(value);\n}\nconst value1 = stringifyValue(arg.variables[\"VAR\"]);\nconst value2 = stringifyValue(\"a\");\nconst errors = [];\nif (value1.endsWith(value2)) {\n    errors.push(\"`\" + value1 + \"` ends with `\" + value2 + \"` (for ENDS_WITH check)\");\n}\nif (errors.length !== 0) {\n    const errs = errors.join(\", \");\n    throw \"The following errors happened: [\" + errs + \"]\";\n}"
-  ],
-  "wait": false
-}

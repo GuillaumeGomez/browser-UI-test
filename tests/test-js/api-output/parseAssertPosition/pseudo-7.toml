@@ -1,0 +1,25 @@
+instructions = [
+  """let parseAssertPosition = await page.$$(\"a ::after\");
+if (parseAssertPosition.length === 0) { throw '\"a ::after\" not found'; }
+for (let i = 0, len = parseAssertPosition.length; i < len; ++i) {
+    await page.evaluate(elem => {
+        const errors = [];
+        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+            let v = e.getBoundingClientRect()[field];
+            let roundedV = Math.round(v);
+            if (v !== value && roundedV !== Math.round(value)) {
+                errors.push(\"different \" + kind + \" values: \" + v + \" (or \" + roundedV + \") != \" + value);
+            }
+        }
+        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1.14, errors);
+        if (errors.length !== 0) {
+            const errs = errors.join(\", \");
+            throw \"The following errors happened: [\" + errs + \"]\";
+        }
+    }, parseAssertPosition[i]);
+}""",
+]
+warnings = [
+]
+wait = false
+checkResult = true

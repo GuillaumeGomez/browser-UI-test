@@ -1,0 +1,1 @@
+error = """expected second argument to be a property name (a string), found a number (`1`)"""

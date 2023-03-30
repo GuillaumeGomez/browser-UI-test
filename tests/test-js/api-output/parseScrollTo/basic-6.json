@@ -1,5 +1,0 @@
-{
-  "instructions": [
-    "await page.hover(\"\\\"a\");"
-  ]
-}

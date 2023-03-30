@@ -1,0 +1,4 @@
+instructions = [
+  """await page.goto(page.url().split(\"/\").slice(0, -1).join(\"/\") + \"/a\");""",
+  """await arg.browser.overridePermissions(page.url(), arg.permissions);""",
+]

@@ -1,0 +1,33 @@
+instructions = [
+  """let parseAssertElemProp = await page.$(\"a\");
+if (parseAssertElemProp === null) { throw '\"a\" not found'; }
+await page.evaluate(e => {
+    const nonMatchingProps = [];
+    const parseAssertElemPropDict = {};
+    const undefProps = [\"a\"];
+    for (const prop of undefProps) {
+        if (e[prop] !== undefined) {
+            continue;
+        }
+    nonMatchingProps.push(\"Property named `\" + prop + \"` doesn't exist\");
+    }
+    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(parseAssertElemPropDict)) {
+        if (e[parseAssertElemPropKey] === undefined) {
+            continue;
+        }
+        if (String(e[parseAssertElemPropKey]).startsWith(parseAssertElemPropValue)) {
+            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey + '` (for STARTS_WITH check)');
+        }
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(\", \");
+        throw \"The following errors happened (for selector `a`): [\" + props + \"]\";
+    }
+}, parseAssertElemProp);""",
+]
+wait = false
+warnings = [
+  """`STARTS_WITH` is present more than once in the third argument array""",
+  """Special checks (STARTS_WITH) will be ignored for `null`""",
+]
+checkResult = true

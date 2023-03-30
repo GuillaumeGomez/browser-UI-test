@@ -1,0 +1,9 @@
+instructions = [
+  """let parseStoreCss = await page.$(\"a\");
+if (parseStoreCss === null) { throw '\"a\" not found'; }
+const jsHandle = await parseStoreCss.evaluateHandle(e => {
+    return String(getComputedStyle(e, \"::after\")[\"b\"]);
+});
+arg.variables[\"VAR\"] = await jsHandle.jsonValue();""",
+]
+wait = false

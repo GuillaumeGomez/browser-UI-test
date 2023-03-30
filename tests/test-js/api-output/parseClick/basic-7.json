@@ -1,5 +1,0 @@
-{
-  "instructions": [
-    "let parseClickVar = await page.$(\"\\\"a\");\nif (parseClickVar === null) { throw '\"\\\"a\" not found'; }\nawait parseClickVar.click();"
-  ]
-}

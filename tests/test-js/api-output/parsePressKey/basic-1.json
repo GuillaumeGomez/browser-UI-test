@@ -1,5 +1,0 @@
-{
-  "instructions": [
-    "await page.keyboard.press(\"a\", 13)"
-  ]
-}

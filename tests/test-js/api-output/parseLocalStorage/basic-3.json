@@ -1,5 +1,0 @@
-{
-  "instructions": [
-    "await page.evaluate(() => {\nlocalStorage.setItem(\"a\", \"1\");\nlocalStorage.setItem(\"b\", \"2px\");\n})"
-  ]
-}

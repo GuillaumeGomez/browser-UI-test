@@ -1,5 +1,0 @@
-{
-  "instructions": [
-    "const ret = page.goBack({'waitUntil': 'domcontentloaded', 'timeout': 12});\nif (ret === null) {\nthrow \"cannot go back in history\";\n}\nawait ret;"
-  ]
-}

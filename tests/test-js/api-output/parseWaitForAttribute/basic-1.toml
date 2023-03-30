@@ -1,0 +1,51 @@
+instructions = [
+  """const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForAttr = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForAttr = await page.$(\"a\");
+        if (parseWaitForAttr !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error(\"The following CSS selector \\\"a\\\" was not found\");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForAttrDict = {};
+        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(parseWaitForAttrDict)) {
+            computedEntry = e.getAttribute(parseWaitForAttrKey);
+            if (computedEntry !== parseWaitForAttrValue) {
+                nonMatchingProps.push(parseWaitForAttrKey + \": (`\" + computedEntry + \"` != `\" + parseWaitForAttrValue + \"`)\");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForAttr);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(\", \");
+        throw new Error(\"The following attributes still don't match: [\" + props + \"]\");
+    }
+}""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

@@ -1,0 +1,7 @@
+instructions = [
+  """let parseAttributeElemJson = await page.$(\"a\");
+if (parseAttributeElemJson === null) { throw '\"a\" not found'; }
+await page.evaluate(e => {
+e.setAttribute(\"b\",\"c\");
+}, parseAttributeElemJson);""",
+]

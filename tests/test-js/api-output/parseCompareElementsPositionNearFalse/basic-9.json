@@ -1,8 +1,0 @@
-{
-  "instructions": [
-    "let parseCompareElementsPosNear1 = await page.$(\"a\");\nif (parseCompareElementsPosNear1 === null) { throw '\"a\" not found'; }\nlet parseCompareElementsPosNear2 = await page.$(\"b\");\nif (parseCompareElementsPosNear2 === null) { throw '\"b\" not found'; }\nawait page.evaluate((elem1, elem2) => {\nfunction checkX(e1, e2) {\ntry {\nlet x1 = e1.getBoundingClientRect().left;\nlet x2 = e2.getBoundingClientRect().left;\nlet delta = Math.abs(x1 - x2);\nif (delta > 1) {\nthrow \"delta X values too large: \" + delta + \" > 1\";\n}\n\n} catch(e) { return; } throw \"assert didn't fail\";}\ncheckX(elem1, elem2);\n}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);"
-  ],
-  "wait": false,
-  "checkResult": true,
-  "warnings": []
-}

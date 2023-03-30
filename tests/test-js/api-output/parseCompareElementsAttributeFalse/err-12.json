@@ -1,3 +1,0 @@
-{
-  "error": "expected fourth argument to be a string of an operator (one of `<`, `<=`, `>`, `>=`, `=`), found a number"
-}

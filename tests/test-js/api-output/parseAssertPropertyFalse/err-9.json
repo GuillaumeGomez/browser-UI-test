@@ -1,3 +1,0 @@
-{
-  "error": "only string, number and ident types are allowed as value, found `[]` (an array)"
-}

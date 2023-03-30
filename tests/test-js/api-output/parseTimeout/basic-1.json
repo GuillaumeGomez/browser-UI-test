@@ -1,9 +1,0 @@
-{
-  "instructions": [
-    "page.setDefaultTimeout(0)"
-  ],
-  "wait": false,
-  "warnings": [
-    "You passed 0 as timeout, it means the timeout has been disabled on this reload"
-  ]
-}

@@ -1,7 +1,0 @@
-{
-  "instructions": [
-    "let parseAssertElemStr = await page.$$(\"a\");\nif (parseAssertElemStr.length === 0) { throw '\"a\" not found'; }\nfor (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {\n    await page.evaluate(e => {\n        const errors = [];\n        const value = \"b\";\n        if (browserUiTestHelpers.elemTextContains(e, value)) {\n            errors.push(\"`\" + browserUiTestHelpers.getElemText(e, value) + \"` contains `\" + value + \"` (for CONTAINS check)\");\n        }\n        if (errors.length !== 0) {\n            const errs = errors.join(\", \");\n            throw \"The following errors happened: [\" + errs + \"]\";\n        }\n    }, parseAssertElemStr[i]);\n}"
-  ],
-  "wait": false,
-  "checkResult": true
-}

@@ -1,0 +1,22 @@
+instructions = [
+  """const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitFor = null;
+while (true) {
+    parseWaitFor = await page.$x(\"//a\");
+    if (parseWaitFor.length !== 0) {
+        parseWaitFor = parseWaitFor[0];
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error(\"The following XPath \\\"//a\\\" was not found\");
+    }
+}""",
+]
+wait = false

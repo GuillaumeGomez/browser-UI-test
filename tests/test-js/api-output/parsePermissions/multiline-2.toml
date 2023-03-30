@@ -1,0 +1,4 @@
+instructions = [
+  """arg.permissions = [\"camera\", \"push\"];""",
+  """await arg.browser.overridePermissions(page.url(), arg.permissions);""",
+]

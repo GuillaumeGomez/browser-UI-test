@@ -1,0 +1,61 @@
+instructions = [
+  """const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForCss = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForCss = await page.$(\"a\");
+        if (parseWaitForCss !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error(\"The following CSS selector \\\"a\\\" was not found\");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        let extractedFloat;
+        const parseWaitForCssDict = {\"x\":\"1\",\"y\":\"2\"};
+        const computedStyle = getComputedStyle(e, \"::after\");
+        for (const [parseWaitForCssKey, parseWaitForCssValue] of Object.entries(parseWaitForCssDict)) {
+            computedEntry = computedStyle[parseWaitForCssKey];
+            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != parseWaitForCssValue) {
+                if (typeof computedEntry === \"string\" && computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
+                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) + \"px\";
+                    if (extractedFloat !== parseWaitForCssValue) {
+                        nonMatchingProps.push(parseWaitForCssKey + \": (`\" + computedEntry + \"` && `\" + extractedFloat + \"`) != `\" + parseWaitForCssValue + \"`)\");
+                    } else {
+                        continue;
+                    }
+                }
+                nonMatchingProps.push(parseWaitForCssKey + \": (`\" + computedEntry + \"` != `\" + parseWaitForCssValue + \"`)\");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForCss);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(\", \");
+        throw new Error(\"The following CSS properties still don't match: [\" + props + \"]\");
+    }
+}""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

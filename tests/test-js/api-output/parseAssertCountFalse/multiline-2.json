@@ -1,7 +1,0 @@
-{
-  "instructions": [
-    "let parseAssertElemCount = await page.$$(\"a ::after\");\nparseAssertElemCount = parseAssertElemCount.length;\ntry {\nif (parseAssertElemCount !== 1) {\nthrow 'expected 1 elements, found ' + parseAssertElemCount;\n}\n} catch(e) { return; } throw \"assert didn't fail\";"
-  ],
-  "wait": false,
-  "checkResult": true
-}

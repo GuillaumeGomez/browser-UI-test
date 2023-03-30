@@ -1,6 +1,0 @@
-{
-  "instructions": [
-    "const ret = page.goBack({'waitUntil': 'domcontentloaded', 'timeout': 0});\nif (ret === null) {\nthrow \"cannot go back in history\";\n}\nawait ret;"
-  ],
-  "warnings": "You passed 0 as timeout, it means the timeout has been disabled on this history-go-back"
-}

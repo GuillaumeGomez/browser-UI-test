@@ -1,7 +1,0 @@
-{
-  "instructions": [
-    "let parseCompareElementsText1 = await page.$x(\"//a\");\nif (parseCompareElementsText1.length === 0) { throw 'XPath \"//a\" not found'; }\nparseCompareElementsText1 = parseCompareElementsText1[0];\nlet parseCompareElementsText2 = await page.$(\"b\");\nif (parseCompareElementsText2 === null) { throw '\"b\" not found'; }\ntry {\nawait page.evaluate((e1, e2) => {\nlet e1value;\nif (e1.tagName.toLowerCase() === \"input\") {\ne1value = e1.value;\n} else {\ne1value = e1.textContent;\n}\nif (e2.tagName.toLowerCase() === \"input\") {\nif (e2.value !== e1value) {\nthrow '\"' + e1value + '\" !== \"' + e2.value + '\"';\n}\n} else if (e2.textContent !== e1value) {\nthrow '\"' + e1value + '\" !== \"' + e2.textContent + '\"';\n}\n}, parseCompareElementsText1, parseCompareElementsText2);\n} catch(e) { return; } throw \"assert didn't fail\";"
-  ],
-  "wait": false,
-  "checkResult": true
-}

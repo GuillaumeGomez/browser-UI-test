@@ -1,0 +1,25 @@
+instructions = [
+  """if (!arg.showText) {
+throw \"`show-text: true` needs to be used before checking for `color` (otherwise the browser doesn't compute it)\";
+}""",
+  """let parseCompareElementsCss1 = await page.$(\"a\");
+if (parseCompareElementsCss1 === null) { throw '\"a\" not found'; }
+let parseCompareElementsCss2 = await page.$(\"b\");
+if (parseCompareElementsCss2 === null) { throw '\"b\" not found'; }
+await page.evaluate((e1, e2) => {let computed_style1 = getComputedStyle(e1);
+let computed_style2 = getComputedStyle(e2);
+const properties = [\"color\"];
+for (const css_property of properties) {
+try {
+let style1_1 = e1.style[css_property];
+let style1_2 = computed_style1[css_property];
+let style2_1 = e2.style[css_property];
+let style2_2 = computed_style2[css_property];
+if (style1_1 != style2_1 && style1_1 != style2_2 && style1_2 != style2_1 && style1_2 != style2_2) {
+throw 'CSS property `' + css_property + '` did not match: ' + style1_2 + ' != ' + style2_2; }
+} catch(e) { continue; } throw \"assert didn't fail\";
+}
+}, parseCompareElementsCss1, parseCompareElementsCss2);""",
+]
+wait = false
+checkResult = true

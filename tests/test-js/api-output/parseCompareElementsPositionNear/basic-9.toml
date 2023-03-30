@@ -1,0 +1,21 @@
+instructions = [
+  """let parseCompareElementsPosNear1 = await page.$(\"a\");
+if (parseCompareElementsPosNear1 === null) { throw '\"a\" not found'; }
+let parseCompareElementsPosNear2 = await page.$(\"b\");
+if (parseCompareElementsPosNear2 === null) { throw '\"b\" not found'; }
+await page.evaluate((elem1, elem2) => {
+function checkX(e1, e2) {
+let x1 = e1.getBoundingClientRect().left;
+let x2 = e2.getBoundingClientRect().left;
+let delta = Math.abs(x1 - x2);
+if (delta > 1) {
+throw \"delta X values too large: \" + delta + \" > 1\";
+}
+}
+checkX(elem1, elem2);
+}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);""",
+]
+wait = false
+checkResult = true
+warnings = [
+]

@@ -1,0 +1,12 @@
+instructions = [
+  """await page.evaluate(() => {
+    const parsePropDict = {\"a\":\"2\"};
+    for (const [parsePropKey, parsePropValue] of Object.entries(parsePropDict)) {
+        window[parsePropKey] = parsePropValue;
+    }
+});""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

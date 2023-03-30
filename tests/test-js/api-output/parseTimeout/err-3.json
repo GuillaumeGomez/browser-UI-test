@@ -1,6 +1,0 @@
-{
-  "instructions": [
-    "page.setDefaultTimeout(12)"
-  ],
-  "wait": false
-}

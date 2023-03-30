@@ -1,0 +1,10 @@
+instructions = [
+  """let parseClickWithOffsetVar = await page.$(\"a\");
+if (parseClickWithOffsetVar === null) { throw '\"a\" not found'; }
+await parseClickWithOffsetVar.click({
+    \"offset\": {\"x\":1},
+});""",
+]
+warnings = [
+  """Pseudo-elements (`::before`) can't be retrieved so `click` will be performed on the element directly""",
+]

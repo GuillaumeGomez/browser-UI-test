@@ -1,0 +1,55 @@
+instructions = [
+  """const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForProp = null;
+let nonMatchingProps;
+while (true) {
+    while (true) {
+        parseWaitForProp = await page.$(\"a\");
+        if (parseWaitForProp !== null) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error(\"The following CSS selector \\\"a\\\" was not found\");
+        }
+    }
+    nonMatchingProps = await page.evaluate(e => {
+        const nonMatchingProps = [];
+        let computedEntry;
+        const parseWaitForPropDict = {\"x\":\"1\",\"y\":\"2\"};
+        for (const [parseWaitForPropKey, parseWaitForPropValue] of Object.entries(parseWaitForPropDict)) {
+            if (e[parseWaitForPropKey] === undefined) {
+                nonMatchingProps.push(\"No property `\" + parseWaitForPropKey + \"`\");
+                continue;
+            }
+            computedEntry = e[parseWaitForPropKey];
+            if (computedEntry !== parseWaitForPropValue) {
+                nonMatchingProps.push(parseWaitForPropKey + \": (`\" + computedEntry + \"` != `\" + parseWaitForPropValue + \"`)\");
+            }
+        }
+        return nonMatchingProps;
+    }, parseWaitForProp);
+    if (nonMatchingProps.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(\", \");
+        throw new Error(\"The following properties still don't match: [\" + props + \"]\");
+    }
+}""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

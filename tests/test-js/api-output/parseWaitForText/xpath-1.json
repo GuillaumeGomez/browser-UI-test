@@ -1,7 +1,0 @@
-{
-  "instructions": [
-    "const timeLimit = page.getDefaultTimeout();\nconst timeAdd = 50;\nlet allTime = 0;\nlet parseWaitForText = null;\nconst value = \"b\";\nlet computedEntry;\nwhile (true) {\n    while (true) {\n        parseWaitForText = await page.$x(\"//a\");\n        if (parseWaitForText.length !== 0) {\n            parseWaitForText = parseWaitForText[0];\n            break;\n        }\n        await new Promise(r => setTimeout(r, timeAdd));\n        if (timeLimit === 0) {\n            continue;\n        }\n        allTime += timeAdd;\n        if (allTime >= timeLimit) {\n            throw new Error(\"The following XPath \\\"//a\\\" was not found\");\n        }\n    }\n    computedEntry = await page.evaluate(e => {\n        return browserUiTestHelpers.getElemText(e, \"b\");\n    }, parseWaitForText);\n    if (computedEntry === value) {\n        break;\n    }\n    await new Promise(r => setTimeout(r, timeAdd));\n    if (timeLimit === 0) {\n        continue;\n    }\n    allTime += timeAdd;\n    if (allTime >= timeLimit) {\n        throw new Error(\"The text still doesn't match: `\" + computedEntry + \"` != `\" + value + \"`\");\n    }\n}"
-  ],
-  "wait": false,
-  "checkResult": true
-}

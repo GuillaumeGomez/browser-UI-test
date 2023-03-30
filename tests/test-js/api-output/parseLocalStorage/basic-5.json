@@ -1,5 +1,0 @@
-{
-  "instructions": [
-    "await page.evaluate(() => {\nlocalStorage.removeItem(\"a\");\n})"
-  ]
-}

@@ -1,6 +1,0 @@
-{
-  "instructions": [
-    "arg.variables[\"VAR\"] = 1;"
-  ],
-  "wait": false
-}

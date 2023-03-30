@@ -1,0 +1,19 @@
+instructions = [
+  """function stringifyValue(value) {
+    if (['number', 'string', 'boolean'].indexOf(typeof value) !== -1) {
+        return String(value);
+    }
+    return JSON.stringify(value);
+}
+const value1 = stringifyValue(arg.variables[\"VAR\"]);
+const value2 = stringifyValue(\"a\");
+const errors = [];
+if (value1.indexOf(value2) !== -1) {
+    errors.push(\"`\" + value1 + \"` contains `\" + value2 + \"` (for CONTAINS check)\");
+}
+if (errors.length !== 0) {
+    const errs = errors.join(\", \");
+    throw \"The following errors happened: [\" + errs + \"]\";
+}""",
+]
+wait = false

@@ -1,8 +1,0 @@
-{
-  "instructions": [
-    "let parseCompareElementsPosNear1 = await page.$(\"a\");\nif (parseCompareElementsPosNear1 === null) { throw '\"a\" not found'; }\nlet parseCompareElementsPosNear2 = await page.$(\"b\");\nif (parseCompareElementsPosNear2 === null) { throw '\"b\" not found'; }\n"
-  ],
-  "wait": false,
-  "checkResult": true,
-  "warnings": []
-}

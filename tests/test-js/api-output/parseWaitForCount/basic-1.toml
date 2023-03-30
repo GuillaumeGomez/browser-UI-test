@@ -1,0 +1,23 @@
+instructions = [
+  """const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForCount = null;
+while (true) {
+    parseWaitForCount = await page.$$(\"a\");
+    parseWaitForCount = parseWaitForCount.length;
+    if (parseWaitForCount === 3) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error(\"Still didn't find 3 instance of \\\"a\\\" (found \" + parseWaitForCount + \")\");
+    }
+}""",
+]
+wait = false
+checkResult = true

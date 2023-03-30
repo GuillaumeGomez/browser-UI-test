@@ -1,0 +1,20 @@
+instructions = [
+  """await page.evaluate(() => {
+    const nonMatchingProps = [];
+    const parseAssertDictPropDict = {\"a\":\"b\"};
+    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(parseAssertDictPropDict)) {
+        if (document[parseAssertDictPropKey] === undefined) {
+            continue;
+        }
+        if (String(document[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertDictPropKey + '` (for STARTS_WITH check)');
+        }
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(\", \");
+        throw \"The following errors happened: [\" + props + \"]\";
+    }
+});""",
+]
+wait = false
+checkResult = true

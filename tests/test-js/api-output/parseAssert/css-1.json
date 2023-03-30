@@ -1,7 +1,0 @@
-{
-  "instructions": [
-    "if ((await page.$(\"a\")) === null) { throw '\"a\" not found'; }"
-  ],
-  "wait": false,
-  "checkResult": true
-}

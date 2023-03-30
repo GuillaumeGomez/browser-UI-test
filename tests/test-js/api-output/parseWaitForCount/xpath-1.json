@@ -1,7 +1,0 @@
-{
-  "instructions": [
-    "const timeLimit = page.getDefaultTimeout();\nconst timeAdd = 50;\nlet allTime = 0;\nlet parseWaitForCount = null;\nwhile (true) {\n    parseWaitForCount = await page.$x(\"//*[@class=\\'a\\']\");\n    parseWaitForCount = parseWaitForCount.length;\n    if (parseWaitForCount === 3) {\n        break;\n    }\n    await new Promise(r => setTimeout(r, timeAdd));\n    if (timeLimit === 0) {\n        continue;\n    }\n    allTime += timeAdd;\n    if (allTime >= timeLimit) {\n        throw new Error(\"Still didn't find 3 instance of \\\"//*[@class=\\'a\\']\\\" (found \" + parseWaitForCount + \")\");\n    }\n}"
-  ],
-  "wait": false,
-  "checkResult": true
-}

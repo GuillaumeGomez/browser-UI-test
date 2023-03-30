@@ -39,6 +39,7 @@
     },
     "devDependencies": {
         "babel-eslint": "^10.0.2",
-        "eslint": "^6.1.0"
+        "eslint": "^6.1.0",
+        "@iarna/toml": "2.2.5"
     }
 }

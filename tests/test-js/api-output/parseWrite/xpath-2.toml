@@ -1,0 +1,6 @@
+instructions = [
+  """let parseWriteVar = await page.$x(\"//a\");
+if (parseWriteVar.length === 0) { throw 'XPath \"//a\" not found'; }
+parseWriteVar = parseWriteVar[0];
+await parseWriteVar.type(\"b\");""",
+]

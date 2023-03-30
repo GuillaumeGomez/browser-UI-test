@@ -1,0 +1,5 @@
+instructions = [
+  """arg.screenshotComparison = \"true\";""",
+]
+wait = false
+warnings = """`\"true\"` is a string and will be used as CSS selector. If you want to set `true` or `false` value, remove quotes."""

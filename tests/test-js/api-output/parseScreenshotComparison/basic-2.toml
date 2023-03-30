@@ -1,0 +1,4 @@
+instructions = [
+  """arg.screenshotComparison = false;""",
+]
+wait = false

@@ -1,8 +1,0 @@
-{
-  "instructions": [
-    "let parseAssertElemAttr = await page.$(\"a\");\nif (parseAssertElemAttr === null) { throw '\"a\" not found'; }\nawait page.evaluate(e => {\n    const nonMatchingAttrs = [];\n    const parseAssertElemAttrDict = {\"\\\"b\":\"c\"};\n    const nullAttributes = [];\n    for (const attr of nullAttributes) {\n        if (e.hasAttribute(attr)) {\n            continue;\n        }\n        nonMatchingAttrs.push(\"Attribute named `\" + attr + \"` doesn't exist\");\n    }\n    for (const [parseAssertElemAttrAttribute, parseAssertElemAttrValue] of Object.entries(parseAssertElemAttrDict)) {\n        if (!e.hasAttribute(parseAssertElemAttrAttribute)) {\n            continue;\n        }\n        const attr = e.getAttribute(parseAssertElemAttrAttribute);\n        if (attr === parseAssertElemAttrValue) {\n            nonMatchingAttrs.push(\"assert didn't fail for attribute `\" + parseAssertElemAttrAttribute + \"` (`\" + attr + \"`)\");\n        }\n    }\n    if (nonMatchingAttrs.length !== 0) {\n        const props = nonMatchingAttrs.join(\", \");\n        throw \"The following errors happened (for selector `a`): [\" + props + \"]\";\n    }\n}, parseAssertElemAttr);"
-  ],
-  "wait": false,
-  "warnings": [],
-  "checkResult": true
-}

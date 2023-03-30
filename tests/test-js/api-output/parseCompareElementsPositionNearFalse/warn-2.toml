@@ -1,0 +1,24 @@
+instructions = [
+  """let parseCompareElementsPosNear1 = await page.$(\"a\");
+if (parseCompareElementsPosNear1 === null) { throw '\"a\" not found'; }
+let parseCompareElementsPosNear2 = await page.$(\"b\");
+if (parseCompareElementsPosNear2 === null) { throw '\"b\" not found'; }
+await page.evaluate((elem1, elem2) => {
+function checkY(e1, e2) {
+try {
+let y1 = e1.getBoundingClientRect().top;
+let y2 = e2.getBoundingClientRect().top;
+let delta = Math.abs(y1 - y2);
+if (delta > 0) {
+throw \"delta Y values too large: \" + delta + \" > 0\";
+}
+
+} catch(e) { return; } throw \"assert didn't fail\";}
+checkY(elem1, elem2);
+}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);""",
+]
+wait = false
+checkResult = true
+warnings = [
+  """Delta is 0 for \"Y\", maybe try to use `compare-elements-position` instead?""",
+]

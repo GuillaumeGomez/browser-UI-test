@@ -6,8 +6,38 @@ const Options = require('../../src/options.js').Options;
 const {Assert, plural, print} = require('./utils.js');
 const path = require('path');
 const fs = require('fs');
+const toml = require('@iarna/toml');
 
 const uniqueFileOutput = Object.create(null);
+
+// We don't use `toml.stringify` because we want to keep multi-line strings.
+function writeToml(value, indent = '') {
+    let out = '';
+    if (value === null || typeof value === 'undefined') {
+        // toml doesn't handle that.
+    } else if (typeof value === 'string') {
+        out += `"""${value.split('\\').join('\\\\').split('"').join('\\"')}"""`;
+    } else if (typeof value === 'boolean') {
+        out += `${value}`;
+    } else if (typeof value === 'number') {
+        out += `${value}`;
+    } else if (Array.isArray(value)) {
+        out += '[\n';
+        for (const entry of value) {
+            out += `${indent}${writeToml(entry, indent + '  ')},\n`;
+        }
+        out += ']';
+    } else {
+        for (const key of Object.keys(value)) {
+            const entry = value[key];
+            const sub = writeToml(entry, indent + '  ');
+            if (sub.length !== 0) {
+                out += `${indent}${key} = ${sub}\n`;
+            }
+        }
+    }
+    return out;
+}
 
 function wrapper(callback, x, arg, name, options) {
     if (typeof name === 'undefined') {
@@ -19,7 +49,7 @@ function wrapper(callback, x, arg, name, options) {
     }
     let expected;
     const parent = path.join(__dirname, 'api-output', callback.name);
-    const filePath = path.join(parent, `${name}.json`);
+    const filePath = path.join(parent, `${name}.toml`);
     if (!Object.prototype.hasOwnProperty.call(uniqueFileOutput, callback.name)) {
         uniqueFileOutput[callback.name] = Object.create(null);
     }
@@ -31,7 +61,7 @@ function wrapper(callback, x, arg, name, options) {
 
     if (fs.existsSync(filePath)) {
         try {
-            expected = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            expected = toml.parse(fs.readFileSync(filePath, 'utf8'));
         } catch (err) {
             expected = err;
         }
@@ -46,13 +76,15 @@ function wrapper(callback, x, arg, name, options) {
     } else {
         res = callback(p, options);
     }
-    x.assertOrBless(res, expected, (value1, _) => {
+    if (!x.assertOrBless(res, expected, (value1, _) => {
         if (!fs.existsSync(parent)) {
             fs.mkdirSync(parent, { recursive: true });
         }
-        fs.writeFileSync(filePath, JSON.stringify(value1, null, 2) + '\n');
+        fs.writeFileSync(filePath, writeToml(value1));
         print(`Blessed \`${filePath}\``);
-    });
+    }) && !x.blessEnabled) {
+        print(`failed for check \`${name}\` (in \`${filePath}\``);
+    }
 }
 
 function wrapperParseContent(arg, options) {

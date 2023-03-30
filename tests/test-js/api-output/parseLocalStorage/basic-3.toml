@@ -1,0 +1,6 @@
+instructions = [
+  """await page.evaluate(() => {
+localStorage.setItem(\"a\", \"1\");
+localStorage.setItem(\"b\", \"2px\");
+})""",
+]

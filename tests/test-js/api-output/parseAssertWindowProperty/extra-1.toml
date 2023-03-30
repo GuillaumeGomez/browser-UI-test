@@ -1,0 +1,21 @@
+instructions = [
+  """await page.evaluate(() => {
+    const nonMatchingProps = [];
+    const parseAssertDictPropDict = {\"a\":\"b\"};
+    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(parseAssertDictPropDict)) {
+        if (window[parseAssertDictPropKey] === undefined) {
+            nonMatchingProps.push('Unknown window property `' + parseAssertDictPropKey + '`');
+            continue;
+        }
+        if (String(window[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) === -1) {
+            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + window[parseAssertDictPropKey] + '`) does not contain `' + parseAssertDictPropValue + '`');
+        }
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(\", \");
+        throw \"The following errors happened: [\" + props + \"]\";
+    }
+});""",
+]
+wait = false
+checkResult = true

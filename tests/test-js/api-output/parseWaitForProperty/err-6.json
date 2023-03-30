@@ -1,3 +1,0 @@
-{
-  "error": "only string and number types are allowed as value, found `{\"a\": 2}` (a json)"
-}
