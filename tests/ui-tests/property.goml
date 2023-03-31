@@ -9,3 +9,7 @@ assert-window-property: {"size": "a"}
 assert-document-property-false: {"size": "a"}
 document-property: {"size": "a"}
 assert-document-property: {"size": "a"}
+
+assert-property-false: ("header", {"yolo": "a"})
+property: ("header", {"yolo": "a"})
+assert-property: ("header", {"yolo": "a"})
