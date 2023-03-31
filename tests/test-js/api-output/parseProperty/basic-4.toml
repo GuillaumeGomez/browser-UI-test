@@ -1,0 +1,10 @@
+instructions = [
+  """let parsePropertyElemJson = await page.$(\"a\");
+if (parsePropertyElemJson === null) { throw '\"a\" not found'; }
+await page.evaluate(e => {
+e[\"b\"] = \"c\";
+}, parsePropertyElemJson);
+await page.evaluate(e => {
+e[\"d\"] = \"e\";
+}, parsePropertyElemJson);""",
+]

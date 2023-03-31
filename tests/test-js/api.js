@@ -440,7 +440,7 @@ function checkAssertText(x, func) {
     func('("//a"\n, \n"b",\n ALL)', 'multiline-2');
 }
 
-function checkAttribute(x, func) {
+function checkAttributeProperty(x, func) {
     func('"', 'err-1');
     func('("a", "b"', 'err-2');
     func('("a")', 'err-3');
@@ -1970,7 +1970,7 @@ const TO_CHECK = [
     },
     {
         'name': 'attribute',
-        'func': checkAttribute,
+        'func': checkAttributeProperty,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAttribute, x, e, name, o),
     },
     {
@@ -2177,6 +2177,11 @@ const TO_CHECK = [
         'name': 'press-key',
         'func': checkPressKey,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parsePressKey, x, e, name, o),
+    },
+    {
+        'name': 'property',
+        'func': checkAttributeProperty,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseProperty, x, e, name, o),
     },
     {
         'name': 'reload',
