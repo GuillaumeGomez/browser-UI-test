@@ -35,3 +35,29 @@ assert-property: ("header", {"yolo": null}, ALL)
 assert-property: ("header", {"yolo": null}, CONTAINS)
 // Should warn.
 assert-property: ("header", {"yolo": null}, [ALL, CONTAINS])
+
+//
+// assert-document-property
+//
+assert-document-property: {"yolo": null}
+// Should fail.
+assert-document-property: {"bgColor": null}
+assert-document-property-false: {"bgColor": null}
+// Should fail.
+assert-document-property-false: {"yolo": null}
+
+// Checking the warnings.
+assert-document-property: ({"yolo": null}, CONTAINS)
+
+//
+// assert-window-property
+//
+assert-window-property: {"yolo": null}
+// Should fail.
+assert-window-property: {"innerHeight": null}
+assert-window-property-false: {"innerHeight": null}
+// Should fail.
+assert-window-property-false: {"yolo": null}
+
+// Checking the warnings.
+assert-window-property: ({"yolo": null}, CONTAINS)
