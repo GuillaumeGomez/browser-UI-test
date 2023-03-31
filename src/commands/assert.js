@@ -179,7 +179,8 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
         json_dict = elems[0].getRaw();
     }
 
-    const entries = validateJson(json_dict, {'string': [], 'number': []}, 'property');
+    const entries = validateJson(
+        json_dict, {'string': [], 'number': [], 'ident': ['null']}, 'property');
     if (entries.error !== undefined) {
         return entries;
     }
@@ -201,8 +202,13 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
     const varValue = varName + 'Value';
     // JSON.stringify produces a problematic output so instead we use this.
     const values = [];
+    const undefProps = [];
     for (const [k, v] of Object.entries(entries.values)) {
-        values.push(`"${k}":"${v.value}"`);
+        if (v.kind !== 'ident') {
+            values.push(`"${k}":"${v.value}"`);
+        } else {
+            undefProps.push(`"${k}"`);
+        }
     }
 
     const checks = [];
@@ -272,6 +278,9 @@ if (Number.isNaN(${objName}[${varKey}])) {
 }`);
         }
     }
+
+    // eslint-disable-next-line no-extra-parens
+    const hasSpecialChecks = (enabled_checks['ALL'] && checks.length > 1) || checks.length !== 0;
     // If no check was enabled.
     if (checks.length === 0) {
         if (assertFalse) {
@@ -287,18 +296,38 @@ if (String(${objName}[${varKey}]) != ${varValue}) {
 }`);
         }
     }
+    if (undefProps.length > 0 && hasSpecialChecks) {
+        const k = Object.entries(enabled_checks)
+            .filter(([k, v]) => v && k !== 'ALL')
+            .map(([k, _]) => k);
+        warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
+    }
 
     let err = '';
+    let unexpectedPropError = '';
+    let expectedPropError = '';
     if (!assertFalse) {
         err = '\n';
         err += indentString(`nonMatchingProps.push('Unknown ${objName} property \`' + ${varKey} + \
 '\`');`, 3);
+        unexpectedPropError = `
+            nonMatchingProps.push("Expected property \`" + prop + "\` to not exist, found: \
+\`" + ${objName}[prop] + "\`");`;
+    } else {
+        expectedPropError = `
+        nonMatchingProps.push("Property named \`" + prop + "\` doesn't exist");`;
     }
 
     const instructions = [`\
 await page.evaluate(() => {
     const nonMatchingProps = [];
     const ${varDict} = {${values.join(',')}};
+    const undefProps = [${undefProps.join(',')}];
+    for (const prop of undefProps) {
+        if (${objName}[prop] !== undefined) {${unexpectedPropError}
+            continue;
+        }${expectedPropError}
+    }
     for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
         if (${objName}[${varKey}] === undefined) {${err}
             continue;
@@ -531,7 +560,7 @@ the check will be performed on the element itself`);
 \`" + e[prop] + "\`");`;
     } else {
         expectedPropError = `
-    nonMatchingProps.push("Property named \`" + prop + "\` doesn't exist");`;
+        nonMatchingProps.push("Property named \`" + prop + "\` doesn't exist");`;
     }
 
     const checkAllElements = enabled_checks['ALL'] === true;
