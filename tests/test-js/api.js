@@ -230,6 +230,12 @@ function checkAssertObjProperty(x, func) {
     func('({"a": "b"}, ENDS_WITH)', 'extra-3');
     func('({"a": "b"}, [STARTS_WITH, ENDS_WITH])', 'extra-4');
     func('({"a": "b"}, [STARTS_WITH, NEAR])', 'extra-5');
+
+    func('({"a": undefined})', 'null-1');
+    func('({"a": null})', 'null-2');
+    func('({"a": null}, ENDS_WITH)', 'null-3');
+    func('({"a": null}, [STARTS_WITH, NEAR])', 'null-4');
+    func('({"a": null, "b": "12"}, [STARTS_WITH, NEAR])', 'null-5');
 }
 
 function checkAssertVariable(x, func) {

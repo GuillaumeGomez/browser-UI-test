@@ -2,6 +2,13 @@ instructions = [
   """await page.evaluate(() => {
     const nonMatchingProps = [];
     const parseAssertDictPropDict = {\"a\":\"b\"};
+    const undefProps = [];
+    for (const prop of undefProps) {
+        if (window[prop] !== undefined) {
+            nonMatchingProps.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + window[prop] + \"`\");
+            continue;
+        }
+    }
     for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(parseAssertDictPropDict)) {
         if (window[parseAssertDictPropKey] === undefined) {
             nonMatchingProps.push('Unknown window property `' + parseAssertDictPropKey + '`');

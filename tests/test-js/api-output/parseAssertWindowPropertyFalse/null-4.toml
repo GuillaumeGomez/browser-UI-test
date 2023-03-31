@@ -1,0 +1,35 @@
+instructions = [
+  """await page.evaluate(() => {
+    const nonMatchingProps = [];
+    const parseAssertDictPropDict = {};
+    const undefProps = [\"a\"];
+    for (const prop of undefProps) {
+        if (window[prop] !== undefined) {
+            continue;
+        }
+        nonMatchingProps.push(\"Property named `\" + prop + \"` doesn't exist\");
+    }
+    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(parseAssertDictPropDict)) {
+        if (window[parseAssertDictPropKey] === undefined) {
+            continue;
+        }
+        if (String(window[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertDictPropKey + '` (for STARTS_WITH check)');
+        }
+        if (Number.isNaN(window[parseAssertDictPropKey])) {
+            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + window[parseAssertDictPropKey] + '`) is NaN (for NEAR check)');
+        } else if (Math.abs(window[parseAssertDictPropKey] - parseAssertDictPropValue) <= 1) {
+            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + window[parseAssertDictPropKey] + '`) is within 1 of `' + parseAssertDictPropValue + '` (for NEAR check)');
+        }
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(\", \");
+        throw \"The following errors happened: [\" + props + \"]\";
+    }
+});""",
+]
+wait = false
+warnings = [
+  """Special checks (STARTS_WITH, NEAR) will be ignored for `null`""",
+]
+checkResult = true

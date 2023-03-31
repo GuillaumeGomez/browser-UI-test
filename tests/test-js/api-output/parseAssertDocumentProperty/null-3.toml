@@ -1,0 +1,31 @@
+instructions = [
+  """await page.evaluate(() => {
+    const nonMatchingProps = [];
+    const parseAssertDictPropDict = {};
+    const undefProps = [\"a\"];
+    for (const prop of undefProps) {
+        if (document[prop] !== undefined) {
+            nonMatchingProps.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + document[prop] + \"`\");
+            continue;
+        }
+    }
+    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(parseAssertDictPropDict)) {
+        if (document[parseAssertDictPropKey] === undefined) {
+            nonMatchingProps.push('Unknown document property `' + parseAssertDictPropKey + '`');
+            continue;
+        }
+        if (!String(document[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + document[parseAssertDictPropKey] + '`) does not end with `' + parseAssertDictPropValue + '`');
+        }
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(\", \");
+        throw \"The following errors happened: [\" + props + \"]\";
+    }
+});""",
+]
+wait = false
+warnings = [
+  """Special checks (ENDS_WITH) will be ignored for `null`""",
+]
+checkResult = true

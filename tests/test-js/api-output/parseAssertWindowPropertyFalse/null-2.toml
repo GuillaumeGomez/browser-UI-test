@@ -1,0 +1,27 @@
+instructions = [
+  """await page.evaluate(() => {
+    const nonMatchingProps = [];
+    const parseAssertDictPropDict = {};
+    const undefProps = [\"a\"];
+    for (const prop of undefProps) {
+        if (window[prop] !== undefined) {
+            continue;
+        }
+        nonMatchingProps.push(\"Property named `\" + prop + \"` doesn't exist\");
+    }
+    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(parseAssertDictPropDict)) {
+        if (window[parseAssertDictPropKey] === undefined) {
+            continue;
+        }
+        if (String(window[parseAssertDictPropKey]) == parseAssertDictPropValue) {
+            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertDictPropKey + '`');
+        }
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(\", \");
+        throw \"The following errors happened: [\" + props + \"]\";
+    }
+});""",
+]
+wait = false
+checkResult = true
