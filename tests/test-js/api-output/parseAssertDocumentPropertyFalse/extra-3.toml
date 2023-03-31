@@ -2,6 +2,13 @@ instructions = [
   """await page.evaluate(() => {
     const nonMatchingProps = [];
     const parseAssertDictPropDict = {\"a\":\"b\"};
+    const undefProps = [];
+    for (const prop of undefProps) {
+        if (document[prop] !== undefined) {
+            continue;
+        }
+        nonMatchingProps.push(\"Property named `\" + prop + \"` doesn't exist\");
+    }
     for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(parseAssertDictPropDict)) {
         if (document[parseAssertDictPropKey] === undefined) {
             continue;

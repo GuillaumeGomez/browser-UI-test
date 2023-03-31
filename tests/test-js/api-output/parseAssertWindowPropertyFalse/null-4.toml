@@ -1,8 +1,8 @@
 instructions = [
   """await page.evaluate(() => {
     const nonMatchingProps = [];
-    const parseAssertDictPropDict = {\"a\":\"b\"};
-    const undefProps = [];
+    const parseAssertDictPropDict = {};
+    const undefProps = [\"a\"];
     for (const prop of undefProps) {
         if (window[prop] !== undefined) {
             continue;
@@ -16,8 +16,10 @@ instructions = [
         if (String(window[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) {
             nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertDictPropKey + '` (for STARTS_WITH check)');
         }
-        if (String(window[parseAssertDictPropKey]).endsWith(parseAssertDictPropValue)) {
-            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertDictPropKey + '` (for ENDS_WITH check)');
+        if (Number.isNaN(window[parseAssertDictPropKey])) {
+            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + window[parseAssertDictPropKey] + '`) is NaN (for NEAR check)');
+        } else if (Math.abs(window[parseAssertDictPropKey] - parseAssertDictPropValue) <= 1) {
+            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + window[parseAssertDictPropKey] + '`) is within 1 of `' + parseAssertDictPropValue + '` (for NEAR check)');
         }
     }
     if (nonMatchingProps.length !== 0) {
@@ -27,4 +29,7 @@ instructions = [
 });""",
 ]
 wait = false
+warnings = [
+  """Special checks (STARTS_WITH, NEAR) will be ignored for `null`""",
+]
 checkResult = true

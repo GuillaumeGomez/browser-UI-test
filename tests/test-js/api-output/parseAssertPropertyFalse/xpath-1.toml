@@ -10,7 +10,7 @@ await page.evaluate(e => {
         if (e[prop] !== undefined) {
             continue;
         }
-    nonMatchingProps.push(\"Property named `\" + prop + \"` doesn't exist\");
+        nonMatchingProps.push(\"Property named `\" + prop + \"` doesn't exist\");
     }
     for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(parseAssertElemPropDict)) {
         if (e[parseAssertElemPropKey] === undefined) {
