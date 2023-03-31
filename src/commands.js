@@ -64,6 +64,7 @@ const ORDERS = {
     'pause-on-error': commands.parsePauseOnError,
     'permissions': commands.parsePermissions,
     'press-key': commands.parsePressKey,
+    'property': commands.parseProperty,
     'reload': commands.parseReload,
     'screenshot': commands.parseScreenshot,
     'screenshot-comparison': commands.parseScreenshotComparison,

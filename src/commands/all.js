@@ -73,6 +73,7 @@ module.exports = {
     'parsePauseOnError': context_setters.parsePauseOnError,
     'parsePermissions': emulation.parsePermissions,
     'parsePressKey': input.parsePressKey,
+    'parseProperty': dom_modifiers.parseProperty,
     'parseReload': navigation.parseReload,
     'parseScreenshot': general.parseScreenshot,
     'parseScreenshotComparison': context_setters.parseScreenshotComparison,

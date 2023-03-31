@@ -102,6 +102,17 @@ function parseAttribute(parser) {
 
 // Possible inputs:
 //
+// * ("CSS selector", "property name", "property value")
+// * ("XPath", "attribute name", "property value")
+// * ("CSS selector", JSON dict)
+// * ("XPath", JSON dict)
+function parseProperty(parser) {
+    return innerParseCssAttribute(parser, 'property', 'parsePropertyElem',
+        (key, value) => `e["${key}"] = "${value}";`);
+}
+
+// Possible inputs:
+//
 // * ("CSS selector", "CSS property name", "CSS property value")
 // * ("XPath", "CSS property name", "CSS property value")
 // * ("CSS selector", JSON dict)
@@ -153,5 +164,6 @@ function parseText(parser) {
 module.exports = {
     'parseAttribute': parseAttribute,
     'parseCss': parseCss,
+    'parseProperty': parseProperty,
     'parseText': parseText,
 };
