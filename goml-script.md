@@ -134,6 +134,7 @@ Here's the command list:
  * [`pause-on-error`](#pause-on-error)
  * [`permissions`](#permissions)
  * [`press-key`](#press-key)
+ * [`property`](#property)
  * [`reload`](#reload)
  * [`screenshot`](#screenshot)
  * [`screenshot-comparison`](#screenshot-comparison)
@@ -1277,6 +1278,24 @@ Examples:
 press-key: 'Escape'
 press-key: 27 // Same but with an integer
 press-key: ('Escape', 1000) // The keyup event will be send after 1000 ms.
+```
+
+#### property
+
+**property** command allows to update an element's property. Example:
+
+```
+property: ("details", "open", "false")
+// Same but with a XPath:
+property: ("//details", "attribute-name", "attribute-value")
+```
+
+To set multiple properties at a time, you can use a JSON object:
+
+```
+property: ("details", {"open": "false", "another": "x"})
+// Same but with a XPath:
+property: ("//details", {"open": "false", "another": "x"})
 ```
 
 #### reload
