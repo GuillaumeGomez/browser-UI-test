@@ -335,6 +335,13 @@ assert-document-property: ({"URL": "https://some.where", "title": "a title"})
 assert-document-property: {"URL": "https://some.where", "title": "a title"}
 ```
 
+If you want to check that a property doesn't exist, you can use `null`:
+
+```
+// Checking that "property-name" doesn't exist.
+assert-document-property: {"property-name": null}
+```
+
 You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
 
 ```
@@ -355,6 +362,13 @@ assert-document-property: ({"URL": "https://some.where", "title": "a title"}, [S
 assert-document-property-false: ({"URL": "https://some.where", "title": "a title"})
 // If you only provide properties, you can also only provide a JSON dict:
 assert-document-property-false: {"URL": "https://some.where", "title": "a title"}
+```
+
+If you want to check that a property does exist, you can use `null`:
+
+```
+// Checking that "property-name" does exist.
+assert-document-property-false: {"property-name": null}
 ```
 
 You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH",
@@ -625,6 +639,13 @@ assert-window-property: ({"pageYOffset": "0", "location": "https://some.where"})
 assert-window-property: {"pageYOffset": "0", "location": "https://some.where"}
 ```
 
+If you want to check that a property doesn't exist, you can use `null`:
+
+```
+// Checking that "property-name" doesn't exist.
+assert-window-property-false: {"property-name": null}
+```
+
 You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
 
 ```
@@ -651,6 +672,13 @@ assert-window-property: (
 assert-window-property-false: ({"location": "https://some.where", "pageYOffset": "10"})
 // If you only provide properties, you can also only provide a JSON dict:
 assert-window-property-false: {"location": "https://some.where", "pageYOffset": "10"}
+```
+
+If you want to check that a property does exist, you can use `null`:
+
+```
+// Checking that "property-name" does exist.
+assert-window-property-false: {"property-name": null}
 ```
 
 You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH", "STARTS_WITH" or "NEAR".
