@@ -1,0 +1,1 @@
+error = """Forbidden `ident` used (`a`). Allowed idents: [null]"""

@@ -1,8 +1,10 @@
 instructions = [
-  """let parseAttributeElemJson = await page.$x(\"//a\");
-if (parseAttributeElemJson.length === 0) { throw 'XPath \"//a\" not found'; }
-parseAttributeElemJson = parseAttributeElemJson[0];
+  """let parseAttributeElem = await page.$x(\"//a\");
+if (parseAttributeElem.length === 0) { throw 'XPath \"//a\" not found'; }
+parseAttributeElem = parseAttributeElem[0];
 await page.evaluate(e => {
     e.setAttribute(\"b\",\"c\\n\");
-}, parseAttributeElemJson);""",
+}, parseAttributeElem);""",
+]
+warnings = [
 ]

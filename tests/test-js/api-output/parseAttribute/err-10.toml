@@ -1,6 +1,1 @@
-instructions = [
-]
-wait = false
-warnings = [
-  """Ignoring recursive entry with key `\"a\"`""",
-]
+error = """only string, number and ident types are allowed as value, found `{\"a\": \"x\"}` (a json)"""

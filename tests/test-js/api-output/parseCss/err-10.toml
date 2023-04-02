@@ -1,1 +1,1 @@
-error = """CSS property name (second argument) cannot be empty"""
+error = """empty strings cannot be used as keys"""
