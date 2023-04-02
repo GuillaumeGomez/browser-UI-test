@@ -1,21 +1,19 @@
 // Commands making changes the current page's DOM.
 
-const { getAndSetElements, checkJsonEntry } = require('./utils.js');
+const { getAndSetElements, checkJsonEntry, indentString } = require('./utils.js');
 
 function innerParseCssAttribute(parser, argName, varName, callback) {
     const elems = parser.elems;
 
     if (elems.length === 0) {
         return {
-            'error': `expected \`("CSS selector" or "XPath", "${argName} name", ` +
-                `"${argName} value")\` or \`("CSS selector" or "XPath", [JSON object])\`` +
-                ', found nothing',
+            'error': `expected \`("CSS selector" or "XPath", "${argName} name", "${argName} value")\
+\` or \`("CSS selector" or "XPath", [JSON object])\`, found nothing`,
         };
     } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
         return {
-            'error': `expected \`("CSS selector" or "XPath", "${argName} name", ` +
-                `"${argName} value")\` or \`("CSS selector" or "XPath", [JSON object])\`` +
-                `, found \`${parser.getRawArgs()}\``,
+            'error': `expected \`("CSS selector" or "XPath", "${argName} name", "${argName} value")\
+\` or \`("CSS selector" or "XPath", [JSON object])\`, found \`${parser.getRawArgs()}\``,
         };
     }
     const tuple = elems[0].getRaw();
@@ -38,14 +36,16 @@ function innerParseCssAttribute(parser, argName, varName, callback) {
         }
         const attributeName = tuple[1].getStringValue(true);
         if (attributeName.length === 0) {
-            return {'error': 'attribute name (second argument) cannot be empty'};
+            return {'error': `${argName} name (second argument) cannot be empty`};
         }
         const value = tuple[2].getStringValue();
         return {
             'instructions': [
-                getAndSetElements(selector, varName, false) + '\n' +
-                `await page.evaluate(e => {\n${callback(attributeName, value)}\n}, ` +
-                `${varName});`,
+                `\
+${getAndSetElements(selector, varName, false)}
+await page.evaluate(e => {
+${indentString(callback(attributeName, value), 1)}
+}, ${varName});`,
             ],
         };
     } else if (tuple.length !== 2) {
@@ -71,7 +71,10 @@ function innerParseCssAttribute(parser, argName, varName, callback) {
         if (code.length !== 0) {
             code += '\n';
         }
-        code += `await page.evaluate(e => {\n${callback(key_s, value_s)}\n}, ${varName});`;
+        code += `\
+await page.evaluate(e => {
+${indentString(callback(key_s, value_s), 1)}
+}, ${varName});`;
     });
     if (code.length === 0) {
         return {

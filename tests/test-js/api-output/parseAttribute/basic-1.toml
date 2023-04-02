@@ -2,6 +2,6 @@ instructions = [
   """let parseAttributeElem = await page.$(\"a\");
 if (parseAttributeElem === null) { throw '\"a\" not found'; }
 await page.evaluate(e => {
-e.setAttribute(\"b\",\"c\");
+    e.setAttribute(\"b\",\"c\");
 }, parseAttributeElem);""",
 ]

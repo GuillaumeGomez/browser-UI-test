@@ -1,8 +1,1 @@
-instructions = [
-  """let parsePropertyElemJson = await page.$x(\"//a\");
-if (parsePropertyElemJson.length === 0) { throw 'XPath \"//a\" not found'; }
-parsePropertyElemJson = parsePropertyElemJson[0];
-await page.evaluate(e => {
-e[\"b\"] = \"c\";
-}, parsePropertyElemJson);""",
-]
+error = """expected json as second argument (since there are only two arguments), found a string"""

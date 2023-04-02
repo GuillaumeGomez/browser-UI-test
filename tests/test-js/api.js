@@ -463,11 +463,12 @@ function checkAttributeProperty(x, func) {
     func('("//a", {"b": "c"})', 'xpath-3');
 
     // Multiline
-    func('("a"\n,\n "b\n"\n)', 'multiline-1');
-    func('("//a"\n,\n {"b":\n "c"})', 'multiline-2');
+    func('("a", \n""\n, "c")', 'multiline-1');
+    func('("a"\n,\n "b\n"\n)', 'multiline-2');
+    func('("//a"\n,\n {"b":\n "c"})', 'multiline-3');
 
     // Multiline string.
-    func('("//a", {"b": "c\n"})', 'multiline-3');
+    func('("//a", {"b": "c\n"})', 'multiline-4');
 }
 
 function checkClick(x, func) {

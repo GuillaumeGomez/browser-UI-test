@@ -3,6 +3,6 @@ instructions = [
 if (parsePropertyElem.length === 0) { throw 'XPath \"//a\" not found'; }
 parsePropertyElem = parsePropertyElem[0];
 await page.evaluate(e => {
-e[\"b\"] = \"c\";
+    e[\"b\"] = \"c\";
 }, parsePropertyElem);""",
 ]
