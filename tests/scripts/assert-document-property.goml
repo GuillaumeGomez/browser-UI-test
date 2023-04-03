@@ -1,4 +1,4 @@
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
 assert-document-property: {"title": "basic test"}
 assert-document-property: ({"title": "basic test"})
 assert-document-property: ({"title": "c te"}, CONTAINS)

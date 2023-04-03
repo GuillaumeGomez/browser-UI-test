@@ -1,4 +1,4 @@
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html" // still the same...
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html" // still the same...
 assert-text: ("#button", "Go somewhere else!")
-text: ("#button", "hello")
+set-text: ("#button", "hello")
 assert-text: ("#button", "hello")

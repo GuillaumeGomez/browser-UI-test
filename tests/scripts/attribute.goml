@@ -1,18 +1,18 @@
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
 assert-attribute: ("#button", {"id": "button"})
-attribute: ("#button", "id", "another-id")
+set-attribute: ("#button", "id", "another-id")
 assert: ("#another-id")
-attribute: ("#another-id", {"id": "yet-another-id", "test": "lol"})
+set-attribute: ("#another-id", {"id": "yet-another-id", "test": "lol"})
 assert-attribute: ("#yet-another-id", {"test": "lol"})
 fail: true
-attribute: ("#yet-another-id", {"\"a": "'b", "c": "d"})
+set-attribute: ("#yet-another-id", {"\"a": "'b", "c": "d"})
 assert-attribute: ("#yet-another-id", {"\a": "'b", "c": "d", "\"e": "'2"})
-attribute: ("#yet-another-id", "\"e", "'2")
+set-attribute: ("#yet-another-id", "\"e", "'2")
 assert-attribute: ("#yet-another-id", {"\"e": "'2"})
 fail: false
-attribute: ("#yet-another-id", "e", "'2")
+set-attribute: ("#yet-another-id", "e", "'2")
 assert-attribute: ("#yet-another-id", {"e": "'2"})
-attribute: ("#yet-another-id", "e", "2")
+set-attribute: ("#yet-another-id", "e", "2")
 assert-attribute: ("#yet-another-id", {"e": "2"})
 assert-attribute-false: ("#yet-another-id", {"e": "3"})
 assert-attribute: ("#yet-another-id", {"e": "2"}, NEAR)

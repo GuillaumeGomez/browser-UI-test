@@ -1,5 +1,5 @@
 // This test ensures that the `store*` commands are working as expected.
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 store-value: (background_color, "#111")
 // This check should fail.
 assert-css: ("header", {"background-color": |background_color|})
@@ -28,7 +28,7 @@ assert-variable: (attr, "a")
 store-attribute: (attr, "header", "data-whatever")
 // Variable shouldn't change value.
 assert-variable: (attr, "a")
-local-storage: {"a key": "a value"}
+set-local-storage: {"a key": "a value"}
 store-local-storage: (local, "a key")
 // Should fail.
 assert-variable: (local, "a key")

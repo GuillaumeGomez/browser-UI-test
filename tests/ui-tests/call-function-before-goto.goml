@@ -21,4 +21,4 @@ store-value: (color, "y")
 // Calling "call-function" before "goto" is valid but then it's the instructions inside
 // that are checked.
 call-function: ("fn1", ("a", {"color": "a"}))
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"

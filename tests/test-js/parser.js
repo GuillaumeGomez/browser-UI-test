@@ -937,14 +937,15 @@ function checkJson(x) {
     process.env['variable'] = undefined;
     process.env['variable_value'] = undefined;
 
-    p = new Parser(`local-storage: {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}
+    p = new Parser(`set-local-storage: {"rustdoc-theme": |theme|, \
+"rustdoc-use-system-theme": "false"}
 // removed comment
 reload: 
 reload://hello
 assert-css: (".item-left sup", {"color": |color|})`);
     p.variables = {'theme': 'a'};
     p.parseNextCommand();
-    x.assert(p.command.value, 'local-storage');
+    x.assert(p.command.value, 'set-local-storage');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
     p.parseNextCommand();

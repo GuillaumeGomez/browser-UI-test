@@ -1,9 +1,9 @@
 // Check that the `device-pixel-ratio` command is working as expected.
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
-device-pixel-ratio: 1.2
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+set-device-pixel-ratio: 1.2
 assert-window-property: ({"devicePixelRatio": "1.2"}, [STARTS_WITH])
-device-pixel-ratio: 1.5
+set-device-pixel-ratio: 1.5
 assert-window-property: ({"devicePixelRatio": "1.5"}, [STARTS_WITH])
-device-pixel-ratio: -2
+set-device-pixel-ratio: -2
 // It should not run the next command.
 assert: ".whatever"

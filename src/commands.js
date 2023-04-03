@@ -26,7 +26,6 @@ const ORDERS = {
     'assert-variable-false': commands.parseAssertVariableFalse,
     'assert-window-property': commands.parseAssertWindowProperty,
     'assert-window-property-false': commands.parseAssertWindowPropertyFalse,
-    'attribute': commands.parseAttribute,
     'click': commands.parseClick,
     'click-with-offset': commands.parseClickWithOffset,
     'call-function': commands.parseCallFunction,
@@ -42,35 +41,39 @@ const ORDERS = {
     'compare-elements-property-false': commands.parseCompareElementsPropertyFalse,
     'compare-elements-text': commands.parseCompareElementsText,
     'compare-elements-text-false': commands.parseCompareElementsTextFalse,
-    'css': commands.parseCss,
     'debug': commands.parseDebug,
-    'device-pixel-ratio': commands.parseDevicePixelRatio,
     'define-function': commands.parseDefineFunction,
-    'document-property': commands.parseDocumentProperty,
     'drag-and-drop': commands.parseDragAndDrop,
     'emulate': commands.parseEmulate,
     'fail': commands.parseFail,
     'fail-on-js-error': commands.parseFailOnJsError,
     'fail-on-request-error': commands.parseFailOnRequestError,
     'focus': commands.parseFocus,
-    'font-size': commands.parseFontSize,
     'geolocation': commands.parseGeolocation,
-    'goto': commands.parseGoTo,
+    'go-to': commands.parseGoTo,
     'history-go-back': commands.parseHistoryGoBack,
     'history-go-forward': commands.parseHistoryGoForward,
     'javascript': commands.parseJavascript,
-    'local-storage': commands.parseLocalStorage,
     'move-cursor-to': commands.parseMoveCursorTo,
     'pause-on-error': commands.parsePauseOnError,
     'permissions': commands.parsePermissions,
     'press-key': commands.parsePressKey,
-    'property': commands.parseProperty,
     'reload': commands.parseReload,
     'screenshot': commands.parseScreenshot,
     'screenshot-comparison': commands.parseScreenshotComparison,
     'scroll-to': commands.parseScrollTo,
+    'set-attribute': commands.parseSetAttribute,
+    'set-css': commands.parseSetCss,
+    'set-device-pixel-ratio': commands.parseSetDevicePixelRatio,
+    'set-document-property': commands.parseSetDocumentProperty,
+    'set-font-size': commands.parseSetFontSize,
+    'set-local-storage': commands.parseSetLocalStorage,
+    'set-property': commands.parseSetProperty,
+    'set-size': commands.parseSetSize,
+    'set-text': commands.parseSetText,
+    'set-timeout': commands.parseSetTimeout,
+    'set-window-property': commands.parseSetWindowProperty,
     'show-text': commands.parseShowText,
-    'size': commands.parseSize,
     'store-attribute': commands.parseStoreAttribute,
     'store-css': commands.parseStoreCss,
     'store-document-property': commands.parseStoreDocumentProperty,
@@ -79,8 +82,6 @@ const ORDERS = {
     'store-text': commands.parseStoreText,
     'store-value': commands.parseStoreValue,
     'store-window-property': commands.parseStoreWindowProperty,
-    'text': commands.parseText,
-    'timeout': commands.parseTimeout,
     'wait-for': commands.parseWaitFor,
     'wait-for-attribute': commands.parseWaitForAttribute,
     'wait-for-css': commands.parseWaitForCss,
@@ -90,32 +91,31 @@ const ORDERS = {
     'wait-for-property': commands.parseWaitForProperty,
     'wait-for-text': commands.parseWaitForText,
     'wait-for-window-property': commands.parseWaitForWindowProperty,
-    'window-property': commands.parseWindowProperty,
     'write': commands.parseWrite,
 };
 
 // If the command fails, the script should stop right away because everything coming after will
 // very likely be broken.
 const FATAL_ERROR_COMMANDS = [
-    'attribute',
     // If calling a function fails, no need to go any further as it could have contained many
     // important things.
     'call-function',
     'click',
-    'css',
-    'device-pixel-ratio',
     'drag-and-drop',
     'emulate',
     'focus',
-    'goto',
-    'local-storage',
+    'go-to',
     'move-cursor-to',
     'screenshot',
     'scroll-to',
-    'size',
+    'set-attribute',
+    'set-css',
+    'set-device-pixel-ratio',
+    'set-local-storage',
+    'set-size',
+    'set-text',
     'store-property',
     'store-value',
-    'text',
     'wait-for',
     'wait-for-attribute',
     'wait-for-css',
@@ -138,7 +138,7 @@ const NO_INTERACTION_COMMANDS = [
     'javascript',
     'screenshot-comparison',
     'store-value',
-    'timeout',
+    'set-timeout',
 ];
 
 // Commands which can only be used before the first `goto` command.
@@ -233,19 +233,19 @@ class ParserWithContext {
         }
         const parser = this.get_current_parser();
         if (this.firstGotoParsed === false) {
-            if (order !== 'goto' && NO_INTERACTION_COMMANDS.indexOf(order) === -1) {
+            if (order !== 'go-to' && NO_INTERACTION_COMMANDS.indexOf(order) === -1) {
                 const cmds = NO_INTERACTION_COMMANDS.map(x => `\`${x}\``);
                 const last = cmds.pop();
                 const text = cmds.join(', ') + ` or ${last}`;
                 return {
-                    'error': `First command must be \`goto\` (${text} can be used before)!`,
+                    'error': `First command must be \`go-to\` (${text} can be used before)!`,
                     'line': this.get_current_line(),
                 };
             }
-            this.firstGotoParsed = order === 'goto';
+            this.firstGotoParsed = order === 'go-to';
         } else if (BEFORE_GOTO.indexOf(order) !== -1) {
             return {
-                'error': `Command ${order} must be used before first goto!`,
+                'error': `Command \`${order}\` must be used before first \`go-to\`!`,
                 'line': this.get_current_line(),
             };
         }

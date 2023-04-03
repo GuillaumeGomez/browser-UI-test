@@ -1,4 +1,4 @@
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
 focus: "//*[@id='the-input']"
 assert: "#the-input:focus"
 write: ("//*[@id='the-input']", "hello")
@@ -11,18 +11,18 @@ fail: true
 assert-text-false: ("//*[@id='the-input']", "hello", ALL)
 fail: false
 assert-text-false: ("//*[@id='the-input']", "ai", ALL)
-attribute: ("//div[@class='content']", "an-attribute", "hello")
+set-attribute: ("//div[@class='content']", "an-attribute", "hello")
 assert-attribute: ("//div[@class='content']", {"an-attribute": "hello"})
 assert-css: ("//*[@id='button']", {"border-radius": "5px"})
-css: ("//*[@id='button']", "border-radius", "50%")
+set-css: ("//*[@id='button']", "border-radius", "50%")
 assert-css: ("//*[@id='button']", {"border-radius": "50%"})
 assert-text-false: ("//*[@id='button']", "new text")
-text: ("//*[@id='button']", "new text")
+set-text: ("//*[@id='button']", "new text")
 assert-text: ("//*[@id='button']", "new text")
 click: "//a[@id='button']"
 assert-text: ("//header", "Another page!")
 
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 compare-elements-text: ("//*[@class='content']/*[@class='right']/p", "//*[@class='content']/*[@class='left']/p")
 compare-elements-position: ("//*[@class='content']/*[@class='right']/p", "//*[@class='content']/*[@class='right']/p", ("x", "y"))
 compare-elements-attribute: ("//*[@class='content']/*[@class='right']", "//*[@class='content']/*[@class='left']", ["data-whatever"])
@@ -31,7 +31,7 @@ compare-elements-position-false: ("//*[@class='content']/*[@class='right']/div",
 compare-elements-attribute-false: ("//*[@class='content']/*[@class='right']", "//*[@class='content']/*[@class='left']/p", ["data-whatever"])
 compare-elements-css-false: ("//*[@class='content']/*[@class='right']/p", "//*[@class='content']/*[@class='left']", ["margin"])
 
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/other_page.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/other_page.html"
 drag-and-drop: ("//*[@id='drag']", (10, 10))
 assert-css: ("//*[@id='drag']", {"top": "10px", "left": "10px"})
 drag-and-drop: ((11, 11), (12, 12))

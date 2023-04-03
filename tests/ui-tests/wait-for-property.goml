@@ -1,7 +1,7 @@
 // This test ensures that the `wait-for-property` command is behaving like expected.
 screenshot-comparison: false
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
-timeout: 500
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+set-timeout: 500
 // Shouldn't wait here since it's already the case.
 wait-for-property: ("#js-wait-prop", {"hehe": "hoho"})
 click: "#js-wait-prop"

@@ -1,5 +1,5 @@
 screenshot-comparison: true
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/other_page.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/other_page.html"
 drag-and-drop: ("#drag", (10, 10))
 assert-css: ("#drag", {"top": "10px", "left": "10px"})
 drag-and-drop: ((11, 11), (12, 12))

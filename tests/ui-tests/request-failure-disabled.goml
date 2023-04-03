@@ -1,6 +1,6 @@
 // Check that this fail is disabled as expected.
 fail-on-request-error: false
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/failure.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/failure.html"
 wait-for: 100
 wait-for: 100
 // Should not have failed at this point!

@@ -1,4 +1,4 @@
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 fail: true
 compare-elements-position-near-false: (".content>.right>div", ".content>.right>div", {"x": 100, "y": 1})
 fail: false

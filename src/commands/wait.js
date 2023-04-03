@@ -543,7 +543,7 @@ ${indentString(incr, 1)}
 // * ("CSS selector", {"property name": "expected property value"})
 // * ("XPath", {"property name": "expected property value"})
 function parseWaitForProperty(parser) {
-    const data = waitForInitializer(parser, 'attribute', true);
+    const data = waitForInitializer(parser, 'property', true);
     if (data.error !== undefined) {
         return data;
     }

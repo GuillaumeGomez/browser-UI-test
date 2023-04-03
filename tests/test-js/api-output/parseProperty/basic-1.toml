@@ -1,7 +1,0 @@
-instructions = [
-  """let parsePropertyElem = await page.$(\"a\");
-if (parsePropertyElem === null) { throw '\"a\" not found'; }
-await page.evaluate(e => {
-    e[\"b\"] = \"c\";
-}, parsePropertyElem);""",
-]

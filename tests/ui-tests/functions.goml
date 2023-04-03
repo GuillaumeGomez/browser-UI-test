@@ -1,5 +1,5 @@
 // This test ensures that the `define-function` and `call-function` commands are working as expected.
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 show-text: true
 define-function: (
     "fn1",
