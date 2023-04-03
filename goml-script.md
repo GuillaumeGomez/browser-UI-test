@@ -15,7 +15,7 @@ This file describes how the `.goml` format works.
 You can add comments in the `.goml` scripts with `//`. Example:
 
 ```
-goto: "https://somewhere.com" // let's start somewhere!
+go-to: "https://somewhere.com" // let's start somewhere!
 ```
 
 ## Multiline commands/strings?
@@ -96,7 +96,6 @@ Here's the command list:
  * [`assert-variable-false`](#assert-variable-false)
  * [`assert-window-property`](#assert-window-property)
  * [`assert-window-property-false`](#assert-window-property-false)
- * [`attribute`](#attribute)
  * [`call-function`](#call-function)
  * [`click`](#click)
  * [`click-with-offset`](#click-with-offset)
@@ -112,35 +111,39 @@ Here's the command list:
  * [`compare-elements-property-false`](#compare-elements-property-false)
  * [`compare-elements-text`](#compare-elements-text)
  * [`compare-elements-text-false`](#compare-elements-text-false)
- * [`css`](#css)
  * [`debug`](#debug)
  * [`define-function`](#define-function)
- * [`device-pixel-ratio`](#device-pixel-ratio)
- * [`document-property`](#document-property)
  * [`drag-and-drop`](#drag-and-drop)
  * [`emulate`](#emulate)
  * [`fail`](#fail)
  * [`fail-on-js-error`](#fail-on-js-error)
  * [`fail-on-request-error`](#fail-on-request-error)
  * [`focus`](#focus)
- * [`font-size`](#font-size)
  * [`geolocation`](#geolocation)
- * [`goto`](#goto)
+ * [`go-to`](#go-to)
  * [`history-go-back`](#history-go-back)
  * [`history-go-forward`](#history-go-forward)
  * [`javascript`](#javascript)
- * [`local-storage`](#local-storage)
  * [`move-cursor-to`](#move-cursor-to)
  * [`pause-on-error`](#pause-on-error)
  * [`permissions`](#permissions)
  * [`press-key`](#press-key)
- * [`property`](#property)
  * [`reload`](#reload)
  * [`screenshot`](#screenshot)
  * [`screenshot-comparison`](#screenshot-comparison)
  * [`scroll-to`](#scroll-to)
+ * [`set-attribute`](#set-attribute)
+ * [`set-css`](#set-css)
+ * [`set-device-pixel-ratio`](#set-device-pixel-ratio)
+ * [`set-document-property`](#set-document-property)
+ * [`set-font-size`](#set-font-size)
+ * [`set-local-storage`](#set-local-storage)
+ * [`set-property`](#set-property)
+ * [`set-size`](#set-size)
+ * [`set-text`](#set-text)
+ * [`set-timeout`](#set-timeout)
+ * [`set-window-property`](#set-window-property)
  * [`show-text`](#show-text)
- * [`size`](#size)
  * [`store-attribute`](#store-attribute)
  * [`store-css`](#store-css)
  * [`store-document-property`](#store-document-property)
@@ -149,8 +152,6 @@ Here's the command list:
  * [`store-text`](#store-text)
  * [`store-value`](#store-value)
  * [`store-window-property`](#store-window-property)
- * [`text`](#text)
- * [`timeout`](#timeout)
  * [`wait-for`](#wait-for)
  * [`wait-for-attribute`](#wait-for-attribute)
  * [`wait-for-count`](#wait-for-count)
@@ -160,7 +161,6 @@ Here's the command list:
  * [`wait-for-property`](#wait-for-property)
  * [`wait-for-text`](#wait-for-text)
  * [`wait-for-window-property`](#wait-for-window-property)
- * [`window-property`](#window-property)
  * [`write`](#write)
 
 #### assert
@@ -700,30 +700,6 @@ assert-windo-property-false: (
 )
 ```
 
-#### attribute
-
-**attribute** command allows to update an element's attribute. Example:
-
-```
-attribute: ("#button", "attribute-name", "attribute-value")
-// Same but with a XPath:
-attribute: ("//*[@id='button']", "attribute-name", "attribute-value")
-```
-
-To remove an attribute, you can use the `null` ident:
-
-```
-attribute: ("a", {"href": null})
-```
-
-To set multiple attributes at a time, you can use a JSON object:
-
-```
-attribute: ("#button", {"attribute name": "attribute value", "another": "x"})
-// Same but with a XPath:
-attribute: ("//*[@id='button']", {"attribute name": "attribute value", "another": "x"})
-```
-
 #### call-function
 
 **call-function** command allows you to call a function defined with `define-function`. It expects a tuple containing the name of the function to call and its arguments (if any). Example:
@@ -956,24 +932,6 @@ compare-elements-text-false: ("element1", "//element2")
 
 Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
 
-#### css
-
-**css** command allows to update an element's style. Example:
-
-```
-css: ("#button", "background-color", "red")
-// Same but with an XPath:
-css: ("//*[@id='button']", "background-color", "red")
-```
-
-To set multiple styles at a time, you can use a JSON object:
-
-```
-css: ("#button", {"background-color": "red", "border": "1px solid"})
-// Same but with an XPath:
-css: ("//*[@id='button']", {"background-color": "red", "border": "1px solid"})
-```
-
 #### debug
 
 **debug** command enables/disables the debug logging. Example:
@@ -1044,31 +1002,6 @@ So in this case, here is what will happen:
  5. `fn1` is called again with `define-function`.
  6. `assert-attribute` is called.
  7. `assert-position` is called.
-
-#### device-pixel-ratio
-
-**device-pixel-ratio** commands allows you to change the device scale factor. You can find more information about it [here](https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio). It expected a positive non-null number (can be a float). Example:
-
-```
-device-pixel-ratio: 1 // the default value
-device-pixel-ratio: 0.5
-```
-
-You can check its value like this:
-
-```
-// We use `STARTS_WITH` because otherwise the check would very likely fail
-// because of floating numbers rounding.
-assert-window-property: ({"devicePixelRatio": "0.5"}, [STARTS_WITH])
-```
-
-#### document-property
-
-**document-property** command sets the given values to the `document` object properties. Example:
-
-```
-document-property: {"title": "a", "linkColor": "blue"}
-```
 
 #### drag-and-drop
 
@@ -1145,14 +1078,6 @@ focus: "#element"
 focus: "//*[@id='element']"
 ```
 
-#### font-size
-
-**font-size** command changes the default font size. Example:
-
-```
-font-size: 22 // Default font size will now be 22px.
-```
-
 #### geolocation
 
 **geolocation** command allows you to set your position. Please note that you might need to enable the `geolocation` permission in order to make it work. It expects as argument `([longitude], [latitude])`. Examples:
@@ -1163,34 +1088,34 @@ geolocation: (2.3635482, 48.8569108) // position of Paris
 geolocation: (144.9337482, -37.7879639) // position of Melbourne
 ```
 
-#### goto
+#### go-to
 
-**goto** command changes the current page to the given path/url. It expects a path (starting with `.` or `/`) or a URL. Examples:
-
-```
-goto: "https://test.com"
-goto: "http://test.com"
-goto: "/test"
-goto: "../test"
-goto: "file://some-location/index.html"
-```
-
-**/!\\** If you want to use `goto` with `file://`, please remember that you must pass a full path to the web browser (from the root). You can access this information direction with `|CURRENT_DIR|`:
+**go-to** command changes the current page to the given path/url. It expects a path (starting with `.` or `/`) or a URL. Examples:
 
 ```
-goto: "file://" + |CURRENT_DIR| + "/my-folder/index.html"
+go-to: "https://test.com"
+go-to: "http://test.com"
+go-to: "/test"
+go-to: "../test"
+go-to: "file://some-location/index.html"
+```
+
+**/!\\** If you want to use `go-to` with `file://`, please remember that you must pass a full path to the web browser (from the root). You can access this information direction with `|CURRENT_DIR|`:
+
+```
+go-to: "file://" + |CURRENT_DIR| + "/my-folder/index.html"
 ```
 
 If you don't want to rewrite your doc path everytime, you can run the test with the `doc-path` argument and then use it as follow:
 
 ```
-goto: "file://" + |DOC_PATH| + "/file.html"
+go-to: "file://" + |DOC_PATH| + "/file.html"
 ```
 
 You can of course use `|DOC_PATH|` and `|CURRENT_DIR|` at the same time:
 
 ```
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/file.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/file.html"
 ```
 
 #### history-go-back
@@ -1223,18 +1148,7 @@ Please note that if no `timeout` is specified, the one from the [`timeout`](#tim
 
 ```
 javascript: false // we disable it before using goto to have a page rendered without javascript
-goto: "https://somewhere.com" // rendering without javascript
-```
-
-#### local-storage
-
-**local-storage** command sets or removes local storage's entries. It expects a JSON object. Example:
-
-```
-local-storage: {"key": "value", "another key": "another value"}
-
-// If you want to remove an entry from the local storage, pass `null` as value:
-local-storage: {"key": null}
+go-to: "https://somewhere.com" // rendering without javascript
 ```
 
 #### move-cursor-to
@@ -1284,30 +1198,6 @@ Examples:
 press-key: 'Escape'
 press-key: 27 // Same but with an integer
 press-key: ('Escape', 1000) // The keyup event will be send after 1000 ms.
-```
-
-#### property
-
-**property** command allows to update an element's property. Example:
-
-```
-property: ("details", "open", "false")
-// Same but with a XPath:
-property: ("//details", "attribute-name", "attribute-value")
-```
-
-To remove a property, you can use the `null` ident. Please note that the properties set by the browser will only be reset.
-
-```
-property: ("details", {"open": null})
-```
-
-To set multiple properties at a time, you can use a JSON object:
-
-```
-property: ("details", {"open": "false", "another": "x"})
-// Same but with a XPath:
-property: ("//details", {"open": "false", "another": "x"})
 ```
 
 #### reload
@@ -1370,20 +1260,157 @@ scroll-to: "//*[@class='element']"
 scroll-to: (10, 12)
 ```
 
+#### set-attribute
+
+**set-attribute** command allows to update an element's attribute. Example:
+
+```
+set-attribute: ("#button", "attribute-name", "attribute-value")
+// Same but with a XPath:
+set-attribute: ("//*[@id='button']", "attribute-name", "attribute-value")
+```
+
+To remove an attribute, you can use the `null` ident:
+
+```
+set-attribute: ("a", {"href": null})
+```
+
+To set multiple attributes at a time, you can use a JSON object:
+
+```
+set-attribute: ("#button", {"attribute name": "attribute value", "another": "x"})
+// Same but with a XPath:
+set-attribute: ("//*[@id='button']", {"attribute name": "attribute value", "another": "x"})
+```
+
+#### set-css
+
+**set-css** command allows to update an element's style. Example:
+
+```
+set-css: ("#button", "background-color", "red")
+// Same but with an XPath:
+set-css: ("//*[@id='button']", "background-color", "red")
+```
+
+To set multiple styles at a time, you can use a JSON object:
+
+```
+set-css: ("#button", {"background-color": "red", "border": "1px solid"})
+// Same but with an XPath:
+set-css: ("//*[@id='button']", {"background-color": "red", "border": "1px solid"})
+```
+
+#### set-device-pixel-ratio
+
+**set-device-pixel-ratio** commands allows you to change the device scale factor. You can find more information about it [here](https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio). It expected a positive non-null number (can be a float). Example:
+
+```
+set-device-pixel-ratio: 1 // the default value
+set-device-pixel-ratio: 0.5
+```
+
+You can check its value like this:
+
+```
+// We use `STARTS_WITH` because otherwise the check would very likely fail
+// because of floating numbers rounding.
+assert-window-property: ({"devicePixelRatio": "0.5"}, [STARTS_WITH])
+```
+
+#### set-document-property
+
+**set-document-property** command sets the given values to the `document` object properties. Example:
+
+```
+set-document-property: {"title": "a", "linkColor": "blue"}
+```
+
+#### set-font-size
+
+**set-font-size** command changes the default font size. Example:
+
+```
+set-font-size: 22 // Default font size will now be 22px.
+```
+
+#### set-local-storage
+
+**set-local-storage** command sets or removes local storage's entries. It expects a JSON object. Example:
+
+```
+set-local-storage: {"key": "value", "another key": "another value"}
+
+// If you want to remove an entry from the local storage, pass `null` as value:
+set-local-storage: {"key": null}
+```
+
+#### set-property
+
+**set-property** command allows to update an element's property. Example:
+
+```
+set-property: ("details", "open", "false")
+// Same but with a XPath:
+set-property: ("//details", "attribute-name", "attribute-value")
+```
+
+To remove a property, you can use the `null` ident. Please note that the properties set by the browser will only be reset.
+
+```
+set-property: ("details", {"open": null})
+```
+
+To set multiple properties at a time, you can use a JSON object:
+
+```
+set-property: ("details", {"open": "false", "another": "x"})
+// Same but with a XPath:
+set-property: ("//details", {"open": "false", "another": "x"})
+```
+
+#### set-size
+
+**set-size** command changes the window's size. It expects a tuple of integers (`(width, height)`). Example:
+
+```
+set-size: (700, 1000)
+```
+
+#### set-text
+
+**set-text** command allows to update an element's text. Example:
+
+```
+set-text: ("#button", "hello")
+// Same but with an XPath:
+set-text: ("//*[@id='button']", "hello")
+```
+
+#### set-timeout
+
+**set-timeout** command allows you to update the timeout of pages' operations. The value is in milliseconds. If you set it to `0`, it'll wait indefinitely (so use it cautiously!). The default value is 30 seconds. Example:
+
+```
+set-timeout: 20000 // set timeout to 20 seconds
+set-timeout: 0 // no more timeout, to be used cautiously!
+```
+
+#### set-window-property
+
+**set-window-property** command sets the given values to the `window` object properties. Example:
+
+```
+set-window-property: {"scrollX": 12, "screenLeft": "a"}
+```
+
 #### show-text
 
 **show-text** command allows to enable/disable the text hiding. Example:
 
 ```
 show-text: true // text won't be invisible anymore
-```
-
-#### size
-
-**size** command changes the window's size. It expects a tuple of integers (`(width, height)`). Example:
-
-```
-size: (700, 1000)
 ```
 
 #### store-attribute
@@ -1478,25 +1505,6 @@ store-window-property: (variable_name, "devicePixelRatio")
 ```
 
 For more information about variables, read the [variables section](#variables).
-
-#### text
-
-**text** command allows to update an element's text. Example:
-
-```
-text: ("#button", "hello")
-// Same but with an XPath:
-text: ("//*[@id='button']", "hello")
-```
-
-#### timeout
-
-**timeout** command allows you to update the timeout of pages' operations. The value is in milliseconds. If you set it to `0`, it'll wait indefinitely (so use it cautiously!). The default value is 30 seconds. Example:
-
-```
-timeout: 20000 // set timeout to 20 seconds
-timeout: 0 // no more timeout, to be used cautiously!
-```
 
 #### wait-for
 
@@ -1620,14 +1628,6 @@ Examples:
 ```
 wait-for-window-property: {"key": "value"}
 wait-for-window-property: {"key": "value", "key2": "value2"}
-```
-
-#### window-property
-
-**window-property** command sets the given values to the `window` object properties. Example:
-
-```
-window-property: {"scrollX": 12, "screenLeft": "a"}
 ```
 
 #### write

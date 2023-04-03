@@ -42,7 +42,7 @@ $ npm install puppeteer --unsafe-perm=true
 You can either use this framework by using it as dependency or running it directly. In both cases you'll need to write some `.goml` scripts. It looks like this:
 
 ```
-goto: "https://somewhere.com" // go to this url
+go-to: "https://somewhere.com" // go to this url
 text: ("#button", "hello") // set text of element #button
 assert: ("#button", "hello") // check if #button element's text has been set to "hello"
 ```
