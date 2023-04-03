@@ -112,8 +112,8 @@ ${indentString(code.join('\n'), 1)}
 // * ("XPath", "attribute name", "attribute value")
 // * ("CSS selector", JSON dict)
 // * ("XPath", JSON dict)
-function parseAttribute(parser) {
-    return innerParseCssAttribute(parser, 'attribute', 'parseAttributeElem', true,
+function parseSetAttribute(parser) {
+    return innerParseCssAttribute(parser, 'attribute', 'parseSetAttributeElem', true,
         (key, value, isIdent) => {
             if (!isIdent) {
                 return `e.setAttribute("${key}","${value}");`;
@@ -128,8 +128,8 @@ function parseAttribute(parser) {
 // * ("XPath", "attribute name", "property value")
 // * ("CSS selector", JSON dict)
 // * ("XPath", JSON dict)
-function parseProperty(parser) {
-    return innerParseCssAttribute(parser, 'property', 'parsePropertyElem', true,
+function parseSetProperty(parser) {
+    return innerParseCssAttribute(parser, 'property', 'parseSetPropertyElem', true,
         (key, value, isIdent) => {
             if (!isIdent) {
                 return `e["${key}"] = "${value}";`;
@@ -144,8 +144,8 @@ function parseProperty(parser) {
 // * ("XPath", "CSS property name", "CSS property value")
 // * ("CSS selector", JSON dict)
 // * ("XPath", JSON dict)
-function parseCss(parser) {
-    return innerParseCssAttribute(parser, 'CSS property', 'parseCssElem', false,
+function parseSetCss(parser) {
+    return innerParseCssAttribute(parser, 'CSS property', 'parseSetCssElem', false,
         (key, value, _isIdent) => `e.style["${key}"] = "${value}";`);
 }
 
@@ -153,7 +153,7 @@ function parseCss(parser) {
 //
 // * ("CSS selector", "text")
 // * ("XPath", "text")
-function parseText(parser) {
+function parseSetText(parser) {
     const elems = parser.elems;
 
     if (elems.length === 0) {
@@ -173,7 +173,7 @@ function parseText(parser) {
         return selector;
     }
     const value = tuple[1].getStringValue();
-    const varName = 'parseTextElem';
+    const varName = 'parseSetTextElem';
     return {
         'instructions': [
             getAndSetElements(selector, varName, false) + '\n' +
@@ -189,8 +189,8 @@ function parseText(parser) {
 }
 
 module.exports = {
-    'parseAttribute': parseAttribute,
-    'parseCss': parseCss,
-    'parseProperty': parseProperty,
-    'parseText': parseText,
+    'parseSetAttribute': parseSetAttribute,
+    'parseSetCss': parseSetCss,
+    'parseSetProperty': parseSetProperty,
+    'parseSetText': parseSetText,
 };

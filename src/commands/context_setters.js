@@ -130,7 +130,7 @@ function parsePauseOnError(parser) {
 // Possible inputs:
 //
 // * number
-function parseTimeout(parser) {
+function parseSetTimeout(parser) {
     const warnings = [];
     const elems = parser.elems;
 
@@ -207,5 +207,5 @@ module.exports = {
     'parsePauseOnError': parsePauseOnError,
     'parseScreenshotComparison': parseScreenshotComparison,
     'parseShowText': parseShowText,
-    'parseTimeout': parseTimeout,
+    'parseSetTimeout': parseSetTimeout,
 };

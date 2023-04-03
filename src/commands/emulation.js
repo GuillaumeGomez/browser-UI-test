@@ -6,7 +6,7 @@ const consts = require('../consts.js');
 // Possible inputs:
 //
 // * (width, height)
-function parseSize(parser) {
+function parseSetSize(parser) {
     const elems = parser.elems;
 
     if (elems.length === 0) {
@@ -35,7 +35,7 @@ await page.setViewport(viewport);`,
 // Possible inputs:
 //
 // * number
-function parseDevicePixelRatio(parser) {
+function parseSetDevicePixelRatio(parser) {
     const elems = parser.elems;
 
     if (elems.length === 0) {
@@ -166,7 +166,7 @@ function parseJavascript(parser) {
 // Possible inputs:
 //
 // * number
-function parseFontSize(parser) {
+function parseSetFontSize(parser) {
     const elems = parser.elems;
 
     if (elems.length === 0) {
@@ -189,11 +189,11 @@ function parseFontSize(parser) {
 }
 
 module.exports = {
-    'parseDevicePixelRatio': parseDevicePixelRatio,
+    'parseSetDevicePixelRatio': parseSetDevicePixelRatio,
     'parseEmulate': parseEmulate,
-    'parseFontSize': parseFontSize,
+    'parseSetFontSize': parseSetFontSize,
     'parseGeolocation': parseGeolocation,
     'parseJavascript': parseJavascript,
     'parsePermissions': parsePermissions,
-    'parseSize': parseSize,
+    'parseSetSize': parseSetSize,
 };

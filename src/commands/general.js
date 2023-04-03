@@ -6,7 +6,7 @@ const { getAndSetElements, checkJsonEntry, validateJson } = require('./utils.js'
 // Possible inputs:
 //
 // * JSON object (for example: {"key": "value", "another key": "another value"})
-function parseLocalStorage(parser) {
+function parseSetLocalStorage(parser) {
     const elems = parser.elems;
 
     if (elems.length === 0) {
@@ -186,21 +186,21 @@ await page.evaluate(() => {
 // Possible inputs:
 //
 // * JSON object (for example: {"key": "value", "another key": "another value"})
-function parseDocumentProperty(parser) {
+function parseSetDocumentProperty(parser) {
     return parseObjPropertyInner(parser, 'document');
 }
 
 // Possible inputs:
 //
 // * JSON object (for example: {"key": "value", "another key": "another value"})
-function parseWindowProperty(parser) {
+function parseSetWindowProperty(parser) {
     return parseObjPropertyInner(parser, 'window');
 }
 
 module.exports = {
-    'parseLocalStorage': parseLocalStorage,
+    'parseSetLocalStorage': parseSetLocalStorage,
     'parseScreenshot': parseScreenshot,
     'innerParseScreenshot': innerParseScreenshot,
-    'parseDocumentProperty': parseDocumentProperty,
-    'parseWindowProperty': parseWindowProperty,
+    'parseSetDocumentProperty': parseSetDocumentProperty,
+    'parseSetWindowProperty': parseSetWindowProperty,
 };
