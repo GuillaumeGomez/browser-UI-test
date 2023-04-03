@@ -710,6 +710,12 @@ attribute: ("#button", "attribute-name", "attribute-value")
 attribute: ("//*[@id='button']", "attribute-name", "attribute-value")
 ```
 
+To remove an attribute, you can use the `null` ident:
+
+```
+attribute: ("a", {"href": null})
+```
+
 To set multiple attributes at a time, you can use a JSON object:
 
 ```
@@ -1288,6 +1294,12 @@ press-key: ('Escape', 1000) // The keyup event will be send after 1000 ms.
 property: ("details", "open", "false")
 // Same but with a XPath:
 property: ("//details", "attribute-name", "attribute-value")
+```
+
+To remove a property, you can use the `null` ident. Please note that the properties set by the browser will only be reset.
+
+```
+property: ("details", {"open": null})
 ```
 
 To set multiple properties at a time, you can use a JSON object:
