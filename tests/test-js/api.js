@@ -3,6 +3,7 @@ process.env.debug_tests = '1'; // We enable this to get all items from `commands
 const parserFuncs = require('../../src/commands.js');
 const {Parser} = require('../../src/parser.js');
 const Options = require('../../src/options.js').Options;
+const { RESERVED_VARIABLE_NAME } = require('../../src/utils.js');
 const {Assert, plural, print} = require('./utils.js');
 const path = require('path');
 const fs = require('fs');
@@ -1535,6 +1536,7 @@ function checkStoreAttribute(x, func) {
     func('(a, 1, 1)', 'err-6');
     func('(a, "1", 1)', 'err-7');
     func('(VAR, \'\', "b")', 'err-8');
+    func(`(${RESERVED_VARIABLE_NAME}, "a", "b")`, 'err-9');
 
     func('(VAR, "a", "b")', 'basic-1');
     func('(VAR, "a", "\\"\'b")', 'basic-2');
@@ -1552,6 +1554,7 @@ function checkStoreCss(x, func) {
     func('(a, 1, 1)', 'err-6');
     func('(a, "1", 1)', 'err-7');
     func('(VAR, \'\', "b")', 'err-8');
+    func(`(${RESERVED_VARIABLE_NAME}, "a", "b")`, 'err-9');
 
     func('(VAR, "a", "b")', 'basic-1');
     func('(VAR, "//a", "b")', 'basic-2');
@@ -1566,6 +1569,7 @@ function checkStoreDocumentProperty(x, func) {
     func('(1)', 'err-4');
     func('(1, 1)', 'err-5');
     func('(a1, 1)', 'err-6');
+    func(`(${RESERVED_VARIABLE_NAME}, "a")`, 'err-7');
 
     func('(a1, "1")', 'basic-1');
 }
@@ -1577,6 +1581,7 @@ function checkStoreWindowProperty(x, func) {
     func('(1)', 'err-4');
     func('(1, 1)', 'err-5');
     func('(a1, 1)', 'err-6');
+    func(`(${RESERVED_VARIABLE_NAME}, "a")`, 'err-7');
 
     func('(a1, "1")', 'basic-1');
 }
@@ -1588,6 +1593,7 @@ function checkStoreLocalStorage(x, func) {
     func('(1)', 'err-4');
     func('(1, 1)', 'err-5');
     func('(a, 1)', 'err-6');
+    func(`(${RESERVED_VARIABLE_NAME}, "a")`, 'err-7');
 
     func('(VAR, "a")', 'basic-1');
 }
@@ -1601,6 +1607,7 @@ function checkStoreProperty(x, func) {
     func('(a, 1, 1)', 'err-6');
     func('(a, "1", 1)', 'err-7');
     func('(VAR, \'\', "b")', 'err-8');
+    func(`(${RESERVED_VARIABLE_NAME}, "a", "b")`, 'err-9');
 
     func('(VAR, "a", "b")', 'basic-1');
     func('(VAR, "a", "\\"\'b")', 'basic-2');
@@ -1617,6 +1624,7 @@ function checkStoreText(x, func) {
     func('(1, 1)', 'err-5');
     func('(a, 1)', 'err-6');
     func('(VAR, \'\')', 'err-7');
+    func(`(${RESERVED_VARIABLE_NAME}, "a")`, 'err-8');
 
     func('(VAR, "a")', 'basic-1');
     func('(VAR, "//a")', 'basic-2');
@@ -1631,6 +1639,7 @@ function checkStoreValue(x, func) {
     func('(1)', 'err-4');
     func('(1, 1)', 'err-5');
     func('(a, b)', 'err-6');
+    func(`(${RESERVED_VARIABLE_NAME}, "a")`, 'err-7');
 
     func('(VAR, "a")', 'basic-1');
     func('(VAR, 1)', 'basic-2');
