@@ -1,6 +1,6 @@
 // This test ensures that the `define-function` and `call-function` produces an error when an extra,
 // unexpected argument is supplied.
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 
 define-function: (
     "fn1",

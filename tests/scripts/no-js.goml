@@ -1,3 +1,3 @@
 javascript: false
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
 assert: ("#no-js")

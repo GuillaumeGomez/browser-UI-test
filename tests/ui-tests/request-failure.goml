@@ -1,5 +1,5 @@
 // Check that if a request fails, the test fails.
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/failure.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/failure.html"
 wait-for: 100
 // It should have failed normally at this point.
 wait-for: 100

@@ -1,3 +1,3 @@
 // This test is to ensure that if "show-text" is false, then it fails.
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 assert-css: (".content>.right>p", {"color": "rgb(0, 0, 0)"})

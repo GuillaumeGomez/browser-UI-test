@@ -1,6 +1,6 @@
 // This test ensures that the script is working as expecting even through browser navigation and
 // page changes.
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/change-page.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/change-page.html"
 assert-document-property: {"title": "change page"}
 click: "#js-wait-nav"
 wait-for-document-property: {"title": "Other page"}

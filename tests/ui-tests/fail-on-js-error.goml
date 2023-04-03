@@ -1,6 +1,6 @@
 // Checks that "fail-on-js-error" command is working as expected.
 fail-on-js-error: true
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 click: "#invalid-js-call"
 wait-for: 500 // to be sure the error will happen before the assert-css
 assert-css: (".content>.right>p", {"font-size": "200px"})

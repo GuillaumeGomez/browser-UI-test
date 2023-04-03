@@ -1,6 +1,6 @@
 // This test ensures that the `wait-for-window-property` command is behaving like expected.
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
-timeout: 500
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+set-timeout: 500
 // Shouldn't wait here since it's already the case.
 wait-for-window-property: {"windowProp": null}
 click: "#js-wait-window-prop"

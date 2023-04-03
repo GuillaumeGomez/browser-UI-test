@@ -1,5 +1,5 @@
 // This test is meant to ensure that "null" checks are working as expected.
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 //
 // assert-attribute
 //
@@ -10,9 +10,9 @@ assert-attribute-false: (".content", {"nb-value": null})
 // Should fail.
 assert-attribute-false: ("header", {"whatever": null})
 // Should succeed.
-attribute: ("header", {"nb-value": "a", "b": "c"})
+set-attribute: ("header", {"nb-value": "a", "b": "c"})
 assert-attribute: ("header", {"nb-value": "a", "b": "c"})
-attribute: ("header", {"nb-value": null, "b": "d"})
+set-attribute: ("header", {"nb-value": null, "b": "d"})
 assert-attribute: ("header", {"nb-value": null, "b": "d"})
 
 // Checking the warnings.
@@ -33,9 +33,9 @@ assert-property-false: ("header", {"bgColor": null})
 // Should fail.
 assert-property-false: ("header", {"yolo": null})
 // Should succeed.
-property: ("header", {"yolo": "a", "b": "c"})
+set-property: ("header", {"yolo": "a", "b": "c"})
 assert-property: ("header", {"yolo": "a", "b": "c"})
-attribute: ("header", {"yolo": null, "b": "d"})
+set-attribute: ("header", {"yolo": null, "b": "d"})
 assert-attribute: ("header", {"yolo": null, "b": "d"})
 
 // Checking the warnings.

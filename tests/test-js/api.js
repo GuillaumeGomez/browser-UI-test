@@ -962,7 +962,7 @@ function checkDefineFunction(x, func) {
     (theme, color),
     block {
         // hello
-        local-storage: {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}
+        set-local-storage: {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}
         // We reload the page so the local storage settings are being used.
         reload:
         assert-css: (".item-left sup", {"color": |color|})
@@ -974,7 +974,7 @@ function checkDefineFunction(x, func) {
             'arguments': ['theme', 'color'],
             'content': `
         // hello
-        local-storage: {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}
+        set-local-storage: {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}
         // We reload the page so the local storage settings are being used.
         reload:
         assert-css: (".item-left sup", {"color": |color|})
@@ -987,10 +987,10 @@ function checkDefineFunction(x, func) {
     "check-result",
     (),
     block {
-        local-storage: ["a"]
-        local-storage: 12
-        local-storage: ALL
-        local-storage: "ab"
+        set-local-storage: ["a"]
+        set-local-storage: 12
+        set-local-storage: ALL
+        set-local-storage: "ab"
     },
 )`);
     x.assert(res6, {'instructions': [], 'wait': false});
@@ -998,10 +998,10 @@ function checkDefineFunction(x, func) {
         'check-result': {
             'arguments': [],
             'content': `
-        local-storage: ["a"]
-        local-storage: 12
-        local-storage: ALL
-        local-storage: "ab"
+        set-local-storage: ["a"]
+        set-local-storage: 12
+        set-local-storage: ALL
+        set-local-storage: "ab"
     `,
             'start_line': 4,
         },
@@ -1233,10 +1233,10 @@ function checkParseContent(x, func) {
     x.assert(func('a: '), [{'error': 'Unknown command "a"', 'line': 1}]);
     x.assert(func(':'), [{'error': 'Unexpected `:` when parsing command', 'line': 1}]);
 
-    x.assert(func('goto: "file:///home"'), [
+    x.assert(func('go-to: "file:///home"'), [
         {
             'fatal_error': true,
-            'original': 'goto: "file:///home"',
+            'original': 'go-to: "file:///home"',
             'line': 1,
             'instructions': [
                 'await page.goto("file:///home");',
@@ -1245,13 +1245,13 @@ function checkParseContent(x, func) {
         },
     ]);
     x.assert(func('focus: "#foo"'), [{
-        'error': 'First command must be `goto` (`assert-variable`, `assert-variable-false`, ' +
+        'error': 'First command must be `go-to` (`assert-variable`, `assert-variable-false`, ' +
             '`call-function`, `debug`, `define-function`, `emulate`, `fail`, `fail-on-js-error`, ' +
             '`fail-on-request-error`, `javascript`, `screenshot-comparison`, `store-value` or ' +
-            '`timeout` can be used before)!',
+            '`set-timeout` can be used before)!',
         'line': 1,
     }]);
-    x.assert(func('fail: true\ngoto: "file:///home"'), [
+    x.assert(func('fail: true\ngo-to: "file:///home"'), [
         {
             'fatal_error': false,
             'wait': false,
@@ -1261,7 +1261,7 @@ function checkParseContent(x, func) {
         },
         {
             'fatal_error': true,
-            'original': 'goto: "file:///home"',
+            'original': 'go-to: "file:///home"',
             'line': 2,
             'instructions': [
                 'await page.goto("file:///home");',
@@ -1269,10 +1269,10 @@ function checkParseContent(x, func) {
             ],
         },
     ]);
-    x.assert(func('goto: "file:///home"\nreload:\ngoto: "file:///home"'), [
+    x.assert(func('go-to: "file:///home"\nreload:\ngo-to: "file:///home"'), [
         {
             'fatal_error': true,
-            'original': 'goto: "file:///home"',
+            'original': 'go-to: "file:///home"',
             'line': 1,
             'instructions': [
                 'await page.goto("file:///home");',
@@ -1290,7 +1290,7 @@ await ret;`,
         },
         {
             'fatal_error': true,
-            'original': 'goto: "file:///home"',
+            'original': 'go-to: "file:///home"',
             'line': 3,
             'instructions': [
                 'await page.goto("file:///home");',
@@ -1299,10 +1299,10 @@ await ret;`,
         },
     ]);
     x.assert(func('// just a comment\na: b'), [{'error': 'Unknown command "a"', 'line': 2}]);
-    x.assert(func('goto: "file:///home"\nemulate: "test"'), [
+    x.assert(func('go-to: "file:///home"\nemulate: "test"'), [
         {
             'fatal_error': true,
-            'original': 'goto: "file:///home"',
+            'original': 'go-to: "file:///home"',
             'line': 1,
             'instructions': [
                 'await page.goto("file:///home");',
@@ -1310,14 +1310,14 @@ await ret;`,
             ],
         },
         {
-            'error': 'Command emulate must be used before first goto!',
+            'error': 'Command `emulate` must be used before first `go-to`!',
             'line': 2,
         },
     ]);
-    x.assert(func('goto: "file:///home"\nassert-text: ("a", "b")'), [
+    x.assert(func('go-to: "file:///home"\nassert-text: ("a", "b")'), [
         {
             'fatal_error': true,
-            'original': 'goto: "file:///home"',
+            'original': 'go-to: "file:///home"',
             'line': 1,
             'instructions': [
                 'await page.goto("file:///home");',
@@ -1979,9 +1979,9 @@ const TO_CHECK = [
         },
     },
     {
-        'name': 'attribute',
+        'name': 'set-attribute',
         'func': checkAttributeProperty,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAttribute, x, e, name, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetAttribute, x, e, name, o),
     },
     {
         'name': 'call-function',
@@ -2079,9 +2079,9 @@ const TO_CHECK = [
         },
     },
     {
-        'name': 'css',
+        'name': 'set-css',
         'func': checkCss,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseCss, x, e, name, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetCss, x, e, name, o),
     },
     {
         'name': 'debug',
@@ -2094,14 +2094,14 @@ const TO_CHECK = [
         'toCall': (_, e, o) => wrapperDefineFunction(parserFuncs.parseDefineFunction, e, o),
     },
     {
-        'name': 'device-pixel-ratio',
+        'name': 'set-device-pixel-ratio',
         'func': checkDevicePixelRatio,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseDevicePixelRatio, x, e, name, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetDevicePixelRatio, x, e, name, o),
     },
     {
-        'name': 'document-property',
+        'name': 'set-document-property',
         'func': checkObjProperty,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseDocumentProperty, x, e, name, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetDocumentProperty, x, e, name, o),
     },
     {
         'name': 'drag-and-drop',
@@ -2134,9 +2134,9 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseFocus, x, e, name, o),
     },
     {
-        'name': 'font-size',
+        'name': 'set-font-size',
         'func': checkFontSize,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseFontSize, x, e, name, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetFontSize, x, e, name, o),
     },
     {
         'name': 'geolocation',
@@ -2144,7 +2144,7 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseGeolocation, x, e, name, o),
     },
     {
-        'name': 'goto',
+        'name': 'go-to',
         'func': checkGoTo,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseGoTo, x, e, name, o),
     },
@@ -2164,9 +2164,9 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseJavascript, x, e, name, o),
     },
     {
-        'name': 'local-storage',
+        'name': 'set-local-storage',
         'func': checkLocalStorage,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseLocalStorage, x, e, name, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetLocalStorage, x, e, name, o),
     },
     {
         'name': 'move-cursor-to',
@@ -2189,9 +2189,9 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parsePressKey, x, e, name, o),
     },
     {
-        'name': 'property',
+        'name': 'set-property',
         'func': checkAttributeProperty,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseProperty, x, e, name, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetProperty, x, e, name, o),
     },
     {
         'name': 'reload',
@@ -2219,9 +2219,9 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseShowText, x, e, name, o),
     },
     {
-        'name': 'size',
+        'name': 'set-size',
         'func': checkSize,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSize, x, e, name, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetSize, x, e, name, o),
     },
     {
         'name': 'store-attribute',
@@ -2264,14 +2264,14 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreWindowProperty, x, e, name, o),
     },
     {
-        'name': 'text',
+        'name': 'set-text',
         'func': checkText,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseText, x, e, name, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetText, x, e, name, o),
     },
     {
-        'name': 'timeout',
+        'name': 'set-timeout',
         'func': checkTimeout,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseTimeout, x, e, name, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetTimeout, x, e, name, o),
     },
     {
         'name': 'wait-for',
@@ -2321,9 +2321,9 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForWindowProperty, x, e, name, o),
     },
     {
-        'name': 'window-property',
+        'name': 'set-window-property',
         'func': checkObjProperty,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWindowProperty, x, e, name, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetWindowProperty, x, e, name, o),
     },
     {
         'name': 'write',

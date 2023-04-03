@@ -1,5 +1,5 @@
 // Checking assert-position output
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 assert-position: ("#the-input", {"x": 0, "y": 29})
 // Should fail
 assert-position: ("#the-input", {"x": 1, "y": 2})

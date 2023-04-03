@@ -1,8 +1,8 @@
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
 assert-text: ("#button", "Go somewhere else!")
-text: ("#button", "hello")
+set-text: ("#button", "hello")
 fail: true
 assert-text: ("#button", "Go somewhere else!")
 fail: false
-timeout: 0
+set-timeout: 0
 assert-text: ("#button", "hello")

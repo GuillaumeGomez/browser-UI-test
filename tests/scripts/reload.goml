@@ -1,6 +1,6 @@
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
 assert-text: ("#button", "Go somewhere else!")
-text: ("#button", "hello")
+set-text: ("#button", "hello")
 assert-text: ("#button", "hello")
 reload:
 assert-text: ("#button", "Go somewhere else!")

@@ -1,7 +1,7 @@
-goto: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 show-text: true
 assert-css: (".right > p", {"font-size": "16px"})
 assert-css: ("#another-one", {"font-size": "14px"})
-font-size: 32
+set-font-size: 32
 assert-css: (".right > p", {"font-size": "32px"})
 assert-css: ("#another-one", {"font-size": "14px"})
