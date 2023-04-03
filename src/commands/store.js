@@ -1,6 +1,7 @@
 // All `compare*` commands.
 
 const { getAndSetElements } = require('./utils.js');
+const { RESERVED_VARIABLE_NAME } = require('../utils.js');
 
 // Possible inputs:
 //
@@ -36,6 +37,13 @@ ${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
         return {
             'error': `expected third argument to be a string, found \
 ${tuple[2].getArticleKind()} (\`${tuple[2].getErrorText()}\`)`,
+        };
+    }
+
+    if (tuple[0].isReservedVariableName()) {
+        return {
+            'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so an ident cannot be \
+named like this`,
         };
     }
 
@@ -105,6 +113,13 @@ ${tuple[2].getArticleKind()} (\`${tuple[2].getErrorText()}\`)`,
         };
     }
 
+    if (tuple[0].isReservedVariableName()) {
+        return {
+            'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so an ident cannot be \
+named like this`,
+        };
+    }
+
     const selector = tuple[1].getSelector();
     if (selector.error !== undefined) {
         return selector;
@@ -161,6 +176,13 @@ ${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
         return {
             'error': `expected third argument to be a string, found \
 ${tuple[2].getArticleKind()} (\`${tuple[2].getErrorText()}\`)`,
+        };
+    }
+
+    if (tuple[0].isReservedVariableName()) {
+        return {
+            'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so an ident cannot be \
+named like this`,
         };
     }
 
@@ -221,6 +243,14 @@ function parseStoreValue(parser) {
 ${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
         };
     }
+
+    if (tuple[0].isReservedVariableName()) {
+        return {
+            'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so an ident cannot be \
+named like this`,
+        };
+    }
+
     return {
         'instructions': [
             `arg.variables["${tuple[0].displayInCode()}"] = ${tuple[1].displayInCode()};`,
@@ -258,6 +288,14 @@ function parseStoreLocalStorage(parser) {
 ${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
         };
     }
+
+    if (tuple[0].isReservedVariableName()) {
+        return {
+            'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so an ident cannot be \
+named like this`,
+        };
+    }
+
     return {
         'instructions': [`\
 const jsHandle = await page.evaluateHandle(() => {
@@ -298,6 +336,13 @@ function parseStoreText(parser) {
         return {
             'error': `expected second argument to be a CSS selector or an XPath, found \
 ${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
+        };
+    }
+
+    if (tuple[0].isReservedVariableName()) {
+        return {
+            'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so an ident cannot be \
+named like this`,
         };
     }
 
@@ -353,6 +398,13 @@ function parseStoreObjectInner(parser, objName) {
         return {
             'error': `expected second argument to be a property name (a string), found \
 ${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
+        };
+    }
+
+    if (tuple[0].isReservedVariableName()) {
+        return {
+            'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so an ident cannot be \
+named like this`,
         };
     }
 

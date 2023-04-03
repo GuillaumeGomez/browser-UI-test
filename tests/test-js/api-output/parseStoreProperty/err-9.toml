@@ -1,0 +1,1 @@
+error = """`CURRENT_DIR` is a reserved name, so an ident cannot be named like this"""

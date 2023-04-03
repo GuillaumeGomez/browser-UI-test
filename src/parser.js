@@ -1,4 +1,4 @@
-const getVariableValue = require('./utils.js').getVariableValue;
+const { getVariableValue, RESERVED_VARIABLE_NAME } = require('./utils.js');
 
 function isWhiteSpace(c) {
     return c === ' ' || c === '\t' || c === '\r' || c === '\n';
@@ -191,6 +191,10 @@ class Element {
 
     displayInCode() {
         return this.value;
+    }
+
+    isReservedVariableName() {
+        return this.kind === 'ident' && this.value === RESERVED_VARIABLE_NAME;
     }
 }
 
