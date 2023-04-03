@@ -1,8 +1,10 @@
 instructions = [
-  """let parseCssElemJson = await page.$x(\"//a\");
-if (parseCssElemJson.length === 0) { throw 'XPath \"//a\" not found'; }
-parseCssElemJson = parseCssElemJson[0];
+  """let parseCssElem = await page.$x(\"//a\");
+if (parseCssElem.length === 0) { throw 'XPath \"//a\" not found'; }
+parseCssElem = parseCssElem[0];
 await page.evaluate(e => {
-e.style[\"b\"] = \"c\";
-}, parseCssElemJson);""",
+    e.style[\"b\"] = \"c\";
+}, parseCssElem);""",
+]
+warnings = [
 ]

@@ -1,7 +1,9 @@
 instructions = [
-  """let parsePropertyElemJson = await page.$(\"a\");
-if (parsePropertyElemJson === null) { throw '\"a\" not found'; }
+  """let parsePropertyElem = await page.$(\"a\");
+if (parsePropertyElem === null) { throw '\"a\" not found'; }
 await page.evaluate(e => {
-e[\"b\"] = \"c\";
-}, parsePropertyElemJson);""",
+    e[\"b\"] = \"c\";
+}, parsePropertyElem);""",
+]
+warnings = [
 ]

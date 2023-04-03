@@ -1,10 +1,10 @@
 instructions = [
-  """let parseAttributeElemJson = await page.$(\"a\");
-if (parseAttributeElemJson === null) { throw '\"a\" not found'; }
+  """let parseAttributeElem = await page.$(\"a\");
+if (parseAttributeElem === null) { throw '\"a\" not found'; }
 await page.evaluate(e => {
-e.setAttribute(\"b\",\"c\");
-}, parseAttributeElemJson);
-await page.evaluate(e => {
-e.setAttribute(\"d\",\"e\");
-}, parseAttributeElemJson);""",
+    e.setAttribute(\"b\",\"c\");
+    e.setAttribute(\"d\",\"e\");
+}, parseAttributeElem);""",
+]
+warnings = [
 ]

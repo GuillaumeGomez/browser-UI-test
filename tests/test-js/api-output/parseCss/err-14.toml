@@ -1,0 +1,1 @@
+error = """expected string or number for CSS property value (third argument), found `a` (an ident)"""

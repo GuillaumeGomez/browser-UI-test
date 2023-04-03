@@ -9,6 +9,11 @@ assert-attribute: (".content", {"nb-value": null})
 assert-attribute-false: (".content", {"nb-value": null})
 // Should fail.
 assert-attribute-false: ("header", {"whatever": null})
+// Should succeed.
+attribute: ("header", {"nb-value": "a", "b": "c"})
+assert-attribute: ("header", {"nb-value": "a", "b": "c"})
+attribute: ("header", {"nb-value": null, "b": "d"})
+assert-attribute: ("header", {"nb-value": null, "b": "d"})
 
 // Checking the warnings.
 // There should be no warning for this one.
@@ -27,14 +32,19 @@ assert-property: (".content", {"bgColor": null})
 assert-property-false: ("header", {"bgColor": null})
 // Should fail.
 assert-property-false: ("header", {"yolo": null})
+// Should succeed.
+property: ("header", {"yolo": "a", "b": "c"})
+assert-property: ("header", {"yolo": "a", "b": "c"})
+attribute: ("header", {"yolo": null, "b": "d"})
+assert-attribute: ("header", {"yolo": null, "b": "d"})
 
 // Checking the warnings.
 // There should be no warning for this one.
-assert-property: ("header", {"yolo": null}, ALL)
+assert-property: ("header", {"whatever": null}, ALL)
 // Should warn.
-assert-property: ("header", {"yolo": null}, CONTAINS)
+assert-property: ("header", {"whatever": null}, CONTAINS)
 // Should warn.
-assert-property: ("header", {"yolo": null}, [ALL, CONTAINS])
+assert-property: ("header", {"whatever": null}, [ALL, CONTAINS])
 
 //
 // assert-document-property
@@ -48,16 +58,3 @@ assert-document-property-false: {"yolo": null}
 
 // Checking the warnings.
 assert-document-property: ({"yolo": null}, CONTAINS)
-
-//
-// assert-window-property
-//
-assert-window-property: {"yolo": null}
-// Should fail.
-assert-window-property: {"innerHeight": null}
-assert-window-property-false: {"innerHeight": null}
-// Should fail.
-assert-window-property-false: {"yolo": null}
-
-// Checking the warnings.
-assert-window-property: ({"yolo": null}, CONTAINS)

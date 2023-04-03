@@ -47,6 +47,7 @@ function validateJson(json, allowedValueTypes, keyName, allowedKeys = null) {
         } else if (!Object.prototype.hasOwnProperty.call(allowedValueTypes, entry['value'].kind)) {
             let allowed = '';
             const types = Object.keys(allowedValueTypes);
+            // Keep this loop like this because of `length - 1`!!
             for (let i = 0; i < types.length - 1; ++i) {
                 if (allowed.length !== 0) {
                     allowed += ', ';

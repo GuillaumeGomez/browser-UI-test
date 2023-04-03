@@ -1,21 +1,19 @@
 // Commands making changes the current page's DOM.
 
-const { getAndSetElements, checkJsonEntry } = require('./utils.js');
+const { getAndSetElements, indentString, validateJson } = require('./utils.js');
 
-function innerParseCssAttribute(parser, argName, varName, callback) {
+function innerParseCssAttribute(parser, argName, varName, allowNullIdent, callback) {
     const elems = parser.elems;
 
     if (elems.length === 0) {
         return {
-            'error': `expected \`("CSS selector" or "XPath", "${argName} name", ` +
-                `"${argName} value")\` or \`("CSS selector" or "XPath", [JSON object])\`` +
-                ', found nothing',
+            'error': `expected \`("CSS selector" or "XPath", "${argName} name", "${argName} value")\
+\` or \`("CSS selector" or "XPath", [JSON object])\`, found nothing`,
         };
     } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
         return {
-            'error': `expected \`("CSS selector" or "XPath", "${argName} name", ` +
-                `"${argName} value")\` or \`("CSS selector" or "XPath", [JSON object])\`` +
-                `, found \`${parser.getRawArgs()}\``,
+            'error': `expected \`("CSS selector" or "XPath", "${argName} name", "${argName} value")\
+\` or \`("CSS selector" or "XPath", [JSON object])\`, found \`${parser.getRawArgs()}\``,
         };
     }
     const tuple = elems[0].getRaw();
@@ -29,63 +27,82 @@ function innerParseCssAttribute(parser, argName, varName, callback) {
     if (selector.error !== undefined) {
         return selector;
     }
+
+    let entries;
     if (tuple.length === 3) {
-        if (tuple[1].kind !== 'string' || tuple[2].kind !== 'string') {
+        if (tuple[1].kind !== 'string') {
+            return { 'error': `expected string for ${argName} name (second argument), found \
+\`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})` };
+        }
+
+        const kinds = ['string', 'number'];
+        if (allowNullIdent) {
+            kinds.push('ident');
+        }
+        if (kinds.indexOf(tuple[2].kind) === -1) {
             return {
-                'error': `expected strings for ${argName} name and ${argName} value (second ` +
-                    'and third arguments)',
+                'error': `expected ${kinds.join(' or ')} for ${argName} value (third argument), \
+found \`${tuple[2].getErrorText()}\` (${tuple[2].getArticleKind()})`,
             };
         }
-        const attributeName = tuple[1].getStringValue(true);
-        if (attributeName.length === 0) {
-            return {'error': 'attribute name (second argument) cannot be empty'};
+        if (tuple[2].kind === 'ident' && tuple[2].value !== 'null') {
+            return {
+                'error': `Only \`null\` ident is allowed for idents, found \`${tuple[2].value}\``,
+            };
         }
-        const value = tuple[2].getStringValue();
-        return {
-            'instructions': [
-                getAndSetElements(selector, varName, false) + '\n' +
-                `await page.evaluate(e => {\n${callback(attributeName, value)}\n}, ` +
-                `${varName});`,
-            ],
+        entries = {
+            values: Object.create(null),
         };
-    } else if (tuple.length !== 2) {
+        entries.values[tuple[1].value] = tuple[2];
+    } else if (tuple.length === 2) {
+        if (tuple[1].kind !== 'json') {
+            return {
+                'error': 'expected json as second argument (since there are only two arguments), ' +
+                    `found ${tuple[1].getArticleKind()}`,
+            };
+        }
+
+        const json = tuple[1].getRaw();
+        const validators = {'string': [], 'number': []};
+        if (allowNullIdent) {
+            validators['ident'] = ['null'];
+        }
+        entries = validateJson(json, validators, argName);
+        if (entries.error !== undefined) {
+            return entries;
+        }
+        if (Object.entries(entries.values).length === 0) {
+            return {
+                'instructions': [],
+                'wait': false,
+                'warnings': entries.warnings,
+            };
+        }
+    } else {
         return {
             'error': `expected \`("CSS selector" or "XPath", "${argName} name", "${argName} ` +
                 'value")` or `("CSS selector" or "XPath", [JSON object])`',
         };
     }
-    if (tuple[1].kind !== 'json') {
-        return {
-            'error': 'expected json as second argument (since there are only two arguments), ' +
-                `found ${tuple[1].getArticleKind()}`,
-        };
-    }
 
-    let code = '';
-    const json = tuple[1].getRaw();
-    varName += 'Json';
-
-    const warnings = checkJsonEntry(json, entry => {
-        const key_s = entry['key'].getStringValue();
-        const value_s = entry['value'].getStringValue();
-        if (code.length !== 0) {
-            code += '\n';
+    const code = [];
+    for (const [key, value] of Object.entries(entries.values)) {
+        if (key === '') {
+            return {
+                'error': 'empty strings cannot be used as keys',
+            };
         }
-        code += `await page.evaluate(e => {\n${callback(key_s, value_s)}\n}, ${varName});`;
-    });
-    if (code.length === 0) {
-        return {
-            'instructions': [],
-            'wait': false,
-            'warnings': warnings,
-        };
+        code.push(callback(key, value.value, value.kind === 'ident'));
     }
     return {
         'instructions': [
-            getAndSetElements(selector, varName, false) + '\n' +
-            code,
+            `\
+${getAndSetElements(selector, varName, false)}
+await page.evaluate(e => {
+${indentString(code.join('\n'), 1)}
+}, ${varName});`,
         ],
-        'warnings': warnings,
+        'warnings': entries.warnings,
     };
 }
 
@@ -96,8 +113,13 @@ function innerParseCssAttribute(parser, argName, varName, callback) {
 // * ("CSS selector", JSON dict)
 // * ("XPath", JSON dict)
 function parseAttribute(parser) {
-    return innerParseCssAttribute(parser, 'attribute', 'parseAttributeElem',
-        (key, value) => `e.setAttribute("${key}","${value}");`);
+    return innerParseCssAttribute(parser, 'attribute', 'parseAttributeElem', true,
+        (key, value, isIdent) => {
+            if (!isIdent) {
+                return `e.setAttribute("${key}","${value}");`;
+            }
+            return `e.removeAttribute("${key}");`;
+        });
 }
 
 // Possible inputs:
@@ -107,8 +129,13 @@ function parseAttribute(parser) {
 // * ("CSS selector", JSON dict)
 // * ("XPath", JSON dict)
 function parseProperty(parser) {
-    return innerParseCssAttribute(parser, 'property', 'parsePropertyElem',
-        (key, value) => `e["${key}"] = "${value}";`);
+    return innerParseCssAttribute(parser, 'property', 'parsePropertyElem', true,
+        (key, value, isIdent) => {
+            if (!isIdent) {
+                return `e["${key}"] = "${value}";`;
+            }
+            return `delete e["${key}"];`;
+        });
 }
 
 // Possible inputs:
@@ -118,8 +145,8 @@ function parseProperty(parser) {
 // * ("CSS selector", JSON dict)
 // * ("XPath", JSON dict)
 function parseCss(parser) {
-    return innerParseCssAttribute(parser, 'CSS property', 'parseCssElem',
-        (key, value) => `e.style["${key}"] = "${value}";`);
+    return innerParseCssAttribute(parser, 'CSS property', 'parseCssElem', false,
+        (key, value, _isIdent) => `e.style["${key}"] = "${value}";`);
 }
 
 // Possible inputs:

@@ -1,0 +1,1 @@
+error = """only string, number and ident types are allowed as value, found `[\"a\"]` (an array)"""
