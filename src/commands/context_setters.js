@@ -5,7 +5,7 @@ const consts = require('../consts.js');
 // Possible inputs:
 //
 // * boolean value (`true` or `false`)
-function parseFail(parser) {
+function parseExpectFailure(parser) {
     const elems = parser.elems;
     if (elems.length === 0) {
         return {'error': 'expected `true` or `false` value, found nothing'};
@@ -219,7 +219,7 @@ if (oldValue !== true) {
 
 module.exports = {
     'parseDebug': parseDebug,
-    'parseFail': parseFail,
+    'parseExpectFailure': parseExpectFailure,
     'parseFailOnJsError': parseFailOnJsError,
     'parseFailOnRequestError': parseFailOnRequestError,
     'parsePauseOnError': parsePauseOnError,

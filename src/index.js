@@ -303,8 +303,8 @@ async function runAllCommands(loaded, logs, options, browser) {
                 break;
             }
             let failed = false;
-            // In case we have some unrecoverable error which cannot be caught in `fail: true`, like
-            // color check when text isn't displayed.
+            // In case we have some unrecoverable error which cannot be caught in
+            // `expect-failure: true`, like color check when text isn't displayed.
             //
             // (It is needed because we cannot break from inside the `await.catch`.)
             let stopLoop = false;
