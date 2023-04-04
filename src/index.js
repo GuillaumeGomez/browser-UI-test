@@ -131,6 +131,37 @@ function checkFolders(options) {
     return createFolderIfNeeded(options.getImageFolder());
 }
 
+// Returns `false` if it failed.
+async function screenshot(extras, filename, selector, page, logs, warnings) {
+    const data = innerParseScreenshot(extras, filename, selector);
+    let screenshot_error = null;
+    for (const instruction of data.instructions) {
+        let loadedInstruction;
+        try {
+            loadedInstruction = loadContent(instruction);
+        } catch (error) { // parsing error
+            screenshot_error = error;
+            break;
+        }
+        try {
+            await loadedInstruction(page, extras);
+        } catch (err) { // execution error
+            screenshot_error = err;
+            break;
+        }
+    }
+
+    if (screenshot_error !== null) {
+        logs.append('FAILED', true);
+        logs.append(`Cannot take screenshot: element \`${extras.screenshotComparison}\`` +
+            ` not found: ${screenshot_error}`);
+        logs.warn(warnings);
+        return false;
+    }
+    logs.info(data['infos']);
+    return true;
+}
+
 function waitUntilEnterPressed(error_log) {
     print('An error occurred: `' + error_log + '`');
     readline.question('Press ENTER to continue...');
@@ -176,6 +207,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             'debug_log': debug_log,
             // If the `--no-headless` option is set, we enable it by default.
             'pauseOnError': options.shouldPauseOnError(),
+            'screenshotOnFailure': options.screenshotOnFailure,
             'getImageFolder': () => options.getImageFolder(),
             'failOnJsError': options.failOnJsError,
             'failOnRequestError': options.failOnRequestError,
@@ -307,6 +339,9 @@ async function runAllCommands(loaded, logs, options, browser) {
                             error_log += `[ERROR] (line ${line_number}) ${s_err}: for ` +
                                 `command \`${original}\`\n`;
                             stopInnerLoop = true;
+                            if (extras.screenshotOnFailure) {
+                                stopLoop = true;
+                            }
                         } else {
                             // it's an expected failure so no need to log it
                             debug_log.append(
@@ -359,6 +394,9 @@ async function runAllCommands(loaded, logs, options, browser) {
             if (extras.pauseOnError === true) {
                 waitUntilEnterPressed(error_log);
             }
+            if (extras.screenshotOnFailure === true) {
+                await screenshot(extras, `${loaded['file']}-failure`, null, page, logs, warnings);
+            }
             await page.close();
             return Status.Failure;
         }
@@ -382,37 +420,12 @@ async function runAllCommands(loaded, logs, options, browser) {
             }
         }
 
-        const data = innerParseScreenshot(
-            extras,
-            `${loaded['file']}-${options.runId}`,
-            selector,
-        );
-        let screenshot_error = null;
-        for (const instruction of data.instructions) {
-            let loadedInstruction;
-            try {
-                loadedInstruction = loadContent(instruction);
-            } catch (error) { // parsing error
-                screenshot_error = error;
-                break;
-            }
-            try {
-                await loadedInstruction(page, extras);
-            } catch (err) { // execution error
-                screenshot_error = err;
-                break;
-            }
-        }
-
-        if (screenshot_error !== null) {
-            logs.append('FAILED', true);
-            logs.append(`Cannot take screenshot: element \`${extras.screenshotComparison}\`` +
-                ` not found: ${screenshot_error}`);
-            logs.warn(warnings);
+        if (!await screenshot(
+            extras, `${loaded['file']}-${options.runId}`, selector, page, logs, warnings)
+        ) {
             await page.close();
             return Status.MissingElementForScreenshot;
         }
-        logs.info(data['infos']);
 
         const compare_s = options.generateImages === false ? 'COMPARISON' : 'GENERATION';
         debug_log.append(`=> [SCREENSHOT ${compare_s}]`);

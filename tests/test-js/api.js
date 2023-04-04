@@ -1248,8 +1248,8 @@ function checkParseContent(x, func) {
     x.assert(func('focus: "#foo"'), [{
         'error': 'First command must be `go-to` (`assert-variable`, `assert-variable-false`, ' +
             '`call-function`, `debug`, `define-function`, `emulate`, `fail`, `fail-on-js-error`, ' +
-            '`fail-on-request-error`, `javascript`, `screenshot-comparison`, `store-value` or ' +
-            '`set-timeout` can be used before)!',
+            '`fail-on-request-error`, `javascript`, `screenshot-comparison`, ' +
+            '`screenshot-on-failure`, `store-value` or `set-timeout` can be used before)!',
         'line': 1,
     }]);
     x.assert(func('fail: true\ngo-to: "file:///home"'), [
@@ -1455,6 +1455,16 @@ function checkScreenshotComparison(x, func) {
     // XPath
     func('"/a"', 'xpath-1');
     func('"//a"', 'xpath-2');
+}
+
+function checkScreenshotOnFailure(x, func) {
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('"true"', 'err-3');
+    func('tru', 'err-4');
+
+    func('false', 'basic-1');
+    func('true', 'basic-2');
 }
 
 function checkScrollTo(x, func) {
@@ -2216,6 +2226,11 @@ const TO_CHECK = [
         'name': 'screenshot-comparison',
         'func': checkScreenshotComparison,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseScreenshotComparison, x, e, name, o),
+    },
+    {
+        'name': 'screenshot-on-failure',
+        'func': checkScreenshotOnFailure,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseScreenshotOnFailure, x, e, name, o),
     },
     {
         'name': 'scroll-to',

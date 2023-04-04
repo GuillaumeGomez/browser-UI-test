@@ -81,6 +81,14 @@ async function compareOutput(x) {
     }
 }
 
+function checkImageFileForTest(x, screenshotFile, testName) {
+    if (fs.existsSync(screenshotFile) === false) {
+        x.addError(`\`${testName}\` should have generated a \`${screenshotFile}\` file!`);
+    } else {
+        fs.unlinkSync(screenshotFile);
+    }
+}
+
 async function checkUi(x) {
     x.startTestSuite('ui items', false);
     print('=> Starting UI tests...');
@@ -95,12 +103,9 @@ async function checkUi(x) {
         print(`<== "ui-test" failed: ${err}\n${err.stack}`);
     }
 
-    const screenshotFile = 'tests/ui-tests/tadam.png';
-    if (fs.existsSync(screenshotFile) === false) {
-        x.addError('`screenshot-info.goml` should have generated a `tadam.png` file!');
-    } else {
-        fs.unlinkSync(screenshotFile);
-    }
+    checkImageFileForTest(x, 'tests/ui-tests/tadam.png', 'screenshot-info.goml');
+    checkImageFileForTest(
+        x, 'tests/ui-tests/screenshot-on-failure-failure.png', 'screenshot-on-failure.goml');
 
     print('');
     print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +

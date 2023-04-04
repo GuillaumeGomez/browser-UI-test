@@ -310,6 +310,9 @@ async function checkOptions(x) {
     await x.assert(options.allowFileAccessFromFiles, false);
     await x.assertTry(() => options.parseArguments(['--allow-file-access-from-files']), [], true);
     await x.assert(options.allowFileAccessFromFiles, true);
+    await x.assert(options.screenshotOnFailure, false);
+    await x.assertTry(() => options.parseArguments(['--screenshot-on-failure']), [], true);
+    await x.assert(options.screenshotOnFailure, true);
 
     await x.assertTry(() => options.parseArguments(['--browser']), [],
         'Missing browser name after `--browser` option');
@@ -445,6 +448,11 @@ async function checkOptions(x) {
     options.allowFileAccessFromFiles = '';
     await x.assertTry(() => options.validateFields(), [],
         '`Options.allowFileAccessFromFiles` field is supposed to be a boolean!');
+
+    options = new Options();
+    options.screenshotOnFailure = '';
+    await x.assertTry(() => options.validateFields(), [],
+        '`Options.screenshotOnFailure` field is supposed to be a boolean!');
 }
 
 const TO_CHECK = [

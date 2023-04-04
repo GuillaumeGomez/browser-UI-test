@@ -70,6 +70,7 @@ module.exports = {
     'parseReload': navigation.parseReload,
     'parseScreenshot': general.parseScreenshot,
     'parseScreenshotComparison': context_setters.parseScreenshotComparison,
+    'parseScreenshotOnFailure': context_setters.parseScreenshotOnFailure,
     'parseScrollTo': input.parseScrollTo,
     'parseSetAttribute': dom_modifiers.parseSetAttribute,
     'parseSetCss': dom_modifiers.parseSetCss,

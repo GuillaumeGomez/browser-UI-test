@@ -192,6 +192,7 @@ The list of fields of the `Options` class is the following:
  * `incognito`: whether or not the browser is running in incognito mode
  * `noHeadless`: disable headless mode
  * `screenshotComparison`: enable screenshots generation and comparison at the end of the scripts
+ * `screenshotOnFailure`: takes a screenshot if a test fails and stops the test execution
  * `onPageCreatedCallback`: callback which is called when a new puppeteer page is created. It provides the puppeteer `page` and the test name as arguments
  * `pauseOnError`: will pause indefinitely if an error occurs.
  * `permissions`: list of permissions to enable (you can see the full list by running with `--show-permissions`)
