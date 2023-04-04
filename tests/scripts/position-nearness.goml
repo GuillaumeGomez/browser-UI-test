@@ -1,6 +1,6 @@
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
-fail: true
+expect-failure: true
 compare-elements-position-near-false: (".content>.right>div", ".content>.right>div", {"x": 100, "y": 1})
-fail: false
+expect-failure: false
 compare-elements-position-near-false: (".content>.right>div", ".content>.left>div", {"x": 1})
 compare-elements-position-near: (".content>.right>div", ".content>.right>div", {"x": 1, "y": 1})

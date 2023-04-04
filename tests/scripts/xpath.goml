@@ -3,13 +3,13 @@ focus: "//*[@id='the-input']"
 assert: "#the-input:focus"
 write: ("//*[@id='the-input']", "hello")
 assert-text: ("//*[@id='the-input']", "hello")
-fail: true
+expect-failure: true
 assert-text-false: ("//*[@id='the-input']", "hello")
-fail: false
+expect-failure: false
 assert-text: ("//*[@id='the-input']", "hello", ALL)
-fail: true
+expect-failure: true
 assert-text-false: ("//*[@id='the-input']", "hello", ALL)
-fail: false
+expect-failure: false
 assert-text-false: ("//*[@id='the-input']", "ai", ALL)
 set-attribute: ("//div[@class='content']", "an-attribute", "hello")
 assert-attribute: ("//div[@class='content']", {"an-attribute": "hello"})

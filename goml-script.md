@@ -70,7 +70,7 @@ Rules of concatenation s simple: if any of the element is a string, then it'll c
 
 ## Command list
 
-Those scripts aim to be as quick to write and as small as possible. To do so, they provide a short list of commands. Please note that those scripts must **always** start with a [`goto`](#goto) command (non-interactional commands such as `screenshot-comparison` or `fail` can be use first as well).
+Those scripts aim to be as quick to write and as small as possible. To do so, they provide a short list of commands. Please note that those scripts must **always** start with a [`goto`](#goto) command (non-interactional commands such as `screenshot-comparison` or `expect-failure` can be use first as well).
 
 Here's the command list:
 
@@ -115,7 +115,7 @@ Here's the command list:
  * [`define-function`](#define-function)
  * [`drag-and-drop`](#drag-and-drop)
  * [`emulate`](#emulate)
- * [`fail`](#fail)
+ * [`expect-failure`](#expect-failure)
  * [`fail-on-js-error`](#fail-on-js-error)
  * [`fail-on-request-error`](#fail-on-request-error)
  * [`focus`](#focus)
@@ -273,7 +273,7 @@ assert-attribute-false: (
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-attribute-false) command.
 
-Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
 
 #### assert-count
 
@@ -325,7 +325,7 @@ assert-css-false: ("//*[@id='id']/*[@class='class']", { "color": "blue", "height
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-css-false) command.
 
-Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
 
 #### assert-document-property
 
@@ -438,7 +438,7 @@ assert-position-false: ("//*[@class='class']", {"x": 1, "y": 2}, ALL)
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-position-false`](#compare-elements-position-false) command.
 
-Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
 
 #### assert-property
 
@@ -524,7 +524,7 @@ assert-property-false: (
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-property-false) command.
 
-Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
 
 #### assert-text
 
@@ -576,7 +576,7 @@ assert-text: (".class", "hello", [ALL, STARTS_WITH, ENDS_WITH])
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-text-false) command.
 
-Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
 
 #### assert-variable
 
@@ -809,7 +809,7 @@ compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attri
 compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX", ...], ">=")
 ```
 
-Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
 
 #### compare-elements-css
 
@@ -829,7 +829,7 @@ compare-elements-css-false: ("element1", "//element2", ["CSS property1", "CSS pr
 compare-elements-css-false: ("//element1", "element2", ["CSS property1", "CSS property2", ...])
 ```
 
-Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
 
 #### compare-elements-position
 
@@ -891,7 +891,7 @@ compare-elements-position-near-false: ("//element1", "//element2", {"x": 4, "y":
 compare-elements-position-near-false: ("element1", "element2", {"y": 3, "x": 1})
 ```
 
-Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
 
 #### compare-elements-property
 
@@ -911,7 +911,7 @@ compare-elements-property-false: ("element1", "//element2", ["CSS property1", "C
 compare-elements-property-false: ("//element1", "element2", ["CSS property1", "CSS property2", ...])
 ```
 
-Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
 
 #### compare-elements-text
 
@@ -931,7 +931,7 @@ compare-elements-text-false: ("//element1", "element2")
 compare-elements-text-false: ("element1", "//element2")
 ```
 
-Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`fail`](#fail) command too.
+Another thing to be noted: if you don't care wether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
 
 #### debug
 
@@ -1025,12 +1025,12 @@ emulate: "iPhone 8"
 
 To see the list of available devices, either run this framework with `--show-devices` option or go [here](https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js).
 
-#### fail
+#### expect-failure
 
-**fail** command sets a test to be expected to fail (or not). Example:
+**expect-failure** command sets a test to be expected to fail (or not). Example:
 
 ```
-fail: false
+expect-failure: false
 ```
 
 You can use it as follows too:
@@ -1040,10 +1040,10 @@ You can use it as follows too:
 assert: ("#elem", "hello")
 text: ("#elem", "not hello")
 // we want to check if the text changed (strangely but whatever)
-fail: true
+expect-failure: true
 assert: ("#elem", "hello")
 // now we set it back to false to check the new text
-fail: false
+expect-failure: false
 assert: ("#elem", "not hello")
 ```
 
@@ -1121,7 +1121,7 @@ go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/file.html"
 
 #### history-go-back
 
-**history-go-back** command goes back to the previous page in the browser history. If there no previous page, it'll fail (if you want to check that, take a look at [`fail`](#fail)). Example:
+**history-go-back** command goes back to the previous page in the browser history. If there no previous page, it'll fail (if you want to check that, take a look at [`expect-failure`](#expect-failure)). Example:
 
 ```
 history-go-back:
@@ -1133,7 +1133,7 @@ Please note that if no `timeout` is specified, the one from the [`timeout`](#tim
 
 #### history-go-forward
 
-**history-go-forward** command goes back to the next page in the browser history. If there no next page, it'll fail (if you want to check that, take a look at [`fail`](#fail)). Example:
+**history-go-forward** command goes back to the next page in the browser history. If there no next page, it'll fail (if you want to check that, take a look at [`expect-failure`](#expect-failure)). Example:
 
 ```
 history-go-back:

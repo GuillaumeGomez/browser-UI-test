@@ -9,7 +9,7 @@ compare-elements-attribute-false: (".content>.right", ".content>.left>p", ["data
 compare-elements-css-false: (".content>.right>p", ".content>.left", ["margin"])
 compare-elements-property-false: (".content>.right", ".content>.left", ["childElementCount"])
 compare-elements-property: (".right>div", ".left>div", ["childElementCount"])
-fail: true // check that the command fails if the comparison succeeds
+expect-failure: true // check that the command fails if the comparison succeeds
 compare-elements-text-false: (".content>.right>p", ".content>.left>p")
 compare-elements-position-false: (".content>.right>div", ".content>.right>div", ("x", "y"))
 compare-elements-attribute-false: (".content>.right", ".content>.right", ["data-whatever"])

@@ -5,16 +5,16 @@ assert-count: (".simili", 4)
 assert-count: (".simili-non-existent", 0)
 assert-count-false: (".simili", 5)
 assert-text: (".simili", "a", ALL)
-fail: true
+expect-failure: true
 assert-text: (".non-simili", "a", ALL)
 // If any of the items has "a" as text, then it fails.
 assert-text-false: (".simili", "a", ALL)
-fail: false
+expect-failure: false
 assert-text-false: (".simili", "c", ALL)
 assert-css: (".simili", {"text-align": "center"}, ALL)
-fail: true
+expect-failure: true
 assert-css: (".simili", {"padding-left": "2px"}, ALL)
 // If any of the items has "text-align: center", then it fails.
 assert-css-false: (".simili", {"text-align": "center"}, ALL)
-fail: false
+expect-failure: false
 assert-css-false: (".simili", {"height": "1000px"}, ALL)

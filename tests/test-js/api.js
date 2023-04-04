@@ -1066,7 +1066,7 @@ function checkEmulate(x, func) {
     func('"a"', 'basic-1');
 }
 
-function checkFail(x, func) {
+function checkExpectFailure(x, func) {
     func('', 'err-1');
     func('hello', 'err-2');
     func('"true"', 'err-3');
@@ -1247,16 +1247,16 @@ function checkParseContent(x, func) {
     ]);
     x.assert(func('focus: "#foo"'), [{
         'error': 'First command must be `go-to` (`assert-variable`, `assert-variable-false`, ' +
-            '`call-function`, `debug`, `define-function`, `emulate`, `fail`, `fail-on-js-error`, ' +
-            '`fail-on-request-error`, `javascript`, `screenshot-comparison`, ' +
+            '`call-function`, `debug`, `define-function`, `emulate`, `expect-failure`, ' +
+            '`fail-on-js-error`, `fail-on-request-error`, `javascript`, `screenshot-comparison`, ' +
             '`screenshot-on-failure`, `store-value` or `set-timeout` can be used before)!',
         'line': 1,
     }]);
-    x.assert(func('fail: true\ngo-to: "file:///home"'), [
+    x.assert(func('expect-failure: true\ngo-to: "file:///home"'), [
         {
             'fatal_error': false,
             'wait': false,
-            'original': 'fail: true',
+            'original': 'expect-failure: true',
             'line': 1,
             'instructions': ['arg.expectedToFail = true;'],
         },
@@ -2133,9 +2133,9 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseEmulate, x, e, name, o),
     },
     {
-        'name': 'fail',
-        'func': checkFail,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseFail, x, e, name, o),
+        'name': 'expect-failure',
+        'func': checkExpectFailure,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseExpectFailure, x, e, name, o),
     },
     {
         'name': 'fail-on-js-error',

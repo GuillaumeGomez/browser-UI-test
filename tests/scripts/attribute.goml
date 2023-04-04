@@ -4,12 +4,12 @@ set-attribute: ("#button", "id", "another-id")
 assert: ("#another-id")
 set-attribute: ("#another-id", {"id": "yet-another-id", "test": "lol"})
 assert-attribute: ("#yet-another-id", {"test": "lol"})
-fail: true
+expect-failure: true
 set-attribute: ("#yet-another-id", {"\"a": "'b", "c": "d"})
 assert-attribute: ("#yet-another-id", {"\a": "'b", "c": "d", "\"e": "'2"})
 set-attribute: ("#yet-another-id", "\"e", "'2")
 assert-attribute: ("#yet-another-id", {"\"e": "'2"})
-fail: false
+expect-failure: false
 set-attribute: ("#yet-another-id", "e", "'2")
 assert-attribute: ("#yet-another-id", {"e": "'2"})
 set-attribute: ("#yet-another-id", "e", "2")
@@ -18,6 +18,6 @@ assert-attribute-false: ("#yet-another-id", {"e": "3"})
 assert-attribute: ("#yet-another-id", {"e": "2"}, NEAR)
 assert-attribute: ("#yet-another-id", {"e": "3"}, NEAR)
 assert-attribute: ("#yet-another-id", {"e": "1"}, NEAR)
-fail: true
+expect-failure: true
 assert-attribute: ("#yet-another-id", {"e": "4"}, NEAR)
 assert-attribute: ("#yet-another-id", {"e": "0"}, NEAR)

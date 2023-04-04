@@ -1,5 +1,5 @@
 screenshot-comparison: false
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
-fail: true
+expect-failure: true
 show-text: true
 compare-elements-css: (".content>.right>p", ".content>.left", ["color"])

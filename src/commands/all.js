@@ -54,7 +54,7 @@ module.exports = {
     'parseDefineFunction': functions.parseDefineFunction,
     'parseDragAndDrop': input.parseDragAndDrop,
     'parseEmulate': emulation.parseEmulate,
-    'parseFail': context_setters.parseFail,
+    'parseExpectFailure': context_setters.parseExpectFailure,
     'parseFailOnJsError': context_setters.parseFailOnJsError,
     'parseFailOnRequestError': context_setters.parseFailOnRequestError,
     'parseFocus': input.parseFocus,
