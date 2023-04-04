@@ -7,9 +7,9 @@ assert-css: ("#useless\.input", {"height": "10px"})
 // Checking escape in dict.
 assert-css-false: ("#useless\.input", {"\"height": "10px"})
 assert-false: '"a'
-fail: true
+expect-failure: true
 click: '"a'
 // Checking backline.
 assert: ("//*
 b")
-fail: false
+expect-failure: false

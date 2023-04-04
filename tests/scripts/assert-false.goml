@@ -1,5 +1,5 @@
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
-fail: true // ensure that the checks below fail because they are not failing (understand who can!)
+expect-failure: true // ensure that the checks below fail because they are not failing (understand who can!)
 assert-false: ("#button") // fails because the selector exists
 assert-false: "#button" // strictly equivalent to the previous line
 assert-text-false: ("#button2", "Go somewhere else!") // should fail because the selector has to exist!
@@ -7,7 +7,7 @@ assert-text-false: ("#button", "Go somewhere else!") // fails because it doesn't
 assert-count-false: ("div", 1) // fails because there is one div
 assert-css-false: ("#button", {"padding": "5px"}) // fails because exact
 assert-css-false: ("#button2", {"padding": "5px"}) // fails because there is no "#button2"
-fail: false
+expect-failure: false
 assert-false: ("#button2")
 assert-false: "#button2"
 assert-text-false: ("#button", "Go somewhere else 2!")

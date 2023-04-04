@@ -6,5 +6,5 @@ press-key: "KeyA"
 assert-text: ("#the-input", "helloa")
 assert: ("#the-input:focus")
 press-key: "Tab"
-fail: true
+expect-failure: true
 assert: ("#the-input:focus") // We want to ensure that the input isn't focused anymore
