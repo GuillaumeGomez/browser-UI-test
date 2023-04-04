@@ -1,0 +1,4 @@
+instructions = [
+  """arg.screenshotOnFailure = true;""",
+]
+wait = false

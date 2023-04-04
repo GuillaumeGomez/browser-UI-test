@@ -1457,6 +1457,16 @@ function checkScreenshotComparison(x, func) {
     func('"//a"', 'xpath-2');
 }
 
+function checkScreenshotOnFailure(x, func) {
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('"true"', 'err-3');
+    func('tru', 'err-4');
+
+    func('false', 'basic-1');
+    func('true', 'basic-2');
+}
+
 function checkScrollTo(x, func) {
     // Check position
     func('hello', 'err-1');
@@ -2216,6 +2226,11 @@ const TO_CHECK = [
         'name': 'screenshot-comparison',
         'func': checkScreenshotComparison,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseScreenshotComparison, x, e, name, o),
+    },
+    {
+        'name': 'screenshot-on-failure',
+        'func': checkScreenshotOnFailure,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseScreenshotOnFailure, x, e, name, o),
     },
     {
         'name': 'scroll-to',
