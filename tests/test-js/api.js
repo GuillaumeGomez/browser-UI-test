@@ -1248,8 +1248,8 @@ function checkParseContent(x, func) {
     x.assert(func('focus: "#foo"'), [{
         'error': 'First command must be `go-to` (`assert-variable`, `assert-variable-false`, ' +
             '`call-function`, `debug`, `define-function`, `emulate`, `fail`, `fail-on-js-error`, ' +
-            '`fail-on-request-error`, `javascript`, `screenshot-comparison`, `store-value` or ' +
-            '`set-timeout` can be used before)!',
+            '`fail-on-request-error`, `javascript`, `screenshot-comparison`, ' +
+            '`screenshot-on-failure`, `store-value` or `set-timeout` can be used before)!',
         'line': 1,
     }]);
     x.assert(func('fail: true\ngo-to: "file:///home"'), [
