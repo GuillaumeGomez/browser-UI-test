@@ -32,7 +32,7 @@ function helper() {
     print('  --incognito                   : Enable incognito mode');
     print('  --no-headless                 : Disable headless mode');
     print('  --no-sandbox                  : Disable the sandbox (use with caution!)');
-    print('  --pause-on-error [true|false] : Add a permission to enable');
+    print('  --pause-on-error [true|false] : Pause execution script until user press ENTER');
     print('  --permission [PERMISSION]     : Add a permission to enable');
     print('  --run-id [id]                 : Id to be used for failed images extension (\'test\'');
     print('                                  by default)');
