@@ -36,6 +36,8 @@ function helper() {
     print('  --permission [PERMISSION]     : Add a permission to enable');
     print('  --run-id [id]                 : Id to be used for failed images extension (\'test\'');
     print('                                  by default)');
+    print('  --screenshot-on-failure       : If a test fails, a screenshot will be generated and');
+    print('                                  the test execution will be stopped');
     print('  --show-devices                : Show list of available devices');
     print('  --show-text                   : Disable text invisibility (be careful when using ' +
         'it!)');
@@ -101,6 +103,7 @@ class Options {
         this.permissions = [];
         this.onPageCreatedCallback = async function() {};
         this.failOnJsError = false;
+        this.screenshotOnFailure = false;
         // Enabled by default!
         this.failOnRequestError = true;
         this.executablePath = null;
@@ -134,6 +137,7 @@ class Options {
         copy.failOnJsError = this.failOnJsError;
         copy.failOnRequestError = this.failOnRequestError;
         copy.executablePath = this.executablePath !== null ? this.executablePath.slice() : null;
+        copy.screenshotOnFailure = this.screenshotOnFailure;
         return copy;
     }
 
@@ -280,6 +284,8 @@ class Options {
                 this.failOnJsError = true;
             } else if (args[it] === '--disable-fail-on-request-error') {
                 this.failOnRequestError = false;
+            } else if (args[it] === '--screenshot-on-failure') {
+                this.screenshotOnFailure = true;
             } else if (args[it] === '--version') {
                 showVersion();
             } else {
@@ -360,6 +366,7 @@ class Options {
         validateField('failOnRequestError', 'boolean');
         validateField('noSandbox', 'boolean');
         validateField('allowFileAccessFromFiles', 'boolean');
+        validateField('screenshotOnFailure', 'boolean');
         // eslint-disable-next-line eqeqeq
         if (this.variables.constructor != Object) {
             throw new Error('`Options.variables` field is supposed to be a dictionary-like!');
