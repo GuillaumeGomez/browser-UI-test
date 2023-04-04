@@ -131,6 +131,7 @@ Here's the command list:
  * [`reload`](#reload)
  * [`screenshot`](#screenshot)
  * [`screenshot-comparison`](#screenshot-comparison)
+ * [`screenshot-on-failure`](#screenshot-on-failure)
  * [`scroll-to`](#scroll-to)
  * [`set-attribute`](#set-attribute)
  * [`set-css`](#set-css)
@@ -1242,6 +1243,18 @@ screenshot-comparison: "//*[@id='test']"
 
 // Disable screenshot comparison:
 screenshot-comparison: false
+```
+
+#### screenshot-on-failure
+
+**screenshot-on-failure** command enables/disables the generation of a screenshot when a test fails. If enabled, it will also stops the script execution at the first error. By default, this option is disabled. It `overrides` the `--screenshot-on-failure` option value. It expects a boolean value. Example:
+
+```
+// Enable screenshot generation when the script fails:
+screenshot-on-failure: true
+
+// Disable screenshot generation when the script fails (the default):
+screenshot-on-failure: false
 ```
 
 #### scroll-to
