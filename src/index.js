@@ -207,6 +207,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             'debug_log': debug_log,
             // If the `--no-headless` option is set, we enable it by default.
             'pauseOnError': options.shouldPauseOnError(),
+            'screenshotOnFailure': options.screenshotOnFailure,
             'getImageFolder': () => options.getImageFolder(),
             'failOnJsError': options.failOnJsError,
             'failOnRequestError': options.failOnRequestError,
@@ -338,7 +339,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                             error_log += `[ERROR] (line ${line_number}) ${s_err}: for ` +
                                 `command \`${original}\`\n`;
                             stopInnerLoop = true;
-                            if (options.screenshotOnFailure) {
+                            if (extras.screenshotOnFailure) {
                                 stopLoop = true;
                             }
                         } else {
@@ -393,7 +394,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             if (extras.pauseOnError === true) {
                 waitUntilEnterPressed(error_log);
             }
-            if (options.screenshotOnFailure === true) {
+            if (extras.screenshotOnFailure === true) {
                 await screenshot(extras, `${loaded['file']}-failure`, null, page, logs, warnings);
             }
             await page.close();

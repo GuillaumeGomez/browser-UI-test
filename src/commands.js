@@ -61,6 +61,7 @@ const ORDERS = {
     'reload': commands.parseReload,
     'screenshot': commands.parseScreenshot,
     'screenshot-comparison': commands.parseScreenshotComparison,
+    'screenshot-on-failure': commands.parseScreenshotOnFailure,
     'scroll-to': commands.parseScrollTo,
     'set-attribute': commands.parseSetAttribute,
     'set-css': commands.parseSetCss,
@@ -137,6 +138,7 @@ const NO_INTERACTION_COMMANDS = [
     'fail-on-request-error',
     'javascript',
     'screenshot-comparison',
+    'screenshot-on-failure',
     'store-value',
     'set-timeout',
 ];

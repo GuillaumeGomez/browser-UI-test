@@ -112,6 +112,24 @@ function parseDebug(parser) {
 // Possible inputs:
 //
 // * boolean value (`true` or `false`)
+function parseScreenshotOnFailure(parser) {
+    const elems = parser.elems;
+    if (elems.length === 0) {
+        return {'error': 'expected `true` or `false` value, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'bool') {
+        return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
+    }
+    return {
+        'instructions': [
+            `arg.screenshotOnFailure = ${elems[0].getRaw()};`,
+        ],
+        'wait': false,
+    };
+}
+
+// Possible inputs:
+//
+// * boolean value (`true` or `false`)
 function parsePauseOnError(parser) {
     const elems = parser.elems;
     if (elems.length === 0) {
@@ -206,6 +224,7 @@ module.exports = {
     'parseFailOnRequestError': parseFailOnRequestError,
     'parsePauseOnError': parsePauseOnError,
     'parseScreenshotComparison': parseScreenshotComparison,
+    'parseScreenshotOnFailure': parseScreenshotOnFailure,
     'parseShowText': parseShowText,
     'parseSetTimeout': parseSetTimeout,
 };
