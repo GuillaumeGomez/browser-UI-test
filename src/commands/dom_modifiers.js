@@ -7,81 +7,50 @@ function innerParseCssAttribute(parser, argName, varName, allowNullIdent, callba
 
     if (elems.length === 0) {
         return {
-            'error': `expected \`("CSS selector" or "XPath", "${argName} name", "${argName} value")\
-\` or \`("CSS selector" or "XPath", [JSON object])\`, found nothing`,
+            'error': 'expected `("CSS selector" or "XPath", JSON)`, found nothing',
         };
     } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
         return {
-            'error': `expected \`("CSS selector" or "XPath", "${argName} name", "${argName} value")\
-\` or \`("CSS selector" or "XPath", [JSON object])\`, found \`${parser.getRawArgs()}\``,
+            'error': `expected \`("CSS selector" or "XPath", JSON)\`, found \`\
+${parser.getRawArgs()}\` (${parser.getArticleKind()})`,
         };
     }
     const tuple = elems[0].getRaw();
-    if (tuple[0].kind !== 'string') {
+    if (tuple.length !== 2) {
         return {
-            'error': `expected \`("CSS selector" or "XPath", "${argName} name", "${argName} ` +
-                'value")` or `("CSS selector" or "XPath", [JSON object])`',
+            'error': `expected a tuple of two elements, found ${tuple.length}`,
+        };
+    } else if (tuple[0].kind !== 'string') {
+        return {
+            'error': `expected a string as first argument of the tuple, found \`\
+${tuple[0].getErrorText()}\` (${tuple[1].getArticleKind()})`,
+        };
+    } else if (tuple[1].kind !== 'json') {
+        return {
+            'error': `expected JSON as second argument, found \`${tuple[1].getErrorText()}\` \
+(${tuple[1].getArticleKind()})`,
         };
     }
+
     const selector = tuple[0].getSelector('(first argument)');
     if (selector.error !== undefined) {
         return selector;
     }
 
-    let entries;
-    if (tuple.length === 3) {
-        if (tuple[1].kind !== 'string') {
-            return { 'error': `expected string for ${argName} name (second argument), found \
-\`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})` };
-        }
-
-        const kinds = ['string', 'number'];
-        if (allowNullIdent) {
-            kinds.push('ident');
-        }
-        if (kinds.indexOf(tuple[2].kind) === -1) {
-            return {
-                'error': `expected ${kinds.join(' or ')} for ${argName} value (third argument), \
-found \`${tuple[2].getErrorText()}\` (${tuple[2].getArticleKind()})`,
-            };
-        }
-        if (tuple[2].kind === 'ident' && tuple[2].value !== 'null') {
-            return {
-                'error': `Only \`null\` ident is allowed for idents, found \`${tuple[2].value}\``,
-            };
-        }
-        entries = {
-            values: Object.create(null),
-        };
-        entries.values[tuple[1].value] = tuple[2];
-    } else if (tuple.length === 2) {
-        if (tuple[1].kind !== 'json') {
-            return {
-                'error': 'expected json as second argument (since there are only two arguments), ' +
-                    `found ${tuple[1].getArticleKind()}`,
-            };
-        }
-
-        const json = tuple[1].getRaw();
-        const validators = {'string': [], 'number': []};
-        if (allowNullIdent) {
-            validators['ident'] = ['null'];
-        }
-        entries = validateJson(json, validators, argName);
-        if (entries.error !== undefined) {
-            return entries;
-        }
-        if (Object.entries(entries.values).length === 0) {
-            return {
-                'instructions': [],
-                'wait': false,
-                'warnings': entries.warnings,
-            };
-        }
-    } else {
+    const json = tuple[1].getRaw();
+    const validators = {'string': [], 'number': []};
+    if (allowNullIdent) {
+        validators['ident'] = ['null'];
+    }
+    const entries = validateJson(json, validators, argName);
+    if (entries.error !== undefined) {
+        return entries;
+    }
+    if (Object.entries(entries.values).length === 0) {
         return {
-            'error': `expected \`("CSS selector" or "XPath", "${argName} name", "${argName} ` +
-                'value")` or `("CSS selector" or "XPath", [JSON object])`',
+            'instructions': [],
+            'wait': false,
+            'warnings': entries.warnings,
         };
     }
 
