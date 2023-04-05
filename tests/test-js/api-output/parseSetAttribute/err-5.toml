@@ -1,1 +1,1 @@
-error = """expected json as second argument (since there are only two arguments), found a string"""
+error = """expected JSON as second argument, found `\"b\"` (a string)"""

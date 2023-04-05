@@ -1,1 +1,1 @@
-error = """expected string or number for CSS property value (third argument), found `a` (an ident)"""
+error = """expected a tuple of two elements, found 3"""

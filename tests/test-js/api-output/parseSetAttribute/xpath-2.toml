@@ -1,8 +1,1 @@
-instructions = [
-  """let parseSetAttributeElem = await page.$x(\"//a\");
-if (parseSetAttributeElem.length === 0) { throw 'XPath \"//a\" not found'; }
-parseSetAttributeElem = parseSetAttributeElem[0];
-await page.evaluate(e => {
-    e.setAttribute(\"b\",\"c\");
-}, parseSetAttributeElem);""",
-]
+error = """expected a tuple of two elements, found 3"""

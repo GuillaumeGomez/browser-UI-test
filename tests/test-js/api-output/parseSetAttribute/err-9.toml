@@ -1,1 +1,1 @@
-error = """expected `(\"CSS selector\" or \"XPath\", \"attribute name\", \"attribute value\")` or `(\"CSS selector\" or \"XPath\", [JSON object])`"""
+error = """expected a tuple of two elements, found 4"""

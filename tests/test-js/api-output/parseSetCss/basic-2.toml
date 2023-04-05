@@ -2,6 +2,8 @@ instructions = [
   """let parseSetCssElem = await page.$(\"a\");
 if (parseSetCssElem === null) { throw '\"a\" not found'; }
 await page.evaluate(e => {
-    e.style[\"\\\"b\"] = \"c\";
+    e.style[\"b\"] = \"\\\"c\";
 }, parseSetCssElem);""",
+]
+warnings = [
 ]

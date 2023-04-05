@@ -1,1 +1,1 @@
-error = """empty strings cannot be used as keys"""
+error = """only string and number types are allowed as value, found `{\"a\": \"x\"}` (a json)"""

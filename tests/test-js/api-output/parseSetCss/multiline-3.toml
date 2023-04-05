@@ -3,7 +3,7 @@ instructions = [
 if (parseSetCssElem.length === 0) { throw 'XPath \"//a\" not found'; }
 parseSetCssElem = parseSetCssElem[0];
 await page.evaluate(e => {
-    e.style[\"b\"] = \"c\";
+    e.style[\"b\"] = \"c\\n\";
 }, parseSetCssElem);""",
 ]
 warnings = [

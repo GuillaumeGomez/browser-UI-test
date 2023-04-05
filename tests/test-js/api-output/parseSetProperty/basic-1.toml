@@ -2,6 +2,8 @@ instructions = [
   """let parseSetPropertyElem = await page.$(\"a\");
 if (parseSetPropertyElem === null) { throw '\"a\" not found'; }
 await page.evaluate(e => {
-    e[\"b\"] = \"c\";
+    e[\"\\\"b\"] = \"c\";
 }, parseSetPropertyElem);""",
+]
+warnings = [
 ]

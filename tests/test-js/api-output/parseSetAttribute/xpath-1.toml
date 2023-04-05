@@ -1,1 +1,1 @@
-error = """XPath must start with `//`"""
+error = """expected a tuple of two elements, found 3"""
