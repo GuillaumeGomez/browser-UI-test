@@ -9,7 +9,7 @@ function parseExpectFailure(parser) {
     const elems = parser.elems;
     if (elems.length === 0) {
         return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'bool') {
+    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
         return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
     }
     return {
@@ -27,7 +27,7 @@ function parseShowText(parser) {
     const elems = parser.elems;
     if (elems.length === 0) {
         return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'bool') {
+    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
         return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
     }
     // We need the value to be updated first.
@@ -58,11 +58,11 @@ function parseScreenshotComparison(parser) {
     const elems = parser.elems;
     if (elems.length === 0) {
         return {'error': 'expected boolean or CSS selector or XPath, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'bool' && elems[0].kind !== 'string') {
+    } else if (elems.length !== 1 || elems[0].kind !== 'boolean' && elems[0].kind !== 'string') {
         return {
             'error': `expected boolean or CSS selector or XPath, found \`${parser.getRawArgs()}\``,
         };
-    } else if (elems[0].kind === 'bool') {
+    } else if (elems[0].kind === 'boolean') {
         return {
             'instructions': [
                 `arg.screenshotComparison = ${elems[0].getRaw()};`,
@@ -94,7 +94,7 @@ function parseDebug(parser) {
     const elems = parser.elems;
     if (elems.length === 0) {
         return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'bool') {
+    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
         return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
     }
     return {
@@ -116,7 +116,7 @@ function parseScreenshotOnFailure(parser) {
     const elems = parser.elems;
     if (elems.length === 0) {
         return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'bool') {
+    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
         return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
     }
     return {
@@ -134,7 +134,7 @@ function parsePauseOnError(parser) {
     const elems = parser.elems;
     if (elems.length === 0) {
         return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'bool') {
+    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
         return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
     }
     return {
@@ -181,7 +181,7 @@ function parseFailOnJsError(parser) {
     const elems = parser.elems;
     if (elems.length === 0) {
         return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'bool') {
+    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
         return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
     }
     const instructions = [
@@ -201,7 +201,7 @@ function parseFailOnRequestError(parser) {
     const elems = parser.elems;
     if (elems.length === 0) {
         return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'bool') {
+    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
         return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
     }
     const instructions = [

@@ -153,7 +153,7 @@ function parseJavascript(parser) {
 
     if (elems.length === 0) {
         return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'bool') {
+    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
         return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
     }
     return {

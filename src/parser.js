@@ -1,5 +1,7 @@
 const { getVariableValue, RESERVED_VARIABLE_NAME } = require('./utils.js');
 
+const SUPPORTED_OPERATORS = ['>', '>=', '<', '<=', '==', '!=', '+', '-', '/', '*', '%', '||', '&&'];
+
 function isWhiteSpace(c) {
     return c === ' ' || c === '\t' || c === '\r' || c === '\n';
 }
@@ -108,9 +110,13 @@ function getCssValue(value, text = '') {
 function isIdentChar(c, start, pos, specialChars = []) {
     return c === '_' ||
         isLetter(c) ||
-        specialChars.indexOf(c) !== -1 ||
+        specialChars.includes(c) ||
         // eslint-disable-next-line no-extra-parens
         (isNumber(c) && pos !== start);
+}
+
+function isExprChar(c) {
+    return '+-/*%=<>&|!'.includes(c);
 }
 
 function getSelector(value, text = '') {
@@ -129,18 +135,129 @@ function getSelector(value, text = '') {
     return css;
 }
 
-function isAdditionable(elem) {
-    return ['string', 'number', 'variable'].indexOf(elem.kind) !== -1;
+function isExpressionCompatible(elem) {
+    if (elem.kind === 'expression') {
+        return true;
+    }
+    return elem.kind === 'tuple' && elem.canBeExpression === true;
+}
+
+function concatExprAsString(elems) {
+    let out = '';
+    for (const elem of elems) {
+        if (elem.kind === 'operator') {
+            continue;
+        } else if (['number', 'string', 'boolean'].includes(elem.kind)) {
+            out += elem.value;
+        } else {
+            out += concatExprAsString(elem.value);
+        }
+    }
+    return out;
+}
+
+function concatExprAsExpr(elems) {
+    const out = [];
+    for (const elem of elems) {
+        if (['operator', 'number', 'boolean'].includes(elem.kind)) {
+            if (elem.originallyExpression) {
+                out.push(`(${elem.value})`);
+            } else {
+                out.push(elem.value);
+            }
+        } else if (['string', 'tuple', 'array', 'json'].includes(elem.kind)) {
+            out.push(elem.fullText);
+        } else {
+            // Should never happen normally since all sub-expressions should already have been
+            // replaced.
+            const sub = concatExprAsExpr(elem.value);
+            out.push(`(${sub})`);
+        }
+    }
+    return out.join(' ');
+}
+
+function canDoPlus(kind) {
+    return [null, 'expression', 'number', 'variable', 'string'].includes(kind);
+}
+
+function canDoMathOperation(kind) {
+    return [null, 'expression', 'number', 'variable'].includes(kind);
+}
+
+function isTypeCompatibleWith(kind, expected) {
+    if ([null, 'expression'].includes(kind)) {
+        // It means variables haven't been inferred so we can skip it.
+        return true;
+    }
+    if (expected === 'boolean') {
+        return 'boolean' === kind;
+    } else if (expected === 'number') {
+        return 'number' === kind;
+    } else if (expected === 'string') {
+        return ['number', 'string'].includes(kind);
+    }
+    return false;
+}
+
+function canBeCompared(kind1, kind2) {
+    if (kind1 === kind2) {
+        return true;
+    }
+    const ok = [null, 'expression'];
+    if (ok.includes(kind1) || ok.includes(kind2)) {
+        return true;
+    }
+    // It's the only case where different types can be compared.
+    const ok2 = ['number', 'string'];
+    return ok2.includes(kind1) && ok2.includes(kind2);
+}
+
+function convertAsString(elem) {
+    return new StringElement(
+        concatExprAsString(elem.value),
+        elem.startPos,
+        elem.endPos,
+        elem.fullText,
+        elem.line,
+        elem.error,
+    );
+}
+
+function convertExprAs(elem, convertAs) {
+    let constructor = null;
+    if (convertAs === 'boolean') {
+        constructor = IdentElement;
+    } else if (convertAs === 'number') {
+        constructor = NumberElement;
+    } else {
+        // Error!
+        return new UnknownElement(
+            elem.value,
+            elem.startPos,
+            elem.endPos,
+            elem.fullText,
+            elem.line,
+            `unknown \`${convertAs}\` kind`,
+        );
+    }
+    const value = concatExprAsExpr(elem.value);
+    const ret = new constructor(value, elem.startPos, elem.endPos, elem.line);
+    ret.kind = convertAs;
+    ret.fullText = elem.fullText;
+    ret.originallyExpression = true;
+    return ret;
 }
 
 class Element {
-    constructor(kind, value, startPos, endPos, line, error = null) {
+    constructor(kind, value, startPos, endPos, fullText, line, error = null) {
         this.kind = kind;
         this.value = value;
         this.startPos = startPos;
         this.endPos = endPos;
         this.error = error;
         this.line = line;
+        this.fullText = fullText;
         if (typeof line !== 'number') {
             throw new Error(
                 `Element constructed with a line which is not a number but \`${typeof line}\``);
@@ -178,7 +295,7 @@ class Element {
 
     // Mostly there for debug, limit its usage as much as possible!
     getErrorText() {
-        return this.value;
+        return this.fullText;
     }
 
     // Used for error messages.
@@ -186,7 +303,8 @@ class Element {
         if (this.kind === 'unknown') {
             return 'an unknown item';
         }
-        return (['array', 'ident'].indexOf(this.kind) !== -1 ? 'an ' : 'a ') + this.kind;
+        const contains = ['array', 'expression', 'ident', 'operator'].includes(this.kind);
+        return (contains ? 'an ' : 'a ') + this.kind;
     }
 
     displayInCode() {
@@ -196,26 +314,52 @@ class Element {
     isReservedVariableName() {
         return this.kind === 'ident' && this.value === RESERVED_VARIABLE_NAME;
     }
+
+    isComparison() {
+        return this.kind === 'operator' && ['<', '<=', '>', '>=', '==', '!='].includes(this.value);
+    }
+
+    isEqualityComparison() {
+        return this.kind === 'operator' && ['==', '!='].includes(this.value);
+    }
+
+    isConditionalOperator() {
+        return this.kind === 'operator' && ['&&', '||'].includes(this.value);
+    }
+
+    isMathOperation() {
+        return this.kind === 'operator' && ['+', '-', '/', '*', '%'].includes(this.value);
+    }
+
 }
 
 class CharElement extends Element {
     constructor(value, startPos, line, error = null) {
-        super('char', value, startPos, startPos, line, error);
+        super('char', value, startPos, startPos, value, line, error);
+    }
+}
+
+class OperatorElement extends Element {
+    constructor(value, startPos, endPos, line, error = null) {
+        super('operator', value, startPos, endPos, value, line, error);
+    }
+}
+
+class ExpressionElement extends Element {
+    constructor(value, startPos, endPos, fullText, line, error = null) {
+        super('expression', value, startPos, endPos, fullText, line, error);
     }
 }
 
 class TupleElement extends Element {
-    constructor(value, startPos, endPos, fullText, line, error = null) {
-        super('tuple', value, startPos, endPos, line, error);
-        this.fullText = fullText;
+    constructor(value, startPos, endPos, fullText, line, foundSeparator, error = null) {
+        super('tuple', value, startPos, endPos, fullText, line, error);
+        this.foundSeparator = foundSeparator;
+        this.canBeExpression = this.value.length === 1 && this.foundSeparator === 0;
     }
 
     isRecursive() {
         return true;
-    }
-
-    getErrorText() {
-        return this.fullText;
     }
 
     displayInCode() {
@@ -224,17 +368,13 @@ class TupleElement extends Element {
 }
 
 class ArrayElement extends Element {
-    constructor(value, startPos, endPos, fullText, line, error = null) {
-        super('array', value, startPos, endPos, line, error);
-        this.fullText = fullText;
+    constructor(value, startPos, endPos, fullText, line, foundSeparator, error = null) {
+        super('array', value, startPos, endPos, fullText, line, error);
+        this.foundSeparator = foundSeparator;
     }
 
     isRecursive() {
         return true;
-    }
-
-    getErrorText() {
-        return this.fullText;
     }
 
     displayInCode() {
@@ -244,12 +384,7 @@ class ArrayElement extends Element {
 
 class StringElement extends Element {
     constructor(value, startPos, endPos, fullText, line, error = null) {
-        super('string', value, startPos, endPos, line, error);
-        this.fullText = fullText;
-    }
-
-    getErrorText() {
-        return this.fullText;
+        super('string', value, startPos, endPos, fullText, line, error);
     }
 
     displayInCode() {
@@ -259,32 +394,27 @@ class StringElement extends Element {
 
 class IdentElement extends Element {
     constructor(value, startPos, endPos, line, error = null) {
-        const kind = value === 'true' || value === 'false' ? 'bool' : 'ident';
-        super(kind, value, startPos, endPos, line, error);
+        const kind = value === 'true' || value === 'false' ? 'boolean' : 'ident';
+        super(kind, value, startPos, endPos, value, line, error);
     }
 }
 
 class NumberElement extends Element {
     constructor(value, startPos, endPos, line, error = null) {
-        super('number', value, startPos, endPos, line, error);
+        super('number', value, startPos, endPos, value, line, error);
         value = String(value);
-        this.isFloat = value.indexOf('.') !== -1;
+        this.isFloat = value.includes('.');
         this.isNegative = value.startsWith('-');
     }
 }
 
 class JsonElement extends Element {
     constructor(value, startPos, endPos, fullText, line, error = null) {
-        super('json', value, startPos, endPos, line, error);
-        this.fullText = fullText;
+        super('json', value, startPos, endPos, fullText, line, error);
     }
 
     isRecursive() {
         return true;
-    }
-
-    getErrorText() {
-        return this.fullText;
     }
 
     displayInCode() {
@@ -297,24 +427,26 @@ class JsonElement extends Element {
 
 class UnknownElement extends Element {
     constructor(value, startPos, endPos, line, error = null) {
-        super('unknown', value, startPos, endPos, line, error);
+        super('unknown', value, startPos, endPos, value, line, error);
     }
 }
 
 class VariableElement extends Element {
     constructor(value, startPos, endPos, line, error = null) {
-        super('variable', value, startPos, endPos, line, error);
+        super('variable', value, startPos, endPos, value, line, error);
     }
 }
 
 class BlockElement extends Element {
     constructor(startPos, endPos, line, parser, error = null) {
         if (error !== null) {
+            const fullText = parser.text.slice(startPos, parser.pos);
             super(
                 'block',
-                parser.text.slice(startPos, parser.pos),
+                fullText,
                 startPos,
                 parser.pos,
+                fullText,
                 line,
                 error,
             );
@@ -324,11 +456,13 @@ class BlockElement extends Element {
         let c = parser.getCurrentChar();
         if (c !== '{') {
             const kind = c === null ? 'nothing' : `\`${c}\``;
+            const fullText = parser.text.slice(startPos, parser.pos);
             super(
                 'block',
-                parser.text.slice(startPos, parser.pos),
+                fullText,
                 startPos,
                 parser.pos,
+                fullText,
                 line,
                 `Expected \`{\` after \`block\` keyword, found ${kind}`,
             );
@@ -364,8 +498,9 @@ class BlockElement extends Element {
         parser.elems = elems;
         parser.command = command;
 
+        const fullText = parser.text.slice(startPos, parser.pos + 1);
         super(
-            'block', parser.text.slice(startPos, parser.pos + 1), startPos, parser.pos, line, error,
+            'block', fullText, startPos, parser.pos, fullText, line, error,
         );
         this.blockCode = parser.text.slice(blockStart, parser.pos);
         this.blockLine = blockLine;
@@ -463,6 +598,23 @@ class Parser {
         }
     }
 
+    isCommentStart() {
+        if (this.pos + 1 < this.text.length) {
+            const c1 = this.text.charAt(this.pos);
+            const c2 = this.text.charAt(this.pos + 1);
+            return c1 === c2 && c1 === '/';
+        }
+        return false;
+    }
+
+    isVariableStart(c) {
+        if (this.pos + 1 < this.text.length) {
+            const c2 = this.text.charAt(this.pos + 1);
+            return c === '|' && isIdentChar(c2);
+        }
+        return false;
+    }
+
     extractNextCommandName() {
         let command = null;
 
@@ -473,7 +625,7 @@ class Parser {
             }
             const tmp = [];
 
-            if (c === '/') {
+            if (this.isCommentStart()) {
                 this.parseComment(tmp);
                 if (tmp.length !== 0) {
                     this.setError('Unexpected `/` when parsing command');
@@ -547,8 +699,26 @@ class Parser {
         }
     }
 
+    decreasePos() {
+        if (this.pos < 1) {
+            return;
+        }
+        this.pos -= 1;
+        if (this.getCurrentChar() === '\n') {
+            this.currentLine -= 1;
+        }
+    }
+
     getElems(pushTo = null) {
         return pushTo !== null ? pushTo : this.elems;
+    }
+
+    getLastElem(pushTo = null) {
+        const elems = this.getElems(pushTo);
+        if (elems.length === 0) {
+            return null;
+        }
+        return elems[elems.length - 1];
     }
 
     parse(endChars = ['\n'], pushTo = null, separator = null, extra = '') {
@@ -557,12 +727,12 @@ class Parser {
         }
         let prev = '';
         let endChar = null;
-        let foundPlus = false;
-        const skipBackline = endChars.indexOf('\n') === -1;
+        let foundSeparator = 0;
+        const skipBackline = !endChars.includes('\n');
 
         const checker = (t, c, toCall) => {
             const elems = t.getElems(pushTo);
-            if (elems.length > 0 && !foundPlus && prev !== separator) {
+            if (elems.length > 0 && prev !== separator) {
                 let msg;
 
                 if (separator === null) {
@@ -588,7 +758,6 @@ class Parser {
             } else {
                 t[toCall](pushTo);
                 prev = '';
-                foundPlus = false;
             }
         };
 
@@ -598,21 +767,9 @@ class Parser {
                 break;
             }
 
-            if (endChars.indexOf(c) !== -1) {
+            if (endChars.includes(c)) {
                 endChar = c;
-                if (foundPlus) {
-                    if (c === '\n') {
-                        // we ignore it and continue.
-                    } else {
-                        const elems = this.getElems(pushTo);
-                        elems[elems.length - 1].error = 'Missing element after `+` token';
-                        this.setError(elems[elems.length - 1].error);
-                        break;
-                    }
-                } else {
-                    // No special case to handle!
-                    break;
-                }
+                break;
             } else if (isStringChar(c)) {
                 checker(this, c, 'parseString');
             } else if (c === '{') {
@@ -620,6 +777,7 @@ class Parser {
             } else if (isWhiteSpace(c)) {
                 // do nothing
             } else if (c === separator) {
+                foundSeparator += 1;
                 const elems = this.getElems(pushTo);
                 if (elems.length === 0) {
                     this.push(new CharElement(separator, this.pos, this.currentLine,
@@ -644,22 +802,30 @@ class Parser {
                 checker(this, c, 'parseTuple');
             } else if (c === '[') {
                 checker(this, c, 'parseArray');
-            } else if (c === '/') {
+            } else if (this.isCommentStart()) {
                 this.parseComment(pushTo);
                 // We want to keep the backline in case this is the end char.
                 continue;
-            } else if (c === '|') {
+            } else if (this.isVariableStart(c)) {
                 checker(this, c, 'parseVariable');
-            } else if (c === '+' && this.getElems(pushTo).length !== 0) {
-                if (!foundPlus) {
-                    this.push(new CharElement(c, this.pos, this.currentLine), pushTo);
-                    foundPlus = true;
-                } else {
-                    const elems = this.getElems(pushTo);
-                    const el = elems[elems.length - 1];
-                    el.error = 'unexpected `+` after `+`';
-                    this.setError(el.error);
+            } else if (isExprChar(c) &&
+                this.getElems(pushTo).length !== 0 &&
+                this.parseOperator(pushTo)
+            ) {
+                // Moving paste the operator.
+                this.increasePos();
+                let enders = endChars;
+                if (separator !== null && !endChars.includes(separator)) {
+                    enders = endChars.concat([separator]);
                 }
+                const elems = this.getElems(pushTo);
+                // We remove the two last elements from the current array to pass them
+                // to `parseExpression`.
+                const expr = this.getElems(pushTo).splice(elems.length - 2, 2);
+                this.parseExpression(expr, enders, pushTo);
+                prev = '';
+                // Don't increment position.
+                continue;
             } else {
                 checker(this, c, 'parseIdent');
                 const elems = this.getElems(pushTo);
@@ -682,77 +848,401 @@ class Parser {
             this.argsEnd = this.pos;
         }
         if (this.error === null) {
-            this.handleExpressions(this.getElems(pushTo));
+            this.handleExpressions(this.getElems(pushTo), false);
         }
-        return [prev, endChar];
+        return [prev, endChar, foundSeparator];
     }
 
-    handleExpressions(elems) {
-        for (let i = elems.length - 1; i > 0; --i) {
-            if (elems[i].kind !== 'char' || elems[i].value !== '+') {
-                continue;
-            }
-            if (i + 1 >= elems.length) {
-                elems[i].error = '`+` token should be followed by something';
-                this.setError(elems[i].error);
-                return;
-            }
-            if (!isAdditionable(elems[i + 1])) {
-                elems[i + 1].error = `${elems[i + 1].getArticleKind()} (\`\
-${elems[i + 1].getErrorText()}\`) cannot be used after a \`+\` token`;
-                this.setError(elems[i + 1].error);
-                return;
-            }
+    parseExpression(elems, endChars, pushTo = null) {
+        const startLine = elems.length !== 0 ? elems[0].line : this.currentLine;
+        const start = elems.length !== 0 ? elems[0].startPos : this.pos;
 
-            let subs = [elems[i + 1]];
-            let last = i;
-            for (; i > 0; i -= 2) {
-                if (elems[i].kind !== 'char' || elems[i].value !== '+') {
-                    break;
-                }
-                if (!isAdditionable(elems[i - 1])) {
-                    elems[i - 1].error = `${elems[i - 1].getArticleKind()} (\`\
-${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
-                    this.setError(elems[i - 1].error);
+        const errorFunc = elem => {
+            let error;
+            if (elems.length > 0) {
+                error = `unexpected ${elem} after \`${elems[elems.length - 1].getErrorText()}\``;
+            } else if (this.getLastElem(pushTo) !== null || this.getLastElem() !== null) {
+                const last = this.getLastElem(pushTo) || this.getLastElem();
+                error = `unexpected ${elem} after \`${last.getErrorText()}\``;
+            } else {
+                error = `unexpected ${elem} as first token`;
+            }
+            this.push(
+                new ExpressionElement(
+                    elems,
+                    start,
+                    this.pos,
+                    this.text.substring(start, this.pos + 1),
+                    startLine,
+                    error,
+                ),
+                pushTo,
+            );
+        };
+
+        while (this.error === null) {
+            const c = this.getCurrentChar();
+
+            if (c === null || endChars.includes(c)) {
+                let stop = true;
+                if (c === '\n') {
+                    const last = this.getLastElem(elems);
+                    if (last !== null && last.kind === 'operator') {
+                        // In this case, we don't stop!
+                        stop = false;
+                    }
+                } else if (c === null && endChars.includes(')')) {
+                    this.push(
+                        new ExpressionElement(
+                            elems,
+                            start,
+                            this.pos,
+                            this.text.substring(start, this.pos + 1),
+                            startLine,
+                            `missing \`)\` at the end of the expression started line ${startLine}`,
+                        ),
+                        pushTo,
+                    );
                     return;
                 }
-                subs.push(elems[i - 1]);
-                last = i;
-            }
-
-            subs = subs.reverse();
-            if (subs.some(e => e.kind === 'string')) {
-                // At least one element is a string so all of them are treated as a string.
-                const full = [];
-                let value = '';
-
-                for (const elem of subs) {
-                    if (elem.kind === 'string') {
-                        full.push(elem.getErrorText());
-                    } else {
-                        full.push(`"${elem.value}"`);
-                    }
-                    value += elem.value;
+                if (stop) {
+                    break;
                 }
-                elems[i + 1] = new StringElement(
-                    value,
-                    subs[0].startPos,
-                    subs[subs.length - 1].endPos,
-                    full.join(' + '),
-                    subs[0].line,
-                );
+            } else if (isStringChar(c)) {
+                this.parseString(elems);
+            } else if (isWhiteSpace(c)) {
+                // Do nothing.
+            } else if (this.isCommentStart()) {
+                this.parseComment(elems);
+                // We want to keep the backline in case this is the end char.
+                continue;
+            } else if (this.isVariableStart(c)) {
+                this.parseVariable(elems);
+            // We need to check this before numbers in case of negative numbers.
+            } else if (isExprChar(c) &&
+                (c !== '-' || elems.length > 0) &&
+                this.parseOperator(elems)
+            ) {
+                // Already done in the method.
+            } else if (isNumber(c)) {
+                this.parseNumber(elems);
+            } else if (c === '(') {
+                // Sub-expression.
+                this.increasePos();
+                this.parseExpression([], [')'], elems);
+            } else if (isLetter(c)) {
+                this.parseIdent(elems);
+                const last = elems[elems.length - 1];
+                if (last.kind !== 'boolean') {
+                    errorFunc(`\`${last.getErrorText()}\` (${last.getArticleKind()}`);
+                    return;
+                }
+            // FIXME: Add support for array and JSON dicts in comparisons?
+            // } else if (c === '[') {
+            //     this.parseArray(elems);
+            // } else if (c === '{') {
+            //     this.parseJson(elems);
             } else {
-                // All elements are numbers so treating as a number.
-                elems[i + 1] = new NumberElement(
-                    subs.map(e => e.value).join(' + '),
-                    subs[0].startPos,
-                    subs[subs.length - 1].endPos,
-                    subs[0].line,
-                );
+                errorFunc(showChar(c));
+                return;
             }
-            // We remove the two elements that are not needed anymore.
-            elems.splice(last, subs.length * 2 - 2);
+            this.increasePos();
         }
+        this.push(
+            new ExpressionElement(
+                elems,
+                start,
+                this.pos,
+                this.text.substring(start, this.pos),
+                startLine,
+            ),
+            pushTo,
+        );
+        if (this.error !== null) {
+            return;
+        }
+
+        // Checking all potential errors now.
+        if (elems.length === 0) {
+            const last = this.getLastElem(pushTo);
+            last.error = 'empty expressions (`()`) are not allowed';
+            this.setError(last.error);
+            return;
+        }
+
+        if (elems[0].kind === 'operator') {
+            elems[0].error = `unexpected operator \`${elems[0].getErrorText()}\``;
+            this.setError(elems[0].error);
+            return;
+        }
+
+        let prev = null;
+        let prevElem = null;
+        // First we check that all elements are separated by one operator.
+        for (const el of elems) {
+            if (el.kind === prev) {
+                if (prev === 'operator') {
+                    el.error = `expected element after operator \`${prevElem.getErrorText()}\`, \
+found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
+                } else {
+                    el.error = `expected operator after ${prevElem.kind} \
+\`${prevElem.getErrorText()}\`, found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
+                }
+                this.setError(el.error);
+                return;
+            }
+            prev = el.kind === 'operator' ? 'operator' : 'element';
+            prevElem = el;
+        }
+        // Then we check that the last element is not an operator.
+        const last = elems[elems.length - 1];
+        if (last.kind === 'operator') {
+            last.error = `missing element after operator \`${last.getErrorText()}\``;
+            this.setError(last.error);
+            return;
+        }
+    }
+
+    parseOperator(pushTo = null) {
+        const start = this.pos;
+        const startLine = this.currentLine;
+
+        while (this.error === null) {
+            const c = this.getCurrentChar();
+            if (c === null || !isExprChar(c)) {
+                const op = this.text.substring(start, this.pos);
+                if (SUPPORTED_OPERATORS.includes(op)) {
+                    this.push(new OperatorElement(op, start, this.pos, startLine), pushTo);
+                    this.decreasePos(); // Going back to last operator character.
+                    return true;
+                }
+                if (op.length < 2) {
+                    // Very likely a `|` or `&`... In this case, we reset and don't create an
+                    // error (at least not here).
+                    while (this.pos > start) {
+                        this.decreasePos();
+                    }
+                } else {
+                    this.push(
+                        new OperatorElement(
+                            op, start, this.pos, startLine, `unknown operator \`${op}\``,
+                        ),
+                        pushTo,
+                    );
+                }
+                return false;
+            }
+            this.increasePos();
+        }
+    }
+
+    handleExpressions(elems, handleTuples) {
+        for (let i = 0, len = elems.length; i < len && this.error === null; ++i) {
+            const elem = elems[i];
+            if (elem.kind !== 'expression' && (!handleTuples || !isExpressionCompatible(elem))) {
+                continue;
+            }
+            const ret = this.handleExpression(elem);
+            if (ret !== null) {
+                elems[i] = ret;
+            }
+        }
+    }
+
+    handleExpression(expr) {
+        const elems = expr.value;
+        // First, we check all sub-expressions.
+        this.handleExpressions(elems, true);
+        if (this.error !== null) {
+            return null;
+        }
+
+        const isExpectingBool = elems.some(e => e.isComparison() || e.isConditionalOperator());
+
+        if (isExpectingBool) {
+            const convertAs = this.checkExprConditions(expr);
+            if (convertAs === null || !this.inferVariablesValue) {
+                return null;
+            }
+            return convertExprAs(expr, convertAs);
+        }
+
+        // No condition or comparison so straight-forward check.
+        const evaluatedType = this.checkExprOperations(expr.value);
+        if (evaluatedType === null) {
+            return null;
+        }
+
+        if (!this.inferVariablesValue) {
+            return null;
+        }
+
+        if (['number', 'boolean'].includes(evaluatedType)) {
+            return convertExprAs(expr, evaluatedType);
+        }
+        // Creating the string.
+        return convertAsString(expr);
+    }
+
+    // In this case, there is no conditional nor comparison operators so the check is only for
+    // mathematic operators.
+    checkExprOperations(elems) {
+        let currentType = null;
+        let prevOperator = null;
+        for (const elem of elems) {
+            if (elem.kind === 'operator') {
+                // eslint-disable-next-line no-extra-parens
+                if ((elem.value !== '+' && !canDoMathOperation(currentType)) ||
+                // eslint-disable-next-line no-extra-parens
+                    (elem.value === '+' && !canDoPlus(currentType))
+                ) {
+                    elem.error = `\`${elem.value}\` is not supported for ${currentType} \
+elements (in \`${this.elemsText(elems)}\`)`;
+                    this.setError(elem.error);
+                    return null;
+                }
+                prevOperator = elem;
+            } else if (prevOperator !== null &&
+                // eslint-disable-next-line no-extra-parens
+                ((prevOperator.value !== '+' && !canDoMathOperation(elem.kind)) ||
+                // eslint-disable-next-line no-extra-parens
+                 (prevOperator.value === '+' && !canDoPlus(elem.kind)))
+            ) {
+                elem.error = `\`${prevOperator.value}\` is not supported for ${elem.kind} \
+elements (in \`${this.elemsText(elems)}\`)`;
+                this.setError(elem.error);
+                return null;
+            } else if (currentType === null) {
+                currentType = ['variable', 'expression'].includes(elem.kind) ? null : elem.kind;
+            } else if (elem.kind !== currentType && currentType !== 'string') {
+                if (elem.kind === 'string' || elem.kind === 'number') {
+                    currentType = elem.kind;
+                }
+            }
+        }
+        return currentType;
+    }
+
+    checkExprConditions(expr) {
+        // Each "segment" of the expression, separated by "condition operators" (such as "&&" and
+        // "||") needs to return a boolean. Also, there should be only one comparison operator
+        // per segment.
+        //
+        // So first, we split by operators.
+        const segments = [];
+        let current = null;
+        for (const elem of expr.value) {
+            if (!elem.isConditionalOperator()) {
+                if (current === null) {
+                    segments.push({elems: [], endOperator: null});
+                    current = segments[segments.length - 1];
+                }
+                current.elems.push(elem);
+            } else {
+                if (current === null) {
+                    // Should never happen but just in case...
+                    elem.error = `unexpected operator \`${elem.value}\``;
+                    this.setError(elem.error);
+                    return null;
+                }
+                current.endOperator = elem.value;
+                current = null;
+            }
+        }
+        // Now we go through all segments.
+        for (const segment of segments) {
+            // We split the segment by comparison operators so we can easily check that right and
+            // left parts have the expected types.
+            const right = [];
+            const left = [];
+            let comparisonOperator = null;
+            current = right;
+            for (const elem of segment.elems) {
+                if (elem.isComparison()) {
+                    if (comparisonOperator !== null) {
+                        elem.error = `unexpected \`${elem.value}\` operator when there is already \
+\`${comparisonOperator.value}\` (in \`${this.segmentText(segment)}\`)`;
+                        this.setError(elem.error);
+                        return null;
+                    }
+                    comparisonOperator = elem;
+                    current = left;
+                } else {
+                    current.push(elem);
+                }
+            }
+            if (comparisonOperator === null) {
+                if (right.length === 0) {
+                    // should never happen but just in case...
+                    expr.error = `expected something before \`${segment.endOperator}\``;
+                    this.setError(expr.error);
+                    return null;
+                }
+                const evaluatedType = this.checkExprOperations(right);
+                if (this.error !== null) {
+                    return null;
+                }
+                if (!isTypeCompatibleWith(evaluatedType, 'boolean')) {
+                    expr.error = `expected expression \`${this.segmentText(segment)}\` to be \
+evaluated as boolean, instead it was evaluated as ${evaluatedType} (in \
+\`${this.elemsText(expr.value)}\`)`;
+                    this.setError(expr.error);
+                    return null;
+                }
+            } else {
+                const evaluatedType1 = this.checkExprOperations(right);
+                if (this.error !== null) {
+                    return null;
+                }
+                const evaluatedType2 = this.checkExprOperations(left);
+                if (this.error !== null) {
+                    return null;
+                }
+                // Now checking both parts of the comparison operator.
+                // If it's not `==` or `!=`, it needs to be a number.
+                if (!comparisonOperator.isEqualityComparison()) {
+                    let errPart = null;
+                    let evalError = null;
+                    if (!isTypeCompatibleWith(evaluatedType1, 'number')) {
+                        errPart = right;
+                        evalError = evaluatedType1;
+                    } else if (!isTypeCompatibleWith(evaluatedType2, 'number')) {
+                        errPart = left;
+                        evalError = evaluatedType2;
+                    }
+                    if (errPart !== null) {
+                        expr.error = `\`${comparisonOperator.value}\` is only supported for number \
+elements, \`${this.elemsText(errPart)}\` (in \`${this.segmentText(segment)}\`) was evaluated as \
+${evalError}`;
+                        this.setError(expr.error);
+                        return null;
+                    }
+                } else {
+                    // Otherwise rules are a bit different, not everything can be compared to
+                    // everything.
+                    if (!canBeCompared(evaluatedType1, evaluatedType2)) {
+                        expr.error = `\`${comparisonOperator.value}\` cannot be used to compare \
+${evaluatedType1} (\`${this.elemsText(right)}\`) and ${evaluatedType2} (\
+\`${this.elemsText(left)}\`) elements`;
+                        this.setError(expr.error);
+                        return null;
+                    }
+                }
+            }
+        }
+        if (!this.inferVariablesValue) {
+            return null;
+        }
+        return 'boolean';
+    }
+
+    segmentText(segment) {
+        return this.elemsText(segment.elems);
+    }
+
+    elemsText(elems) {
+        const last = elems[elems.length - 1];
+        return this.text.substring(elems[0].startPos, last.endPos);
     }
 
     parseComment(pushTo = null) {
@@ -772,7 +1262,7 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
         const startLine = this.currentLine;
 
         this.increasePos();
-        const [prev, ender] = this.parse([endChar], elems, ',');
+        const [prev, ender, foundSeparator] = this.parse([endChar], elems, ',');
         const full = this.text.substring(start, this.pos + 1);
         if (elems.length > 0 && elems[elems.length - 1].error !== null) {
             this.push(
@@ -782,6 +1272,7 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
                     this.pos + 1,
                     full,
                     this.currentLine,
+                    foundSeparator,
                     elems[elems.length - 1].error,
                 ),
                 pushTo,
@@ -789,7 +1280,7 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
         } else if (this.pos >= this.text.length || ender !== endChar) {
             if (elems.length === 0) {
                 this.push(
-                    new constructor(elems, start, this.pos, full, startLine,
+                    new constructor(elems, start, this.pos, full, startLine, foundSeparator,
                         `expected ${showChar(endChar)} at the end`),
                     pushTo);
             } else {
@@ -803,12 +1294,15 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
                         `\`${elems[elems.length - 1].getErrorText()}\``;
                 }
                 this.push(
-                    new constructor(elems, start, this.pos, full, startLine, err),
+                    new constructor(elems, start, this.pos, full, startLine, foundSeparator, err),
                     pushTo,
                 );
             }
         } else {
-            this.push(new constructor(elems, start, this.pos + 1, full, startLine), pushTo);
+            this.push(
+                new constructor(elems, start, this.pos + 1, full, startLine, foundSeparator),
+                pushTo,
+            );
         }
     }
 
@@ -880,14 +1374,15 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
                 new UnknownElement(this.text.charAt(start), start, this.pos, this.currentLine),
                 pushTo,
             );
-            return;
+            return false;
         }
         if (ident === 'block') {
             this.push(new BlockElement(start, this.pos, this.currentLine, this), pushTo);
         } else {
             this.push(new IdentElement(ident, start, this.pos, this.currentLine), pushTo);
-            this.pos -= 1; // Need to go back to last "good" letter.
+            this.decreasePos(); // Need to go back to last "good" letter.
         }
+        return true;
     }
 
     parseVariable(pushTo = null) {
@@ -918,8 +1413,15 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
                 if (associatedValue instanceof Element) {
                     // Nothing to be done in here.
                     this.push(associatedValue, pushTo);
-                } else if (['number', 'string'].indexOf(typeof associatedValue) !== -1) {
-                    if (typeof associatedValue === 'number' ||
+                } else if (['number', 'string', 'boolean'].includes(typeof associatedValue)) {
+                    if (typeof associatedValue === 'boolean') {
+                        this.push(
+                            new IdentElement(
+                                associatedValue.toString(), start, this.pos, this.currentLine,
+                            ),
+                            pushTo,
+                        );
+                    } else if (typeof associatedValue === 'number' ||
                         // eslint-disable-next-line no-extra-parens
                         (!this.forceVariableAsString && matchInteger(associatedValue) === true)) {
                         this.push(
@@ -991,7 +1493,7 @@ ${elems[i - 1].getErrorText()}\`) cannot be used before a \`+\` token`;
             } else if (isNumber(c) === false) {
                 const nb = this.text.substring(start, this.pos);
                 this.push(new NumberElement(nb, start, this.pos, this.currentLine), pushTo);
-                this.pos -= 1;
+                this.decreasePos();
                 return;
             }
             this.increasePos();
