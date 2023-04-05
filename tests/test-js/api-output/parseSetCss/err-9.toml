@@ -1,1 +1,1 @@
-error = """expected json as second argument (since there are only two arguments), found a string"""
+error = """expected a tuple of two elements, found 4"""

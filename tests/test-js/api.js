@@ -455,14 +455,16 @@ function checkAttributeProperty(x, func) {
     func('("x", {"a": ["a"]})', 'err-11');
     func('("x", {"a": a})', 'err-12');
     func('("x", "a", a)', 'err-13');
+    func('("a", "b", "c")', 'err-14');
+    func('("a", {"b": null}', 'err-15');
+    func('("a", {"b": id})', 'err-16');
 
-    func('("a", "b", "c")', 'basic-1');
-    func('("a", "\\"b", "c")', 'basic-2');
+    func('("a", {"\\"b": "c"})', 'basic-1');
+    func('("a", {"b": "\\"c"})', 'basic-2');
     func('("a", {"b": "c"})', 'basic-3');
     func('("a", {"b": "c", "d": "e"})', 'basic-4');
     func('("a", {"b": null})', 'basic-5');
     func('("a", {"b": null, "a": "b"})', 'basic-6');
-    func('("a", "b", null)', 'basic-7');
 
     // XPath
     func('("/a", "b", "c")', 'xpath-1');
@@ -470,12 +472,11 @@ function checkAttributeProperty(x, func) {
     func('("//a", {"b": "c"})', 'xpath-3');
 
     // Multiline
-    func('("a", \n""\n, "c")', 'multiline-1');
-    func('("a"\n,\n "b\n"\n)', 'multiline-2');
-    func('("//a"\n,\n {"b":\n "c"})', 'multiline-3');
+    func('("a", \n{""\n: "c"})', 'multiline-1');
+    func('("//a"\n,\n {"b":\n "c"})', 'multiline-2');
 
     // Multiline string.
-    func('("//a", {"b": "c\n"})', 'multiline-4');
+    func('("//a", {"b": "c\n"})', 'multiline-3');
 }
 
 function checkClick(x, func) {
@@ -741,37 +742,6 @@ function checkCompareElementsText(x, func) {
     // Multiline
     func('("a"\n,\n "b", 1)', 'multiline-1');
     func('("a"\n, \n"b")', 'multiline-2');
-}
-
-function checkCss(x, func) {
-    func('"', 'err-1');
-    func('("a", "b"', 'err-2');
-    func('("a")', 'err-3');
-    func('("a", )', 'err-4');
-    func('("a", "b", )', 'err-5');
-    func('("a", "b" "c")', 'err-6');
-    func('("a", )', 'err-7');
-    func('("a", "b" "c")', 'err-8');
-    func('("a", "b")', 'err-9');
-    func('("a", "", "c")', 'err-10');
-    func('("x", {"a": {"a": "x"}})', 'err-11');
-    func('("x", {"a": a})', 'err-12');
-    func('("x", {"a": null})', 'err-13');
-    func('("x", "a", a)', 'err-14');
-
-    func('("a", "b", "c")', 'basic-1');
-    func('("a", "\\"b", "c")', 'basic-2');
-    func('("a", {"b": "c"})', 'basic-3');
-    func('("a", {"b": "c", "d": "e"})', 'basic-4');
-
-    // XPath
-    func('("/a", "b", "c")', 'xpath-1');
-    func('("//a", "b", "c")', 'xpath-2');
-    func('("//a", {"b": "c"})', 'xpath-3');
-
-    // Multiline
-    func('("a", \n""\n, "c")', 'multiline-1');
-    func('("a", \n"b", \n"c")', 'multiline-2');
 }
 
 function checkDebug(x, func) {
@@ -2099,7 +2069,7 @@ const TO_CHECK = [
     },
     {
         'name': 'set-css',
-        'func': checkCss,
+        'func': checkAttributeProperty,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetCss, x, e, name, o),
     },
     {

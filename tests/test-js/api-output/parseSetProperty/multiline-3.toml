@@ -3,7 +3,7 @@ instructions = [
 if (parseSetPropertyElem.length === 0) { throw 'XPath \"//a\" not found'; }
 parseSetPropertyElem = parseSetPropertyElem[0];
 await page.evaluate(e => {
-    e[\"b\"] = \"c\";
+    e[\"b\"] = \"c\\n\";
 }, parseSetPropertyElem);""",
 ]
 warnings = [

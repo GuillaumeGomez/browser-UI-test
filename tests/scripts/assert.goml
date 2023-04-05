@@ -2,7 +2,7 @@ go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
 assert: ("#button")
 assert: "#button" // strictly equivalent to the previous line
  	assert-text  : ("#button", "Go somewhere else!")
-set-css: (".content", "display", "none")
+set-css: (".content", {"display": "none"})
 assert-count: ("div", 1)
 assert-css: ("#button", {"padding": "5px"})
 assert-attribute: ("#button", {"href": "./other_page.html"})

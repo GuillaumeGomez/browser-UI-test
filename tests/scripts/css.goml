@@ -1,5 +1,5 @@
 screenshot-comparison: true
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
 assert-css: ("#button", {"border-radius": "5px"})
-set-css: ("#button", "border-radius", "50%")
+set-css: ("#button", {"border-radius": "50%"})
 assert-css: ("#button", {"border-radius": "50%"})

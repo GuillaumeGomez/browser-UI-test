@@ -11,10 +11,10 @@ expect-failure: true
 assert-text-false: ("//*[@id='the-input']", "hello", ALL)
 expect-failure: false
 assert-text-false: ("//*[@id='the-input']", "ai", ALL)
-set-attribute: ("//div[@class='content']", "an-attribute", "hello")
+set-attribute: ("//div[@class='content']", {"an-attribute": "hello"})
 assert-attribute: ("//div[@class='content']", {"an-attribute": "hello"})
 assert-css: ("//*[@id='button']", {"border-radius": "5px"})
-set-css: ("//*[@id='button']", "border-radius", "50%")
+set-css: ("//*[@id='button']", {"border-radius": "50%"})
 assert-css: ("//*[@id='button']", {"border-radius": "50%"})
 assert-text-false: ("//*[@id='button']", "new text")
 set-text: ("//*[@id='button']", "new text")

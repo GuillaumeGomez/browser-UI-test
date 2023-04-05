@@ -1,8 +1,1 @@
-instructions = [
-  """let parseSetCssElem = await page.$x(\"//a\");
-if (parseSetCssElem.length === 0) { throw 'XPath \"//a\" not found'; }
-parseSetCssElem = parseSetCssElem[0];
-await page.evaluate(e => {
-    e.style[\"b\"] = \"c\";
-}, parseSetCssElem);""",
-]
+error = """expected a tuple of two elements, found 3"""

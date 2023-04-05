@@ -1281,6 +1281,11 @@ scroll-to: (10, 12)
 set-attribute: ("#button", "attribute-name", "attribute-value")
 // Same but with a XPath:
 set-attribute: ("//*[@id='button']", "attribute-name", "attribute-value")
+
+// To set multiple attributes at once:
+set-attribute: ("#button", {"attribute name": "attribute value", "another": "x"})
+// Same but with a XPath:
+set-attribute: ("//*[@id='button']", {"attribute name": "attribute value", "another": "x"})
 ```
 
 To remove an attribute, you can use the `null` ident:
@@ -1289,27 +1294,16 @@ To remove an attribute, you can use the `null` ident:
 set-attribute: ("a", {"href": null})
 ```
 
-To set multiple attributes at a time, you can use a JSON object:
-
-```
-set-attribute: ("#button", {"attribute name": "attribute value", "another": "x"})
-// Same but with a XPath:
-set-attribute: ("//*[@id='button']", {"attribute name": "attribute value", "another": "x"})
-```
-
 #### set-css
 
 **set-css** command allows to update an element's style. Example:
 
 ```
-set-css: ("#button", "background-color", "red")
+set-css: ("#button", {"background-color": "red"})
 // Same but with an XPath:
-set-css: ("//*[@id='button']", "background-color", "red")
-```
+set-css: ("//*[@id='button']", {"background-color": "red"})
 
-To set multiple styles at a time, you can use a JSON object:
-
-```
+// To set multiple styles at once:
 set-css: ("#button", {"background-color": "red", "border": "1px solid"})
 // Same but with an XPath:
 set-css: ("//*[@id='button']", {"background-color": "red", "border": "1px solid"})
@@ -1364,23 +1358,20 @@ set-local-storage: {"key": null}
 **set-property** command allows to update an element's property. Example:
 
 ```
-set-property: ("details", "open", "false")
+set-property: ("details", {"open": "false"})
 // Same but with a XPath:
-set-property: ("//details", "attribute-name", "attribute-value")
+set-property: ("//details", {"attribute-name": "attribute-value"})
+
+// Setting multiple properties at once:
+set-property: ("details", {"open": "false", "another": "x"})
+// Same but with a XPath:
+set-property: ("//details", {"open": "false", "another": "x"})
 ```
 
 To remove a property, you can use the `null` ident. Please note that the properties set by the browser will only be reset.
 
 ```
 set-property: ("details", {"open": null})
-```
-
-To set multiple properties at a time, you can use a JSON object:
-
-```
-set-property: ("details", {"open": "false", "another": "x"})
-// Same but with a XPath:
-set-property: ("//details", {"open": "false", "another": "x"})
 ```
 
 #### set-size
