@@ -61,11 +61,32 @@ store-value: (effect, ":hover")
 text: ("element" + |effect|, "something " + 2 + " something else")
 ```
 
-Rules of concatenation s simple: if any of the element is a string, then it'll concatenate as a string. Examples:
+Rules of concatenation are simple: if any of the element is a string, then it'll concatenate as a string. Examples:
 
 ```
-1 + 2 + "a" // gives "12a"
-1 + 2 // gives "3"
+1 + 2 + "a" // gives string "12a"
+1 + 2 // gives number 3
+```
+
+This is just a sub-part of expressions which allow more things.
+
+## Expressions
+
+You can do more advanced things like:
+
+```
+store-value: (variable, 12)
+12 == |variable| && variable + 1 < 14
+```
+
+The expression type will be evaluated depending on its components. If comparisons are being performed, it will be evaluated as booleans. Comparisons can only be performed between elements of the same type, except for numbers and strings which can be compared despite not being the same type.
+
+```
+true != false // ok
+1 != false // not ok
+"a" == "a" // ok
+"false" == false // not ok
+1 == "1" // ok
 ```
 
 ## Command list
@@ -166,26 +187,42 @@ Here's the command list:
 
 #### assert
 
-**assert** command checks that the element exists, otherwise fail. Examples:
+**assert** command checks that the element exists or that the boolean is true, otherwise fails. Examples:
 
 ```
 // To be noted: all following examples can use XPath instead of CSS selector.
 
-// will check that "#id > .class" exists
+// Will check that "#id > .class" exists:
 assert: "#id > .class"
 assert: ("#id > .class") // strictly equivalent
+
+// Will check that the boolean is true:
+store-attribute: (class, "#id > .class")
+// We assume that the window's height is superior than 1000.
+store-window-property: (window_height, "innerHeight")
+assert: |class| == "class" && window_height > 1000
+// Or more simply:
+assert: true
 ```
 
 #### assert-false
 
-**assert-false** command checks that the element doesn't exist, otherwise fail. It's mostly doing the opposite of [`assert`](#assert). Examples:
+**assert-false** command checks that the element doesn't exist or that the boolean is false, otherwise fails. It's mostly doing the opposite of [`assert`](#assert). Examples:
 
 ```
 // To be noted: all following examples can use XPath instead of CSS selector.
 
-// will check that "#id > .class" doesn't exists
+// Will check that "#id > .class" doesn't exists:
 assert-false: "#id > .class"
 assert-false: ("#id > .class") // strictly equivalent
+
+// Will check that the boolean is false:
+store-attribute: (class, "#id > .class")
+// We assume that the window's height is superior than 1000.
+store-window-property: (window_height, "innerHeight")
+assert-false: |class| != "class" && window_height < 1000
+// Or more simply:
+assert-false: false
 ```
 
 #### assert-attribute
