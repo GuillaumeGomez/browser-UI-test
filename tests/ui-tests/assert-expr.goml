@@ -1,0 +1,19 @@
+// This test is meant to ensure that `assert*` commands work with expressions.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+assert-false: 1 > 2
+store-value: (var, 1)
+assert: 1 == |var|
+assert-false: |var| > 2
+store-value: (var2, "a")
+assert: |var2| == "a"
+assert-false: |var2| != "a"
+
+// Checking order of operations.
+store-value: (var, (1 + 2) * 4 + 1)
+assert: |var| == 13
+assert: |var| != 12 && 1 < 2
+
+// Should fail.
+assert: |var| != 13
+assert-false: |var| == 13
+assert: |var2| == |var|

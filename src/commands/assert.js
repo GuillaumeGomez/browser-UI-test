@@ -11,6 +11,7 @@ const {
     checkJsonEntry,
 } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
+const { cleanString } = require('../parser.js');
 
 function parseAssertCssInner(parser, assertFalse) {
     const selector = getAssertSelector(parser);
@@ -1108,31 +1109,45 @@ function parseAssertInner(parser, assertFalse) {
     if (elems.length === 0) {
         return {'error': err + ', found nothing'};
     } else if (elems.length !== 1) {
-        return {'error': `expected a CSS selector or an XPath, found \`${parser.getRawArgs()}\``};
-    } else if (elems[0].kind === 'string') {
+        return {'error': `expected a CSS selector, an XPath or a boolean, \
+found \`${parser.getRawArgs()}\` (${parser.getArticleKind()})`};
+    } else if (elems[0].kind === 'string' || elems[0].kind === 'boolean') {
         tuple = elems;
     } else if (elems[0].kind === 'tuple') {
         tuple = elems[0].getRaw();
         if (tuple.length !== 1) {
             return {
-                'error': 'expected only a CSS selector or an XPath in the tuple, found ' +
-                    `${tuple.length} elements`,
+                'error': 'expected only a CSS selector, an XPath or a boolean in the tuple, found' +
+                    ` ${tuple.length} elements`,
             };
-        } else if (tuple[0].kind !== 'string') {
+        } else if (tuple[0].kind !== 'string' && tuple[0].kind !== 'boolean') {
             return {
-                'error': 'expected argument to be a CSS selector or an XPath, ' +
-                    `found \`${tuple[0].getRaw()}\``,
+                'error': 'expected argument to be a CSS selector, an XPath or a boolean, ' +
+                    `found \`${tuple[0].getRaw()}\` (${tuple[0].getArticleKind()})`,
             };
         }
     } else {
-        return {'error': err + `, found \`${elems[0].getRaw()}\``};
+        return {'error': err + `, found \`${elems[0].getRaw()}\` (${elems[0].getArticleKind()})`};
+    }
+
+    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
+
+    if (tuple[0].kind === 'boolean') {
+        return {
+            'instructions': [`\
+const check = ${tuple[0].value};
+${insertBefore}if (!check) {
+    throw "Condition \`${cleanString(tuple[0].getErrorText())}\` was evaluated as false";
+}${insertAfter}`],
+            'wait': false,
+            'checkResult': true,
+        };
     }
     const selector = tuple[0].getSelector();
 
     if (selector.error !== undefined) {
         return selector;
     }
-    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
 
     let instructions;
     if (selector.isXPath) {
@@ -1157,8 +1172,10 @@ function parseAssertInner(parser, assertFalse) {
 //
 // * "CSS selector"
 // * "XPath"
+// * boolean
 // * ("CSS selector")
 // * ("XPath")
+// * (boolean)
 function parseAssert(parser) {
     return parseAssertInner(parser, false);
 }
@@ -1167,8 +1184,10 @@ function parseAssert(parser) {
 //
 // * "CSS selector"
 // * "XPath"
+// * boolean
 // * ("CSS selector")
 // * ("XPath")
+// * (boolean)
 function parseAssertFalse(parser) {
     return parseAssertInner(parser, true);
 }

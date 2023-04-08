@@ -1,0 +1,8 @@
+instructions = [
+  """const check = 1 >= 2 / (3 + 6);
+if (!check) {
+    throw \"Condition `1 >= 2 / (3 + 6)` was evaluated as false\";
+}""",
+]
+wait = false
+checkResult = true

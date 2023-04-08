@@ -71,7 +71,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].error, 'expected `,` or `)`, found `f` after `true`');
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
     x.assert(p.elems[0].getRaw()[1].error, 'expected `,` or `)`, found `f` after `true`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
@@ -87,7 +87,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].error, 'unexpected `,` after `,`');
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
     x.assert(p.elems[0].getRaw()[1].error, 'unexpected `,` after `,`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
@@ -103,7 +103,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].error, 'expected `,` or `)`, found `|` after `true`');
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
     x.assert(p.elems[0].getRaw()[1].error, 'expected `,` or `)`, found `|` after `true`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
@@ -119,7 +119,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
 
 
@@ -181,7 +181,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].error, 'expected `)` or `,` after `false`');
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
 
 
@@ -194,10 +194,10 @@ function checkTuple(x) {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
     x.assert(p.elems[0].getRaw()[1].error, null);
-    x.assert(p.elems[0].getRaw()[1].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[1].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[1].getRaw(), 'true');
 
 
@@ -210,10 +210,10 @@ function checkTuple(x) {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
     x.assert(p.elems[0].getRaw()[1].error, null);
-    x.assert(p.elems[0].getRaw()[1].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[1].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[1].getRaw(), 'true');
 
 
@@ -225,7 +225,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].getErrorText(), '(false,"s", (3, 12))');
     x.assert(p.elems[0].getRaw().length, 3);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
     x.assert(p.elems[0].getRaw()[1].error, null);
     x.assert(p.elems[0].getRaw()[1].kind, 'string');
@@ -251,7 +251,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw().length, 4);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
     x.assert(p.elems[0].getRaw()[1].error, null);
     x.assert(p.elems[0].getRaw()[1].kind, 'string');
@@ -274,7 +274,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
     x.assert(p.elems[0].getRaw()[1].error, null);
     x.assert(p.elems[0].getRaw()[1].kind, 'array');
@@ -404,7 +404,7 @@ function checkArray(x) {
     x.assert(p.elems[0].error, 'expected `,` or `]`, found `f` after `true`');
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
     x.assert(p.elems[0].getRaw()[1].error, 'expected `,` or `]`, found `f` after `true`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
@@ -420,7 +420,7 @@ function checkArray(x) {
     x.assert(p.elems[0].error, 'unexpected `,` after `,`');
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
     x.assert(p.elems[0].getRaw()[1].error, 'unexpected `,` after `,`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
@@ -436,7 +436,7 @@ function checkArray(x) {
     x.assert(p.elems[0].error, 'expected `,` or `]`, found `|` after `true`');
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'true');
     x.assert(p.elems[0].getRaw()[1].error, 'expected `,` or `]`, found `|` after `true`');
     x.assert(p.elems[0].getRaw()[1].kind, 'char');
@@ -452,7 +452,7 @@ function checkArray(x) {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
 
 
@@ -480,7 +480,7 @@ function checkArray(x) {
     x.assert(p.elems[0].error, 'expected `]` or `,` after `false`');
     x.assert(p.elems[0].getRaw().length, 1);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
 
 
@@ -493,10 +493,10 @@ function checkArray(x) {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
     x.assert(p.elems[0].getRaw()[1].error, null);
-    x.assert(p.elems[0].getRaw()[1].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[1].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[1].getRaw(), 'true');
 
 
@@ -509,10 +509,10 @@ function checkArray(x) {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw().length, 2);
     x.assert(p.elems[0].getRaw()[0].error, null);
-    x.assert(p.elems[0].getRaw()[0].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[0].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[0].getRaw(), 'false');
     x.assert(p.elems[0].getRaw()[1].error, null);
-    x.assert(p.elems[0].getRaw()[1].kind, 'bool');
+    x.assert(p.elems[0].getRaw()[1].kind, 'boolean');
     x.assert(p.elems[0].getRaw()[1].getRaw(), 'true');
 
 
@@ -576,7 +576,7 @@ function checkIdent(x) {
     p.parse();
     x.assert(p.error, null);
     x.assert(p.elems.length, 1);
-    x.assert(p.elems[0].kind, 'bool');
+    x.assert(p.elems[0].kind, 'boolean');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'false');
 
@@ -584,7 +584,7 @@ function checkIdent(x) {
     p.parse();
     x.assert(p.error, null);
     x.assert(p.elems.length, 1);
-    x.assert(p.elems[0].kind, 'bool');
+    x.assert(p.elems[0].kind, 'boolean');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'true');
 
@@ -601,7 +601,7 @@ function checkIdent(x) {
     p.parse();
     x.assert(p.error, null);
     x.assert(p.elems.length, 1);
-    x.assert(p.elems[0].kind, 'bool');
+    x.assert(p.elems[0].kind, 'boolean');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'false');
 
@@ -618,7 +618,7 @@ function checkIdent(x) {
     p.parse();
     x.assert(p.error, 'expected nothing, found `,` after `true`');
     x.assert(p.elems.length, 2);
-    x.assert(p.elems[0].kind, 'bool');
+    x.assert(p.elems[0].kind, 'boolean');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'true');
     x.assert(p.elems[1].kind, 'char');
@@ -965,12 +965,12 @@ assert-css: (".item-left sup", {"color": |color|})`);
 
     p = new Parser('{true: 1}');
     p.parse();
-    x.assert(p.error, 'only strings can be used as keys in JSON dict, found a bool (`true`)');
+    x.assert(p.error, 'only strings can be used as keys in JSON dict, found a boolean (`true`)');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
     x.assert(
         p.elems[0].error,
-        'only strings can be used as keys in JSON dict, found a bool (`true`)',
+        'only strings can be used as keys in JSON dict, found a boolean (`true`)',
     );
     x.assert(p.elems[0].getErrorText(), '{true');
 
@@ -1270,7 +1270,7 @@ assert-css: (".item-left sup", {"color": |color|})`);
     x.assert(p.elems[0].getRaw()[1].key.kind, 'string');
     x.assert(p.elems[0].getRaw()[1].key.getErrorText(), '"y"');
     x.assert(p.elems[0].getRaw()[1].key.getRaw(), 'y');
-    x.assert(p.elems[0].getRaw()[1].value.kind, 'bool');
+    x.assert(p.elems[0].getRaw()[1].value.kind, 'boolean');
     x.assert(p.elems[0].getRaw()[1].value.getRaw(), 'true');
     x.assert(p.elems[0].getRaw()[1].value.isRecursive(), false);
     x.assert(p.elems[0].getRaw()[2].key.kind, 'string');
@@ -1334,7 +1334,7 @@ assert-css: (".item-left sup", {"color": |color|})`);
     x.assert(subsubsub[1].key.kind, 'string');
     x.assert(subsubsub[1].key.getErrorText(), '"done"');
     x.assert(subsubsub[1].key.getRaw(), 'done');
-    x.assert(subsubsub[1].value.kind, 'bool');
+    x.assert(subsubsub[1].value.kind, 'boolean');
     x.assert(subsubsub[1].value.getRaw(), 'false');
 
     // welcome to level 4... json god?
@@ -1423,15 +1423,18 @@ function checkComment(x) {
     x.assert(p.elems[0].getErrorText(), '"just a string// with a comment in the middle!"');
 }
 
-function checkConcat(x) {
+function checkExpr(x) {
     let p = new Parser('1 + + 1');
     p.parse();
-    x.assert(p.error, 'unexpected `+` after `+`');
-    x.assert(p.elems.length, 2);
-    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.error, 'expected element after operator `+`, found `+` (an operator)');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'expression');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[1].kind, 'char');
-    x.assert(p.elems[1].error, 'unexpected `+` after `+`');
+    x.assert(p.elems[0].getRaw()[2].kind, 'operator');
+    x.assert(
+        p.elems[0].getRaw()[2].error,
+        'expected element after operator `+`, found `+` (an operator)',
+    );
 
     p = new Parser('+ 1 + 1');
     p.parse();
@@ -1440,16 +1443,101 @@ function checkConcat(x) {
     x.assert(p.elems[0].kind, 'unknown');
     x.assert(p.elems[0].error, 'unexpected `+` as first token');
 
+    p = new Parser('1 + 2 && true');
+    p.parse();
+    x.assert(p.error, 'expected expression `1 + 2` to be evaluated as boolean, instead it was ' +
+        'evaluated as number (in `1 + 2 && true`)');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'expression');
+    x.assert(p.elems[0].error, 'expected expression `1 + 2` to be evaluated as boolean, instead ' +
+        'it was evaluated as number (in `1 + 2 && true`)');
+
     p = new Parser('1 + true');
     p.parse();
-    x.assert(p.error, 'a bool (`true`) cannot be used after a `+` token');
-    x.assert(p.elems.length, 3);
-    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.error, '`+` is not supported for boolean elements (in `1 + true`)');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'expression');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[1].kind, 'char');
-    x.assert(p.elems[1].error, null);
-    x.assert(p.elems[2].kind, 'bool');
-    x.assert(p.elems[2].error, 'a bool (`true`) cannot be used after a `+` token');
+
+    p = new Parser('1 + (1 + 3');
+    p.parse();
+    x.assert(p.error, 'missing `)` at the end of the expression started line 1');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'expression');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw()[0].kind, 'number');
+    x.assert(p.elems[0].getRaw()[0].error, null);
+    x.assert(p.elems[0].getRaw()[1].kind, 'operator');
+    x.assert(p.elems[0].getRaw()[2].kind, 'expression');
+    x.assert(
+        p.elems[0].getRaw()[2].error,
+        'missing `)` at the end of the expression started line 1',
+    );
+
+    p = new Parser('[1, 2] == [3]');
+    p.parse();
+    x.assert(p.error, 'unexpected `[` after `==`');
+
+    p = new Parser('{"1": 1} == {"a": 2}');
+    p.parse();
+    x.assert(p.error, 'unexpected `{` after `==`');
+
+    p = new Parser('true == 1');
+    p.parse();
+    x.assert(p.error, '`==` cannot be used to compare boolean (`true`) and number (`1`) elements');
+    p = new Parser('1 == true');
+    p.parse();
+    x.assert(p.error, '`==` cannot be used to compare number (`1`) and boolean (`true`) elements');
+
+    p = new Parser('"a" == true');
+    p.parse();
+    x.assert(
+        p.error, '`==` cannot be used to compare string (`"a"`) and boolean (`true`) elements');
+
+    p = new Parser('"a" > true');
+    p.parse();
+    x.assert(
+        p.error,
+        '`>` is only supported for number elements, `"a"` (in `"a" > true`) was evaluated as ' +
+            'string',
+    );
+    p = new Parser('1 > true');
+    p.parse();
+    x.assert(
+        p.error,
+        '`>` is only supported for number elements, `true` (in `1 > true`) was evaluated as ' +
+            'boolean',
+    );
+    p = new Parser('1 > (true)');
+    p.parse();
+    x.assert(
+        p.error,
+        '`>` is only supported for number elements, `true` (in `1 > (true`) was evaluated as ' +
+            'boolean',
+    );
+
+    p = new Parser('1 > (true || false)');
+    p.parse();
+    x.assert(
+        p.error,
+        '`>` is only supported for number elements, `true || false` (in `1 > (true || false`) ' +
+            'was evaluated as boolean',
+    );
+
+    p = new Parser('1 == (true || false)');
+    p.parse();
+    x.assert(
+        p.error,
+        '`==` cannot be used to compare number (`1`) and boolean (`true || false`) elements',
+    );
+
+    p = new Parser('1 + "a" > 2');
+    p.parse();
+    x.assert(
+        p.error,
+        '`>` is only supported for number elements, `1 + "a"` (in `1 + "a" > 2`) was evaluated ' +
+            'as string',
+    );
 
     p = new Parser('1 + 1');
     p.parse();
@@ -1467,7 +1555,7 @@ function checkConcat(x) {
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), '1 + 1 + 4');
-    x.assert(p.elems[0].getErrorText(), '1 + 1 + 4');
+    x.assert(p.elems[0].getErrorText(), '1 + 1 +    4');
 
     p = new Parser('"a" + "b" ');
     p.parse();
@@ -1476,7 +1564,7 @@ function checkConcat(x) {
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'ab');
-    x.assert(p.elems[0].getErrorText(), '"a" + "b"');
+    x.assert(p.elems[0].getErrorText(), '"a" + "b" ');
 
     p = new Parser('"a" +   "b"');
     p.parse();
@@ -1485,7 +1573,7 @@ function checkConcat(x) {
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'ab');
-    x.assert(p.elems[0].getErrorText(), '"a" + "b"');
+    x.assert(p.elems[0].getErrorText(), '"a" +   "b"');
 
     p = new Parser('"a" + 1 ');
     p.parse();
@@ -1494,7 +1582,7 @@ function checkConcat(x) {
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'a1');
-    x.assert(p.elems[0].getErrorText(), '"a" + "1"');
+    x.assert(p.elems[0].getErrorText(), '"a" + 1 ');
 
     p = new Parser('1 + "a" ');
     p.parse();
@@ -1503,7 +1591,7 @@ function checkConcat(x) {
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), '1a');
-    x.assert(p.elems[0].getErrorText(), '"1" + "a"');
+    x.assert(p.elems[0].getErrorText(), '1 + "a" ');
 
     p = new Parser('1 + "a" + 4 +    "bcd"');
     p.parse();
@@ -1512,7 +1600,7 @@ function checkConcat(x) {
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), '1a4bcd');
-    x.assert(p.elems[0].getErrorText(), '"1" + "a" + "4" + "bcd"');
+    x.assert(p.elems[0].getErrorText(), '1 + "a" + 4 +    "bcd"');
 
     process.env['variable'] = 'hello';
     p = new Parser('|variable| + 2');
@@ -1522,7 +1610,7 @@ function checkConcat(x) {
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'hello2');
-    x.assert(p.elems[0].getErrorText(), '"hello" + "2"');
+    x.assert(p.elems[0].getErrorText(), '|variable| + 2');
 
     process.env['variable'] = '1';
     p = new Parser('|variable| + 2');
@@ -1532,7 +1620,7 @@ function checkConcat(x) {
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), '1 + 2');
-    x.assert(p.elems[0].getErrorText(), '1 + 2');
+    x.assert(p.elems[0].getErrorText(), '|variable| + 2');
     process.env['variable'] = undefined;
 
     p = new Parser('1 + "" + 2');
@@ -1542,7 +1630,7 @@ function checkConcat(x) {
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), '12');
-    x.assert(p.elems[0].getErrorText(), '"1" + "" + "2"');
+    x.assert(p.elems[0].getErrorText(), '1 + "" + 2');
 
     p = new Parser('1 + 2 + "a"');
     p.parse();
@@ -1551,7 +1639,7 @@ function checkConcat(x) {
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), '12a');
-    x.assert(p.elems[0].getErrorText(), '"1" + "2" + "a"');
+    x.assert(p.elems[0].getErrorText(), '1 + 2 + "a"');
 
     p = new Parser('"a" + 1 + 2');
     p.parse();
@@ -1560,7 +1648,7 @@ function checkConcat(x) {
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'a12');
-    x.assert(p.elems[0].getErrorText(), '"a" + "1" + "2"');
+    x.assert(p.elems[0].getErrorText(), '"a" + 1 + 2');
 
     p = new Parser('"a" + 1 + \n2');
     p.parse();
@@ -1569,7 +1657,7 @@ function checkConcat(x) {
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'a12');
-    x.assert(p.elems[0].getErrorText(), '"a" + "1" + "2"');
+    x.assert(p.elems[0].getErrorText(), '"a" + 1 + \n2');
 
     p = new Parser('"a" + 1 + // comment?\n2');
     p.parse();
@@ -1578,7 +1666,7 @@ function checkConcat(x) {
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'a12');
-    x.assert(p.elems[0].getErrorText(), '"a" + "1" + "2"');
+    x.assert(p.elems[0].getErrorText(), '"a" + 1 + // comment?\n2');
 
     p = new Parser('{"x" + 2: 1,}');
     p.parse();
@@ -1588,10 +1676,85 @@ function checkConcat(x) {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getErrorText(), '{"x" + 2: 1,}');
     x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].key.getErrorText(), '"x" + "2"');
+    x.assert(p.elems[0].getRaw()[0].key.getErrorText(), '"x" + 2');
     x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x2');
     x.assert(p.elems[0].getRaw()[0].value.kind, 'number');
     x.assert(p.elems[0].getRaw()[0].value.getRaw(), '1');
+
+    p = new Parser('1 > 2 && true');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'boolean');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '1 > 2 && true');
+    x.assert(p.elems[0].getErrorText(), '1 > 2 && true');
+
+    p = new Parser('1 + (1 + 3)');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '1 + (1 + 3)');
+    x.assert(p.elems[0].getErrorText(), '1 + (1 + 3)');
+
+    p = new Parser('1 + (1 + |var| * (1 + (4 * (7 / |var|))))', {'var': 4});
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '1 + (1 + 4 * (1 + (4 * (7 / 4))))');
+    x.assert(p.elems[0].getErrorText(), '1 + (1 + |var| * (1 + (4 * (7 / |var|))))');
+
+    p = new Parser('true || |variable|', {'variable': true});
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'boolean');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'true || true');
+    x.assert(p.elems[0].getErrorText(), 'true || |variable|');
+
+    p = new Parser('true || |variable| == "a"', {'variable': 'b'});
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'boolean');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'true || "b" == "a"');
+    x.assert(p.elems[0].getErrorText(), 'true || |variable| == "a"');
+
+    p = new Parser('(1 + 3, "a")');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'tuple');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getErrorText(), '(1 + 3, "a")');
+    x.assert(p.elems[0].getRaw()[0].kind, 'number');
+    x.assert(p.elems[0].getRaw()[0].getErrorText(), '1 + 3');
+    x.assert(p.elems[0].getRaw()[1].kind, 'string');
+    x.assert(p.elems[0].getRaw()[1].getErrorText(), '"a"');
+
+    p = new Parser('(1 + 2) * 4');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '((1 + 2)) * 4');
+    x.assert(p.elems[0].getErrorText(), '(1 + 2) * 4');
+
+    p = new Parser('|var| == (true || false)', {'var': false});
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'boolean');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'false == (true || false)');
+    x.assert(p.elems[0].getErrorText(), '|var| == (true || false)');
 }
 
 function checkBlock(x) {
@@ -1683,7 +1846,7 @@ const TO_CHECK = [
     {'name': 'number', 'func': checkNumber},
     {'name': 'json', 'func': checkJson},
     {'name': 'comment', 'func': checkComment},
-    {'name': 'concatenation', 'func': checkConcat},
+    {'name': 'expression', 'func': checkExpr},
     {'name': 'block', 'func': checkBlock},
 ];
 

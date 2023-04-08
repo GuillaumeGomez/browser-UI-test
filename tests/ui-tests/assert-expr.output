@@ -1,0 +1,9 @@
+=> Starting doc-ui tests...
+
+assert-expr... FAILED
+[ERROR] (line 17) Condition `|var| != 13` was evaluated as false: for command `assert: |var| != 13`
+[ERROR] (line 18) assert didn't fail: for command `assert-false: |var| == 13`
+[ERROR] (line 19) Condition `|var2| == |var|` was evaluated as false: for command `assert: |var2| == |var|`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed

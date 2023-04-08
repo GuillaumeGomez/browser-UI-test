@@ -141,6 +141,10 @@ function checkAssert(x, func) {
 
     // Multiline string.
     func('"//a\nhello"', 'multiline-2');
+
+    // bool
+    func('1 > 2 + 3', 'bool-1');
+    func('1 >= 2 / (3 + 6)', 'bool-2');
 }
 
 function checkAssertAttribute(x, func) {
