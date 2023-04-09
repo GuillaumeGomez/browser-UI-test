@@ -1539,6 +1539,28 @@ function checkExpr(x) {
             'as string',
     );
 
+    p = new Parser('(1, 2) + 1');
+    p.parse();
+    x.assert(p.error, '`+` is not supported for tuple elements (in `(1, 2) + 1`)');
+
+    p = new Parser('(1,) + 1');
+    p.parse();
+    x.assert(p.error, '`+` is not supported for tuple elements (in `(1,) + 1`)');
+
+    p = new Parser('(1,) > 1');
+    p.parse();
+    x.assert(
+        p.error,
+        '`>` is only supported for number elements, `(1,)` (in `(1,) > 1`) was evaluated as tuple',
+    );
+
+    p = new Parser('(1,) == 1');
+    p.parse();
+    x.assert(
+        p.error,
+        '`==` cannot be used to compare tuple (`(1,)`) and number (`1`) elements',
+    );
+
     p = new Parser('1 + 1');
     p.parse();
     x.assert(p.error, null);
