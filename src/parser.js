@@ -11,7 +11,7 @@ function isStringChar(c) {
 }
 
 function isNumber(c) {
-    return c !== null && (c >= '0' && c <= '9' || c === '-');
+    return c !== null && c >= '0' && c <= '9';
 }
 
 function isLetter(c) {
@@ -607,6 +607,16 @@ class Parser {
         return false;
     }
 
+    isNumberStart() {
+        const c = this.text.charAt(this.pos);
+        if (isNumber(c)) {
+            return true;
+        } else if (c !== '-') {
+            return false;
+        }
+        return this.pos + 1 < this.text.length && isNumber(this.text.charAt(this.pos + 1));
+    }
+
     isVariableStart(c) {
         if (this.pos + 1 < this.text.length) {
             const c2 = this.text.charAt(this.pos + 1);
@@ -798,6 +808,12 @@ class Parser {
                 }
             } else if (isNumber(c)) {
                 checker(this, c, 'parseNumber');
+            // If it's a negative number, check is a bit trickier since it can also be an
+            // expression like in `1-2`.
+            } else if (c === '-' && this.isNumberStart() &&
+                (this.getElems(pushTo).length === 0 || prev !== '')
+            ) {
+                checker(this, c, 'parseNumber');
             } else if (c === '(') {
                 checker(this, c, 'parseTuple');
             } else if (c === '[') {
@@ -833,7 +849,13 @@ class Parser {
                 if (el.kind === 'unknown') {
                     const token = el.value;
                     if (elems.length === 1) {
-                        el.error = `unexpected \`${token}\` as first token${extra}`;
+                        // We special-case the `-` sign.
+                        if (token === '-' && this.pos + 1 < this.text.length) {
+                            el.error = `unexpected \`${this.text.charAt(this.pos + 1)}\` after \
+\`${token}\``;
+                        } else {
+                            el.error = `unexpected \`${token}\` as first token${extra}`;
+                        }
                     } else {
                         const prevElem = elems[elems.length - 2].getErrorText();
                         el.error = `unexpected token \`${token}\` after \`${prevElem}\``;
@@ -881,6 +903,8 @@ class Parser {
         };
 
         while (this.error === null) {
+            const last = this.getLastElem(elems);
+            const prevIsOperator = last !== null && last.kind === 'operator';
             const c = this.getCurrentChar();
 
             if (c === null || endChars.includes(c)) {
@@ -918,14 +942,24 @@ class Parser {
                 continue;
             } else if (this.isVariableStart(c)) {
                 this.parseVariable(elems);
-            // We need to check this before numbers in case of negative numbers.
-            } else if (isExprChar(c) &&
-                (c !== '-' || elems.length > 0) &&
-                this.parseOperator(elems)
-            ) {
-                // Already done in the method.
-            } else if (isNumber(c)) {
+            } else if (c === '-') {
+                // We need to disambiguate if it's an operator or a number.
+                if (!this.isNumberStart() || !prevIsOperator) {
+                    this.parseOperator(elems);
+                } else {
+                    this.parseNumber(elems);
+                }
+            } else if (isExprChar(c)) {
+                this.parseOperator(elems);
+            } else if (this.isNumberStart()) {
                 this.parseNumber(elems);
+            // FIXME: Add support for array and JSON dicts in comparisons?
+            // } else if (c === '[') {
+            //     this.parseArray(elems);
+            // } else if (c === '{') {
+            //     this.parseJson(elems);
+            // } else if (c === '(') {
+            //     this.parseTuple(elems);
             } else if (c === '(') {
                 // Sub-expression.
                 this.increasePos();
@@ -937,41 +971,34 @@ class Parser {
                     errorFunc(`\`${last.getErrorText()}\` (${last.getArticleKind()}`);
                     return;
                 }
-            // FIXME: Add support for array and JSON dicts in comparisons?
-            // } else if (c === '[') {
-            //     this.parseArray(elems);
-            // } else if (c === '{') {
-            //     this.parseJson(elems);
             } else {
                 errorFunc(showChar(c));
                 return;
             }
             this.increasePos();
         }
-        this.push(
-            new ExpressionElement(
-                elems,
-                start,
-                this.pos,
-                this.text.substring(start, this.pos),
-                startLine,
-            ),
-            pushTo,
+        const expr = new ExpressionElement(
+            elems,
+            start,
+            this.pos,
+            this.text.substring(start, this.pos),
+            startLine,
         );
+        this.push(expr, pushTo);
         if (this.error !== null) {
             return;
         }
 
         // Checking all potential errors now.
         if (elems.length === 0) {
-            const last = this.getLastElem(pushTo);
-            last.error = 'empty expressions (`()`) are not allowed';
-            this.setError(last.error);
+            expr.error = 'empty expressions (`()`) are not allowed';
+            this.setError(expr.error);
             return;
         }
 
         if (elems[0].kind === 'operator') {
             elems[0].error = `unexpected operator \`${elems[0].getErrorText()}\``;
+            expr.error = elems[0].error;
             this.setError(elems[0].error);
             return;
         }
@@ -988,6 +1015,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                     el.error = `expected operator after ${prevElem.kind} \
 \`${prevElem.getErrorText()}\`, found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                 }
+                expr.error = el.error;
                 this.setError(el.error);
                 return;
             }
@@ -998,6 +1026,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         const last = elems[elems.length - 1];
         if (last.kind === 'operator') {
             last.error = `missing element after operator \`${last.getErrorText()}\``;
+            expr.error = last.error;
             this.setError(last.error);
             return;
         }
@@ -1469,18 +1498,13 @@ ${evaluatedType1} (\`${this.elemsText(right)}\`) and ${evaluatedType2} (\
     parseNumber(pushTo = null) {
         const start = this.pos;
         let hasDot = false;
+        let nbDigit = 0;
 
         while (this.pos < this.text.length) {
             const c = this.text.charAt(this.pos);
 
-            if (c === '-') {
-                if (this.pos > start) { // The minus sign can only be present as first character.
-                    const nb = this.text.substring(start, this.pos);
-                    this.push(new NumberElement(nb, start, this.pos, this.currentLine,
-                        `unexpected \`-\` after \`${nb}\``), pushTo);
-                    this.pos = this.text.length;
-                    return;
-                }
+            if (c === '-' && nbDigit === 0 && hasDot === false) {
+                // Nothing to do.
             } else if (c === '.') {
                 if (hasDot === true) {
                     const nb = this.text.substring(start, this.pos);
@@ -1491,10 +1515,19 @@ ${evaluatedType1} (\`${this.elemsText(right)}\`) and ${evaluatedType2} (\
                 }
                 hasDot = true;
             } else if (isNumber(c) === false) {
+                if (nbDigit < 1) {
+                    const nb = this.text.substring(start, this.pos);
+                    this.push(new NumberElement(nb, start, this.pos, this.currentLine,
+                        `unexpected \`${c}\` after \`${nb}\``), pushTo);
+                    this.pos = this.text.length;
+                    return;
+                }
                 const nb = this.text.substring(start, this.pos);
                 this.push(new NumberElement(nb, start, this.pos, this.currentLine), pushTo);
                 this.decreasePos();
                 return;
+            } else {
+                nbDigit += 1;
             }
             this.increasePos();
         }
