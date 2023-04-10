@@ -828,27 +828,22 @@ function checkNumber(x) {
     p.parse();
     x.assert(p.error, 'unexpected `-` after `-`');
     x.assert(p.elems[0].getRaw(), '-');
+    x.assert(p.elems[0].kind, 'unknown');
     x.assert(p.elems[0].error, 'unexpected `-` after `-`');
-    x.assert(p.elems[0].isNegative, true);
-    x.assert(p.elems[0].isFloat, false);
-
 
     p = new Parser('1-2');
     p.parse();
-    x.assert(p.error, 'unexpected `-` after `1`');
-    x.assert(p.elems[0].getRaw(), '1');
-    x.assert(p.elems[0].error, 'unexpected `-` after `1`');
-    x.assert(p.elems[0].isNegative, false);
-    x.assert(p.elems[0].isFloat, false);
-
+    x.assert(p.error, null);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].getRaw(), '1 - 2');
+    x.assert(p.elems[0].getErrorText(), '1-2');
+    x.assert(p.elems[0].error, null);
 
     p = new Parser('-0.2-');
     p.parse();
-    x.assert(p.error, 'unexpected `-` after `-0.2`');
-    x.assert(p.elems[0].getRaw(), '-0.2');
-    x.assert(p.elems[0].error, 'unexpected `-` after `-0.2`');
-    x.assert(p.elems[0].isNegative, true);
-    x.assert(p.elems[0].isFloat, true);
+    x.assert(p.error, 'missing element after operator `-`');
+    x.assert(p.elems[0].kind, 'expression');
+    x.assert(p.elems[0].error, 'missing element after operator `-`');
 }
 
 function checkJson(x) {
@@ -1429,7 +1424,7 @@ function checkExpr(x) {
     x.assert(p.error, 'expected element after operator `+`, found `+` (an operator)');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'expression');
-    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].error, 'expected element after operator `+`, found `+` (an operator)');
     x.assert(p.elems[0].getRaw()[2].kind, 'operator');
     x.assert(
         p.elems[0].getRaw()[2].error,
@@ -1768,6 +1763,24 @@ function checkExpr(x) {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), '((1 + 2)) * 4');
     x.assert(p.elems[0].getErrorText(), '(1 + 2) * 4');
+
+    p = new Parser('(1 - -2) * 4');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '((1 - -2)) * 4');
+    x.assert(p.elems[0].getErrorText(), '(1 - -2) * 4');
+
+    p = new Parser('-1-2');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'number');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '-1 - 2');
+    x.assert(p.elems[0].getErrorText(), '-1-2');
 
     p = new Parser('|var| == (true || false)', {'var': false});
     p.parse();
