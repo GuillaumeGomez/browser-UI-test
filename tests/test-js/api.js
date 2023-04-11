@@ -145,6 +145,12 @@ function checkAssert(x, func) {
     // bool
     func('1 > 2 + 3', 'bool-1');
     func('1 >= 2 / (3 + 6)', 'bool-2');
+    func('{"a": 1} == {"a": 2}', 'bool-3');
+    func('{"a": 1} != {"a": 2}', 'bool-4');
+    func('["a", "b"] == ["a", "c"]', 'bool-5');
+    func('["a", "b"] != ["a", "c"]', 'bool-6');
+    func('("a", 1) == ("a", 2)', 'bool-7');
+    func('("a", 1) != ("a", 2)', 'bool-8');
 }
 
 function checkAssertAttribute(x, func) {

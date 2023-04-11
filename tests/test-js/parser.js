@@ -1463,19 +1463,11 @@ function checkExpr(x) {
     x.assert(p.elems[0].getRaw()[0].kind, 'number');
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[1].kind, 'operator');
-    x.assert(p.elems[0].getRaw()[2].kind, 'expression');
+    x.assert(p.elems[0].getRaw()[2].kind, 'tuple');
     x.assert(
         p.elems[0].getRaw()[2].error,
         'missing `)` at the end of the expression started line 1',
     );
-
-    p = new Parser('[1, 2] == [3]');
-    p.parse();
-    x.assert(p.error, 'unexpected `[` after `==`');
-
-    p = new Parser('{"1": 1} == {"a": 2}');
-    p.parse();
-    x.assert(p.error, 'unexpected `{` after `==`');
 
     p = new Parser('true == 1');
     p.parse();
@@ -1493,45 +1485,45 @@ function checkExpr(x) {
     p.parse();
     x.assert(
         p.error,
-        '`>` is only supported for number elements, `"a"` (in `"a" > true`) was evaluated as ' +
-            'string',
+        '`>` is only supported for number elements, `"a"` was evaluated as string ' +
+            '(in `"a" > true`)',
     );
     p = new Parser('1 > true');
     p.parse();
     x.assert(
         p.error,
-        '`>` is only supported for number elements, `true` (in `1 > true`) was evaluated as ' +
-            'boolean',
+        '`>` is only supported for number elements, `true` was evaluated as boolean ' +
+            '(in `1 > true`)',
     );
     p = new Parser('1 > (true)');
     p.parse();
     x.assert(
         p.error,
-        '`>` is only supported for number elements, `true` (in `1 > (true`) was evaluated as ' +
-            'boolean',
+        '`>` is only supported for number elements, `(true)` was evaluated as boolean ' +
+            '(in `1 > (true)`)',
     );
 
     p = new Parser('1 > (true || false)');
     p.parse();
     x.assert(
         p.error,
-        '`>` is only supported for number elements, `true || false` (in `1 > (true || false`) ' +
-            'was evaluated as boolean',
+        '`>` is only supported for number elements, `(true || false)` was evaluated as boolean' +
+            ' (in `1 > (true || false)`)',
     );
 
     p = new Parser('1 == (true || false)');
     p.parse();
     x.assert(
         p.error,
-        '`==` cannot be used to compare number (`1`) and boolean (`true || false`) elements',
+        '`==` cannot be used to compare number (`1`) and boolean (`(true || false)`) elements',
     );
 
     p = new Parser('1 + "a" > 2');
     p.parse();
     x.assert(
         p.error,
-        '`>` is only supported for number elements, `1 + "a"` (in `1 + "a" > 2`) was evaluated ' +
-            'as string',
+        '`>` is only supported for number elements, `1 + "a"` was evaluated as string ' +
+            '(in `1 + "a" > 2`)',
     );
 
     p = new Parser('(1, 2) + 1');
@@ -1546,7 +1538,7 @@ function checkExpr(x) {
     p.parse();
     x.assert(
         p.error,
-        '`>` is only supported for number elements, `(1,)` (in `(1,) > 1`) was evaluated as tuple',
+        '`>` is only supported for number elements, `(1,)` was evaluated as tuple (in `(1,) > 1`)',
     );
 
     p = new Parser('(1,) == 1');
@@ -1554,6 +1546,18 @@ function checkExpr(x) {
     x.assert(
         p.error,
         '`==` cannot be used to compare tuple (`(1,)`) and number (`1`) elements',
+    );
+
+    p = new Parser('("1", 1) == [3, 2]');
+    p.parse();
+    x.assert(
+        p.error, '`==` cannot be used to compare tuple (`("1", 1)`) and array (`[3, 2]`) elements');
+
+    p = new Parser('("1", 1) == {"3": 2}');
+    p.parse();
+    x.assert(
+        p.error,
+        '`==` cannot be used to compare tuple (`("1", 1)`) and json (`{"3": 2}`) elements',
     );
 
     p = new Parser('1 + 1');
@@ -1761,7 +1765,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '((1 + 2)) * 4');
+    x.assert(p.elems[0].getRaw(), '(1 + 2) * 4');
     x.assert(p.elems[0].getErrorText(), '(1 + 2) * 4');
 
     p = new Parser('(1 - -2) * 4');
@@ -1770,7 +1774,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '((1 - -2)) * 4');
+    x.assert(p.elems[0].getRaw(), '(1 - -2) * 4');
     x.assert(p.elems[0].getErrorText(), '(1 - -2) * 4');
 
     p = new Parser('-1-2');
@@ -1790,6 +1794,60 @@ function checkExpr(x) {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].getRaw(), 'false == (true || false)');
     x.assert(p.elems[0].getErrorText(), '|var| == (true || false)');
+
+    p = new Parser('[1, 2] == [3]');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'boolean');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'compareArrayLike([1, 2], [3])');
+    x.assert(p.elems[0].getErrorText(), '[1, 2] == [3]');
+
+    p = new Parser('[1, 2] != [3]');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'boolean');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '!compareArrayLike([1, 2], [3])');
+    x.assert(p.elems[0].getErrorText(), '[1, 2] != [3]');
+
+    p = new Parser('{"1": 1} == {"a": 2}');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'boolean');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'compareJson({"1": 1}, {"a": 2})');
+    x.assert(p.elems[0].getErrorText(), '{"1": 1} == {"a": 2}');
+
+    p = new Parser('{"1": 1} != {"a": 2}');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'boolean');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '!compareJson({"1": 1}, {"a": 2})');
+    x.assert(p.elems[0].getErrorText(), '{"1": 1} != {"a": 2}');
+
+    p = new Parser('("1", 1) == ("a", 3, 2)');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'boolean');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), 'compareArrayLike(["1", 1], ["a", 3, 2])');
+    x.assert(p.elems[0].getErrorText(), '("1", 1) == ("a", 3, 2)');
+
+    p = new Parser('("1", 1) != ("a", 3, 2)');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'boolean');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '!compareArrayLike(["1", 1], ["a", 3, 2])');
+    x.assert(p.elems[0].getErrorText(), '("1", 1) != ("a", 3, 2)');
 }
 
 function checkBlock(x) {

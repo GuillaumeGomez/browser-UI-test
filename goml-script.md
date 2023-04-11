@@ -89,6 +89,15 @@ true != false // ok
 1 == "1" // ok
 ```
 
+You can also compare arrays, tuples and JSON dictionaries:
+
+```
+["a", "b"] == [1, 2] // computed as false
+["a", "b"] != [1, 2] // computed as true
+(1, "a") == (1, "a", "e") // computed as false
+{"1": "a"} != {"1": "e"} // computed as true
+```
+
 ## Command list
 
 Those scripts aim to be as quick to write and as small as possible. To do so, they provide a short list of commands. Please note that those scripts must **always** start with a [`goto`](#goto) command (non-interactional commands such as `screenshot-comparison` or `expect-failure` can be use first as well).

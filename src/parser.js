@@ -142,6 +142,7 @@ function isExpressionCompatible(elem) {
     return elem.kind === 'tuple' && elem.canBeExpression === true;
 }
 
+// Used to concatenate all elements into a string, like `1 + "a" + 12` -> "1a12".
 function concatExprAsString(elems) {
     let out = '';
     for (const elem of elems) {
@@ -156,17 +157,27 @@ function concatExprAsString(elems) {
     return out;
 }
 
+// This function is used when generating an expression generating a boolean.
 function concatExprAsExpr(elems) {
     const out = [];
-    for (const elem of elems) {
+    for (let i = 0, len = elems.length; i < len; ++i) {
+        const elem = elems[i];
         if (['operator', 'number', 'boolean'].includes(elem.kind)) {
-            if (elem.originallyExpression) {
+            if (elem.originallyExpression && elem.originalKind !== 'tuple') {
                 out.push(`(${elem.value})`);
             } else {
                 out.push(elem.value);
             }
-        } else if (['string', 'tuple', 'array', 'json'].includes(elem.kind)) {
+        } else if (elem.kind === 'string') {
             out.push(elem.fullText);
+        } else if (['tuple', 'array', 'json'].includes(elem.kind)) {
+            // The next non-operator elem will also be of the same type, so we can get it too.
+            const funcName = elem.kind === 'json' ? 'compareJson' : 'compareArrayLike';
+            i += 1;
+            const operator = elems[i].value === '==' ? '' : '!';
+            i += 1;
+            const elem2 = elems[i];
+            out.push(`${operator}${funcName}(${elem.displayInCode()}, ${elem2.displayInCode()})`);
         } else {
             // Should never happen normally since all sub-expressions should already have been
             // replaced.
@@ -246,6 +257,7 @@ function convertExprAs(elem, convertAs) {
     ret.kind = convertAs;
     ret.fullText = elem.fullText;
     ret.originallyExpression = true;
+    ret.originalKind = elem.kind;
     return ret;
 }
 
@@ -363,7 +375,7 @@ class TupleElement extends Element {
     }
 
     displayInCode() {
-        return '(' + this.value.map(e => e.displayInCode()).join(', ') + ')';
+        return '[' + this.value.map(e => e.displayInCode()).join(', ') + ']';
     }
 }
 
@@ -953,13 +965,12 @@ class Parser {
                 this.parseOperator(elems);
             } else if (this.isNumberStart()) {
                 this.parseNumber(elems);
-            // FIXME: Add support for array and JSON dicts in comparisons?
-            // } else if (c === '[') {
-            //     this.parseArray(elems);
-            // } else if (c === '{') {
-            //     this.parseJson(elems);
-            // } else if (c === '(') {
-            //     this.parseTuple(elems);
+            } else if (c === '[') {
+                this.parseArray(elems);
+            } else if (c === '{') {
+                this.parseJson(elems);
+            } else if (c === '(') {
+                this.parseTuple(elems);
             } else if (c === '(') {
                 // Sub-expression.
                 this.increasePos();
@@ -1119,6 +1130,11 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         let currentType = null;
         let prevOperator = null;
         for (const elem of elems) {
+            let elemKind = null;
+            if (!['variable', 'expression'].includes(elem.kind) && !isExpressionCompatible(elem)) {
+                elemKind = elem.kind;
+            }
+
             if (elem.kind === 'operator') {
                 // eslint-disable-next-line no-extra-parens
                 if ((elem.value !== '+' && !canDoMathOperation(currentType)) ||
@@ -1133,16 +1149,16 @@ elements (in \`${this.elemsText(elems)}\`)`;
                 prevOperator = elem;
             } else if (prevOperator !== null &&
                 // eslint-disable-next-line no-extra-parens
-                ((prevOperator.value !== '+' && !canDoMathOperation(elem.kind)) ||
+                ((prevOperator.value !== '+' && !canDoMathOperation(elemKind)) ||
                 // eslint-disable-next-line no-extra-parens
-                 (prevOperator.value === '+' && !canDoPlus(elem.kind)))
+                 (prevOperator.value === '+' && !canDoPlus(elemKind)))
             ) {
                 elem.error = `\`${prevOperator.value}\` is not supported for ${elem.kind} \
 elements (in \`${this.elemsText(elems)}\`)`;
                 this.setError(elem.error);
                 return null;
             } else if (currentType === null) {
-                currentType = ['variable', 'expression'].includes(elem.kind) ? null : elem.kind;
+                currentType = elem.kind;
             } else if (elem.kind !== currentType && currentType !== 'string') {
                 if (elem.kind === 'string' || elem.kind === 'number') {
                     currentType = elem.kind;
@@ -1241,8 +1257,8 @@ evaluated as boolean, instead it was evaluated as ${evaluatedType} (in \
                     }
                     if (errPart !== null) {
                         expr.error = `\`${comparisonOperator.value}\` is only supported for number \
-elements, \`${this.elemsText(errPart)}\` (in \`${this.segmentText(segment)}\`) was evaluated as \
-${evalError}`;
+elements, \`${this.elemsText(errPart)}\` was evaluated as ${evalError} (in \
+\`${this.segmentText(segment)}\`)`;
                         this.setError(expr.error);
                         return null;
                     }
