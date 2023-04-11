@@ -1,9 +1,9 @@
 // Check that the `size` command is working as expected.
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
-set-size: (670, 650)
+set-window-size: (670, 650)
 assert-window-property: {"innerWidth": "670", "innerHeight": "650"}
-set-size: (610, 600)
+set-window-size: (610, 600)
 assert-window-property: {"innerWidth": "610", "innerHeight": "600"}
-set-size: (-10, 0.2)
+set-window-size: (-10, 0.2)
 // It should not run the next command.
 assert: ".whatever"

@@ -170,9 +170,9 @@ Here's the command list:
  * [`set-font-size`](#set-font-size)
  * [`set-local-storage`](#set-local-storage)
  * [`set-property`](#set-property)
- * [`set-size`](#set-size)
  * [`set-text`](#set-text)
  * [`set-timeout`](#set-timeout)
+ * [`set-window-size`](#set-window-size)
  * [`set-window-property`](#set-window-property)
  * [`show-text`](#show-text)
  * [`store-attribute`](#store-attribute)
@@ -1420,14 +1420,6 @@ To remove a property, you can use the `null` ident. Please note that the propert
 set-property: ("details", {"open": null})
 ```
 
-#### set-size
-
-**set-size** command changes the window's size. It expects a tuple of integers (`(width, height)`). Example:
-
-```
-set-size: (700, 1000)
-```
-
 #### set-text
 
 **set-text** command allows to update an element's text. Example:
@@ -1453,6 +1445,14 @@ set-timeout: 0 // no more timeout, to be used cautiously!
 
 ```
 set-window-property: {"scrollX": 12, "screenLeft": "a"}
+```
+
+#### set-window-size
+
+**set-window-size** command changes the window's size. It expects a tuple of integers (`(width, height)`). Example:
+
+```
+set-window-size: (700, 1000)
 ```
 
 #### show-text
