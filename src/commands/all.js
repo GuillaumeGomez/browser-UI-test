@@ -79,7 +79,7 @@ module.exports = {
     'parseSetFontSize': emulation.parseSetFontSize,
     'parseSetLocalStorage': general.parseSetLocalStorage,
     'parseSetProperty': dom_modifiers.parseSetProperty,
-    'parseSetSize': emulation.parseSetSize,
+    'parseSetWindowSize': emulation.parseSetWindowSize,
     'parseSetText': dom_modifiers.parseSetText,
     'parseSetTimeout': context_setters.parseSetTimeout,
     'parseSetWindowProperty': general.parseSetWindowProperty,

@@ -2223,9 +2223,9 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseShowText, x, e, name, o),
     },
     {
-        'name': 'set-size',
+        'name': 'set-window-size',
         'func': checkSize,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetSize, x, e, name, o),
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetWindowSize, x, e, name, o),
     },
     {
         'name': 'store-attribute',

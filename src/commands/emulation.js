@@ -6,7 +6,7 @@ const consts = require('../consts.js');
 // Possible inputs:
 //
 // * (width, height)
-function parseSetSize(parser) {
+function parseSetWindowSize(parser) {
     const elems = parser.elems;
 
     if (elems.length === 0) {
@@ -195,5 +195,5 @@ module.exports = {
     'parseGeolocation': parseGeolocation,
     'parseJavascript': parseJavascript,
     'parsePermissions': parsePermissions,
-    'parseSetSize': parseSetSize,
+    'parseSetWindowSize': parseSetWindowSize,
 };
