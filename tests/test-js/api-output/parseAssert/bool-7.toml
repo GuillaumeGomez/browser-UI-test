@@ -24,12 +24,10 @@ function compareJson(j1, j2) {
     return true;
 }
 
-const check = 1 > 2 + 3;
-try {
+const check = compareArrayLike([\"a\", 1], [\"a\", 2]);
 if (!check) {
-    throw \"Condition `1 > 2 + 3` was evaluated as false\";
-}
-} catch(e) { return; } throw \"assert didn't fail\";""",
+    throw \"Condition `(\\\"a\\\", 1) == (\\\"a\\\", 2)` was evaluated as false\";
+}""",
 ]
 wait = false
 checkResult = true
