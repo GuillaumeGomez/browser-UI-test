@@ -1,0 +1,21 @@
+instructions = [
+  """let elem = await page.$(\"a\");
+if (elem === null) { throw '\"a\" not found'; }
+const jsHandle = await elem.evaluateHandle(e => {
+    const style = getComputedStyle(e, \"::after\");
+    let height = parseFloat(style[\"height\"]);
+    let width = parseFloat(style[\"width\"]);
+    if (style[\"box-sizing\"] !== \"border-box\") {
+        height += parseFloat(style[\"padding-top\"]) + parseFloat(style[\"padding-bottom\"]);
+        height += parseFloat(style[\"border-top-width\"]) + parseFloat(style[\"border-bottom-width\"]);
+        width += parseFloat(style[\"padding-left\"]) + parseFloat(style[\"padding-right\"]);
+        width += parseFloat(style[\"border-left-width\"]) + parseFloat(style[\"border-right-width\"]);
+    }
+    return {\"offsetHeight\": Math.round(height), \"offsetWidth\": Math.round(width)};
+});
+const data = await jsHandle.jsonValue();
+arg.variables[\"a\"] = data[\"offsetWidth\"];""",
+]
+wait = false
+warnings = [
+]

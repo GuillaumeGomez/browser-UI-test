@@ -1162,7 +1162,7 @@ function compareJson(j1, j2) {
 
 const check = ${tuple[0].value};
 ${insertBefore}if (!check) {
-    throw "Condition \`${cleanString(tuple[0].getErrorText())}\` was evaluated as false";
+    throw "Condition \`${cleanString(tuple[0].getRaw())}\` was evaluated as false";
 }${insertAfter}`],
             'wait': false,
             'checkResult': true,

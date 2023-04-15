@@ -84,6 +84,7 @@ module.exports = {
     'parseSetTimeout': context_setters.parseSetTimeout,
     'parseSetWindowProperty': general.parseSetWindowProperty,
     'parseShowText': context_setters.parseShowText,
+    'parseStoreSize': store.parseStoreSize,
     'parseStoreAttribute': store.parseStoreAttribute,
     'parseStoreCss': store.parseStoreCss,
     'parseStoreDocumentProperty': store.parseStoreDocumentProperty,

@@ -1,0 +1,12 @@
+instructions = [
+  """let elem = await page.$(\"a\");
+if (elem === null) { throw '\"a\" not found'; }
+const jsHandle = await elem.evaluateHandle(e => {
+    return {\"offsetHeight\": e.offsetHeight, \"offsetWidth\": e.offsetWidth};
+});
+const data = await jsHandle.jsonValue();
+arg.variables[\"b\"] = data[\"offsetHeight\"];""",
+]
+wait = false
+warnings = [
+]

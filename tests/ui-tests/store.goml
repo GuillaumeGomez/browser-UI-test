@@ -26,25 +26,5 @@ store-attribute: (attr, ".right", "data-whatever")
 assert-variable: (attr, "a")
 // Should fail
 store-attribute: (attr, "header", "data-whatever")
-// Variable shouldn't change value.
-assert-variable: (attr, "a")
-set-local-storage: {"a key": "a value"}
-store-local-storage: (local, "a key")
-// Should fail.
-assert-variable: (local, "a key")
-// Should succeed.
-assert-variable: (local, "a value")
-store-text: (text, "#another-one")
-// Should fail.
-assert-variable: (text, "hoy")
-// Should succeed.
-assert-variable: (text, "hey")
-store-value: (css_checks, {"background-color": |background_color|})
-assert-css: ("header", |css_checks|)
-assert-variable: (css_checks, {"background-color": "rgb(17, 17, 17)"})
-// Should fail
-assert-variable: (css_checks, "a")
-store-document-property: (document_v, "title")
-assert-variable: (document_v, "Other")
-store-window-property: (window_v, "pageYOffset")
-assert-variable: (window_v, "Other")
+// Nothing after this point.
+store-attribute: (attr, "header", "data-whatever")

@@ -1,12 +1,12 @@
 => Starting doc-ui tests...
 
 assert-expr... FAILED
-[ERROR] (line 22) Condition `|var| != 13` was evaluated as false: for command `assert: |var| != 13`
+[ERROR] (line 22) Condition `13 != 13` was evaluated as false: for command `assert: |var| != 13`
 [ERROR] (line 23) assert didn't fail: for command `assert-false: |var| == 13`
-[ERROR] (line 24) Condition `|var2| == |var|` was evaluated as false: for command `assert: |var2| == |var|`
-[ERROR] (line 25) Condition `{"b": 3} == |var3|` was evaluated as false: for command `assert: {"b": 3} == |var3|`
-[ERROR] (line 26) Condition `(1, "a") == (2, 3)` was evaluated as false: for command `assert: (1, "a") == (2, 3)`
-[ERROR] (line 27) Condition `[1, 2] == ["a", "b"]` was evaluated as false: for command `assert: [1, 2] == ["a", "b"]`
+[ERROR] (line 24) Condition `"a" == 13` was evaluated as false: for command `assert: |var2| == |var|`
+[ERROR] (line 25) Condition `compareJson({"b": 3}, {"a": 2})` was evaluated as false: for command `assert: {"b": 3} == |var3|`
+[ERROR] (line 26) Condition `compareArrayLike([1, "a"], [2, 3])` was evaluated as false: for command `assert: (1, "a") == (2, 3)`
+[ERROR] (line 27) Condition `compareArrayLike([1, 2], ["a", "b"])` was evaluated as false: for command `assert: [1, 2] == ["a", "b"]`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

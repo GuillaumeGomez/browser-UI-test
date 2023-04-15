@@ -1,6 +1,6 @@
 // All `compare*` commands.
 
-const { getAndSetElements } = require('./utils.js');
+const { getAndSetElements, indentString, validateJson } = require('./utils.js');
 const { RESERVED_VARIABLE_NAME } = require('../utils.js');
 
 // Possible inputs:
@@ -214,6 +214,106 @@ arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`;
 
 // Possible inputs:
 //
+// * ("CSS selector" | "XPath", {"width"|"height": ident})
+function parseStoreSize(parser) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {'error': 'expected a tuple, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
+        return {'error': `expected a tuple, found \`${parser.getRawArgs()}\``};
+    }
+    const tuple = elems[0].getRaw();
+    if (tuple.length !== 2) {
+        let err = `expected 2 elements in the tuple, found ${tuple.length} element`;
+        if (tuple.length > 1) {
+            err += 's';
+        }
+        return {'error': err};
+    } else if (tuple[0].kind !== 'string') {
+        return {
+            'error': 'expected first argument to be a string, ' +
+                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getErrorText()}\`)`,
+        };
+    } else if (tuple[1].kind !== 'json') {
+        return {
+            'error': `expected second argument to be a JSON dict, found \
+${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
+        };
+    }
+
+    const json = tuple[1].getRaw();
+    const entries = validateJson(json, {'ident': []}, 'JSON dict key', ['height', 'width']);
+    if (entries.error !== undefined) {
+        return entries;
+    }
+    for (const v of json) {
+        if (v.value.isReservedVariableName()) {
+            return {
+                'error': `\`${v.value.value}\` is a reserved name, so an ident cannot be named \
+like this`,
+            };
+        }
+    }
+
+    const code = [];
+    const variables = new Set();
+    for (const [k, v] of Object.entries(entries.values)) {
+        if (variables.has(v.value)) {
+            return {
+                'error': `duplicated variable \`${v.value}\` (in \`${tuple[1].getErrorText()}\`)`,
+            };
+        }
+        variables.add(v.value);
+        if (k === 'width') {
+            code.push(`arg.variables["${v.value}"] = data["offsetWidth"];`);
+        } else {
+            code.push(`arg.variables["${v.value}"] = data["offsetHeight"];`);
+        }
+    }
+    const varName = 'elem';
+    const selector = tuple[0].getSelector();
+    if (selector.error !== undefined) {
+        return selector;
+    }
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    let getter;
+    // To get the size of a pseudo element, we need to get the computed style for it. There is
+    // one thing to be careful about: if the `box-sizing` is "border-box", "height" and "width"
+    // already include the border and the padding.
+    if (isPseudo) {
+        getter = `\
+const style = getComputedStyle(e, "${selector.pseudo}");
+let height = parseFloat(style["height"]);
+let width = parseFloat(style["width"]);
+if (style["box-sizing"] !== "border-box") {
+    height += parseFloat(style["padding-top"]) + parseFloat(style["padding-bottom"]);
+    height += parseFloat(style["border-top-width"]) + parseFloat(style["border-bottom-width"]);
+    width += parseFloat(style["padding-left"]) + parseFloat(style["padding-right"]);
+    width += parseFloat(style["border-left-width"]) + parseFloat(style["border-right-width"]);
+}
+return {"offsetHeight": Math.round(height), "offsetWidth": Math.round(width)};`;
+    } else {
+        getter = 'return {"offsetHeight": e.offsetHeight, "offsetWidth": e.offsetWidth};';
+    }
+
+    const instructions = `\
+${getAndSetElements(selector, varName, false)}
+const jsHandle = await ${varName}.evaluateHandle(e => {
+${indentString(getter, 1)}
+});
+const data = await jsHandle.jsonValue();
+${code.join('\n')}`;
+
+    return {
+        'instructions': [instructions],
+        'wait': false,
+        'warnings': entries.warnings,
+    };
+}
+
+// Possible inputs:
+//
 // * (ident, "string" | number | json)
 function parseStoreValue(parser) {
     const elems = parser.elems;
@@ -309,7 +409,7 @@ arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`,
 
 // Possible inputs:
 //
-// * (ident, "CSS selector" | "XPath"
+// * (ident, "CSS selector" | "XPath")
 function parseStoreText(parser) {
     const elems = parser.elems;
 
@@ -444,6 +544,7 @@ module.exports = {
     'parseStoreDocumentProperty': parseStoreDocumentProperty,
     'parseStoreLocalStorage': parseStoreLocalStorage,
     'parseStoreProperty': parseStoreProperty,
+    'parseStoreSize': parseStoreSize,
     'parseStoreText': parseStoreText,
     'parseStoreValue': parseStoreValue,
     'parseStoreWindowProperty': parseStoreWindowProperty,

@@ -1606,6 +1606,29 @@ function checkStoreProperty(x, func) {
     func('(VAR, "a::after", "b")', 'pseudo-1');
 }
 
+function checkStoreSize(x, func) {
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1, 1)', 'err-5');
+    func('(a, 1)', 'err-6');
+    func(`("a", {"width": ${RESERVED_VARIABLE_NAME}})`, 'err-7');
+    func('("a", {"hoho": var})', 'err-8');
+    func('("a", {"height": 2})', 'err-9');
+    func('("a", {"height": a, "width": a})', 'err-10');
+
+    func('("a", {"width": a})', 'basic-1');
+    func('("a", {"height": b})', 'basic-2');
+    func('("a", {"width": a, "height": b})', 'basic-3');
+
+    func('("a::after", {"width": a})', 'pseudo-1');
+    func('("a::after", {"height": a})', 'pseudo-2');
+    func('("a::after", {"width": a, "height": b})', 'pseudo-3');
+
+    func('("//a", {"width": a})', 'xpath-1');
+}
+
 function checkStoreText(x, func) {
     func('', 'err-1');
     func('hello', 'err-2');
@@ -2251,6 +2274,11 @@ const TO_CHECK = [
         'name': 'store-property',
         'func': checkStoreProperty,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreProperty, x, e, name, o),
+    },
+    {
+        'name': 'store-size',
+        'func': checkStoreSize,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreSize, x, e, name, o),
     },
     {
         'name': 'store-text',
