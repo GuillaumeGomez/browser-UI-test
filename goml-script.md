@@ -180,6 +180,7 @@ Here's the command list:
  * [`store-document-property`](#store-document-property)
  * [`store-local-storage`](#store-local-storage)
  * [`store-property`](#store-property)
+ * [`store-size`](#store-size)
  * [`store-text`](#store-text)
  * [`store-value`](#store-value)
  * [`store-window-property`](#store-window-property)
@@ -1520,6 +1521,27 @@ store-property: (variable_name, "#button", "scrollHeight")
 
 For more information about variables, read the [variables section](#variables).
 
+#### store-size
+
+**store-size** command stores an element's size into a variable. Examples:
+
+```
+store-size: ("#button", {"width": width})
+store-size: ("#button", {"height": var2})
+assert: |width| == 30 && |var2| == 10
+
+// It could be written like this too:
+store-size: ("#button", {"width": width, "height": var2})
+
+// It also works for pseudo elements:
+store-size: ("#button::after", {"width": width, "height": var2})
+```
+
+To be more exact, this command stores the "offsetWidth" and "offsetHeigt", which include the content
+size, the padding and the border.
+
+For more information about variables, read the [variables section](#variables).
+
 #### store-text
 
 **store-text** command stores an element's text into a variable. Examples:
@@ -1530,7 +1552,6 @@ assert-variable: (variable_name, "click me")
 ```
 
 For more information about variables, read the [variables section](#variables).
-
 
 #### store-value
 
