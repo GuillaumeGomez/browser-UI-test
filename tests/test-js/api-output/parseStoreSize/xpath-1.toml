@@ -1,0 +1,13 @@
+instructions = [
+  """let elem = await page.$x(\"//a\");
+if (elem.length === 0) { throw 'XPath \"//a\" not found'; }
+elem = elem[0];
+const jsHandle = await elem.evaluateHandle(e => {
+    return {\"offsetHeight\": e.offsetHeight, \"offsetWidth\": e.offsetWidth};
+});
+const data = await jsHandle.jsonValue();
+arg.variables[\"a\"] = data[\"offsetWidth\"];""",
+]
+wait = false
+warnings = [
+]

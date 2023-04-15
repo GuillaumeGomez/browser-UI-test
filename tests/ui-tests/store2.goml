@@ -1,0 +1,34 @@
+// This test ensures that the `store*` commands are working as expected.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+set-window-size: (800, 500)
+store-value: (background_color, "rgb(17, 17, 17)")
+set-local-storage: {"a key": "a value"}
+store-local-storage: (local, "a key")
+// Should fail.
+assert-variable: (local, "a key")
+// Should succeed.
+assert-variable: (local, "a value")
+store-text: (text, "#another-one")
+// Should fail.
+assert-variable: (text, "hoy")
+// Should succeed.
+assert-variable: (text, "hey")
+store-value: (css_checks, {"background-color": |background_color|})
+assert-css: ("header", |css_checks|)
+assert-variable: (css_checks, {"background-color": "rgb(17, 17, 17)"})
+// Should fail
+assert-variable: (css_checks, "a")
+store-document-property: (document_v, "title")
+assert-variable: (document_v, "Other")
+store-window-property: (window_v, "pageYOffset")
+assert-variable: (window_v, "Other")
+
+store-size: ("header", {"width": width, "height": height})
+assert: |width| == 800 && |height| == 24
+store-size: (".right", {"height": height2})
+store-size: (".right", {"width": width2})
+assert: |width2| == 400 && |height2| == 40
+assert: |width2| != |width| && |height| < |height2|
+// Checking for pseudo element now.
+store-size: ("#another-one::before", {"height": height, "width": width})
+assert: |height| == 14 && |width| == 24

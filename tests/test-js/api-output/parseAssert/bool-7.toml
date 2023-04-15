@@ -26,7 +26,7 @@ function compareJson(j1, j2) {
 
 const check = compareArrayLike([\"a\", 1], [\"a\", 2]);
 if (!check) {
-    throw \"Condition `(\\\"a\\\", 1) == (\\\"a\\\", 2)` was evaluated as false\";
+    throw \"Condition `compareArrayLike([\\\"a\\\", 1], [\\\"a\\\", 2])` was evaluated as false\";
 }""",
 ]
 wait = false
