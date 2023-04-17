@@ -212,10 +212,7 @@ arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`;
     };
 }
 
-// Possible inputs:
-//
-// * ("CSS selector" | "XPath", {"width"|"height": ident})
-function parseStoreSize(parser) {
+function checkSelectorAndJson(parser, allowedKeys, callback) {
     const elems = parser.elems;
 
     if (elems.length === 0) {
@@ -243,7 +240,7 @@ ${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
     }
 
     const json = tuple[1].getRaw();
-    const entries = validateJson(json, {'ident': []}, 'JSON dict key', ['height', 'width']);
+    const entries = validateJson(json, {'ident': []}, 'JSON dict key', allowedKeys);
     if (entries.error !== undefined) {
         return entries;
     }
@@ -255,35 +252,53 @@ like this`,
             };
         }
     }
+    const selector = tuple[0].getSelector();
+    if (selector.error !== undefined) {
+        return selector;
+    }
 
-    const code = [];
     const variables = new Set();
     for (const [k, v] of Object.entries(entries.values)) {
         if (variables.has(v.value)) {
             return {
-                'error': `duplicated variable \`${v.value}\` (in \`${tuple[1].getErrorText()}\`)`,
+                'error': `duplicated variable \`${v.value}\` (in \
+\`${tuple[1].getErrorText()}\`)`,
             };
         }
         variables.add(v.value);
+        callback(k, v);
+    }
+    return {
+        'warnings': entries.warnings,
+        'selector': selector,
+        'isPseudo': !selector.isXPath && selector.pseudo !== null,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector" | "XPath", {"width"|"height": ident})
+function parseStoreSize(parser) {
+    const code = [];
+    const data = checkSelectorAndJson(parser, ['height', 'width'], (k, v) => {
         if (k === 'width') {
             code.push(`arg.variables["${v.value}"] = data["offsetWidth"];`);
         } else {
             code.push(`arg.variables["${v.value}"] = data["offsetHeight"];`);
         }
+    });
+    if (data.error !== undefined) {
+        return data;
     }
+
     const varName = 'elem';
-    const selector = tuple[0].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
-    const isPseudo = !selector.isXPath && selector.pseudo !== null;
     let getter;
     // To get the size of a pseudo element, we need to get the computed style for it. There is
     // one thing to be careful about: if the `box-sizing` is "border-box", "height" and "width"
     // already include the border and the padding.
-    if (isPseudo) {
+    if (data.isPseudo) {
         getter = `\
-const style = getComputedStyle(e, "${selector.pseudo}");
+const style = getComputedStyle(e, "${data.selector.pseudo}");
 let height = parseFloat(style["height"]);
 let width = parseFloat(style["width"]);
 if (style["box-sizing"] !== "border-box") {
@@ -298,7 +313,7 @@ return {"offsetHeight": Math.round(height), "offsetWidth": Math.round(width)};`;
     }
 
     const instructions = `\
-${getAndSetElements(selector, varName, false)}
+${getAndSetElements(data.selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
 ${indentString(getter, 1)}
 });
@@ -308,7 +323,42 @@ ${code.join('\n')}`;
     return {
         'instructions': [instructions],
         'wait': false,
-        'warnings': entries.warnings,
+        'warnings': data.warnings,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector" | "XPath", {"width"|"height": ident})
+function parseStorePosition(parser) {
+    const code = [];
+    const data = checkSelectorAndJson(parser, ['x', 'X', 'y', 'Y'], (k, v) => {
+        if (k === 'x' || k === 'X') {
+            code.push(`arg.variables["${v.value}"] = data["x"];`);
+        } else {
+            code.push(`arg.variables["${v.value}"] = data["y"];`);
+        }
+    });
+    if (data.error !== undefined) {
+        return data;
+    }
+
+    const varName = 'elem';
+    const pseudo = data.isPseudo ? data.selector.pseudo : '';
+    const instructions = `\
+${getAndSetElements(data.selector, varName, false)}
+const jsHandle = await ${varName}.evaluateHandle(e => {
+    const x = browserUiTestHelpers.getElementPosition(e, "${pseudo}", "left", "marginLeft");
+    const y = browserUiTestHelpers.getElementPosition(e, "${pseudo}", "top", "marginTop");
+    return {"x": Math.round(x), "y": Math.round(y)};
+});
+const data = await jsHandle.jsonValue();
+${code.join('\n')}`;
+
+    return {
+        'instructions': [instructions],
+        'wait': false,
+        'warnings': data.warnings,
     };
 }
 
@@ -543,6 +593,7 @@ module.exports = {
     'parseStoreCss': parseStoreCss,
     'parseStoreDocumentProperty': parseStoreDocumentProperty,
     'parseStoreLocalStorage': parseStoreLocalStorage,
+    'parseStorePosition': parseStorePosition,
     'parseStoreProperty': parseStoreProperty,
     'parseStoreSize': parseStoreSize,
     'parseStoreText': parseStoreText,
