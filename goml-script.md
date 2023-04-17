@@ -179,6 +179,7 @@ Here's the command list:
  * [`store-css`](#store-css)
  * [`store-document-property`](#store-document-property)
  * [`store-local-storage`](#store-local-storage)
+ * [`store-position`](#store-position)
  * [`store-property`](#store-property)
  * [`store-size`](#store-size)
  * [`store-text`](#store-text)
@@ -1505,6 +1506,24 @@ For more information about variables, read the [variables section](#variables).
 local-storage: {"key": "value"}
 store-local-storage: (variable_name, "key")
 assert-variable: (variable_name, "value")
+```
+
+For more information about variables, read the [variables section](#variables).
+
+#### store-position
+
+**store-position** command stores an element's position into a variable. Examples:
+
+```
+store-position: ("#button", {"x": x})
+store-position: ("#button", {"y": var2})
+assert: |width| == 30 && |var2| == 10
+
+// It could be written like this too:
+store-position: ("#button", {"x": x, "y": var2})
+
+// It also works for pseudo elements:
+store-position: ("#button::after", {"x": x, "y": var2})
 ```
 
 For more information about variables, read the [variables section](#variables).
