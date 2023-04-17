@@ -151,6 +151,7 @@ function checkAssert(x, func) {
     func('["a", "b"] != ["a", "c"]', 'bool-6');
     func('("a", 1) == ("a", 2)', 'bool-7');
     func('("a", 1) != ("a", 2)', 'bool-8');
+    func('(2 + 1) >= (1 / 2)', 'bool-9');
 }
 
 function checkAssertAttribute(x, func) {

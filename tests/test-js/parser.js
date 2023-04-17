@@ -1768,6 +1768,15 @@ function checkExpr(x) {
     x.assert(p.elems[0].getRaw(), '(1 + 2) * 4');
     x.assert(p.elems[0].getErrorText(), '(1 + 2) * 4');
 
+    p = new Parser('(1 + 2) < (4 * 3)');
+    p.parse();
+    x.assert(p.error, null);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'boolean');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw(), '(1 + 2) < (4 * 3)');
+    x.assert(p.elems[0].getErrorText(), '(1 + 2) < (4 * 3)');
+
     p = new Parser('(1 - -2) * 4');
     p.parse();
     x.assert(p.error, null);
