@@ -23,6 +23,9 @@ assert-variable: (document_v, "Other")
 store-window-property: (window_v, "pageYOffset")
 assert-variable: (window_v, "Other")
 
+//
+// store-size
+//
 store-size: ("header", {"width": width, "height": height})
 assert: |width| == 800 && |height| == 24
 store-size: (".right", {"height": height2})
@@ -32,3 +35,14 @@ assert: |width2| != |width| && |height| < |height2|
 // Checking for pseudo element now.
 store-size: ("#another-one::before", {"height": height, "width": width})
 assert: |height| == 14 && |width| == 24
+
+//
+// store-position
+//
+store-position: ("header", {"x": x, "y": y})
+assert: |x| == 0 && |y| == 0
+store-position: (".right", {"x": x, "y": y})
+assert: |x| == 400 && |y| == 24
+// Checking for pseudo element now.
+store-position: ("#another-one::before", {"x": x, "y": y})
+assert: |x| == 0 && |y| == 98

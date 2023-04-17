@@ -1,0 +1,14 @@
+instructions = [
+  """let elem = await page.$(\"a\");
+if (elem === null) { throw '\"a\" not found'; }
+const jsHandle = await elem.evaluateHandle(e => {
+    const x = browserUiTestHelpers.getElementPosition(e, \"::after\", \"left\", \"marginLeft\");
+    const y = browserUiTestHelpers.getElementPosition(e, \"::after\", \"top\", \"marginTop\");
+    return {\"x\": Math.round(x), \"y\": Math.round(y)};
+});
+const data = await jsHandle.jsonValue();
+arg.variables[\"a\"] = data[\"y\"];""",
+]
+wait = false
+warnings = [
+]
