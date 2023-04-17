@@ -4,8 +4,8 @@ if (parseAssertPosition === null) { throw '\"a:focus\" not found'; }
 await page.evaluate(elem => {
     const errors = [];
     function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-        let v = e.getBoundingClientRect()[field];
-        let roundedV = Math.round(v);
+        const v = browserUiTestHelpers.getElementPosition(e, \"\", field, styleField);
+        const roundedV = Math.round(v);
         if (v !== value && roundedV !== Math.round(value)) {
             errors.push(\"different \" + kind + \" values: \" + v + \" (or \" + roundedV + \") != \" + value);
         }

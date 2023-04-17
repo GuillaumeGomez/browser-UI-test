@@ -1589,6 +1589,31 @@ function checkStoreLocalStorage(x, func) {
     func('(VAR, "a")', 'basic-1');
 }
 
+function checkStorePosition(x, func) {
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1, 1)', 'err-5');
+    func('(a, 1)', 'err-6');
+    func(`("a", {"x": ${RESERVED_VARIABLE_NAME}})`, 'err-7');
+    func('("a", {"hoho": var})', 'err-8');
+    func('("a", {"x": 2})', 'err-9');
+    func('("a", {"x": a, "y": a})', 'err-10');
+
+    func('("a", {"x": a})', 'basic-1');
+    func('("a", {"X": a})', 'basic-2');
+    func('("a", {"y": b})', 'basic-3');
+    func('("a", {"Y": b})', 'basic-4');
+    func('("a", {"x": a, "y": b})', 'basic-5');
+
+    func('("a::after", {"x": a})', 'pseudo-1');
+    func('("a::after", {"y": a})', 'pseudo-2');
+    func('("a::after", {"x": a, "y": b})', 'pseudo-3');
+
+    func('("//a", {"x": a})', 'xpath-1');
+}
+
 function checkStoreProperty(x, func) {
     func('', 'err-1');
     func('hello', 'err-2');
@@ -2270,6 +2295,11 @@ const TO_CHECK = [
         'name': 'store-local-storage',
         'func': checkStoreLocalStorage,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreLocalStorage, x, e, name, o),
+    },
+    {
+        'name': 'store-position',
+        'func': checkStorePosition,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStorePosition, x, e, name, o),
     },
     {
         'name': 'store-property',

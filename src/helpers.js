@@ -26,6 +26,11 @@ const browserUiTestHelpers = (function() {
         return ret;
     }
 
+    function extractFloatOrZero(value, rounded) {
+        const ret = extractFloat(value, rounded);
+        return ret === null ? 0. : ret;
+    }
+
     return {
         getElemText: getElemText,
         compareElemText: function(e, value) {
@@ -45,9 +50,15 @@ const browserUiTestHelpers = (function() {
             return elemValue.indexOf(value) !== -1;
         },
         extractFloat: extractFloat,
-        extractFloatOrZero: function(value, rounded) {
-            const ret = extractFloat(value, rounded);
-            return ret === null ? 0. : ret;
+        extractFloatOrZero: extractFloatOrZero,
+        getElementPosition: function(e, pseudo, field, styleField) {
+            let v = e.getBoundingClientRect()[field];
+            if (pseudo.length !== 0) {
+                const pseudoStyle = window.getComputedStyle(e, pseudo);
+                const style = window.getComputedStyle(e);
+                v += extractFloatOrZero(pseudoStyle[field]) - extractFloatOrZero(style[styleField]);
+            }
+            return v;
         },
     };
 })();

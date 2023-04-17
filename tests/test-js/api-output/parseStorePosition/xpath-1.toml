@@ -1,0 +1,15 @@
+instructions = [
+  """let elem = await page.$x(\"//a\");
+if (elem.length === 0) { throw 'XPath \"//a\" not found'; }
+elem = elem[0];
+const jsHandle = await elem.evaluateHandle(e => {
+    const x = browserUiTestHelpers.getElementPosition(e, \"\", \"left\", \"marginLeft\");
+    const y = browserUiTestHelpers.getElementPosition(e, \"\", \"top\", \"marginTop\");
+    return {\"x\": Math.round(x), \"y\": Math.round(y)};
+});
+const data = await jsHandle.jsonValue();
+arg.variables[\"a\"] = data[\"x\"];""",
+]
+wait = false
+warnings = [
+]

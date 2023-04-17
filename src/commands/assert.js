@@ -1253,15 +1253,6 @@ checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', ${value.value}, errors);`;
         }
     }
 
-    let extra = '';
-    if (isPseudo) {
-        extra += `
-let pseudoStyle = window.getComputedStyle(e, "${selector.pseudo}");
-let style = window.getComputedStyle(e);
-v += browserUiTestHelpers.extractFloatOrZero(pseudoStyle[field]) - \
-browserUiTestHelpers.extractFloatOrZero(style[styleField]);`;
-    }
-
     let check;
     if (assertFalse) {
         check = `\
@@ -1276,10 +1267,11 @@ if (v !== value && roundedV !== Math.round(value)) {
 }`;
     }
 
+    const pseudo = isPseudo ? selector.pseudo : '';
     const code = `\
 function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-    let v = e.getBoundingClientRect()[field];${indentString(extra, 1)}
-    let roundedV = Math.round(v);
+    const v = browserUiTestHelpers.getElementPosition(e, "${pseudo}", field, styleField);
+    const roundedV = Math.round(v);
 ${indentString(check, 1)}
 }${checks}`;
 
