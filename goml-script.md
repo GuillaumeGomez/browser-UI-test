@@ -1481,8 +1481,10 @@ For more information about variables, read the [variables section](#variables).
 **store-css** command stores an element's CSS into a variable. Examples:
 
 ```
-store-css: (variable_name, "#button", "color")
+store-css: ("#button", {"color": variable_name})
 assert-variable: (variable_name, "rgb(255, 0, 0)")
+// You can set multiple variables at once.
+store-css: ("#button", {"color": variable_name, "font-size": font_size})
 ```
 
 For more information about variables, read the [variables section](#variables).
@@ -1533,9 +1535,10 @@ For more information about variables, read the [variables section](#variables).
 **store-property** command stores an element's property into a variable. Examples:
 
 ```
-store-property: (variable_name, "#button", "clientHeight")
+store-property: ("#button", {variable_name: "clientHeight"})
 assert-variable: (variable_name, 152)
-store-property: (variable_name, "#button", "scrollHeight")
+// You can set multiple variables at once.
+store-property: ("#button", {variable_name: "scrollHeight", another_var: "clientHeight"})
 ```
 
 For more information about variables, read the [variables section](#variables).
