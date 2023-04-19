@@ -2,13 +2,15 @@ instructions = [
   """let parseStoreCss = await page.$(\"a\");
 if (parseStoreCss === null) { throw '\"a\" not found'; }
 const jsHandle = await parseStoreCss.evaluateHandle(e => {
-    const style = getComputedStyle(e, \"::after\");
+    const style = getComputedStyle(e);
     return {
-        \"x\": style[\"x\"],
+        \"yaya\": style[\"yaya\"],
+        \"yiyi\": style[\"yiyi\"],
     };
 });
 data = await jsHandle.jsonValue();
-arg.variables[\"a\"] = data[\"x\"];""",
+arg.variables[\"a\"] = data[\"yaya\"];
+arg.variables[\"b\"] = data[\"yiyi\"];""",
 ]
 wait = false
 warnings = [

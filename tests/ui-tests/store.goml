@@ -8,7 +8,10 @@ store-value: (background_color, "rgb(17, 17, 17)")
 store-value: (background_color2, |background_color|)
 assert-css: ("header", {"background-color": |background_color|})
 assert-css: ("header", {"background-color": |background_color2|})
-store-property: (height, "header", "clientHeight")
+store-property: ("header", {"clientHeight": height})
+store-property: ("header", {"clientTop": top})
+store-property: ("header", {"clientHeight": height2, "clientTop": top2})
+assert: |height| == |height2| && |top| == |top2|
 // The 4 checks should fail
 assert-variable: (height, "12")
 assert-variable-false: (height, "24")
@@ -19,7 +22,10 @@ assert-variable: (height, "24")
 assert-variable-false: (height, "12")
 assert-variable: (height, "2", [STARTS_WITH, CONTAINS])
 assert-variable: (height, "4", [CONTAINS, ENDS_WITH])
-store-css: (height, "header", "background-color")
+store-css: ("header", {"background-color": height})
+store-css: ("header", {"font-size": font})
+store-css: ("header", {"background-color": height2, "font-size": font2})
+assert: |height| == |height2| && |font| == |font2|
 // Should succeed
 assert-variable: (height, "rgb(17, 17, 17)")
 store-attribute: (attr, ".right", "data-whatever")

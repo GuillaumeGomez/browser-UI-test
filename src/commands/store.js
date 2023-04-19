@@ -3,6 +3,69 @@
 const { getAndSetElements, indentString, validateJson } = require('./utils.js');
 const { RESERVED_VARIABLE_NAME } = require('../utils.js');
 
+function checkSelectorAndJson(parser, allowedKeys, callback) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {'error': 'expected a tuple, found nothing'};
+    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
+        return {'error': `expected a tuple, found \`${parser.getRawArgs()}\``};
+    }
+    const tuple = elems[0].getRaw();
+    if (tuple.length !== 2) {
+        let err = `expected 2 elements in the tuple, found ${tuple.length} element`;
+        if (tuple.length > 1) {
+            err += 's';
+        }
+        return {'error': err};
+    } else if (tuple[0].kind !== 'string') {
+        return {
+            'error': 'expected first argument to be a string, ' +
+                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getErrorText()}\`)`,
+        };
+    } else if (tuple[1].kind !== 'json') {
+        return {
+            'error': `expected second argument to be a JSON dict, found \
+${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
+        };
+    }
+
+    const json = tuple[1].getRaw();
+    const entries = validateJson(json, {'ident': []}, 'JSON dict key', allowedKeys);
+    if (entries.error !== undefined) {
+        return entries;
+    }
+    for (const v of json) {
+        if (v.value.isReservedVariableName()) {
+            return {
+                'error': `\`${v.value.value}\` is a reserved name, so an ident cannot be named \
+like this`,
+            };
+        }
+    }
+    const selector = tuple[0].getSelector();
+    if (selector.error !== undefined) {
+        return selector;
+    }
+
+    const variables = new Set();
+    for (const [k, v] of Object.entries(entries.values)) {
+        if (variables.has(v.value)) {
+            return {
+                'error': `duplicated variable \`${v.value}\` (in \
+\`${tuple[1].getErrorText()}\`)`,
+            };
+        }
+        variables.add(v.value);
+        callback(k, v);
+    }
+    return {
+        'warnings': entries.warnings,
+        'selector': selector,
+        'isPseudo': !selector.isXPath && selector.pseudo !== null,
+    };
+}
+
 // Possible inputs:
 //
 // * (ident, "CSS selector" | "XPath", "attribute")
@@ -78,200 +141,89 @@ arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`;
 
 // Possible inputs:
 //
-// * (ident, "CSS selector" | "XPath", "CSS property")
+// * ("CSS selector" | "XPath", {"CSS property": ident})
 function parseStoreCss(parser) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
-        };
+    const code = [];
+    const getter = [];
+    const data = checkSelectorAndJson(parser, null, (k, v) => {
+        code.push(`arg.variables["${v.value}"] = data["${k}"];`);
+        getter.push(`"${k}": style["${k}"],`);
+    });
+    if (data.error !== undefined) {
+        return data;
     }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 3) {
-        let err = `expected 3 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'ident') {
+
+    if (code.length === 0) {
         return {
-            'error': `expected first argument to be an ident, found ${tuple[0].getArticleKind()} \
-(\`${tuple[0].getErrorText()}\`)`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': `expected second argument to be a CSS selector or an XPath, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
-        };
-    } else if (tuple[2].kind !== 'string') {
-        return {
-            'error': `expected third argument to be a string, found \
-${tuple[2].getArticleKind()} (\`${tuple[2].getErrorText()}\`)`,
+            'instructions': [],
+            'wait': false,
+            'warnings': data.warnings,
         };
     }
 
-    if (tuple[0].isReservedVariableName()) {
-        return {
-            'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so an ident cannot be \
-named like this`,
-        };
-    }
-
-    const selector = tuple[1].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
-    const warnings = [];
-    const pseudo = !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '';
+    const pseudo = data.isPseudo ? `, "${data.selector.pseudo}"` : '';
 
     const varName = 'parseStoreCss';
-    const code = `\
-${getAndSetElements(selector, varName, false)}
+    const instructions = `\
+${getAndSetElements(data.selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
-    return String(getComputedStyle(e${pseudo})[${tuple[2].displayInCode()}]);
+    const style = getComputedStyle(e${pseudo});
+    return {
+${indentString(getter.join('\n'), 2)}
+    };
 });
-arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`;
+data = await jsHandle.jsonValue();
+${code.join('\n')}`;
 
     return {
-        'instructions': [code],
+        'instructions': [instructions],
         'wait': false,
-        'warnings': warnings.length !== 0 ? warnings : undefined,
+        'warnings': data.warnings,
     };
 }
 
 // Possible inputs:
 //
-// * (ident, "CSS selector" | "XPath", "property")
+// * ("CSS selector" | "XPath", {"property": ident})
 function parseStoreProperty(parser) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 3) {
-        let err = `expected 3 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'ident') {
-        return {
-            'error': `expected first argument to be an ident, found ${tuple[0].getArticleKind()} \
-(\`${tuple[0].getErrorText()}\`)`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': `expected second argument to be a CSS selector or an XPath, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
-        };
-    } else if (tuple[2].kind !== 'string') {
-        return {
-            'error': `expected third argument to be a string, found \
-${tuple[2].getArticleKind()} (\`${tuple[2].getErrorText()}\`)`,
-        };
+    const code = [];
+    const getter = [];
+    const data = checkSelectorAndJson(parser, null, (k, v) => {
+        code.push(`arg.variables["${v.value}"] = data["${k}"];`);
+        getter.push(`"${k}": e["${k}"],`);
+    });
+    if (data.error !== undefined) {
+        return data;
     }
 
-    if (tuple[0].isReservedVariableName()) {
-        return {
-            'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so an ident cannot be \
-named like this`,
-        };
-    }
-
-    const selector = tuple[1].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
-    const warnings = [];
-    const isPseudo = !selector.isXPath && selector.pseudo !== null;
-    if (isPseudo) {
-        warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
+    if (data.isPseudo) {
+        data.warnings.push(`Pseudo-elements (\`${data.selector.pseudo}\`) don't have attributes so \
 the check will be performed on the element itself`);
     }
 
-    const varName = 'parseStoreProperty';
-    const code = `\
-${getAndSetElements(selector, varName, false)}
+    if (code.length === 0) {
+        return {
+            'instructions': [],
+            'wait': false,
+            'warnings': data.warnings,
+        };
+    }
+
+    const varName = 'elem';
+    const instructions = `\
+${getAndSetElements(data.selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
-    return String(e[${tuple[2].displayInCode()}]);
-});
-arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`;
-
     return {
-        'instructions': [code],
-        'wait': false,
-        'warnings': warnings.length !== 0 ? warnings : undefined,
+${indentString(getter.join('\n'), 2)}
     };
-}
+});
+data = await jsHandle.jsonValue();
+${code.join('\n')}`;
 
-function checkSelectorAndJson(parser, allowedKeys, callback) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {'error': `expected a tuple, found \`${parser.getRawArgs()}\``};
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        let err = `expected 2 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected first argument to be a string, ' +
-                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getErrorText()}\`)`,
-        };
-    } else if (tuple[1].kind !== 'json') {
-        return {
-            'error': `expected second argument to be a JSON dict, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
-        };
-    }
-
-    const json = tuple[1].getRaw();
-    const entries = validateJson(json, {'ident': []}, 'JSON dict key', allowedKeys);
-    if (entries.error !== undefined) {
-        return entries;
-    }
-    for (const v of json) {
-        if (v.value.isReservedVariableName()) {
-            return {
-                'error': `\`${v.value.value}\` is a reserved name, so an ident cannot be named \
-like this`,
-            };
-        }
-    }
-    const selector = tuple[0].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
-
-    const variables = new Set();
-    for (const [k, v] of Object.entries(entries.values)) {
-        if (variables.has(v.value)) {
-            return {
-                'error': `duplicated variable \`${v.value}\` (in \
-\`${tuple[1].getErrorText()}\`)`,
-            };
-        }
-        variables.add(v.value);
-        callback(k, v);
-    }
     return {
-        'warnings': entries.warnings,
-        'selector': selector,
-        'isPseudo': !selector.isXPath && selector.pseudo !== null,
+        'instructions': [instructions],
+        'wait': false,
+        'warnings': data.warnings,
     };
 }
 

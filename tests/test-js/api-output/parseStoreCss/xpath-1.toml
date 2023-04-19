@@ -1,0 +1,16 @@
+instructions = [
+  """let parseStoreCss = await page.$x(\"//a\");
+if (parseStoreCss.length === 0) { throw 'XPath \"//a\" not found'; }
+parseStoreCss = parseStoreCss[0];
+const jsHandle = await parseStoreCss.evaluateHandle(e => {
+    const style = getComputedStyle(e);
+    return {
+        \"blop\": style[\"blop\"],
+    };
+});
+data = await jsHandle.jsonValue();
+arg.variables[\"a\"] = data[\"blop\"];""",
+]
+wait = false
+warnings = [
+]

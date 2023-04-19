@@ -1541,16 +1541,21 @@ function checkStoreCss(x, func) {
     func('hello', 'err-2');
     func('(', 'err-3');
     func('(1)', 'err-4');
-    func('(1, 1, 1)', 'err-5');
-    func('(a, 1, 1)', 'err-6');
-    func('(a, "1", 1)', 'err-7');
-    func('(VAR, \'\', "b")', 'err-8');
-    func(`(${RESERVED_VARIABLE_NAME}, "a", "b")`, 'err-9');
+    func('(1, 1)', 'err-5');
+    func('(a, 1)', 'err-6');
+    func(`("a", {"xa": ${RESERVED_VARIABLE_NAME}})`, 'err-7');
+    func('("a", {"xo": 2})', 'err-8');
+    func('("a", {"xi": a, "yi": a})', 'err-9');
 
-    func('(VAR, "a", "b")', 'basic-1');
-    func('(VAR, "//a", "b")', 'basic-2');
+    func('("a", {"ye": a})', 'basic-1');
+    func('("a", {\'"ye\': a})', 'basic-2');
+    func('("a", {"yaya": a, "yiyi": b})', 'basic-3');
 
-    func('(VAR, "a::after", "b")', 'pseudo-1');
+    func('("a::after", {"x": a})', 'pseudo-1');
+    func('("a::after", {"bla": a})', 'pseudo-2');
+    func('("a::after", {"bip": a, "bla": b})', 'pseudo-3');
+
+    func('("//a", {"blop": a})', 'xpath-1');
 }
 
 function checkStoreDocumentProperty(x, func) {
@@ -1619,17 +1624,21 @@ function checkStoreProperty(x, func) {
     func('hello', 'err-2');
     func('(', 'err-3');
     func('(1)', 'err-4');
-    func('(1, 1, 1)', 'err-5');
-    func('(a, 1, 1)', 'err-6');
-    func('(a, "1", 1)', 'err-7');
-    func('(VAR, \'\', "b")', 'err-8');
-    func(`(${RESERVED_VARIABLE_NAME}, "a", "b")`, 'err-9');
+    func('(1, 1)', 'err-5');
+    func('(a, 1)', 'err-6');
+    func(`("a", {"xa": ${RESERVED_VARIABLE_NAME}})`, 'err-7');
+    func('("a", {"xo": 2})', 'err-8');
+    func('("a", {"xi": a, "yi": a})', 'err-9');
 
-    func('(VAR, "a", "b")', 'basic-1');
-    func('(VAR, "a", "\\"\'b")', 'basic-2');
-    func('(VAR, "//a", "b")', 'basic-3');
+    func('("a", {"ye": a})', 'basic-1');
+    func('("a", {\'"ye\': a})', 'basic-2');
+    func('("a", {"yaya": a, "yiyi": b})', 'basic-3');
 
-    func('(VAR, "a::after", "b")', 'pseudo-1');
+    func('("a::after", {"x": a})', 'pseudo-1');
+    func('("a::after", {"bla": a})', 'pseudo-2');
+    func('("a::after", {"bip": a, "bla": b})', 'pseudo-3');
+
+    func('("//a", {"blop": a})', 'xpath-1');
 }
 
 function checkStoreSize(x, func) {

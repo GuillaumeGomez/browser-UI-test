@@ -3,11 +3,13 @@ instructions = [
 if (elem === null) { throw '\"a\" not found'; }
 const jsHandle = await elem.evaluateHandle(e => {
     return {
-        \"x\": e[\"x\"],
+        \"bip\": e[\"bip\"],
+        \"bla\": e[\"bla\"],
     };
 });
 data = await jsHandle.jsonValue();
-arg.variables[\"a\"] = data[\"x\"];""",
+arg.variables[\"a\"] = data[\"bip\"];
+arg.variables[\"b\"] = data[\"bla\"];""",
 ]
 wait = false
 warnings = [

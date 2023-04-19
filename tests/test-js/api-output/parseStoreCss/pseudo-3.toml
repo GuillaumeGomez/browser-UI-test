@@ -4,11 +4,13 @@ if (parseStoreCss === null) { throw '\"a\" not found'; }
 const jsHandle = await parseStoreCss.evaluateHandle(e => {
     const style = getComputedStyle(e, \"::after\");
     return {
-        \"x\": style[\"x\"],
+        \"bip\": style[\"bip\"],
+        \"bla\": style[\"bla\"],
     };
 });
 data = await jsHandle.jsonValue();
-arg.variables[\"a\"] = data[\"x\"];""",
+arg.variables[\"a\"] = data[\"bip\"];
+arg.variables[\"b\"] = data[\"bla\"];""",
 ]
 wait = false
 warnings = [
