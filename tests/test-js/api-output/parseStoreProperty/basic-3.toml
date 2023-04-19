@@ -1,10 +1,16 @@
 instructions = [
-  """let parseStoreProperty = await page.$x(\"//a\");
-if (parseStoreProperty.length === 0) { throw 'XPath \"//a\" not found'; }
-parseStoreProperty = parseStoreProperty[0];
-const jsHandle = await parseStoreProperty.evaluateHandle(e => {
-    return String(e[\"b\"]);
+  """let elem = await page.$(\"a\");
+if (elem === null) { throw '\"a\" not found'; }
+const jsHandle = await elem.evaluateHandle(e => {
+    return {
+        \"yaya\": e[\"yaya\"],
+        \"yiyi\": e[\"yiyi\"],
+    };
 });
-arg.variables[\"VAR\"] = await jsHandle.jsonValue();""",
+data = await jsHandle.jsonValue();
+arg.variables[\"a\"] = data[\"yaya\"];
+arg.variables[\"b\"] = data[\"yiyi\"];""",
 ]
 wait = false
+warnings = [
+]

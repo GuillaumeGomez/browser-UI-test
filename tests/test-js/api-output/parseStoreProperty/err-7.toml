@@ -1,1 +1,1 @@
-error = """expected third argument to be a string, found a number (`1`)"""
+error = """`CURRENT_DIR` is a reserved name, so an ident cannot be named like this"""

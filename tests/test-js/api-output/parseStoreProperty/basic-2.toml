@@ -1,9 +1,14 @@
 instructions = [
-  """let parseStoreProperty = await page.$(\"a\");
-if (parseStoreProperty === null) { throw '\"a\" not found'; }
-const jsHandle = await parseStoreProperty.evaluateHandle(e => {
-    return String(e[\"\\\"\\'b\"]);
+  """let elem = await page.$(\"a\");
+if (elem === null) { throw '\"a\" not found'; }
+const jsHandle = await elem.evaluateHandle(e => {
+    return {
+        \"\\\"ye\": e[\"\\\"ye\"],
+    };
 });
-arg.variables[\"VAR\"] = await jsHandle.jsonValue();""",
+data = await jsHandle.jsonValue();
+arg.variables[\"a\"] = data[\"\\\"ye\"];""",
 ]
 wait = false
+warnings = [
+]

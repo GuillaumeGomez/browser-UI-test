@@ -2,8 +2,14 @@ instructions = [
   """let parseStoreCss = await page.$(\"a\");
 if (parseStoreCss === null) { throw '\"a\" not found'; }
 const jsHandle = await parseStoreCss.evaluateHandle(e => {
-    return String(getComputedStyle(e)[\"b\"]);
+    const style = getComputedStyle(e);
+    return {
+        \"ye\": style[\"ye\"],
+    };
 });
-arg.variables[\"VAR\"] = await jsHandle.jsonValue();""",
+data = await jsHandle.jsonValue();
+arg.variables[\"a\"] = data[\"ye\"];""",
 ]
 wait = false
+warnings = [
+]

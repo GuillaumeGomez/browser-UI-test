@@ -3,12 +3,13 @@ instructions = [
 if (elem === null) { throw '\"a\" not found'; }
 const jsHandle = await elem.evaluateHandle(e => {
     return {
-        \"ye\": e[\"ye\"],
+        \"bla\": e[\"bla\"],
     };
 });
 data = await jsHandle.jsonValue();
-arg.variables[\"a\"] = data[\"ye\"];""",
+arg.variables[\"a\"] = data[\"bla\"];""",
 ]
 wait = false
 warnings = [
+  """Pseudo-elements (`::after`) don't have attributes so the check will be performed on the element itself""",
 ]

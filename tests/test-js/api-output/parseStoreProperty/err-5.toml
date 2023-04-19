@@ -1,1 +1,1 @@
-error = """expected first argument to be an ident, found a number (`1`)"""
+error = """expected first argument to be a string, found a number (`1`)"""
