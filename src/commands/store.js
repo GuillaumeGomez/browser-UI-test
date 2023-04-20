@@ -68,74 +68,58 @@ like this`,
 
 // Possible inputs:
 //
-// * (ident, "CSS selector" | "XPath", "attribute")
+// * ("CSS selector" | "XPath", {"attribute": ident})
 function parseStoreAttribute(parser) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
-        };
+    const code = [];
+    const getter = [];
+    const data = checkSelectorAndJson(parser, null, (k, v) => {
+        code.push(`arg.variables["${v.value}"] = data["${k}"];`);
+        getter.push(`"${k}"`);
+    });
+    if (data.error !== undefined) {
+        return data;
     }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 3) {
-        let err = `expected 3 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'ident') {
+
+    if (code.length === 0) {
         return {
-            'error': `expected first argument to be an ident, found ${tuple[0].getArticleKind()} \
-(\`${tuple[0].getErrorText()}\`)`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': `expected second argument to be a CSS selector or an XPath, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
-        };
-    } else if (tuple[2].kind !== 'string') {
-        return {
-            'error': `expected third argument to be a string, found \
-${tuple[2].getArticleKind()} (\`${tuple[2].getErrorText()}\`)`,
+            'instructions': [],
+            'wait': false,
+            'warnings': data.warnings,
         };
     }
 
-    if (tuple[0].isReservedVariableName()) {
-        return {
-            'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so an ident cannot be \
-named like this`,
-        };
+    if (data.isPseudo) {
+        data.warnings.push(`Pseudo-elements (\`${data.selector.pseudo}\`) don't have attributes so \
+it will be performed on the element itself`);
     }
 
-    const selector = tuple[1].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
-    const warnings = [];
-    const isPseudo = !selector.isXPath && selector.pseudo !== null;
-    if (isPseudo) {
-        warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
-the check will be performed on the element itself`);
-    }
-
-    const varName = 'parseStoreAttribute';
-    const code = `\
-${getAndSetElements(selector, varName, false)}
+    const varName = 'elem';
+    const instructions = `\
+${getAndSetElements(data.selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
-    if (!e.hasAttribute(${tuple[2].displayInCode()})) {
-        throw "No attribute name \`" + ${tuple[2].displayInCode()} + "\`";
+    const attrs = [${getter}];
+    const ret = Object.create(null);
+    const errors = [];
+
+    for (const attr of attrs) {
+        if (!e.hasAttribute(attr)) {
+            errors.push('"No attribute name \`' + attr + '\`"');
+        } else {
+            ret[attr] = e.getAttribute(attr);
+        }
     }
-    return String(e.getAttribute(${tuple[2].displayInCode()}));
+    if (errors.length !== 0) {
+        throw "The following errors happened: [" + errors.join(", ") + "]";
+    }
+    return ret;
 });
-arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`;
+const data= await jsHandle.jsonValue();
+${code.join('\n')}`;
 
     return {
-        'instructions': [code],
+        'instructions': [instructions],
         'wait': false,
-        'warnings': warnings.length !== 0 ? warnings : undefined,
+        'warnings': data.warnings,
     };
 }
 
