@@ -1,8 +1,9 @@
 instructions = [
-  """let elem = await page.$(\"a\");
-if (elem === null) { throw '\"a\" not found'; }
+  """let elem = await page.$x(\"//a\");
+if (elem.length === 0) { throw 'XPath \"//a\" not found'; }
+elem = elem[0];
 const jsHandle = await elem.evaluateHandle(e => {
-    const attrs = [\"yaya\",\"yiyi\"];
+    const attrs = [\"blop\"];
     const ret = Object.create(null);
     const errors = [];
 
@@ -19,8 +20,7 @@ const jsHandle = await elem.evaluateHandle(e => {
     return ret;
 });
 const data= await jsHandle.jsonValue();
-arg.variables[\"a\"] = data[\"yaya\"];
-arg.variables[\"b\"] = data[\"yiyi\"];""",
+arg.variables[\"a\"] = data[\"blop\"];""",
 ]
 wait = false
 warnings = [

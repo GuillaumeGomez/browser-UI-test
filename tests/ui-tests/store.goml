@@ -28,9 +28,11 @@ store-css: ("header", {"background-color": height2, "font-size": font2})
 assert: |height| == |height2| && |font| == |font2|
 // Should succeed
 assert-variable: (height, "rgb(17, 17, 17)")
-store-attribute: (attr, ".right", "data-whatever")
+store-attribute: (".right", {"data-whatever": attr})
 assert-variable: (attr, "a")
+store-attribute: (".right", {"data-whatever": attr2, "class": class})
+assert: |attr| == |attr2| && |class| == "right"
 // Should fail
-store-attribute: (attr, "header", "data-whatever")
+store-attribute: ("header", {"data-whatever": attr})
 // Nothing after this point.
-store-attribute: (attr, "header", "data-whatever")
+store-attribute: ("header", {"data-whatever": attr})

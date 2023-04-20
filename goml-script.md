@@ -208,10 +208,10 @@ assert: "#id > .class"
 assert: ("#id > .class") // strictly equivalent
 
 // Will check that the boolean is true:
-store-attribute: (class, "#id > .class")
+store-attribute: ("#id > .class", {"class": class_var})
 // We assume that the window's height is superior than 1000.
 store-window-property: (window_height, "innerHeight")
-assert: |class| == "class" && window_height > 1000
+assert: |class_var| == "class" && window_height > 1000
 // Or more simply:
 assert: true
 ```
@@ -228,10 +228,10 @@ assert-false: "#id > .class"
 assert-false: ("#id > .class") // strictly equivalent
 
 // Will check that the boolean is false:
-store-attribute: (class, "#id > .class")
+store-attribute: ("#id > .class", {"class": class_var})
 // We assume that the window's height is superior than 1000.
 store-window-property: (window_height, "innerHeight")
-assert-false: |class| != "class" && window_height < 1000
+assert-false: |class_var| != "class" && window_height < 1000
 // Or more simply:
 assert-false: false
 ```
@@ -1470,8 +1470,11 @@ show-text: true // text won't be invisible anymore
 **store-attribute** command stores an element's attribute into a variable. Examples:
 
 ```
-store-attribute: (variable_name, "#button", "id")
-assert-variable: (variable_name, "button")
+store-attribute: ("#button", {"id": variable_name})
+assert: |variable_name| == "button")
+
+// You can set multiple variables at once too:
+store-attribute: ("#button", {"id": variable_name, "class": another_variable})
 ```
 
 For more information about variables, read the [variables section](#variables).

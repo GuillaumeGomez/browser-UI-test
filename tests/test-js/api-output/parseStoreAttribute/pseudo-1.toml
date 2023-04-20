@@ -1,15 +1,27 @@
 instructions = [
-  """let parseStoreAttribute = await page.$(\"a\");
-if (parseStoreAttribute === null) { throw '\"a\" not found'; }
-const jsHandle = await parseStoreAttribute.evaluateHandle(e => {
-    if (!e.hasAttribute(\"b\")) {
-        throw \"No attribute name `\" + \"b\" + \"`\";
+  """let elem = await page.$(\"a\");
+if (elem === null) { throw '\"a\" not found'; }
+const jsHandle = await elem.evaluateHandle(e => {
+    const attrs = [\"x\"];
+    const ret = Object.create(null);
+    const errors = [];
+
+    for (const attr of attrs) {
+        if (!e.hasAttribute(attr)) {
+            errors.push('\"No attribute name `' + attr + '`\"');
+        } else {
+            ret[attr] = e.getAttribute(attr);
+        }
     }
-    return String(e.getAttribute(\"b\"));
+    if (errors.length !== 0) {
+        throw \"The following errors happened: [\" + errors.join(\", \") + \"]\";
+    }
+    return ret;
 });
-arg.variables[\"VAR\"] = await jsHandle.jsonValue();""",
+const data= await jsHandle.jsonValue();
+arg.variables[\"a\"] = data[\"x\"];""",
 ]
 wait = false
 warnings = [
-  """Pseudo-elements (`::after`) don't have attributes so the check will be performed on the element itself""",
+  """Pseudo-elements (`::after`) don't have attributes so it will be performed on the element itself""",
 ]
