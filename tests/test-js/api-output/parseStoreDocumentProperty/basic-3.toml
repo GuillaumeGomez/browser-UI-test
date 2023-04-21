@@ -1,14 +1,14 @@
 instructions = [
   """const jsHandle = await page.evaluateHandle(() => {
-    const properties = [\"ye\"];
+    const properties = [\"yaya\",\"yiyi\"];
     const errors = [];
     const ret = Object.create(null);
 
     for (const property of properties) {
-        if (window[property] === undefined) {
-            errors.push('\"window doesn\\'t have a property named `' + property + '`\"');
+        if (document[property] === undefined) {
+            errors.push('\"document doesn\\'t have a property named `' + property + '`\"');
         } else {
-            ret[property] = window[property];
+            ret[property] = document[property];
         }
     }
     if (errors.length !== 0) {
@@ -17,6 +17,7 @@ instructions = [
     return ret;
 });
 const data = await jsHandle.jsonValue();
-arg.variables[\"a\"] = data[\"ye\"];""",
+arg.variables[\"a\"] = data[\"yaya\"];
+arg.variables[\"b\"] = data[\"yiyi\"];""",
 ]
 wait = false

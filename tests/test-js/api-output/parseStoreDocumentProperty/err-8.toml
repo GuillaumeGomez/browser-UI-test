@@ -1,0 +1,1 @@
+error = """only ident type is allowed as value, found `2` (a number)"""

@@ -1566,10 +1566,14 @@ function checkStoreDocumentProperty(x, func) {
     func('(', 'err-3');
     func('(1)', 'err-4');
     func('(1, 1)', 'err-5');
-    func('(a1, 1)', 'err-6');
-    func(`(${RESERVED_VARIABLE_NAME}, "a")`, 'err-7');
+    func('(a, 1)', 'err-6');
+    func(`{"xa": ${RESERVED_VARIABLE_NAME}}`, 'err-7');
+    func('{"xo": 2}', 'err-8');
+    func('{"xi": a, "yi": a}', 'err-9');
 
-    func('(a1, "1")', 'basic-1');
+    func('{"ye": a}', 'basic-1');
+    func('{\'"ye\': a}', 'basic-2');
+    func('{"yaya": a, "yiyi": b}', 'basic-3');
 }
 
 function checkStoreWindowProperty(x, func) {
@@ -1578,10 +1582,14 @@ function checkStoreWindowProperty(x, func) {
     func('(', 'err-3');
     func('(1)', 'err-4');
     func('(1, 1)', 'err-5');
-    func('(a1, 1)', 'err-6');
-    func(`(${RESERVED_VARIABLE_NAME}, "a")`, 'err-7');
+    func('(a, 1)', 'err-6');
+    func(`{"xa": ${RESERVED_VARIABLE_NAME}}`, 'err-7');
+    func('{"xo": 2}', 'err-8');
+    func('{"xi": a, "yi": a}', 'err-9');
 
-    func('(a1, "1")', 'basic-1');
+    func('{"ye": a}', 'basic-1');
+    func('{\'"ye\': a}', 'basic-2');
+    func('{"yaya": a, "yiyi": b}', 'basic-3');
 }
 
 function checkStoreLocalStorage(x, func) {
@@ -1591,9 +1599,13 @@ function checkStoreLocalStorage(x, func) {
     func('(1)', 'err-4');
     func('(1, 1)', 'err-5');
     func('(a, 1)', 'err-6');
-    func(`(${RESERVED_VARIABLE_NAME}, "a")`, 'err-7');
+    func(`{"xa": ${RESERVED_VARIABLE_NAME}}`, 'err-7');
+    func('{"xo": 2}', 'err-8');
+    func('{"xi": a, "yi": a}', 'err-9');
 
-    func('(VAR, "a")', 'basic-1');
+    func('{"ye": a}', 'basic-1');
+    func('{\'"ye\': a}', 'basic-2');
+    func('{"yaya": a, "yiyi": b}', 'basic-3');
 }
 
 function checkStorePosition(x, func) {

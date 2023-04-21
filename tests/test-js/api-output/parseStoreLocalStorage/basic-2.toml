@@ -1,10 +1,10 @@
 instructions = [
   """const jsHandle = await page.evaluateHandle(() => {
     return {
-        \"ye\": window.localStorage.getItem(\"ye\"),
+        \"\\\"ye\": window.localStorage.getItem(\"\\\"ye\"),
     };
 });
 const data = await jsHandle.jsonValue();
-arg.variables[\"a\"] = data[\"ye\"];""",
+arg.variables[\"a\"] = data[\"\\\"ye\"];""",
 ]
 wait = false

@@ -3,6 +3,52 @@
 const { getAndSetElements, indentString, validateJson } = require('./utils.js');
 const { RESERVED_VARIABLE_NAME } = require('../utils.js');
 
+function checkJsonInner(rawElem, allowedKeys, extra, callback) {
+    if (rawElem.kind !== 'json') {
+        return {
+            'error': `expected${extra} a JSON dict, found \
+${rawElem.getArticleKind()} (\`${rawElem.getErrorText()}\`)`,
+        };
+    }
+    const json = rawElem.getRaw();
+    const entries = validateJson(json, {'ident': []}, 'JSON dict key', allowedKeys);
+    if (entries.error !== undefined) {
+        return entries;
+    }
+    for (const v of json) {
+        if (v.value.isReservedVariableName()) {
+            return {
+                'error': `\`${v.value.value}\` is a reserved name, so an ident cannot be named \
+like this`,
+            };
+        }
+    }
+
+    const variables = new Set();
+    for (const [k, v] of Object.entries(entries.values)) {
+        if (variables.has(v.value)) {
+            return {
+                'error': `duplicated variable \`${v.value}\` (in \
+\`${rawElem.getErrorText()}\`)`,
+            };
+        }
+        variables.add(v.value);
+        callback(k, v);
+    }
+    return entries;
+}
+
+function checkJson(parser, allowedKeys, callback) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {'error': 'expected a JSON dict, found nothing'};
+    } else if (elems.length !== 1) {
+        return {'error': `expected a JSON dict, found \`${parser.getRawArgs()}\``};
+    }
+    return checkJsonInner(elems[0], allowedKeys, '', callback);
+}
+
 function checkSelectorAndJson(parser, allowedKeys, callback) {
     const elems = parser.elems;
 
@@ -23,41 +69,15 @@ function checkSelectorAndJson(parser, allowedKeys, callback) {
             'error': 'expected first argument to be a string, ' +
                 `found ${tuple[0].getArticleKind()} (\`${tuple[0].getErrorText()}\`)`,
         };
-    } else if (tuple[1].kind !== 'json') {
-        return {
-            'error': `expected second argument to be a JSON dict, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
-        };
     }
 
-    const json = tuple[1].getRaw();
-    const entries = validateJson(json, {'ident': []}, 'JSON dict key', allowedKeys);
+    const entries = checkJsonInner(tuple[1], allowedKeys, ' second argument to be', callback);
     if (entries.error !== undefined) {
         return entries;
-    }
-    for (const v of json) {
-        if (v.value.isReservedVariableName()) {
-            return {
-                'error': `\`${v.value.value}\` is a reserved name, so an ident cannot be named \
-like this`,
-            };
-        }
     }
     const selector = tuple[0].getSelector();
     if (selector.error !== undefined) {
         return selector;
-    }
-
-    const variables = new Set();
-    for (const [k, v] of Object.entries(entries.values)) {
-        if (variables.has(v.value)) {
-            return {
-                'error': `duplicated variable \`${v.value}\` (in \
-\`${tuple[1].getErrorText()}\`)`,
-            };
-        }
-        variables.add(v.value);
-        callback(k, v);
     }
     return {
         'warnings': entries.warnings,
@@ -347,47 +367,34 @@ named like this`,
 
 // Possible inputs:
 //
-// * (ident, "string")
+// * {"string": ident}
 function parseStoreLocalStorage(parser) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {'error': `expected a tuple, found \`${parser.getRawArgs()}\``};
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        let err = `expected 2 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'ident') {
-        return {
-            'error': 'expected first argument to be an ident, ' +
-                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getErrorText()}\`)`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': `expected second argument to be a string, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
-        };
+    const code = [];
+    const getter = [];
+    const ret = checkJson(parser, null, (k, v) => {
+        code.push(`arg.variables["${v.value}"] = data["${k}"];`);
+        getter.push(`"${k}": window.localStorage.getItem("${k}"),`);
+    });
+    if (ret.error !== undefined) {
+        return ret;
     }
 
-    if (tuple[0].isReservedVariableName()) {
+    if (code.length === 0) {
         return {
-            'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so an ident cannot be \
-named like this`,
+            'instructions': [],
+            'wait': false,
         };
     }
 
     return {
         'instructions': [`\
 const jsHandle = await page.evaluateHandle(() => {
-    return window.localStorage.getItem(${tuple[1].displayInCode()});
+    return {
+${indentString(getter.join('\n'), 2)}
+    };
 });
-arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`,
+const data = await jsHandle.jsonValue();
+${code.join('\n')}`,
         ],
         'wait': false,
     };
@@ -459,67 +466,60 @@ arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`;
 }
 
 function parseStoreObjectInner(parser, objName) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
-        };
+    const code = [];
+    const getter = [];
+    const ret = checkJson(parser, null, (k, v) => {
+        code.push(`arg.variables["${v.value}"] = data["${k}"];`);
+        getter.push(`"${k}"`);
+    });
+    if (ret.error !== undefined) {
+        return ret;
     }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        let err = `expected 2 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'ident') {
+
+    if (code.length === 0) {
         return {
-            'error': `expected first argument to be an ident, found ${tuple[0].getArticleKind()} \
-(\`${tuple[0].getErrorText()}\`)`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': `expected second argument to be a property name (a string), found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
+            'instructions': [],
+            'wait': false,
         };
     }
 
-    if (tuple[0].isReservedVariableName()) {
-        return {
-            'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so an ident cannot be \
-named like this`,
-        };
-    }
-
-    const propertyName = tuple[1].getStringValue();
-    const code = `\
+    const instructions = `\
 const jsHandle = await page.evaluateHandle(() => {
-    if (${objName}["${propertyName}"] === undefined) {
-        throw "${objName} doesn't have a property named \`${propertyName}\`";
+    const properties = [${getter}];
+    const errors = [];
+    const ret = Object.create(null);
+
+    for (const property of properties) {
+        if (${objName}[property] === undefined) {
+            errors.push('"${objName} doesn\\'t have a property named \`' + property + '\`"');
+        } else {
+            ret[property] = ${objName}[property];
+        }
     }
-    return ${objName}["${propertyName}"];
+    if (errors.length !== 0) {
+        throw "The following errors happened: [" + errors.join(", ") + "]";
+    }
+    return ret;
 });
-arg.variables["${tuple[0].getStringValue()}"] = await jsHandle.jsonValue();`;
+const data = await jsHandle.jsonValue();
+${code.join('\n')}`;
 
     return {
-        'instructions': [code],
+        'instructions': [instructions],
         'wait': false,
     };
 }
 
 // Possible inputs:
 //
-// * (ident, "property name")
+// * {"property name": ident}
 function parseStoreDocumentProperty(parser) {
     return parseStoreObjectInner(parser, 'document');
 }
 
 // Possible inputs:
 //
-// * (ident, "property name")
+// * {"property name": ident}
 function parseStoreWindowProperty(parser) {
     return parseStoreObjectInner(parser, 'window');
 }

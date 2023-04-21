@@ -1497,8 +1497,10 @@ For more information about variables, read the [variables section](#variables).
 **store-document-property** command stores a property of the `document` object into a variable. Examples:
 
 ```
-store-document-property: (variable_name, "title")
-store-document-property: (variable_name, "URL")
+store-document-property: {"title": variable_name}
+
+// You can store multiple ones at a time:
+store-document-property: {"URL": variable_name, "title": another_var}
 ```
 
 For more information about variables, read the [variables section](#variables).
@@ -1509,8 +1511,11 @@ For more information about variables, read the [variables section](#variables).
 
 ```
 local-storage: {"key": "value"}
-store-local-storage: (variable_name, "key")
+store-local-storage: {"key": variable_name}
 assert-variable: (variable_name, "value")
+
+// You can store multiple ones at a time:
+store-local-storage: {"key": variable_name, "another-one": another_var}
 ```
 
 For more information about variables, read the [variables section](#variables).
@@ -1596,8 +1601,10 @@ For more information about variables, read the [variables section](#variables).
 **store-window-property** command stores a property of the `window` object into a variable. Examples:
 
 ```
-store-window-property: (variable_name, "pageYOffset")
-store-window-property: (variable_name, "devicePixelRatio")
+store-window-property: {"pageYOffset": variable_name}
+
+// You can store multiple ones at a time:
+store-window-property: {"devicePixelRatio": variable_name, "pageXOffset": another_var}
 ```
 
 For more information about variables, read the [variables section](#variables).

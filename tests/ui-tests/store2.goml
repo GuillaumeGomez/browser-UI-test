@@ -3,7 +3,7 @@ go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 set-window-size: (800, 500)
 store-value: (background_color, "rgb(17, 17, 17)")
 set-local-storage: {"a key": "a value"}
-store-local-storage: (local, "a key")
+store-local-storage: {"a key": local}
 // Should fail.
 assert-variable: (local, "a key")
 // Should succeed.
@@ -18,9 +18,9 @@ assert-css: ("header", |css_checks|)
 assert-variable: (css_checks, {"background-color": "rgb(17, 17, 17)"})
 // Should fail
 assert-variable: (css_checks, "a")
-store-document-property: (document_v, "title")
+store-document-property: {"title": document_v}
 assert-variable: (document_v, "Other")
-store-window-property: (window_v, "pageYOffset")
+store-window-property: {"pageYOffset": window_v}
 assert-variable: (window_v, "Other")
 
 //

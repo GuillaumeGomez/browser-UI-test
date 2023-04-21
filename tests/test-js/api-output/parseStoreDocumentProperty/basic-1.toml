@@ -1,10 +1,22 @@
 instructions = [
   """const jsHandle = await page.evaluateHandle(() => {
-    if (document[\"1\"] === undefined) {
-        throw \"document doesn't have a property named `1`\";
+    const properties = [\"ye\"];
+    const errors = [];
+    const ret = Object.create(null);
+
+    for (const property of properties) {
+        if (document[property] === undefined) {
+            errors.push('\"document doesn\\'t have a property named `' + property + '`\"');
+        } else {
+            ret[property] = document[property];
+        }
     }
-    return document[\"1\"];
+    if (errors.length !== 0) {
+        throw \"The following errors happened: [\" + errors.join(\", \") + \"]\";
+    }
+    return ret;
 });
-arg.variables[\"a1\"] = await jsHandle.jsonValue();""",
+const data = await jsHandle.jsonValue();
+arg.variables[\"a\"] = data[\"ye\"];""",
 ]
 wait = false
