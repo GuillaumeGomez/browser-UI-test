@@ -1,6 +1,6 @@
 instructions = [
   """const jsHandle = await page.evaluateHandle(() => {
-    const properties = [\"ye\"];
+    const properties = [\"\\\"ye\"];
     const errors = [];
     const ret = Object.create(null);
 
@@ -17,6 +17,6 @@ instructions = [
     return ret;
 });
 const data = await jsHandle.jsonValue();
-arg.variables[\"a\"] = data[\"ye\"];""",
+arg.variables[\"a\"] = data[\"\\\"ye\"];""",
 ]
 wait = false

@@ -1,1 +1,1 @@
-error = """expected first argument to be an ident, found a number (`1`)"""
+error = """expected a JSON dict, found a tuple (`(1, 1)`)"""
