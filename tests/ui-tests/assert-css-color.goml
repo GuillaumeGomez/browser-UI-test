@@ -1,3 +1,9 @@
 // This test is to ensure that if "show-text" is false, then it fails.
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+// This test should succeed.
+assert-css: ("#js-create-elem", {
+    "border": "1px solid rgb(1, 1, 1)",
+    "border-color": "rgb(1, 1, 1)"}
+)
+// This test should fail.
 assert-css: (".content>.right>p", {"color": "rgb(0, 0, 0)"})
