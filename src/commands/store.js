@@ -123,7 +123,7 @@ const jsHandle = await ${varName}.evaluateHandle(e => {
 
     for (const attr of attrs) {
         if (!e.hasAttribute(attr)) {
-            errors.push('"No attribute name \`' + attr + '\`"');
+            errors.push('"No attribute named \`' + attr + '\`"');
         } else {
             ret[attr] = e.getAttribute(attr);
         }
@@ -133,7 +133,7 @@ const jsHandle = await ${varName}.evaluateHandle(e => {
     }
     return ret;
 });
-const data= await jsHandle.jsonValue();
+const data = await jsHandle.jsonValue();
 ${code.join('\n')}`;
 
     return {
@@ -151,7 +151,7 @@ function parseStoreCss(parser) {
     const getter = [];
     const data = checkSelectorAndJson(parser, null, (k, v) => {
         code.push(`arg.variables["${v.value}"] = data["${k}"];`);
-        getter.push(`"${k}": style["${k}"],`);
+        getter.push(`"${k}"`);
     });
     if (data.error !== undefined) {
         return data;
@@ -172,9 +172,21 @@ function parseStoreCss(parser) {
 ${getAndSetElements(data.selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
     const style = getComputedStyle(e${pseudo});
-    return {
-${indentString(getter.join('\n'), 2)}
-    };
+    const props = [${getter.join(',')}];
+    const ret = Object.create(null);
+    const errors = [];
+
+    for (const prop of props) {
+        if (style[prop] === undefined) {
+            errors.push('"No CSS property named \`' + prop + '\`"');
+        } else {
+            ret[prop] = style[prop];
+        }
+    }
+    if (errors.length !== 0) {
+        throw "The following errors happened: [" + errors.join(", ") + "]";
+    }
+    return ret;
 });
 data = await jsHandle.jsonValue();
 ${code.join('\n')}`;
@@ -194,7 +206,7 @@ function parseStoreProperty(parser) {
     const getter = [];
     const data = checkSelectorAndJson(parser, null, (k, v) => {
         code.push(`arg.variables["${v.value}"] = data["${k}"];`);
-        getter.push(`"${k}": e["${k}"],`);
+        getter.push(`"${k}"`);
     });
     if (data.error !== undefined) {
         return data;
@@ -217,9 +229,21 @@ the check will be performed on the element itself`);
     const instructions = `\
 ${getAndSetElements(data.selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
-    return {
-${indentString(getter.join('\n'), 2)}
-    };
+    const props = [${getter.join(',')}];
+    const ret = Object.create(null);
+    const errors = [];
+
+    for (const prop of props) {
+        if (e[prop] === undefined) {
+            errors.push('"No property named \`' + prop + '\`"');
+        } else {
+            ret[prop] = e[prop];
+        }
+    }
+    if (errors.length !== 0) {
+        throw "The following errors happened: [" + errors.join(", ") + "]";
+    }
+    return ret;
 });
 data = await jsHandle.jsonValue();
 ${code.join('\n')}`;

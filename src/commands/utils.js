@@ -219,6 +219,8 @@ function buildPropertyDict(entries, errorText, allowEmptyValues, valuesAsStrings
     const ret = {
         'needColorCheck': false,
         'dict': '',
+        'keys': [],
+        'values': [],
     };
 
     // JSON.stringify produces a problematic output so instead we use this.
@@ -240,9 +242,12 @@ function buildPropertyDict(entries, errorText, allowEmptyValues, valuesAsStrings
         }
         if (valuesAsStrings === true) {
             ret['dict'] += `"${k}":"${v.value}"`;
+            ret['values'].push(`"${v.value}"`);
         } else {
             ret['dict'] += `"${k}":${v.value}`;
+            ret['values'].push(`${v.value}`);
         }
+        ret['keys'].push(`"${k}"`);
     }
     return ret;
 }

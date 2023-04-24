@@ -32,82 +32,119 @@ function parseAssertCssInner(parser, assertFalse) {
 
     const varName = 'parseAssertElemCss';
     const varDict = varName + 'Dict';
-    const varKey = varName + 'Key';
-    const varValue = varName + 'Value';
     const propertyDict = buildPropertyDict(entries, 'CSS property', false);
     if (propertyDict.error !== undefined) {
         return propertyDict;
     }
 
-    const indent = checkAllElements ? 1 : 0;
-
-    // This allows to round values in pixels to make checks simpler in case it's a decimal.
-    const extra = `\
-if (typeof assertComputedStyle[${varKey}] === "string" && \
-assertComputedStyle[${varKey}].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[${varKey}], true) + "px" !== \
-${varValue}) {
-        localErr.push('expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\`, \
-found \`' + assertComputedStyle[${varKey}] + '\` (or \`' + \
-browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[${varKey}], true) + 'px\`)');
-    }
-    succeeded = true;
-}`;
-
-    let code = `const ${varDict} = {${propertyDict['dict']}};
-for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-    const localErr = [];
-    let succeeded = false;
-    if (e.style[${varKey}] != ${varValue} && assertComputedStyle[${varKey}] != \
-${varValue}) {
-${indentString(extra, 2)}
-        if (!succeeded) {
-            localErr.push('expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\`\
-, found \`' + assertComputedStyle[${varKey}] + '\`');
-        }
-    }
-`;
-    if (assertFalse) {
-        code += `    if (localErr.length === 0) {
-        nonMatchingProps.push("assert didn't fail for key \`" + ${varKey} + '\`');
-    }`;
-    } else {
-        code += '    nonMatchingProps.push(...localErr);';
-    }
-
-    code += '\n}';
-
-    const errorCheck = `\
-if (nonMatchingProps.length !== 0) {
-    const props = nonMatchingProps.join(", ");
-    throw "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props + "]";
-}`;
-
-    const instructions = [];
-    if (propertyDict['needColorCheck']) {
-        instructions.push(`if (!arg.showText) {
-    throw "${COLOR_CHECK_ERROR}";
-}`,
-        );
-    }
-    let whole = getAndSetElements(selector, varName, checkAllElements) + '\n';
-    if (checkAllElements) {
-        whole += `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n`;
-    }
-    whole += indentString(`\
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    let assertComputedStyle = getComputedStyle(e${pseudo});
-${indentString(code, 1)}
-${indentString(errorCheck, 1)}
-`, indent);
+    let whole;
     if (checkAllElements) {
         whole += `    }, ${varName}[i]);
 }`;
     } else {
         whole += `}, ${varName});`;
     }
-    instructions.push(whole);
+
+    let extra;
+    if (checkAllElements) {
+        extra = `\
+for (const elem of ${varName}) {
+    await checkElem(elem);
+}`
+    } else {
+        extra = `await checkElem(${varName});`
+    }
+    let assertCheck;
+    if (assertFalse) {
+        assertCheck = `\
+if (localErr.length === 0) {
+    nonMatchingProps.push("assert didn't fail for key \`" + key + '\`');
+}`;
+    } else {
+        assertCheck = 'nonMatchingProps.push(...localErr);';
+    }
+
+    const instructions = [];
+    if (propertyDict['needColorCheck']) {
+        instructions.push(`\
+if (!arg.showText) {
+    throw "${COLOR_CHECK_ERROR}";
+}`);
+    }
+
+    instructions.push(`\
+const { CssParser } = require('css_parser.js');
+const { browserUiTestHelpers } = require('helpers.js');
+
+function makeError(value, key, computed, extracted = null) {
+    let out = 'expected \`' + value + '\` for key \`' + key + '\`, found \`' + computed + '\`';
+    if (extracted !== null) {
+        out += ' (or \`' + extracted + '\`)';
+    }
+    return out;
+}
+function checkProperty(key, value, simple, computed, localErr) {
+    if (simple == value || computed == value) {
+        return;
+    }
+    if (simple === null || computed === null) {
+        localErr.push('no local CSS property named \`' + key + '\`');
+        return;
+    }
+    if (typeof computed === "string" && computed.search(/^(\\d+\\.\\d+px)$/g) === 0) {
+        const extracted = browserUiTestHelpers.extractFloatOrZero(computed, true) + "px";
+        if (extracted !== value) {
+            localErr.push(makeError(value, key, computed, extracted));
+            return;
+        }
+    }
+    if (computed !== null && value !== null) {
+        const improvedComputed = new CssParser(computed);
+        if (!improvedComputed.hasColor) {
+            localErr.push(makeError(value, key, computed));
+            return;
+        }
+        let improved = new CssParser(value);
+        if (!improved.hasColor) {
+            localErr.push(makeError(value, key, computed));
+            return;
+        } else if (improved.toRGBAString() === improvedComputed.toRGBAString()) {
+            return;
+        }
+        localErr.push(makeError(value, key, improvedComputed.sameFormatAs(improved)));
+    }
+}
+async function checkElem(elem) {
+    const nonMatchingProps = [];
+    const jsHandle = await elem.evaluateHandle(e => {
+        const ${varDict} = [${propertyDict['keys'].join(',')}];
+        const assertComputedStyle = window.getComputedStyle(e${pseudo});
+        const simple = [];
+        const computed = [];
+        const keys = [];
+
+        for (const entry of ${varDict}) {
+            simple.push(e.style[entry]);
+            computed.push(assertComputedStyle[entry]);
+            keys.push(entry);
+        }
+        return [keys, simple, computed];
+    });
+    const [keys, simple, computed] = await jsHandle.jsonValue();
+    const values = [${propertyDict['values'].join(',')}];
+
+    for (const [i, key] of keys.entries()) {
+        const localErr = [];
+        checkProperty(key, values[i], simple[i], computed[i], localErr);
+${indentString(assertCheck, 3)}
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(", ");
+        throw "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props + "]";
+    }
+}
+${getAndSetElements(selector, varName, checkAllElements)}
+${extra}`);
     return {
         'instructions': instructions,
         'wait': false,

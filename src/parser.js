@@ -1704,4 +1704,6 @@ module.exports = {
     'JsonElement': JsonElement,
     'cleanString': cleanString,
     'getSelector': getSelector,
+    'isWhiteSpace': isWhiteSpace,
+    'isStringChar': isStringChar,
 };
