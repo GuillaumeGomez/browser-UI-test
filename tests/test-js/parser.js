@@ -6,15 +6,43 @@ const {Assert, plural, print} = require('./utils.js');
 function checkCssParser(x) {
     let p = new CssParser('rgb()');
     x.assert(p.hasColor, false);
+    x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'ident');
     x.assert(p.elems[0].value, 'rgb()');
 
     p = new CssParser('rgb(1, 2, 3)');
     x.assert(p.hasColor, true);
+    x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'color');
     x.assert(p.elems[0].value, 'rgb(1, 2, 3)');
     x.assert(p.elems[0].colorKind, 'rgb');
     x.assert(p.elems[0].color, [1, 2, 3, 1]);
+
+    p = new CssParser('1px whatever(rgb(1, 2, 3), a), 3');
+    x.assert(p.hasColor, false);
+    x.assert(p.elems.length, 3);
+    x.assert(p.elems[0].kind, 'ident');
+    x.assert(p.elems[0].value, '1px');
+    x.assert(p.elems[1].kind, 'ident');
+    x.assert(p.elems[1].value, 'whatever(rgb(1, 2, 3), a)');
+    x.assert(p.elems[2].kind, 'ident');
+    x.assert(p.elems[2].value, '3');
+
+    p = new CssParser('#fff 3px hsla(50 10% 40%) a');
+    x.assert(p.hasColor, true);
+    x.assert(p.elems.length, 4);
+    x.assert(p.elems[0].kind, 'color');
+    x.assert(p.elems[0].value, '#fff');
+    x.assert(p.elems[0].colorKind, 'hex-short');
+    x.assert(p.elems[0].color, [255, 255, 255, 1]);
+    x.assert(p.elems[1].kind, 'ident');
+    x.assert(p.elems[1].value, '3px');
+    x.assert(p.elems[2].kind, 'color');
+    x.assert(p.elems[2].value, 'hsla(50 10% 40%)');
+    x.assert(p.elems[2].colorKind, 'hsla');
+    x.assert(p.elems[2].color, [112, 108, 91, 1]);
+    x.assert(p.elems[3].kind, 'ident');
+    x.assert(p.elems[3].value, 'a');
 }
 
 function checkTuple(x) {
@@ -1966,15 +1994,15 @@ function checkBlock(x) {
 
 const TO_CHECK = [
     {'name': 'css', 'func': checkCssParser},
-    // {'name': 'tuple', 'func': checkTuple},
-    // {'name': 'array', 'func': checkArray},
-    // {'name': 'ident', 'func': checkIdent},
-    // {'name': 'string', 'func': checkString},
-    // {'name': 'number', 'func': checkNumber},
-    // {'name': 'json', 'func': checkJson},
-    // {'name': 'comment', 'func': checkComment},
-    // {'name': 'expression', 'func': checkExpr},
-    // {'name': 'block', 'func': checkBlock},
+    {'name': 'tuple', 'func': checkTuple},
+    {'name': 'array', 'func': checkArray},
+    {'name': 'ident', 'func': checkIdent},
+    {'name': 'string', 'func': checkString},
+    {'name': 'number', 'func': checkNumber},
+    {'name': 'json', 'func': checkJson},
+    {'name': 'comment', 'func': checkComment},
+    {'name': 'expression', 'func': checkExpr},
+    {'name': 'block', 'func': checkBlock},
 ];
 
 async function checkParsers(x = new Assert()) {
