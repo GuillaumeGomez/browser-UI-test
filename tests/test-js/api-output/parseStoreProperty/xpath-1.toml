@@ -3,9 +3,21 @@ instructions = [
 if (elem.length === 0) { throw 'XPath \"//a\" not found'; }
 elem = elem[0];
 const jsHandle = await elem.evaluateHandle(e => {
-    return {
-        \"blop\": e[\"blop\"],
-    };
+    const props = [\"blop\"];
+    const ret = Object.create(null);
+    const errors = [];
+
+    for (const prop of props) {
+        if (e[prop] === undefined) {
+            errors.push('\"No property named `' + prop + '`\"');
+        } else {
+            ret[prop] = e[prop];
+        }
+    }
+    if (errors.length !== 0) {
+        throw \"The following errors happened: [\" + errors.join(\", \") + \"]\";
+    }
+    return ret;
 });
 data = await jsHandle.jsonValue();
 arg.variables[\"a\"] = data[\"blop\"];""",

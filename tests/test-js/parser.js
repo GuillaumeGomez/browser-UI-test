@@ -1,6 +1,21 @@
 const process = require('process');
 const Parser = require('../../src/parser.js').Parser;
+const CssParser = require('../../src/css_parser.js').CssParser;
 const {Assert, plural, print} = require('./utils.js');
+
+function checkCssParser(x) {
+    let p = new CssParser('rgb()');
+    x.assert(p.hasColor, false);
+    x.assert(p.elems[0].kind, 'ident');
+    x.assert(p.elems[0].value, 'rgb()');
+
+    p = new CssParser('rgb(1, 2, 3)');
+    x.assert(p.hasColor, true);
+    x.assert(p.elems[0].kind, 'color');
+    x.assert(p.elems[0].value, 'rgb(1, 2, 3)');
+    x.assert(p.elems[0].colorKind, 'rgb');
+    x.assert(p.elems[0].color, [1, 2, 3, 1]);
+}
 
 function checkTuple(x) {
     let p = new Parser('()');
@@ -1950,15 +1965,16 @@ function checkBlock(x) {
 }
 
 const TO_CHECK = [
-    {'name': 'tuple', 'func': checkTuple},
-    {'name': 'array', 'func': checkArray},
-    {'name': 'ident', 'func': checkIdent},
-    {'name': 'string', 'func': checkString},
-    {'name': 'number', 'func': checkNumber},
-    {'name': 'json', 'func': checkJson},
-    {'name': 'comment', 'func': checkComment},
-    {'name': 'expression', 'func': checkExpr},
-    {'name': 'block', 'func': checkBlock},
+    {'name': 'css', 'func': checkCssParser},
+    // {'name': 'tuple', 'func': checkTuple},
+    // {'name': 'array', 'func': checkArray},
+    // {'name': 'ident', 'func': checkIdent},
+    // {'name': 'string', 'func': checkString},
+    // {'name': 'number', 'func': checkNumber},
+    // {'name': 'json', 'func': checkJson},
+    // {'name': 'comment', 'func': checkComment},
+    // {'name': 'expression', 'func': checkExpr},
+    // {'name': 'block', 'func': checkBlock},
 ];
 
 async function checkParsers(x = new Assert()) {

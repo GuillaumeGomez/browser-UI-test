@@ -3,9 +3,21 @@ instructions = [
 if (parseStoreCss === null) { throw '\"a\" not found'; }
 const jsHandle = await parseStoreCss.evaluateHandle(e => {
     const style = getComputedStyle(e);
-    return {
-        \"ye\": style[\"ye\"],
-    };
+    const props = [\"ye\"];
+    const ret = Object.create(null);
+    const errors = [];
+
+    for (const prop of props) {
+        if (style[prop] === undefined) {
+            errors.push('\"No CSS property named `' + prop + '`\"');
+        } else {
+            ret[prop] = style[prop];
+        }
+    }
+    if (errors.length !== 0) {
+        throw \"The following errors happened: [\" + errors.join(\", \") + \"]\";
+    }
+    return ret;
 });
 data = await jsHandle.jsonValue();
 arg.variables[\"a\"] = data[\"ye\"];""",

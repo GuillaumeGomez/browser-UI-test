@@ -4,9 +4,21 @@ if (parseStoreCss.length === 0) { throw 'XPath \"//a\" not found'; }
 parseStoreCss = parseStoreCss[0];
 const jsHandle = await parseStoreCss.evaluateHandle(e => {
     const style = getComputedStyle(e);
-    return {
-        \"blop\": style[\"blop\"],
-    };
+    const props = [\"blop\"];
+    const ret = Object.create(null);
+    const errors = [];
+
+    for (const prop of props) {
+        if (style[prop] === undefined) {
+            errors.push('\"No CSS property named `' + prop + '`\"');
+        } else {
+            ret[prop] = style[prop];
+        }
+    }
+    if (errors.length !== 0) {
+        throw \"The following errors happened: [\" + errors.join(\", \") + \"]\";
+    }
+    return ret;
 });
 data = await jsHandle.jsonValue();
 arg.variables[\"a\"] = data[\"blop\"];""",
