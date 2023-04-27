@@ -2,54 +2,20 @@ instructions = [
   """if (!arg.showText) {
     throw \"`show-text: true` needs to be used before checking for `color` (otherwise the browser doesn't compute it)\";
 }""",
-  """const { CssParser } = require('css_parser.js');
-const { browserUiTestHelpers } = require('helpers.js');
+  """const { checkCssProperty } = require('command-helpers.js');
 
-function makeError(value, key, computed, extracted = null) {
-    let out = 'expected `' + value + '` for key `' + key + '`, found `' + computed + '`';
-    if (extracted !== null) {
-        out += ' (or `' + extracted + '`)';
-    }
-    return out;
-}
-function checkProperty(key, value, simple, computed, localErr) {
-    if (simple == value || computed == value) {
-        return true;
-    }
-    if (typeof computed === \"string\" && computed.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-        const extracted = browserUiTestHelpers.extractFloatOrZero(computed, true) + \"px\";
-        if (extracted !== value) {
-            localErr.push(makeError(value, key, computed, extracted));
-            return false;
-        }
-    }
-    const improvedComputed = new CssParser(computed);
-    if (!improvedComputed.hasColor) {
-        localErr.push(makeError(value, key, computed));
-        return false;
-    }
-    let improved = new CssParser(value);
-    if (!improved.hasColor) {
-        localErr.push(makeError(value, key, computed));
-        return false;
-    } else if (improved.toRGBAString() === computed) {
-        return true;
-    }
-    localErr.push(makeError(value, key, improvedComputed.sameFormatAs(improved)));
-    return false;
-}
 async function checkElem(elem) {
     const nonMatchingProps = [];
     const jsHandle = await elem.evaluateHandle(e => {
         const parseAssertElemCssDict = [\"color\"];
         const assertComputedStyle = window.getComputedStyle(e);
-        const simple = Object.create(null);
-        const computed = Object.create(null);
+        const simple = [];
+        const computed = [];
         const keys = [];
 
         for (const entry of parseAssertElemCssDict) {
-            simple[entry] = e.style[entry];
-            computed[entry] = assertComputedStyle[entry];
+            simple.push(e.style[entry]);
+            computed.push(assertComputedStyle[entry]);
             keys.push(entry);
         }
         return [keys, simple, computed];
@@ -59,11 +25,10 @@ async function checkElem(elem) {
 
     for (const [i, key] of keys.entries()) {
         const localErr = [];
-        if (!checkProperty(key, values[i], simple[i], computed[i], localErr)) {
+        checkCssProperty(key, values[i], simple[i], computed[i], localErr);
             if (localErr.length === 0) {
                 nonMatchingProps.push(\"assert didn't fail for key `\" + key + '`');
             }
-        }
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(\", \");

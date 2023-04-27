@@ -413,31 +413,15 @@ function parseWaitForCss(parser) {
 
     const varName = 'parseWaitForCss';
     const varDict = varName + 'Dict';
-    const varKey = varName + 'Key';
-    const varValue = varName + 'Value';
 
     const instructions = [];
-    if (data['propertyDict']['needColorCheck']) {
+    const propertyDict = data['propertyDict'];
+    if (propertyDict['needColorCheck']) {
         instructions.push(`\
 if (!arg.showText) {
     throw "${COLOR_CHECK_ERROR}";
 }`);
     }
-    const nonMatchingS = `nonMatchingProps.push(${varKey} + ": (\`" + computedEntry + "\` && \`" \
-+ extractedFloat + "\`) != \`" + ${varValue} + "\`)");`;
-    const check = `\
-computedEntry = computedStyle[${varKey}];
-if (e.style[${varKey}] != ${varValue} && computedEntry != ${varValue}) {
-    if (typeof computedEntry === "string" && computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-        extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) + "px";
-        if (extractedFloat !== ${varValue}) {
-            ${nonMatchingS}
-        } else {
-            continue;
-        }
-    }
-    nonMatchingProps.push(${varKey} + ": (\`" + computedEntry + "\` != \`" + ${varValue} + "\`)");
-}`;
 
     const incr = incrWait(`\
 const props = nonMatchingProps.join(", ");
@@ -445,21 +429,33 @@ throw new Error("The following CSS properties still don't match: [" + props + "]
 
     const [init, looper] = waitForElement(data['selector'], varName);
     instructions.push(`\
+const { checkCssProperty } = require('command-helpers.js');
 ${init}
-let nonMatchingProps;
 while (true) {
 ${indentString(looper, 1)}
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        let extractedFloat;
-        const ${varDict} = {${data['propertyDict']['dict']}};
-        const computedStyle = getComputedStyle(e${data['pseudo']});
-        for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-${indentString(check, 3)}
+    const jsHandle = await ${varName}.evaluateHandle(e => {
+        const ${varDict} = [${propertyDict['keys'].join(',')}];
+        const assertComputedStyle = window.getComputedStyle(e${data['pseudo']});
+        const simple = [];
+        const computed = [];
+        const keys = [];
+
+        for (const entry of ${varDict}) {
+            simple.push(e.style[entry]);
+            computed.push(assertComputedStyle[entry]);
+            keys.push(entry);
         }
-        return nonMatchingProps;
-    }, ${varName});
+        return [keys, simple, computed];
+    });
+    const [keys, simple, computed] = await jsHandle.jsonValue();
+    const values = [${propertyDict['values'].join(',')}];
+    const nonMatchingProps = [];
+
+    for (const [i, key] of keys.entries()) {
+        const localErr = [];
+        checkCssProperty(key, values[i], simple[i], computed[i], localErr);
+        nonMatchingProps.push(...localErr);
+    }
     if (nonMatchingProps.length === 0) {
         break;
     }

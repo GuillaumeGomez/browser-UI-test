@@ -1,9 +1,9 @@
 instructions = [
-  """const timeLimit = page.getDefaultTimeout();
+  """const { checkCssProperty } = require('command-helpers.js');
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForCss = null;
-let nonMatchingProps;
 while (true) {
     while (true) {
         parseWaitForCss = await page.$x(\"//a\");
@@ -20,28 +20,29 @@ while (true) {
             throw new Error(\"The following XPath \\\"//a\\\" was not found\");
         }
     }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        let extractedFloat;
-        const parseWaitForCssDict = {\"x\":\"1\"};
-        const computedStyle = getComputedStyle(e);
-        for (const [parseWaitForCssKey, parseWaitForCssValue] of Object.entries(parseWaitForCssDict)) {
-            computedEntry = computedStyle[parseWaitForCssKey];
-            if (e.style[parseWaitForCssKey] != parseWaitForCssValue && computedEntry != parseWaitForCssValue) {
-                if (typeof computedEntry === \"string\" && computedEntry.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    extractedFloat = browserUiTestHelpers.extractFloatOrZero(computedEntry, true) + \"px\";
-                    if (extractedFloat !== parseWaitForCssValue) {
-                        nonMatchingProps.push(parseWaitForCssKey + \": (`\" + computedEntry + \"` && `\" + extractedFloat + \"`) != `\" + parseWaitForCssValue + \"`)\");
-                    } else {
-                        continue;
-                    }
-                }
-                nonMatchingProps.push(parseWaitForCssKey + \": (`\" + computedEntry + \"` != `\" + parseWaitForCssValue + \"`)\");
-            }
+    const jsHandle = await parseWaitForCss.evaluateHandle(e => {
+        const parseWaitForCssDict = [\"x\"];
+        const assertComputedStyle = window.getComputedStyle(e);
+        const simple = [];
+        const computed = [];
+        const keys = [];
+
+        for (const entry of parseWaitForCssDict) {
+            simple.push(e.style[entry]);
+            computed.push(assertComputedStyle[entry]);
+            keys.push(entry);
         }
-        return nonMatchingProps;
-    }, parseWaitForCss);
+        return [keys, simple, computed];
+    });
+    const [keys, simple, computed] = await jsHandle.jsonValue();
+    const values = [\"1\"];
+    const nonMatchingProps = [];
+
+    for (const [i, key] of keys.entries()) {
+        const localErr = [];
+        checkCssProperty(key, values[i], simple[i], computed[i], localErr);
+        nonMatchingProps.push(...localErr);
+    }
     if (nonMatchingProps.length === 0) {
         break;
     }
