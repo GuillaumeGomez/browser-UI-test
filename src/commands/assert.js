@@ -73,47 +73,9 @@ if (!arg.showText) {
     }
 
     instructions.push(`\
-const { CssParser } = require('css_parser.js');
 const { browserUiTestHelpers } = require('helpers.js');
+const { checkCssProperty } = require('command-helpers.js');
 
-function makeError(value, key, computed, extracted = null) {
-    let out = 'expected \`' + value + '\` for key \`' + key + '\`, found \`' + computed + '\`';
-    if (extracted !== null) {
-        out += ' (or \`' + extracted + '\`)';
-    }
-    return out;
-}
-function checkProperty(key, value, simple, computed, localErr) {
-    if (simple == value || computed == value) {
-        return;
-    }
-    if (simple === null || computed === null) {
-        localErr.push('no local CSS property named \`' + key + '\`');
-        return;
-    }
-    if (typeof computed === "string" && computed.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-        const extracted = browserUiTestHelpers.extractFloatOrZero(computed, true) + "px";
-        if (extracted !== value) {
-            localErr.push(makeError(value, key, computed, extracted));
-            return;
-        }
-    }
-    if (computed !== null && value !== null) {
-        const improvedComputed = new CssParser(computed);
-        if (!improvedComputed.hasColor) {
-            localErr.push(makeError(value, key, computed));
-            return;
-        }
-        let improved = new CssParser(value);
-        if (!improved.hasColor) {
-            localErr.push(makeError(value, key, computed));
-            return;
-        } else if (improved.toRGBAString() === improvedComputed.toRGBAString()) {
-            return;
-        }
-        localErr.push(makeError(value, key, improvedComputed.sameFormatAs(improved)));
-    }
-}
 async function checkElem(elem) {
     const nonMatchingProps = [];
     const jsHandle = await elem.evaluateHandle(e => {
@@ -135,7 +97,7 @@ async function checkElem(elem) {
 
     for (const [i, key] of keys.entries()) {
         const localErr = [];
-        checkProperty(key, values[i], simple[i], computed[i], localErr);
+        checkCssProperty(key, values[i], simple[i], computed[i], localErr);
 ${indentString(assertCheck, 3)}
     }
     if (nonMatchingProps.length !== 0) {
