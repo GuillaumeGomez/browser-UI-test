@@ -37,22 +37,14 @@ function parseAssertCssInner(parser, assertFalse) {
         return propertyDict;
     }
 
-    let whole;
-    if (checkAllElements) {
-        whole += `    }, ${varName}[i]);
-}`;
-    } else {
-        whole += `}, ${varName});`;
-    }
-
     let extra;
     if (checkAllElements) {
         extra = `\
 for (const elem of ${varName}) {
     await checkElem(elem);
-}`
+}`;
     } else {
-        extra = `await checkElem(${varName});`
+        extra = `await checkElem(${varName});`;
     }
     let assertCheck;
     if (assertFalse) {
@@ -73,7 +65,6 @@ if (!arg.showText) {
     }
 
     instructions.push(`\
-const { browserUiTestHelpers } = require('helpers.js');
 const { checkCssProperty } = require('command-helpers.js');
 
 async function checkElem(elem) {

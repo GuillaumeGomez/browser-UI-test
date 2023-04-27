@@ -1,23 +1,25 @@
 const { CssParser } = require('./css_parser.js');
+const { browserUiTestHelpers } = require('./helpers.js');
 
 function makeError(value, key, computed, extracted = null) {
-    let out = 'expected \`' + value + '\` for key \`' + key + '\`, found \`' + computed + '\`';
+    let out = `expected \`${value}\` for key \`${key}\`, found \`${computed}\``;
     if (extracted !== null) {
-        out += ' (or \`' + extracted + '\`)';
+        out += ` (or \`${extracted}\`)`;
     }
     return out;
 }
 
 function checkCssProperty(key, value, simple, computed, localErr) {
+    // eslint-disable-next-line eqeqeq
     if (simple == value || computed == value) {
         return;
     }
     if (simple === null || computed === null) {
-        localErr.push('no local CSS property named \`' + key + '\`');
+        localErr.push(`no local CSS property named \`${key}\``);
         return;
     }
-    if (typeof computed === "string" && computed.search(/^(\\d+\\.\\d+px)$/g) === 0) {
-        const extracted = browserUiTestHelpers.extractFloatOrZero(computed, true) + "px";
+    if (typeof computed === 'string' && computed.search(/^(\\d+\\.\\d+px)$/g) === 0) {
+        const extracted = browserUiTestHelpers.extractFloatOrZero(computed, true) + 'px';
         if (extracted !== value) {
             localErr.push(makeError(value, key, computed, extracted));
             return;
@@ -29,7 +31,7 @@ function checkCssProperty(key, value, simple, computed, localErr) {
             localErr.push(makeError(value, key, computed));
             return;
         }
-        let improved = new CssParser(value);
+        const improved = new CssParser(value);
         if (!improved.hasColor) {
             localErr.push(makeError(value, key, computed));
             return;
