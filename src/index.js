@@ -27,11 +27,9 @@ const Status = {
 };
 
 function loadContent(content) {
-    const filename = ''; // works fine as is...
-    const m = new Module(filename);
-    m.filename = filename; // because why not?
-    m.paths = Module._nodeModulePaths(path.dirname(filename)); // not sure if very useful...
-    m._compile(`async function f(page, arg){ ${content} } module.exports.f = f;`, filename);
+    const m = new Module();
+    m.paths = [__dirname];
+    m._compile(`module.exports.f = async function(page, arg){ ${content} };`, __dirname);
     return m.exports.f;
 }
 

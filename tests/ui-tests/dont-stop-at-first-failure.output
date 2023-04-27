@@ -2,8 +2,8 @@
 
 dont-stop-at-first-failure... FAILED
 [ERROR] (line 4) "#doesnt-exist" not found: for command `assert: "#doesnt-exist"`
-[ERROR] (line 5) Error: Evaluation failed: The following errors happened (for selector `.content>.right>p`): [expected `200px` for key `font-size`, found `16px`, expected `30` for key `height`, found `18px`]: for command `assert-css: (".content>.right>p", {"font-size": "200px", "height": "30"})`
-[ERROR] (line 6) Error: Evaluation failed: The following errors happened (for selector `.content>.right>p`): [assert didn't fail for key `font-size`, assert didn't fail for key `height`]: for command `assert-css-false: (".content>.right>p", {"font-size": "16px", "height": "18px"})`
+[ERROR] (line 5) The following errors happened (for selector `.content>.right>p`): [expected `200px` for key `font-size`, found `16px`, expected `30` for key `height`, found `18px`]: for command `assert-css: (".content>.right>p", {"font-size": "200px", "height": "30"})`
+[ERROR] (line 6) The following errors happened (for selector `.content>.right>p`): [assert didn't fail for key `font-size`, assert didn't fail for key `height`]: for command `assert-css-false: (".content>.right>p", {"font-size": "16px", "height": "18px"})`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

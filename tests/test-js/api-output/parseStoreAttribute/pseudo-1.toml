@@ -8,7 +8,7 @@ const jsHandle = await elem.evaluateHandle(e => {
 
     for (const attr of attrs) {
         if (!e.hasAttribute(attr)) {
-            errors.push('\"No attribute name `' + attr + '`\"');
+            errors.push('\"No attribute named `' + attr + '`\"');
         } else {
             ret[attr] = e.getAttribute(attr);
         }
@@ -18,7 +18,7 @@ const jsHandle = await elem.evaluateHandle(e => {
     }
     return ret;
 });
-const data= await jsHandle.jsonValue();
+const data = await jsHandle.jsonValue();
 arg.variables[\"a\"] = data[\"x\"];""",
 ]
 wait = false

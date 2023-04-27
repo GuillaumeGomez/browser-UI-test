@@ -2,10 +2,21 @@ instructions = [
   """let elem = await page.$(\"a\");
 if (elem === null) { throw '\"a\" not found'; }
 const jsHandle = await elem.evaluateHandle(e => {
-    return {
-        \"yaya\": e[\"yaya\"],
-        \"yiyi\": e[\"yiyi\"],
-    };
+    const props = [\"yaya\",\"yiyi\"];
+    const ret = Object.create(null);
+    const errors = [];
+
+    for (const prop of props) {
+        if (e[prop] === undefined) {
+            errors.push('\"No property named `' + prop + '`\"');
+        } else {
+            ret[prop] = e[prop];
+        }
+    }
+    if (errors.length !== 0) {
+        throw \"The following errors happened: [\" + errors.join(\", \") + \"]\";
+    }
+    return ret;
 });
 data = await jsHandle.jsonValue();
 arg.variables[\"a\"] = data[\"yaya\"];

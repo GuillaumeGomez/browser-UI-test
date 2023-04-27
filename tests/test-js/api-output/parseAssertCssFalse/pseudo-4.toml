@@ -1,34 +1,41 @@
 instructions = [
-  """let parseAssertElemCss = await page.$$(\"a:focus\");
-if (parseAssertElemCss.length === 0) { throw '\"a:focus\" not found'; }
-for (let i = 0, len = parseAssertElemCss.length; i < len; ++i) {
-    await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let assertComputedStyle = getComputedStyle(e);
-        const parseAssertElemCssDict = {\"a\":\"1\"};
-        for (const [parseAssertElemCssKey, parseAssertElemCssValue] of Object.entries(parseAssertElemCssDict)) {
-            const localErr = [];
-            let succeeded = false;
-            if (e.style[parseAssertElemCssKey] != parseAssertElemCssValue && assertComputedStyle[parseAssertElemCssKey] != parseAssertElemCssValue) {
-                if (typeof assertComputedStyle[parseAssertElemCssKey] === \"string\" && assertComputedStyle[parseAssertElemCssKey].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-                    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + \"px\" !== parseAssertElemCssValue) {
-                        localErr.push('expected `' + parseAssertElemCssValue + '` for key `' + parseAssertElemCssKey + '`, found `' + assertComputedStyle[parseAssertElemCssKey] + '` (or `' + browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[parseAssertElemCssKey], true) + 'px`)');
-                    }
-                    succeeded = true;
-                }
-                if (!succeeded) {
-                    localErr.push('expected `' + parseAssertElemCssValue + '` for key `' + parseAssertElemCssKey + '`, found `' + assertComputedStyle[parseAssertElemCssKey] + '`');
-                }
-            }
+  """const { checkCssProperty } = require('command-helpers.js');
+
+async function checkElem(elem) {
+    const nonMatchingProps = [];
+    const jsHandle = await elem.evaluateHandle(e => {
+        const parseAssertElemCssDict = [\"a\"];
+        const assertComputedStyle = window.getComputedStyle(e);
+        const simple = [];
+        const computed = [];
+        const keys = [];
+
+        for (const entry of parseAssertElemCssDict) {
+            simple.push(e.style[entry]);
+            computed.push(assertComputedStyle[entry]);
+            keys.push(entry);
+        }
+        return [keys, simple, computed];
+    });
+    const [keys, simple, computed] = await jsHandle.jsonValue();
+    const values = [\"1\"];
+
+    for (const [i, key] of keys.entries()) {
+        const localErr = [];
+        checkCssProperty(key, values[i], simple[i], computed[i], localErr);
             if (localErr.length === 0) {
-                nonMatchingProps.push(\"assert didn't fail for key `\" + parseAssertElemCssKey + '`');
+                nonMatchingProps.push(\"assert didn't fail for key `\" + key + '`');
             }
-        }
-        if (nonMatchingProps.length !== 0) {
-            const props = nonMatchingProps.join(\", \");
-            throw \"The following errors happened (for selector `a:focus`): [\" + props + \"]\";
-        }
-    }, parseAssertElemCss[i]);
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(\", \");
+        throw \"The following errors happened (for selector `a:focus`): [\" + props + \"]\";
+    }
+}
+let parseAssertElemCss = await page.$$(\"a:focus\");
+if (parseAssertElemCss.length === 0) { throw '\"a:focus\" not found'; }
+for (const elem of parseAssertElemCss) {
+    await checkElem(elem);
 }""",
 ]
 wait = false

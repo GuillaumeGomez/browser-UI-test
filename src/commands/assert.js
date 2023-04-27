@@ -32,82 +32,72 @@ function parseAssertCssInner(parser, assertFalse) {
 
     const varName = 'parseAssertElemCss';
     const varDict = varName + 'Dict';
-    const varKey = varName + 'Key';
-    const varValue = varName + 'Value';
     const propertyDict = buildPropertyDict(entries, 'CSS property', false);
     if (propertyDict.error !== undefined) {
         return propertyDict;
     }
 
-    const indent = checkAllElements ? 1 : 0;
-
-    // This allows to round values in pixels to make checks simpler in case it's a decimal.
-    const extra = `\
-if (typeof assertComputedStyle[${varKey}] === "string" && \
-assertComputedStyle[${varKey}].search(/^(\\d+\\.\\d+px)$/g) === 0) {
-    if (browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[${varKey}], true) + "px" !== \
-${varValue}) {
-        localErr.push('expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\`, \
-found \`' + assertComputedStyle[${varKey}] + '\` (or \`' + \
-browserUiTestHelpers.extractFloatOrZero(assertComputedStyle[${varKey}], true) + 'px\`)');
-    }
-    succeeded = true;
+    let extra;
+    if (checkAllElements) {
+        extra = `\
+for (const elem of ${varName}) {
+    await checkElem(elem);
 }`;
-
-    let code = `const ${varDict} = {${propertyDict['dict']}};
-for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-    const localErr = [];
-    let succeeded = false;
-    if (e.style[${varKey}] != ${varValue} && assertComputedStyle[${varKey}] != \
-${varValue}) {
-${indentString(extra, 2)}
-        if (!succeeded) {
-            localErr.push('expected \`' + ${varValue} + '\` for key \`' + ${varKey} + '\`\
-, found \`' + assertComputedStyle[${varKey}] + '\`');
-        }
-    }
-`;
-    if (assertFalse) {
-        code += `    if (localErr.length === 0) {
-        nonMatchingProps.push("assert didn't fail for key \`" + ${varKey} + '\`');
-    }`;
     } else {
-        code += '    nonMatchingProps.push(...localErr);';
+        extra = `await checkElem(${varName});`;
     }
-
-    code += '\n}';
-
-    const errorCheck = `\
-if (nonMatchingProps.length !== 0) {
-    const props = nonMatchingProps.join(", ");
-    throw "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props + "]";
+    let assertCheck;
+    if (assertFalse) {
+        assertCheck = `\
+if (localErr.length === 0) {
+    nonMatchingProps.push("assert didn't fail for key \`" + key + '\`');
 }`;
+    } else {
+        assertCheck = 'nonMatchingProps.push(...localErr);';
+    }
 
     const instructions = [];
     if (propertyDict['needColorCheck']) {
-        instructions.push(`if (!arg.showText) {
+        instructions.push(`\
+if (!arg.showText) {
     throw "${COLOR_CHECK_ERROR}";
-}`,
-        );
+}`);
     }
-    let whole = getAndSetElements(selector, varName, checkAllElements) + '\n';
-    if (checkAllElements) {
-        whole += `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n`;
-    }
-    whole += indentString(`\
-await page.evaluate(e => {
+
+    instructions.push(`\
+const { checkCssProperty } = require('command-helpers.js');
+
+async function checkElem(elem) {
     const nonMatchingProps = [];
-    let assertComputedStyle = getComputedStyle(e${pseudo});
-${indentString(code, 1)}
-${indentString(errorCheck, 1)}
-`, indent);
-    if (checkAllElements) {
-        whole += `    }, ${varName}[i]);
-}`;
-    } else {
-        whole += `}, ${varName});`;
+    const jsHandle = await elem.evaluateHandle(e => {
+        const ${varDict} = [${propertyDict['keys'].join(',')}];
+        const assertComputedStyle = window.getComputedStyle(e${pseudo});
+        const simple = [];
+        const computed = [];
+        const keys = [];
+
+        for (const entry of ${varDict}) {
+            simple.push(e.style[entry]);
+            computed.push(assertComputedStyle[entry]);
+            keys.push(entry);
+        }
+        return [keys, simple, computed];
+    });
+    const [keys, simple, computed] = await jsHandle.jsonValue();
+    const values = [${propertyDict['values'].join(',')}];
+
+    for (const [i, key] of keys.entries()) {
+        const localErr = [];
+        checkCssProperty(key, values[i], simple[i], computed[i], localErr);
+${indentString(assertCheck, 3)}
     }
-    instructions.push(whole);
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(", ");
+        throw "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props + "]";
+    }
+}
+${getAndSetElements(selector, varName, checkAllElements)}
+${extra}`);
     return {
         'instructions': instructions,
         'wait': false,
