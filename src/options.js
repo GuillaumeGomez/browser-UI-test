@@ -344,10 +344,10 @@ class Options {
             throw new Error('You need to provide `--failure-folder` or `--test-folder` option if ' +
                 '`--enable-screenshot-comparison` option is used!');
         }
-        for (let i = 0; i < this.testFiles.length; ++i) {
-            if (this.testFiles[i].endsWith('.goml') === false) {
+        for (const test of this.testFiles) {
+            if (test.endsWith('.goml') === false) {
                 throw new Error('Only `.goml` script files are allowed in the `--test-files` ' +
-                    `option, got \`${this.testFiles[i]}\``);
+                    `option, got \`${test}\``);
             }
         }
         this.validateFields();
