@@ -82,12 +82,12 @@ function getVariableValue(variables, variableName, functionArgs = null) {
     return null;
 }
 
-function loadPuppeteerWrapper(options) {
-    return new PuppeteerWrapper(options);
+function loadPuppeteerWrapper() {
+    return new PuppeteerWrapper();
 }
 
 async function loadPuppeteer(options) {
-    const puppeteer = loadPuppeteerWrapper(options);
+    const puppeteer = loadPuppeteerWrapper();
     await puppeteer.init(options);
     return puppeteer;
 }
@@ -104,6 +104,7 @@ module.exports = {
     'print': print,
     'getVariableValue': getVariableValue,
     'loadPuppeteer': loadPuppeteer,
+    // Used in `options.js` for function `showDeviceList()`.
     'loadPuppeteerWrapper': loadPuppeteerWrapper,
     'RESERVED_VARIABLE_NAME': RESERVED_VARIABLE_NAME,
 };

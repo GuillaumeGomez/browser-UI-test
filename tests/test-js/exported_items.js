@@ -10,17 +10,17 @@ const {Assert, plural, print, removeFolder} = require('./utils.js');
 async function wrapRunTests(options = new Options()) {
     options.screenshotComparison = false;
     options.noSandbox = true;
-    return await runTests(options, false);
+    return await runTests({'options': options, 'showLogs': false});
 }
 async function wrapRunTest(testPath, options = new Options()) {
     options.screenshotComparison = false;
     options.noSandbox = true;
-    return await runTest(testPath, options, false);
+    return await runTest(testPath, {'options': options, 'showLogs': false});
 }
 async function wrapRunTestCode(testName, content, options = new Options()) {
     options.screenshotComparison = false;
     options.noSandbox = true;
-    return await runTestCode(testName, content, options, false);
+    return await runTestCode(testName, content, {'options': options, 'showLogs': false});
 }
 
 async function checkRunTest(x, func) {
@@ -28,8 +28,8 @@ async function checkRunTest(x, func) {
     await x.assertTry(func, [], 'expected `runTest` first argument to be a string');
 
     // invalid Options type
-    await x.assertTry(func, ['../scripts/fail.goml', {'test': false}],
-        'Options must be an "Options" type!');
+    await x.assertTry(func, ['./tests/scripts/basic.goml', {'test': false}],
+        '`extras["options"]` must be an "Options" type!');
 
     // non-existent file
     await x.assertTry(func, ['./tests/fail.goml'], 'No file found with path `./tests/fail.goml`');
@@ -68,23 +68,26 @@ async function checkRunTest(x, func) {
 
 async function checkRunTestCode(x, func) {
     // no arguments check
-    await x.assertTry(func, [], 'expected `runTestCode` first argument to be a string');
+    await x.assertTry(
+        func, [], 'expected `runTestCode` first argument to be a string, found `undefined`');
 
     // no arguments check
-    await x.assertTry(func, [''], 'expected `runTestCode` second argument to be a string');
+    await x.assertTry(
+        func, [''], 'expected `runTestCode` second argument to be a string, found `undefined`');
 
     // no arguments check
-    await x.assertTry(func, ['', ''], 'test name (first argument) cannot be empty');
+    await x.assertTry(func, ['', ''], '`runTestCode` first argument cannot be empty');
 
     // no options
     await x.assertTry(func, ['test', ''], ['test... FAILED (No command to execute)', 1]);
 
     // invalid Options type
-    await x.assertTry(func, ['test', '', {'test': false}], 'Options must be an "Options" type!');
+    await x.assertTry(
+        func, ['test', '', {'test': false}], '`extras["options"]` must be an "Options" type!');
 
     // invalid content
     await x.assertTry(func, ['test', {'test': 'test'}],
-        'expected `runTestCode` second argument to be a string');
+        'expected `runTestCode` second argument to be a string, found `object`');
 
     // what about some js?
     await x.assertTry(func, ['test', 'let x = true;'],
@@ -141,7 +144,7 @@ async function checkRunTests(x, func) {
         '`--test-files` option!');
 
     // invalid Options type
-    await x.assertTry(func, [{'test': false}], 'Options must be an "Options" type!');
+    await x.assertTry(func, [{'test': false}], '`extras["options"]` must be an "Options" type!');
 
     // non-existent folder
     let options = new Options();

@@ -58,8 +58,8 @@ function showVersion() {
     process.exit(0);
 }
 
-function showDeviceList(options) {
-    const b = utils.loadPuppeteerWrapper(options);
+function showDeviceList() {
+    const b = utils.loadPuppeteerWrapper();
     print('List of available devices:');
     print('');
     const devices = b.puppeteer.devices;
@@ -72,8 +72,8 @@ function showPermissionsList() {
     print('List of available permissions:');
     print('');
     const permissions = consts.AVAILABLE_PERMISSIONS;
-    for (let i = 0; i < permissions.length; ++i) {
-        print(`"${permissions[i]}"`);
+    for (const permission of permissions) {
+        print(`"${permission}"`);
     }
 }
 
@@ -314,7 +314,7 @@ class Options {
             }
         }
         if (showDevices === true) {
-            showDeviceList(this);
+            showDeviceList();
         }
         if (showPermissions === true) {
             showPermissionsList();

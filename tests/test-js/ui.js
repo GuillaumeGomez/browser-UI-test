@@ -9,14 +9,19 @@ utils.print = function print() {}; // overwriting the print function to avoid th
 const {runTests, Options} = require('../../src/index.js');
 const {Assert, plural, print} = require('./utils.js');
 
-async function wrapRunTests(options = new Options()) {
+async function wrapRunTests(browser, options = new Options()) {
     options.screenshotComparison = false;
     options.noSandbox = true;
-    const ret = await runTests(options, false, false);
+    const ret = await runTests({
+        'options': options,
+        'browser': browser,
+        'showLogs': false,
+        'showNbThreads': false,
+    });
     return ret[0];
 }
 
-function runAsyncUiTest(x, file, output, tests_queue) {
+function runAsyncUiTest(x, file, output, tests_queue, browser) {
     const options = new Options();
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
         '--test-files', file]);
@@ -24,7 +29,7 @@ function runAsyncUiTest(x, file, output, tests_queue) {
 
     const callback = x.assertTryUi(
         wrapRunTests,
-        [options],
+        [browser, options],
         output.replaceAll('$CURRENT_DIR', utils.getCurrentDir()),
         file,
         false,
@@ -60,6 +65,7 @@ async function compareOutput(x) {
     const cpuCount = os.cpus().length / 2 + 1;
     process.setMaxListeners(cpuCount);
     const tests_queue = [];
+    const browser = await utils.loadPuppeteer(new Options());
 
     for (const file of filesToTest) {
         const outputFile = file.replace('.goml', '.output');
@@ -71,7 +77,7 @@ async function compareOutput(x) {
             output = `Cannot open file \`${outputFile}\``;
         }
 
-        runAsyncUiTest(x, file, output, tests_queue);
+        runAsyncUiTest(x, file, output, tests_queue, browser);
         if (tests_queue.length >= cpuCount) {
             await Promise.race(tests_queue);
         }
@@ -79,6 +85,7 @@ async function compareOutput(x) {
     if (tests_queue.length > 0) {
         await Promise.all(tests_queue);
     }
+    await browser.close();
 }
 
 function checkImageFileForTest(x, screenshotFile, testName) {
