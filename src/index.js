@@ -664,7 +664,7 @@ async function runTest(testPath, options = new Options(), showLogs = false) {
         optionsCopy, showLogs, checkTestFolder);
 }
 
-async function runTests(options, showLogs = false) {
+async function runTests(options, showLogs = false, showNbThreads = true) {
     if (!options || options.validate === undefined) {
         throw new Error('Options must be an "Options" type!');
     }
@@ -672,8 +672,9 @@ async function runTests(options, showLogs = false) {
 
     const logs = new Logs(showLogs);
     const s = options.nbThreads > 1 ? 's' : '';
+    const extra = showNbThreads === true ? ` (on ${options.nbThreads} thread${s})` : '';
 
-    logs.append(`=> Starting doc-ui tests (on ${options.nbThreads} thread${s})...\n`);
+    logs.append(`=> Starting doc-ui tests${extra}...\n`);
 
     try {
         return innerRunTests(logs, options);
