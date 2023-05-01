@@ -133,7 +133,7 @@ try {
 Then you just pass this `options` variable to the `runTests` function and it's done:
 
 ```js
-runTests(options).then(x => {
+runTests({"options": options}).then(x => {
     const [output, nb_failures] = x;
     console.log(output);
     process.exit(nb_failures);
@@ -158,6 +158,34 @@ runTest('someFile.goml').then(x => {
 });
 ```
 
+And if you already have the content of a test, you can use `runTestCode`:
+
+```js
+const {runTestCode} = require('browser-ui-test');
+
+runTestCode('someFile.goml', 'go-to: "file://" + |CURRENT_DIR| + "/path"').then(x => {
+    const [output, nb_failures] = x;
+    console.log(output);
+    process.exit(nb_failures);
+}).catch(err => {
+    console.error(err);
+    process.exit(1);
+});
+```
+
+#### Optional arguments
+
+All these functions can take an extra argument (you can see it in `runTests` with `{"options": options}`).
+It expects a dictionary which can contains the following fields:
+
+ * `options`: If not set, it'll be created with `new Options()`.
+ * `browser`: `null` by default, expected to be created from `loadBrowser` otherwise.
+ * `showLogs`: If not set, it'll be set to `false`.
+
+The `browser` optional argument allows you tu re-use the same `Browser` instance instead of a
+re-creating a new one for each test. You can get this object by calling the `loadBrowser` function.
+It expects a `Options` argument.
+
 ### Exported elements
 
 Like said above, you can use this framework through code directly. Here is the list of available
@@ -165,11 +193,15 @@ elements:
 
  * `runTest`: Function to run a specific test. Parameters:
    * testPath: String [MANDATORY]
-   * options: `Options` type [OPTIONAL]
-   * saveLogs: Boolean [OPTIONAL]
+   * extras: Dictionary [OPTIONAL] (see [Optional arguments](#Optional-arguments))
+ * `runTestCode`: Function to run a specific inline test. Parameters:
+   * testName: String [MANDATORY]
+   * content: String [MANDATORY] (content representing the `.goml` content script)
+   * extras: Dictionary [OPTIONAL] (see [Optional arguments](#Optional-arguments))
  * `runTests`: Function to run tests based on the received options. Parameters:
-   * options: `Options` type [OPTIONAL]
-   * saveLogs: Boolean [OPTIONAL]
+   * extras: Dictionary [OPTIONAL] (see [Optional arguments](#Optional-arguments))
+ * `loadBrowser`: Function to create a new connection to the underlying web browser. Parameters:
+   * options: Options [MANDATORY]
  * `Options`: Object used to store run options. More information follows in the [`Options`](#Options) section.
 
 #### Options

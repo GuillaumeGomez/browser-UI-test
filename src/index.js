@@ -474,7 +474,7 @@ async function runAllCommands(loaded, logs, options, browser) {
     return returnValue;
 }
 
-async function innerRunTests(logs, options) {
+async function innerRunTests(logs, options, browser) {
     let successes = 0;
     let total = 0;
     const allFiles = [];
@@ -530,7 +530,10 @@ async function innerRunTests(logs, options) {
 
     process.setMaxListeners(options.nbThreads + 1);
     try {
-        // const browser = await utils.loadPuppeteer(options);
+        const needCloseBrowser = browser === null;
+        if (browser === null) {
+            browser = await utils.loadPuppeteer(options);
+        }
         const testsQueue = [];
 
         for (const file of allFiles) {
@@ -547,6 +550,7 @@ async function innerRunTests(logs, options) {
                 testName,
                 utils.readFile(file),
                 optionsCopy,
+                browser,
                 false,
                 false,
             ).then(out => {
@@ -570,7 +574,9 @@ async function innerRunTests(logs, options) {
             await Promise.all(testsQueue);
         }
 
-        // await browser.close();
+        if (needCloseBrowser) {
+            await browser.close();
+        }
 
         logs.append(`\n<= doc-ui tests done: ${successes} succeeded, ${total - successes} failed`);
 
@@ -586,7 +592,7 @@ async function innerRunTests(logs, options) {
     return [logs.logs, total - successes];
 }
 
-async function innerRunTestCode(testName, content, options, showLogs, checkTestFolder) {
+async function innerRunTestCode(testName, content, options, browser, showLogs, checkTestFolder) {
     const logs = new Logs(showLogs);
 
     if (checkTestFolder === true && options.testFolder.length > 0) {
@@ -599,10 +605,15 @@ async function innerRunTestCode(testName, content, options, showLogs, checkTestF
             return [logs.logs, 1];
         }
 
-        const browser = await utils.loadPuppeteer(options);
+        const needCloseBrowser = browser === null;
+        if (browser === null) {
+            browser = await utils.loadPuppeteer(options);
+        }
         const ret = await runAllCommands(load, logs, options, browser);
 
-        await browser.close();
+        if (needCloseBrowser) {
+            await browser.close();
+        }
 
         if (ret !== Status.Ok) {
             return [logs.logs, 1];
@@ -616,32 +627,72 @@ async function innerRunTestCode(testName, content, options, showLogs, checkTestF
     return [logs.logs, 0];
 }
 
-async function runTestCode(testName, content, options = new Options(), showLogs = false) {
-    if (typeof testName !== 'string' || typeof testName === 'undefined') {
-        throw new Error('expected `runTestCode` first argument to be a string');
-    } else if (typeof content !== 'string' || typeof content === 'undefined') {
-        throw new Error('expected `runTestCode` second argument to be a string');
-    } else if (testName.length === 0) {
-        throw new Error('test name (first argument) cannot be empty');
-    } else if (!options || options.validate === undefined) {
-        throw new Error('Options must be an "Options" type!');
+function checkExtras(extras) {
+    if (extras === undefined || extras === null) {
+        extras = {};
+    }
+    let browser;
+    if (extras['browser'] === undefined) {
+        browser = null;
+    } else {
+        browser = extras['browser'];
+    }
+    let options;
+    if (extras['options'] === undefined || extras['options'] === null) {
+        options = new Options();
+    } else {
+        options = extras['options'];
+    }
+    const showLogs = extras['showLogs'] !== undefined ? extras['showLogs'] : false;
+
+    if (options.validate === undefined) {
+        throw new Error('`extras["options"]` must be an "Options" type!');
+    } else if (browser !== null && (typeof browser !== 'object' || browser.newPage === undefined)) {
+        throw new Error('`extras["browser"]` must be created using `loadBrowser`!');
+    } else if (typeof showLogs !== 'boolean') {
+        throw new Error('`extras["showLogs"]` must be a boolean!');
     }
     // "light" validation of the Options type.
     options.validateFields();
 
-    return await innerRunTestCode(testName, content, options, showLogs, true);
+    return [browser, options, showLogs, extras];
 }
 
-async function runTest(testPath, options = new Options(), showLogs = false) {
+// `extras` values are as follows:
+//  * `options`: If not set, it'll be created with `new Options()`.
+//  * `browser`: `null` by default, expected to be created from `loadBrowser` otherwise.
+//  * `showLogs`: If not set, it'll be set to `false`.
+async function runTestCode(testName, content, extras = null) {
+    // content, browser = null, options = new Options(), showLogs = false
+    if (typeof testName !== 'string') {
+        const e = typeof testName;
+        throw new Error(`expected \`runTestCode\` first argument to be a string, found \`${e}\``);
+    } else if (typeof content !== 'string') {
+        const e = typeof content;
+        throw new Error(`expected \`runTestCode\` second argument to be a string, found \`${e}\``);
+    } else if (testName.length === 0) {
+        throw new Error('`runTestCode` first argument cannot be empty');
+    }
+
+    const [browser, options, showLogs] = checkExtras(extras);
+
+    return await innerRunTestCode(testName, content, options, browser, showLogs, true);
+}
+
+// `extras` values are as follows:
+//  * `options`: If not set, it'll be created with `new Options()`.
+//  * `browser`: `null` by default, expected to be created from `loadBrowser` otherwise.
+//  * `showLogs`: If not set, it'll be set to `false`.
+async function runTest(testPath, extras = null) {
     if (typeof testPath !== 'string' || typeof testPath === 'undefined') {
         throw new Error('expected `runTest` first argument to be a string');
-    } else if (!options || options.validate === undefined) {
-        throw new Error('Options must be an "Options" type!');
     } else if (!fs.existsSync(testPath) || !fs.lstatSync(testPath).isFile()) {
         throw new Error(`No file found with path \`${testPath}\``);
     } else if (!testPath.endsWith('.goml')) {
         throw new Error(`Expected a \`.goml\` script, found ${path.basename(testPath)}`);
     }
+
+    const [browser, options, showLogs] = checkExtras(extras);
 
     // We need to clone the `options` variable to prevent modifying it in the caller!
     const optionsCopy = options.clone();
@@ -660,27 +711,31 @@ async function runTest(testPath, options = new Options(), showLogs = false) {
     }
 
     const basename = path.basename(testPath);
-    return innerRunTestCode(basename.substr(0, basename.length - 5), utils.readFile(testPath),
-        optionsCopy, showLogs, checkTestFolder);
+    const testName = basename.substr(0, basename.length - 5);
+    return innerRunTestCode(
+        testName, utils.readFile(testPath), optionsCopy, browser, showLogs, checkTestFolder);
 }
 
-async function runTests(options, showLogs = false, showNbThreads = true) {
-    if (!options || options.validate === undefined) {
-        throw new Error('Options must be an "Options" type!');
-    }
+// `extras` values are as follows:
+//  * `options`: If not set, it'll be created with `new Options()`.
+//  * `browser`: `null` by default, expected to be created from `loadBrowser` otherwise.
+//  * `showLogs`: If not set, it'll be set to `false`.
+async function runTests(extras = null) {
+    const [browser, options, showLogs, newExtras] = checkExtras(extras);
     options.validate();
 
     const logs = new Logs(showLogs);
     const s = options.nbThreads > 1 ? 's' : '';
-    const extra = showNbThreads === true ? ` (on ${options.nbThreads} thread${s})` : '';
+    const extra =
+        newExtras['showNbThreads'] !== false ? ` (on ${options.nbThreads} thread${s})` : '';
 
     logs.append(`=> Starting doc-ui tests${extra}...\n`);
 
     try {
-        return innerRunTests(logs, options);
+        return innerRunTests(logs, options, browser);
     } catch (error) {
-        logs.append(`An exception occured: ${error.message}\n== STACKTRACE ==\n` +
-            `${new Error().stack}`);
+        logs.append(
+            `An exception occured: ${error.message}\n== STACKTRACE ==\n${new Error().stack}`);
         return [logs.logs, 1];
     }
 }
@@ -709,11 +764,19 @@ if (require.main === module) {
         }
         process.exit(1);
     }
-    runTests(options, true).then(x => {
-        const [_output, nb_failures] = x;
-        process.exit(nb_failures);
+    utils.loadPuppeteer(options).then(browser => {
+        runTests({'options': options, 'browser': browser, 'showLogs': true}).then(x => {
+            const [_output, nb_failures] = x;
+            process.exit(nb_failures);
+        }).catch(err => {
+            print(err.message);
+            if (options.debug === true) {
+                print(err.stack);
+            }
+            process.exit(1);
+        });
     }).catch(err => {
-        print(err.message);
+        print(err);
         if (options.debug === true) {
             print(err.stack);
         }
@@ -725,5 +788,6 @@ if (require.main === module) {
         'runTestCode': runTestCode,
         'runTests': runTests,
         'Options': Options,
+        'loadBrowser': utils.loadPuppeteer,
     };
 }
