@@ -1,6 +1,6 @@
 => Starting doc-ui tests...
 
-assert-warning... ok
+assert-warning... OK
 [WARNING] Pseudo-elements (`::after`) don't have attributes so the check will be performed on the element itself
 [WARNING] Pseudo-elements (`::after`) don't have attributes so the check will be performed on the element itself
 

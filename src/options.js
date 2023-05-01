@@ -1,5 +1,6 @@
 const process = require('process');
 const path = require('path');
+const os = require('os');
 const utils = require('./utils.js');
 const print = utils.print;
 const consts = require('./consts.js');
@@ -30,6 +31,7 @@ function helper() {
         'generated');
     print('                                  (same as `test-folder` if not provided)');
     print('  --incognito                   : Enable incognito mode');
+    print('  --jobs [N]                    : Number of parallel jobs, defaults to number of CPUs');
     print('  --no-headless                 : Disable headless mode');
     print('  --no-sandbox                  : Disable the sandbox (use with caution!)');
     print('  --pause-on-error [true|false] : Pause execution script until user press ENTER');
@@ -104,6 +106,7 @@ class Options {
         this.onPageCreatedCallback = async function() {};
         this.failOnJsError = false;
         this.screenshotOnFailure = false;
+        this.nbThreads = os.cpus().length;
         // Enabled by default!
         this.failOnRequestError = true;
         this.executablePath = null;
@@ -138,6 +141,7 @@ class Options {
         copy.failOnRequestError = this.failOnRequestError;
         copy.executablePath = this.executablePath !== null ? this.executablePath.slice() : null;
         copy.screenshotOnFailure = this.screenshotOnFailure;
+        copy.nbThreads = this.nbThreads;
         return copy;
     }
 
@@ -288,6 +292,22 @@ class Options {
                 this.screenshotOnFailure = true;
             } else if (args[it] === '--version') {
                 showVersion();
+            } else if (args[it] === '--jobs') {
+                if (it + 1 < args.length) {
+                    const next = args[it + 1];
+                    if (/^\d+$/.test(next)) {
+                        this.nbThreads = parseInt(next);
+                    } else {
+                        throw new Error(
+                            `Expected a number after \`--jobs\` option, found \`${next}\``);
+                    }
+                    if (this.nbThreads < 1) {
+                        throw new Error('Number of threads cannot be < 1!');
+                    }
+                    it += 1;
+                } else {
+                    throw new Error('Missing number after `--jobs` option');
+                }
             } else {
                 throw new Error(`Unknown option \`${args[it]}\`\n` +
                     'Use `--help` if you want the list of the available commands');
@@ -324,10 +344,10 @@ class Options {
             throw new Error('You need to provide `--failure-folder` or `--test-folder` option if ' +
                 '`--enable-screenshot-comparison` option is used!');
         }
-        for (let i = 0; i < this.testFiles.length; ++i) {
-            if (this.testFiles[i].endsWith('.goml') === false) {
+        for (const test of this.testFiles) {
+            if (test.endsWith('.goml') === false) {
                 throw new Error('Only `.goml` script files are allowed in the `--test-files` ' +
-                    `option, got \`${this.testFiles[i]}\``);
+                    `option, got \`${test}\``);
             }
         }
         this.validateFields();
@@ -367,6 +387,7 @@ class Options {
         validateField('noSandbox', 'boolean');
         validateField('allowFileAccessFromFiles', 'boolean');
         validateField('screenshotOnFailure', 'boolean');
+        validateField('nbThreads', 'number');
         // eslint-disable-next-line eqeqeq
         if (this.variables.constructor != Object) {
             throw new Error('`Options.variables` field is supposed to be a dictionary-like!');
@@ -378,6 +399,9 @@ class Options {
         }
         if (this.timeout < 0) {
             throw new Error('`Options.timeout` field cannot be < 0');
+        }
+        if (this.nbThreads < 1) {
+            throw new Error('`Options.nbThreads` field cannot be < 1');
         }
     }
 }

@@ -39,6 +39,13 @@ class Logs {
     warn(newLog) {
         addLog(this, newLog, '[WARNING] ');
     }
+
+    appendLogs(other) {
+        if (other.logs.length === 0) {
+            return;
+        }
+        this.append(other.logs);
+    }
 }
 
 class Debug {

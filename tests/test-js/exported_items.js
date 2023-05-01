@@ -1,11 +1,11 @@
 const process = require('process');
+const os = require('os');
 
 const utils = require('../../src/utils.js');
 utils.print = function print() {}; // overwriting the print function to avoid the print
 
 const {runTestCode, runTest, runTests, Options} = require('../../src/index.js');
 const {Assert, plural, print, removeFolder} = require('./utils.js');
-
 
 async function wrapRunTests(options = new Options()) {
     options.screenshotComparison = false;
@@ -48,7 +48,7 @@ async function checkRunTest(x, func) {
     // We need to check that our `options` variable isn't modified by the `runTest` function.
     await x.assert(options.testFiles, []);
     await x.assert(options.testFolder, '');
-    await x.assertTry(func, ['./tests/scripts/basic.goml', options], ['basic... ok', 0]);
+    await x.assertTry(func, ['./tests/scripts/basic.goml', options], ['basic... OK', 0]);
     // We need to check that our `options` variable isn't modified by the `runTest` function.
     await x.assert(options.testFiles, []);
     await x.assert(options.testFolder, '');
@@ -56,14 +56,14 @@ async function checkRunTest(x, func) {
     // check if test-folder option is ignored
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files', '--test-folder', 'yolo']);
     await x.assertTry(func, ['./tests/scripts/basic.goml', options],
-        ['[WARNING] `--test-folder` option will be ignored.\n\nbasic... ok', 0]);
+        ['[WARNING] `--test-folder` option will be ignored.\n\nbasic... OK', 0]);
     removeFolder('yolo'); // The folder is generated because failure and image folders use it.
 
     // with just one file through "--test-files" options (the extra file should be ignored)
     options = new Options();
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
         '--test-files', './tests/scripts/basic.goml']);
-    await x.assertTry(func, ['./tests/scripts/basic.goml', options], ['basic... ok', 0]);
+    await x.assertTry(func, ['./tests/scripts/basic.goml', options], ['basic... OK', 0]);
 }
 
 async function checkRunTestCode(x, func) {
@@ -77,7 +77,7 @@ async function checkRunTestCode(x, func) {
     await x.assertTry(func, ['', ''], 'test name (first argument) cannot be empty');
 
     // no options
-    await x.assertTry(func, ['test', ''], ['test... FAILED\n=> No command to execute', 1]);
+    await x.assertTry(func, ['test', ''], ['test... FAILED (No command to execute)', 1]);
 
     // invalid Options type
     await x.assertTry(func, ['test', '', {'test': false}], 'Options must be an "Options" type!');
@@ -96,19 +96,19 @@ async function checkRunTestCode(x, func) {
 expect-failure: true
 go-to: "file://" + |CURRENT_DIR| + "/tests/html_files/basic.html"
 assert-text: ("#button", "Go somewhere els!")`,
-    ], ['test... ok', 0]);
+    ], ['test... OK', 0]);
 
     // check if test-folder option is ignored
     const options = new Options();
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
         '--test-folder', 'yolo']);
     await x.assertTry(func, ['test', 'expect-failure: false', options],
-        ['[WARNING] `--test-folder` option will be ignored.\n\ntest... ok', 0]);
+        ['[WARNING] `--test-folder` option will be ignored.\n\ntest... OK', 0]);
 
     // Check a working code
     await x.assertTry(func, ['test',
         'go-to: "file://" + |CURRENT_DIR| + "/tests/html_files/basic.html"\n' +
-        'assert-text: ("#button", "Go somewhere else!")'], ['test... ok', 0]);
+        'assert-text: ("#button", "Go somewhere else!")'], ['test... OK', 0]);
 
     // Check callback
     const options2 = new Options();
@@ -131,7 +131,7 @@ assert-text: ("#button", "Go somewhere els!")`,
     await x.assertTry(func, ['hoho',
         'go-to: "file://" + |CURRENT_DIR| + "/tests/html_files/basic.html"\n' +
         'click: "#button"\n' +
-        'assert-text: ("body > header", "Basic test!")', options2], ['hoho... ok', 0]);
+        'assert-text: ("body > header", "Basic test!")', options2], ['hoho... OK', 0]);
 }
 
 async function checkRunTests(x, func) {
@@ -164,9 +164,10 @@ async function checkRunTests(x, func) {
     options = new Options();
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
         '--test-files', './tests/scripts/basic.goml']);
+    const nbThreads = os.cpus().length;
     await x.assertTry(func, [options],
-        ['=> Starting doc-ui tests...\n\nbasic... ok\n\n<= doc-ui tests done: 1 ' +
-         'succeeded, 0 failed', 0]);
+        [`=> Starting doc-ui tests (on ${nbThreads} threads)...\n\nbasic... OK\n\n<= doc-ui \
+tests done: 1 succeeded, 0 failed`, 0]);
 
     // with the usual folder full of examples
     // options = new Options();
@@ -331,6 +332,13 @@ async function checkOptions(x) {
     await x.assertTry(() => options.parseArguments(['--executable-path', 'a']), [], true);
     await x.assert(options.executablePath, 'a');
 
+    await x.assertTry(() => options.parseArguments(['--jobs']), [],
+        'Missing number after `--jobs` option');
+    await x.assertTry(() => options.parseArguments(['--jobs', 'a']), [],
+        'Expected a number after `--jobs` option, found `a`');
+    await x.assertTry(() => options.parseArguments(['--jobs', '8']), [], true);
+    await x.assert(options.nbThreads, 8);
+
     options = new Options();
     options.runId = true;
     await x.assertTry(() => options.validateFields(), [],
@@ -456,6 +464,11 @@ async function checkOptions(x) {
     options.screenshotOnFailure = '';
     await x.assertTry(() => options.validateFields(), [],
         '`Options.screenshotOnFailure` field is supposed to be a boolean!');
+
+    options = new Options();
+    options.nbThreads = '';
+    await x.assertTry(() => options.validateFields(), [],
+        '`Options.nbThreads` field is supposed to be a number!');
 }
 
 const TO_CHECK = [

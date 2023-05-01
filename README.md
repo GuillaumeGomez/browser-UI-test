@@ -44,7 +44,7 @@ You can either use this framework by using it as dependency or running it direct
 ```
 go-to: "https://somewhere.com" // go to this url
 text: ("#button", "hello") // set text of element #button
-assert: ("#button", "hello") // check if #button element's text has been set to "hello"
+assert-text: ("#button", "hello") // check if #button element's text has been set to "hello"
 ```
 
 The list of the commands is available [here](https://github.com/GuillaumeGomez/browser-UI-test/blob/master/goml-script.md).
@@ -190,6 +190,7 @@ The list of fields of the `Options` class is the following:
  * `generateImages`: if provided, it'll generate test images and won't run comparison tests
  * `imageFolder`: path of the folder where screenshots are and where they are generated (`testFolder` value by default)
  * `incognito`: whether or not the browser is running in incognito mode
+ * `nbThreads`: number of parallel jobs, defaults to number of CPUs
  * `noHeadless`: disable headless mode
  * `screenshotComparison`: enable screenshots generation and comparison at the end of the scripts
  * `screenshotOnFailure`: takes a screenshot if a test fails and stops the test execution

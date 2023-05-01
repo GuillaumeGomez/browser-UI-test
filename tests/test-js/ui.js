@@ -12,7 +12,7 @@ const {Assert, plural, print} = require('./utils.js');
 async function wrapRunTests(options = new Options()) {
     options.screenshotComparison = false;
     options.noSandbox = true;
-    const ret = await runTests(options, false);
+    const ret = await runTests(options, false, false);
     return ret[0];
 }
 

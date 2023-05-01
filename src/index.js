@@ -102,14 +102,6 @@ function parseTest(testName, content, logs, options) {
     return null;
 }
 
-function parseTestFile(testPath, logs, options) {
-    const fullPath = testPath;
-    const basename = path.basename(fullPath);
-    const testName = basename.substr(0, basename.length - 5);
-
-    return parseTest(testName, utils.readFile(fullPath), logs, options);
-}
-
 function createFolderIfNeeded(path) {
     if (path !== '' && fs.existsSync(path) === false) {
         try {
@@ -130,7 +122,7 @@ function checkFolders(options) {
 }
 
 // Returns `false` if it failed.
-async function screenshot(extras, filename, selector, page, logs, warnings) {
+async function screenshot(extras, filename, selector, page, logs, commandLogs, warnings) {
     const data = innerParseScreenshot(extras, filename, selector);
     let screenshot_error = null;
     for (const instruction of data.instructions) {
@@ -150,13 +142,13 @@ async function screenshot(extras, filename, selector, page, logs, warnings) {
     }
 
     if (screenshot_error !== null) {
-        logs.append('FAILED', true);
-        logs.append(`Cannot take screenshot: element \`${extras.screenshotComparison}\`` +
-            ` not found: ${screenshot_error}`);
+        logs.append(`FAILED (Cannot take screenshot: element \`${extras.screenshotComparison}\` \
+not found: ${screenshot_error})`, true);
+        logs.appendLogs(commandLogs);
         logs.warn(warnings);
         return false;
     }
-    logs.info(data['infos']);
+    commandLogs.info(data['infos']);
     return true;
 }
 
@@ -185,12 +177,14 @@ async function runInstruction(loadedInstruction, page, extras) {
 }
 
 async function runAllCommands(loaded, logs, options, browser) {
+    const commandLogs = new Logs(false);
     logs.append(loaded['file'] + '... ');
     const context_parser = loaded['parser'];
 
     let notOk = false;
     let returnValue = Status.Ok;
     const debug_log = new Debug(options.debug, logs);
+    const warnings = [];
 
     const page = await browser.newPage(options, debug_log);
     await browser.emulate(options, page, debug_log);
@@ -279,7 +273,6 @@ async function runAllCommands(loaded, logs, options, browser) {
         };
 
         let error_log = '';
-        const warnings = [];
         let current_url = '';
 
         command_loop:
@@ -287,8 +280,8 @@ async function runAllCommands(loaded, logs, options, browser) {
             const command = context_parser.get_next_command();
             if (command === null) {
                 if (nb_commands === 0) {
-                    logs.append('FAILED', true);
-                    logs.append('=> No command to execute');
+                    logs.append('FAILED (No command to execute)', true);
+                    logs.appendLogs(commandLogs);
                     return Status.Failure;
                 }
                 break;
@@ -369,7 +362,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             } else if (command['wait'] !== false) {
                 shouldWait = true;
             }
-            logs.info(command['infos']);
+            commandLogs.info(command['infos']);
             if (shouldWait) {
                 // We wait a bit between each command to be sure the browser can follow.
                 await new Promise(r => setTimeout(r, 50));
@@ -387,13 +380,15 @@ async function runAllCommands(loaded, logs, options, browser) {
         }
         if (error_log.length > 0 || checkJsErrors() || checkRequestErrors()) {
             logs.append('FAILED', true);
+            logs.appendLogs(commandLogs);
             logs.warn(warnings);
             logs.append(error_log);
             if (extras.pauseOnError === true) {
                 waitUntilEnterPressed(error_log);
             }
             if (extras.screenshotOnFailure === true) {
-                await screenshot(extras, `${loaded['file']}-failure`, null, page, logs, warnings);
+                await screenshot(
+                    extras, `${loaded['file']}-failure`, null, page, logs, commandLogs, warnings);
             }
             await page.close();
             return Status.Failure;
@@ -402,7 +397,8 @@ async function runAllCommands(loaded, logs, options, browser) {
         let selector = null;
         if (extras.screenshotComparison !== true) {
             if (extras.screenshotComparison === false) {
-                logs.append('ok', true);
+                logs.append('OK', true);
+                logs.appendLogs(commandLogs);
                 debug_log.append('=> [NO SCREENSHOT COMPARISON]');
                 logs.warn(warnings);
                 await page.close();
@@ -410,8 +406,8 @@ async function runAllCommands(loaded, logs, options, browser) {
             }
             selector = parser.getSelector(extras.screenshotComparison);
             if (selector.error !== undefined) {
-                logs.append('FAILED', true);
-                logs.append(`Cannot take screenshot: ${selector.error.join('\n')}`);
+                logs.append(`FAILED (Cannot take screenshot: ${selector.error.join('\n')})`, true);
+                logs.appendLogs(commandLogs);
                 logs.warn(warnings);
                 await page.close();
                 return Status.MissingElementForScreenshot;
@@ -419,7 +415,8 @@ async function runAllCommands(loaded, logs, options, browser) {
         }
 
         if (!await screenshot(
-            extras, `${loaded['file']}-${options.runId}`, selector, page, logs, warnings)
+            extras, `${loaded['file']}-${options.runId}`, selector, page, logs, commandLogs,
+            warnings)
         ) {
             await page.close();
             return Status.MissingElementForScreenshot;
@@ -450,7 +447,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                 const failedPath = path.join(
                     options.getFailureFolder(), `${loaded['file']}-${options.runId}.png`);
                 logs.append(
-                    `FAILED (images "${failedPath}" and "${loaded['file']}" are different)`,
+                    `FAILED (images "${failedPath}" and "${originalImage}" are different)`,
                     true);
             } else {
                 logs.append(
@@ -472,11 +469,13 @@ async function runAllCommands(loaded, logs, options, browser) {
     if (notOk === false) {
         logs.append('ok', true);
     }
+    logs.appendLogs(commandLogs);
+    logs.warn(warnings);
     return returnValue;
 }
 
 async function innerRunTests(logs, options) {
-    let failures = 0;
+    let successes = 0;
     let total = 0;
     const allFiles = [];
 
@@ -508,7 +507,8 @@ async function innerRunTests(logs, options) {
 
     if (options.testFolder.length === 0
         && options.getFailureFolder() === ''
-        && options.getImageFolder() === '') {
+        && options.getImageFolder() === ''
+    ) {
         print('[WARNING] No failure or image folder set, taking first test file\'s folder');
         options.testFolder = path.dirname(options.testFiles[0]);
     }
@@ -528,34 +528,51 @@ async function innerRunTests(logs, options) {
         return 0;
     });
 
-    const all_loaded = [];
-    for (const file of allFiles) {
-        total += 1;
-
-        const load = parseTestFile(file, logs, options);
-        if (load === null) {
-            failures += 1;
-        } else {
-            all_loaded.push(load);
-        }
-    }
-
-    if (all_loaded.length === 0) {
-        logs.append('');
-        return [logs.logs, failures];
-    }
-
+    process.setMaxListeners(options.nbThreads + 1);
     try {
-        const browser = await utils.loadPuppeteer(options);
-        for (const loaded of all_loaded) {
-            const ret = await runAllCommands(loaded, logs, options, browser);
-            if (ret !== Status.Ok) {
-                failures += 1;
+        // const browser = await utils.loadPuppeteer(options);
+        const testsQueue = [];
+
+        for (const file of allFiles) {
+            total += 1;
+            const basename = path.basename(file);
+            const testName = basename.substr(0, basename.length - 5);
+            const optionsCopy = options.clone();
+
+            // To make the Options type validation happy.
+            optionsCopy.testFiles.push(file);
+            optionsCopy.validate();
+
+            const callback = innerRunTestCode(
+                testName,
+                utils.readFile(file),
+                optionsCopy,
+                false,
+                false,
+            ).then(out => {
+                const [output, nbFailures] = out;
+                logs.append(output);
+                if (nbFailures === 0) {
+                    successes += 1;
+                }
+            }).catch(err => {
+                logs.append(err);
+            }).finally(() => {
+                // We now remove the promise from the testsQueue.
+                testsQueue.splice(testsQueue.indexOf(callback), 1);
+            });
+            testsQueue.push(callback);
+            if (testsQueue.length >= options.nbThreads) {
+                await Promise.race(testsQueue);
             }
         }
-        await browser.close();
+        if (testsQueue.length > 0) {
+            await Promise.all(testsQueue);
+        }
 
-        logs.append(`\n<= doc-ui tests done: ${total - failures} succeeded, ${failures} failed`);
+        // await browser.close();
+
+        logs.append(`\n<= doc-ui tests done: ${successes} succeeded, ${total - successes} failed`);
 
         if (logs.showLogs === true) {
             logs.append('');
@@ -566,7 +583,7 @@ async function innerRunTests(logs, options) {
         return [logs.logs, 1];
     }
 
-    return [logs.logs, failures];
+    return [logs.logs, total - successes];
 }
 
 async function innerRunTestCode(testName, content, options, showLogs, checkTestFolder) {
@@ -647,15 +664,17 @@ async function runTest(testPath, options = new Options(), showLogs = false) {
         optionsCopy, showLogs, checkTestFolder);
 }
 
-async function runTests(options, showLogs = false) {
+async function runTests(options, showLogs = false, showNbThreads = true) {
     if (!options || options.validate === undefined) {
         throw new Error('Options must be an "Options" type!');
     }
     options.validate();
 
     const logs = new Logs(showLogs);
+    const s = options.nbThreads > 1 ? 's' : '';
+    const extra = showNbThreads === true ? ` (on ${options.nbThreads} thread${s})` : '';
 
-    logs.append('=> Starting doc-ui tests...\n');
+    logs.append(`=> Starting doc-ui tests${extra}...\n`);
 
     try {
         return innerRunTests(logs, options);
