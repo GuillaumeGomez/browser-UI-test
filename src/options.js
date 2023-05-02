@@ -256,14 +256,15 @@ class Options {
                 }
             } else if (args[it] === '--timeout') {
                 if (it + 1 < args.length) {
-                    const milliseconds = parseInt(args[it + 1]);
-                    if (isNaN(milliseconds) === true) {
-                        throw new Error('`--timeout` expected an integer, found `' +
-                            `${args[it + 1]}\``);
-                    } else if (milliseconds < 0) {
+                    const next = args[it + 1];
+                    if (/^-?\d+$/.test(next)) {
+                        this.timeout = parseInt(next);
+                    } else {
+                        throw new Error(`\`--timeout\` expected an integer, found \`${next}\``);
+                    }
+                    if (this.timeout < 0) {
                         throw new Error('Number of milliseconds for `timeout` cannot be < 0!');
                     }
-                    this.timeout = milliseconds;
                     it += 1;
                 } else {
                     throw new Error('Missing number of milliseconds after `--timeout` option');
@@ -295,7 +296,7 @@ class Options {
             } else if (args[it] === '--jobs') {
                 if (it + 1 < args.length) {
                     const next = args[it + 1];
-                    if (/^\d+$/.test(next)) {
+                    if (/^-?\d+$/.test(next)) {
                         this.nbThreads = parseInt(next);
                     } else {
                         throw new Error(
