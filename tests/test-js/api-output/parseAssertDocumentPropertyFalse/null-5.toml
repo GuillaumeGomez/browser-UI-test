@@ -4,7 +4,7 @@ instructions = [
     const parseAssertDictPropDict = {\"b\":\"12\"};
     const undefProps = [\"a\"];
     for (const prop of undefProps) {
-        if (document[prop] !== undefined) {
+        if (document[prop] !== undefined && document[prop] !== null) {
             continue;
         }
         nonMatchingProps.push(\"Property named `\" + prop + \"` doesn't exist\");
@@ -13,13 +13,14 @@ instructions = [
         if (document[parseAssertDictPropKey] === undefined) {
             continue;
         }
-        if (String(document[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) {
+        const parseAssertDictProp = document[parseAssertDictPropKey];
+        if (String(parseAssertDictProp).startsWith(parseAssertDictPropValue)) {
             nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertDictPropKey + '` (for STARTS_WITH check)');
         }
-        if (Number.isNaN(document[parseAssertDictPropKey])) {
-            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + document[parseAssertDictPropKey] + '`) is NaN (for NEAR check)');
-        } else if (Math.abs(document[parseAssertDictPropKey] - parseAssertDictPropValue) <= 1) {
-            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + document[parseAssertDictPropKey] + '`) is within 1 of `' + parseAssertDictPropValue + '` (for NEAR check)');
+        if (Number.isNaN(parseAssertDictProp)) {
+            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + parseAssertDictProp + '`) is NaN (for NEAR check)');
+        } else if (Math.abs(parseAssertDictProp - parseAssertDictPropValue) <= 1) {
+            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + parseAssertDictProp + '`) is within 1 of `' + parseAssertDictPropValue + '` (for NEAR check)');
         }
     }
     if (nonMatchingProps.length !== 0) {

@@ -284,7 +284,7 @@ function checkJsonEntry(json, callback) {
         }
         callback(entry);
     }
-    return warnings.length > 0 ? warnings : undefined;
+    return warnings;
 }
 
 module.exports = {

@@ -6,6 +6,7 @@ const {
     validateJson,
     indentString,
     checkJsonEntry,
+    fillEnabledChecks,
 } = require('./utils.js');
 
 function incrWait(error) {
@@ -310,37 +311,68 @@ function parseWaitForObjectProperty(parser, objName) {
     const elems = parser.elems;
 
     if (elems.length === 0) {
-        return {'error': 'expected JSON, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'json') {
-        return {'error': `expected JSON, found \`${parser.getRawArgs()}\``};
+        return {'error': 'expected JSON or tuple, found nothing'};
+    // eslint-disable-next-line no-extra-parens
+    } else if (elems.length !== 1 || (elems[0].kind !== 'json' && elems[0].kind !== 'tuple')) {
+        return {'error': `expected JSON or tuple, found \`${parser.getRawArgs()}\``};
     }
 
-    const json = elems[0].getRaw();
-    let d = '';
+    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH', 'NEAR'];
+    const enabled_checks = Object.create(null);
+    const warnings = [];
+    let json;
+    if (elems[0].kind === 'tuple') {
+        const tuple = elems[0].getRaw();
+        if (tuple.length < 1 || tuple.length > 2) {
+            return {
+                'error': `expected a tuple of one or two elements, found ${tuple.length} elements`,
+            };
+        } else if (tuple[0].kind !== 'json') {
+            return {
+                'error': 'expected first element of the tuple to be a JSON dict, found `' +
+                    `${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
+            };
+        }
+        json = tuple[0].getRaw();
+        if (tuple.length > 1) {
+            const ret = fillEnabledChecks(
+                tuple[1],
+                identifiers,
+                enabled_checks,
+                warnings,
+                'second',
+            );
+            if (ret !== null) {
+                return ret;
+            }
+        }
+    } else {
+        json = elems[0].getRaw();
+    }
+
     let error = null;
 
-    const warnings = checkJsonEntry(json, entry => {
+    const undefProps = [];
+    const values = [];
+    warnings.push(...checkJsonEntry(json, entry => {
         if (error !== null) {
             return;
         }
         const key_s = entry['key'].getStringValue();
-        let value_s;
         if (entry['value'].kind === 'ident') {
-            value_s = entry['value'].getStringValue();
+            const value_s = entry['value'].getStringValue();
             if (value_s !== 'null') {
                 error = `Only \`null\` ident is allowed, found \`${value_s}\``;
             }
+            undefProps.push(`"${key_s}"`);
         } else {
-            value_s = `"${entry['value'].getStringValue()}"`;
+            const value_s = `"${entry['value'].getStringValue()}"`;
+            values.push(`"${key_s}":${value_s}`);
         }
-        if (d.length > 0) {
-            d += ',';
-        }
-        d += `"${key_s}":${value_s}`;
-    });
+    }));
     if (error !== null) {
         return {'error': error};
-    } else if (d.length === 0) {
+    } else if (values.length === 0 && undefProps.length === 0) {
         return {
             'instructions': [],
             'warnings': warnings,
@@ -353,21 +385,72 @@ function parseWaitForObjectProperty(parser, objName) {
     const varKey = `${varName}Key`;
     const varValue = `${varName}Value`;
 
+    const checks = [];
+    if (enabled_checks['CONTAINS']) {
+        checks.push(`\
+if (String(${varName}).indexOf(${varValue}) === -1) {
+    errors.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
+\`) does not contain \`' + ${varValue} + '\`');
+}`);
+    }
+    if (enabled_checks['STARTS_WITH']) {
+        checks.push(`\
+if (!String(${varName}).startsWith(${varValue})) {
+    errors.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
+\`) does not start with \`' + ${varValue} + '\`');
+}`);
+    }
+    if (enabled_checks['ENDS_WITH']) {
+        checks.push(`\
+if (!String(${varName}).endsWith(${varValue})) {
+    errors.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
+\`) does not end with \`' + ${varValue} + '\`');
+}`);
+    }
+    if (enabled_checks['NEAR']) {
+        checks.push(`\
+if (Number.isNaN(${varName})) {
+    errors.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\`) is NaN (for NEAR check)');
+} else if (Math.abs(${varName} - ${varValue}) > 1) {
+    errors.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
+\`) is not within 1 of \`' + ${varValue} + '\` (for NEAR check)');
+}`);
+    }
+
+    const hasSpecialChecks = checks.length !== 0;
+    // If no check was enabled.
+    if (checks.length === 0) {
+        checks.push(`\
+if (String(${varName}) != ${varValue}) {
+    errors.push("${objName} item \\"" + ${varKey} + "\\" (of value \\"" + ${varValue} + \
+"\\") != \\"" + ${varName} + "\\"");
+}`);
+    }
+    if (undefProps.length > 0 && hasSpecialChecks) {
+        const k = Object.entries(enabled_checks).map(([k, _]) => k);
+        warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
+    }
+
     const instructions = getWaitForElems(
         varName,
         `\
 ${varName} = await page.evaluate(() => {
     const errors = [];
-    const ${varDict} = {${d}};
+    const ${varDict} = {${values.join(',')}};
+    const undefProps = [${undefProps.join(',')}];
+    for (const prop of undefProps) {
+        if (${objName}[prop] !== undefined && ${objName}[prop] !== null) {
+            errors.push("Expected property \`" + prop + "\` to not exist, found: \
+\`" + ${objName}[prop] + "\`");
+            continue;
+        }
+    }
     for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
         if (${objName}[${varKey}] === undefined) {
             errors.push("${objName} doesn't have a property named \`" + ${varKey} + "\`");
         }
-        let ${varName} = ${objName}[${varKey}];
-        if (${varName} != ${varValue}) {
-            errors.push("${objName} item \\"" + ${varKey} + "\\" (of value \\"" + ${varValue} + \
-"\\") != \\"" + ${varName} + "\\"");
-        }
+        const ${varName} = ${objName}[${varKey}];
+${indentString(checks.join('\n'), 2)}
     }
     return errors;
 });

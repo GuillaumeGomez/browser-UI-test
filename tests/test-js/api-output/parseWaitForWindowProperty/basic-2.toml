@@ -1,6 +1,5 @@
 instructions = [
 ]
 warnings = [
-  """Ignoring recursive entry with key `\"a\"`""",
 ]
 wait = false

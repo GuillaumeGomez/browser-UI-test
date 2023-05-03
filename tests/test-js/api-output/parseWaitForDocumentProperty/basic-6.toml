@@ -1,0 +1,45 @@
+instructions = [
+  """const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let property = null;
+while (true) {
+    property = await page.evaluate(() => {
+        const errors = [];
+        const propertyDict = {\"\\\"a\":\"\\'b\"};
+        const undefProps = [];
+        for (const prop of undefProps) {
+            if (document[prop] !== undefined && document[prop] !== null) {
+                errors.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + document[prop] + \"`\");
+                continue;
+            }
+        }
+        for (const [propertyKey, propertyValue] of Object.entries(propertyDict)) {
+            if (document[propertyKey] === undefined) {
+                errors.push(\"document doesn't have a property named `\" + propertyKey + \"`\");
+            }
+            const property = document[propertyKey];
+            if (String(property) != propertyValue) {
+                errors.push(\"document item \\\"\" + propertyKey + \"\\\" (of value \\\"\" + propertyValue + \"\\\") != \\\"\" + property + \"\\\"\");
+            }
+        }
+        return errors;
+    });
+    if (property.length === 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const errs = property.join(\", \");
+        throw new Error(\"The following document properties still don't match: [\" + errs + \"]\");
+    }
+}""",
+]
+wait = false
+checkResult = true
+warnings = [
+]
