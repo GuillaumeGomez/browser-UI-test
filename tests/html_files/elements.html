@@ -112,12 +112,12 @@ setTimeout(() => {
 }
 function updateWaitWindowProp() {
 setTimeout(() => {
-  window["windowProp"] = "hello";
+  if (!window["windowProp"]) { window["windowProp"] = "hello"; } else { window["windowProp"] += "1"; }
 }, 100);
 }
 function updateWaitDocumentProp() {
 setTimeout(() => {
-  document["windowProp"] = "hello";
+  if (!document["windowProp"]) { document["windowProp"] = "hello"; } else { document["windowProp"] += "1"; }
 }, 100);
 }
 function updateWaitElementProp() {
