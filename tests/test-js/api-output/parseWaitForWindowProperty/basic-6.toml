@@ -6,7 +6,7 @@ let property = null;
 while (true) {
     property = await page.evaluate(() => {
         const errors = [];
-        const propertyDict = {\"a\":\"b\"};
+        const propertyDict = {\"\\\"a\":\"\\'b\"};
         const undefProps = [];
         for (const prop of undefProps) {
             if (window[prop] !== undefined && window[prop] !== null) {

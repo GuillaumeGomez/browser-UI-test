@@ -1850,9 +1850,18 @@ function checkWaitForObjectProperty(x, func) {
     func('{"a": b}', 'err-3');
 
     func('{}', 'basic-1');
-    func('{"a": {"b": "c"}}', 'basic-2');
+    func('({})', 'basic-2');
     func('{"a": "b"}', 'basic-3');
-    func('{\'"a\':\n"\'b"\n}', 'basic-4');
+    func('({"a": "b"})', 'basic-4');
+    func('{"a": {"b": "c"}}', 'basic-5');
+    func('{\'"a\':\n"\'b"\n}', 'basic-6');
+    func('{"a": null}', 'basic-7');
+
+    func('({"a": "b"}, STARTS_WITH)', 'extra-1');
+    func('({"a": "b"}, [STARTS_WITH])', 'extra-2');
+    func('({"a": null}, [STARTS_WITH])', 'extra-3');
+    func('({"a": "b"}, [STARTS_WITH, ENDS_WITH])', 'extra-4');
+    func('({"a": "b", "c": null}, [STARTS_WITH, ENDS_WITH])', 'extra-5');
 }
 
 function checkWaitForLocalStorage(x, func) {

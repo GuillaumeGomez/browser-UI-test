@@ -6,21 +6,21 @@ let property = null;
 while (true) {
     property = await page.evaluate(() => {
         const errors = [];
-        const propertyDict = {\"a\":\"b\"};
+        const propertyDict = {\"\\\"a\":\"\\'b\"};
         const undefProps = [];
         for (const prop of undefProps) {
-            if (window[prop] !== undefined && window[prop] !== null) {
-                errors.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + window[prop] + \"`\");
+            if (document[prop] !== undefined && document[prop] !== null) {
+                errors.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + document[prop] + \"`\");
                 continue;
             }
         }
         for (const [propertyKey, propertyValue] of Object.entries(propertyDict)) {
-            if (window[propertyKey] === undefined) {
-                errors.push(\"window doesn't have a property named `\" + propertyKey + \"`\");
+            if (document[propertyKey] === undefined) {
+                errors.push(\"document doesn't have a property named `\" + propertyKey + \"`\");
             }
-            const property = window[propertyKey];
+            const property = document[propertyKey];
             if (String(property) != propertyValue) {
-                errors.push(\"window item \\\"\" + propertyKey + \"\\\" (of value \\\"\" + propertyValue + \"\\\") != \\\"\" + property + \"\\\"\");
+                errors.push(\"document item \\\"\" + propertyKey + \"\\\" (of value \\\"\" + propertyValue + \"\\\") != \\\"\" + property + \"\\\"\");
             }
         }
         return errors;
@@ -35,7 +35,7 @@ while (true) {
     allTime += timeAdd;
     if (allTime >= timeLimit) {
         const errs = property.join(\", \");
-        throw new Error(\"The following window properties still don't match: [\" + errs + \"]\");
+        throw new Error(\"The following document properties still don't match: [\" + errs + \"]\");
     }
 }""",
 ]

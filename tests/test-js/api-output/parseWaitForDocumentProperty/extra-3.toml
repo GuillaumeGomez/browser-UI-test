@@ -6,8 +6,8 @@ let property = null;
 while (true) {
     property = await page.evaluate(() => {
         const errors = [];
-        const propertyDict = {\"a\":\"b\"};
-        const undefProps = [];
+        const propertyDict = {};
+        const undefProps = [\"a\"];
         for (const prop of undefProps) {
             if (document[prop] !== undefined && document[prop] !== null) {
                 errors.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + document[prop] + \"`\");
@@ -19,8 +19,8 @@ while (true) {
                 errors.push(\"document doesn't have a property named `\" + propertyKey + \"`\");
             }
             const property = document[propertyKey];
-            if (String(property) != propertyValue) {
-                errors.push(\"document item \\\"\" + propertyKey + \"\\\" (of value \\\"\" + propertyValue + \"\\\") != \\\"\" + property + \"\\\"\");
+            if (!String(property).startsWith(propertyValue)) {
+                errors.push('Property `' + propertyKey + '` (`' + property + '`) does not start with `' + propertyValue + '`');
             }
         }
         return errors;
@@ -42,4 +42,5 @@ while (true) {
 wait = false
 checkResult = true
 warnings = [
+  """Special checks (STARTS_WITH) will be ignored for `null`""",
 ]

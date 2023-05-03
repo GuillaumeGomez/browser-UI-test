@@ -19,8 +19,8 @@ while (true) {
                 errors.push(\"window doesn't have a property named `\" + propertyKey + \"`\");
             }
             const property = window[propertyKey];
-            if (String(property) != propertyValue) {
-                errors.push(\"window item \\\"\" + propertyKey + \"\\\" (of value \\\"\" + propertyValue + \"\\\") != \\\"\" + property + \"\\\"\");
+            if (!String(property).startsWith(propertyValue)) {
+                errors.push('Property `' + propertyKey + '` (`' + property + '`) does not start with `' + propertyValue + '`');
             }
         }
         return errors;

@@ -6,8 +6,8 @@ let property = null;
 while (true) {
     property = await page.evaluate(() => {
         const errors = [];
-        const propertyDict = {\"a\":\"b\"};
-        const undefProps = [];
+        const propertyDict = {};
+        const undefProps = [\"a\"];
         for (const prop of undefProps) {
             if (window[prop] !== undefined && window[prop] !== null) {
                 errors.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + window[prop] + \"`\");
