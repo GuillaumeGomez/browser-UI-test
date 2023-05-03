@@ -287,7 +287,9 @@ async function runAllCommands(loaded, logs, options, browser) {
                 break;
             }
             if (command['warnings'] !== undefined) {
-                warnings.push(...command['warnings']);
+                for (const warning of command['warnings']) {
+                    warnings.push(`line ${command['line']}: ${warning}`);
+                }
             }
             if (Object.prototype.hasOwnProperty.call(command, 'error')) {
                 error_log += `[ERROR] line ${command['line']}: ${command['error']}`;
