@@ -31,3 +31,5 @@ while (true) {
 ]
 wait = false
 checkResult = true
+warnings = [
+]

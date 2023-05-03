@@ -1,8 +1,8 @@
 => Starting doc-ui tests...
 
 wait-for-window-property... FAILED
-[ERROR] (line 10) Error: The following window properties still don't match: [window item "windowProp" (of value "tadam") != "hello"]: for command `wait-for-window-property: {"windowProp": "tadam"}`
-[ERROR] (line 12) Error: Evaluation failed: The following errors happened: [Expected `tadam` for property `windowProp`, found `hello`]: for command `assert-window-property: {"windowProp": "tadam"}`
+[ERROR] (line 11) Error: The following window properties still don't match: [window item "windowProp" (of value "tadam") != "hello"]: for command `wait-for-window-property: {"windowProp": "tadam"}`
+[ERROR] (line 13) Error: Evaluation failed: The following errors happened: [Expected `tadam` for property `windowProp`, found `hello`]: for command `assert-window-property: {"windowProp": "tadam"}`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

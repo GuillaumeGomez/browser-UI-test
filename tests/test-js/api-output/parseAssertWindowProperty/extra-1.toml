@@ -4,7 +4,7 @@ instructions = [
     const parseAssertDictPropDict = {\"a\":\"b\"};
     const undefProps = [];
     for (const prop of undefProps) {
-        if (window[prop] !== undefined) {
+        if (window[prop] !== undefined && window[prop] !== null) {
             nonMatchingProps.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + window[prop] + \"`\");
             continue;
         }
@@ -14,8 +14,9 @@ instructions = [
             nonMatchingProps.push('Unknown window property `' + parseAssertDictPropKey + '`');
             continue;
         }
-        if (String(window[parseAssertDictPropKey]).indexOf(parseAssertDictPropValue) === -1) {
-            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + window[parseAssertDictPropKey] + '`) does not contain `' + parseAssertDictPropValue + '`');
+        const parseAssertDictProp = window[parseAssertDictPropKey];
+        if (String(parseAssertDictProp).indexOf(parseAssertDictPropValue) === -1) {
+            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + parseAssertDictProp + '`) does not contain `' + parseAssertDictPropValue + '`');
         }
     }
     if (nonMatchingProps.length !== 0) {

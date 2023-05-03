@@ -4,7 +4,7 @@ instructions = [
     const parseAssertDictPropDict = {};
     const undefProps = [\"a\"];
     for (const prop of undefProps) {
-        if (window[prop] !== undefined) {
+        if (window[prop] !== undefined && window[prop] !== null) {
             continue;
         }
         nonMatchingProps.push(\"Property named `\" + prop + \"` doesn't exist\");
@@ -13,6 +13,7 @@ instructions = [
         if (window[parseAssertDictPropKey] === undefined) {
             continue;
         }
+        const parseAssertDictProp = window[parseAssertDictPropKey];
         if (String(window[parseAssertDictPropKey]) == parseAssertDictPropValue) {
             nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertDictPropKey + '`');
         }

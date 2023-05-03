@@ -14,5 +14,7 @@ instructions = [
     }
 });""",
 ]
+warnings = [
+]
 wait = false
 checkResult = true

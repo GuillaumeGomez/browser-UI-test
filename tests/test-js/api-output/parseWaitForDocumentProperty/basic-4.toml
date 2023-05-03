@@ -7,12 +7,19 @@ while (true) {
     property = await page.evaluate(() => {
         const errors = [];
         const propertyDict = {\"\\\"a\":\"\\'b\"};
+        const undefProps = [];
+        for (const prop of undefProps) {
+            if (document[prop] !== undefined && document[prop] !== null) {
+                errors.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + document[prop] + \"`\");
+                continue;
+            }
+        }
         for (const [propertyKey, propertyValue] of Object.entries(propertyDict)) {
             if (document[propertyKey] === undefined) {
                 errors.push(\"document doesn't have a property named `\" + propertyKey + \"`\");
             }
-            let property = document[propertyKey];
-            if (property != propertyValue) {
+            const property = document[propertyKey];
+            if (String(property) != propertyValue) {
                 errors.push(\"document item \\\"\" + propertyKey + \"\\\" (of value \\\"\" + propertyValue + \"\\\") != \\\"\" + property + \"\\\"\");
             }
         }
@@ -34,3 +41,5 @@ while (true) {
 ]
 wait = false
 checkResult = true
+warnings = [
+]

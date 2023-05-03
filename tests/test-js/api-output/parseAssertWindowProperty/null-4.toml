@@ -4,7 +4,7 @@ instructions = [
     const parseAssertDictPropDict = {};
     const undefProps = [\"a\"];
     for (const prop of undefProps) {
-        if (window[prop] !== undefined) {
+        if (window[prop] !== undefined && window[prop] !== null) {
             nonMatchingProps.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + window[prop] + \"`\");
             continue;
         }
@@ -14,13 +14,14 @@ instructions = [
             nonMatchingProps.push('Unknown window property `' + parseAssertDictPropKey + '`');
             continue;
         }
-        if (!String(window[parseAssertDictPropKey]).startsWith(parseAssertDictPropValue)) {
-            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + window[parseAssertDictPropKey] + '`) does not start with `' + parseAssertDictPropValue + '`');
+        const parseAssertDictProp = window[parseAssertDictPropKey];
+        if (!String(parseAssertDictProp).startsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + parseAssertDictProp + '`) does not start with `' + parseAssertDictPropValue + '`');
         }
-        if (Number.isNaN(window[parseAssertDictPropKey])) {
-            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + window[parseAssertDictPropKey] + '`) is NaN (for NEAR check)');
-        } else if (Math.abs(window[parseAssertDictPropKey] - parseAssertDictPropValue) > 1) {
-            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + window[parseAssertDictPropKey] + '`) is not within 1 of `' + parseAssertDictPropValue + '` (for NEAR check)');
+        if (Number.isNaN(parseAssertDictProp)) {
+            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + parseAssertDictProp + '`) is NaN (for NEAR check)');
+        } else if (Math.abs(parseAssertDictProp - parseAssertDictPropValue) > 1) {
+            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + parseAssertDictProp + '`) is not within 1 of `' + parseAssertDictPropValue + '` (for NEAR check)');
         }
     }
     if (nonMatchingProps.length !== 0) {
