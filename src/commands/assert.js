@@ -128,7 +128,6 @@ function parseAssertCssFalse(parser) {
 
 function parseAssertObjPropertyInner(parser, assertFalse, objName) {
     const elems = parser.elems;
-    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH', 'NEAR'];
 
     if (elems.length === 0) {
         return {'error': 'expected a tuple or a JSON dict, found nothing'};
@@ -137,6 +136,7 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
         return {'error': `expected a tuple or a JSON dict, found \`${parser.getRawArgs()}\``};
     }
 
+    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH', 'NEAR'];
     const enabled_checks = Object.create(null);
     const warnings = [];
     let json_dict;
@@ -206,14 +206,14 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
     if (enabled_checks['CONTAINS']) {
         if (assertFalse) {
             checks.push(`\
-if (String(${objName}[${varKey}]).indexOf(${varValue}) !== -1) {
+if (String(${varName}).indexOf(${varValue}) !== -1) {
     nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
 CONTAINS check)');
 }`);
         } else {
             checks.push(`\
-if (String(${objName}[${varKey}]).indexOf(${varValue}) === -1) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
+if (String(${varName}).indexOf(${varValue}) === -1) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
 \`) does not contain \`' + ${varValue} + '\`');
 }`);
         }
@@ -221,14 +221,14 @@ if (String(${objName}[${varKey}]).indexOf(${varValue}) === -1) {
     if (enabled_checks['STARTS_WITH']) {
         if (assertFalse) {
             checks.push(`\
-if (String(${objName}[${varKey}]).startsWith(${varValue})) {
+if (String(${varName}).startsWith(${varValue})) {
     nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
 STARTS_WITH check)');
 }`);
         } else {
             checks.push(`\
-if (!String(${objName}[${varKey}]).startsWith(${varValue})) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
+if (!String(${varName}).startsWith(${varValue})) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
 \`) does not start with \`' + ${varValue} + '\`');
 }`);
         }
@@ -236,14 +236,14 @@ if (!String(${objName}[${varKey}]).startsWith(${varValue})) {
     if (enabled_checks['ENDS_WITH']) {
         if (assertFalse) {
             checks.push(`\
-if (String(${objName}[${varKey}]).endsWith(${varValue})) {
+if (String(${varName}).endsWith(${varValue})) {
     nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
 ENDS_WITH check)');
 }`);
         } else {
             checks.push(`\
-if (!String(${objName}[${varKey}]).endsWith(${varValue})) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
+if (!String(${varName}).endsWith(${varValue})) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
 \`) does not end with \`' + ${varValue} + '\`');
 }`);
         }
@@ -251,27 +251,27 @@ if (!String(${objName}[${varKey}]).endsWith(${varValue})) {
     if (enabled_checks['NEAR']) {
         if (assertFalse) {
             checks.push(`\
-if (Number.isNaN(${objName}[${varKey}])) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
+if (Number.isNaN(${varName})) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
 \`) is NaN (for NEAR check)');
-} else if (Math.abs(${objName}[${varKey}] - ${varValue}) <= 1) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
+} else if (Math.abs(${varName} - ${varValue}) <= 1) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
 \`) is within 1 of \`' + ${varValue} + '\` (for NEAR check)');
 }`);
         } else {
             checks.push(`\
-if (Number.isNaN(${objName}[${varKey}])) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
+if (Number.isNaN(${varName})) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
 \`) is NaN (for NEAR check)');
-} else if (Math.abs(${objName}[${varKey}] - ${varValue}) > 1) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${objName}[${varKey}] + '\
+} else if (Math.abs(${varName} - ${varValue}) > 1) {
+    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
 \`) is not within 1 of \`' + ${varValue} + '\` (for NEAR check)');
 }`);
         }
     }
 
     // eslint-disable-next-line no-extra-parens
-    const hasSpecialChecks = (enabled_checks['ALL'] && checks.length > 1) || checks.length !== 0;
+    const hasSpecialChecks = checks.length !== 0;
     // If no check was enabled.
     if (checks.length === 0) {
         if (assertFalse) {
@@ -281,16 +281,14 @@ if (String(${objName}[${varKey}]) == ${varValue}) {
 }`);
         } else {
             checks.push(`\
-if (String(${objName}[${varKey}]) != ${varValue}) {
+if (String(${varName}) != ${varValue}) {
     nonMatchingProps.push('Expected \`' + ${varValue} + '\` for property \`' + ${varKey} \
-+ '\`, found \`' + ${objName}[${varKey}] + '\`');
++ '\`, found \`' + ${varName} + '\`');
 }`);
         }
     }
     if (undefProps.length > 0 && hasSpecialChecks) {
-        const k = Object.entries(enabled_checks)
-            .filter(([k, v]) => v && k !== 'ALL')
-            .map(([k, _]) => k);
+        const k = Object.entries(enabled_checks).map(([k, _]) => k);
         warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
     }
 
@@ -315,7 +313,7 @@ await page.evaluate(() => {
     const ${varDict} = {${values.join(',')}};
     const undefProps = [${undefProps.join(',')}];
     for (const prop of undefProps) {
-        if (${objName}[prop] !== undefined) {${unexpectedPropError}
+        if (${objName}[prop] !== undefined && ${objName}[prop] !== null) {${unexpectedPropError}
             continue;
         }${expectedPropError}
     }
@@ -323,6 +321,7 @@ await page.evaluate(() => {
         if (${objName}[${varKey}] === undefined) {${err}
             continue;
         }
+        const ${varName} = ${objName}[${varKey}];
 ${indentString(checks.join('\n'), 2)}
     }
     if (nonMatchingProps.length !== 0) {
