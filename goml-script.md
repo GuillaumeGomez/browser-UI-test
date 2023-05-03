@@ -1683,6 +1683,15 @@ wait-for-document-property: {"key": "value"}
 wait-for-document-property: {"key": "value", "key2": "value2"}
 ```
 
+You can use more specific checks as well by using one of the following identifiers: CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
+
+Examples:
+
+```
+wait-for-document-property: ({"key": "value"}, ENDS_WITH)
+wait-for-document-property: ({"key": "value", "key2": "value2"}, [ENDS_WITH, STARTS_WITH])
+```
+
 #### wait-for-local-storage
 
 **wait-for-local-storage** command waits for the local storage keys to have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
@@ -1731,6 +1740,15 @@ Examples:
 ```
 wait-for-window-property: {"key": "value"}
 wait-for-window-property: {"key": "value", "key2": "value2"}
+```
+
+You can use more specific checks as well by using one of the following identifiers: CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
+
+Examples:
+
+```
+wait-for-window-property: ({"key": "value"}, ENDS_WITH)
+wait-for-window-property: ({"key": "value", "key2": "value2"}, [ENDS_WITH, STARTS_WITH])
 ```
 
 #### write
