@@ -73,6 +73,7 @@ header {
 		<button id="js-wait-window-prop" onclick="updateWaitWindowProp()">hey</button>
 		<button id="js-wait-document-prop" onclick="updateWaitDocumentProp()">hey</button>
 		<button id="js-wait-prop" onclick="updateWaitElementProp()">hey</button>
+		<button id="js-change-colors" onclick="updateButtonsColor()">hey</button>
 		<script>
 window.windowProp = null;
 document.windowProp = null;
@@ -126,6 +127,12 @@ setTimeout(() => {
 }, 250);
 }
 document.getElementById("js-wait-prop")["hehe"] = "hoho";
+async function updateButtonsColor() {
+  for (const but of document.getElementsByTagName("button")) {
+    but.style.color = "blue";
+    await new Promise(r => setTimeout(r, 5));
+  }
+}
 </script>
 	</body>
 </html>

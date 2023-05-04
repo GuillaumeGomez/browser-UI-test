@@ -1842,6 +1842,10 @@ function checkWaitForCss(x, func) {
     func('("/a", {"x": "1"})', 'xpath-1');
     func('("//a", {})', 'xpath-2');
     func('("//a", {"x": "1"})', 'xpath-3');
+
+    // With 'ALL' ident.
+    func('("a", {"x": 1, "y": "2"}, ALL)', 'ident-1');
+    func('("//a", {"x": 1, "y": "2"}, ALL)', 'ident-2');
 }
 
 function checkWaitForObjectProperty(x, func) {

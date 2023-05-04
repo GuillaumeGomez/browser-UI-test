@@ -3,6 +3,34 @@ instructions = [
     throw \"`show-text: true` needs to be used before checking for `color` (otherwise the browser doesn't compute it)\";
 }""",
   """const { checkCssProperty } = require('command-helpers.js');
+
+async function checkCssForElem(elem) {
+    const jsHandle = await elem.evaluateHandle(e => {
+        const entries = [\"color\"];
+        const assertComputedStyle = window.getComputedStyle(e);
+        const simple = [];
+        const computed = [];
+        const keys = [];
+
+        for (const entry of entries) {
+            simple.push(e.style[entry]);
+            computed.push(assertComputedStyle[entry]);
+            keys.push(entry);
+        }
+        return [keys, simple, computed];
+    });
+    const [keys, simple, computed] = await jsHandle.jsonValue();
+    const values = [\"blue\"];
+    const nonMatchingProps = [];
+
+    for (const [i, key] of keys.entries()) {
+        const localErr = [];
+        checkCssProperty(key, values[i], simple[i], computed[i], localErr);
+        nonMatchingProps.push(...localErr);
+    }
+    return nonMatchingProps;
+}
+
 const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
@@ -22,29 +50,7 @@ while (true) {
             throw new Error(\"The following CSS selector \\\"a\\\" was not found\");
         }
     }
-    const jsHandle = await parseWaitForCss.evaluateHandle(e => {
-        const parseWaitForCssDict = [\"color\"];
-        const assertComputedStyle = window.getComputedStyle(e);
-        const simple = [];
-        const computed = [];
-        const keys = [];
-
-        for (const entry of parseWaitForCssDict) {
-            simple.push(e.style[entry]);
-            computed.push(assertComputedStyle[entry]);
-            keys.push(entry);
-        }
-        return [keys, simple, computed];
-    });
-    const [keys, simple, computed] = await jsHandle.jsonValue();
-    const values = [\"blue\"];
-    const nonMatchingProps = [];
-
-    for (const [i, key] of keys.entries()) {
-        const localErr = [];
-        checkCssProperty(key, values[i], simple[i], computed[i], localErr);
-        nonMatchingProps.push(...localErr);
-    }
+    const nonMatchingProps = await checkCssForElem(parseWaitForCss);
     if (nonMatchingProps.length === 0) {
         break;
     }

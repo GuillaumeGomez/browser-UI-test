@@ -4,7 +4,7 @@ instructions = [
 async function checkCssForElem(elem) {
     const jsHandle = await elem.evaluateHandle(e => {
         const entries = [\"x\",\"y\"];
-        const assertComputedStyle = window.getComputedStyle(e, \"::after\");
+        const assertComputedStyle = window.getComputedStyle(e);
         const simple = [];
         const computed = [];
         const keys = [];
@@ -34,8 +34,8 @@ let allTime = 0;
 let parseWaitForCss = null;
 while (true) {
     while (true) {
-        parseWaitForCss = await page.$(\"a\");
-        if (parseWaitForCss !== null) {
+        parseWaitForCss = await page.$$(\"a\");
+        if (parseWaitForCss.length !== 0) {
             break;
         }
         await new Promise(r => setTimeout(r, timeAdd));
@@ -47,7 +47,14 @@ while (true) {
             throw new Error(\"The following CSS selector \\\"a\\\" was not found\");
         }
     }
-    const nonMatchingProps = await checkCssForElem(parseWaitForCss);
+    let nonMatchingProps = [];
+    for (const elem of parseWaitForCss) {
+        const ret = await checkCssForElem(elem);
+        if (ret.length !== 0) {
+            nonMatchingProps = ret;
+            break;
+        }
+    }
     if (nonMatchingProps.length === 0) {
         break;
     }
