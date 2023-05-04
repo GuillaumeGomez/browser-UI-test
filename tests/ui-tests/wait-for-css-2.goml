@@ -1,0 +1,9 @@
+// This test ensures that the `wait-for-css` command is behaving like expected.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+show-text: true
+// Testing the `ALL` ident.
+click: "#js-change-colors"
+wait-for-css: ("button", {"color": "blue"}, ALL)
+set-timeout: 100
+// Should fail since the element doesn't exist.
+wait-for-css: ("#i-dont-exist", {"color": "blue"}, ALL)

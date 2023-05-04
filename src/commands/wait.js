@@ -35,26 +35,46 @@ ${indentString(incrWait(error), 1)}
     ];
 }
 
-function waitForElement(selector, varName) {
+function waitForElement(selector, varName, checkAll = false) {
     let code;
     let kind;
 
-    if (selector.isXPath) {
-        kind = 'XPath';
-        code = `\
+    if (!checkAll) {
+        if (selector.isXPath) {
+            kind = 'XPath';
+            code = `\
 ${varName} = await page.$x("${selector.value}");
 if (${varName}.length !== 0) {
     ${varName} = ${varName}[0];
     break;
 }`;
-    } else {
-        kind = 'CSS selector';
-        code = `\
+        } else {
+            kind = 'CSS selector';
+            code = `\
 ${varName} = await page.$("${selector.value}");
 if (${varName} !== null) {
     break;
 }`;
+        }
+
+        return getWaitForElems(
+            varName,
+            code,
+            `throw new Error("The following ${kind} \\"${selector.value}\\" was not found");`,
+        );
     }
+
+    if (selector.isXPath) {
+        kind = 'XPath';
+        code = `${varName} = await page.$x("${selector.value}");`;
+    } else {
+        kind = 'CSS selector';
+        code = `${varName} = await page.$$("${selector.value}");`;
+    }
+    code += `
+if (${varName}.length !== 0) {
+    break;
+}`;
 
     return getWaitForElems(
         varName,
@@ -106,7 +126,7 @@ function parseWaitFor(parser) {
     };
 }
 
-function waitForInitializer(parser, errorMessage, allowEmptyValues) {
+function waitForInitializer(parser, errorMessage, allowEmptyValues, allowExtra) {
     const elems = parser.elems;
 
     if (elems.length === 0) {
@@ -120,11 +140,18 @@ function waitForInitializer(parser, errorMessage, allowEmptyValues) {
         };
     }
     const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        return {
-            'error': 'expected a tuple with a string and a JSON dict, ' +
-                `found \`${parser.getRawArgs()}\``,
-        };
+    if (tuple.length !== 2 && (!allowExtra || tuple.length !== 3)) {
+        if (!allowExtra) {
+            return {
+                'error': 'expected a tuple with a string and a JSON dict, ' +
+                    `found \`${parser.getRawArgs()}\``,
+            };
+        } else {
+            return {
+                'error': 'invalid number of values in the tuple: expected 2 or 3, found ' +
+                    tuple.length,
+            };
+        }
     } else if (tuple[0].kind !== 'string') {
         return {
             'error': 'expected a CSS selector or an XPath as first tuple element, ' +
@@ -157,6 +184,7 @@ function waitForInitializer(parser, errorMessage, allowEmptyValues) {
         'warnings': entries.warnings,
         'pseudo': !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '',
         'propertyDict': propertyDict,
+        'tuple': tuple,
     };
 }
 
@@ -488,14 +516,44 @@ function parseWaitForWindowProperty(parser) {
 //
 // * ("CSS selector", {"CSS property name": "expected CSS property value"})
 // * ("XPath", {"CSS property name": "expected CSS property value"})
+// * ("CSS selector", {"CSS property name": "expected CSS property value"}, ALL)
+// * ("XPath", {"CSS property name": "expected CSS property value"}, ALL)
 function parseWaitForCss(parser) {
-    const data = waitForInitializer(parser, 'CSS property', false);
+    const data = waitForInitializer(parser, 'CSS property', false, true);
+    let checkAll = false;
     if (data.error !== undefined) {
         return data;
+    } else if (data.tuple.length === 3) {
+        if (data.tuple[2].kind !== 'ident') {
+            return {
+                'error': 'expected identifier `ALL` as third argument or nothing, found `' +
+                    `${data.tuple[2].getRaw()}\``,
+            };
+        } else if (data.tuple[2].getRaw() !== 'ALL') {
+            return {
+                'error': 'expected identifier `ALL` as third argument or nothing, found `' +
+                    `${data.tuple[2].getRaw()}\``,
+            };
+        }
+        checkAll = true;
     }
 
     const varName = 'parseWaitForCss';
-    const varDict = varName + 'Dict';
+
+    let checker;
+    if (!checkAll) {
+        checker = `const nonMatchingProps = await checkCssForElem(${varName});`;
+    } else {
+        checker = `\
+let nonMatchingProps = [];
+for (const elem of ${varName}) {
+    const ret = await checkCssForElem(elem);
+    if (ret.length !== 0) {
+        nonMatchingProps = ret;
+        break;
+    }
+}`;
+    }
 
     const instructions = [];
     const propertyDict = data['propertyDict'];
@@ -510,20 +568,19 @@ if (!arg.showText) {
 const props = nonMatchingProps.join(", ");
 throw new Error("The following CSS properties still don't match: [" + props + "]");`);
 
-    const [init, looper] = waitForElement(data['selector'], varName);
+    const [init, looper] = waitForElement(data['selector'], varName, checkAll);
     instructions.push(`\
 const { checkCssProperty } = require('command-helpers.js');
-${init}
-while (true) {
-${indentString(looper, 1)}
-    const jsHandle = await ${varName}.evaluateHandle(e => {
-        const ${varDict} = [${propertyDict['keys'].join(',')}];
+
+async function checkCssForElem(elem) {
+    const jsHandle = await elem.evaluateHandle(e => {
+        const entries = [${propertyDict['keys'].join(',')}];
         const assertComputedStyle = window.getComputedStyle(e${data['pseudo']});
         const simple = [];
         const computed = [];
         const keys = [];
 
-        for (const entry of ${varDict}) {
+        for (const entry of entries) {
             simple.push(e.style[entry]);
             computed.push(assertComputedStyle[entry]);
             keys.push(entry);
@@ -539,6 +596,13 @@ ${indentString(looper, 1)}
         checkCssProperty(key, values[i], simple[i], computed[i], localErr);
         nonMatchingProps.push(...localErr);
     }
+    return nonMatchingProps;
+}
+
+${init}
+while (true) {
+${indentString(looper, 1)}
+${indentString(checker, 1)}
     if (nonMatchingProps.length === 0) {
         break;
     }
