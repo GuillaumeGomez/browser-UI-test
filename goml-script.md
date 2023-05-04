@@ -1672,6 +1672,14 @@ wait-for-css: ("//*[@id='element']", {"font-size": "12px"})
 wait-for-css: ("//*[@id='element']", {"font-size": "12px", "margin-top": "12px"})
 ```
 
+If you want to check all the elements matching the given selector have the given CSS values, you can use the `ALL` ident at the end:
+
+```
+wait-for-css: ("button", {"font-size": "12px"}, ALL)
+// Same with an XPath:
+wait-for-css: ("//button", {"font-size": "12px"}, ALL)
+```
+
 #### wait-for-document-property
 
 **wait-for-document-property** command waits for the document objects properties to have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
