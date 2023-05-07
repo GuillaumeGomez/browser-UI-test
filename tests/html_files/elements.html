@@ -130,6 +130,7 @@ document.getElementById("js-wait-prop")["hehe"] = "hoho";
 async function updateButtonsColor() {
   for (const but of document.getElementsByTagName("button")) {
     but.style.color = "blue";
+    but.setAttribute("data-hoho", "hehe");
     await new Promise(r => setTimeout(r, 5));
   }
 }

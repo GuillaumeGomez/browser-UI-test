@@ -1,0 +1,7 @@
+=> Starting doc-ui tests...
+
+wait-for-attribute-2... FAILED
+[ERROR] (line 11) Error: The following CSS selector "#i-dont-exist" was not found: for command `wait-for-attribute: ("#i-dont-exist", {"data-hoho": "heh"}, ALL)`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed

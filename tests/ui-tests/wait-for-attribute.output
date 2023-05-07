@@ -1,7 +1,7 @@
 => Starting doc-ui tests...
 
 wait-for-attribute... FAILED
-[ERROR] (line 14) Error: The following attributes still don't match: [data-a: (`b` != `c`)]: for command `wait-for-attribute: ("#js-call-attr", {"data-a": "c"})`
+[ERROR] (line 14) Error: The following attributes still don't match: [attribute `data-a` isn't equal to `c` (`b`)]: for command `wait-for-attribute: ("#js-call-attr", {"data-a": "c"})`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed
