@@ -225,13 +225,13 @@ function buildPropertyDict(entries, errorText, allowEmptyValues, valuesAsStrings
 
     // JSON.stringify produces a problematic output so instead we use this.
     for (const [k, v] of Object.entries(entries.values)) {
-        if (v.value.length === 0 && allowEmptyValues !== true) {
-            return {
-                'error': `Empty values are not allowed: \`${k}\` has an empty value`,
-            };
-        } else if (k.length === 0) {
+        if (k.length === 0) {
             return {
                 'error': `Empty ${errorText} keys ("" or '') are not allowed`,
+            };
+        } else if (v.value.length === 0 && allowEmptyValues !== true) {
+            return {
+                'error': `Empty values are not allowed: \`${k}\` has an empty value`,
             };
         }
         if (k === 'color') {

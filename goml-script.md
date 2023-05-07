@@ -1644,6 +1644,33 @@ wait-for-attribute: ("//*[@id='element']", {"class": "hello"})
 wait-for-attribute: ("//*[@id='element']", {"class": "hello", "id": "some-id"})
 ```
 
+If you want to wait for an attribute removal, you can use `null`:
+
+```
+// Waiting for "attribute-name" to be removed.
+wait-for-attribute: ("#id > .class", {"attribute-name": null})
+```
+
+You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
+
+```
+wait-for-attribute: (
+    "#id",
+    {"class": "where", "title": "a title"},
+    STARTS_WITH,
+)
+```
+
+You can even combine the checks:
+
+```
+wait-for-attribute: (
+    "#id",
+    {"class": "where", "title": "a title"},
+    [STARTS_WITH, ENDS_WITH, ALL],
+)
+```
+
 #### wait-for-count
 
 **wait-for-count** command waits for the page to contain exactly the number of elements which match the provided selector. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).

@@ -1,9 +1,34 @@
 instructions = [
-  """const timeLimit = page.getDefaultTimeout();
+  """async function checkAttrForElem(elem) {
+    return await elem.evaluate(e => {
+        const nonMatchingAttrs = [];
+        const parseWaitForAttrDict = {};
+        const nullAttributes = [];
+        for (const parseWaitForAttrKey of nullAttributes) {
+            if (e.hasAttribute(parseWaitForAttrKey)) {
+                const attr = e.getAttribute(parseWaitForAttrKey);
+                nonMatchingAttrs.push(\"Expected `null` for attribute `\" + parseWaitForAttrKey + \"`, found: `\" + attr + \"`\");
+                continue;
+            }
+        }
+        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(parseWaitForAttrDict)) {
+            if (!e.hasAttribute(parseWaitForAttrKey)) {
+                nonMatchingAttrs.push(\"Attribute named `\" + parseWaitForAttrKey + \"` doesn't exist\");
+                continue;
+            }
+            const attr = e.getAttribute(parseWaitForAttrKey);
+            if (attr !== parseWaitForAttrValue) {
+                nonMatchingAttrs.push(\"attribute `\" + parseWaitForAttrKey + \"` isn't equal to `\" + parseWaitForAttrValue + \"` (`\" + attr + \"`)\");
+            }
+        }
+        return nonMatchingAttrs;
+    });
+}
+
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForAttr = null;
-let nonMatchingProps;
 while (true) {
     while (true) {
         parseWaitForAttr = await page.$(\"a\");
@@ -19,19 +44,8 @@ while (true) {
             throw new Error(\"The following CSS selector \\\"a\\\" was not found\");
         }
     }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForAttrDict = {};
-        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(parseWaitForAttrDict)) {
-            computedEntry = e.getAttribute(parseWaitForAttrKey);
-            if (computedEntry !== parseWaitForAttrValue) {
-                nonMatchingProps.push(parseWaitForAttrKey + \": (`\" + computedEntry + \"` != `\" + parseWaitForAttrValue + \"`)\");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForAttr);
-    if (nonMatchingProps.length === 0) {
+    const nonMatchingAttrs = await checkAttrForElem(parseWaitForAttr);
+    if (nonMatchingAttrs.length === 0) {
         break;
     }
     await new Promise(r => setTimeout(r, timeAdd));
@@ -40,7 +54,7 @@ while (true) {
     }
     allTime += timeAdd;
     if (allTime >= timeLimit) {
-        const props = nonMatchingProps.join(\", \");
+        const props = nonMatchingAttrs.join(\", \");
         throw new Error(\"The following attributes still don't match: [\" + props + \"]\");
     }
 }""",

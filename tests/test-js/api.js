@@ -1769,11 +1769,14 @@ function checkWaitForAttribute(x, func) {
     func('(1, 2)', 'err-4');
     func('("a", 2)', 'err-5');
     func('("a", {"b": {"a": 2}})', 'err-6');
+    func('("a", {"b": "a"}, a)', 'err-7');
 
     // Check css selector
     func('("a", {})', 'basic-1');
     func('("a", {"x": 1})', 'basic-2');
     func('("a", {"x": 1, "y": "2"})', 'basic-3');
+    // Check `null`.
+    func('("a", {"x": null})', 'null-1');
     // Check pseudo element.
     func('("a::after", {"x": 1, "y": "2"})', 'pseudo-1');
     // Ensures that there is no "show-text" check (because of "color").
@@ -1783,6 +1786,11 @@ function checkWaitForAttribute(x, func) {
     func('("/a", {"x": "1"})', 'xpath-1');
     func('("//a", {})', 'xpath-2');
     func('("//a", {"x": "1"})', 'xpath-3');
+
+    // extra
+    func('("a", {"x": 1}, ALL)', 'extra-1');
+    func('("a", {"x": 1}, CONTAINS)', 'extra-2');
+    func('("a", {"x": 1}, [CONTAINS, ALL])', 'extra-3');
 }
 
 function checkWaitForProperty(x, func) {
@@ -1828,6 +1836,7 @@ function checkWaitForCss(x, func) {
     func('(1, 2)', 'err-4');
     func('("a", 2)', 'err-5');
     func('("a", {"b": {"a": 2}})', 'err-6');
+    func('("a", {"b": "a"}, A)', 'err-7');
 
     // Check css selector
     func('("a", {})', 'basic-1');

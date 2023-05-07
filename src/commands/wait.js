@@ -126,7 +126,7 @@ function parseWaitFor(parser) {
     };
 }
 
-function waitForInitializer(parser, errorMessage, allowEmptyValues, allowExtra) {
+function waitForChecker(parser, allowExtra) {
     const elems = parser.elems;
 
     if (elems.length === 0) {
@@ -167,9 +167,20 @@ function waitForInitializer(parser, errorMessage, allowEmptyValues, allowExtra) 
     if (selector.error !== undefined) {
         return selector;
     }
-    const json = tuple[1].getRaw();
-    const entries = validateJson(json, {'string': [], 'number': []}, errorMessage);
+    return {
+        'tuple': tuple,
+        'json': tuple[1].getRaw(),
+        'selector': selector,
+    };
+}
 
+function waitForInitializer(parser, errorMessage, allowEmptyValues, allowExtra) {
+    const checker = waitForChecker(parser, allowExtra);
+    if (checker.error !== undefined) {
+        return checker;
+    }
+
+    const entries = validateJson(checker.json, {'string': [], 'number': []}, errorMessage);
     if (entries.error !== undefined) {
         return entries;
     }
@@ -179,12 +190,13 @@ function waitForInitializer(parser, errorMessage, allowEmptyValues, allowExtra) 
         return propertyDict;
     }
 
+    const selector = checker.selector;
     return {
         'selector': selector,
         'warnings': entries.warnings,
         'pseudo': !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '',
         'propertyDict': propertyDict,
-        'tuple': tuple,
+        'tuple': checker.tuple,
     };
 }
 
@@ -622,18 +634,27 @@ ${indentString(incr, 1)}
 // * ("CSS selector", {"attribute name": "expected attribute value"})
 // * ("XPath", {"attribute name": "expected attribute value"})
 function parseWaitForAttribute(parser) {
-    const data = waitForInitializer(parser, 'attribute', true);
-    if (data.error !== undefined) {
-        return data;
+    const waitChecker = waitForChecker(parser, true);
+    if (waitChecker.error !== undefined) {
+        return waitChecker;
     }
 
-    const isPseudo = !data.selector.isXPath && data.selector.pseudo !== null;
-    if (isPseudo) {
-        if (data.warnings === undefined) {
-            data.warnings = [];
+    const entries = validateJson(
+        waitChecker.json, {'string': [], 'number': [], 'ident': ['null']}, 'attribute');
+    if (entries.error !== undefined) {
+        return entries;
+    }
+
+    const warnings = entries.warnings !== undefined ? entries.warnings : [];
+    const enabled_checks = Object.create(null);
+
+    if (waitChecker.tuple.length === 3) {
+        const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH', 'NEAR'];
+        const ret = fillEnabledChecks(
+            waitChecker.tuple[2], identifiers, enabled_checks, warnings, 'third');
+        if (ret !== null) {
+            return ret;
         }
-        data.warnings.push(`Pseudo-elements (\`${data.selector.pseudo}\`) don't have attributes so \
-the check will be performed on the element itself`);
     }
 
     const varName = 'parseWaitForAttr';
@@ -642,32 +663,124 @@ the check will be performed on the element itself`);
     const varValue = varName + 'Value';
 
     const instructions = [];
-    const check = `\
-computedEntry = e.getAttribute(${varKey});
-if (computedEntry !== ${varValue}) {
-    nonMatchingProps.push(${varKey} + ": (\`" + computedEntry + "\` != \`" + ${varValue} + "\`)");
-}`;
+    const checks = [];
+    if (enabled_checks['CONTAINS']) {
+        checks.push(`\
+if (attr.indexOf(${varValue}) === -1) {
+    nonMatchingAttrs.push("attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't contain \`"\
+ + ${varValue} + "\` (for CONTAINS check)");
+}`);
+    }
+    if (enabled_checks['STARTS_WITH']) {
+        checks.push(`\
+if (!attr.startsWith(${varValue})) {
+    nonMatchingAttrs.push("attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't start with \
+\`" + ${varValue} + "\` (for STARTS_WITH check)");
+}`);
+    }
+    if (enabled_checks['ENDS_WITH']) {
+        checks.push(`\
+if (!attr.endsWith(${varValue})) {
+    nonMatchingAttrs.push("attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't end with \`"\
+ + ${varValue} + "\`");
+}`);
+    }
+    if (enabled_checks['NEAR']) {
+        checks.push(`\
+if (Number.isNaN(attr)) {
+    nonMatchingAttrs.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
+\`) is NaN (for NEAR check)');
+} else if (Math.abs(attr - ${varValue}) > 1) {
+    nonMatchingAttrs.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
+\`) is not within 1 of \`' + ${varValue} + '\` (for NEAR check)');
+}`);
+    }
+    // eslint-disable-next-line no-extra-parens
+    const hasSpecialChecks = (enabled_checks['ALL'] && checks.length > 1) || checks.length !== 0;
+    if (checks.length === 0) {
+        checks.push(`\
+if (attr !== ${varValue}) {
+    nonMatchingAttrs.push("attribute \`" + ${varKey} + "\` isn't equal to \`" + ${varValue} + "\` \
+(\`" + attr + "\`)");
+}`);
+    }
 
-    const [init, looper] = waitForElement(data['selector'], varName);
+    let checker;
+    if (!enabled_checks['ALL']) {
+        checker = `const nonMatchingAttrs = await checkAttrForElem(${varName});`;
+    } else {
+        checker = `\
+let nonMatchingAttrs = [];
+for (const elem of ${varName}) {
+    const ret = await checkAttrForElem(elem);
+    if (ret.length !== 0) {
+        nonMatchingAttrs = ret;
+        break;
+    }
+}`;
+    }
+
+    const selector = waitChecker.selector;
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    if (isPseudo) {
+        warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
+the check will be performed on the element itself`);
+    }
+
+    // JSON.stringify produces a problematic output so instead we use this.
+    const tests = [];
+    const nullAttributes = [];
+    for (const [k, v] of Object.entries(entries.values)) {
+        if (v.kind !== 'ident') {
+            tests.push(`"${k}":"${v.value}"`);
+        } else {
+            nullAttributes.push(`"${k}"`);
+        }
+    }
+
+    if (nullAttributes.length > 0 && hasSpecialChecks) {
+        const k = Object.entries(enabled_checks)
+            .filter(([k, v]) => v && k !== 'ALL')
+            .map(([k, _]) => k);
+        warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
+    }
+
+    const [init, looper] = waitForElement(selector, varName, enabled_checks['ALL']);
     const incr = incrWait(`\
-const props = nonMatchingProps.join(", ");
+const props = nonMatchingAttrs.join(", ");
 throw new Error("The following attributes still don't match: [" + props + "]");`);
 
     instructions.push(`\
+async function checkAttrForElem(elem) {
+    return await elem.evaluate(e => {
+        const nonMatchingAttrs = [];
+        const ${varDict} = {${tests.join(',')}};
+        const nullAttributes = [${nullAttributes.join(',')}];
+        for (const ${varKey} of nullAttributes) {
+            if (e.hasAttribute(${varKey})) {
+                const attr = e.getAttribute(${varKey});
+                nonMatchingAttrs.push("Expected \`null\` for attribute \`" + ${varKey} + "\`, \
+found: \`" + attr + "\`");
+                continue;
+            }
+        }
+        for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+            if (!e.hasAttribute(${varKey})) {
+                nonMatchingAttrs.push("Attribute named \`" + ${varKey} + "\` doesn't exist");
+                continue;
+            }
+            const attr = e.getAttribute(${varKey});
+${indentString(checks.join('\n'), 3)}
+        }
+        return nonMatchingAttrs;
+    });
+}
+
 ${init}
-let nonMatchingProps;
 while (true) {
 ${indentString(looper, 1)}
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const ${varDict} = {${data['propertyDict']['dict']}};
-        for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-${indentString(check, 3)}
-        }
-        return nonMatchingProps;
-    }, ${varName});
-    if (nonMatchingProps.length === 0) {
+${indentString(checker, 1)}
+    if (nonMatchingAttrs.length === 0) {
         break;
     }
 ${indentString(incr, 1)}
@@ -676,7 +789,7 @@ ${indentString(incr, 1)}
     return {
         'instructions': instructions,
         'wait': false,
-        'warnings': data['warnings'],
+        'warnings': warnings,
         'checkResult': true,
     };
 }
