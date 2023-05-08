@@ -2,7 +2,8 @@
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 show-text: true
 // Shouldn't wait here still the "data-hoho" attribute doesn't exist yet.
-wait-for-attribute: ("button", {"data-hoho": null}, ALL)
+// Also should emit a warning.
+wait-for-attribute: ("button", {"data-hoho": null}, [ALL, STARTS_WITH])
 // Testing the `ALL` ident.
 click: "#js-change-colors"
 wait-for-attribute: ("button", {"data-hoho": "heh"}, [ALL, STARTS_WITH])
