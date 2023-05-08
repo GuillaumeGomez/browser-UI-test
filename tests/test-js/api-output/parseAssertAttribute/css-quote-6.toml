@@ -8,7 +8,7 @@ for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
         const nullAttributes = [];
         for (const attr of nullAttributes) {
             if (e.hasAttribute(attr)) {
-                nonMatchingAttrs.push(\"Expected `null` for attribute `\" + attr + \"`, found: `\" + e.getAttribute(attr) + \"`\");
+                nonMatchingAttrs.push(\"Expected attribute `\" + attr + \"` to not exist, found: `\" + e.getAttribute(attr) + \"`\");
                 continue;
             }
         }

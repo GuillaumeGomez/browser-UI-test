@@ -6,13 +6,13 @@ await page.evaluate(e => {
     const parseAssertElemPropDict = {\"a\":\"1\"};
     const undefProps = [];
     for (const prop of undefProps) {
-        if (e[prop] !== undefined) {
+        if (e[prop] !== undefined && e[prop] !== null) {
             continue;
         }
         nonMatchingProps.push(\"Property named `\" + prop + \"` doesn't exist\");
     }
     for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(parseAssertElemPropDict)) {
-        if (e[parseAssertElemPropKey] === undefined) {
+        if (e[parseAssertElemPropKey] === undefined || e[parseAssertElemPropKey] === null) {
             continue;
         }
         if (String(e[parseAssertElemPropKey]) == parseAssertElemPropValue) {

@@ -2,7 +2,7 @@ instructions = [
   """async function checkPropForElem(elem) {
     return await elem.evaluate(e => {
         const nonMatchingProps = [];
-        const parseWaitForPropDict = {\"x\":\"1\",\"y\":\"2\"};
+        const parseWaitForPropDict = {\"x\":\"1\"};
         const nullProps = [];
         for (const parseWaitForPropKey of nullProps) {
             if (e[parseWaitForPropKey] !== undefined && e[parseWaitForPropKey] !== null) {
@@ -17,8 +17,8 @@ instructions = [
                 continue;
             }
             const prop = e[parseWaitForPropKey];
-            if (prop !== parseWaitForPropValue) {
-                nonMatchingProps.push(\"property `\" + parseWaitForPropKey + \"` isn't equal to `\" + parseWaitForPropValue + \"` (`\" + prop + \"`)\");
+            if (prop.indexOf(parseWaitForPropValue) === -1) {
+                nonMatchingProps.push(\"property `\" + parseWaitForPropKey + \"` (`\" + prop + \"`) doesn't contain `\" + parseWaitForPropValue + \"` (for CONTAINS check)\");
             }
         }
         return nonMatchingProps;
@@ -61,6 +61,5 @@ while (true) {
 ]
 wait = false
 warnings = [
-  """Pseudo-elements (`::after`) don't have properties so the check will be performed on the element itself""",
 ]
 checkResult = true

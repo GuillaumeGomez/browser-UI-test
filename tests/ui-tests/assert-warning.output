@@ -2,7 +2,7 @@
 
 assert-warning... OK
 [WARNING] line 3: Pseudo-elements (`::after`) don't have attributes so the check will be performed on the element itself
-[WARNING] line 4: Pseudo-elements (`::after`) don't have attributes so the check will be performed on the element itself
+[WARNING] line 4: Pseudo-elements (`::after`) don't have properties so the check will be performed on the element itself
 
 
 <= doc-ui tests done: 1 succeeded, 0 failed

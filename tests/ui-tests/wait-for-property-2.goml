@@ -1,0 +1,12 @@
+// This test ensures that the `wait-for-property` command is behaving like expected.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+show-text: true
+// Shouldn't wait here since the "data-a" property doesn't exist yet.
+// Also should emit a warning.
+wait-for-property: ("button", {"data-a": null}, [ALL, STARTS_WITH])
+// Testing the `ALL` ident.
+click: "#js-change-colors"
+wait-for-property: ("button", {"data-a": "huh"}, [ALL, STARTS_WITH])
+set-timeout: 100
+// Should fail since the element doesn't exist.
+wait-for-property: ("#i-dont-exist", {"data-huh": "heh"}, ALL)

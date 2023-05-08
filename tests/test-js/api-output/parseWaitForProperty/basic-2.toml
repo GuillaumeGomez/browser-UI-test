@@ -1,9 +1,34 @@
 instructions = [
-  """const timeLimit = page.getDefaultTimeout();
+  """async function checkPropForElem(elem) {
+    return await elem.evaluate(e => {
+        const nonMatchingProps = [];
+        const parseWaitForPropDict = {\"x\":\"1\"};
+        const nullProps = [];
+        for (const parseWaitForPropKey of nullProps) {
+            if (e[parseWaitForPropKey] !== undefined && e[parseWaitForPropKey] !== null) {
+                const prop = e[parseWaitForPropKey];
+                nonMatchingProps.push(\"Expected property `\" + parseWaitForPropKey + \"` to not exist, found: `\" + prop + \"`\");
+                continue;
+            }
+        }
+        for (const [parseWaitForPropKey, parseWaitForPropValue] of Object.entries(parseWaitForPropDict)) {
+            if (e[parseWaitForPropKey] === undefined || e[parseWaitForPropKey] === null) {
+                nonMatchingProps.push(\"Property named `\" + parseWaitForPropKey + \"` doesn't exist\");
+                continue;
+            }
+            const prop = e[parseWaitForPropKey];
+            if (prop !== parseWaitForPropValue) {
+                nonMatchingProps.push(\"property `\" + parseWaitForPropKey + \"` isn't equal to `\" + parseWaitForPropValue + \"` (`\" + prop + \"`)\");
+            }
+        }
+        return nonMatchingProps;
+    });
+}
+
+const timeLimit = page.getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForProp = null;
-let nonMatchingProps;
 while (true) {
     while (true) {
         parseWaitForProp = await page.$(\"a\");
@@ -19,22 +44,7 @@ while (true) {
             throw new Error(\"The following CSS selector \\\"a\\\" was not found\");
         }
     }
-    nonMatchingProps = await page.evaluate(e => {
-        const nonMatchingProps = [];
-        let computedEntry;
-        const parseWaitForPropDict = {\"x\":\"1\"};
-        for (const [parseWaitForPropKey, parseWaitForPropValue] of Object.entries(parseWaitForPropDict)) {
-            if (e[parseWaitForPropKey] === undefined) {
-                nonMatchingProps.push(\"No property `\" + parseWaitForPropKey + \"`\");
-                continue;
-            }
-            computedEntry = e[parseWaitForPropKey];
-            if (computedEntry !== parseWaitForPropValue) {
-                nonMatchingProps.push(parseWaitForPropKey + \": (`\" + computedEntry + \"` != `\" + parseWaitForPropValue + \"`)\");
-            }
-        }
-        return nonMatchingProps;
-    }, parseWaitForProp);
+    const nonMatchingProps = await checkPropForElem(parseWaitForProp);
     if (nonMatchingProps.length === 0) {
         break;
     }

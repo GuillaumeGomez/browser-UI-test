@@ -1801,6 +1801,7 @@ function checkWaitForProperty(x, func) {
     func('(1, 2)', 'err-4');
     func('("a", 2)', 'err-5');
     func('("a", {"b": {"a": 2}})', 'err-6');
+    func('("a", {"b": "a"}, a)', 'err-7');
 
     // Check css selector
     func('("a", {})', 'basic-1');
@@ -1815,6 +1816,11 @@ function checkWaitForProperty(x, func) {
     func('("/a", {"x": "1"})', 'xpath-1');
     func('("//a", {})', 'xpath-2');
     func('("//a", {"x": "1"})', 'xpath-3');
+
+    // extra
+    func('("a", {"x": 1}, ALL)', 'extra-1');
+    func('("a", {"x": 1}, CONTAINS)', 'extra-2');
+    func('("a", {"x": 1}, [CONTAINS, ALL])', 'extra-3');
 }
 
 function checkWaitForCount(x, func) {

@@ -1,7 +1,7 @@
 => Starting doc-ui tests...
 
 screenshot-on-failure... FAILED
-[ERROR] (line 5) Error: Evaluation failed: The following errors happened (for selector `.content`): [Expected `null` for attribute `nb-value`, found: `12`]: for command `assert-attribute: (".content", {"nb-value": null})`
+[ERROR] (line 5) Error: Evaluation failed: The following errors happened (for selector `.content`): [Expected attribute `nb-value` to not exist, found: `12`]: for command `assert-attribute: (".content", {"nb-value": null})`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

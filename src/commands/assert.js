@@ -517,7 +517,7 @@ if (String(e[${varKey}]) != ${varValue}) {
     warnings.push(...entries.warnings);
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
-        warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
+        warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have properties so \
 the check will be performed on the element itself`);
     }
 
@@ -565,12 +565,12 @@ await page.evaluate(e => {
     const ${varDict} = {${props.join(',')}};
     const undefProps = [${undefProps.join(',')}];
     for (const prop of undefProps) {
-        if (e[prop] !== undefined) {${unexpectedPropError}
+        if (e[prop] !== undefined && e[prop] !== null) {${unexpectedPropError}
             continue;
         }${expectedPropError}
     }
     for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-        if (e[${varKey}] === undefined) {${unknown}
+        if (e[${varKey}] === undefined || e[${varKey}] === null) {${unknown}
             continue;
         }
 ${indentString(checks.join('\n'), 2)}
@@ -789,7 +789,7 @@ the check will be performed on the element itself`);
         noAttrError = `
         nonMatchingAttrs.push("No attribute named \`" + ${varKey} + "\`");`;
         unexpectedAttrError = `
-        nonMatchingAttrs.push("Expected \`null\` for attribute \`" + attr + "\`, found: \`" + \
+        nonMatchingAttrs.push("Expected attribute \`" + attr + "\` to not exist, found: \`" + \
 e.getAttribute(attr) + "\`");`;
     } else {
         expectedAttrError = `

@@ -7,7 +7,7 @@ await page.evaluate(e => {
     const nullAttributes = [\"\\\"b\"];
     for (const attr of nullAttributes) {
         if (e.hasAttribute(attr)) {
-            nonMatchingAttrs.push(\"Expected `null` for attribute `\" + attr + \"`, found: `\" + e.getAttribute(attr) + \"`\");
+            nonMatchingAttrs.push(\"Expected attribute `\" + attr + \"` to not exist, found: `\" + e.getAttribute(attr) + \"`\");
             continue;
         }
     }
