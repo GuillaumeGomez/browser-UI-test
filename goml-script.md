@@ -501,7 +501,7 @@ assert-property: ("#id > .class", { "offsetParent": "null" }, ALL)
 assert-property: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" }, ALL)
 ```
 
-If you want to check that an attribute doesn't exist, you can use `null`:
+If you want to check that a property doesn't exist, you can use `null`:
 
 ```
 // Checking that "property-name" doesn't exist.
@@ -543,7 +543,7 @@ assert-property-false: ("#id > .class", { "offsetParent": "null" }, ALL)
 assert-property-false: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" }, ALL)
 ```
 
-If you want to check that an attribute does exist, you can use `null`:
+If you want to check that a property does exist, you can use `null`:
 
 ```
 // Checking that "property-name" does exist.
@@ -1751,6 +1751,33 @@ wait-for-property: ("#element", {"scrollTop": 10, "name": "hello"})
 // Same with an XPath:
 wait-for-property: ("//*[@id='element']", {"scrollTop": 10})
 wait-for-property: ("//*[@id='element']", {"scrollTop": 10, "name": "hello"})
+```
+
+If you want to check that a property doesn't exist, you can use `null`:
+
+```
+// Checking that "property-name" doesn't exist.
+wait-for-property: ("#id > .class", {"property-name": null})
+```
+
+You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH", "STARTS_WITH" or "NEAR".
+
+```
+wait-for-property: (
+    "#id",
+    {"className": "where", "title": "a title"},
+    STARTS_WITH,
+)
+```
+
+You can even combine the checks:
+
+```
+wait-for-property: (
+    "#id",
+    {"className": "where", "title": "a title"},
+    [STARTS_WITH, ENDS_WITH, ALL],
+)
 ```
 
 #### wait-for-text
