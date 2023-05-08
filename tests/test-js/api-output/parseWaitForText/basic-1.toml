@@ -3,6 +3,20 @@ instructions = [
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForText = null;
+async function checkTextForElem(elem) {
+    return await elem.evaluate(e => {
+        const value = \"b\";
+        const elemText = browserUiTestHelpers.getElemText(e, value);
+        const errors = [];
+    if (elemText !== value) {
+        errors.push(\"`\" + elemText + \"` isn't equal to `\" + value + \"`\");
+    }
+        if (errors.length !== 0) {
+            const errs = errors.join(\", \");
+            throw \"The following errors happened: [\" + errs + \"]\";
+        }
+    });
+}
 const value = \"b\";
 let computedEntry;
 while (true) {
@@ -37,4 +51,6 @@ while (true) {
 }""",
 ]
 wait = false
+warnings = [
+]
 checkResult = true

@@ -981,92 +981,89 @@ the check will be performed on the element itself`);
     if (enabled_checks['CONTAINS']) {
         if (assertFalse) {
             checks.push(`\
-if (browserUiTestHelpers.elemTextContains(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` contains \`" + value + "\` \
-(for CONTAINS check)");
+if (elemText.includes(value)) {
+    errors.push("\`" + elemText + "\` contains \`" + value + "\` (for CONTAINS check)");
 }`);
         } else {
             checks.push(`\
-if (!browserUiTestHelpers.elemTextContains(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` doesn't contain \`" + \
-value + "\` (for CONTAINS check)");
+if (!elemText.includes(value)) {
+    errors.push("\`" + elemText + "\` doesn't contain \`" + value + "\` (for CONTAINS check)");
 }`);
         }
     }
     if (enabled_checks['STARTS_WITH']) {
         if (assertFalse) {
             checks.push(`\
-if (browserUiTestHelpers.elemTextStartsWith(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` starts with \`" + value \
-+ "\` (for STARTS_WITH check)");
+if (elemText.startsWith(value)) {
+    errors.push("\`" + elemText + "\` starts with \`" + value + "\` (for STARTS_WITH check)");
 }`);
         } else {
             checks.push(`\
-if (!browserUiTestHelpers.elemTextStartsWith(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` doesn't start with \`" + \
-value + "\` (for STARTS_WITH check)");
+if (!elemText.startsWith(value)) {
+    errors.push("\`" + elemText + "\` doesn't start with \`" + value + "\` (for STARTS_WITH \
+check)");
 }`);
         }
     }
     if (enabled_checks['ENDS_WITH']) {
         if (assertFalse) {
             checks.push(`\
-if (browserUiTestHelpers.elemTextEndsWith(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` ends with \`" + value + \
-"\` (for ENDS_WITH check)");
+if (elemText.endsWith(value)) {
+    errors.push("\`" + elemText + "\` ends with \`" + value + "\` (for ENDS_WITH check)");
 }`);
         } else {
             checks.push(`\
-if (!browserUiTestHelpers.elemTextEndsWith(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` doesn't end with \`" + \
-value + "\` (for ENDS_WITH check)");
+if (!elemText.endsWith(value)) {
+    errors.push("\`" + elemText + "\` doesn't end with \`" + value + "\` (for ENDS_WITH check)");
 }`);
         }
     }
     if (checks.length === 0) {
         if (assertFalse) {
             checks.push(`\
-if (browserUiTestHelpers.compareElemText(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` is equal to \`" + value \
-+ "\`");
+if (elemText === value) {
+    errors.push("\`" + elemText + "\` is equal to \`" + value + "\`");
 }`);
         } else {
             checks.push(`\
-if (!browserUiTestHelpers.compareElemText(e, value)) {
-    errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` isn't equal to \`" + \
-value + "\`");
+if (elemText !== value) {
+    errors.push("\`" + elemText + "\` isn't equal to \`" + value + "\`");
 }`);
         }
     }
 
-    let whole = getAndSetElements(selector, varName, enabled_checks['ALL'] === true) + '\n';
-    let indent = 0;
+    let checker;
     if (enabled_checks['ALL'] === true) {
-        whole += `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n`;
-        indent = 1;
-    }
-    whole += indentString(`\
-await page.evaluate(e => {
-    const errors = [];
-    const value = "${value}";
-${indentString(checks.join('\n'), 1)}
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-`, indent);
-    if (enabled_checks['ALL'] === true) {
-        whole += `    }, ${varName}[i]);
+        checker = `\
+for (const elem of ${varName}) {
+    await checkTextForElem(elem);
 }`;
     } else {
-        whole += `}, ${varName});`;
+        checker = `await checkTextForElem(${varName});`;
     }
 
+    const instructions = `\
+async function checkTextForElem(elem) {
+    await elem.evaluate(e => {
+        const errors = [];
+        const value = "${value}";
+        const elemText = browserUiTestHelpers.getElemText(e, value);
+${indentString(checks.join('\n'), 2)}
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    });
+}
+
+${getAndSetElements(selector, varName, enabled_checks['ALL'] === true)}
+${checker}`;
+
     return {
-        'instructions': [whole],
+        'instructions': [instructions],
         'wait': false,
         'checkResult': true,
-        'warnings': warnings.length > 0 ? warnings : undefined,
+        'warnings': warnings,
     };
 }
 

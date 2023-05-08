@@ -1,17 +1,24 @@
 instructions = [
-  """let parseAssertElemStr = await page.$(\"a\");
+  """async function checkTextForElem(elem) {
+    await elem.evaluate(e => {
+        const errors = [];
+        const value = \"b\";
+        const elemText = browserUiTestHelpers.getElemText(e, value);
+        if (!elemText.startsWith(value)) {
+            errors.push(\"`\" + elemText + \"` doesn't start with `\" + value + \"` (for STARTS_WITH check)\");
+        }
+        if (errors.length !== 0) {
+            const errs = errors.join(\", \");
+            throw \"The following errors happened: [\" + errs + \"]\";
+        }
+    });
+}
+
+let parseAssertElemStr = await page.$(\"a\");
 if (parseAssertElemStr === null) { throw '\"a\" not found'; }
-await page.evaluate(e => {
-    const errors = [];
-    const value = \"b\";
-    if (!browserUiTestHelpers.elemTextStartsWith(e, value)) {
-        errors.push(\"`\" + browserUiTestHelpers.getElemText(e, value) + \"` doesn't start with `\" + value + \"` (for STARTS_WITH check)\");
-    }
-    if (errors.length !== 0) {
-        const errs = errors.join(\", \");
-        throw \"The following errors happened: [\" + errs + \"]\";
-    }
-}, parseAssertElemStr);""",
+await checkTextForElem(parseAssertElemStr);""",
 ]
 wait = false
 checkResult = true
+warnings = [
+]

@@ -33,22 +33,6 @@ const browserUiTestHelpers = (function() {
 
     return {
         getElemText: getElemText,
-        compareElemText: function(e, value) {
-            const elemValue = getElemText(e, value);
-            return elemValue === value;
-        },
-        elemTextStartsWith: function(e, value) {
-            const elemValue = getElemText(e, value);
-            return elemValue.startsWith(value);
-        },
-        elemTextEndsWith: function(e, value) {
-            const elemValue = getElemText(e, value);
-            return elemValue.endsWith(value);
-        },
-        elemTextContains: function(e, value) {
-            const elemValue = getElemText(e, value);
-            return elemValue.indexOf(value) !== -1;
-        },
         extractFloat: extractFloat,
         extractFloatOrZero: extractFloatOrZero,
         getElementPosition: function(e, pseudo, field, styleField) {

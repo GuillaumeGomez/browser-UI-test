@@ -1,20 +1,25 @@
 instructions = [
-  """let parseAssertElemStr = await page.$(\"a\");
+  """async function checkTextForElem(elem) {
+    await elem.evaluate(e => {
+        const errors = [];
+        const value = \"b\";
+        const elemText = browserUiTestHelpers.getElemText(e, value);
+        if (!elemText.includes(value)) {
+            errors.push(\"`\" + elemText + \"` doesn't contain `\" + value + \"` (for CONTAINS check)\");
+        }
+        if (!elemText.endsWith(value)) {
+            errors.push(\"`\" + elemText + \"` doesn't end with `\" + value + \"` (for ENDS_WITH check)\");
+        }
+        if (errors.length !== 0) {
+            const errs = errors.join(\", \");
+            throw \"The following errors happened: [\" + errs + \"]\";
+        }
+    });
+}
+
+let parseAssertElemStr = await page.$(\"a\");
 if (parseAssertElemStr === null) { throw '\"a\" not found'; }
-await page.evaluate(e => {
-    const errors = [];
-    const value = \"b\";
-    if (!browserUiTestHelpers.elemTextContains(e, value)) {
-        errors.push(\"`\" + browserUiTestHelpers.getElemText(e, value) + \"` doesn't contain `\" + value + \"` (for CONTAINS check)\");
-    }
-    if (!browserUiTestHelpers.elemTextEndsWith(e, value)) {
-        errors.push(\"`\" + browserUiTestHelpers.getElemText(e, value) + \"` doesn't end with `\" + value + \"` (for ENDS_WITH check)\");
-    }
-    if (errors.length !== 0) {
-        const errs = errors.join(\", \");
-        throw \"The following errors happened: [\" + errs + \"]\";
-    }
-}, parseAssertElemStr);""",
+await checkTextForElem(parseAssertElemStr);""",
 ]
 wait = false
 checkResult = true
