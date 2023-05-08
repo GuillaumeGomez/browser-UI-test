@@ -799,18 +799,27 @@ ${indentString(incr, 1)}
 // * ("CSS selector", {"property name": "expected property value"})
 // * ("XPath", {"property name": "expected property value"})
 function parseWaitForProperty(parser) {
-    const data = waitForInitializer(parser, 'property', true);
-    if (data.error !== undefined) {
-        return data;
+    const waitChecker = waitForChecker(parser, true);
+    if (waitChecker.error !== undefined) {
+        return waitChecker;
     }
 
-    const isPseudo = !data.selector.isXPath && data.selector.pseudo !== null;
-    if (isPseudo) {
-        if (data.warnings === undefined) {
-            data.warnings = [];
+    const entries = validateJson(
+        waitChecker.json, {'string': [], 'number': [], 'ident': ['null']}, 'property');
+    if (entries.error !== undefined) {
+        return entries;
+    }
+
+    const warnings = entries.warnings !== undefined ? entries.warnings : [];
+    const enabled_checks = Object.create(null);
+
+    if (waitChecker.tuple.length === 3) {
+        const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH', 'NEAR'];
+        const ret = fillEnabledChecks(
+            waitChecker.tuple[2], identifiers, enabled_checks, warnings, 'third');
+        if (ret !== null) {
+            return ret;
         }
-        data.warnings.push(`Pseudo-elements (\`${data.selector.pseudo}\`) don't have properties so \
-the check will be performed on the element itself`);
     }
 
     const varName = 'parseWaitForProp';
@@ -819,35 +828,123 @@ the check will be performed on the element itself`);
     const varValue = varName + 'Value';
 
     const instructions = [];
-    const check = `\
-if (e[${varKey}] === undefined) {
-    nonMatchingProps.push("No property \`" + ${varKey} + "\`");
-    continue;
-}
-computedEntry = e[${varKey}];
-if (computedEntry !== ${varValue}) {
-    nonMatchingProps.push(${varKey} + ": (\`" + computedEntry + "\` != \`" + ${varValue} + "\`)");
-}`;
+    const checks = [];
+    if (enabled_checks['CONTAINS']) {
+        checks.push(`\
+if (prop.indexOf(${varValue}) === -1) {
+    nonMatchingProps.push("property \`" + ${varKey} + "\` (\`" + prop + "\`) doesn't contain \`"\
+ + ${varValue} + "\` (for CONTAINS check)");
+}`);
+    }
+    if (enabled_checks['STARTS_WITH']) {
+        checks.push(`\
+if (!prop.startsWith(${varValue})) {
+    nonMatchingProps.push("property \`" + ${varKey} + "\` (\`" + prop + "\`) doesn't start with \
+\`" + ${varValue} + "\` (for STARTS_WITH check)");
+}`);
+    }
+    if (enabled_checks['ENDS_WITH']) {
+        checks.push(`\
+if (!prop.endsWith(${varValue})) {
+    nonMatchingProps.push("property \`" + ${varKey} + "\` (\`" + prop + "\`) doesn't end with \`"\
+ + ${varValue} + "\`");
+}`);
+    }
+    if (enabled_checks['NEAR']) {
+        checks.push(`\
+if (Number.isNaN(prop)) {
+    nonMatchingProps.push('property \`' + ${varKey} + '\` (\`' + prop + '\
+\`) is NaN (for NEAR check)');
+} else if (Math.abs(prop - ${varValue}) > 1) {
+    nonMatchingProps.push('property \`' + ${varKey} + '\` (\`' + prop + '\
+\`) is not within 1 of \`' + ${varValue} + '\` (for NEAR check)');
+}`);
+    }
+    // eslint-disable-next-line no-extra-parens
+    const hasSpecialChecks = (enabled_checks['ALL'] && checks.length > 1) || checks.length !== 0;
+    if (checks.length === 0) {
+        checks.push(`\
+if (prop !== ${varValue}) {
+    nonMatchingProps.push("property \`" + ${varKey} + "\` isn't equal to \`" + ${varValue} + "\` \
+(\`" + prop + "\`)");
+}`);
+    }
 
-    const [init, looper] = waitForElement(data['selector'], varName);
+    let checker;
+    if (!enabled_checks['ALL']) {
+        checker = `const nonMatchingProps = await checkPropForElem(${varName});`;
+    } else {
+        checker = `\
+let nonMatchingProps = [];
+for (const elem of ${varName}) {
+    const ret = await checkPropForElem(elem);
+    if (ret.length !== 0) {
+        nonMatchingProps = ret;
+        break;
+    }
+}`;
+    }
+
+    const selector = waitChecker.selector;
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    if (isPseudo) {
+        warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have properties so \
+the check will be performed on the element itself`);
+    }
+
+    // JSON.stringify produces a problematic output so instead we use this.
+    const tests = [];
+    const nullProps = [];
+    for (const [k, v] of Object.entries(entries.values)) {
+        if (v.kind !== 'ident') {
+            tests.push(`"${k}":"${v.value}"`);
+        } else {
+            nullProps.push(`"${k}"`);
+        }
+    }
+
+    if (nullProps.length > 0 && hasSpecialChecks) {
+        const k = Object.entries(enabled_checks)
+            .filter(([k, v]) => v && k !== 'ALL')
+            .map(([k, _]) => k);
+        warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
+    }
+
+    const [init, looper] = waitForElement(selector, varName, enabled_checks['ALL']);
     const incr = incrWait(`\
 const props = nonMatchingProps.join(", ");
 throw new Error("The following properties still don't match: [" + props + "]");`);
 
     instructions.push(`\
-${init}
-let nonMatchingProps;
-while (true) {
-${indentString(looper, 1)}
-    nonMatchingProps = await page.evaluate(e => {
+async function checkPropForElem(elem) {
+    return await elem.evaluate(e => {
         const nonMatchingProps = [];
-        let computedEntry;
-        const ${varDict} = {${data['propertyDict']['dict']}};
+        const ${varDict} = {${tests.join(',')}};
+        const nullProps = [${nullProps.join(',')}];
+        for (const ${varKey} of nullProps) {
+            if (e[${varKey}] !== undefined && e[${varKey}] !== null) {
+                const prop = e[${varKey}];
+                nonMatchingProps.push("Expected property \`" + ${varKey} + "\` to not exist, \
+found: \`" + prop + "\`");
+                continue;
+            }
+        }
         for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-${indentString(check, 3)}
+            if (e[${varKey}] === undefined || e[${varKey}] === null) {
+                nonMatchingProps.push("Property named \`" + ${varKey} + "\` doesn't exist");
+                continue;
+            }
+            const prop = e[${varKey}];
+${indentString(checks.join('\n'), 3)}
         }
         return nonMatchingProps;
-    }, ${varName});
+    });
+}
+
+${init}
+while (true) {
+${indentString(looper, 1)}
+${indentString(checker, 1)}
     if (nonMatchingProps.length === 0) {
         break;
     }
@@ -857,7 +954,7 @@ ${indentString(incr, 1)}
     return {
         'instructions': instructions,
         'wait': false,
-        'warnings': data['warnings'],
+        'warnings': warnings,
         'checkResult': true,
     };
 }
@@ -904,7 +1001,7 @@ function parseWaitForText(parser) {
     let warnings = undefined;
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
-        warnings = [`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
+        warnings = [`Pseudo-elements (\`${selector.pseudo}\`) don't have inner text so \
 the check will be performed on the element itself`];
     }
 
