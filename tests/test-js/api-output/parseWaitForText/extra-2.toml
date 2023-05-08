@@ -8,8 +8,8 @@ async function checkTextForElem(elem) {
         const value = \"b\";
         const elemText = browserUiTestHelpers.getElemText(e, value);
         const errors = [];
-        if (elemText !== value) {
-            errors.push(\"`\" + elemText + \"` isn't equal to `\" + value + \"`\");
+        if (!elemText.includes(value)) {
+            errors.push(\"`\" + elemText + \"` doesn't contain `\" + value + \"` (for CONTAINS check)\");
         }
         return errors;
     });
@@ -48,6 +48,5 @@ while (true) {
 ]
 wait = false
 warnings = [
-  """Pseudo-elements (`::after`) don't have inner text so the check will be performed on the element itself""",
 ]
 checkResult = true

@@ -17,8 +17,8 @@ async function checkTextForElem(elem) {
 const value = \"b\";
 while (true) {
     while (true) {
-        parseWaitForText = await page.$(\"a\");
-        if (parseWaitForText !== null) {
+        parseWaitForText = await page.$$(\"a\");
+        if (parseWaitForText.length !== 0) {
             break;
         }
         await new Promise(r => setTimeout(r, timeAdd));
@@ -30,7 +30,13 @@ while (true) {
             throw new Error(\"The following CSS selector \\\"a\\\" was not found\");
         }
     }
-    const errors = await checkTextForElem(parseWaitForText);
+    let errors = [];
+    for (const elem of parseWaitForText) {
+        errors = await checkTextForElem(elem);
+        if (errors.length !== 0) {
+            break;
+        }
+    }
     if (errors.length === 0) {
         break;
     }
@@ -48,6 +54,5 @@ while (true) {
 ]
 wait = false
 warnings = [
-  """Pseudo-elements (`::after`) don't have inner text so the check will be performed on the element itself""",
 ]
 checkResult = true

@@ -1904,12 +1904,19 @@ function checkWaitForText(x, func) {
     func('(1)', 'err-3');
     func('(1, 2)', 'err-4');
     func('("a", 2)', 'err-5');
+    func('("a", "a", A)', 'err-6');
 
     // Check CSS selector.
     func('("a", "b")', 'basic-1');
     func('("a::after", "b")', 'basic-2');
 
+    // Check XPath.
     func('("//a", "b")', 'xpath-1');
+
+    // Check extended checks.
+    func('("a", "b", ALL)', 'extra-1');
+    func('("a", "b", CONTAINS)', 'extra-2');
+    func('("a", "b", [ALL, CONTAINS])', 'extra-3');
 }
 
 function checkObjProperty(x, func) {

@@ -1,0 +1,11 @@
+// This test ensures that the `wait-for-text` command is behaving like expected.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+show-text: true
+// Shouldn't wait here since all `<button>` elements already have "hey" as text.
+wait-for-text: ("button", "he", [ALL, STARTS_WITH])
+// Testing the `ALL` ident.
+click: "#js-change-colors"
+wait-for-text: ("button", "ihi", [ALL, ENDS_WITH])
+set-timeout: 100
+// Should fail since the element doesn't exist.
+wait-for-text: ("#i-dont-exist", "oho")

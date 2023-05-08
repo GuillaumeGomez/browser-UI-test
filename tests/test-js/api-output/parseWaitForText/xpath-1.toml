@@ -8,17 +8,13 @@ async function checkTextForElem(elem) {
         const value = \"b\";
         const elemText = browserUiTestHelpers.getElemText(e, value);
         const errors = [];
-    if (elemText !== value) {
-        errors.push(\"`\" + elemText + \"` isn't equal to `\" + value + \"`\");
-    }
-        if (errors.length !== 0) {
-            const errs = errors.join(\", \");
-            throw \"The following errors happened: [\" + errs + \"]\";
+        if (elemText !== value) {
+            errors.push(\"`\" + elemText + \"` isn't equal to `\" + value + \"`\");
         }
+        return errors;
     });
 }
 const value = \"b\";
-let computedEntry;
 while (true) {
     while (true) {
         parseWaitForText = await page.$x(\"//a\");
@@ -35,19 +31,19 @@ while (true) {
             throw new Error(\"The following XPath \\\"//a\\\" was not found\");
         }
     }
-    computedEntry = await page.evaluate(e => {
-        return browserUiTestHelpers.getElemText(e, \"b\");
-    }, parseWaitForText);
-    if (computedEntry === value) {
+    const errors = await checkTextForElem(parseWaitForText);
+    if (errors.length === 0) {
         break;
     }
+
     await new Promise(r => setTimeout(r, timeAdd));
     if (timeLimit === 0) {
         continue;
     }
     allTime += timeAdd;
     if (allTime >= timeLimit) {
-        throw new Error(\"The text still doesn't match: `\" + computedEntry + \"` != `\" + value + \"`\");
+        const err = errors.join(\", \");
+        throw new Error(\"The following checks still fail: [\" + err + \"]\");
     }
 }""",
 ]
