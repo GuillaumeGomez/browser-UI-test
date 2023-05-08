@@ -1788,9 +1788,22 @@ Examples:
 
 ```
 wait-for-text: ("#element", "text")
-
 // Same with an XPath:
 wait-for-text: ("//*[@id='element']", "text")
+
+// If you want to wait for all elements matching this selector/XPath, use `ALL`:
+wait-for-text: ("#id > .class", "hello", ALL)
+wait-for-text: ("//*[@id='id']/*[@class='class']", "hello", ALL)
+```
+
+Apart from "ALL", you can also use "CONTAINS", "ENDS_WITH" and "STARTS_WITH" and even combine them if you want. Example:
+
+```
+wait-for-text: (".class", "hello", CONTAINS)
+// To wait for all ".class" elements to contain "hello":
+wait-for-text: (".class", "hello", [ALL, CONTAINS])
+// To wait for all ".class" elements to start and end with "hello":
+wait-for-text: (".class", "hello", [ALL, STARTS_WITH, ENDS_WITH])
 ```
 
 #### wait-for-window-property
