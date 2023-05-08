@@ -1,19 +1,26 @@
 instructions = [
-  """let parseAssertElemStr = await page.$x(\"//a[text()=\\'l\\']\");
-if (parseAssertElemStr.length === 0) { throw 'XPath \"//a[text()=\\'l\\']\" not found'; }
-for (let i = 0, len = parseAssertElemStr.length; i < len; ++i) {
-    await page.evaluate(e => {
+  """async function checkTextForElem(elem) {
+    await elem.evaluate(e => {
         const errors = [];
         const value = \"b\";
-        if (!browserUiTestHelpers.compareElemText(e, value)) {
-            errors.push(\"`\" + browserUiTestHelpers.getElemText(e, value) + \"` isn't equal to `\" + value + \"`\");
+        const elemText = browserUiTestHelpers.getElemText(e, value);
+        if (elemText !== value) {
+            errors.push(\"`\" + elemText + \"` isn't equal to `\" + value + \"`\");
         }
         if (errors.length !== 0) {
             const errs = errors.join(\", \");
             throw \"The following errors happened: [\" + errs + \"]\";
         }
-    }, parseAssertElemStr[i]);
+    });
+}
+
+let parseAssertElemStr = await page.$x(\"//a[text()=\\'l\\']\");
+if (parseAssertElemStr.length === 0) { throw 'XPath \"//a[text()=\\'l\\']\" not found'; }
+for (const elem of parseAssertElemStr) {
+    await checkTextForElem(elem);
 }""",
 ]
 wait = false
 checkResult = true
+warnings = [
+]

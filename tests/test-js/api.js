@@ -1313,21 +1313,26 @@ await ret;`,
             'original': 'assert-text: ("a", "b")',
             'line': 2,
             'instructions': [`\
+async function checkTextForElem(elem) {
+    await elem.evaluate(e => {
+        const errors = [];
+        const value = "b";
+        const elemText = browserUiTestHelpers.getElemText(e, value);
+        if (elemText !== value) {
+            errors.push("\`" + elemText + "\` isn't equal to \`" + value + "\`");
+        }
+        if (errors.length !== 0) {
+            const errs = errors.join(", ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    });
+}
+
 let parseAssertElemStr = await page.$("a");
 if (parseAssertElemStr === null) { throw '"a" not found'; }
-await page.evaluate(e => {
-    const errors = [];
-    const value = "b";
-    if (!browserUiTestHelpers.compareElemText(e, value)) {
-        errors.push("\`" + browserUiTestHelpers.getElemText(e, value) + "\` isn't equal to \`" + \
-value + "\`");
-    }
-    if (errors.length !== 0) {
-        const errs = errors.join(", ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-}, parseAssertElemStr);`,
+await checkTextForElem(parseAssertElemStr);`,
             ],
+            'warnings': [],
         },
     ]);
 }
