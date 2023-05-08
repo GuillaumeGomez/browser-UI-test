@@ -2,7 +2,7 @@ instructions = [
   """async function checkPropForElem(elem) {
     return await elem.evaluate(e => {
         const nonMatchingProps = [];
-        const parseWaitForPropDict = {\"x\":\"1\",\"y\":\"2\"};
+        const parseWaitForPropDict = {\"x\":\"1\"};
         const nullProps = [];
         for (const parseWaitForPropKey of nullProps) {
             if (e[parseWaitForPropKey] !== undefined && e[parseWaitForPropKey] !== null) {
@@ -17,8 +17,8 @@ instructions = [
                 continue;
             }
             const prop = e[parseWaitForPropKey];
-            if (prop !== parseWaitForPropValue) {
-                nonMatchingProps.push(\"property `\" + parseWaitForPropKey + \"` isn't equal to `\" + parseWaitForPropValue + \"` (`\" + prop + \"`)\");
+            if (prop.indexOf(parseWaitForPropValue) === -1) {
+                nonMatchingProps.push(\"property `\" + parseWaitForPropKey + \"` (`\" + prop + \"`) doesn't contain `\" + parseWaitForPropValue + \"` (for CONTAINS check)\");
             }
         }
         return nonMatchingProps;
@@ -31,8 +31,8 @@ let allTime = 0;
 let parseWaitForProp = null;
 while (true) {
     while (true) {
-        parseWaitForProp = await page.$(\"a\");
-        if (parseWaitForProp !== null) {
+        parseWaitForProp = await page.$$(\"a\");
+        if (parseWaitForProp.length !== 0) {
             break;
         }
         await new Promise(r => setTimeout(r, timeAdd));
@@ -44,7 +44,14 @@ while (true) {
             throw new Error(\"The following CSS selector \\\"a\\\" was not found\");
         }
     }
-    const nonMatchingProps = await checkPropForElem(parseWaitForProp);
+    let nonMatchingProps = [];
+    for (const elem of parseWaitForProp) {
+        const ret = await checkPropForElem(elem);
+        if (ret.length !== 0) {
+            nonMatchingProps = ret;
+            break;
+        }
+    }
     if (nonMatchingProps.length === 0) {
         break;
     }
@@ -61,6 +68,5 @@ while (true) {
 ]
 wait = false
 warnings = [
-  """Pseudo-elements (`::after`) don't have properties so the check will be performed on the element itself""",
 ]
 checkResult = true

@@ -7,13 +7,13 @@ for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
         const parseAssertElemPropDict = {\"a\":\"1\"};
         const undefProps = [];
         for (const prop of undefProps) {
-            if (e[prop] !== undefined) {
+            if (e[prop] !== undefined && e[prop] !== null) {
                 continue;
             }
             nonMatchingProps.push(\"Property named `\" + prop + \"` doesn't exist\");
         }
         for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(parseAssertElemPropDict)) {
-            if (e[parseAssertElemPropKey] === undefined) {
+            if (e[parseAssertElemPropKey] === undefined || e[parseAssertElemPropKey] === null) {
                 continue;
             }
             if (String(e[parseAssertElemPropKey]) == parseAssertElemPropValue) {
@@ -29,6 +29,6 @@ for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
 ]
 wait = false
 warnings = [
-  """Pseudo-elements (`::after`) don't have attributes so the check will be performed on the element itself""",
+  """Pseudo-elements (`::after`) don't have properties so the check will be performed on the element itself""",
 ]
 checkResult = true

@@ -1,7 +1,7 @@
 // This test ensures that the `wait-for-attribute` command is behaving like expected.
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 show-text: true
-// Shouldn't wait here still the "data-hoho" attribute doesn't exist yet.
+// Shouldn't wait here since the "data-hoho" attribute doesn't exist yet.
 // Also should emit a warning.
 wait-for-attribute: ("button", {"data-hoho": null}, [ALL, STARTS_WITH])
 // Testing the `ALL` ident.

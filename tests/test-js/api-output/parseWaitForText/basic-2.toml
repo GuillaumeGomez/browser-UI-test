@@ -38,6 +38,6 @@ while (true) {
 ]
 wait = false
 warnings = [
-  """Pseudo-elements (`::after`) don't have attributes so the check will be performed on the element itself""",
+  """Pseudo-elements (`::after`) don't have inner text so the check will be performed on the element itself""",
 ]
 checkResult = true

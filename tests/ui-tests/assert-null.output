@@ -7,7 +7,7 @@ assert-null... FAILED
 [WARNING] line 47: Special checks (CONTAINS) will be ignored for `null`
 [WARNING] line 60: Special checks (CONTAINS) will be ignored for `null`
 
-[ERROR] (line 8) Error: Evaluation failed: The following errors happened (for selector `.content`): [Expected `null` for attribute `nb-value`, found: `12`]: for command `assert-attribute: (".content", {"nb-value": null})`
+[ERROR] (line 8) Error: Evaluation failed: The following errors happened (for selector `.content`): [Expected attribute `nb-value` to not exist, found: `12`]: for command `assert-attribute: (".content", {"nb-value": null})`
 [ERROR] (line 11) Error: Evaluation failed: The following errors happened (for selector `header`): [Attribute named `whatever` doesn't exist]: for command `assert-attribute-false: ("header", {"whatever": null})`
 [ERROR] (line 32) Error: Evaluation failed: The following errors happened (for selector `header`): [Property named `bgColor` doesn't exist]: for command `assert-property-false: ("header", {"bgColor": null})`
 [ERROR] (line 34) Error: Evaluation failed: The following errors happened (for selector `header`): [Property named `yolo` doesn't exist]: for command `assert-property-false: ("header", {"yolo": null})`
