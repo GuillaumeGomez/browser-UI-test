@@ -965,6 +965,9 @@ ${indentString(incr, 1)}
 // * ("XPath", "text")
 function parseWaitForText(parser) {
     const elems = parser.elems;
+    const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
+    const warnings = [];
+    const enabled_checks = Object.create(null);
 
     if (elems.length === 0) {
         return {
@@ -977,10 +980,9 @@ function parseWaitForText(parser) {
         };
     }
     const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
+    if (tuple.length < 2 || tuple.length > 3) {
         return {
-            'error': 'expected a tuple with two strings, ' +
-                `found \`${parser.getRawArgs()}\``,
+            'error': `expected a tuple of 2 or 3 elements, found \`${tuple.length}\``,
         };
     } else if (tuple[0].kind !== 'string') {
         return {
@@ -992,38 +994,91 @@ function parseWaitForText(parser) {
             'error': 'expected a string as second tuple element, ' +
                 `found \`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
         };
+    } else if (tuple.length === 3) {
+        const ret = fillEnabledChecks(tuple[2], identifiers, enabled_checks, warnings, 'third');
+        if (ret !== null) {
+            return ret;
+        }
     }
+
     const selector = tuple[0].getSelector();
     if (selector.error !== undefined) {
         return selector;
     }
-
-    let warnings = undefined;
-    const isPseudo = !selector.isXPath && selector.pseudo !== null;
-    if (isPseudo) {
-        warnings = [`Pseudo-elements (\`${selector.pseudo}\`) don't have inner text so \
-the check will be performed on the element itself`];
-    }
-
     const value = tuple[1].getStringValue();
     const varName = 'parseWaitForText';
 
-    const [init, looper] = waitForElement(selector, varName);
-    const incr = incrWait('\
-throw new Error("The text still doesn\'t match: `" + computedEntry + "` != `" + value + "`");');
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    if (isPseudo) {
+        warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have inner text so \
+the check will be performed on the element itself`);
+    }
+
+    const checks = [];
+    if (enabled_checks['CONTAINS']) {
+        checks.push(`\
+if (!elemText.includes(value)) {
+    errors.push("\`" + elemText + "\` doesn't contain \`" + value + "\` (for CONTAINS check)");
+}`);
+    }
+    if (enabled_checks['STARTS_WITH']) {
+        checks.push(`\
+if (!elemText.startsWith(value)) {
+    errors.push("\`" + elemText + "\` doesn't start with \`" + value + "\` (for STARTS_WITH \
+check)");
+}`);
+    }
+    if (enabled_checks['ENDS_WITH']) {
+        checks.push(`\
+if (!elemText.endsWith(value)) {
+    errors.push("\`" + elemText + "\` doesn't end with \`" + value + "\` (for ENDS_WITH check)");
+}`);
+    }
+    if (checks.length === 0) {
+        checks.push(`\
+if (elemText !== value) {
+    errors.push("\`" + elemText + "\` isn't equal to \`" + value + "\`");
+}`);
+    }
+
+    let checker;
+    if (!enabled_checks['ALL']) {
+        checker = `const errors = await checkTextForElem(${varName});`;
+    } else {
+        checker = `\
+let errors = [];
+for (const elem of ${varName}) {
+    errors = await checkTextForElem(elem);
+    if (errors.length !== 0) {
+        break;
+    }
+}`;
+    }
+
+    const [init, looper] = waitForElement(selector, varName, enabled_checks['ALL'] === true);
+    const incr = incrWait(`\
+const err = errors.join(", ");
+throw new Error("The following checks still fail: [" + err + "]");`);
 
     const instructions = `\
 ${init}
+async function checkTextForElem(elem) {
+    return await elem.evaluate(e => {
+        const value = "${value}";
+        const elemText = browserUiTestHelpers.getElemText(e, value);
+        const errors = [];
+${indentString(checks.join('\n'), 2)}
+        return errors;
+    });
+}
 const value = "${value}";
-let computedEntry;
 while (true) {
 ${indentString(looper, 1)}
-    computedEntry = await page.evaluate(e => {
-        return browserUiTestHelpers.getElemText(e, "${value}");
-    }, ${varName});
-    if (computedEntry === value) {
+${indentString(checker, 1)}
+    if (errors.length === 0) {
         break;
     }
+
 ${indentString(incr, 1)}
 }`;
 
