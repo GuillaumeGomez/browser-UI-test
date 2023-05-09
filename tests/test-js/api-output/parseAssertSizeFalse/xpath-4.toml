@@ -1,0 +1,27 @@
+instructions = [
+  """async function checkElemSize(elem) {
+    await elem.evaluate(e => {
+        const errors = [];
+        const height = e.offsetHeight;
+        const width = e.offsetWidth;
+        if (width === 1) {
+            errors.push(\"width is equal to `1`\");
+        }
+        if (height === 2) {
+            errors.push(\"height is equal to `2`\");
+        }
+        if (errors.length !== 0) {
+            const errs = errors.join(\"; \");
+            throw \"The following errors happened: [\" + errs + \"]\";
+        }
+    });
+}
+let assertSizeElem = await page.$x(\"//a\");
+if (assertSizeElem.length === 0) { throw 'XPath \"//a\" not found'; }
+assertSizeElem = assertSizeElem[0];
+await checkElemSize(assertSizeElem);""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

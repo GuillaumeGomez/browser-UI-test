@@ -17,3 +17,4 @@ if (errors.length !== 0) {
 }""",
 ]
 wait = false
+checkResult = true

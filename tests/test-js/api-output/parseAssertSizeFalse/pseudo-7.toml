@@ -1,0 +1,25 @@
+instructions = [
+  """async function checkElemSize(elem) {
+    await elem.evaluate(e => {
+        const errors = [];
+        const height = e.offsetHeight;
+        const width = e.offsetWidth;
+        if (width === 1.14) {
+            errors.push(\"width is equal to `1.14`\");
+        }
+        if (errors.length !== 0) {
+            const errs = errors.join(\"; \");
+            throw \"The following errors happened: [\" + errs + \"]\";
+        }
+    });
+}
+let assertSizeElem = await page.$$(\"a ::after\");
+if (assertSizeElem.length === 0) { throw '\"a ::after\" not found'; }
+for (const elem of assertSizeElem) {
+    await checkElemSize(elem);
+}""",
+]
+wait = false
+warnings = [
+]
+checkResult = true
