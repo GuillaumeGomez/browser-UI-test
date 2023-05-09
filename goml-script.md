@@ -120,6 +120,8 @@ Here's the command list:
  * [`assert-position-false`](#assert-position-false)
  * [`assert-property`](#assert-property)
  * [`assert-property-false`](#assert-property-false)
+ * [`assert-size`](#assert-size)
+ * [`assert-size-false`](#assert-size-false)
  * [`assert-text`](#assert-text)
  * [`assert-text-false`](#assert-text-false)
  * [`assert-variable`](#assert-variable)
@@ -573,6 +575,48 @@ assert-property-false: (
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-property-false) command.
 
 Another thing to be noted: if you don't care whether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
+
+#### assert-size
+
+**assert-size** command checks that either the "width" or the "height" (or both) have the expected value. Examples:
+
+```
+assert-size: ("button", {"width": 200, "height": 20})
+// Same with XPath
+assert-size: ("//button", {"width": 200, "height": 20})
+```
+
+If you want to check all the elements matching the given selector, use `ALL`:
+
+```
+assert-size: ("button", {"width": 200, "height": 20}, ALL)
+// Same with XPath
+assert-size: ("//button", {"width": 200, "height": 20}, ALL)
+```
+
+To be more exact, this command compares the "offsetWidth" and "offsetHeight", which include the content
+size, the padding and the border.
+
+#### assert-size-false
+
+**assert-size-false** command checks that neither the "width" or the "height" (or both) have the expected value. Examples:
+
+```
+assert-size-false: ("button", {"width": 200, "height": 20})
+// Same with XPath
+assert-size-false: ("//button", {"width": 200, "height": 20})
+```
+
+If you want to check all the elements matching the given selector, use `ALL`:
+
+```
+assert-size-false: ("button", {"width": 200, "height": 20}, ALL)
+// Same with XPath
+assert-size-false: ("//button", {"width": 200, "height": 20}, ALL)
+```
+
+To be more exact, this command compares the "offsetWidth" and "offsetHeight", which include the content
+size, the padding and the border.
 
 #### assert-text
 
@@ -1567,7 +1611,7 @@ store-size: ("#button", {"width": width, "height": var2})
 store-size: ("#button::after", {"width": width, "height": var2})
 ```
 
-To be more exact, this command stores the "offsetWidth" and "offsetHeigt", which include the content
+To be more exact, this command stores the "offsetWidth" and "offsetHeight", which include the content
 size, the padding and the border.
 
 For more information about variables, read the [variables section](#variables).

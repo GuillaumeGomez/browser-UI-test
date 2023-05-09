@@ -11,6 +11,7 @@ const {
     checkJsonEntry,
     makeExtendedChecks,
     makeTextExtendedChecks,
+    getSizes,
 } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 const { cleanString } = require('../parser.js');
@@ -1233,6 +1234,7 @@ if (errors.length !== 0) {
         ],
         'wait': false,
         'warnings': warnings.length > 0 ? warnings : undefined,
+        'checkResult': true,
     };
 }
 
@@ -1249,6 +1251,98 @@ function parseAssertVariable(parser) {
 function parseAssertVariableFalse(parser) {
     return parseAssertVariableInner(parser, true);
 }
+
+function parseAssertSizeInner(parser, assertFalse) {
+    const selector = getAssertSelector(parser);
+    if (selector.error !== undefined) {
+        return selector;
+    }
+
+    const checkAllElements = selector.checkAllElements;
+    const json = selector.tuple[1].getRaw();
+
+    const entries = validateJson(json, {'number': []}, 'JSON dict key', ['height', 'width']);
+    if (entries.error !== undefined) {
+        return entries;
+    }
+
+    const checks = [];
+    for (const [k, v] of Object.entries(entries.values)) {
+        if (k === 'width') {
+            if (assertFalse) {
+                checks.push(`\
+if (width === ${v.value}) {
+    errors.push("width is equal to \`${v.value}\`");
+}`);
+            } else {
+                checks.push(`\
+if (width !== ${v.value}) {
+    errors.push("expected a width of \`${v.value}\`, found \`" + width + "\`");
+}`);
+            }
+        } else if (k === 'height') {
+            if (assertFalse) {
+                checks.push(`\
+if (height === ${v.value}) {
+    errors.push("height is equal to \`${v.value}\`");
+}`);
+            } else {
+                checks.push(`\
+if (height !== ${v.value}) {
+    errors.push("expected a height of \`${v.value}\`, found \`" + height + "\`");
+}`);
+            }
+        }
+    }
+
+    const varName = 'assertSizeElem';
+    let checker;
+    if (checkAllElements) {
+        checker = `\
+for (const elem of ${varName}) {
+    await checkElemSize(elem);
+}`;
+    } else {
+        checker = `await checkElemSize(${varName});`;
+    }
+
+    const instructions = `\
+async function checkElemSize(elem) {
+    await elem.evaluate(e => {
+        const errors = [];
+${indentString(getSizes(selector), 2)}
+${indentString(checks.join('\n'), 2)}
+        if (errors.length !== 0) {
+            const errs = errors.join("; ");
+            throw "The following errors happened: [" + errs + "]";
+        }
+    });
+}
+${getAndSetElements(selector, varName, checkAllElements)}
+${checker}`;
+
+    return {
+        'instructions': [instructions],
+        'wait': false,
+        'warnings': entries.warnings,
+        'checkResult': true,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector" | "XPath", {"width"|"height": number})
+function parseAssertSize(parser) {
+    return parseAssertSizeInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * ("CSS selector" | "XPath", {"width"|"height": number})
+function parseAssertSizeFalse(parser) {
+    return parseAssertSizeInner(parser, true);
+}
+
 
 module.exports = {
     'parseAssert': parseAssert,
@@ -1267,6 +1361,8 @@ module.exports = {
     'parseAssertPositionFalse': parseAssertPositionFalse,
     'parseAssertProperty': parseAssertProperty,
     'parseAssertPropertyFalse': parseAssertPropertyFalse,
+    'parseAssertSize': parseAssertSize,
+    'parseAssertSizeFalse': parseAssertSizeFalse,
     'parseAssertText': parseAssertText,
     'parseAssertTextFalse': parseAssertTextFalse,
     'parseAssertVariable': parseAssertVariable,

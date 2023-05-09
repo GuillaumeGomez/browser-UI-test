@@ -452,6 +452,46 @@ function checkAssertText(x, func) {
     func('("//a"\n, \n"b",\n ALL)', 'multiline-2');
 }
 
+function checkAssertSize(x, func) {
+    func('("a", "b", )', 'err-1');
+    func('("a", "b")', 'err-2');
+    func('("a", "b" "c")', 'err-3');
+    func('("a", "b" "c", ALL)', 'err-4');
+    func('("a", "b", "c")', 'err-5');
+    func('("a::after", {"a": 1}, all)', 'err-6');
+    func('("a::after", {"a": 1}, ALLO)', 'err-7');
+    func('("a", {"b": "c", "b": "d"})', 'err-8');
+    func('("a", {"b": ""})', 'err-9');
+    func('("a", {"z": 12})', 'err-10');
+
+    func('("a", {})', 'basic-1');
+    func('("a", {"width": 1})', 'basic-2');
+    func('("a", {"width": 1}, ALL)', 'basic-3');
+    func('("a", {"height": 1})', 'basic-4');
+    func('("a", {"height": 1}, ALL)', 'basic-5');
+
+    // Check the handling of pseudo elements
+    func('("a::after", {"width": 1})', 'pseudo-1');
+    func('("a::after", {"height": 1})', 'pseudo-2');
+    func('("a:focus", {"width": 1})', 'pseudo-3');
+    func('("a:focus", {"height": 1}, ALL)', 'pseudo-4');
+    func('("a ::after", {"width": 1})', 'pseudo-5');
+    func('("a ::after", {"height": 1}, ALL)', 'pseudo-6');
+    // With decimal.
+    func('("a ::after", {"width": 1.14}, ALL)', 'pseudo-7');
+
+    // XPath
+    func('("//a", {})', 'xpath-1');
+    func('("//a", {"width": 1})', 'xpath-2');
+    func('("//a", {"width": 1}, ALL)', 'xpath-3');
+    func('("//a", {"width": 1, "height": 2})', 'xpath-4');
+    func('("//a", {"width": 1, "height": 2}, ALL)', 'xpath-5');
+
+    // Multiline
+    func('("a", {"width": \n1\n, "width": 2})', 'multiline-1');
+    func('("//a"\n, \n{"width": \n1, \n"height": \n2}\n, \nALL)', 'multiline-2');
+}
+
 function checkAttributeProperty(x, func) {
     func('"', 'err-1');
     func('("a", "b"', 'err-2');
@@ -2056,6 +2096,16 @@ const TO_CHECK = [
         'name': 'assert-position-false',
         'func': checkAssertPosition,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertPositionFalse, x, e, name, o),
+    },
+    {
+        'name': 'assert-size',
+        'func': checkAssertSize,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertSize, x, e, name, o),
+    },
+    {
+        'name': 'assert-size-false',
+        'func': checkAssertSize,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertSizeFalse, x, e, name, o),
     },
     {
         'name': 'assert-text',

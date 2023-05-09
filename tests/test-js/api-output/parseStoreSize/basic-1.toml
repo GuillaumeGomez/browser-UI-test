@@ -2,7 +2,9 @@ instructions = [
   """let elem = await page.$(\"a\");
 if (elem === null) { throw '\"a\" not found'; }
 const jsHandle = await elem.evaluateHandle(e => {
-    return {\"offsetHeight\": e.offsetHeight, \"offsetWidth\": e.offsetWidth};
+    const height = e.offsetHeight;
+    const width = e.offsetWidth;
+    return {\"offsetHeight\": Math.round(height), \"offsetWidth\": Math.round(width)};
 });
 const data = await jsHandle.jsonValue();
 arg.variables[\"a\"] = data[\"offsetWidth\"];""",

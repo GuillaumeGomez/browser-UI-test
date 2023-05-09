@@ -1,6 +1,6 @@
 // All `compare*` commands.
 
-const { getAndSetElements, indentString, validateJson } = require('./utils.js');
+const { getAndSetElements, indentString, validateJson, getSizes } = require('./utils.js');
 const { RESERVED_VARIABLE_NAME } = require('../utils.js');
 
 function checkJsonInner(rawElem, allowedKeys, extra, callback) {
@@ -28,8 +28,7 @@ like this`,
     for (const [k, v] of Object.entries(entries.values)) {
         if (variables.has(v.value)) {
             return {
-                'error': `duplicated variable \`${v.value}\` (in \
-\`${rawElem.getErrorText()}\`)`,
+                'error': `duplicated variable \`${v.value}\` (in \`${rawElem.getErrorText()}\`)`,
             };
         }
         variables.add(v.value);
@@ -71,13 +70,13 @@ function checkSelectorAndJson(parser, allowedKeys, callback) {
         };
     }
 
-    const entries = checkJsonInner(tuple[1], allowedKeys, ' second argument to be', callback);
-    if (entries.error !== undefined) {
-        return entries;
-    }
     const selector = tuple[0].getSelector();
     if (selector.error !== undefined) {
         return selector;
+    }
+    const entries = checkJsonInner(tuple[1], allowedKeys, ' second argument to be', callback);
+    if (entries.error !== undefined) {
+        return entries;
     }
     return {
         'warnings': entries.warnings,
@@ -272,30 +271,12 @@ function parseStoreSize(parser) {
     }
 
     const varName = 'elem';
-    let getter;
-    // To get the size of a pseudo element, we need to get the computed style for it. There is
-    // one thing to be careful about: if the `box-sizing` is "border-box", "height" and "width"
-    // already include the border and the padding.
-    if (data.isPseudo) {
-        getter = `\
-const style = getComputedStyle(e, "${data.selector.pseudo}");
-let height = parseFloat(style["height"]);
-let width = parseFloat(style["width"]);
-if (style["box-sizing"] !== "border-box") {
-    height += parseFloat(style["padding-top"]) + parseFloat(style["padding-bottom"]);
-    height += parseFloat(style["border-top-width"]) + parseFloat(style["border-bottom-width"]);
-    width += parseFloat(style["padding-left"]) + parseFloat(style["padding-right"]);
-    width += parseFloat(style["border-left-width"]) + parseFloat(style["border-right-width"]);
-}
-return {"offsetHeight": Math.round(height), "offsetWidth": Math.round(width)};`;
-    } else {
-        getter = 'return {"offsetHeight": e.offsetHeight, "offsetWidth": e.offsetWidth};';
-    }
 
     const instructions = `\
 ${getAndSetElements(data.selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
-${indentString(getter, 1)}
+${indentString(getSizes(data.selector), 1)}
+    return {"offsetHeight": Math.round(height), "offsetWidth": Math.round(width)};
 });
 const data = await jsHandle.jsonValue();
 ${code.join('\n')}`;

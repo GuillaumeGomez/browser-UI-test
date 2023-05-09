@@ -1,0 +1,30 @@
+instructions = [
+  """async function checkElemSize(elem) {
+    await elem.evaluate(e => {
+        const errors = [];
+        const style = getComputedStyle(e, \"::after\");
+        let height = parseFloat(style[\"height\"]);
+        let width = parseFloat(style[\"width\"]);
+        if (style[\"box-sizing\"] !== \"border-box\") {
+            height += parseFloat(style[\"padding-top\"]) + parseFloat(style[\"padding-bottom\"]);
+            height += parseFloat(style[\"border-top-width\"]) + parseFloat(style[\"border-bottom-width\"]);
+            width += parseFloat(style[\"padding-left\"]) + parseFloat(style[\"padding-right\"]);
+            width += parseFloat(style[\"border-left-width\"]) + parseFloat(style[\"border-right-width\"]);
+        }
+        if (height !== 1) {
+            errors.push(\"expected a height of `1`, found `\" + height + \"`\");
+        }
+        if (errors.length !== 0) {
+            const errs = errors.join(\"; \");
+            throw \"The following errors happened: [\" + errs + \"]\";
+        }
+    });
+}
+let assertSizeElem = await page.$(\"a\");
+if (assertSizeElem === null) { throw '\"a\" not found'; }
+await checkElemSize(assertSizeElem);""",
+]
+wait = false
+warnings = [
+]
+checkResult = true
