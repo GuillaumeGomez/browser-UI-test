@@ -1,5 +1,5 @@
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 assert-position: (".content>.right>p", {})
-assert-position: (".content>.right>p", {"x": 402})
+assert-position: (".content>.right>p", {"x": 502})
 assert-position: (".content>.right>p", {"y": 26})
-assert-position: (".content>.right>p", {"x": 402, "y": 26})
+assert-position: (".content>.right>p", {"x": 502, "y": 26})
