@@ -16,12 +16,13 @@ await page.evaluate(e => {
             nonMatchingProps.push('Unknown property `' + parseAssertElemPropKey + '`');
             continue;
         }
-        if (!String(e[parseAssertElemPropKey]).startsWith(parseAssertElemPropValue)) {
-            nonMatchingProps.push('Property `' + parseAssertElemPropKey + '` (`' + e[parseAssertElemPropKey] + '`) does not start with `' + parseAssertElemPropValue + '`');
+        const prop = String(e[parseAssertElemPropKey]);
+        if (!prop.startsWith(parseAssertElemPropValue)) {
+            nonMatchingProps.push(\"property `\" + parseAssertElemPropKey + \"` (`\" + prop + \"`) doesn't start with `\" + parseAssertElemPropValue + \"` (for STARTS_WITH check)\");
         }
     }
     if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(\", \");
+        const props = nonMatchingProps.join(\"; \");
         throw \"The following errors happened (for selector `a`): [\" + props + \"]\";
     }
 }, parseAssertElemProp);""",

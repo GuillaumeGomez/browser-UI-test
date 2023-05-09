@@ -15,12 +15,13 @@ await page.evaluate(e => {
         if (e[parseAssertElemPropKey] === undefined || e[parseAssertElemPropKey] === null) {
             continue;
         }
-        if (String(e[parseAssertElemPropKey]).startsWith(parseAssertElemPropValue)) {
-            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey + '` (for STARTS_WITH check)');
+        const prop = String(e[parseAssertElemPropKey]);
+        if (prop.startsWith(parseAssertElemPropValue)) {
+            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey + \"` (`\" + prop + \"`) (for STARTS_WITH check)\");
         }
     }
     if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(\", \");
+        const props = nonMatchingProps.join(\"; \");
         throw \"The following errors happened (for selector `a`): [\" + props + \"]\";
     }
 }, parseAssertElemProp);""",

@@ -215,6 +215,161 @@ function fillEnabledChecks(elem, identifiers, enabled_checks, warnings, err_pos)
     return null;
 }
 
+function makeExtendedChecks(enabledChecks, assertFalse, pushTo, kind, storedVar, varKey, varValue) {
+    const checks = [];
+
+    if (enabledChecks['CONTAINS']) {
+        if (assertFalse) {
+            checks.push(`\
+if (${storedVar}.includes(${varValue})) {
+    ${pushTo}.push("assert didn't fail for ${kind} \`" + ${varKey} + "\` (\`" + ${storedVar} + \
+"\`) (for CONTAINS check)");
+}`);
+        } else {
+            checks.push(`\
+if (!${storedVar}.includes(${varValue})) {
+    ${pushTo}.push("${kind} \`" + ${varKey} + "\` (\`" + ${storedVar} + "\`) doesn't contain \`"\
+ + ${varValue} + "\` (for CONTAINS check)");
+}`);
+        }
+    }
+    if (enabledChecks['STARTS_WITH']) {
+        if (assertFalse) {
+            checks.push(`\
+if (${storedVar}.startsWith(${varValue})) {
+    ${pushTo}.push("assert didn't fail for ${kind} \`" + ${varKey} + "\` (\`" + ${storedVar} + \
+"\`) (for STARTS_WITH check)");
+}`);
+        } else {
+            checks.push(`\
+if (!${storedVar}.startsWith(${varValue})) {
+    ${pushTo}.push("${kind} \`" + ${varKey} + "\` (\`" + ${storedVar} + "\`) doesn't start with \
+\`" + ${varValue} + "\` (for STARTS_WITH check)");
+}`);
+        }
+    }
+    if (enabledChecks['ENDS_WITH']) {
+        if (assertFalse) {
+            checks.push(`\
+if (${storedVar}.endsWith(${varValue})) {
+    ${pushTo}.push("assert didn't fail for ${kind} \`" + ${varKey} + "\` (\`" + ${storedVar} + \
+"\`) (for ENDS_WITH check)");
+}`);
+        } else {
+            checks.push(`\
+if (!${storedVar}.endsWith(${varValue})) {
+    ${pushTo}.push("${kind} \`" + ${varKey} + "\` (\`" + ${storedVar} + "\`) doesn't end with \`"\
+ + ${varValue} + "\`");
+}`);
+        }
+    }
+    if (enabledChecks['NEAR']) {
+        checks.push(`\
+const tmpNb = parseFloat(${storedVar});
+const tmpNb2 = parseFloat(${varValue});
+if (Number.isNaN(tmpNb)) {
+    ${pushTo}.push('${kind} \`' + ${varKey} + '\` (\`' + ${storedVar} + '\`) is NaN (for \
+NEAR check)');
+} else if (Number.isNaN(tmpNb2)) {
+    ${pushTo}.push('provided value for \`' + ${varKey} + '\` is NaN (for NEAR check)');
+`);
+        if (assertFalse) {
+            checks[checks.length - 1] += `\
+} else if (Math.abs(tmpNb - tmpNb2) <= 1) {
+    ${pushTo}.push('${kind} \`' + ${varKey} + '\` (\`' + ${storedVar} + '\`) is within 1 of \`' + \
+${varValue} + '\` (for NEAR check)');
+}`;
+        } else {
+            checks[checks.length - 1] += `\
+} else if (Math.abs(${storedVar} - ${varValue}) > 1) {
+    ${pushTo}.push('${kind} \`' + ${varKey} + '\` (\`' + ${storedVar} + '\`) is not within 1 of \
+\`' + ${varValue} + '\` (for NEAR check)');
+}`;
+        }
+    }
+    // eslint-disable-next-line no-extra-parens
+    const hasSpecialChecks = (enabledChecks['ALL'] && checks.length > 1) || checks.length !== 0;
+    if (checks.length === 0) {
+        if (assertFalse) {
+            checks.push(`\
+if (${storedVar} === ${varValue}) {
+    ${pushTo}.push("assert didn't fail for ${kind} \`" + ${varKey} + "\` (\`" + ${storedVar} + \
+"\`)");
+}`);
+        } else {
+            checks.push(`\
+if (${storedVar} !== ${varValue}) {
+    ${pushTo}.push("expected \`" + ${varValue} + "\` for ${kind} \`" + ${varKey} + "\`, found \`" \
++ ${storedVar} + "\`");
+}`);
+        }
+    }
+
+    return {
+        'checks': checks,
+        'hasSpecialChecks': hasSpecialChecks,
+    };
+}
+
+function makeTextExtendedChecks(enabledChecks, assertFalse) {
+    const checks = [];
+
+    if (enabledChecks['CONTAINS']) {
+        if (assertFalse) {
+            checks.push(`\
+if (elemText.includes(value)) {
+    errors.push("\`" + elemText + "\` contains \`" + value + "\` (for CONTAINS check)");
+}`);
+        } else {
+            checks.push(`\
+if (!elemText.includes(value)) {
+    errors.push("\`" + elemText + "\` doesn't contain \`" + value + "\` (for CONTAINS check)");
+}`);
+        }
+    }
+    if (enabledChecks['STARTS_WITH']) {
+        if (assertFalse) {
+            checks.push(`\
+if (elemText.startsWith(value)) {
+    errors.push("\`" + elemText + "\` starts with \`" + value + "\` (for STARTS_WITH check)");
+}`);
+        } else {
+            checks.push(`\
+if (!elemText.startsWith(value)) {
+    errors.push("\`" + elemText + "\` doesn't start with \`" + value + "\` (for STARTS_WITH \
+check)");
+}`);
+        }
+    }
+    if (enabledChecks['ENDS_WITH']) {
+        if (assertFalse) {
+            checks.push(`\
+if (elemText.endsWith(value)) {
+    errors.push("\`" + elemText + "\` ends with \`" + value + "\` (for ENDS_WITH check)");
+}`);
+        } else {
+            checks.push(`\
+if (!elemText.endsWith(value)) {
+    errors.push("\`" + elemText + "\` doesn't end with \`" + value + "\` (for ENDS_WITH check)");
+}`);
+        }
+    }
+    if (checks.length === 0) {
+        if (assertFalse) {
+            checks.push(`\
+if (elemText === value) {
+    errors.push("\`" + elemText + "\` is equal to \`" + value + "\`");
+}`);
+        } else {
+            checks.push(`\
+if (elemText !== value) {
+    errors.push("\`" + elemText + "\` isn't equal to \`" + value + "\`");
+}`);
+        }
+    }
+    return checks;
+}
+
 function buildPropertyDict(entries, errorText, allowEmptyValues, valuesAsStrings = true) {
     const ret = {
         'needColorCheck': false,
@@ -297,4 +452,6 @@ module.exports = {
     'buildPropertyDict': buildPropertyDict,
     'indentString': indentString,
     'checkJsonEntry': checkJsonEntry,
+    'makeExtendedChecks': makeExtendedChecks,
+    'makeTextExtendedChecks': makeTextExtendedChecks,
 };

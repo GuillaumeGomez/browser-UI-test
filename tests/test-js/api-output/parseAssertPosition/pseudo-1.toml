@@ -12,7 +12,7 @@ await page.evaluate(elem => {
     }
     checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
     if (errors.length !== 0) {
-        const errs = errors.join(\", \");
+        const errs = errors.join(\"; \");
         throw \"The following errors happened: [\" + errs + \"]\";
     }
 }, parseAssertPosition);""",

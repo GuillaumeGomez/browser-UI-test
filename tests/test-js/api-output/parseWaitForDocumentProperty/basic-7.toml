@@ -18,9 +18,9 @@ while (true) {
             if (document[propertyKey] === undefined) {
                 errors.push(\"document doesn't have a property named `\" + propertyKey + \"`\");
             }
-            const property = document[propertyKey];
-            if (String(property) != propertyValue) {
-                errors.push(\"document item \\\"\" + propertyKey + \"\\\" (of value \\\"\" + propertyValue + \"\\\") != \\\"\" + property + \"\\\"\");
+            const property = String(document[propertyKey]);
+            if (property !== propertyValue) {
+                errors.push(\"expected `\" + propertyValue + \"` for document property `\" + propertyKey + \"`, found `\" + property + \"`\");
             }
         }
         return errors;

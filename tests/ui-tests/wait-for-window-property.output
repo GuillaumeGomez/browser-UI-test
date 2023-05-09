@@ -3,8 +3,8 @@
 wait-for-window-property... FAILED
 [WARNING] line 12: Special checks (ENDS_WITH) will be ignored for `null`
 
-[ERROR] (line 14) Error: The following window properties still don't match: [window item "windowProp" (of value "tadam") != "hello1"]: for command `wait-for-window-property: {"windowProp": "tadam"}`
-[ERROR] (line 16) Error: Evaluation failed: The following errors happened: [Expected `tadam` for property `windowProp`, found `hello1`]: for command `assert-window-property: {"windowProp": "tadam"}`
+[ERROR] (line 14) Error: The following window properties still don't match: [expected `tadam` for window property `windowProp`, found `hello1`]: for command `wait-for-window-property: {"windowProp": "tadam"}`
+[ERROR] (line 16) Error: Evaluation failed: The following errors happened: [expected `tadam` for window property `windowProp`, found `hello1`]: for command `assert-window-property: {"windowProp": "tadam"}`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

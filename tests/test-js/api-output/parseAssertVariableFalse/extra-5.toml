@@ -17,7 +17,7 @@ if (Number.isNaN(value1)) {
     errors.push('`' + value1 + '` is within 1 of `' + value2 + '` (for NEAR check)');
 }
 if (errors.length !== 0) {
-    const errs = errors.join(\", \");
+    const errs = errors.join(\"; \");
     throw \"The following errors happened: [\" + errs + \"]\";
 }""",
 ]

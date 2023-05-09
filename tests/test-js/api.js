@@ -1322,7 +1322,7 @@ async function checkTextForElem(elem) {
             errors.push("\`" + elemText + "\` isn't equal to \`" + value + "\`");
         }
         if (errors.length !== 0) {
-            const errs = errors.join(", ");
+            const errs = errors.join("; ");
             throw "The following errors happened: [" + errs + "]";
         }
     });

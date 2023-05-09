@@ -16,12 +16,13 @@ await page.evaluate(e => {
         if (e[parseAssertElemPropKey] === undefined || e[parseAssertElemPropKey] === null) {
             continue;
         }
-        if (String(e[parseAssertElemPropKey]) == parseAssertElemPropValue) {
-            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey + '`');
+        const prop = String(e[parseAssertElemPropKey]);
+        if (prop === parseAssertElemPropValue) {
+            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey + \"` (`\" + prop + \"`)\");
         }
     }
     if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(\", \");
+        const props = nonMatchingProps.join(\"; \");
         throw \"The following errors happened (for XPath `//a`): [\" + props + \"]\";
     }
 }, parseAssertElemProp);""",

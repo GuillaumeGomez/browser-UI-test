@@ -17,7 +17,7 @@ await page.evaluate(e => {
             continue;
         }
         const attr = e.getAttribute(parseAssertElemAttrAttribute);
-        if (attr.indexOf(parseAssertElemAttrValue) === -1) {
+        if (!attr.includes(parseAssertElemAttrValue)) {
             nonMatchingAttrs.push(\"attribute `\" + parseAssertElemAttrAttribute + \"` (`\" + attr + \"`) doesn't contain `\" + parseAssertElemAttrValue + \"` (for CONTAINS check)\");
         }
         if (!attr.startsWith(parseAssertElemAttrValue)) {
@@ -25,7 +25,7 @@ await page.evaluate(e => {
         }
     }
     if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(\", \");
+        const props = nonMatchingAttrs.join(\"; \");
         throw \"The following errors happened (for selector `a`): [\" + props + \"]\";
     }
 }, parseAssertElemAttr);""",

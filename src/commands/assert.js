@@ -9,6 +9,8 @@ const {
     validateJson,
     indentString,
     checkJsonEntry,
+    makeExtendedChecks,
+    makeTextExtendedChecks,
 } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 const { cleanString } = require('../parser.js');
@@ -92,7 +94,7 @@ async function checkElem(elem) {
 ${indentString(assertCheck, 3)}
     }
     if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
+        const props = nonMatchingProps.join("; ");
         throw "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props + "]";
     }
 }
@@ -137,7 +139,7 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
     }
 
     const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH', 'NEAR'];
-    const enabled_checks = Object.create(null);
+    const enabledChecks = Object.create(null);
     const warnings = [];
     let json_dict;
 
@@ -158,7 +160,7 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
             const ret = fillEnabledChecks(
                 tuple[1],
                 identifiers,
-                enabled_checks,
+                enabledChecks,
                 warnings,
                 'second',
             );
@@ -201,94 +203,18 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
             undefProps.push(`"${k}"`);
         }
     }
+    const { checks, hasSpecialChecks } = makeExtendedChecks(
+        enabledChecks,
+        assertFalse,
+        'nonMatchingProps',
+        `${objName} property`,
+        varName,
+        varKey,
+        varValue,
+    );
 
-    const checks = [];
-    if (enabled_checks['CONTAINS']) {
-        if (assertFalse) {
-            checks.push(`\
-if (String(${varName}).indexOf(${varValue}) !== -1) {
-    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
-CONTAINS check)');
-}`);
-        } else {
-            checks.push(`\
-if (String(${varName}).indexOf(${varValue}) === -1) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
-\`) does not contain \`' + ${varValue} + '\`');
-}`);
-        }
-    }
-    if (enabled_checks['STARTS_WITH']) {
-        if (assertFalse) {
-            checks.push(`\
-if (String(${varName}).startsWith(${varValue})) {
-    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
-STARTS_WITH check)');
-}`);
-        } else {
-            checks.push(`\
-if (!String(${varName}).startsWith(${varValue})) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
-\`) does not start with \`' + ${varValue} + '\`');
-}`);
-        }
-    }
-    if (enabled_checks['ENDS_WITH']) {
-        if (assertFalse) {
-            checks.push(`\
-if (String(${varName}).endsWith(${varValue})) {
-    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
-ENDS_WITH check)');
-}`);
-        } else {
-            checks.push(`\
-if (!String(${varName}).endsWith(${varValue})) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
-\`) does not end with \`' + ${varValue} + '\`');
-}`);
-        }
-    }
-    if (enabled_checks['NEAR']) {
-        if (assertFalse) {
-            checks.push(`\
-if (Number.isNaN(${varName})) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
-\`) is NaN (for NEAR check)');
-} else if (Math.abs(${varName} - ${varValue}) <= 1) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
-\`) is within 1 of \`' + ${varValue} + '\` (for NEAR check)');
-}`);
-        } else {
-            checks.push(`\
-if (Number.isNaN(${varName})) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
-\`) is NaN (for NEAR check)');
-} else if (Math.abs(${varName} - ${varValue}) > 1) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + ${varName} + '\
-\`) is not within 1 of \`' + ${varValue} + '\` (for NEAR check)');
-}`);
-        }
-    }
-
-    // eslint-disable-next-line no-extra-parens
-    const hasSpecialChecks = checks.length !== 0;
-    // If no check was enabled.
-    if (checks.length === 0) {
-        if (assertFalse) {
-            checks.push(`\
-if (String(${objName}[${varKey}]) == ${varValue}) {
-    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\`');
-}`);
-        } else {
-            checks.push(`\
-if (String(${varName}) != ${varValue}) {
-    nonMatchingProps.push('Expected \`' + ${varValue} + '\` for property \`' + ${varKey} \
-+ '\`, found \`' + ${varName} + '\`');
-}`);
-        }
-    }
     if (undefProps.length > 0 && hasSpecialChecks) {
-        const k = Object.entries(enabled_checks).map(([k, _]) => k);
+        const k = Object.entries(enabledChecks).map(([k, _]) => k);
         warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
     }
 
@@ -321,11 +247,11 @@ await page.evaluate(() => {
         if (${objName}[${varKey}] === undefined) {${err}
             continue;
         }
-        const ${varName} = ${objName}[${varKey}];
+        const ${varName} = String(${objName}[${varKey}]);
 ${indentString(checks.join('\n'), 2)}
     }
     if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
+        const props = nonMatchingProps.join("; ");
         throw "The following errors happened: [" + props + "]";
     }
 });`,
@@ -383,7 +309,7 @@ function parseAssertPropertyInner(parser, assertFalse) {
     const elems = parser.elems;
     const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH', 'NEAR'];
     const warnings = [];
-    const enabled_checks = Object.create(null);
+    const enabledChecks = Object.create(null);
 
     if (elems.length === 0) {
         return {
@@ -409,7 +335,7 @@ function parseAssertPropertyInner(parser, assertFalse) {
                 `\`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
         };
     } else if (tuple.length === 3) {
-        const ret = fillEnabledChecks(tuple[2], identifiers, enabled_checks, warnings, 'third');
+        const ret = fillEnabledChecks(tuple[2], identifiers, enabledChecks, warnings, 'third');
         if (ret !== null) {
             return ret;
         }
@@ -423,90 +349,8 @@ function parseAssertPropertyInner(parser, assertFalse) {
     const varKey = varName + 'Key';
     const varValue = varName + 'Value';
 
-    const checks = [];
-    if (enabled_checks['CONTAINS']) {
-        if (assertFalse) {
-            checks.push(`\
-if (String(e[${varKey}]).indexOf(${varValue}) !== -1) {
-    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
-CONTAINS check)');
-}`);
-        } else {
-            checks.push(`\
-if (String(e[${varKey}]).indexOf(${varValue}) === -1) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
-\`) does not contain \`' + ${varValue} + '\`');
-}`);
-        }
-    }
-    if (enabled_checks['STARTS_WITH']) {
-        if (assertFalse) {
-            checks.push(`\
-if (String(e[${varKey}]).startsWith(${varValue})) {
-    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
-STARTS_WITH check)');
-}`);
-        } else {
-            checks.push(`\
-if (!String(e[${varKey}]).startsWith(${varValue})) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
-\`) does not start with \`' + ${varValue} + '\`');
-}`);
-        }
-    }
-    if (enabled_checks['ENDS_WITH']) {
-        if (assertFalse) {
-            checks.push(`\
-if (String(e[${varKey}]).endsWith(${varValue})) {
-    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\` (for \
-ENDS_WITH check)');
-}`);
-        } else {
-            checks.push(`\
-if (!String(e[${varKey}]).endsWith(${varValue})) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
-\`) does not end with \`' + ${varValue} + '\`');
-}`);
-        }
-    }
-    if (enabled_checks['NEAR']) {
-        if (assertFalse) {
-            checks.push(`\
-if (Number.isNaN(e[${varKey}])) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
-\`) is NaN (for NEAR check)');
-} else if (Math.abs(e[${varKey}] - ${varValue}) <= 1) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
-\`) is within 1 of \`' + ${varValue} + '\` (for NEAR check)');
-}`);
-        } else {
-            checks.push(`\
-if (Number.isNaN(e[${varKey}])) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
-\`) is NaN (for NEAR check)');
-} else if (Math.abs(e[${varKey}] - ${varValue}) > 1) {
-    nonMatchingProps.push('Property \`' + ${varKey} + '\` (\`' + e[${varKey}] + '\
-\`) is not within 1 of \`' + ${varValue} + '\` (for NEAR check)');
-}`);
-        }
-    }
-    // eslint-disable-next-line no-extra-parens
-    const hasSpecialChecks = (enabled_checks['ALL'] && checks.length > 1) || checks.length !== 0;
-    // If no check was enabled.
-    if (checks.length === 0) {
-        if (assertFalse) {
-            checks.push(`\
-if (String(e[${varKey}]) == ${varValue}) {
-    nonMatchingProps.push("assert didn't fail for property \`" + ${varKey} + '\`');
-}`);
-        } else {
-            checks.push(`\
-if (String(e[${varKey}]) != ${varValue}) {
-    nonMatchingProps.push('Expected \`' + ${varValue} + '\` for property \`' + ${varKey} \
-+ '\`, found \`' + e[${varKey}] + '\`');
-}`);
-        }
-    }
+    const { checks, hasSpecialChecks } = makeExtendedChecks(
+        enabledChecks, assertFalse, 'nonMatchingProps', 'property', 'prop', varKey, varValue);
 
     const json = tuple[1].getRaw();
     const entries = validateJson(
@@ -533,7 +377,7 @@ the check will be performed on the element itself`);
     }
 
     if (undefProps.length > 0 && hasSpecialChecks) {
-        const k = Object.entries(enabled_checks)
+        const k = Object.entries(enabledChecks)
             .filter(([k, v]) => v && k !== 'ALL')
             .map(([k, _]) => k);
         warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
@@ -553,7 +397,7 @@ the check will be performed on the element itself`);
         nonMatchingProps.push("Property named \`" + prop + "\` doesn't exist");`;
     }
 
-    const checkAllElements = enabled_checks['ALL'] === true;
+    const checkAllElements = enabledChecks['ALL'] === true;
     const indent = checkAllElements ? 1 : 0;
     let whole = getAndSetElements(selector, varName, checkAllElements) + '\n';
     if (checkAllElements) {
@@ -573,10 +417,11 @@ await page.evaluate(e => {
         if (e[${varKey}] === undefined || e[${varKey}] === null) {${unknown}
             continue;
         }
+        const prop = String(e[${varKey}]);
 ${indentString(checks.join('\n'), 2)}
     }
     if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(", ");
+        const props = nonMatchingProps.join("; ");
         throw "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props + "]";
     }
 `, indent);
@@ -623,7 +468,7 @@ function parseAssertAttributeInner(parser, assertFalse) {
     const elems = parser.elems;
     const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH', 'NEAR'];
     const warnings = [];
-    const enabled_checks = Object.create(null);
+    const enabledChecks = Object.create(null);
 
     if (elems.length === 0) {
         return {
@@ -649,7 +494,7 @@ function parseAssertAttributeInner(parser, assertFalse) {
                 `\`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
         };
     } else if (tuple.length === 3) {
-        const ret = fillEnabledChecks(tuple[2], identifiers, enabled_checks, warnings, 'third');
+        const ret = fillEnabledChecks(tuple[2], identifiers, enabledChecks, warnings, 'third');
         if (ret !== null) {
             return ret;
         }
@@ -663,90 +508,8 @@ function parseAssertAttributeInner(parser, assertFalse) {
     const varKey = varName + 'Attribute';
     const varValue = varName + 'Value';
 
-    const checks = [];
-    if (enabled_checks['CONTAINS']) {
-        if (assertFalse) {
-            checks.push(`\
-if (attr.indexOf(${varValue}) !== -1) {
-    nonMatchingAttrs.push("assert didn't fail for attribute \`" + ${varKey} + "\` (\`" + attr + \
-"\`) (for CONTAINS check)");
-}`);
-        } else {
-            checks.push(`\
-if (attr.indexOf(${varValue}) === -1) {
-    nonMatchingAttrs.push("attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't contain \`"\
- + ${varValue} + "\` (for CONTAINS check)");
-}`);
-        }
-    }
-    if (enabled_checks['STARTS_WITH']) {
-        if (assertFalse) {
-            checks.push(`\
-if (attr.startsWith(${varValue})) {
-    nonMatchingAttrs.push("assert didn't fail for attribute \`" + ${varKey} + "\` (\`" + attr + \
-"\`) (for STARTS_WITH check)");
-}`);
-        } else {
-            checks.push(`\
-if (!attr.startsWith(${varValue})) {
-    nonMatchingAttrs.push("attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't start with \
-\`" + ${varValue} + "\` (for STARTS_WITH check)");
-}`);
-        }
-    }
-    if (enabled_checks['ENDS_WITH']) {
-        if (assertFalse) {
-            checks.push(`\
-if (attr.endsWith(${varValue})) {
-    nonMatchingAttrs.push("assert didn't fail for attribute \`" + ${varKey} + "\` (\`" + attr + \
-"\`) (for ENDS_WITH check)");
-}`);
-        } else {
-            checks.push(`\
-if (!attr.endsWith(${varValue})) {
-    nonMatchingAttrs.push("attribute \`" + ${varKey} + "\` (\`" + attr + "\`) doesn't end with \`"\
- + ${varValue} + "\`");
-}`);
-        }
-    }
-    if (enabled_checks['NEAR']) {
-        if (assertFalse) {
-            checks.push(`\
-if (Number.isNaN(attr)) {
-    nonMatchingAttrs.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
-\`) is NaN (for NEAR check)');
-} else if (Math.abs(attr - ${varValue}) <= 1) {
-    nonMatchingAttrs.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
-\`) is within 1 of \`' + ${varValue} + '\` (for NEAR check)');
-}`);
-        } else {
-            checks.push(`\
-if (Number.isNaN(attr)) {
-    nonMatchingAttrs.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
-\`) is NaN (for NEAR check)');
-} else if (Math.abs(attr - ${varValue}) > 1) {
-    nonMatchingAttrs.push('attribute \`' + ${varKey} + '\` (\`' + attr + '\
-\`) is not within 1 of \`' + ${varValue} + '\` (for NEAR check)');
-}`);
-        }
-    }
-    // eslint-disable-next-line no-extra-parens
-    const hasSpecialChecks = (enabled_checks['ALL'] && checks.length > 1) || checks.length !== 0;
-    if (checks.length === 0) {
-        if (assertFalse) {
-            checks.push(`\
-if (attr === ${varValue}) {
-    nonMatchingAttrs.push("assert didn't fail for attribute \`" + ${varKey} + "\` (\`" + \
-attr + "\`)");
-}`);
-        } else {
-            checks.push(`\
-if (attr !== ${varValue}) {
-    nonMatchingAttrs.push("attribute \`" + ${varKey} + "\` isn't equal to \`" + ${varValue} + "\` \
-(\`" + attr + "\`)");
-}`);
-        }
-    }
+    const { checks, hasSpecialChecks } = makeExtendedChecks(
+        enabledChecks, assertFalse, 'nonMatchingAttrs', 'attribute', 'attr', varKey, varValue);
 
     const json = tuple[1].getRaw();
     const entries = validateJson(
@@ -776,7 +539,7 @@ the check will be performed on the element itself`);
     }
 
     if (nullAttributes.length > 0 && hasSpecialChecks) {
-        const k = Object.entries(enabled_checks)
+        const k = Object.entries(enabledChecks)
             .filter(([k, v]) => v && k !== 'ALL')
             .map(([k, _]) => k);
         warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
@@ -812,12 +575,12 @@ for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
 ${indentString(checks.join('\n'), 1)}
 }
 if (nonMatchingAttrs.length !== 0) {
-    const props = nonMatchingAttrs.join(", ");
+    const props = nonMatchingAttrs.join("; ");
     throw "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props + "]";
 }`;
 
     let instructions;
-    if (enabled_checks['ALL'] === true) {
+    if (enabledChecks['ALL'] === true) {
         instructions = `\
 ${getAndSetElements(selector, varName, true)}
 for (let i = 0, len = ${varName}.length; i < len; ++i) {
@@ -938,7 +701,7 @@ function parseAssertTextInner(parser, assertFalse) {
     const elems = parser.elems;
     const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
     const warnings = [];
-    const enabled_checks = Object.create(null);
+    const enabledChecks = Object.create(null);
 
     if (elems.length === 0) {
         return {'error': err + ', found nothing'};
@@ -961,7 +724,7 @@ function parseAssertTextInner(parser, assertFalse) {
             'error': `expected second argument to be a string, found \`${tuple[1].getRaw()}\``,
         };
     } else if (tuple.length === 3) {
-        const ret = fillEnabledChecks(tuple[2], identifiers, enabled_checks, warnings, 'third');
+        const ret = fillEnabledChecks(tuple[2], identifiers, enabledChecks, warnings, 'third');
         if (ret !== null) {
             return ret;
         }
@@ -977,63 +740,10 @@ the check will be performed on the element itself`);
     const value = tuple[1].getStringValue();
     const varName = 'parseAssertElemStr';
 
-    const checks = [];
-    if (enabled_checks['CONTAINS']) {
-        if (assertFalse) {
-            checks.push(`\
-if (elemText.includes(value)) {
-    errors.push("\`" + elemText + "\` contains \`" + value + "\` (for CONTAINS check)");
-}`);
-        } else {
-            checks.push(`\
-if (!elemText.includes(value)) {
-    errors.push("\`" + elemText + "\` doesn't contain \`" + value + "\` (for CONTAINS check)");
-}`);
-        }
-    }
-    if (enabled_checks['STARTS_WITH']) {
-        if (assertFalse) {
-            checks.push(`\
-if (elemText.startsWith(value)) {
-    errors.push("\`" + elemText + "\` starts with \`" + value + "\` (for STARTS_WITH check)");
-}`);
-        } else {
-            checks.push(`\
-if (!elemText.startsWith(value)) {
-    errors.push("\`" + elemText + "\` doesn't start with \`" + value + "\` (for STARTS_WITH \
-check)");
-}`);
-        }
-    }
-    if (enabled_checks['ENDS_WITH']) {
-        if (assertFalse) {
-            checks.push(`\
-if (elemText.endsWith(value)) {
-    errors.push("\`" + elemText + "\` ends with \`" + value + "\` (for ENDS_WITH check)");
-}`);
-        } else {
-            checks.push(`\
-if (!elemText.endsWith(value)) {
-    errors.push("\`" + elemText + "\` doesn't end with \`" + value + "\` (for ENDS_WITH check)");
-}`);
-        }
-    }
-    if (checks.length === 0) {
-        if (assertFalse) {
-            checks.push(`\
-if (elemText === value) {
-    errors.push("\`" + elemText + "\` is equal to \`" + value + "\`");
-}`);
-        } else {
-            checks.push(`\
-if (elemText !== value) {
-    errors.push("\`" + elemText + "\` isn't equal to \`" + value + "\`");
-}`);
-        }
-    }
+    const checks = makeTextExtendedChecks(enabledChecks, assertFalse);
 
     let checker;
-    if (enabled_checks['ALL'] === true) {
+    if (enabledChecks['ALL'] === true) {
         checker = `\
 for (const elem of ${varName}) {
     await checkTextForElem(elem);
@@ -1050,13 +760,13 @@ async function checkTextForElem(elem) {
         const elemText = browserUiTestHelpers.getElemText(e, value);
 ${indentString(checks.join('\n'), 2)}
         if (errors.length !== 0) {
-            const errs = errors.join(", ");
+            const errs = errors.join("; ");
             throw "The following errors happened: [" + errs + "]";
         }
     });
 }
 
-${getAndSetElements(selector, varName, enabled_checks['ALL'] === true)}
+${getAndSetElements(selector, varName, enabledChecks['ALL'] === true)}
 ${checker}`;
 
     return {
@@ -1272,7 +982,7 @@ await page.evaluate(elem => {
     const errors = [];
 ${indentString(code, 1)}
     if (errors.length !== 0) {
-        const errs = errors.join(", ");
+        const errs = errors.join("; ");
         throw "The following errors happened: [" + errs + "]";
     }
 `, indent);
@@ -1368,7 +1078,7 @@ await page.evaluate(() => {
         }
     }
     if (errors.length !== 0) {
-        const errs = errors.join(", ");
+        const errs = errors.join("; ");
         throw "The following errors happened: [" + errs + "]";
     }
 });`;
@@ -1517,7 +1227,7 @@ const value2 = stringifyValue(${tuple[1].displayInCode()});
 const errors = [];
 ${checks.join('\n')}
 if (errors.length !== 0) {
-    const errs = errors.join(", ");
+    const errs = errors.join("; ");
     throw "The following errors happened: [" + errs + "]";
 }`,
         ],
