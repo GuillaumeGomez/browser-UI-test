@@ -20,6 +20,8 @@ const ORDERS = {
     'assert-position-false': commands.parseAssertPositionFalse,
     'assert-property': commands.parseAssertProperty,
     'assert-property-false': commands.parseAssertPropertyFalse,
+    'assert-size': commands.parseAssertSize,
+    'assert-size-false': commands.parseAssertSizeFalse,
     'assert-text': commands.parseAssertText,
     'assert-text-false': commands.parseAssertTextFalse,
     'assert-variable': commands.parseAssertVariable,

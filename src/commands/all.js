@@ -29,6 +29,8 @@ module.exports = {
     'parseAssertPositionFalse': assert.parseAssertPositionFalse,
     'parseAssertProperty': assert.parseAssertProperty,
     'parseAssertPropertyFalse': assert.parseAssertPropertyFalse,
+    'parseAssertSize': assert.parseAssertSize,
+    'parseAssertSizeFalse': assert.parseAssertSizeFalse,
     'parseAssertText': assert.parseAssertText,
     'parseAssertTextFalse': assert.parseAssertTextFalse,
     'parseAssertVariable': assert.parseAssertVariable,

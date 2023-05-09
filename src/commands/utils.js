@@ -442,6 +442,29 @@ function checkJsonEntry(json, callback) {
     return warnings;
 }
 
+function getSizes(selector) {
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+
+    // To get the size of a pseudo element, we need to get the computed style for it. There is
+    // one thing to be careful about: if the `box-sizing` is "border-box", "height" and "width"
+    // already include the border and the padding.
+    if (isPseudo) {
+        return `\
+const style = getComputedStyle(e, "${selector.pseudo}");
+let height = parseFloat(style["height"]);
+let width = parseFloat(style["width"]);
+if (style["box-sizing"] !== "border-box") {
+    height += parseFloat(style["padding-top"]) + parseFloat(style["padding-bottom"]);
+    height += parseFloat(style["border-top-width"]) + parseFloat(style["border-bottom-width"]);
+    width += parseFloat(style["padding-left"]) + parseFloat(style["padding-right"]);
+    width += parseFloat(style["border-left-width"]) + parseFloat(style["border-right-width"]);
+}`;
+    }
+    return `\
+const height = e.offsetHeight;
+const width = e.offsetWidth;`;
+}
+
 module.exports = {
     'getAndSetElements': getAndSetElements,
     'checkIntegerTuple': checkIntegerTuple,
@@ -454,4 +477,5 @@ module.exports = {
     'checkJsonEntry': checkJsonEntry,
     'makeExtendedChecks': makeExtendedChecks,
     'makeTextExtendedChecks': makeTextExtendedChecks,
+    'getSizes': getSizes,
 };
