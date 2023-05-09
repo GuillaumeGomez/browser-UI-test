@@ -13,13 +13,13 @@ instructions = [
         if (document[parseAssertDictPropKey] === undefined) {
             continue;
         }
-        const parseAssertDictProp = document[parseAssertDictPropKey];
-        if (String(document[parseAssertDictPropKey]) == parseAssertDictPropValue) {
-            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertDictPropKey + '`');
+        const parseAssertDictProp = String(document[parseAssertDictPropKey]);
+        if (parseAssertDictProp === parseAssertDictPropValue) {
+            nonMatchingProps.push(\"assert didn't fail for document property `\" + parseAssertDictPropKey + \"` (`\" + parseAssertDictProp + \"`)\");
         }
     }
     if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(\", \");
+        const props = nonMatchingProps.join(\"; \");
         throw \"The following errors happened: [\" + props + \"]\";
     }
 });""",

@@ -18,9 +18,9 @@ while (true) {
             if (window[propertyKey] === undefined) {
                 errors.push(\"window doesn't have a property named `\" + propertyKey + \"`\");
             }
-            const property = window[propertyKey];
-            if (String(property) != propertyValue) {
-                errors.push(\"window item \\\"\" + propertyKey + \"\\\" (of value \\\"\" + propertyValue + \"\\\") != \\\"\" + property + \"\\\"\");
+            const property = String(window[propertyKey]);
+            if (property !== propertyValue) {
+                errors.push(\"expected `\" + propertyValue + \"` for window property `\" + propertyKey + \"`, found `\" + property + \"`\");
             }
         }
         return errors;

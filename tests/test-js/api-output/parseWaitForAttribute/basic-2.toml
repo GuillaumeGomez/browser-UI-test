@@ -18,7 +18,7 @@ instructions = [
             }
             const attr = e.getAttribute(parseWaitForAttrKey);
             if (attr !== parseWaitForAttrValue) {
-                nonMatchingAttrs.push(\"attribute `\" + parseWaitForAttrKey + \"` isn't equal to `\" + parseWaitForAttrValue + \"` (`\" + attr + \"`)\");
+                nonMatchingAttrs.push(\"expected `\" + parseWaitForAttrValue + \"` for attribute `\" + parseWaitForAttrKey + \"`, found `\" + attr + \"`\");
             }
         }
         return nonMatchingAttrs;

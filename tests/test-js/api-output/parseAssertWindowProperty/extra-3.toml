@@ -14,13 +14,13 @@ instructions = [
             nonMatchingProps.push('Unknown window property `' + parseAssertDictPropKey + '`');
             continue;
         }
-        const parseAssertDictProp = window[parseAssertDictPropKey];
-        if (!String(parseAssertDictProp).endsWith(parseAssertDictPropValue)) {
-            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + parseAssertDictProp + '`) does not end with `' + parseAssertDictPropValue + '`');
+        const parseAssertDictProp = String(window[parseAssertDictPropKey]);
+        if (!parseAssertDictProp.endsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push(\"window property `\" + parseAssertDictPropKey + \"` (`\" + parseAssertDictProp + \"`) doesn't end with `\" + parseAssertDictPropValue + \"`\");
         }
     }
     if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(\", \");
+        const props = nonMatchingProps.join(\"; \");
         throw \"The following errors happened: [\" + props + \"]\";
     }
 });""",

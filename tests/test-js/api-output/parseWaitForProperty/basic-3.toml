@@ -18,7 +18,7 @@ instructions = [
             }
             const prop = e[parseWaitForPropKey];
             if (prop !== parseWaitForPropValue) {
-                nonMatchingProps.push(\"property `\" + parseWaitForPropKey + \"` isn't equal to `\" + parseWaitForPropValue + \"` (`\" + prop + \"`)\");
+                nonMatchingAttrs.push(\"expected `\" + parseWaitForPropValue + \"` for property `\" + parseWaitForPropKey + \"`, found `\" + prop + \"`\");
             }
         }
         return nonMatchingProps;

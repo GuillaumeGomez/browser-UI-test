@@ -13,13 +13,13 @@ instructions = [
         if (window[parseAssertDictPropKey] === undefined) {
             continue;
         }
-        const parseAssertDictProp = window[parseAssertDictPropKey];
-        if (String(parseAssertDictProp).endsWith(parseAssertDictPropValue)) {
-            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertDictPropKey + '` (for ENDS_WITH check)');
+        const parseAssertDictProp = String(window[parseAssertDictPropKey]);
+        if (parseAssertDictProp.endsWith(parseAssertDictPropValue)) {
+            nonMatchingProps.push(\"assert didn't fail for window property `\" + parseAssertDictPropKey + \"` (`\" + parseAssertDictProp + \"`) (for ENDS_WITH check)\");
         }
     }
     if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(\", \");
+        const props = nonMatchingProps.join(\"; \");
         throw \"The following errors happened: [\" + props + \"]\";
     }
 });""",

@@ -22,7 +22,7 @@ await page.evaluate(e => {
         }
     }
     if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(\", \");
+        const props = nonMatchingAttrs.join(\"; \");
         throw \"The following errors happened (for XPath `//a`): [\" + props + \"]\";
     }
 }, parseAssertElemAttr);""",

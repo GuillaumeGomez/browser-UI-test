@@ -21,7 +21,7 @@ await page.evaluate(e => {
         }
     }
     if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(\", \");
+        const props = nonMatchingAttrs.join(\"; \");
         throw \"The following errors happened (for selector `b:after`): [\" + props + \"]\";
     }
 }, parseAssertElemAttr);""",

@@ -14,13 +14,13 @@ instructions = [
             nonMatchingProps.push('Unknown document property `' + parseAssertDictPropKey + '`');
             continue;
         }
-        const parseAssertDictProp = document[parseAssertDictPropKey];
-        if (String(parseAssertDictProp).indexOf(parseAssertDictPropValue) === -1) {
-            nonMatchingProps.push('Property `' + parseAssertDictPropKey + '` (`' + parseAssertDictProp + '`) does not contain `' + parseAssertDictPropValue + '`');
+        const parseAssertDictProp = String(document[parseAssertDictPropKey]);
+        if (!parseAssertDictProp.includes(parseAssertDictPropValue)) {
+            nonMatchingProps.push(\"document property `\" + parseAssertDictPropKey + \"` (`\" + parseAssertDictProp + \"`) doesn't contain `\" + parseAssertDictPropValue + \"` (for CONTAINS check)\");
         }
     }
     if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(\", \");
+        const props = nonMatchingProps.join(\"; \");
         throw \"The following errors happened: [\" + props + \"]\";
     }
 });""",

@@ -18,12 +18,12 @@ while (true) {
             if (window[propertyKey] === undefined) {
                 errors.push(\"window doesn't have a property named `\" + propertyKey + \"`\");
             }
-            const property = window[propertyKey];
-            if (!String(property).startsWith(propertyValue)) {
-                errors.push('Property `' + propertyKey + '` (`' + property + '`) does not start with `' + propertyValue + '`');
+            const property = String(window[propertyKey]);
+            if (!property.startsWith(propertyValue)) {
+                errors.push(\"window property `\" + propertyKey + \"` (`\" + property + \"`) doesn't start with `\" + propertyValue + \"` (for STARTS_WITH check)\");
             }
-            if (!String(property).endsWith(propertyValue)) {
-                errors.push('Property `' + propertyKey + '` (`' + property + '`) does not end with `' + propertyValue + '`');
+            if (!property.endsWith(propertyValue)) {
+                errors.push(\"window property `\" + propertyKey + \"` (`\" + property + \"`) doesn't end with `\" + propertyValue + \"`\");
             }
         }
         return errors;

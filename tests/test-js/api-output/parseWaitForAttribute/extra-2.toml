@@ -17,7 +17,7 @@ instructions = [
                 continue;
             }
             const attr = e.getAttribute(parseWaitForAttrKey);
-            if (attr.indexOf(parseWaitForAttrValue) === -1) {
+            if (!attr.includes(parseWaitForAttrValue)) {
                 nonMatchingAttrs.push(\"attribute `\" + parseWaitForAttrKey + \"` (`\" + attr + \"`) doesn't contain `\" + parseWaitForAttrValue + \"` (for CONTAINS check)\");
             }
         }

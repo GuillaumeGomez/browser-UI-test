@@ -17,8 +17,8 @@ instructions = [
                 continue;
             }
             const prop = e[parseWaitForPropKey];
-            if (prop.indexOf(parseWaitForPropValue) === -1) {
-                nonMatchingProps.push(\"property `\" + parseWaitForPropKey + \"` (`\" + prop + \"`) doesn't contain `\" + parseWaitForPropValue + \"` (for CONTAINS check)\");
+            if (!prop.includes(parseWaitForPropValue)) {
+                nonMatchingAttrs.push(\"property `\" + parseWaitForPropKey + \"` (`\" + prop + \"`) doesn't contain `\" + parseWaitForPropValue + \"` (for CONTAINS check)\");
             }
         }
         return nonMatchingProps;

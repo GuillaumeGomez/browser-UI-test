@@ -18,7 +18,7 @@ if (value1.endsWith(value2)) {
     errors.push(\"`\" + value1 + \"` ends with `\" + value2 + \"` (for ENDS_WITH check)\");
 }
 if (errors.length !== 0) {
-    const errs = errors.join(\", \");
+    const errs = errors.join(\"; \");
     throw \"The following errors happened: [\" + errs + \"]\";
 }""",
 ]

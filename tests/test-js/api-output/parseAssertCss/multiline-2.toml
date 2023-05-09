@@ -26,7 +26,7 @@ async function checkElem(elem) {
             nonMatchingProps.push(...localErr);
     }
     if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(\", \");
+        const props = nonMatchingProps.join(\"; \");
         throw \"The following errors happened (for XPath `//a`): [\" + props + \"]\";
     }
 }

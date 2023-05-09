@@ -19,11 +19,11 @@ await page.evaluate(e => {
         }
         const attr = e.getAttribute(parseAssertElemAttrAttribute);
         if (attr !== parseAssertElemAttrValue) {
-            nonMatchingAttrs.push(\"attribute `\" + parseAssertElemAttrAttribute + \"` isn't equal to `\" + parseAssertElemAttrValue + \"` (`\" + attr + \"`)\");
+            nonMatchingAttrs.push(\"expected `\" + parseAssertElemAttrValue + \"` for attribute `\" + parseAssertElemAttrAttribute + \"`, found `\" + attr + \"`\");
         }
     }
     if (nonMatchingAttrs.length !== 0) {
-        const props = nonMatchingAttrs.join(\", \");
+        const props = nonMatchingAttrs.join(\"; \");
         throw \"The following errors happened (for XPath `//a`): [\" + props + \"]\";
     }
 }, parseAssertElemAttr);""",
