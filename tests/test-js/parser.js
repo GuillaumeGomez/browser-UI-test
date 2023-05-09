@@ -43,6 +43,29 @@ function checkCssParser(x) {
     x.assert(p.elems[2].color, [112, 108, 91, 1]);
     x.assert(p.elems[3].kind, 'ident');
     x.assert(p.elems[3].value, 'a');
+
+    p = new CssParser('url("rgb(1, 2, 3)")');
+    x.assert(p.hasColor, false);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'ident');
+    x.assert(p.elems[0].value, 'url("rgb(1, 2, 3)")');
+
+    p = new CssParser('#fff #eaeaea hsl(50 10% 40%) rgb(1, 1, 1)');
+    x.assert(p.hasColor, true);
+    x.assert(p.elems.length, 4);
+    x.assert(p.elems[2].kind, 'color');
+    x.assert(
+        p.toRGBAString(),
+        'rgba(255, 255, 255, 1) rgba(234, 234, 234, 1) rgba(112, 108, 91, 1) rgba(1, 1, 1, 1)',
+    );
+
+    const p2 = new CssParser('rgb(17,17,17) rgb(1,1,1) rgb(1,0,2) #fff');
+    x.assert(p2.hasColor, true);
+    x.assert(p2.elems.length, 4);
+    x.assert(
+        p2.sameFormatAs(p),
+        '#111 #010101 hsl(270, 100.00000000000036%, 0.39215686274509803%) rgb(255, 255, 255)',
+    );
 }
 
 function checkTuple(x) {
