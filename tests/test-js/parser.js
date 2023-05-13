@@ -50,6 +50,13 @@ function checkCssParser(x) {
     x.assert(p.elems[0].kind, 'ident');
     x.assert(p.elems[0].value, 'url("rgb(1, 2, 3)")');
 
+    p = new CssParser('transparent whitesmoke');
+    x.assert(p.hasColor, true);
+    x.assert(p.elems.length, 2);
+    x.assert(p.elems[0].kind, 'color');
+    x.assert(p.elems[1].kind, 'color');
+    x.assert(p.toRGBAString(), 'rgba(0, 0, 0, 0) rgba(245, 245, 245, 1)');
+
     p = new CssParser('#fff #eaeaea hsl(50 10% 40%) rgb(1, 1, 1)');
     x.assert(p.hasColor, true);
     x.assert(p.elems.length, 4);
