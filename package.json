@@ -36,8 +36,7 @@
         "pngjs": "^3.4.0",
         "puppeteer": "18.1.0",
         "readline-sync": "^1.4.10",
-        "css-unit-converter": "^1.1.2",
-        "color-name": "^1.1.4"
+        "css-unit-converter": "^1.1.2"
     },
     "devDependencies": {
         "babel-eslint": "^10.0.2",
