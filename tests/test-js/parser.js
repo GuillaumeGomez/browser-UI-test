@@ -66,12 +66,30 @@ function checkCssParser(x) {
         'rgba(255, 255, 255, 1) rgba(234, 234, 234, 1) rgba(112, 108, 91, 1) rgba(1, 1, 1, 1)',
     );
 
-    const p2 = new CssParser('rgb(17,17,17) rgb(1,1,1) rgb(1,0,2) #fff');
+    let p2 = new CssParser('rgb(17,17,17) rgb(1,1,1) rgb(1,0,2) #fff');
     x.assert(p2.hasColor, true);
     x.assert(p2.elems.length, 4);
     x.assert(
         p2.sameFormatAs(p),
         '#111 #010101 hsl(270, 100.00000000000036%, 0.39215686274509803%) rgb(255, 255, 255)',
+    );
+
+    // Testing that the alpha value is correctly handled in hex format.
+    p = new CssParser('#aaaa #112233aa #aaa');
+    x.assert(p.hasColor, true);
+    x.assert(p.elems.length, 3);
+    x.assert(p.elems[0].kind, 'color');
+    x.assert(p.elems[1].kind, 'color');
+    x.assert(p.elems[2].kind, 'color');
+    x.assert(
+        p.toRGBAString(), 'rgba(170, 170, 170, 0.7) rgba(17, 34, 51, 0.7) rgba(170, 170, 170, 1)');
+
+    p2 = new CssParser('rgb(17,17,17) rgb(1,1,1) rgba(1,1,1,1)');
+    x.assert(p2.hasColor, true);
+    x.assert(p2.elems.length, 3);
+    x.assert(
+        p2.sameFormatAs(p),
+        '#111f #010101ff #010101',
     );
 }
 

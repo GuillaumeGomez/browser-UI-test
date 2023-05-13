@@ -35,8 +35,10 @@ class CssParser {
                     if (elem.value.startsWith('#')) {
                         if (elem.value.length < 7) {
                             kind = 'hex-short';
+                            elem.hasAlpha = elem.value.length > 4;
                         } else {
                             kind = 'hex';
+                            elem.hasAlpha = elem.value.length > 7;
                         }
                     } else if (elem.value.startsWith('rgb(')) {
                         kind = 'rgb';
@@ -97,8 +99,12 @@ class CssParser {
                 output += elem.value;
                 continue;
             }
-            if (otherElem.colorKind.startsWith('hex') && elem.color[3] >= 1) {
+            if (otherElem.colorKind.startsWith('hex')) {
+                const alpha = otherElem.hasAlpha || elem.color[3] < 1 ? elem.color[3] * 255 : null;
                 const values = elem.color.slice(0, 3).map(v => toHex(v));
+                if (alpha !== null) {
+                    values.push(toHex(alpha));
+                }
                 if (otherElem.colorKind === 'hex-short' && values.every(e => e[0] === e[1])) {
                     output += '#' + values.map(e => e[0]).join('');
                 } else {
