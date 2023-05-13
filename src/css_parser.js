@@ -1,6 +1,6 @@
 const { isStringChar, isWhiteSpace } = require('./parser.js');
 const { fromString, fromRgba } = require('./css-color-converter.js');
-const allColors = require('color-name');
+const allColors = require('./color-name.js');
 
 function toHex(n) {
     const hex = n.toString(16);
