@@ -6,21 +6,9 @@
 
 "use strict";
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.fromRgba = fromRgba;
-exports.fromRgb = fromRgb;
-exports.fromHsla = fromHsla;
-exports.fromHsl = fromHsl;
-exports.fromString = fromString;
-exports["default"] = void 0;
+const _colorName = require("./color-name.js");
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
-var _colorName = _interopRequireDefault(require("color-name"));
-
-var _cssUnitConverter = _interopRequireDefault(require("css-unit-converter"));
+const _cssUnitConverter = require("css-unit-converter");
 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -285,7 +273,7 @@ function fromHslString(reg, str) {
       a = _reg$exec2[5];
 
   unit = unit || 'deg';
-  h = (0, _cssUnitConverter["default"])(parseFloat(h), unit, 'deg');
+  h = (0, _cssUnitConverter)(parseFloat(h), unit, 'deg');
   s = parseFloat(s);
   l = parseFloat(l);
   a = a === undefined ? 1 : parseFloat(a) / (contains(a, '%') ? 100 : 1);
@@ -293,8 +281,12 @@ function fromHslString(reg, str) {
 }
 
 function fromString(str) {
-  if (_colorName["default"][str]) {
-    return fromRgb(_colorName["default"][str]);
+  const color = _colorName[str];
+  if (color) {
+    if (color.length === 4) {
+      return fromRgba(color);
+    }
+    return fromRgb(color);
   }
 
   if (hex.test(str) || shortHex.test(str)) {
@@ -316,11 +308,10 @@ function fromString(str) {
   return null;
 }
 
-var _default = {
+module.exports = {
   fromString: fromString,
   fromRgb: fromRgb,
   fromRgba: fromRgba,
   fromHsl: fromHsl,
   fromHsla: fromHsla
 };
-exports["default"] = _default;
