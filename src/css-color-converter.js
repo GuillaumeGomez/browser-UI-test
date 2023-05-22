@@ -118,14 +118,14 @@ var Color = /*#__PURE__*/function () {
 
   _createClass(Color, [{
     key: "toRgbString",
-    value: function toRgbString() {
+    value: function toRgbString(forceAlpha = false) {
       var _this$values = _slicedToArray(this.values, 4),
           r = _this$values[0],
           g = _this$values[1],
           b = _this$values[2],
           a = _this$values[3];
 
-      if (a === 1) {
+      if (a === 1 && !forceAlpha) {
         return "rgb(".concat(r, ", ").concat(g, ", ").concat(b, ")");
       }
 

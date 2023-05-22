@@ -7,7 +7,8 @@ function checkCssParser(x) {
     let p = new CssParser('rgb()');
     x.assert(p.hasColor, false);
     x.assert(p.elems.length, 1);
-    x.assert(p.elems[0].kind, 'ident');
+    x.assert(p.elems[0].kind, 'function');
+    x.assert(p.elems[0].containsColor, false);
     x.assert(p.elems[0].value, 'rgb()');
 
     p = new CssParser('rgb(1, 2, 3)');
@@ -19,12 +20,17 @@ function checkCssParser(x) {
     x.assert(p.elems[0].color, [1, 2, 3, 1]);
 
     p = new CssParser('1px whatever(rgb(1, 2, 3), a), 3');
-    x.assert(p.hasColor, false);
+    x.assert(p.hasColor, true);
     x.assert(p.elems.length, 3);
     x.assert(p.elems[0].kind, 'ident');
     x.assert(p.elems[0].value, '1px');
-    x.assert(p.elems[1].kind, 'ident');
+    x.assert(p.elems[1].kind, 'function');
     x.assert(p.elems[1].value, 'whatever(rgb(1, 2, 3), a)');
+    x.assert(p.elems[1].functionName, 'whatever');
+    x.assert(p.elems[1].containsColor, true);
+    x.assert(p.elems[1].innerArgs.length, 2);
+    x.assert(p.elems[1].innerArgs[0].kind, 'color');
+    x.assert(p.elems[1].innerArgs[1].kind, 'ident');
     x.assert(p.elems[2].kind, 'ident');
     x.assert(p.elems[2].value, '3');
 
@@ -44,10 +50,16 @@ function checkCssParser(x) {
     x.assert(p.elems[3].kind, 'ident');
     x.assert(p.elems[3].value, 'a');
 
+    p = new CssParser('"rgb(1, 2, 3)"');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].value, '"rgb(1, 2, 3)"');
+
     p = new CssParser('url("rgb(1, 2, 3)")');
     x.assert(p.hasColor, false);
     x.assert(p.elems.length, 1);
-    x.assert(p.elems[0].kind, 'ident');
+    x.assert(p.elems[0].kind, 'function');
+    x.assert(p.elems[0].containsColor, false);
     x.assert(p.elems[0].value, 'url("rgb(1, 2, 3)")');
 
     p = new CssParser('transparent whitesmoke');
@@ -91,6 +103,28 @@ function checkCssParser(x) {
         p2.sameFormatAs(p),
         '#111f #010101ff #010101',
     );
+
+    p = new CssParser('linear-gradient(rgb(15, 20, 25), rgba(15, 20, 25, 0))');
+    x.assert(p.hasColor, true);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'function');
+    x.assert(p.elems[0].containsColor, true);
+    x.assert(p.elems[0].innerArgs.length, 2);
+    x.assert(p.elems[0].innerArgs[0].kind, 'color');
+    x.assert(p.elems[0].innerArgs[0].value, 'rgb(15, 20, 25)');
+    x.assert(p.elems[0].innerArgs[1].kind, 'color');
+    x.assert(p.elems[0].innerArgs[1].value, 'rgba(15, 20, 25, 0)');
+    x.assert(p.toRGBAString(), 'linear-gradient(rgba(15, 20, 25, 1), rgba(15, 20, 25, 0))');
+
+    p2 = new CssParser('linear-gradient(#aaa, #fff)');
+    x.assert(p2.hasColor, true);
+    x.assert(p2.elems.length, 1);
+    x.assert(p2.toRGBAString(), 'linear-gradient(rgba(170, 170, 170, 1), rgba(255, 255, 255, 1))');
+    x.assert(p2.sameFormatAs(p), 'linear-gradient(rgb(170, 170, 170), rgba(255, 255, 255, 1))');
+
+    p = new CssParser('rgba(15, 20, 25, 1)');
+    p2 = new CssParser('rgb(0,0,0)');
+    x.assert(p2.sameFormatAs(p), 'rgba(0, 0, 0, 1)');
 }
 
 function checkTuple(x) {
