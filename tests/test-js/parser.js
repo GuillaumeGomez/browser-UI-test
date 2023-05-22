@@ -120,7 +120,11 @@ function checkCssParser(x) {
     x.assert(p2.hasColor, true);
     x.assert(p2.elems.length, 1);
     x.assert(p2.toRGBAString(), 'linear-gradient(rgba(170, 170, 170, 1), rgba(255, 255, 255, 1))');
-    x.assert(p2.sameFormatAs(p), 'linear-gradient(rgb(170, 170, 170), rgb(255, 255, 255))');
+    x.assert(p2.sameFormatAs(p), 'linear-gradient(rgb(170, 170, 170), rgba(255, 255, 255, 1))');
+
+    p = new CssParser('rgba(15, 20, 25, 1)');
+    p2 = new CssParser('rgb(0,0,0)');
+    x.assert(p2.sameFormatAs(p), 'rgba(0, 0, 0, 1)');
 }
 
 function checkTuple(x) {
