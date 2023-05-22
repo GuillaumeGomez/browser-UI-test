@@ -35,8 +35,10 @@ function convertElemToColor(parser, elem) {
             }
         } else if (elem.value.startsWith('rgb(')) {
             kind = 'rgb';
+            elem.hasAlpha = false;
         } else if (elem.value.startsWith('rgba(')) {
             kind = 'rgba';
+            elem.hasAlpha = true;
         } else if (elem.value.startsWith('hsl(')) {
             kind = 'hsl';
         } else if (elem.value.startsWith('hsla(')) {
@@ -143,7 +145,7 @@ class CssParser {
             } else if (otherElem.colorKind.startsWith('hsl')) {
                 output += fromRgba(elem.color).toHslString();
             } else if (otherElem.colorKind.startsWith('rgb')) {
-                output += fromRgba(elem.color).toRgbString();
+                output += fromRgba(elem.color).toRgbString(otherElem.hasAlpha);
             } else {
                 const ret = Object.entries(allColors).find(([key, _]) => {
                     return key === otherElem.value;
