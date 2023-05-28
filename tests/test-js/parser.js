@@ -125,6 +125,10 @@ function checkCssParser(x) {
     p = new CssParser('rgba(15, 20, 25, 1)');
     p2 = new CssParser('rgb(0,0,0)');
     x.assert(p2.sameFormatAs(p), 'rgba(0, 0, 0, 1)');
+
+    p = new CssParser('#aaa3 #aaa');
+    p2 = new CssParser('rgb(224, 224, 224) rgb(224, 224, 224)');
+    x.assert(p2.sameFormatAs(p), '#e0e0e0ff #e0e0e0');
 }
 
 function checkTuple(x) {
