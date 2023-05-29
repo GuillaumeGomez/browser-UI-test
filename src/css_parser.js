@@ -132,7 +132,8 @@ class CssParser {
                 continue;
             }
             if (otherElem.colorKind.startsWith('hex')) {
-                const alpha = otherElem.hasAlpha || elem.color[3] < 1 ? elem.color[3] * 255 : null;
+                const alpha = otherElem.hasAlpha || elem.color[3] < 1 ?
+                    Math.round(elem.color[3] * 255) : null;
                 const values = elem.color.slice(0, 3).map(v => toHex(v));
                 if (alpha !== null) {
                     values.push(toHex(alpha));
