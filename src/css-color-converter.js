@@ -160,8 +160,8 @@ function fromRgbString(str) {
   return fromRgba([r, g, b, a]);
 }
 
-function fromHslString(str) {
-  let [, h, unit, s, l, a] = hsl.exec(str);
+function fromHslString(reg, str) {
+  let [_, h, unit, s, l, a] = reg.exec(str);
   unit = unit || 'deg';
   h = unitConverter(parseFloat(h), unit, 'deg');
   s = parseFloat(s);
@@ -171,8 +171,12 @@ function fromHslString(str) {
 }
 
 function fromString(str) {
-  if (colorNames[str]) {
-    return fromRgb(colorNames[str]);
+  const color = colorNames[str];
+  if (color) {
+    if (color.length === 4) {
+      return fromRgba(color);
+    }
+    return fromRgb(color);
   }
 
   if (hex.test(str) || shortHex.test(str)) {
@@ -184,7 +188,11 @@ function fromString(str) {
   }
 
   if (hsl.test(str)) {
-    return fromHslString(str);
+    return fromHslString(hsl, str);
+  }
+
+  if (hslws.test(str)) {
+    return fromHslString(hslws, str);
   }
 
   return null;
