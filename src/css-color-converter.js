@@ -147,7 +147,7 @@ function fromHexString(str) {
   r = parseInt(r.length < 2 ? r.repeat(2) : r, 16);
   g = parseInt(g.length < 2 ? g.repeat(2) : g, 16);
   b = parseInt(b.length < 2 ? b.repeat(2) : b, 16);
-  a = (a && (parseInt(a.length < 2 ? a.repeat(2) : a, 16) / 255).toPrecision(1)) || 1;
+  a = (a && (parseInt(a.length < 2 ? a.repeat(2) : a, 16) / 255).toPrecision(2)) || 1;
   return fromRgba([r, g, b, a]);
 }
 
