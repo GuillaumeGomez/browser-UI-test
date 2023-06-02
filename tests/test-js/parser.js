@@ -94,7 +94,9 @@ function checkCssParser(x) {
     x.assert(p.elems[1].kind, 'color');
     x.assert(p.elems[2].kind, 'color');
     x.assert(
-        p.toRGBAString(), 'rgba(170, 170, 170, 0.7) rgba(17, 34, 51, 0.7) rgba(170, 170, 170, 1)');
+        p.toRGBAString(),
+        'rgba(170, 170, 170, 0.67) rgba(17, 34, 51, 0.67) rgba(170, 170, 170, 1)',
+    );
 
     p2 = new CssParser('rgb(17,17,17) rgb(1,1,1) rgba(1,1,1,1)');
     x.assert(p2.hasColor, true);
@@ -133,6 +135,10 @@ function checkCssParser(x) {
     p = new CssParser('rgba(255, 236, 164, 0.06)');
     p2 = new CssParser('#aaa');
     x.assert(p.sameFormatAs(p2), '#ffeca40f');
+
+    p = new CssParser('rgba(255, 180, 76, 0.85)');
+    p2 = new CssParser('#ffb44cd9');
+    x.assert(p2.sameFormatAs(p), 'rgba(255, 180, 76, 0.85)');
 }
 
 function checkTuple(x) {
