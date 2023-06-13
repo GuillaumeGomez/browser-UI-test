@@ -1,5 +1,7 @@
 => Starting doc-ui tests...
 
-escapes... OK
+escapes... FAILED
+[ERROR] (line 16) Cannot navigate to invalid URL `file://C:\a\b\d\elements.html`: for command `go-to: "file://" + |WINDOWS_PATH| + "\\d\\elements.html"`
 
-<= doc-ui tests done: 1 succeeded, 0 failed
+
+<= doc-ui tests done: 0 succeeded, 1 failed

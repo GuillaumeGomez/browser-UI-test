@@ -1,4 +1,13 @@
 instructions = [
-  """await page.goto(page.url().split(\"/\").slice(0, -1).join(\"/\") + \"/./a\");""",
+  """const url = page.url().split(\"/\").slice(0, -1).join(\"/\") + \"/./a\";
+try {
+    await page.goto(url);
+} catch(exc) {
+    if (exc instanceof arg.puppeteer.ProtocolError) {
+        throw \"Cannot navigate to invalid URL `\" + url + \"`\";
+    } else {
+        throw exc;
+    }
+}""",
   """await arg.browser.overridePermissions(page.url(), arg.permissions);""",
 ]

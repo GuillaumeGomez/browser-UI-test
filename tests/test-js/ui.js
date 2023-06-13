@@ -23,8 +23,11 @@ async function wrapRunTests(browser, options = new Options()) {
 
 function runAsyncUiTest(x, file, output, tests_queue, browser) {
     const options = new Options();
-    options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
-        '--test-files', file]);
+    options.parseArguments([
+        '--variable', 'DOC_PATH', 'tests/html_files',
+        '--variable', 'WINDOWS_PATH', 'C:\\a\\b',
+        '--test-files', file,
+    ]);
     let testOutput = '';
 
     const callback = x.assertTryUi(

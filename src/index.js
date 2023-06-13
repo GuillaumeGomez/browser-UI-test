@@ -357,7 +357,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                     'supposed to fail but succeeded\n';
             }
             let shouldWait = false;
-            if (failed === true) {
+            if (failed === true && extras.expectedToFail === false) {
                 if (command['fatal_error'] === true || extras.pauseOnError === true) {
                     break;
                 }
