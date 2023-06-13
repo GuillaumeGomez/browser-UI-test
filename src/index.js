@@ -247,7 +247,7 @@ async function runAllCommands(loaded, logs, options, browser) {
         });
         await options.onPageCreatedCallback(page, loaded['file']);
         // eslint-disable-next-line no-undef
-        const script = fs.readFileSync(path.join(__dirname, '/helpers.js'), 'utf8');
+        const script = fs.readFileSync(path.join(__dirname, 'helpers.js'), 'utf8');
         debug_log.append(`Injecting helpers script into page: "${script}"`);
         await page.evaluateOnNewDocument(script);
 

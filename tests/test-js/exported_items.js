@@ -201,7 +201,7 @@ async function checkOptions(x) {
     await x.assertTry(() => options.parseArguments(['--run-id']), [],
         'Missing id after `--run-id` option');
     await x.assertTry(() => options.parseArguments(['--run-id', 'he/lo']), [],
-        '`--run-id` cannot contain `/` character!');
+        '`--run-id` cannot contain `/` or `\\` characters!');
     await x.assertTry(() => options.parseArguments(['--run-id', 'hello']), [], true);
     x.assert(options.runId, 'hello');
 

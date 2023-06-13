@@ -167,8 +167,8 @@ class Options {
             if (args[it] === '--run-id') {
                 if (it + 1 < args.length) {
                     this.runId = args[it + 1];
-                    if (this.runId.indexOf('/') !== -1) {
-                        throw new Error('`--run-id` cannot contain `/` character!');
+                    if (this.runId.includes('/') || this.runId.includes('\\')) {
+                        throw new Error('`--run-id` cannot contain `/` or `\\` characters!');
                     }
                     it += 1;
                 } else {
