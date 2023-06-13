@@ -4,7 +4,16 @@ debug...
 [DEBUG] Done!
 [DEBUG] EXECUTING (line 2) "arg.screenshotComparison = false;"
 [DEBUG] Done!
-[DEBUG] EXECUTING (line 3) "await page.goto("file://$CURRENT_DIR/tests/html_files/elements.html");"
+[DEBUG] EXECUTING (line 3) "const url = "file://$CURRENT_DIR/tests/html_files/elements.html";
+try {
+    await page.goto(url);
+} catch(exc) {
+    if (exc instanceof arg.puppeteer.ProtocolError) {
+        throw "Cannot navigate to invalid URL `" + url + "`";
+    } else {
+        throw exc;
+    }
+}"
 [DEBUG] Done!
 [DEBUG] EXECUTING (line 3) "await arg.browser.overridePermissions(page.url(), arg.permissions);"
 [DEBUG] Done!

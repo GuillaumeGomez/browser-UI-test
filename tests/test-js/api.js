@@ -152,6 +152,7 @@ function checkAssert(x, func) {
     func('("a", 1) == ("a", 2)', 'bool-7');
     func('("a", 1) != ("a", 2)', 'bool-8');
     func('(2 + 1) >= (1 / 2)', 'bool-9');
+    func('["\\a", "b"] != ["a", "c"]', 'bool-10');
 }
 
 function checkAssertAttribute(x, func) {
@@ -1173,6 +1174,9 @@ function checkGoTo(x, func) {
     func('|url|', 'var-2', {'variables': {'url': 'http://foo'}});
     func('"http://foo/" + |url| + "fa"', 'var-3', {'variables': {'url': 'tadam/'}});
     func('"http://foo/" + |url| + "/fa"', 'var-4', {'variables': {'url': 'tadam'}});
+
+    // Checking `\` are correctly escaped
+    func('"file://C:\\b\\c\\d"', 'backslash-1');
 }
 
 function checkHistory(x, func) {
@@ -1261,7 +1265,17 @@ function checkParseContent(x, func) {
             'original': 'go-to: "file:///home"',
             'line': 1,
             'instructions': [
-                'await page.goto("file:///home");',
+                `\
+const url = "file:///home";
+try {
+    await page.goto(url);
+} catch(exc) {
+    if (exc instanceof arg.puppeteer.ProtocolError) {
+        throw "Cannot navigate to invalid URL \`" + url + "\`";
+    } else {
+        throw exc;
+    }
+}`,
                 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
             ],
         },
@@ -1286,7 +1300,17 @@ function checkParseContent(x, func) {
             'original': 'go-to: "file:///home"',
             'line': 2,
             'instructions': [
-                'await page.goto("file:///home");',
+                `\
+const url = "file:///home";
+try {
+    await page.goto(url);
+} catch(exc) {
+    if (exc instanceof arg.puppeteer.ProtocolError) {
+        throw "Cannot navigate to invalid URL \`" + url + "\`";
+    } else {
+        throw exc;
+    }
+}`,
                 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
             ],
         },
@@ -1297,7 +1321,17 @@ function checkParseContent(x, func) {
             'original': 'go-to: "file:///home"',
             'line': 1,
             'instructions': [
-                'await page.goto("file:///home");',
+                `\
+const url = "file:///home";
+try {
+    await page.goto(url);
+} catch(exc) {
+    if (exc instanceof arg.puppeteer.ProtocolError) {
+        throw "Cannot navigate to invalid URL \`" + url + "\`";
+    } else {
+        throw exc;
+    }
+}`,
                 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
             ],
         },
@@ -1315,7 +1349,17 @@ await ret;`,
             'original': 'go-to: "file:///home"',
             'line': 3,
             'instructions': [
-                'await page.goto("file:///home");',
+                `\
+const url = "file:///home";
+try {
+    await page.goto(url);
+} catch(exc) {
+    if (exc instanceof arg.puppeteer.ProtocolError) {
+        throw "Cannot navigate to invalid URL \`" + url + "\`";
+    } else {
+        throw exc;
+    }
+}`,
                 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
             ],
         },
@@ -1327,7 +1371,17 @@ await ret;`,
             'original': 'go-to: "file:///home"',
             'line': 1,
             'instructions': [
-                'await page.goto("file:///home");',
+                `\
+const url = "file:///home";
+try {
+    await page.goto(url);
+} catch(exc) {
+    if (exc instanceof arg.puppeteer.ProtocolError) {
+        throw "Cannot navigate to invalid URL \`" + url + "\`";
+    } else {
+        throw exc;
+    }
+}`,
                 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
             ],
         },
@@ -1342,7 +1396,17 @@ await ret;`,
             'original': 'go-to: "file:///home"',
             'line': 1,
             'instructions': [
-                'await page.goto("file:///home");',
+                `\
+const url = "file:///home";
+try {
+    await page.goto(url);
+} catch(exc) {
+    if (exc instanceof arg.puppeteer.ProtocolError) {
+        throw "Cannot navigate to invalid URL \`" + url + "\`";
+    } else {
+        throw exc;
+    }
+}`,
                 'await arg.browser.overridePermissions(page.url(), arg.permissions);',
             ],
         },

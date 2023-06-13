@@ -5,7 +5,7 @@ assert-css: ("input[id='the-input']", {"height": "10px"})
 // This one checks the handling of `\` in a CSS selector.
 assert-css: ("#useless\.input", {"height": "10px"})
 // Checking escape in dict.
-assert-css-false: ("#useless\.input", {"\"height": "10px"})
+assert-css-false: ("#useless\.input", {"\"\\height": "10px"})
 assert-false: '"a'
 expect-failure: true
 click: '"a'
@@ -13,3 +13,7 @@ click: '"a'
 assert: ("//*
 b")
 expect-failure: false
+go-to: "file://" + |WINDOWS_PATH| + "\\d\\elements.html"
+assert-document-property: {"URL": "file://C:\\a\\b\\d\\elements.html"}
+// Just to ensure all commands have been run.
+assert: 12 == 13
