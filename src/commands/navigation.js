@@ -26,36 +26,38 @@ ${line.getErrorText()}\`)`};
 
     line = line.value.trim();
     // There will always be one element...
+    let goto_arg;
     const permissions = 'await arg.browser.overridePermissions(page.url(), arg.permissions);';
     // We just check if it goes to an HTML file, not checking much though...
     if (line.startsWith('http://') === true
         || line.startsWith('https://') === true
         || line.startsWith('www.') === true
         || line.startsWith('file://') === true) {
-        return {
-            'instructions': [
-                `await page.goto("${cleanString(line)}");`,
-                permissions,
-            ],
-        };
+        goto_arg = `"${cleanString(line)}"`;
     } else if (line.startsWith('.')) {
-        return {
-            'instructions': [
-                'await page.goto(page.url().split("/").slice(0, -1).join("/") + ' +
-                `"/${cleanString(line)}");`,
-                permissions,
-            ],
-        };
+        goto_arg = `page.url().split("/").slice(0, -1).join("/") + "/${cleanString(line)}"`;
     } else if (line.startsWith('/')) {
-        return {
-            'instructions': [
-                'await page.goto(page.url().split("/").slice(0, -1).join("/") + ' +
-                `"${cleanString(line)}");`,
-                permissions,
-            ],
-        };
+        goto_arg = `page.url().split("/").slice(0, -1).join("/") + "${cleanString(line)}"`;
+    } else {
+        return {'error': `a relative path or a full URL was expected, found \`${line}\``};
     }
-    return {'error': `a relative path or a full URL was expected, found \`${line}\``};
+    const command = `\
+const url = ${goto_arg};
+try {
+    await page.goto(url);
+} catch(exc) {
+    if (exc instanceof arg.puppeteer.ProtocolError) {
+        throw "Cannot navigate to invalid URL \`" + url + "\`";
+    } else {
+        throw exc;
+    }
+}`;
+    return {
+        'instructions': [
+            command,
+            permissions,
+        ],
+    };
 }
 
 function innerReloadAndHistory(parser, options, command, jsFunc, errorMessage) {
