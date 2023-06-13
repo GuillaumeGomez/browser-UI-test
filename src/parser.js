@@ -35,26 +35,38 @@ function matchInteger(s) {
 }
 
 function cleanString(s) {
-    if (s.replace !== undefined) {
-        let parts = s.split('"');
-        for (let i = parts.length - 2; i >= 0; --i) {
-            if (!parts[i].endsWith('\\')) {
-                parts[i] += '\\';
-            }
-        }
-        parts = parts.join('"').split('\'');
-        for (let i = parts.length - 2; i >= 0; --i) {
-            if (!parts[i].endsWith('\\')) {
-                parts[i] += '\\';
-            }
-        }
-        return parts.join('\'').replace(/\n/g, '\\n');
+    if (s.replace === undefined) {
+        return s;
     }
-    return s;
+    let parts = s.split('"');
+    for (let i = parts.length - 2; i >= 0; --i) {
+        if (!parts[i].endsWith('\\')) {
+            parts[i] += '\\';
+        }
+    }
+    parts = parts.join('"').split('\'');
+    for (let i = parts.length - 2; i >= 0; --i) {
+        if (!parts[i].endsWith('\\')) {
+            parts[i] += '\\';
+        }
+    }
+    parts = parts.join('\'').replace(/\n/g, '\\n');
+    for (let i = 0; i < parts.length - 1; ++i) {
+        if (parts[i] === '\\') {
+            const next = parts[i + 1];
+            if ('"\'n\\'.includes(next)) {
+                i += 1; // No need to look at the next one.
+                continue;
+            }
+            parts = parts.substring(0, i) + '\\' + parts.substring(i);
+            i += 1;
+        }
+    }
+    return parts;
 }
 
 function cleanCssSelector(s, text = '') {
-    s = cleanString(s.replace(/\\/g, '\\\\')).trim();
+    s = cleanString(s).trim();
     if (s.length === 0) {
         return {
             'error': `CSS selector ${text !== '' ? text + ' ' : ''}cannot be empty`,
