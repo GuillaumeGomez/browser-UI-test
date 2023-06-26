@@ -504,8 +504,10 @@ class BlockElement extends Element {
         const blockStart = parser.pos;
         while (c !== '}') {
             if (parser.parseNextCommand(['\n', '}']) !== true) {
-                parser.error += ' (in `block { ... }`)';
-                error = parser.error;
+                if (parser.error !== null) {
+                    parser.error += ' (in `block { ... }`)';
+                    error = parser.error;
+                }
                 break;
             }
             parser.skipWhiteSpaceCharacters();
@@ -597,12 +599,12 @@ class Parser {
         return null;
     }
 
-    parseNextCommand(endChars = ['\n']) {
+    parseNextCommand(endChars = null) {
         this.elems = [];
         this.error = null;
         // First, we skip all unneeded characters...
         this.skipWhiteSpaceCharacters();
-        this.command = this.extractNextCommandName();
+        this.command = this.extractNextCommandName(endChars);
         if (this.command === null || this.error !== null) {
             return false;
         }
@@ -610,6 +612,9 @@ class Parser {
         if (!Object.prototype.hasOwnProperty.call(this.orders, order)) {
             this.error = `Unknown command "${order}"`;
             return false;
+        }
+        if (endChars === null) {
+            endChars = ['\n'];
         }
         // Now that we have the command, let's get its arguments!
         this.parse(endChars);
@@ -649,7 +654,7 @@ class Parser {
         return false;
     }
 
-    extractNextCommandName() {
+    extractNextCommandName(endChars) {
         let command = null;
 
         while (command === null) {
@@ -671,6 +676,8 @@ class Parser {
                 this.commandStart = this.pos;
                 this.parseIdent(tmp, ['-']);
                 command = tmp.pop();
+            } else if (endChars !== null && endChars.includes(c)) {
+                return null;
             } else {
                 this.setError(`Unexpected ${showChar(c)} when parsing command`);
                 return null;
