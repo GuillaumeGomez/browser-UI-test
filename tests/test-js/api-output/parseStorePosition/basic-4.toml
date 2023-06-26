@@ -7,7 +7,7 @@ const jsHandle = await elem.evaluateHandle(e => {
     return {\"x\": Math.round(x), \"y\": Math.round(y)};
 });
 const data = await jsHandle.jsonValue();
-arg.variables[\"b\"] = data[\"y\"];""",
+arg.setVariable(\"b\", data[\"y\"]);""",
 ]
 wait = false
 warnings = [

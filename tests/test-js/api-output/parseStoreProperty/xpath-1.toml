@@ -20,7 +20,7 @@ const jsHandle = await elem.evaluateHandle(e => {
     return ret;
 });
 data = await jsHandle.jsonValue();
-arg.variables[\"a\"] = data[\"blop\"];""",
+arg.setVariable(\"a\", data[\"blop\"]);""",
 ]
 wait = false
 warnings = [

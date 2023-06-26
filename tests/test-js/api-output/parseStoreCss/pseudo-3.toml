@@ -20,8 +20,8 @@ const jsHandle = await parseStoreCss.evaluateHandle(e => {
     return ret;
 });
 data = await jsHandle.jsonValue();
-arg.variables[\"a\"] = data[\"bip\"];
-arg.variables[\"b\"] = data[\"bla\"];""",
+arg.setVariable(\"a\", data[\"bip\"]);
+arg.setVariable(\"b\", data[\"bla\"]);""",
 ]
 wait = false
 warnings = [

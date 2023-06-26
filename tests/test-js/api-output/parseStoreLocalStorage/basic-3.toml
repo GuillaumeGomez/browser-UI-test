@@ -6,7 +6,7 @@ instructions = [
     };
 });
 const data = await jsHandle.jsonValue();
-arg.variables[\"a\"] = data[\"yaya\"];
-arg.variables[\"b\"] = data[\"yiyi\"];""",
+arg.setVariable(\"a\", data[\"yaya\"]);
+arg.setVariable(\"b\", data[\"yiyi\"]);""",
 ]
 wait = false

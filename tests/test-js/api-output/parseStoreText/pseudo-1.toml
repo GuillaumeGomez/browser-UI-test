@@ -4,7 +4,7 @@ if (parseStoreText === null) { throw '\"a\" not found'; }
 const jsHandle = await parseStoreText.evaluateHandle(e => {
     return browserUiTestHelpers.getElemText(e, \"\");
 });
-arg.variables[\"VAR\"] = await jsHandle.jsonValue();""",
+arg.setVariable(\"VAR\", await jsHandle.jsonValue());""",
 ]
 wait = false
 warnings = [
