@@ -92,7 +92,7 @@ function parseStoreAttribute(parser) {
     const code = [];
     const getter = [];
     const data = checkSelectorAndJson(parser, null, (k, v) => {
-        code.push(`arg.variables["${v.value}"] = data["${k}"];`);
+        code.push(`arg.setVariable("${v.value}", data["${k}"]);`);
         getter.push(`"${k}"`);
     });
     if (data.error !== undefined) {
@@ -149,7 +149,7 @@ function parseStoreCss(parser) {
     const code = [];
     const getter = [];
     const data = checkSelectorAndJson(parser, null, (k, v) => {
-        code.push(`arg.variables["${v.value}"] = data["${k}"];`);
+        code.push(`arg.setVariable("${v.value}", data["${k}"]);`);
         getter.push(`"${k}"`);
     });
     if (data.error !== undefined) {
@@ -204,7 +204,7 @@ function parseStoreProperty(parser) {
     const code = [];
     const getter = [];
     const data = checkSelectorAndJson(parser, null, (k, v) => {
-        code.push(`arg.variables["${v.value}"] = data["${k}"];`);
+        code.push(`arg.setVariable("${v.value}", data["${k}"]);`);
         getter.push(`"${k}"`);
     });
     if (data.error !== undefined) {
@@ -261,9 +261,9 @@ function parseStoreSize(parser) {
     const code = [];
     const data = checkSelectorAndJson(parser, ['height', 'width'], (k, v) => {
         if (k === 'width') {
-            code.push(`arg.variables["${v.value}"] = data["offsetWidth"];`);
+            code.push(`arg.setVariable("${v.value}", data["offsetWidth"]);`);
         } else {
-            code.push(`arg.variables["${v.value}"] = data["offsetHeight"];`);
+            code.push(`arg.setVariable("${v.value}", data["offsetHeight"]);`);
         }
     });
     if (data.error !== undefined) {
@@ -295,9 +295,9 @@ function parseStorePosition(parser) {
     const code = [];
     const data = checkSelectorAndJson(parser, ['x', 'X', 'y', 'Y'], (k, v) => {
         if (k === 'x' || k === 'X') {
-            code.push(`arg.variables["${v.value}"] = data["x"];`);
+            code.push(`arg.setVariable("${v.value}", data["x"]);`);
         } else {
-            code.push(`arg.variables["${v.value}"] = data["y"];`);
+            code.push(`arg.setVariable("${v.value}", data["y"]);`);
         }
     });
     if (data.error !== undefined) {
@@ -377,7 +377,7 @@ function parseStoreLocalStorage(parser) {
     const code = [];
     const getter = [];
     const ret = checkJson(parser, null, (k, v) => {
-        code.push(`arg.variables["${v.value}"] = data["${k}"];`);
+        code.push(`arg.setVariable("${v.value}", data["${k}"]);`);
         getter.push(`"${k}": window.localStorage.getItem("${k}"),`);
     });
     if (ret.error !== undefined) {
@@ -461,7 +461,7 @@ ${getAndSetElements(selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
     return browserUiTestHelpers.getElemText(e, "");
 });
-arg.variables["${tuple[0].displayInCode()}"] = await jsHandle.jsonValue();`;
+arg.setVariable("${tuple[0].displayInCode()}", await jsHandle.jsonValue());`;
 
     return {
         'instructions': [code],
@@ -474,7 +474,7 @@ function parseStoreObjectInner(parser, objName) {
     const code = [];
     const getter = [];
     const ret = checkJson(parser, null, (k, v) => {
-        code.push(`arg.variables["${v.value}"] = data["${k}"];`);
+        code.push(`arg.setVariable("${v.value}", data["${k}"]);`);
         getter.push(`"${k}"`);
     });
     if (ret.error !== undefined) {

@@ -16,6 +16,10 @@ function addSlash(s) {
     return s;
 }
 
+function escapeBackslahes(s) {
+    return s.split('\\').join('\\\\');
+}
+
 function getCurrentDir() {
     let dir = process.cwd();
     if (dir.endsWith('/') === true || dir.endsWith('\\') === true) {
@@ -107,4 +111,5 @@ module.exports = {
     // Used in `options.js` for function `showDeviceList()`.
     'loadPuppeteerWrapper': loadPuppeteerWrapper,
     'RESERVED_VARIABLE_NAME': RESERVED_VARIABLE_NAME,
+    'escapeBackslahes': escapeBackslahes,
 };

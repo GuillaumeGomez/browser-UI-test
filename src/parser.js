@@ -1,4 +1,4 @@
-const { getVariableValue, RESERVED_VARIABLE_NAME } = require('./utils.js');
+const { escapeBackslahes, getVariableValue, RESERVED_VARIABLE_NAME } = require('./utils.js');
 
 const SUPPORTED_OPERATORS = ['>', '>=', '<', '<=', '==', '!=', '+', '-', '/', '*', '%', '||', '&&'];
 
@@ -50,23 +50,11 @@ function cleanString(s) {
             parts[i] += '\\';
         }
     }
-    parts = parts.join('\'').replace(/\n/g, '\\n');
-    for (let i = 0; i < parts.length - 1; ++i) {
-        if (parts[i] === '\\') {
-            const next = parts[i + 1];
-            if ('"\'n\\'.includes(next)) {
-                i += 1; // No need to look at the next one.
-                continue;
-            }
-            parts = parts.substring(0, i) + '\\' + parts.substring(i);
-            i += 1;
-        }
-    }
-    return parts;
+    return parts.join('\'').replace(/\n/g, '\\n');
 }
 
 function cleanCssSelector(s, text = '') {
-    s = cleanString(s).trim();
+    s = cleanString(escapeBackslahes(s)).trim();
     if (s.length === 0) {
         return {
             'error': `CSS selector ${text !== '' ? text + ' ' : ''}cannot be empty`,
