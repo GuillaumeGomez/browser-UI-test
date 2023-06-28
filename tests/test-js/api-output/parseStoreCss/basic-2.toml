@@ -20,7 +20,7 @@ const jsHandle = await parseStoreCss.evaluateHandle(e => {
     return ret;
 });
 data = await jsHandle.jsonValue();
-arg.variables[\"a\"] = data[\"\\\"ye\"];""",
+arg.setVariable(\"a\", data[\"\\\"ye\"]);""",
 ]
 wait = false
 warnings = [

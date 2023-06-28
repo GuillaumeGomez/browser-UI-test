@@ -738,7 +738,6 @@ function parseAssertTextInner(parser, assertFalse) {
 the check will be performed on the element itself`);
     }
 
-    const value = tuple[1].getStringValue();
     const varName = 'parseAssertElemStr';
 
     const checks = makeTextExtendedChecks(enabledChecks, assertFalse);
@@ -757,7 +756,7 @@ for (const elem of ${varName}) {
 async function checkTextForElem(elem) {
     await elem.evaluate(e => {
         const errors = [];
-        const value = "${value}";
+        const value = ${tuple[1].displayInCode()};
         const elemText = browserUiTestHelpers.getElemText(e, value);
 ${indentString(checks.join('\n'), 2)}
         if (errors.length !== 0) {

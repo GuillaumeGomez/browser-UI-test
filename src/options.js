@@ -212,7 +212,7 @@ class Options {
                 addPath(args[it]);
             } else if (args[it] === '--variable') {
                 if (it + 2 < args.length) {
-                    this.variables[args[it + 1]] = args[it + 2];
+                    this.variables[args[it + 1]] = utils.escapeBackslahes(args[it + 2]);
                     it += 2;
                 } else if (it + 1 < args.length) {
                     throw new Error('Missing variable value after `--variable` option');

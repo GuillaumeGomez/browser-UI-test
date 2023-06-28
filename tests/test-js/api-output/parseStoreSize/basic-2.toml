@@ -7,7 +7,7 @@ const jsHandle = await elem.evaluateHandle(e => {
     return {\"offsetHeight\": Math.round(height), \"offsetWidth\": Math.round(width)};
 });
 const data = await jsHandle.jsonValue();
-arg.variables[\"b\"] = data[\"offsetHeight\"];""",
+arg.setVariable(\"b\", data[\"offsetHeight\"]);""",
 ]
 wait = false
 warnings = [

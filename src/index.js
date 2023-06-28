@@ -206,6 +206,12 @@ async function runAllCommands(loaded, logs, options, browser) {
             'jsErrors': [],
             'requestErrors': [],
             'variables': context_parser.variables(),
+            'setVariable': (varName, value) => {
+                if (typeof value === 'string') {
+                    value = utils.escapeBackslahes(value);
+                }
+                extras.variables[varName] = value;
+            },
         };
         page.on('pageerror', message => {
             extras.jsErrors.push(message);

@@ -24,9 +24,9 @@ function compareJson(j1, j2) {
     return true;
 }
 
-const check = !compareArrayLike([\"\\\\a\", \"b\"], [\"a\", \"c\"]);
+const check = !compareArrayLike([\"\\a\", \"b\"], [\"a\", \"c\"]);
 if (!check) {
-    throw \"Condition `!compareArrayLike([\\\"\\\\a\\\", \\\"b\\\"], [\\\"a\\\", \\\"c\\\"])` was evaluated as false\";
+    throw \"Condition `!compareArrayLike([\\\"\\a\\\", \\\"b\\\"], [\\\"a\\\", \\\"c\\\"])` was evaluated as false\";
 }""",
 ]
 wait = false
