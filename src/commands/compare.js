@@ -445,7 +445,7 @@ browserUiTestHelpers.extractFloatOrZero(style${end}["margin-" + property]);
 `;
 }
 
-function parseCompareElementsPositionInner(parser, assertFalse) {
+function parseCompareElementsCommon(parser, assertFalse) {
     const elems = parser.elems;
 
     if (elems.length === 0) {
@@ -465,21 +465,27 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
     } else if (tuple[0].kind !== 'string') {
         return {
             'error': 'expected first argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[0].getArticleKind()}`,
+                `found \`${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
         };
     } else if (tuple[1].kind !== 'string') {
         return {
             'error': 'expected second argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[1].getArticleKind()}`,
+                `found \`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
         };
     } else if (tuple[2].kind !== 'tuple') {
         return {
-            'error': `expected third argument to be a tuple, found ${tuple[2].getArticleKind()}`,
+            'error': `expected third argument to be a tuple, found \`${tuple[2].getErrorText()}\` \
+(${tuple[2].getArticleKind()})`,
         };
     }
-    const array = tuple[2].getRaw();
-    if (array.length > 0 && array[0].kind !== 'string') {
-        return {'error': `expected an array of strings, found \`${tuple[2].getErrorText()}\``};
+    const checks = tuple[2].getRaw();
+    if (checks.length > 0) {
+        for (const check of checks) {
+            if (check.kind !== 'string') {
+                return { 'error': `\`${tuple[2].getErrorText()}\` should only contain strings, \
+found \`${check.getErrorText()}\` (${check.getArticleKind()})` };
+            }
+        }
     }
 
     const selector1 = tuple[0].getSelector();
@@ -490,40 +496,49 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
     if (selector2.error !== undefined) {
         return selector2;
     }
-    const varName = 'parseCompareElementsPos';
-    const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
-        getAndSetElements(selector2, varName + '2', false) + '\n';
-
     let errHandling;
     if (assertFalse) {
         errHandling = 'if (err === null) { throw "comparison didn\'t fail"; }';
     } else {
         errHandling = 'if (err !== null) { throw err; }';
     }
-    const sub_tuple = tuple[2].getRaw();
+    return {
+        'errHandling': errHandling,
+        'checks': checks,
+        'selector1': selector1,
+        'selector2': selector2,
+        'tuple': tuple,
+    };
+}
+
+function parseCompareElementsPositionInner(parser, assertFalse) {
+    const ret = parseCompareElementsCommon(parser, assertFalse);
+    if (ret.error !== undefined) {
+        return ret;
+    }
     let x = false;
     let y = false;
     let code = `\
 function browserComparePosition(e1, e2, kind, property) {
     let err = null;
     let val1 = e1.getBoundingClientRect()[property];
-${indentString(handlePseudo(selector1, '1'), 1)}\
+${indentString(handlePseudo(ret.selector1, '1'), 1)}\
     let val2 = e2.getBoundingClientRect()[property];
-${indentString(handlePseudo(selector1, '2'), 1)}\
+${indentString(handlePseudo(ret.selector2, '2'), 1)}\
     if (val1 !== val2) { err = "different " + kind + " values: " + val1 + " != " + val2; }
-    ${errHandling}
+    ${ret.errHandling}
 }
 `;
 
-    for (const sub of sub_tuple) {
+    for (const sub of ret.checks) {
         if (sub.kind !== 'string') {
-            return { 'error': `\`${tuple[2].getErrorText()}\` should only contain strings` };
+            return { 'error': `\`${ret.tuple[2].getErrorText()}\` should only contain strings` };
         }
         const value = sub.getRaw();
         if (value === 'x') {
             if (x) {
                 return {
-                    'error': `Duplicated "x" value in \`${tuple[2].getErrorText()}\``,
+                    'error': `Duplicated "x" value in \`${ret.tuple[2].getErrorText()}\``,
                 };
             }
             code += 'browserComparePosition(elem1, elem2, "X", "left");\n';
@@ -531,7 +546,7 @@ ${indentString(handlePseudo(selector1, '2'), 1)}\
         } else if (value === 'y') {
             if (y) {
                 return {
-                    'error': `Duplicated "y" value in \`${tuple[2].getErrorText()}\``,
+                    'error': `Duplicated "y" value in \`${ret.tuple[2].getErrorText()}\``,
                 };
             }
             code += 'browserComparePosition(elem1, elem2, "Y", "top");\n';
@@ -539,12 +554,15 @@ ${indentString(handlePseudo(selector1, '2'), 1)}\
         } else {
             return {
                 'error': 'Only accepted values are "x" and "y", found `' +
-                    `${sub.getErrorText()}\` (in \`${tuple[2].getErrorText()}\`)`,
+                    `${sub.getErrorText()}\` (in \`${ret.tuple[2].getErrorText()}\`)`,
             };
         }
     }
-    let instructions = selectors;
-    if (code.length !== 0) {
+
+    const varName = 'parseCompareElementsPos';
+    let instructions = getAndSetElements(ret.selector1, varName + '1', false) + '\n' +
+        getAndSetElements(ret.selector2, varName + '2', false) + '\n';
+    if (x || y) {
         instructions += `\
 await page.evaluate((elem1, elem2) => {
 ${indentString(code, 1)}}, ${varName}1, ${varName}2);`;
@@ -636,7 +654,7 @@ function browserComparePositionNear(e1, e2, kind, property, maxDelta) {
     let val1 = e1.getBoundingClientRect()[property];
 ${indentString(handlePseudo(selector1, '1'), 1)}\
     let val2 = e2.getBoundingClientRect()[property];
-${indentString(handlePseudo(selector1, '2'), 1)}\
+${indentString(handlePseudo(selector2, '2'), 1)}\
     let delta = Math.abs(val1 - val2);
     if (delta > maxDelta) {
         err = "delta " + kind + " values too large: " + delta + " > " + maxDelta;
