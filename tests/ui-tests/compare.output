@@ -6,12 +6,14 @@ compare... FAILED
 [ERROR] (line 4) Error: Evaluation failed: clientHeight: `24` !== `6`: for command `compare-elements-property: ("header", "#the-input", ["clientHeight"])`
 [ERROR] (line 10) assert didn't fail: for command `compare-elements-property-false: ("#useless\.input", "#the-input", ["clientHeight"])`
 [ERROR] (line 19) Error: Evaluation failed: different Y values: 24 != 34: for command `compare-elements-position: ("#the-input", "#useless\.input", ("y"))`
-[ERROR] (line 20) Error: Evaluation failed: comparison didn't fail: for command `compare-elements-position-false: ("#the-input", "#useless\.input", ("x"))`
-[ERROR] (line 21) Error: Evaluation failed: comparison didn't fail: for command `compare-elements-position-near-false: ("#the-input", "#useless\.input", {"x": 1, "y": 12})`
-[ERROR] (line 26) Error: Evaluation failed: assert didn't fail: for command `compare-elements-css-false: ("#the-input", "#useless\.input", ["width"])`
-[ERROR] (line 27) Error: Evaluation failed: CSS property `width` did not match: 1000px != 37.5px: for command `compare-elements-css: ("#the-input", "#js-call", ["width"])`
-[ERROR] (line 32) Error: Evaluation failed: assert didn't fail: for command `compare-elements-attribute-false: (".content .right", ".content .left", ["data-whatever"])`
-[ERROR] (line 33) Error: Evaluation failed: class: right !== left: for command `compare-elements-attribute: (".content .right", ".content .left", ["class"])`
+[ERROR] (line 20) Error: Evaluation failed: different Y values: 102 != 34: for command `compare-elements-position: ("#another-one::before", "#useless\.input", ("y", "x"))`
+[ERROR] (line 21) Error: Evaluation failed: comparison didn't fail: for command `compare-elements-position-false: ("#the-input", "#useless\.input", ("x"))`
+[ERROR] (line 22) Error: Evaluation failed: delta Y values too large: 68 > 1: for command `compare-elements-position-near: ("#another-one::before", "#useless\.input", {"y": 1, "x": 2})`
+[ERROR] (line 23) Error: Evaluation failed: comparison didn't fail: for command `compare-elements-position-near-false: ("#the-input", "#useless\.input", {"x": 1, "y": 12})`
+[ERROR] (line 28) Error: Evaluation failed: assert didn't fail: for command `compare-elements-css-false: ("#the-input", "#useless\.input", ["width"])`
+[ERROR] (line 29) Error: Evaluation failed: CSS property `width` did not match: 1000px != 37.5px: for command `compare-elements-css: ("#the-input", "#js-call", ["width"])`
+[ERROR] (line 34) Error: Evaluation failed: assert didn't fail: for command `compare-elements-attribute-false: (".content .right", ".content .left", ["data-whatever"])`
+[ERROR] (line 35) Error: Evaluation failed: class: right !== left: for command `compare-elements-attribute: (".content .right", ".content .left", ["class"])`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed
