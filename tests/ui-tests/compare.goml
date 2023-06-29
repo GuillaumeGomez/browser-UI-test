@@ -1,4 +1,4 @@
-// This test ensures that the `store*` commands are working as expected.
+// This test ensures that the `compare*` commands are working as expected.
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 // Should fail.
 compare-elements-property: ("header", "#the-input", ["clientHeight"])
@@ -8,3 +8,24 @@ compare-elements-property: ("#useless\.input", "#the-input", ["clientHeight"])
 compare-elements-property-false: ("header", "#the-input", ["clientHeight"])
 // Should fail.
 compare-elements-property-false: ("#useless\.input", "#the-input", ["clientHeight"])
+// Should succeed.
+compare-elements-position: ("#the-input", "#useless\.input", ("x"))
+compare-elements-position-near: ("#the-input", "#useless\.input", {"x": 1, "y": 12})
+compare-elements-position-false: ("#the-input", "#useless\.input", ("y"))
+compare-elements-position-near-false: ("#the-input", "#useless\.input", {"y": 8})
+// Should fail.
+compare-elements-position: ("#the-input", "#useless\.input", ("y"))
+compare-elements-position-false: ("#the-input", "#useless\.input", ("x"))
+compare-elements-position-near-false: ("#the-input", "#useless\.input", {"x": 1, "y": 12})
+// Should succeed.
+compare-elements-css: ("#the-input", "#useless\.input", ["width"])
+compare-elements-css-false: ("#the-input", "#js-call", ["width"])
+// Should fail.
+compare-elements-css-false: ("#the-input", "#useless\.input", ["width"])
+compare-elements-css: ("#the-input", "#js-call", ["width"])
+// Should succeed.
+compare-elements-attribute: (".content .right", ".content .left", ["data-whatever"])
+compare-elements-attribute-false: (".content .right", ".content .left", ["class"])
+// Should fail.
+compare-elements-attribute-false: (".content .right", ".content .left", ["data-whatever"])
+compare-elements-attribute: (".content .right", ".content .left", ["class"])
