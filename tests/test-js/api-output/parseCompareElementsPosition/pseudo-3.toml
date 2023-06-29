@@ -4,30 +4,38 @@ if (parseCompareElementsPos1 === null) { throw '\"a\" not found'; }
 let parseCompareElementsPos2 = await page.$(\"b\");
 if (parseCompareElementsPos2 === null) { throw '\"b\" not found'; }
 await page.evaluate((elem1, elem2) => {
-function checkY(e1, e2) {
-let y1 = e1.getBoundingClientRect().top;
-let pseudoStyle1 = window.getComputedStyle(e1, \"::after\");
-let style1 = window.getComputedStyle(e1);
-y1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1.top) - browserUiTestHelpers.extractFloatOrZero(style1.marginTop);
-let y2 = e2.getBoundingClientRect().top;
-let pseudoStyle2 = window.getComputedStyle(e2, \"::after\");
-let style2 = window.getComputedStyle(e2);
-y2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2.top) - browserUiTestHelpers.extractFloatOrZero(style2.marginTop);
-if (y1 !== y2) { throw \"different Y values: \" + y1 + \" != \" + y2; }
-}
-checkY(elem1, elem2);
-function checkX(e1, e2) {
-let x1 = e1.getBoundingClientRect().left;
-let pseudoStyle1 = window.getComputedStyle(e1, \"::after\");
-let style1 = window.getComputedStyle(e1);
-x1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1.left) - browserUiTestHelpers.extractFloatOrZero(style1.marginLeft);
-let x2 = e2.getBoundingClientRect().left;
-let pseudoStyle2 = window.getComputedStyle(e2, \"::after\");
-let style2 = window.getComputedStyle(e2);
-x2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2.left) - browserUiTestHelpers.extractFloatOrZero(style2.marginLeft);
-if (x1 !== x2) { throw \"different X values: \" + x1 + \" != \" + x2; }
-}
-checkX(elem1, elem2);
+    function checkY(e1, e2) {
+        let err = null;
+        let y1 = e1.getBoundingClientRect().top;
+        let pseudoStyle1 = window.getComputedStyle(e1, \"::after\");
+        let style1 = window.getComputedStyle(e1);
+        y1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1.top) - browserUiTestHelpers.extractFloatOrZero(style1.marginTop);
+
+        let y2 = e2.getBoundingClientRect().top;
+        let pseudoStyle2 = window.getComputedStyle(e2, \"::after\");
+        let style2 = window.getComputedStyle(e2);
+        y2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2.top) - browserUiTestHelpers.extractFloatOrZero(style2.marginTop);
+
+        if (y1 !== y2) { err = \"different Y values: \" + y1 + \" != \" + y2; }
+        if (err !== null) { throw err; }
+    }
+    checkY(elem1, elem2);
+    function checkX(e1, e2) {
+        let err = null;
+        let x1 = e1.getBoundingClientRect().left;
+        let pseudoStyle1 = window.getComputedStyle(e1, \"::after\");
+        let style1 = window.getComputedStyle(e1);
+        x1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1.left) - browserUiTestHelpers.extractFloatOrZero(style1.marginLeft);
+
+        let x2 = e2.getBoundingClientRect().left;
+        let pseudoStyle2 = window.getComputedStyle(e2, \"::after\");
+        let style2 = window.getComputedStyle(e2);
+        x2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2.left) - browserUiTestHelpers.extractFloatOrZero(style2.marginLeft);
+
+        if (x1 !== x2) { err = \"different X values: \" + x1 + \" != \" + x2; }
+        if (err !== null) { throw err; }
+    }
+    checkX(elem1, elem2);
 }, parseCompareElementsPos1, parseCompareElementsPos2);""",
 ]
 wait = false

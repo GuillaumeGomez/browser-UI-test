@@ -23,6 +23,7 @@ throw \"delta X values too large: \" + delta + \" > 1\";
 }
 }
 checkX(elem1, elem2);
+
 }, parseCompareElementsPosNear1, parseCompareElementsPosNear2);""",
 ]
 wait = false

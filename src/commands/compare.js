@@ -470,8 +470,6 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
         return {'error': `expected an array of strings, found \`${tuple[2].getErrorText()}\``};
     }
 
-    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
-
     const selector1 = tuple[0].getSelector();
     if (selector1.error !== undefined) {
         return selector1;
@@ -484,6 +482,12 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
     const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
         getAndSetElements(selector2, varName + '2', false) + '\n';
 
+    let errHandling;
+    if (assertFalse) {
+        errHandling = 'if (err === null) { throw "comparison didn\'t fail"; }';
+    } else {
+        errHandling = 'if (err !== null) { throw err; }';
+    }
     const sub_tuple = tuple[2].getRaw();
     let x = false;
     let y = false;
@@ -493,19 +497,23 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
         if (selector.isXPath || selector.pseudo === null) {
             return '';
         }
-        return `let pseudoStyle${end} = window.getComputedStyle(e${end}, "${selector.pseudo}");\n` +
-            `let style${end} = window.getComputedStyle(e${end});\n` +
-            `x${end} += browserUiTestHelpers.extractFloatOrZero(pseudoStyle${end}.left) - ` +
-                `browserUiTestHelpers.extractFloatOrZero(style${end}.marginLeft);\n`;
+        return `\
+let pseudoStyle${end} = window.getComputedStyle(e${end}, "${selector.pseudo}");
+let style${end} = window.getComputedStyle(e${end});
+x${end} += browserUiTestHelpers.extractFloatOrZero(pseudoStyle${end}.left) - \
+browserUiTestHelpers.extractFloatOrZero(style${end}.marginLeft);
+`;
     }
     function handlePseudoY(selector, end) {
         if (selector.isXPath || selector.pseudo === null) {
             return '';
         }
-        return `let pseudoStyle${end} = window.getComputedStyle(e${end}, "${selector.pseudo}");\n` +
-            `let style${end} = window.getComputedStyle(e${end});\n` +
-            `y${end} += browserUiTestHelpers.extractFloatOrZero(pseudoStyle${end}.top) - ` +
-                `browserUiTestHelpers.extractFloatOrZero(style${end}.marginTop);\n`;
+        return `\
+let pseudoStyle${end} = window.getComputedStyle(e${end}, "${selector.pseudo}");
+let style${end} = window.getComputedStyle(e${end});
+y${end} += browserUiTestHelpers.extractFloatOrZero(pseudoStyle${end}.top) - \
+browserUiTestHelpers.extractFloatOrZero(style${end}.marginTop);
+`;
     }
 
     for (let i = 0; i < sub_tuple.length; ++i) {
@@ -519,16 +527,18 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
                     'error': `Duplicated "x" value in \`${tuple[2].getErrorText()}\``,
                 };
             }
-            code += 'function checkX(e1, e2) {\n' +
-                insertBefore +
-                'let x1 = e1.getBoundingClientRect().left;\n' +
-                handlePseudoX(selector1, '1') +
-                'let x2 = e2.getBoundingClientRect().left;\n' +
-                handlePseudoX(selector2, '2') +
-                'if (x1 !== x2) { throw "different X values: " + x1 + " != " + x2; }\n' +
-                insertAfter +
-                '}\n' +
-                'checkX(elem1, elem2);\n';
+            code += `\
+function checkX(e1, e2) {
+    let err = null;
+    let x1 = e1.getBoundingClientRect().left;
+${indentString(handlePseudoX(selector1, '1'), 1)}
+    let x2 = e2.getBoundingClientRect().left;
+${indentString(handlePseudoX(selector2, '2'), 1)}
+    if (x1 !== x2) { err = "different X values: " + x1 + " != " + x2; }
+    ${errHandling}
+}
+checkX(elem1, elem2);
+`;
             x = true;
         } else if (value === 'y') {
             if (y) {
@@ -536,16 +546,18 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
                     'error': `Duplicated "y" value in \`${tuple[2].getErrorText()}\``,
                 };
             }
-            code += 'function checkY(e1, e2) {\n' +
-                insertBefore +
-                'let y1 = e1.getBoundingClientRect().top;\n' +
-                handlePseudoY(selector1, '1') +
-                'let y2 = e2.getBoundingClientRect().top;\n' +
-                handlePseudoY(selector2, '2') +
-                'if (y1 !== y2) { throw "different Y values: " + y1 + " != " + y2; }\n' +
-                insertAfter +
-                '}\n' +
-                'checkY(elem1, elem2);\n';
+            code += `\
+function checkY(e1, e2) {
+    let err = null;
+    let y1 = e1.getBoundingClientRect().top;
+${indentString(handlePseudoY(selector1, '1'), 1)}
+    let y2 = e2.getBoundingClientRect().top;
+${indentString(handlePseudoY(selector2, '2'), 1)}
+    if (y1 !== y2) { err = "different Y values: " + y1 + " != " + y2; }
+    ${errHandling}
+}
+checkY(elem1, elem2);
+`;
             y = true;
         } else {
             return {
@@ -556,8 +568,9 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
     }
     let instructions = selectors;
     if (code.length !== 0) {
-        instructions += 'await page.evaluate((elem1, elem2) => {\n' +
-            `${code}}, ${varName}1, ${varName}2);`;
+        instructions += `\
+await page.evaluate((elem1, elem2) => {
+${indentString(code, 1)}}, ${varName}1, ${varName}2);`;
     }
     return {
         'instructions': [instructions],
@@ -688,8 +701,10 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
 
     let instructions = selectors;
     if (code.length !== 0) {
-        instructions += 'await page.evaluate((elem1, elem2) => {\n' +
-            `${code}}, ${varName}1, ${varName}2);`;
+        instructions += `\
+await page.evaluate((elem1, elem2) => {
+${code}
+}, ${varName}1, ${varName}2);`;
     }
     return {
         'instructions': [instructions],

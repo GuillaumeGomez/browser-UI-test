@@ -22,6 +22,7 @@ throw \"delta Y values too large: \" + delta + \" > 2\";
 }
 }
 checkY(elem1, elem2);
+
 }, parseCompareElementsPosNear1, parseCompareElementsPosNear2);""",
 ]
 wait = false
