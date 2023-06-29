@@ -745,6 +745,7 @@ function checkCompareElementsPositionNear(x, func) {
     // Multiline
     func('("a", \n"b", {\n"y":\n -1})', 'multiline-1');
     func('("a", \n"b",\n {\n})', 'multiline-2');
+    func('("a", \n"b",\n {\n"y":\n1})', 'multiline-3');
 }
 
 function checkCompareElementsProperty(x, func) {

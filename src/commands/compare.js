@@ -590,7 +590,7 @@ function parseCompareElementsPositionFalse(parser) {
     return parseCompareElementsPositionInner(parser, true);
 }
 
-function parseCompareElementsPositionNearInner(parser, assertFalse) {
+function parseCompareElementsPositionNearCommon(parser, assertFalse) {
     const elems = parser.elems;
     if (elems.length === 0) {
         return {'error': 'expected a tuple, found nothing'};
@@ -609,17 +609,17 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
     } else if (tuple[0].kind !== 'string') {
         return {
             'error': 'expected first argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[0].getArticleKind()}`,
+                `found \`${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
         };
     } else if (tuple[1].kind !== 'string') {
         return {
             'error': 'expected second argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[1].getArticleKind()}`,
+                `found \`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
         };
     } else if (tuple[2].kind !== 'json') {
         return {
             'error': 'expected third argument to be a JSON dict, found ' +
-                tuple[2].getArticleKind(),
+                `found \`${tuple[2].getErrorText()}\` (${tuple[2].getArticleKind()})`,
         };
     }
 
@@ -638,9 +638,6 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
     if (selector2.error !== undefined) {
         return selector2;
     }
-    const varName = 'parseCompareElementsPosNear';
-    const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
-        getAndSetElements(selector2, varName + '2', false) + '\n';
 
     let errHandling;
     if (assertFalse) {
@@ -648,28 +645,42 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
     } else {
         errHandling = 'if (err !== null) { throw err; }';
     }
+    return {
+        'entries': entries,
+        'errHandling': errHandling,
+        'selector1': selector1,
+        'selector2': selector2,
+        'tuple': tuple,
+    };
+}
 
-    const warnings = entries.warnings;
+function parseCompareElementsPositionNearInner(parser, assertFalse) {
+    const ret = parseCompareElementsPositionNearCommon(parser, assertFalse);
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    const warnings = ret.entries.warnings;
     let code = `\
 function browserComparePositionNear(e1, e2, kind, property, maxDelta) {
     let err = null;
     let val1 = e1.getBoundingClientRect()[property];
-${indentString(handlePseudo(selector1, '1'), 1)}\
+${indentString(handlePseudo(ret.selector1, '1'), 1)}\
     let val2 = e2.getBoundingClientRect()[property];
-${indentString(handlePseudo(selector2, '2'), 1)}\
+${indentString(handlePseudo(ret.selector2, '2'), 1)}\
     let delta = Math.abs(val1 - val2);
     if (delta > maxDelta) {
         err = "delta " + kind + " values too large: " + delta + " > " + maxDelta;
     }
-    ${errHandling}
+    ${ret.errHandling}
 }
 `;
-    for (const [key, value] of Object.entries(entries.values)) {
+    let added = 0;
+    for (const [key, value] of Object.entries(ret.entries.values)) {
         const v = parseInt(value.value, 10);
         if (key !== 'x' && key !== 'y') {
             return {
                 'error': 'Only accepted keys are "x" and "y", found `' +
-                    `"${key}"\` (in \`${tuple[2].getErrorText()}\`)`,
+                    `"${key}"\` (in \`${ret.tuple[2].getErrorText()}\`)`,
             };
         } else if (v < 0) {
             return {
@@ -684,10 +695,13 @@ ${indentString(handlePseudo(selector2, '2'), 1)}\
         } else if (key === 'y') {
             code += `browserComparePositionNear(elem1, elem2, "Y", "top", ${v});\n`;
         }
+        added += 1;
     }
 
-    let instructions = selectors;
-    if (code.length !== 0) {
+    const varName = 'parseCompareElementsPosNear';
+    let instructions = getAndSetElements(ret.selector1, varName + '1', false) + '\n' +
+        getAndSetElements(ret.selector2, varName + '2', false) + '\n';
+    if (added !== 0) {
         instructions += `\
 await page.evaluate((elem1, elem2) => {
 ${code}}, ${varName}1, ${varName}2);`;

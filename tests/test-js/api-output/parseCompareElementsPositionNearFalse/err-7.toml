@@ -1,1 +1,1 @@
-error = """expected first argument to be a CSS selector or an XPath, found a number"""
+error = """expected first argument to be a CSS selector or an XPath, found `1` (a number)"""
