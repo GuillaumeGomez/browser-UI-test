@@ -719,19 +719,19 @@ function checkCompareElementsPositionNear(x, func) {
     func('("a", "a", "b", "c")', 'err-9');
     func('("a", "b", 1)', 'err-10');
     func('("a", "b", {"x": -1})', 'err-11');
+    func('("a", "b", {"x": 1, "x": 2})', 'err-12');
 
     func('("a", "b", ())', 'basic-1');
     func('("a", "b", (1))', 'basic-2');
     func('("a", "b", {"x": 1, "yo": 2})', 'basic-3');
-    func('("a", "b", {"x": 1, "x": 2})', 'basic-4');
-    func('("a", "b", {"x": "a", "y": 2})', 'basic-5');
-    func('("a", "b", {"x": -1})', 'basic-6');
-    func('("a", "b", {"y": -1})', 'basic-7');
-    func('("a", "b", {})', 'basic-8');
-    func('("a", "b", {"x": 1})', 'basic-9');
-    func('("a", "b", {"y": 1})', 'basic-10');
-    func('("a", "b", {"x": 1, "y": 2})', 'basic-11');
-    func('("a", "b", {"y": 2, "x": 1})', 'basic-12');
+    func('("a", "b", {"x": "a", "y": 2})', 'basic-4');
+    func('("a", "b", {"x": -1})', 'basic-5');
+    func('("a", "b", {"y": -1})', 'basic-6');
+    func('("a", "b", {})', 'basic-7');
+    func('("a", "b", {"x": 1})', 'basic-8');
+    func('("a", "b", {"y": 1})', 'basic-9');
+    func('("a", "b", {"x": 1, "y": 2})', 'basic-10');
+    func('("a", "b", {"y": 2, "x": 1})', 'basic-11');
 
     // warnings
     func('("a", "b", {"x": 0})', 'warn-1');
@@ -809,6 +809,47 @@ function checkCompareElementsSize(x, func) {
     // Multiline
     func('("a", \n"b", \n("width",\n "height", "height"))', 'multiline-1');
     func('("a",\n "b", (\n"width"))', 'multiline-2');
+}
+
+function checkCompareElementsSizeNear(x, func) {
+    func('"a"', 'err-1');
+    func('1', 'err-2');
+    func('()', 'err-3');
+    func('[]', 'err-4');
+    func('("a")', 'err-5');
+    func('("a", 1)', 'err-6');
+    func('(1, "a", ("a"))', 'err-7');
+    func('((), "a", ("a"))', 'err-8');
+    func('("a", "a", "b", "c")', 'err-9');
+    func('("a", "b", 1)', 'err-10');
+    func('("a", "b", {"width": -1})', 'err-11');
+    func('("a", "b", {"width": 1, "width": 2})', 'err-12');
+
+    func('("a", "b", ())', 'basic-1');
+    func('("a", "b", (1))', 'basic-2');
+    func('("a", "b", {"width": 1, "heighto": 2})', 'basic-3');
+    func('("a", "b", {"width": "a", "height": 2})', 'basic-4');
+    func('("a", "b", {"width": -1})', 'basic-5');
+    func('("a", "b", {"height": -1})', 'basic-6');
+    func('("a", "b", {})', 'basic-7');
+    func('("a", "b", {"width": 1})', 'basic-8');
+    func('("a", "b", {"height": 1})', 'basic-9');
+    func('("a", "b", {"width": 1, "height": 2})', 'basic-10');
+    func('("a", "b", {"height": 2, "width": 1})', 'basic-11');
+
+    // warnings
+    func('("a", "b", {"width": 0})', 'warn-1');
+    func('("a", "b", {"height": 0})', 'warn-2');
+
+    // XPath
+    func('("//a", "b", {"height": 2, "width": 1})', 'xpath-1');
+    func('("a", "//b", {"height": 2, "width": 1})', 'xpath-2');
+    func('("//a", "//b", {"height": 2, "width": 1})', 'xpath-3');
+
+    // Multiline
+    func('("a", \n"b", {\n"height":\n -1})', 'multiline-1');
+    func('("a", \n"b",\n {\n})', 'multiline-2');
+    func('("a", \n"b",\n {\n"height":\n1})', 'multiline-3');
 }
 
 function checkCompareElementsText(x, func) {
@@ -2342,6 +2383,20 @@ const TO_CHECK = [
         'func': checkCompareElementsSize,
         'toCall': (x, e, name, o) => {
             return wrapper(parserFuncs.parseCompareElementsSizeFalse, x, e, name, o);
+        },
+    },
+    {
+        'name': 'compare-elements-size-near',
+        'func': checkCompareElementsSizeNear,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsSizeNear, x, e, name, o);
+        },
+    },
+    {
+        'name': 'compare-elements-size-near-false',
+        'func': checkCompareElementsSizeNear,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsSizeNearFalse, x, e, name, o);
         },
     },
     {

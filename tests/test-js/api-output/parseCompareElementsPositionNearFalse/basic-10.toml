@@ -14,7 +14,8 @@ function browserComparePositionNear(e1, e2, kind, property, maxDelta) {
     }
     if (err === null) { throw \"comparison didn't fail\"; }
 }
-browserComparePositionNear(elem1, elem2, \"Y\", \"top\", 1);
+browserComparePositionNear(elem1, elem2, \"X\", \"left\", 1);
+browserComparePositionNear(elem1, elem2, \"Y\", \"top\", 2);
 }, parseCompareElementsPosNear1, parseCompareElementsPosNear2);""",
 ]
 wait = false

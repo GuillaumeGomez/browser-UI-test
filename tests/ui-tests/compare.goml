@@ -37,7 +37,13 @@ compare-elements-attribute-false: (".content .right", ".content .left", ["data-w
 compare-elements-attribute: (".content .right", ".content .left", ["class"])
 // Should succeed.
 compare-elements-size: (".content .right", ".content .left", ("width"))
+compare-elements-size-near: (".content .right", ".content .left", {"width": 1})
 compare-elements-size-false: ("#another-one::before", ".content .left span", ("height"))
+compare-elements-size-near-false: ("#another-one::before", ".content .left span", {"height": 1})
+// Should warn.
+compare-elements-size-near: (".content .right", ".content .left", {"width": 0})
 // Should fail.
 compare-elements-size-false: (".content .right", ".content .left", ("width"))
+compare-elements-size-near-false: (".content .right", ".content .left", {"width": 1})
 compare-elements-size: ("#another-one::before", ".content .left span", ("height"))
+compare-elements-size-near: ("#another-one::before", ".content .left span", {"height": 1})
