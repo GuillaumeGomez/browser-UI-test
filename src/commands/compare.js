@@ -1,6 +1,8 @@
 // All `compare*` commands.
 
-const { getAndSetElements, getInsertStrings, validateJson, indentString } = require('./utils.js');
+const {
+    getAndSetElements, getInsertStrings, validateJson, indentString, getSizes,
+} = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 
 function parseCompareElementsTextInner(parser, assertFalse) {
@@ -712,6 +714,95 @@ function parseCompareElementsPositionNearFalse(parser) {
     return parseCompareElementsPositionNearInner(parser, true);
 }
 
+function parseCompareElementsSizeInner(parser, assertFalse) {
+    const ret = parseCompareElementsCommon(parser, assertFalse);
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    let width = false;
+    let height = false;
+    let code = `\
+function browserGetElementSizes1(e) {
+${indentString(getSizes(ret.selector1), 1)}
+    return [Math.round(width), Math.round(height)];
+}
+function browserGetElementSizes2(e) {
+${indentString(getSizes(ret.selector2), 1)}
+    return [Math.round(width), Math.round(height)];
+}
+const [width1, height1] = browserGetElementSizes1(elem1);
+const [width2, height2] = browserGetElementSizes2(elem2);
+let err = null;
+`;
+
+    for (const sub of ret.checks) {
+        if (sub.kind !== 'string') {
+            return { 'error': `\`${ret.tuple[2].getErrorText()}\` should only contain strings` };
+        }
+        const value = sub.getRaw();
+        if (value === 'width') {
+            if (width) {
+                return {
+                    'error': `Duplicated "width" value in \`${ret.tuple[2].getErrorText()}\``,
+                };
+            }
+            code += `\
+if (width1 !== width2) {
+    err = "widths don't match: " + width1 + " != " + width2;
+}
+${ret.errHandling}
+`;
+            width = true;
+        } else if (value === 'height') {
+            if (height) {
+                return {
+                    'error': `Duplicated "height" value in \`${ret.tuple[2].getErrorText()}\``,
+                };
+            }
+            code += `\
+if (height1 !== height2) {
+    err = "heights don't match: " + height1 + " != " + height2;
+}
+${ret.errHandling}
+`;
+            height = true;
+        } else {
+            return {
+                'error': 'Only accepted values are "width" and "height", found `' +
+                    `${sub.getErrorText()}\` (in \`${ret.tuple[2].getErrorText()}\`)`,
+            };
+        }
+    }
+
+    const varName = 'parseCompareElementsSize';
+    let instructions = getAndSetElements(ret.selector1, varName + '1', false) + '\n' +
+        getAndSetElements(ret.selector2, varName + '2', false) + '\n';
+    if (width || height) {
+        instructions += `\
+await page.evaluate((elem1, elem2) => {
+${indentString(code, 1)}}, ${varName}1, ${varName}2);`;
+    }
+    return {
+        'instructions': [instructions],
+        'wait': false,
+        'checkResult': true,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ("width"|"height"))
+function parseCompareElementsSize(parser) {
+    return parseCompareElementsSizeInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ("width"|"height"))
+function parseCompareElementsSizeFalse(parser) {
+    return parseCompareElementsSizeInner(parser, true);
+}
+
 module.exports = {
     'parseCompareElementsAttribute': parseCompareElementsAttribute,
     'parseCompareElementsAttributeFalse': parseCompareElementsAttributeFalse,
@@ -723,6 +814,8 @@ module.exports = {
     'parseCompareElementsPositionNearFalse': parseCompareElementsPositionNearFalse,
     'parseCompareElementsProperty': parseCompareElementsProperty,
     'parseCompareElementsPropertyFalse': parseCompareElementsPropertyFalse,
+    'parseCompareElementsSize': parseCompareElementsSize,
+    'parseCompareElementsSizeFalse': parseCompareElementsSizeFalse,
     'parseCompareElementsText': parseCompareElementsText,
     'parseCompareElementsTextFalse': parseCompareElementsTextFalse,
 };
