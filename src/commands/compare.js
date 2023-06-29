@@ -153,11 +153,11 @@ function parseCompareElementsAttributeInner(parser, assertFalse) {
         getAndSetElements(selector2, varName + '2', false) + '\n';
 
     let arr = '';
-    for (let i = 0; i < array.length; ++i) {
-        if (i > 0) {
+    for (const entry of array) {
+        if (arr.length > 0) {
             arr += ',';
         }
-        arr += `"${array[i].getStringValue()}"`;
+        arr += `"${entry.getStringValue()}"`;
     }
 
     let comparison;
@@ -282,8 +282,8 @@ function parseCompareElementsCssInner(parser, assertFalse) {
 
     let arr = '';
     let needColorCheck = false;
-    for (let i = 0; i < array.length; ++i) {
-        const key = array[i].getStringValue();
+    for (const entry of array) {
+        const key = entry.getStringValue();
         if (key.length === 0) {
             return {
                 'error': 'Empty CSS property keys ("" or \'\') are not allowed',
@@ -433,6 +433,18 @@ function parseCompareElementsPropertyFalse(parser) {
     return parseCompareElementsPropertyInner(parser, true);
 }
 
+function handlePseudo(selector, end) {
+    if (selector.isXPath || selector.pseudo === null) {
+        return '';
+    }
+    return `\
+const pseudoStyle${end} = window.getComputedStyle(e${end}, "${selector.pseudo}");
+const style${end} = window.getComputedStyle(e${end});
+val${end} += browserUiTestHelpers.extractFloatOrZero(pseudoStyle${end}[property]) - \
+browserUiTestHelpers.extractFloatOrZero(style${end}["margin-" + property]);
+`;
+}
+
 function parseCompareElementsPositionInner(parser, assertFalse) {
     const elems = parser.elems;
 
@@ -491,54 +503,30 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
     const sub_tuple = tuple[2].getRaw();
     let x = false;
     let y = false;
-    let code = '';
-
-    function handlePseudoX(selector, end) {
-        if (selector.isXPath || selector.pseudo === null) {
-            return '';
-        }
-        return `\
-let pseudoStyle${end} = window.getComputedStyle(e${end}, "${selector.pseudo}");
-let style${end} = window.getComputedStyle(e${end});
-x${end} += browserUiTestHelpers.extractFloatOrZero(pseudoStyle${end}.left) - \
-browserUiTestHelpers.extractFloatOrZero(style${end}.marginLeft);
+    let code = `\
+function browserComparePosition(e1, e2, kind, property) {
+    let err = null;
+    let val1 = e1.getBoundingClientRect()[property];
+${indentString(handlePseudo(selector1, '1'), 1)}\
+    let val2 = e2.getBoundingClientRect()[property];
+${indentString(handlePseudo(selector1, '2'), 1)}\
+    if (val1 !== val2) { err = "different " + kind + " values: " + val1 + " != " + val2; }
+    ${errHandling}
+}
 `;
-    }
-    function handlePseudoY(selector, end) {
-        if (selector.isXPath || selector.pseudo === null) {
-            return '';
-        }
-        return `\
-let pseudoStyle${end} = window.getComputedStyle(e${end}, "${selector.pseudo}");
-let style${end} = window.getComputedStyle(e${end});
-y${end} += browserUiTestHelpers.extractFloatOrZero(pseudoStyle${end}.top) - \
-browserUiTestHelpers.extractFloatOrZero(style${end}.marginTop);
-`;
-    }
 
-    for (let i = 0; i < sub_tuple.length; ++i) {
-        if (sub_tuple[i].kind !== 'string') {
+    for (const sub of sub_tuple) {
+        if (sub.kind !== 'string') {
             return { 'error': `\`${tuple[2].getErrorText()}\` should only contain strings` };
         }
-        const value = sub_tuple[i].getRaw();
+        const value = sub.getRaw();
         if (value === 'x') {
             if (x) {
                 return {
                     'error': `Duplicated "x" value in \`${tuple[2].getErrorText()}\``,
                 };
             }
-            code += `\
-function checkX(e1, e2) {
-    let err = null;
-    let x1 = e1.getBoundingClientRect().left;
-${indentString(handlePseudoX(selector1, '1'), 1)}
-    let x2 = e2.getBoundingClientRect().left;
-${indentString(handlePseudoX(selector2, '2'), 1)}
-    if (x1 !== x2) { err = "different X values: " + x1 + " != " + x2; }
-    ${errHandling}
-}
-checkX(elem1, elem2);
-`;
+            code += 'browserComparePosition(elem1, elem2, "X", "left");\n';
             x = true;
         } else if (value === 'y') {
             if (y) {
@@ -546,23 +534,12 @@ checkX(elem1, elem2);
                     'error': `Duplicated "y" value in \`${tuple[2].getErrorText()}\``,
                 };
             }
-            code += `\
-function checkY(e1, e2) {
-    let err = null;
-    let y1 = e1.getBoundingClientRect().top;
-${indentString(handlePseudoY(selector1, '1'), 1)}
-    let y2 = e2.getBoundingClientRect().top;
-${indentString(handlePseudoY(selector2, '2'), 1)}
-    if (y1 !== y2) { err = "different Y values: " + y1 + " != " + y2; }
-    ${errHandling}
-}
-checkY(elem1, elem2);
-`;
+            code += 'browserComparePosition(elem1, elem2, "Y", "top");\n';
             y = true;
         } else {
             return {
                 'error': 'Only accepted values are "x" and "y", found `' +
-                    `${sub_tuple[i].getErrorText()}\` (in \`${tuple[2].getErrorText()}\`)`,
+                    `${sub.getErrorText()}\` (in \`${tuple[2].getErrorText()}\`)`,
             };
         }
     }
@@ -653,7 +630,20 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
     }
 
     const warnings = entries.warnings;
-    let code = '';
+    let code = `\
+function browserComparePositionNear(e1, e2, kind, property, maxDelta) {
+    let err = null;
+    let val1 = e1.getBoundingClientRect()[property];
+${indentString(handlePseudo(selector1, '1'), 1)}\
+    let val2 = e2.getBoundingClientRect()[property];
+${indentString(handlePseudo(selector1, '2'), 1)}\
+    let delta = Math.abs(val1 - val2);
+    if (delta > maxDelta) {
+        err = "delta " + kind + " values too large: " + delta + " > " + maxDelta;
+    }
+    ${errHandling}
+}
+`;
     for (const [key, value] of Object.entries(entries.values)) {
         const v = parseInt(value.value, 10);
         if (key !== 'x' && key !== 'y') {
@@ -670,33 +660,9 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
                 `Delta is 0 for "${key}", maybe try to use \`compare-elements-position\` instead?`);
         }
         if (key === 'x') {
-            code += `\
-function checkX(e1, e2) {
-    let err = null;
-    let x1 = e1.getBoundingClientRect().left;
-    let x2 = e2.getBoundingClientRect().left;
-    let delta = Math.abs(x1 - x2);
-    if (delta > ${v}) {
-        err = "delta X values too large: " + delta + " > ${v}";
-    }
-    ${errHandling}
-}
-checkX(elem1, elem2);
-`;
+            code += `browserComparePositionNear(elem1, elem2, "X", "left", ${v});\n`;
         } else if (key === 'y') {
-            code += `\
-function checkY(e1, e2) {
-    let err = null;
-    let y1 = e1.getBoundingClientRect().top;
-    let y2 = e2.getBoundingClientRect().top;
-    let delta = Math.abs(y1 - y2);
-    if (delta > ${v}) {
-        err = "delta Y values too large: " + delta + " > ${v}";
-    }
-    ${errHandling}
-}
-checkY(elem1, elem2);
-`;
+            code += `browserComparePositionNear(elem1, elem2, "Y", "top", ${v});\n`;
         }
     }
 
