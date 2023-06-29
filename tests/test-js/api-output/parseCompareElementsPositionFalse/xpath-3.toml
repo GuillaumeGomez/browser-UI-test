@@ -6,26 +6,15 @@ let parseCompareElementsPos2 = await page.$x(\"//b\");
 if (parseCompareElementsPos2.length === 0) { throw 'XPath \"//b\" not found'; }
 parseCompareElementsPos2 = parseCompareElementsPos2[0];
 await page.evaluate((elem1, elem2) => {
-    function checkY(e1, e2) {
+    function browserComparePosition(e1, e2, kind, property) {
         let err = null;
-        let y1 = e1.getBoundingClientRect().top;
-
-        let y2 = e2.getBoundingClientRect().top;
-
-        if (y1 !== y2) { err = \"different Y values: \" + y1 + \" != \" + y2; }
+        let val1 = e1.getBoundingClientRect()[property];
+        let val2 = e2.getBoundingClientRect()[property];
+        if (val1 !== val2) { err = \"different \" + kind + \" values: \" + val1 + \" != \" + val2; }
         if (err === null) { throw \"comparison didn't fail\"; }
     }
-    checkY(elem1, elem2);
-    function checkX(e1, e2) {
-        let err = null;
-        let x1 = e1.getBoundingClientRect().left;
-
-        let x2 = e2.getBoundingClientRect().left;
-
-        if (x1 !== x2) { err = \"different X values: \" + x1 + \" != \" + x2; }
-        if (err === null) { throw \"comparison didn't fail\"; }
-    }
-    checkX(elem1, elem2);
+    browserComparePosition(elem1, elem2, \"Y\", \"top\");
+    browserComparePosition(elem1, elem2, \"X\", \"left\");
 }, parseCompareElementsPos1, parseCompareElementsPos2);""",
 ]
 wait = false
