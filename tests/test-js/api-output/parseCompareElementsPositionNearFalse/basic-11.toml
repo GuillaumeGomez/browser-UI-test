@@ -26,6 +26,7 @@ throw \"delta Y values too large: \" + delta + \" > 2\";
 
 } catch(e) { return; } throw \"assert didn't fail\";}
 checkY(elem1, elem2);
+
 }, parseCompareElementsPosNear1, parseCompareElementsPosNear2);""",
 ]
 wait = false
