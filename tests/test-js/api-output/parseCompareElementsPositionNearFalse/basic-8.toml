@@ -3,7 +3,19 @@ instructions = [
 if (parseCompareElementsPosNear1 === null) { throw '\"a\" not found'; }
 let parseCompareElementsPosNear2 = await page.$(\"b\");
 if (parseCompareElementsPosNear2 === null) { throw '\"b\" not found'; }
-""",
+await page.evaluate((elem1, elem2) => {
+function browserComparePositionNear(e1, e2, kind, property, maxDelta) {
+    let err = null;
+    let val1 = e1.getBoundingClientRect()[property];
+    let val2 = e2.getBoundingClientRect()[property];
+    let delta = Math.abs(val1 - val2);
+    if (delta > maxDelta) {
+        err = \"delta \" + kind + \" values too large: \" + delta + \" > \" + maxDelta;
+    }
+    if (err === null) { throw \"comparison didn't fail\"; }
+}
+browserComparePositionNear(elem1, elem2, \"X\", \"left\", 1);
+}, parseCompareElementsPosNear1, parseCompareElementsPosNear2);""",
 ]
 wait = false
 checkResult = true

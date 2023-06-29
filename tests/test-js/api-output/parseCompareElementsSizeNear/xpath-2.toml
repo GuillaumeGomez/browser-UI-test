@@ -1,0 +1,36 @@
+instructions = [
+  """let parseCompareElementsSizeNear1 = await page.$(\"a\");
+if (parseCompareElementsSizeNear1 === null) { throw '\"a\" not found'; }
+let parseCompareElementsSizeNear2 = await page.$x(\"//b\");
+if (parseCompareElementsSizeNear2.length === 0) { throw 'XPath \"//b\" not found'; }
+parseCompareElementsSizeNear2 = parseCompareElementsSizeNear2[0];
+await page.evaluate((elem1, elem2) => {
+function browserGetElementSizes1(e) {
+    const height = e.offsetHeight;
+    const width = e.offsetWidth;
+    return [Math.round(width), Math.round(height)];
+}
+function browserGetElementSizes2(e) {
+    const height = e.offsetHeight;
+    const width = e.offsetWidth;
+    return [Math.round(width), Math.round(height)];
+}
+function browserCompareValuesNear(v1, v2, kind, maxDelta) {
+    delta = Math.abs(v1 - v2);
+    if (delta > maxDelta) {
+        err = \"delta for \" + kind + \" values too large: \" + delta + \" > \" + maxDelta;
+    }
+    if (err !== null) { throw err; }
+}
+const [width1, height1] = browserGetElementSizes1(elem1);
+const [width2, height2] = browserGetElementSizes2(elem2);
+let err = null;
+let delta;
+browserCompareValuesNear(height1, height2, \"height\", 2);
+browserCompareValuesNear(width1, width2, \"width\", 1);
+}, parseCompareElementsSizeNear1, parseCompareElementsSizeNear2);""",
+]
+wait = false
+checkResult = true
+warnings = [
+]
