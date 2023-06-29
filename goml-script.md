@@ -141,6 +141,8 @@ Here's the command list:
  * [`compare-elements-position-near-false`](#compare-elements-position-near-false)
  * [`compare-elements-property`](#compare-elements-property)
  * [`compare-elements-property-false`](#compare-elements-property-false)
+ * [`compare-elements-size`](#compare-elements-size)
+ * [`compare-elements-size-false`](#compare-elements-size-false)
  * [`compare-elements-text`](#compare-elements-text)
  * [`compare-elements-text-false`](#compare-elements-text-false)
  * [`debug`](#debug)
@@ -1004,6 +1006,34 @@ compare-elements-property-false: ("//element1", "element2", ["CSS property1", "C
 ```
 
 Another thing to be noted: if you don't care whether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
+
+#### compare-elements-size
+
+**compare-elements-size** command allows you to check that two DOM elements' width and/or height are equal. Examples:
+
+```
+// Compare the width.
+compare-elements-size: ("//element1", "element2", ("x"))
+// Compare the height
+compare-elements-size: ("element1", "//element2", ("y"))
+// Compare the width and the height.
+compare-elements-size: ("//element1", "//element2", ("x", "y"))
+compare-elements-size: ("element1", "element2", ("y", "x"))
+```
+
+#### compare-elements-size-false
+
+**compare-elements-size-false** command allows you to check that two DOM elements' width and/or height are different. If one of the elements doesn't exist, the command will fail. Examples:
+
+```
+// Compare the width.
+compare-elements-size-false: ("//element1", "element2", ("x"))
+// Compare the height
+compare-elements-size-false: ("element1", "//element2", ("y"))
+// Compare the width and the height.
+compare-elements-size-false: ("//element1", "//element2", ("x", "y"))
+compare-elements-size-false: ("element1", "element2", ("y", "x"))
+```
 
 #### compare-elements-text
 

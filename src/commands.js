@@ -41,6 +41,8 @@ const ORDERS = {
     'compare-elements-position-near-false': commands.parseCompareElementsPositionNearFalse,
     'compare-elements-property': commands.parseCompareElementsProperty,
     'compare-elements-property-false': commands.parseCompareElementsPropertyFalse,
+    'compare-elements-size': commands.parseCompareElementsSize,
+    'compare-elements-size-false': commands.parseCompareElementsSizeFalse,
     'compare-elements-text': commands.parseCompareElementsText,
     'compare-elements-text-false': commands.parseCompareElementsTextFalse,
     'debug': commands.parseDebug,

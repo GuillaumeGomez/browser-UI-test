@@ -35,3 +35,9 @@ compare-elements-attribute-false: (".content .right", ".content .left", ["class"
 // Should fail.
 compare-elements-attribute-false: (".content .right", ".content .left", ["data-whatever"])
 compare-elements-attribute: (".content .right", ".content .left", ["class"])
+// Should succeed.
+compare-elements-size: (".content .right", ".content .left", ("width"))
+compare-elements-size-false: ("#another-one::before", ".content .left span", ("height"))
+// Should fail.
+compare-elements-size-false: (".content .right", ".content .left", ("width"))
+compare-elements-size: ("#another-one::before", ".content .left span", ("height"))

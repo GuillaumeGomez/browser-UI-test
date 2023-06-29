@@ -1,0 +1,2 @@
+error = """Duplicated \"height\" value in `(\"width\",
+ \"height\", \"height\")`"""

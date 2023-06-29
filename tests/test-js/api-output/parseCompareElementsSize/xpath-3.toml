@@ -1,0 +1,33 @@
+instructions = [
+  """let parseCompareElementsSize1 = await page.$x(\"//a\");
+if (parseCompareElementsSize1.length === 0) { throw 'XPath \"//a\" not found'; }
+parseCompareElementsSize1 = parseCompareElementsSize1[0];
+let parseCompareElementsSize2 = await page.$x(\"//b\");
+if (parseCompareElementsSize2.length === 0) { throw 'XPath \"//b\" not found'; }
+parseCompareElementsSize2 = parseCompareElementsSize2[0];
+await page.evaluate((elem1, elem2) => {
+    function browserGetElementSizes1(e) {
+        const height = e.offsetHeight;
+        const width = e.offsetWidth;
+        return [Math.round(width), Math.round(height)];
+    }
+    function browserGetElementSizes2(e) {
+        const height = e.offsetHeight;
+        const width = e.offsetWidth;
+        return [Math.round(width), Math.round(height)];
+    }
+    const [width1, height1] = browserGetElementSizes1(elem1);
+    const [width2, height2] = browserGetElementSizes2(elem2);
+    let err = null;
+    if (height1 !== height2) {
+        err = \"heights don't match: \" + height1 + \" != \" + height2;
+    }
+    if (err !== null) { throw err; }
+    if (width1 !== width2) {
+        err = \"widths don't match: \" + width1 + \" != \" + width2;
+    }
+    if (err !== null) { throw err; }
+}, parseCompareElementsSize1, parseCompareElementsSize2);""",
+]
+wait = false
+checkResult = true
