@@ -3,7 +3,15 @@ instructions = [
 if (parseCompareElementsPos1 === null) { throw '\"a\" not found'; }
 let parseCompareElementsPos2 = await page.$(\"b\");
 if (parseCompareElementsPos2 === null) { throw '\"b\" not found'; }
-""",
+await page.evaluate((elem1, elem2) => {
+    function browserComparePosition(e1, e2, kind, property) {
+        let err = null;
+        let val1 = e1.getBoundingClientRect()[property];
+        let val2 = e2.getBoundingClientRect()[property];
+        if (val1 !== val2) { err = \"different \" + kind + \" values: \" + val1 + \" != \" + val2; }
+        if (err !== null) { throw err; }
+    }
+}, parseCompareElementsPos1, parseCompareElementsPos2);""",
 ]
 wait = false
 checkResult = true

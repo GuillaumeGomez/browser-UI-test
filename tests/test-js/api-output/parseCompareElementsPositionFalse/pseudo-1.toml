@@ -4,32 +4,21 @@ if (parseCompareElementsPos1 === null) { throw '\"a\" not found'; }
 let parseCompareElementsPos2 = await page.$(\"b\");
 if (parseCompareElementsPos2 === null) { throw '\"b\" not found'; }
 await page.evaluate((elem1, elem2) => {
-    function checkY(e1, e2) {
+    function browserComparePosition(e1, e2, kind, property) {
         let err = null;
-        let y1 = e1.getBoundingClientRect().top;
-        let pseudoStyle1 = window.getComputedStyle(e1, \"::after\");
-        let style1 = window.getComputedStyle(e1);
-        y1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1.top) - browserUiTestHelpers.extractFloatOrZero(style1.marginTop);
-
-        let y2 = e2.getBoundingClientRect().top;
-
-        if (y1 !== y2) { err = \"different Y values: \" + y1 + \" != \" + y2; }
+        let val1 = e1.getBoundingClientRect()[property];
+        const pseudoStyle1 = window.getComputedStyle(e1, \"::after\");
+        const style1 = window.getComputedStyle(e1);
+        val1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1[property]) - browserUiTestHelpers.extractFloatOrZero(style1[\"margin-\" + property]);
+        let val2 = e2.getBoundingClientRect()[property];
+        const pseudoStyle2 = window.getComputedStyle(e2, \"::after\");
+        const style2 = window.getComputedStyle(e2);
+        val2 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle2[property]) - browserUiTestHelpers.extractFloatOrZero(style2[\"margin-\" + property]);
+        if (val1 !== val2) { err = \"different \" + kind + \" values: \" + val1 + \" != \" + val2; }
         if (err === null) { throw \"comparison didn't fail\"; }
     }
-    checkY(elem1, elem2);
-    function checkX(e1, e2) {
-        let err = null;
-        let x1 = e1.getBoundingClientRect().left;
-        let pseudoStyle1 = window.getComputedStyle(e1, \"::after\");
-        let style1 = window.getComputedStyle(e1);
-        x1 += browserUiTestHelpers.extractFloatOrZero(pseudoStyle1.left) - browserUiTestHelpers.extractFloatOrZero(style1.marginLeft);
-
-        let x2 = e2.getBoundingClientRect().left;
-
-        if (x1 !== x2) { err = \"different X values: \" + x1 + \" != \" + x2; }
-        if (err === null) { throw \"comparison didn't fail\"; }
-    }
-    checkX(elem1, elem2);
+    browserComparePosition(elem1, elem2, \"Y\", \"top\");
+    browserComparePosition(elem1, elem2, \"X\", \"left\");
 }, parseCompareElementsPos1, parseCompareElementsPos2);""",
 ]
 wait = false
