@@ -143,6 +143,8 @@ Here's the command list:
  * [`compare-elements-property-false`](#compare-elements-property-false)
  * [`compare-elements-size`](#compare-elements-size)
  * [`compare-elements-size-false`](#compare-elements-size-false)
+ * [`compare-elements-size-near`](#compare-elements-size-near)
+ * [`compare-elements-size-near-false`](#compare-elements-size-near-false)
  * [`compare-elements-text`](#compare-elements-text)
  * [`compare-elements-text-false`](#compare-elements-text-false)
  * [`debug`](#debug)
@@ -1033,6 +1035,34 @@ compare-elements-size-false: ("element1", "//element2", ("y"))
 // Compare the width and the height.
 compare-elements-size-false: ("//element1", "//element2", ("x", "y"))
 compare-elements-size-false: ("element1", "element2", ("y", "x"))
+```
+
+#### compare-elements-size-near
+
+**compare-elements-size-near** command allows you to check that two DOM elements' width and/or height are within the given than the given pixel range. Examples:
+
+```
+// Compare the width.
+compare-elements-size-near: ("//element1", "element2", {"x": 1})
+// Compare the height
+compare-elements-size-near: ("element1", "//element2", {"y": 4})
+// Compare the width and the height.
+compare-elements-size-near: ("//element1", "//element2", {"x": 2, "y": 1})
+compare-elements-size-near: ("element1", "element2", {"y": 1, "x": 2})
+```
+
+#### compare-elements-size-near-false
+
+**compare-elements-size-near-false** command allows you to check that two DOM elements' width and/or height differ by more than the given pixel range. If one of the elements doesn't exist, the command will fail. Examples:
+
+```
+// Compare the width.
+compare-elements-size-near-false: ("//element1", "element2", {"x": 1})
+// Compare the height
+compare-elements-size-near-false: ("element1", "//element2", {"y": 4})
+// Compare the width and the height.
+compare-elements-size-near-false: ("//element1", "//element2", {"x": 2, "y": 1})
+compare-elements-size-near-false: ("element1", "element2", {"y": 1, "x": 2})
 ```
 
 #### compare-elements-text
