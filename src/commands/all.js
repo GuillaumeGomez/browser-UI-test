@@ -52,6 +52,8 @@ module.exports = {
     'parseCompareElementsPropertyFalse': compare.parseCompareElementsPropertyFalse,
     'parseCompareElementsSize': compare.parseCompareElementsSize,
     'parseCompareElementsSizeFalse': compare.parseCompareElementsSizeFalse,
+    'parseCompareElementsSizeNear': compare.parseCompareElementsSizeNear,
+    'parseCompareElementsSizeNearFalse': compare.parseCompareElementsSizeNearFalse,
     'parseCompareElementsText': compare.parseCompareElementsText,
     'parseCompareElementsTextFalse': compare.parseCompareElementsTextFalse,
     'parseDebug': context_setters.parseDebug,

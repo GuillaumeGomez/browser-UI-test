@@ -817,6 +817,87 @@ function parseCompareElementsSizeFalse(parser) {
     return parseCompareElementsSizeInner(parser, true);
 }
 
+function parseCompareElementsSizeNearInner(parser, assertFalse) {
+    const ret = parseCompareElementsPositionNearCommon(parser, assertFalse);
+    if (ret.error !== undefined) {
+        return ret;
+    }
+    const warnings = ret.entries.warnings;
+    let code = `\
+function browserGetElementSizes1(e) {
+${indentString(getSizes(ret.selector1), 1)}
+    return [Math.round(width), Math.round(height)];
+}
+function browserGetElementSizes2(e) {
+${indentString(getSizes(ret.selector2), 1)}
+    return [Math.round(width), Math.round(height)];
+}
+function browserCompareValuesNear(v1, v2, kind, maxDelta) {
+    delta = Math.abs(v1 - v2);
+    if (delta > maxDelta) {
+        err = "delta for " + kind + " values too large: " + delta + " > " + maxDelta;
+    }
+    ${ret.errHandling}
+}
+const [width1, height1] = browserGetElementSizes1(elem1);
+const [width2, height2] = browserGetElementSizes2(elem2);
+let err = null;
+let delta;
+`;
+    let added = 0;
+    for (const [key, value] of Object.entries(ret.entries.values)) {
+        const v = parseInt(value.value, 10);
+        if (key !== 'width' && key !== 'height') {
+            return {
+                'error': 'Only accepted keys are "width" and "height", found `' +
+                    `"${key}"\` (in \`${ret.tuple[2].getErrorText()}\`)`,
+            };
+        } else if (v < 0) {
+            return {
+                'error': `Delta cannot be negative (in \`"${key}": ${v}\`)`,
+            };
+        } else if (v === 0) {
+            warnings.push(
+                `Delta is 0 for "${key}", maybe try to use \`compare-elements-size\` instead?`);
+        }
+        if (key === 'width') {
+            code += `browserCompareValuesNear(width1, width2, "width", ${v});\n`;
+        } else if (key === 'height') {
+            code += `browserCompareValuesNear(height1, height2, "height", ${v});\n`;
+        }
+        added += 1;
+    }
+
+    const varName = 'parseCompareElementsSizeNear';
+    let instructions = getAndSetElements(ret.selector1, varName + '1', false) + '\n' +
+        getAndSetElements(ret.selector2, varName + '2', false) + '\n';
+    if (added !== 0) {
+        instructions += `\
+await page.evaluate((elem1, elem2) => {
+${code}}, ${varName}1, ${varName}2);`;
+    }
+    return {
+        'instructions': [instructions],
+        'wait': false,
+        'checkResult': true,
+        'warnings': warnings,
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", {"width"|"height": number}))
+function parseCompareElementsSizeNear(parser) {
+    return parseCompareElementsSizeNearInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", {"width"|"height": number})
+function parseCompareElementsSizeNearFalse(parser) {
+    return parseCompareElementsSizeNearInner(parser, true);
+}
+
 module.exports = {
     'parseCompareElementsAttribute': parseCompareElementsAttribute,
     'parseCompareElementsAttributeFalse': parseCompareElementsAttributeFalse,
@@ -830,6 +911,8 @@ module.exports = {
     'parseCompareElementsPropertyFalse': parseCompareElementsPropertyFalse,
     'parseCompareElementsSize': parseCompareElementsSize,
     'parseCompareElementsSizeFalse': parseCompareElementsSizeFalse,
+    'parseCompareElementsSizeNear': parseCompareElementsSizeNear,
+    'parseCompareElementsSizeNearFalse': parseCompareElementsSizeNearFalse,
     'parseCompareElementsText': parseCompareElementsText,
     'parseCompareElementsTextFalse': parseCompareElementsTextFalse,
 };
