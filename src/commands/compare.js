@@ -633,8 +633,6 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
         return entries;
     }
 
-    const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
-
     const selector1 = tuple[0].getSelector();
     if (selector1.error !== undefined) {
         return selector1;
@@ -647,55 +645,58 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
     const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
         getAndSetElements(selector2, varName + '2', false) + '\n';
 
+    let errHandling;
+    if (assertFalse) {
+        errHandling = 'if (err === null) { throw "comparison didn\'t fail"; }';
+    } else {
+        errHandling = 'if (err !== null) { throw err; }';
+    }
+
     const warnings = entries.warnings;
     let code = '';
     for (const [key, value] of Object.entries(entries.values)) {
-        const v = value.value;
-        if (key === 'x') {
-            if (v < 0) {
-                return {
-                    'error': `Delta cannot be negative (in \`"x": ${v}\`)`,
-                };
-            } else if (v === '0') {
-                warnings.push(
-                    'Delta is 0 for "X", maybe try to use `compare-elements-position` instead?');
-            }
-            code += 'function checkX(e1, e2) {\n' +
-                insertBefore +
-                'let x1 = e1.getBoundingClientRect().left;\n' +
-                'let x2 = e2.getBoundingClientRect().left;\n' +
-                'let delta = Math.abs(x1 - x2);\n' +
-                `if (delta > ${v}) {\n` +
-                `throw "delta X values too large: " + delta + " > ${v}";\n` +
-                '}\n' +
-                insertAfter +
-                '}\n' +
-                'checkX(elem1, elem2);\n';
-        } else if (key === 'y') {
-            if (v < 0) {
-                return {
-                    'error': `Delta cannot be negative (in \`"y": ${v}\`)`,
-                };
-            } else if (v === '0') {
-                warnings.push(
-                    'Delta is 0 for "Y", maybe try to use `compare-elements-position` instead?');
-            }
-            code += 'function checkY(e1, e2) {\n' +
-                insertBefore +
-                'let y1 = e1.getBoundingClientRect().top;\n' +
-                'let y2 = e2.getBoundingClientRect().top;\n' +
-                'let delta = Math.abs(y1 - y2);\n' +
-                `if (delta > ${v}) {\n` +
-                `throw "delta Y values too large: " + delta + " > ${v}";\n` +
-                '}\n' +
-                insertAfter +
-                '}\n' +
-                'checkY(elem1, elem2);\n';
-        } else {
+        const v = parseInt(value.value, 10);
+        if (key !== 'x' && key !== 'y') {
             return {
                 'error': 'Only accepted keys are "x" and "y", found `' +
                     `"${key}"\` (in \`${tuple[2].getErrorText()}\`)`,
             };
+        } else if (v < 0) {
+            return {
+                'error': `Delta cannot be negative (in \`"${key}": ${v}\`)`,
+            };
+        } else if (v === 0) {
+            warnings.push(
+                `Delta is 0 for "${key}", maybe try to use \`compare-elements-position\` instead?`);
+        }
+        if (key === 'x') {
+            code += `\
+function checkX(e1, e2) {
+    let err = null;
+    let x1 = e1.getBoundingClientRect().left;
+    let x2 = e2.getBoundingClientRect().left;
+    let delta = Math.abs(x1 - x2);
+    if (delta > ${v}) {
+        err = "delta X values too large: " + delta + " > ${v}";
+    }
+    ${errHandling}
+}
+checkX(elem1, elem2);
+`;
+        } else if (key === 'y') {
+            code += `\
+function checkY(e1, e2) {
+    let err = null;
+    let y1 = e1.getBoundingClientRect().top;
+    let y2 = e2.getBoundingClientRect().top;
+    let delta = Math.abs(y1 - y2);
+    if (delta > ${v}) {
+        err = "delta Y values too large: " + delta + " > ${v}";
+    }
+    ${errHandling}
+}
+checkY(elem1, elem2);
+`;
         }
     }
 
@@ -703,8 +704,7 @@ function parseCompareElementsPositionNearInner(parser, assertFalse) {
     if (code.length !== 0) {
         instructions += `\
 await page.evaluate((elem1, elem2) => {
-${code}
-}, ${varName}1, ${varName}2);`;
+${code}}, ${varName}1, ${varName}2);`;
     }
     return {
         'instructions': [instructions],

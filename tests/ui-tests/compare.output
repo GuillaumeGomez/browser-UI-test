@@ -1,15 +1,17 @@
 => Starting doc-ui tests...
 
 compare... FAILED
+[WARNING] line 15: Delta is 0 for "x", maybe try to use `compare-elements-position` instead?
+
 [ERROR] (line 4) Error: Evaluation failed: clientHeight: `24` !== `6`: for command `compare-elements-property: ("header", "#the-input", ["clientHeight"])`
 [ERROR] (line 10) assert didn't fail: for command `compare-elements-property-false: ("#useless\.input", "#the-input", ["clientHeight"])`
-[ERROR] (line 17) Error: Evaluation failed: different Y values: 24 != 34: for command `compare-elements-position: ("#the-input", "#useless\.input", ("y"))`
-[ERROR] (line 18) Error: Evaluation failed: comparison didn't fail: for command `compare-elements-position-false: ("#the-input", "#useless\.input", ("x"))`
-[ERROR] (line 19) Error: Evaluation failed: assert didn't fail: for command `compare-elements-position-near-false: ("#the-input", "#useless\.input", {"x": 1, "y": 12})`
-[ERROR] (line 24) Error: Evaluation failed: assert didn't fail: for command `compare-elements-css-false: ("#the-input", "#useless\.input", ["width"])`
-[ERROR] (line 25) Error: Evaluation failed: CSS property `width` did not match: 1000px != 37.5px: for command `compare-elements-css: ("#the-input", "#js-call", ["width"])`
-[ERROR] (line 30) Error: Evaluation failed: assert didn't fail: for command `compare-elements-attribute-false: (".content .right", ".content .left", ["data-whatever"])`
-[ERROR] (line 31) Error: Evaluation failed: class: right !== left: for command `compare-elements-attribute: (".content .right", ".content .left", ["class"])`
+[ERROR] (line 19) Error: Evaluation failed: different Y values: 24 != 34: for command `compare-elements-position: ("#the-input", "#useless\.input", ("y"))`
+[ERROR] (line 20) Error: Evaluation failed: comparison didn't fail: for command `compare-elements-position-false: ("#the-input", "#useless\.input", ("x"))`
+[ERROR] (line 21) Error: Evaluation failed: comparison didn't fail: for command `compare-elements-position-near-false: ("#the-input", "#useless\.input", {"x": 1, "y": 12})`
+[ERROR] (line 26) Error: Evaluation failed: assert didn't fail: for command `compare-elements-css-false: ("#the-input", "#useless\.input", ["width"])`
+[ERROR] (line 27) Error: Evaluation failed: CSS property `width` did not match: 1000px != 37.5px: for command `compare-elements-css: ("#the-input", "#js-call", ["width"])`
+[ERROR] (line 32) Error: Evaluation failed: assert didn't fail: for command `compare-elements-attribute-false: (".content .right", ".content .left", ["data-whatever"])`
+[ERROR] (line 33) Error: Evaluation failed: class: right !== left: for command `compare-elements-attribute: (".content .right", ".content .left", ["class"])`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

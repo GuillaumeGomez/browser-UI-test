@@ -5,24 +5,27 @@ let parseCompareElementsPosNear2 = await page.$(\"b\");
 if (parseCompareElementsPosNear2 === null) { throw '\"b\" not found'; }
 await page.evaluate((elem1, elem2) => {
 function checkY(e1, e2) {
-let y1 = e1.getBoundingClientRect().top;
-let y2 = e2.getBoundingClientRect().top;
-let delta = Math.abs(y1 - y2);
-if (delta > 2) {
-throw \"delta Y values too large: \" + delta + \" > 2\";
-}
+    let err = null;
+    let y1 = e1.getBoundingClientRect().top;
+    let y2 = e2.getBoundingClientRect().top;
+    let delta = Math.abs(y1 - y2);
+    if (delta > 2) {
+        err = \"delta Y values too large: \" + delta + \" > 2\";
+    }
+    if (err !== null) { throw err; }
 }
 checkY(elem1, elem2);
 function checkX(e1, e2) {
-let x1 = e1.getBoundingClientRect().left;
-let x2 = e2.getBoundingClientRect().left;
-let delta = Math.abs(x1 - x2);
-if (delta > 1) {
-throw \"delta X values too large: \" + delta + \" > 1\";
-}
+    let err = null;
+    let x1 = e1.getBoundingClientRect().left;
+    let x2 = e2.getBoundingClientRect().left;
+    let delta = Math.abs(x1 - x2);
+    if (delta > 1) {
+        err = \"delta X values too large: \" + delta + \" > 1\";
+    }
+    if (err !== null) { throw err; }
 }
 checkX(elem1, elem2);
-
 }, parseCompareElementsPosNear1, parseCompareElementsPosNear2);""",
 ]
 wait = false
