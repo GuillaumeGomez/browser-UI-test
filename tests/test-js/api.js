@@ -718,6 +718,7 @@ function checkCompareElementsPositionNear(x, func) {
     func('((), "a", ("a"))', 'err-8');
     func('("a", "a", "b", "c")', 'err-9');
     func('("a", "b", 1)', 'err-10');
+    func('("a", "b", {"x": -1})', 'err-11');
 
     func('("a", "b", ())', 'basic-1');
     func('("a", "b", (1))', 'basic-2');
