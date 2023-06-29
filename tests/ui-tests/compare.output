@@ -14,6 +14,8 @@ compare... FAILED
 [ERROR] (line 31) Error: Evaluation failed: CSS property `width` did not match: 1000px != 37.5px: for command `compare-elements-css: ("#the-input", "#js-call", ["width"])`
 [ERROR] (line 36) Error: Evaluation failed: assert didn't fail: for command `compare-elements-attribute-false: (".content .right", ".content .left", ["data-whatever"])`
 [ERROR] (line 37) Error: Evaluation failed: class: right !== left: for command `compare-elements-attribute: (".content .right", ".content .left", ["class"])`
+[ERROR] (line 42) Error: Evaluation failed: comparison didn't fail: for command `compare-elements-size-false: (".content .right", ".content .left", ("width"))`
+[ERROR] (line 43) Error: Evaluation failed: heights don't match: 14 != 1: for command `compare-elements-size: ("#another-one::before", ".content .left span", ("height"))`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

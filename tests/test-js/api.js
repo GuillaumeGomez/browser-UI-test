@@ -773,6 +773,43 @@ function checkCompareElementsProperty(x, func) {
     func('("a",\n "b",\n [\n"margin"])', 'multiline-2');
 }
 
+function checkCompareElementsSize(x, func) {
+    func('"a"', 'err-1');
+    func('1', 'err-2');
+    func('()', 'err-3');
+    func('[]', 'err-4');
+    func('("a")', 'err-5');
+    func('("a", 1)', 'err-6');
+    func('(1, "a", ("a"))', 'err-7');
+    func('((), "a", ("a"))', 'err-8');
+    func('("a", "a", "b", "c")', 'err-9');
+    func('("a", "b", 1)', 'err-10');
+    func('("a", "b", (1))', 'err-11');
+    func('("a", "b", ("width", "heighto"))', 'err-12');
+    func('("a", "b", ("width", "height", "width"))', 'err-13');
+    func('("a", "b", ("width", "height", "height"))', 'err-14');
+
+    func('("a", "b", ())', 'basic-1');
+    func('("a", "b", ("width"))', 'basic-2');
+    func('("a", "b", ("height"))', 'basic-3');
+    func('("a", "b", ("width", "height"))', 'basic-4');
+    func('("a", "b", ("height", "width"))', 'basic-5');
+
+    // Pseudo element
+    func('("a::after", "b", ("height", "width"))', 'pseudo-1');
+    func('("a", "b::after", ("height", "width"))', 'pseudo-2');
+    func('("a::after", "b::after", ("height", "width"))', 'pseudo-3');
+
+    // XPath
+    func('("//a", "b", ("height", "width"))', 'xpath-1');
+    func('("a", "//b", ("height", "width"))', 'xpath-2');
+    func('("//a", "//b", ("height", "width"))', 'xpath-3');
+
+    // Multiline
+    func('("a", \n"b", \n("width",\n "height", "height"))', 'multiline-1');
+    func('("a",\n "b", (\n"width"))', 'multiline-2');
+}
+
 function checkCompareElementsText(x, func) {
     func('"a"', 'err-1');
     func('1', 'err-2');
@@ -2290,6 +2327,20 @@ const TO_CHECK = [
         'func': checkCompareElementsProperty,
         'toCall': (x, e, name, o) => {
             return wrapper(parserFuncs.parseCompareElementsPropertyFalse, x, e, name, o);
+        },
+    },
+    {
+        'name': 'compare-elements-size',
+        'func': checkCompareElementsSize,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsSize, x, e, name, o);
+        },
+    },
+    {
+        'name': 'compare-elements-size-false',
+        'func': checkCompareElementsSize,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseCompareElementsSizeFalse, x, e, name, o);
         },
     },
     {

@@ -1,0 +1,38 @@
+instructions = [
+  """let parseCompareElementsSize1 = await page.$(\"a\");
+if (parseCompareElementsSize1 === null) { throw '\"a\" not found'; }
+let parseCompareElementsSize2 = await page.$(\"b\");
+if (parseCompareElementsSize2 === null) { throw '\"b\" not found'; }
+await page.evaluate((elem1, elem2) => {
+    function browserGetElementSizes1(e) {
+        const style = getComputedStyle(e, \"::after\");
+        let height = parseFloat(style[\"height\"]);
+        let width = parseFloat(style[\"width\"]);
+        if (style[\"box-sizing\"] !== \"border-box\") {
+            height += parseFloat(style[\"padding-top\"]) + parseFloat(style[\"padding-bottom\"]);
+            height += parseFloat(style[\"border-top-width\"]) + parseFloat(style[\"border-bottom-width\"]);
+            width += parseFloat(style[\"padding-left\"]) + parseFloat(style[\"padding-right\"]);
+            width += parseFloat(style[\"border-left-width\"]) + parseFloat(style[\"border-right-width\"]);
+        }
+        return [Math.round(width), Math.round(height)];
+    }
+    function browserGetElementSizes2(e) {
+        const height = e.offsetHeight;
+        const width = e.offsetWidth;
+        return [Math.round(width), Math.round(height)];
+    }
+    const [width1, height1] = browserGetElementSizes1(elem1);
+    const [width2, height2] = browserGetElementSizes2(elem2);
+    let err = null;
+    if (height1 !== height2) {
+        err = \"heights don't match: \" + height1 + \" != \" + height2;
+    }
+    if (err === null) { throw \"comparison didn't fail\"; }
+    if (width1 !== width2) {
+        err = \"widths don't match: \" + width1 + \" != \" + width2;
+    }
+    if (err === null) { throw \"comparison didn't fail\"; }
+}, parseCompareElementsSize1, parseCompareElementsSize2);""",
+]
+wait = false
+checkResult = true
