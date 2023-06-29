@@ -11,10 +11,12 @@ compare-elements-property-false: ("#useless\.input", "#the-input", ["clientHeigh
 // Should succeed.
 compare-elements-position: ("#the-input", "#useless\.input", ("x"))
 compare-elements-position-near: ("#the-input", "#useless\.input", {"x": 1, "y": 12})
-// Should emit a warning.
-compare-elements-position-near: ("#the-input", "#useless\.input", {"x": 0, "y": 12})
+compare-elements-position: ("#another-one::before", "#another-one::before", ("y", "x"))
+compare-elements-position-near: ("#another-one::before", "#another-one::before", {"y": 1, "x": 1})
 compare-elements-position-false: ("#the-input", "#useless\.input", ("y"))
 compare-elements-position-near-false: ("#the-input", "#useless\.input", {"y": 8})
+// Should emit a warning.
+compare-elements-position-near: ("#the-input", "#useless\.input", {"x": 0, "y": 12})
 // Should fail.
 compare-elements-position: ("#the-input", "#useless\.input", ("y"))
 compare-elements-position: ("#another-one::before", "#useless\.input", ("y", "x"))
