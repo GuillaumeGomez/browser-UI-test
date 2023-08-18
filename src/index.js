@@ -88,9 +88,9 @@ function getGlobalStyle(showText) {
     return css;
 }
 
-function parseTest(testName, content, logs, options) {
+function parseTest(testName, testPath, logs, options, content) {
     try {
-        const parser = new commands_parser.ParserWithContext(content, options);
+        const parser = new commands_parser.ParserWithContext(testPath, options, content);
         return {
             'file': testName,
             'parser': parser,
@@ -205,7 +205,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             'failOnRequestError': options.failOnRequestError,
             'jsErrors': [],
             'requestErrors': [],
-            'variables': context_parser.variables(),
+            'variables': options.variables,
             'setVariable': (varName, value) => {
                 if (typeof value === 'string') {
                     value = utils.escapeBackslahes(value);
@@ -297,8 +297,14 @@ async function runAllCommands(loaded, logs, options, browser) {
                     warnings.push(`line ${command['line']}: ${warning}`);
                 }
             }
-            if (Object.prototype.hasOwnProperty.call(command, 'error')) {
+            // FIXME: This is ugly to have both 'error' and 'errors'. Clean that up!
+            if (command['error'] !== undefined) {
                 error_log += `[ERROR] line ${command['line']}: ${command['error']}`;
+                break;
+            } else if (command['errors'] !== undefined && command['errors'].length > 0) {
+                error_log += command['errors'].map(e => {
+                    return `[ERROR] line ${e['line']}: ${e['message']}`;
+                }).join('\n');
                 break;
             }
             let failed = false;
@@ -546,8 +552,7 @@ async function innerRunTests(logs, options, browser) {
 
         for (const file of allFiles) {
             total += 1;
-            const basename = path.basename(file);
-            const testName = basename.substr(0, basename.length - 5);
+            const testName = utils.extractFileNameWithoutExtension(file);
             const optionsCopy = options.clone();
 
             // To make the Options type validation happy.
@@ -556,7 +561,7 @@ async function innerRunTests(logs, options, browser) {
 
             const callback = innerRunTestCode(
                 testName,
-                utils.readFile(file),
+                file,
                 optionsCopy,
                 browser,
                 false,
@@ -600,7 +605,15 @@ async function innerRunTests(logs, options, browser) {
     return [logs.logs, total - successes];
 }
 
-async function innerRunTestCode(testName, content, options, browser, showLogs, checkTestFolder) {
+async function innerRunTestCode(
+    testName,
+    testPath,
+    options,
+    browser,
+    showLogs,
+    checkTestFolder,
+    content = null,
+) {
     const logs = new Logs(showLogs);
 
     if (checkTestFolder === true && options.testFolder.length > 0) {
@@ -608,8 +621,15 @@ async function innerRunTestCode(testName, content, options, browser, showLogs, c
     }
 
     try {
-        const load = parseTest(path.normalize(testName), content, logs, options);
-        if (load === null) {
+        const loaded = parseTest(testName, testPath, logs, options, content);
+        if (loaded === null) {
+            return [logs.logs, 1];
+        } else if (loaded.parser.get_parser_errors().length !== 0) {
+            const errors = loaded.parser.get_parser_errors()
+                .map(e => `line ${e.line}: ${e.message}`)
+                .join('\n');
+            logs.append(testName + '... FAILED');
+            logs.append(`Syntax errors:\n${errors}`);
             return [logs.logs, 1];
         }
 
@@ -617,7 +637,7 @@ async function innerRunTestCode(testName, content, options, browser, showLogs, c
         if (browser === null) {
             browser = await utils.loadPuppeteer(options);
         }
-        const ret = await runAllCommands(load, logs, options, browser);
+        const ret = await runAllCommands(loaded, logs, options, browser);
 
         if (needCloseBrowser) {
             await browser.close();
@@ -628,7 +648,7 @@ async function innerRunTestCode(testName, content, options, browser, showLogs, c
         }
     } catch (error) {
         logs.append(`An exception occured: ${error.message}\n== STACKTRACE ==\n` +
-            `${new Error().stack}`);
+            `${error.stack}`);
         return [logs.logs, 1];
     }
 
@@ -637,7 +657,7 @@ async function innerRunTestCode(testName, content, options, browser, showLogs, c
 
 function checkExtras(extras) {
     if (extras === undefined || extras === null) {
-        extras = {};
+        extras = Object.create(null);
     }
     let browser;
     if (extras['browser'] === undefined) {
@@ -684,7 +704,7 @@ async function runTestCode(testName, content, extras = null) {
 
     const [browser, options, showLogs] = checkExtras(extras);
 
-    return await innerRunTestCode(testName, content, options, browser, showLogs, true);
+    return await innerRunTestCode(testName, '', options, browser, showLogs, true, content);
 }
 
 // `extras` values are as follows:
@@ -718,10 +738,14 @@ async function runTest(testPath, extras = null) {
         return ['', 1];
     }
 
-    const basename = path.basename(testPath);
-    const testName = basename.substr(0, basename.length - 5);
     return innerRunTestCode(
-        testName, utils.readFile(testPath), optionsCopy, browser, showLogs, checkTestFolder);
+        utils.extractFileNameWithoutExtension(testPath),
+        testPath,
+        optionsCopy,
+        browser,
+        showLogs,
+        checkTestFolder,
+    );
 }
 
 // `extras` values are as follows:

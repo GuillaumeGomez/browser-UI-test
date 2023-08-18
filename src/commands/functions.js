@@ -47,7 +47,6 @@ argument cannot be named like this`,
         }
     }
 
-    const blockCode = tuple[2].getBlockCode();
     let warnings = undefined;
     const func_name = tuple[0].value;
     if (Object.prototype.hasOwnProperty.call(parser.definedFunctions, func_name)) {
@@ -55,7 +54,7 @@ argument cannot be named like this`,
     }
     parser.definedFunctions[func_name] = {
         'arguments': args.map(e => e.value),
-        'content': blockCode,
+        'commands': tuple[2].value,
         'start_line': tuple[2].blockLine,
     };
     return {
@@ -69,7 +68,7 @@ argument cannot be named like this`,
 //
 // Possible inputs:
 //
-// * ("function name", [ident arguments], [("command name", command_args)])
+// * ("function name", [ident arguments], block { commands })
 function parseCallFunction(parser) {
     const elems = parser.elems;
     if (elems.length === 0) {

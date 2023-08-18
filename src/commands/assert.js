@@ -647,7 +647,8 @@ function parseAssertCountInner(parser, assertFalse) {
         };
     } else if (tuple[1].kind !== 'number') {
         return {
-            'error': `expected second argument to be a number, found \`${tuple[1].getRaw()}\``,
+            'error': `expected second argument to be a number, found \
+\`${tuple[1].getErrorText()}\``,
         };
     }
 
@@ -722,7 +723,8 @@ function parseAssertTextInner(parser, assertFalse) {
         };
     } else if (tuple[1].kind !== 'string') {
         return {
-            'error': `expected second argument to be a string, found \`${tuple[1].getRaw()}\``,
+            'error': `expected second argument to be a string, found \`\
+${tuple[1].getErrorText()}\``,
         };
     } else if (tuple.length === 3) {
         const ret = fillEnabledChecks(tuple[2], identifiers, enabledChecks, warnings, 'third');
@@ -798,7 +800,7 @@ function parseAssertTextFalse(parser) {
 }
 
 function parseAssertInner(parser, assertFalse) {
-    const err = 'expected a tuple, a CSS selector or an XPath';
+    const err = 'expected a boolean, a CSS selector or an XPath';
     const elems = parser.elems;
 
     let tuple;
@@ -806,7 +808,7 @@ function parseAssertInner(parser, assertFalse) {
         return {'error': err + ', found nothing'};
     } else if (elems.length !== 1) {
         return {'error': `expected a CSS selector, an XPath or a boolean, \
-found \`${parser.getRawArgs()}\` (${parser.getArticleKind()})`};
+found \`${parser.getRawArgs()}\``};
     } else if (elems[0].kind === 'string' || elems[0].kind === 'boolean') {
         tuple = elems;
     } else if (elems[0].kind === 'tuple') {
@@ -819,11 +821,13 @@ found \`${parser.getRawArgs()}\` (${parser.getArticleKind()})`};
         } else if (tuple[0].kind !== 'string' && tuple[0].kind !== 'boolean') {
             return {
                 'error': 'expected argument to be a CSS selector, an XPath or a boolean, ' +
-                    `found \`${tuple[0].getRaw()}\` (${tuple[0].getArticleKind()})`,
+                    `found \`${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
             };
         }
     } else {
-        return {'error': err + `, found \`${elems[0].getRaw()}\` (${elems[0].getArticleKind()})`};
+        return {
+            'error': err + `, found \`${elems[0].getErrorText()}\` (${elems[0].getArticleKind()})`,
+        };
     }
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);

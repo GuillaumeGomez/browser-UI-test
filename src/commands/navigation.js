@@ -18,28 +18,28 @@ function parseGoTo(parser) {
         return {'error': `Expected a URL, found \`${parser.getRawArgs()}\``};
     }
 
-    let line = parser.elems[0];
-    if (line.kind !== 'string') {
-        return {'error': `Expected a URL (inside a string), found \`${line.getArticleKind()}\` (\`\
-${line.getErrorText()}\`)`};
+    let path = parser.elems[0];
+    if (path.kind !== 'string') {
+        return {'error': `Expected a URL (inside a string), found \`${path.getArticleKind()}\` (\`\
+${path.getErrorText()}\`)`};
     }
 
-    line = line.value.trim();
+    path = path.value.trim();
     // There will always be one element...
     let goto_arg;
     const permissions = 'await arg.browser.overridePermissions(page.url(), arg.permissions);';
     // We just check if it goes to an HTML file, not checking much though...
-    if (line.startsWith('http://') === true
-        || line.startsWith('https://') === true
-        || line.startsWith('www.') === true
-        || line.startsWith('file://') === true) {
-        goto_arg = `"${cleanString(line)}"`;
-    } else if (line.startsWith('.')) {
-        goto_arg = `page.url().split("/").slice(0, -1).join("/") + "/${cleanString(line)}"`;
-    } else if (line.startsWith('/')) {
-        goto_arg = `page.url().split("/").slice(0, -1).join("/") + "${cleanString(line)}"`;
+    if (path.startsWith('http://') === true
+        || path.startsWith('https://') === true
+        || path.startsWith('www.') === true
+        || path.startsWith('file://') === true) {
+        goto_arg = `"${cleanString(path)}"`;
+    } else if (path.startsWith('.')) {
+        goto_arg = `page.url().split("/").slice(0, -1).join("/") + "/${cleanString(path)}"`;
+    } else if (path.startsWith('/')) {
+        goto_arg = `page.url().split("/").slice(0, -1).join("/") + "${cleanString(path)}"`;
     } else {
-        return {'error': `a relative path or a full URL was expected, found \`${line}\``};
+        return {'error': `a relative path or a full URL was expected, found \`${path}\``};
     }
     const command = `\
 const url = ${goto_arg};

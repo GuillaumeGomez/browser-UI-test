@@ -95,7 +95,7 @@ class Options {
         this.noSandbox = false;
         this.allowFileAccessFromFiles = false;
         this.testFiles = [];
-        this.variables = {};
+        this.variables = Object.create(null);
         this.extensions = [];
         this.browser = 'chrome';
         this.incognito = false;
@@ -359,11 +359,12 @@ class Options {
         const validateField = (fieldName, expectedType) => {
             if (expectedType === 'array') {
                 if (Array.isArray(this[fieldName]) !== true) {
-                    throw new Error(`\`Options.${fieldName}\` field is supposed to be an array!`);
+                    throw new Error(`\`Options.${fieldName}\` field is supposed to be an array! ` +
+                        `(Type is ${typeof this[fieldName]})`);
                 }
             } else if (typeof this[fieldName] !== expectedType) {
                 throw new Error(`\`Options.${fieldName}\` field is supposed to be a ` +
-                    `${expectedType}!`);
+                    `${expectedType}! (Type is ${typeof this[fieldName]})`);
             }
         };
         validateField('runId', 'string');
@@ -390,8 +391,9 @@ class Options {
         validateField('screenshotOnFailure', 'boolean');
         validateField('nbThreads', 'number');
         // eslint-disable-next-line eqeqeq
-        if (this.variables.constructor != Object) {
-            throw new Error('`Options.variables` field is supposed to be a dictionary-like!');
+        if (this.variables.constructor != Object && typeof this.variables !== 'object') {
+            throw new Error('`Options.variables` field is supposed to be a dictionary-like! ' +
+                `(Type is ${typeof this.variables})`);
         }
         if (BROWSERS.indexOf(this.browser) === -1) {
             const browsers = BROWSERS.map(e => `"${e}"`).join(' or ');

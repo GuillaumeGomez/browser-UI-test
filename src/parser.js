@@ -1,4 +1,4 @@
-const { escapeBackslahes, getVariableValue, RESERVED_VARIABLE_NAME } = require('./utils.js');
+const { escapeBackslahes, RESERVED_VARIABLE_NAME } = require('./utils.js');
 
 const SUPPORTED_OPERATORS = ['>', '>=', '<', '<=', '==', '!=', '+', '-', '/', '*', '%', '||', '&&'];
 
@@ -197,7 +197,7 @@ function canDoMathOperation(kind) {
 }
 
 function isTypeCompatibleWith(kind, expected) {
-    if ([null, 'expression'].includes(kind)) {
+    if ([null, 'expression', 'variable'].includes(kind)) {
         // It means variables haven't been inferred so we can skip it.
         return true;
     }
@@ -215,7 +215,7 @@ function canBeCompared(kind1, kind2) {
     if (kind1 === kind2) {
         return true;
     }
-    const ok = [null, 'expression'];
+    const ok = [null, 'expression', 'variable'];
     if (ok.includes(kind1) || ok.includes(kind2)) {
         return true;
     }
@@ -267,9 +267,9 @@ class Element {
         this.value = value;
         this.startPos = startPos;
         this.endPos = endPos;
-        this.error = error;
-        this.line = line;
         this.fullText = fullText;
+        this.line = line;
+        this.error = error;
         if (typeof line !== 'number') {
             throw new Error(
                 `Element constructed with a line which is not a number but \`${typeof line}\``);
@@ -343,11 +343,20 @@ class Element {
         return this.kind === 'operator' && ['+', '-', '/', '*', '%'].includes(this.value);
     }
 
+    clone() {
+        return new this.constructor(
+            this.kind, this.value, this.startPos, this.endPos, this.fullText, this.line, this.error,
+        );
+    }
 }
 
 class CharElement extends Element {
     constructor(value, startPos, line, error = null) {
         super('char', value, startPos, startPos, value, line, error);
+    }
+
+    clone() {
+        return new this.constructor(this.value, this.startPos, this.line, this.error);
     }
 }
 
@@ -355,11 +364,21 @@ class OperatorElement extends Element {
     constructor(value, startPos, endPos, line, error = null) {
         super('operator', value, startPos, endPos, value, line, error);
     }
+
+    clone() {
+        return new this.constructor(this.value, this.startPos, this.endPos, this.line, this.error);
+    }
 }
 
 class ExpressionElement extends Element {
     constructor(value, startPos, endPos, fullText, line, error = null) {
         super('expression', value, startPos, endPos, fullText, line, error);
+    }
+
+    clone() {
+        return new this.constructor(
+            this.value, this.startPos, this.endPos, this.fullText, this.line, this.error,
+        );
     }
 }
 
@@ -367,7 +386,7 @@ class TupleElement extends Element {
     constructor(value, startPos, endPos, fullText, line, foundSeparator, error = null) {
         super('tuple', value, startPos, endPos, fullText, line, error);
         this.foundSeparator = foundSeparator;
-        this.canBeExpression = this.value.length === 1 && this.foundSeparator === 0;
+        this.canBeExpression = this.foundSeparator === 0;
     }
 
     isRecursive() {
@@ -376,6 +395,14 @@ class TupleElement extends Element {
 
     displayInCode() {
         return '[' + this.value.map(e => e.displayInCode()).join(', ') + ']';
+    }
+
+    clone() {
+        const elems = this.value.map(elem => elem.clone());
+        return new this.constructor(
+            elems, this.startPos, this.endPos, this.fullText, this.line, this.foundSeparator,
+            this.error,
+        );
     }
 }
 
@@ -383,6 +410,7 @@ class ArrayElement extends Element {
     constructor(value, startPos, endPos, fullText, line, foundSeparator, error = null) {
         super('array', value, startPos, endPos, fullText, line, error);
         this.foundSeparator = foundSeparator;
+        this.needCheck = false;
     }
 
     isRecursive() {
@@ -391,6 +419,41 @@ class ArrayElement extends Element {
 
     displayInCode() {
         return '[' + this.value.map(e => e.displayInCode()).join(', ') + ']';
+    }
+
+    validate(checkVariables) {
+        const values = this.value;
+        if (checkVariables &&
+            (values[0].kind === 'variable' || isExpressionCompatible(values[0]))
+        ) {
+            this.needCheck = true;
+            return null;
+        }
+
+        for (let i = 1; i < values.length; ++i) {
+            if (checkVariables &&
+                (values[i].kind === 'variable' || isExpressionCompatible(values[i]))
+            ) {
+                this.needCheck = true;
+                return null;
+            } else if (values[i].kind !== values[0].kind) {
+                this.error = 'all array\'s elements must be of the same kind: expected ' +
+                    `array of \`${values[0].kind}\` (because the first element is of this ` +
+                    `kind), found \`${values[i].kind}\` at position ${i}`;
+                return this.error;
+            }
+        }
+        return null;
+    }
+
+    clone() {
+        const elems = this.value.map(elem => elem.clone());
+        const ret = new this.constructor(
+            elems, this.startPos, this.endPos, this.fullText, this.line, this.foundSeparator,
+            this.error,
+        );
+        ret.needCheck = this.needCheck;
+        return ret;
     }
 }
 
@@ -402,12 +465,21 @@ class StringElement extends Element {
     displayInCode() {
         return `"${cleanString(this.value)}"`;
     }
+
+    clone() {
+        return new this.constructor(
+            this.value, this.startPos, this.endPos, this.fullText, this.line, this.error,
+        );
+    }
 }
 
 class IdentElement extends Element {
     constructor(value, startPos, endPos, line, error = null) {
         const kind = value === 'true' || value === 'false' ? 'boolean' : 'ident';
         super(kind, value, startPos, endPos, value, line, error);
+    }
+    clone() {
+        return new this.constructor(this.value, this.startPos, this.endPos, this.line, this.error);
     }
 }
 
@@ -417,6 +489,10 @@ class NumberElement extends Element {
         value = String(value);
         this.isFloat = value.includes('.');
         this.isNegative = value.startsWith('-');
+    }
+
+    clone() {
+        return new this.constructor(this.value, this.startPos, this.endPos, this.line, this.error);
     }
 }
 
@@ -435,89 +511,65 @@ class JsonElement extends Element {
         });
         return '{' + p.join(', ') + '}';
     }
+
+    clone() {
+        const elems = this.value.map(elem => {
+            return {'key': elem.key, 'value': elem.value.clone()};
+        });
+        return new this.constructor(
+            elems, this.startPos, this.endPos, this.fullText, this.line, this.error,
+        );
+    }
 }
 
 class UnknownElement extends Element {
     constructor(value, startPos, endPos, line, error = null) {
         super('unknown', value, startPos, endPos, value, line, error);
     }
+
+    clone() {
+        return new this.constructor(
+            this.value, this.startPos, this.endPos, this.line, this.error,
+        );
+    }
 }
 
 class VariableElement extends Element {
-    constructor(value, startPos, endPos, line, error = null) {
-        super('variable', value, startPos, endPos, value, line, error);
+    constructor(value, startPos, endPos, fullText, line, error = null) {
+        super('variable', value, startPos, endPos, fullText, line, error);
+    }
+
+    clone() {
+        return new this.constructor(
+            this.value, this.startPos, this.endPos, this.fullText, this.line, this.error,
+        );
     }
 }
 
 class BlockElement extends Element {
-    constructor(startPos, endPos, line, parser, error = null) {
-        if (error !== null) {
-            const fullText = parser.text.slice(startPos, parser.pos);
-            super(
-                'block',
-                fullText,
-                startPos,
-                parser.pos,
-                fullText,
-                line,
-                error,
-            );
-            return;
-        }
-        parser.skipWhiteSpaceCharacters();
-        let c = parser.getCurrentChar();
-        if (c !== '{') {
-            const kind = c === null ? 'nothing' : `\`${c}\``;
-            const fullText = parser.text.slice(startPos, parser.pos);
-            super(
-                'block',
-                fullText,
-                startPos,
-                parser.pos,
-                fullText,
-                line,
-                `Expected \`{\` after \`block\` keyword, found ${kind}`,
-            );
-            return;
-        }
-        const blockLine = parser.currentLine;
-        // We go after the `{`.
-        parser.increasePos();
-        // We save the current command and elems to prevent them to be overwrote when parsing
-        // the `block` content.
-        const elems = parser.elems;
-        const command = parser.command;
-        // We disable the variables inferrence so we can keep the code "as is".
-        parser.inferVariablesValue = false;
-        const blockStart = parser.pos;
-        while (c !== '}') {
-            if (parser.parseNextCommand(['\n', '}']) !== true) {
-                if (parser.error !== null) {
-                    parser.error += ' (in `block { ... }`)';
-                    error = parser.error;
-                }
-                break;
-            }
-            parser.skipWhiteSpaceCharacters();
-            c = parser.getCurrentChar();
-            if (c === null) {
-                parser.error = 'Missing `}` to end the block';
-                error = parser.error;
-                break;
-            }
-        }
-        // We re-enable the variables inference now that we're done with this parsing.
-        parser.inferVariablesValue = true;
-        // We set back the values before the `block` parsing.
-        parser.elems = elems;
-        parser.command = command;
-
-        const fullText = parser.text.slice(startPos, parser.pos + 1);
+    constructor(
+        fullText,
+        blockCode,
+        blockLine,
+        elems,
+        startPos,
+        endPos,
+        line,
+        hasVariable,
+        error = null,
+    ) {
         super(
-            'block', fullText, startPos, parser.pos, fullText, line, error,
+            'block',
+            elems,
+            startPos,
+            endPos,
+            fullText,
+            line,
+            error,
         );
-        this.blockCode = parser.text.slice(blockStart, parser.pos);
+        this.blockCode = blockCode;
         this.blockLine = blockLine;
+        this.hasVariable = hasVariable;
     }
 
     getErrorText() {
@@ -528,56 +580,64 @@ class BlockElement extends Element {
     getBlockCode() {
         return this.blockCode;
     }
+
+    clone() {
+        return new this.constructor(
+            this.fullText,
+            this.blockCode,
+            this.blockLine,
+            this.value.map(e => e.clone()),
+            this.startPos,
+            this.endPos,
+            this.line,
+            this.hasVariable,
+            this.error,
+        );
+    }
+}
+
+function addErrorTo(message, line, isFatal, errors) {
+    if (message === null) {
+        throw new Error('Error with `null` message');
+    }
+    let addError = true;
+    if (errors.length > 0) {
+        const last = errors[errors.length - 1];
+        addError = last.message !== message || last.line !== line;
+    }
+    if (addError) {
+        errors.push({
+            'message': message,
+            'isFatal': isFatal,
+            'line': line,
+        });
+    }
 }
 
 class Parser {
-    constructor(text, variables, functionArgs = null, definedFunctions = null) {
+    constructor(text) {
         // We have to put this import here and not at the top of the file to avoid circular import.
         const { ORDERS } = require('./commands.js');
 
         this.text = text;
         this.pos = 0;
         this.elems = [];
-        this.error = null;
+        this.errors = [];
         this.orders = ORDERS;
-        if (typeof variables === 'undefined' || variables === null) {
-            variables = {};
-        }
-        this.variables = Object.create(null);
-        // We don't copy the map, only its content.
-        for (const key in variables) {
-            this.variables[key] = variables[key];
-        }
         // For humans, the first line isn't 0 but 1.
         this.currentLine = 1;
+        this.commandLine = 1;
         this.command = null;
-        this.argsStart = 0;
-        this.argsEnd = 0;
-        this.forceVariableAsString = false;
-        this.definedFunctions = definedFunctions === null ? Object.create(null) : definedFunctions;
-        this.functionArgs = functionArgs;
-        this.inferVariablesValue = true;
+        this.hasFatalError = false;
+        this.hasVariable = false;
+        this.commandStart = 0;
     }
 
-    setError(error) {
-        if (this.error === null) {
-            this.error = error;
+    setError(error, isFatal) {
+        addErrorTo(error, this.currentLine, isFatal, this.errors);
+        if (isFatal) {
+            this.hasFatalError = true;
         }
-    }
-
-    getRawArgs() {
-        if (this.argsEnd - this.argsStart > 100) {
-            return this.text.slice(this.argsStart, this.argsStart + 100) + '…';
-        }
-        return this.text.slice(this.argsStart, this.argsEnd);
-    }
-
-    getOriginalCommand() {
-        return this.text.slice(this.commandStart, this.argsEnd);
-    }
-
-    getOriginalWithIndexes(start, end) {
-        return this.text.slice(start, end);
     }
 
     getCurrentChar() {
@@ -587,26 +647,49 @@ class Parser {
         return null;
     }
 
-    parseNextCommand(endChars = null) {
-        this.elems = [];
-        this.error = null;
+    parseNextCommand(endChars = null, pushTo = null) {
+        if (pushTo === null) {
+            this.elems = [];
+            pushTo = this.elems;
+            this.errors = [];
+        }
+        const nbErrors = this.errors.length;
+        this.hasFatalError = false;
+        this.hasVariable = false;
         // First, we skip all unneeded characters...
         this.skipWhiteSpaceCharacters();
+        this.commandLine = this.currentLine;
         this.command = this.extractNextCommandName(endChars);
-        if (this.command === null || this.error !== null) {
-            return false;
+        if (this.errors.length > nbErrors) {
+            return {
+                'errors': true,
+                'finished': false,
+            };
+        } else if (this.command === null) {
+            return {
+                'errors': false,
+                'finished': true,
+            };
         }
+        this.commandLine = this.currentLine;
         const order = this.command.getRaw().toLowerCase();
         if (!Object.prototype.hasOwnProperty.call(this.orders, order)) {
-            this.error = `Unknown command "${order}"`;
-            return false;
+            this.setError(`Unknown command "${order}"`, false);
         }
         if (endChars === null) {
             endChars = ['\n'];
         }
         // Now that we have the command, let's get its arguments!
-        this.parse(endChars);
-        return this.error === null;
+        this.parse(endChars, pushTo);
+        if (this.errors.length === nbErrors) {
+            const validator = new ExpressionsValidator(this.getElems(pushTo), false, this.text);
+            this.errors.push(...validator.errors);
+            this.hasFatalError = validator.hasFatalError;
+        }
+        return {
+            'errors': this.errors.length !== nbErrors || this.hasFatalError,
+            'finished': false,
+        };
     }
 
     skipWhiteSpaceCharacters() {
@@ -655,7 +738,7 @@ class Parser {
             if (this.isCommentStart()) {
                 this.parseComment(tmp);
                 if (tmp.length !== 0) {
-                    this.setError('Unexpected `/` when parsing command');
+                    this.setError('Unexpected `/` when parsing command', true);
                     return null;
                 }
             } else if (isWhiteSpace(c)) {
@@ -667,7 +750,7 @@ class Parser {
             } else if (endChars !== null && endChars.includes(c)) {
                 return null;
             } else {
-                this.setError(`Unexpected ${showChar(c)} when parsing command`);
+                this.setError(`Unexpected ${showChar(c)} when parsing command`, true);
                 return null;
             }
             this.increasePos();
@@ -689,10 +772,10 @@ class Parser {
                 // No need to check anything, if there is a comment, it means it'll be on two lines,
                 // which isn't allowed.
                 this.setError('Unexpected `/` when parsing command ' +
-                    `(after \`${command.getRaw()}\`)`);
+                    `(after \`${command.getRaw()}\`)`, true);
                 return null;
             } else if (c === '\n') {
-                this.setError('Backlines are not allowed between command identifier and `:`');
+                this.setError('Backlines are not allowed between command identifier and `:`', true);
                 return null;
             } else if (isWhiteSpace(c)) {
                 // Do nothing...
@@ -700,13 +783,14 @@ class Parser {
                 stop = true;
             } else {
                 this.setError(`Unexpected ${showChar(c)} when parsing command ` +
-                    `(after \`${command.getRaw()}\`)`);
+                    `(after \`${command.getRaw()}\`)`, true);
                 return null;
             }
             this.increasePos();
         }
         if (!stop) {
-            this.setError(`Missing \`:\` after command identifier (after \`${command.getRaw()}\`)`);
+            this.setError(
+                `Missing \`:\` after command identifier (after \`${command.getRaw()}\`)`, true);
             return null;
         }
         return command;
@@ -750,47 +834,71 @@ class Parser {
         return elems[elems.length - 1];
     }
 
-    parse(endChars = ['\n'], pushTo = null, separator = null, extra = '') {
-        if (pushTo === null) {
-            this.argsStart = this.pos;
-        }
+    parse(endChars = ['\n'], pushTo = null, separator = null, extra = '', exclude = null) {
         let prev = '';
         let endChar = null;
         let foundSeparator = 0;
         const skipBackline = !endChars.includes('\n');
+        if (exclude === null) {
+            exclude = [];
+        }
 
         const checker = (t, c, toCall) => {
             const elems = t.getElems(pushTo);
-            if (elems.length > 0 && prev !== separator) {
-                let msg;
-
-                if (separator === null) {
-                    if (endChars.length === 1) {
-                        msg = endChars[0] === '\n' ? 'nothing' : showChar(endChars[0]);
-                    } else {
-                        msg = endChars.map(e => showChar(e)).join(' or ');
-                    }
-                } else {
-                    if (c === '\n') {
-                        msg = showChar(separator);
-                    } else {
-                        const chars = endChars.map(e => showChar(e)).join(' or ');
-                        msg = `${showChar(separator)} or ${chars}`;
-                    }
-                }
-                const e = new CharElement(
-                    c, t.pos, this.currentLine,
-                    `expected ${msg}, found ${showChar(c)} after ` +
-                        `\`${showEnd(elems[elems.length - 1])}\``);
-                t.push(e, pushTo);
-                t.pos = t.text.length;
-            } else {
-                t[toCall](pushTo);
+            const nbElems = elems.length;
+            const isError = elems.length > 0 && prev !== separator;
+            const checkerNbErrors = this.errors.length;
+            t[toCall](pushTo);
+            if (!isError) {
                 prev = '';
+                return;
             }
+
+            const removedErrors = [];
+            while (this.errors.length > checkerNbErrors) {
+                removedErrors.push(this.errors.pop());
+            }
+            let msg;
+
+            if (separator === null) {
+                if (endChars.length === 1) {
+                    msg = endChars[0] === '\n' ? 'nothing' : showChar(endChars[0]);
+                } else {
+                    msg = endChars.filter(e => exclude.indexOf(e) === -1)
+                        .map(e => showChar(e))
+                        .join(' or ');
+                }
+            } else {
+                if (c === '\n') {
+                    msg = showChar(separator);
+                } else {
+                    const chars = endChars.filter(e => exclude.indexOf(e) === -1)
+                        .map(e => showChar(e))
+                        .join(' or ');
+                    msg = `${showChar(separator)} or ${chars}`;
+                }
+            }
+            let err;
+            const prevElem = elems[elems.length - 1];
+            if (nbElems === elems.length) {
+                err = `expected ${msg} before \`${showEnd(prevElem)}\`, found ${showChar(c)}`;
+            } else {
+                err = `expected ${msg} after \`${showEnd(elems[elems.length - 2])}\`, \
+found \`${showEnd(prevElem)}\``;
+            }
+            if (nbElems === elems.length) {
+                // In case no new element was added.
+                t.push(new CharElement(c, t.pos, this.currentLine, err), pushTo);
+            } else {
+                prevElem.error = err;
+            }
+            this.setError(err, nbElems === elems.length);
+            // We put back the errors we removed in the right order.
+            removedErrors.reverse();
+            this.errors.push(...removedErrors);
         };
 
-        while (this.error === null) {
+        while (!this.hasFatalError) {
             const c = this.getCurrentChar();
             if (c === null) {
                 break;
@@ -809,19 +917,19 @@ class Parser {
                 foundSeparator += 1;
                 const elems = this.getElems(pushTo);
                 if (elems.length === 0) {
-                    this.push(new CharElement(separator, this.pos, this.currentLine,
-                        `unexpected \`${separator}\` as first element`), pushTo);
-                    this.pos = this.text.length;
+                    const e = `unexpected \`${separator}\` as first element`;
+                    this.push(new CharElement(separator, this.pos, this.currentLine, e), pushTo);
+                    this.setError(e, false);
                 } else if (prev === separator) {
-                    this.push(new CharElement(separator, this.pos, this.currentLine,
-                        `unexpected \`${separator}\` after \`${separator}\``), pushTo);
-                    this.pos = this.text.length;
+                    const e = `unexpected \`${separator}\` after \`${separator}\``;
+                    this.push(new CharElement(separator, this.pos, this.currentLine, e), pushTo);
+                    this.setError(e, false);
                 } else if (elems[elems.length - 1].kind === 'char') {
                     // TODO: not sure if this block is useful...
                     const prevElem = elems[elems.length - 1].text;
-                    this.push(new CharElement(separator, this.pos, this.currentLine,
-                        `unexpected \`${separator}\` after \`${prevElem}\``), pushTo);
-                    this.pos = this.text.length;
+                    const e = `unexpected \`${separator}\` after \`${prevElem}\``;
+                    this.push(new CharElement(separator, this.pos, this.currentLine, e), pushTo);
+                    this.setError(e, false);
                 } else {
                     prev = separator;
                 }
@@ -879,17 +987,10 @@ class Parser {
                         const prevElem = elems[elems.length - 2].getErrorText();
                         el.error = `unexpected token \`${token}\` after \`${prevElem}\``;
                     }
-                    this.setError(el.error);
-                    this.pos = this.text.length;
+                    this.setError(el.error, false);
                 }
             }
             this.increasePos(true, skipBackline);
-        }
-        if (pushTo === null) {
-            this.argsEnd = this.pos;
-        }
-        if (this.error === null) {
-            this.handleExpressions(this.getElems(pushTo), false);
         }
         return [prev, endChar, foundSeparator];
     }
@@ -919,9 +1020,10 @@ class Parser {
                 ),
                 pushTo,
             );
+            this.setError(error, false);
         };
 
-        while (this.error === null) {
+        while (!this.hasFatalError) {
             const last = this.getLastElem(elems);
             const prevIsOperator = last !== null && last.kind === 'operator';
             const c = this.getCurrentChar();
@@ -935,6 +1037,8 @@ class Parser {
                         stop = false;
                     }
                 } else if (c === null && endChars.includes(')')) {
+                    const err = `\
+missing \`)\` at the end of the expression started line ${startLine}`;
                     this.push(
                         new ExpressionElement(
                             elems,
@@ -942,10 +1046,11 @@ class Parser {
                             this.pos,
                             this.text.substring(start, this.pos + 1),
                             startLine,
-                            `missing \`)\` at the end of the expression started line ${startLine}`,
+                            err,
                         ),
                         pushTo,
                     );
+                    this.setError(err, false);
                     return;
                 }
                 if (stop) {
@@ -1003,21 +1108,21 @@ class Parser {
             startLine,
         );
         this.push(expr, pushTo);
-        if (this.error !== null) {
+        if (this.hasFatalError) {
             return;
         }
 
         // Checking all potential errors now.
         if (elems.length === 0) {
             expr.error = 'empty expressions (`()`) are not allowed';
-            this.setError(expr.error);
+            this.setError(expr.error, false);
             return;
         }
 
         if (elems[0].kind === 'operator') {
             elems[0].error = `unexpected operator \`${elems[0].getErrorText()}\``;
             expr.error = elems[0].error;
-            this.setError(elems[0].error);
+            this.setError(elems[0].error, false);
             return;
         }
 
@@ -1034,7 +1139,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
 \`${prevElem.getErrorText()}\`, found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                 }
                 expr.error = el.error;
-                this.setError(el.error);
+                this.setError(el.error, false);
                 return;
             }
             prev = el.kind === 'operator' ? 'operator' : 'element';
@@ -1045,7 +1150,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         if (last.kind === 'operator') {
             last.error = `missing element after operator \`${last.getErrorText()}\``;
             expr.error = last.error;
-            this.setError(last.error);
+            this.setError(last.error, false);
             return;
         }
     }
@@ -1054,7 +1159,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         const start = this.pos;
         const startLine = this.currentLine;
 
-        while (this.error === null) {
+        while (!this.hasFatalError) {
             const c = this.getCurrentChar();
             if (c === null || !isExprChar(c)) {
                 const op = this.text.substring(start, this.pos);
@@ -1070,12 +1175,9 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                         this.decreasePos();
                     }
                 } else {
-                    this.push(
-                        new OperatorElement(
-                            op, start, this.pos, startLine, `unknown operator \`${op}\``,
-                        ),
-                        pushTo,
-                    );
+                    const e = `unknown operator \`${op}\``;
+                    this.push(new OperatorElement(op, start, this.pos, startLine, e), pushTo);
+                    this.setError(e, false);
                 }
                 return false;
             }
@@ -1083,15 +1185,584 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         }
     }
 
-    handleExpressions(elems, handleTuples) {
-        for (let i = 0, len = elems.length; i < len && this.error === null; ++i) {
-            const elem = elems[i];
-            if (elem.kind !== 'expression' && (!handleTuples || !isExpressionCompatible(elem))) {
-                continue;
+    parseComment(pushTo = null) {
+        const start = this.pos;
+        if (this.text.charAt(this.pos + 1) === '/') {
+            while (this.pos < this.text.length && this.text.charAt(this.pos) !== '\n') {
+                this.pos += 1;
             }
-            const ret = this.handleExpression(elem);
-            if (ret !== null) {
-                elems[i] = ret;
+        } else {
+            this.push(new UnknownElement('/', start, this.pos, this.currentLine), pushTo);
+        }
+    }
+
+    parseList(endChar, constructor, pushTo = null) {
+        const start = this.pos;
+        const elems = [];
+        const startLine = this.currentLine;
+
+        this.increasePos();
+        const nbErrors = this.errors.length;
+        const [prev, ender, foundSeparator] = this.parse([endChar], elems, ',');
+        const full = this.text.substring(start, this.pos + 1);
+        if (elems.length > 0 && nbErrors !== this.errors.length) {
+            this.push(
+                new constructor(
+                    elems,
+                    start,
+                    this.pos + 1,
+                    full,
+                    this.currentLine,
+                    foundSeparator,
+                    elems.find(el => el.error !== null).error,
+                ),
+                pushTo,
+            );
+        } else if (this.pos >= this.text.length || ender !== endChar) {
+            if (elems.length === 0) {
+                const e = `expected ${showChar(endChar)} at the end`;
+                this.push(
+                    new constructor(elems, start, this.pos, full, startLine, foundSeparator, e),
+                    pushTo,
+                );
+                this.setError(e, true);
+            } else {
+                let err;
+
+                if (prev === ',') {
+                    const last = elems[elems.length - 1].getErrorText();
+                    err = `expected ${showChar(endChar)} after \`${last}\``;
+                } else {
+                    err = `expected ${showChar(endChar)} or \`,\` after ` +
+                        `\`${elems[elems.length - 1].getErrorText()}\``;
+                }
+                this.push(
+                    new constructor(elems, start, this.pos, full, startLine, foundSeparator, err),
+                    pushTo,
+                );
+                this.setError(err, false);
+            }
+        } else {
+            this.push(
+                new constructor(elems, start, this.pos + 1, full, startLine, foundSeparator),
+                pushTo,
+            );
+        }
+    }
+
+    parseTuple(pushTo = null) {
+        const tmp = [];
+        this.parseList(')', TupleElement, tmp);
+        this.push(tmp[0], pushTo);
+    }
+
+    parseArray(pushTo = null) {
+        const tmp = [];
+        this.parseList(']', ArrayElement, tmp);
+        if (tmp[0].error === null && tmp[0].getRaw().length > 1) {
+            const error = tmp[0].validate(true);
+            if (error !== null) {
+                this.setError(error, false);
+            }
+        }
+        this.push(tmp[0], pushTo);
+    }
+
+    parseString(pushTo = null) {
+        const start = this.pos;
+        const endChar = this.text.charAt(this.pos);
+
+        this.increasePos();
+        while (this.pos < this.text.length) {
+            const c = this.text.charAt(this.pos);
+            if (c === endChar) {
+                const value = this.text.substring(start + 1, this.pos);
+                const full = this.text.substring(start, this.pos + 1);
+                const e = new StringElement(value, start, this.pos + 1, full, this.currentLine);
+                this.push(e, pushTo);
+                return;
+            } else if (c === '\\') {
+                this.pos += 1;
+            }
+            this.increasePos();
+        }
+        const value = this.text.substring(start + 1, this.pos);
+        const full = this.text.substring(start, this.pos);
+        const e = `expected \`${endChar}\` at the end of the string`;
+        this.push(
+            new StringElement(value, start, this.pos, full, this.currentLine, e),
+            pushTo,
+        );
+        this.setError(e, false);
+    }
+
+    parseIdent(pushTo = null, specialChars = null) {
+        if (specialChars === null) {
+            specialChars = [];
+        } else if (!Array.isArray(specialChars)) {
+            throw new Error('`specialChars` variable should be an array!');
+        }
+        const start = this.pos;
+        // Loop as long as it is a latin letter or a number.
+        while (isIdentChar(this.getCurrentChar(), start, this.pos, specialChars)) {
+            this.increasePos();
+        }
+        const ident = this.text.substring(start, this.pos);
+        if (ident.length === 0) {
+            this.push(
+                new UnknownElement(this.text.charAt(start), start, this.pos, this.currentLine),
+                pushTo,
+            );
+            return false;
+        }
+        if (ident === 'block') {
+            this.parseBlock(start, pushTo);
+        } else {
+            this.push(new IdentElement(ident, start, this.pos, this.currentLine), pushTo);
+            this.decreasePos(); // Need to go back to last "good" letter.
+        }
+        return true;
+    }
+
+    parseBlock(startPos, pushTo = null) {
+        // To prevent cyclic import.
+        const { CommandNode } = require('./ast.js');
+
+        const line = this.currentLine;
+        let error = null;
+
+        this.skipWhiteSpaceCharacters();
+        let c = this.getCurrentChar();
+        if (c !== '{') {
+            const kind = c === null ? 'nothing' : `\`${c}\``;
+            const fullText = this.text.slice(startPos, this.pos);
+            const e = `Expected \`{\` after \`block\` keyword, found ${kind}`;
+            this.push(
+                new BlockElement(
+                    fullText,
+                    '',
+                    line,
+                    [],
+                    startPos,
+                    this.pos,
+                    this.currentLine,
+                    false,
+                    e,
+                ),
+                pushTo,
+            );
+            this.setError(e, false);
+            return;
+        }
+        const blockLine = this.currentLine;
+        // We go after the `{`.
+        this.increasePos();
+        // We save the current command and elems to prevent them to be overwrote when parsing
+        // the `block` content.
+        const commandNodes = [];
+        const command = this.command;
+        const hasVariable = this.hasVariable;
+        const blockStart = this.pos;
+        const nbErrors = this.errors.length;
+        const hasFatalError = this.hasFatalError;
+        this.hasFatalError = false;
+        while (c !== '}') {
+            const elems = [];
+            const ret = this.parseNextCommand(['\n', '}'], elems);
+            if (ret.errors !== false) {
+                error = this.errors[this.errors.length - 1].message;
+                if (this.hasFatalError) {
+                    break;
+                }
+            } else if (ret.finished === true) {
+                this.skipWhiteSpaceCharacters();
+                c = this.getCurrentChar();
+                if (c !== '}') {
+                    error = `Expected \`}\` to end the block, found \`${showChar(c)}\``;
+                    this.setError(error, true);
+                }
+                break;
+            } else {
+                commandNodes.push(new CommandNode(
+                    this.command.getRaw(),
+                    this.commandLine,
+                    elems,
+                    this.hasVariable,
+                    this.commandStart,
+                    this.text,
+                ));
+            }
+            this.skipWhiteSpaceCharacters();
+            c = this.getCurrentChar();
+            if (c === null) {
+                error = 'Missing `}` to end the block';
+                this.setError(error, true);
+                break;
+            }
+        }
+
+        for (let i = nbErrors; i < this.errors.length; ++i) {
+            if (this.errors[i].message.indexOf(' to end the block') === -1) {
+                this.errors[i].message += ' (in `block { ... }`)';
+            }
+        }
+
+        const fullText = this.text.slice(startPos, this.pos + 1);
+        const blockCode = this.text.slice(blockStart, this.pos);
+        this.push(
+            new BlockElement(
+                fullText,
+                blockCode,
+                blockLine,
+                commandNodes,
+                startPos,
+                this.pos,
+                line,
+                this.hasVariable,
+                error,
+            ),
+            pushTo,
+        );
+
+        // We set back the values before the `block` parsing.
+        this.command = command;
+        this.hasVariable = hasVariable;
+        this.hasFatalError = hasFatalError || this.hasFatalError;
+    }
+
+    parseVariable(pushTo = null) {
+        const start = this.pos;
+
+        this.increasePos();
+        while (this.pos < this.text.length) {
+            const c = this.text.charAt(this.pos);
+            if (c === '|') {
+                const variableName = this.text.substring(start + 1, this.pos).trim();
+                this.push(
+                    new VariableElement(
+                        variableName,
+                        start,
+                        this.pos + 1,
+                        this.text.substring(start, this.pos + 1),
+                        this.currentLine,
+                    ),
+                    pushTo,
+                );
+                return;
+            } else if (!isIdentChar(c, start, this.pos)) {
+                const variableName = this.text.substring(start + 1, this.pos).trim();
+                const fullText = this.text.substring(start, this.pos);
+                const e = `unexpected character \`${c}\` after \`${fullText}\``;
+                this.push(
+                    new VariableElement(
+                        variableName,
+                        start,
+                        this.pos,
+                        fullText,
+                        this.currentLine,
+                        e,
+                    ),
+                    pushTo,
+                );
+                this.setError(e, false);
+                return;
+            }
+            this.increasePos();
+        }
+        const variableName = this.text.substring(start + 1, this.pos).trim();
+        const fullText = this.text.substring(start, this.pos);
+        const e = `expected \`|\` after the variable name \`${fullText}\``;
+        this.push(
+            new VariableElement(
+                variableName,
+                start,
+                this.pos,
+                fullText,
+                this.currentLine,
+                e,
+            ),
+            pushTo,
+        );
+        this.setError(e, false);
+    }
+
+    parseNumber(pushTo = null) {
+        const start = this.pos;
+        let hasDot = false;
+        let nbDigit = 0;
+
+        while (this.pos < this.text.length) {
+            const c = this.text.charAt(this.pos);
+
+            if (c === '-' && nbDigit === 0 && hasDot === false) {
+                // Nothing to do.
+            } else if (c === '.') {
+                if (hasDot === true) {
+                    const nb = this.text.substring(start, this.pos);
+                    const e = `unexpected \`.\` after \`${nb}\``;
+                    this.push(
+                        new NumberElement(nb, start, this.pos, this.currentLine, e), pushTo);
+                    this.setError(e, false);
+                    return;
+                }
+                hasDot = true;
+            } else if (isNumber(c) === false) {
+                if (nbDigit < 1) {
+                    const nb = this.text.substring(start, this.pos);
+                    const e = `unexpected \`${c}\` after \`${nb}\``;
+                    this.push(
+                        new NumberElement(nb, start, this.pos, this.currentLine, e), pushTo);
+                    this.setError(e, false);
+                    return;
+                }
+                const nb = this.text.substring(start, this.pos);
+                this.push(new NumberElement(nb, start, this.pos, this.currentLine), pushTo);
+                this.decreasePos();
+                return;
+            } else {
+                nbDigit += 1;
+            }
+            this.increasePos();
+        }
+        const nb = this.text.substring(start, this.pos);
+        this.push(new NumberElement(nb, start, this.pos, this.currentLine), pushTo);
+    }
+
+    push(e, pushTo) {
+        if (e instanceof VariableElement) {
+            this.hasVariable = true;
+        }
+        if (pushTo !== null) {
+            pushTo.push(e);
+        } else {
+            this.elems.push(e);
+        }
+    }
+
+    parseJson(pushTo = null) {
+        const start = this.pos;
+        const startLine = this.currentLine;
+        const json = [];
+        let error = null;
+
+        const keyError = (obj, errorMsg) => {
+            this.setError(errorMsg, false);
+            if (error === null) {
+                error = errorMsg;
+            }
+        };
+
+        // Moving past the `{` character.
+        this.increasePos();
+
+        let ender = '';
+        let elems = [];
+
+        while (ender !== '}' && this.pos < this.text.length && !this.hasFatalError) {
+            const nbErrors = this.errors.length;
+            elems = [];
+
+            ender = this.parse([':', '}', ','], elems, null, ' of JSON dict key', ['}', ','])[1];
+            if (elems.length > 1) {
+                keyError(this, `expected \`:\` after \`${elems[0].getErrorText()}\`, found \
+\`${elems[1].getErrorText()}\``);
+                if (this.hasFatalError) {
+                    return;
+                }
+            } else if (elems.length === 0) {
+                if (ender === ':') {
+                    keyError(this, 'expected key before `:`');
+                } else if (ender === ',') {
+                    if (json.length === 0) {
+                        keyError(this, 'expected a key after `{`, found `,`');
+                    } else {
+                        const last = json[json.length - 1];
+                        keyError(
+                            this,
+                            `expected a key after \`${last.value.getErrorText()}\`, found \`,\``,
+                        );
+                    }
+                } else if (ender === '}') {
+                    break;
+                }
+                this.increasePos(); // Moving past whatever we encountered.
+                continue;
+            } else if (elems[0].error !== null && elems[0].kind !== 'unknown') {
+                keyError(this, elems[0].error);
+                if (this.hasFatalError) {
+                    return;
+                }
+            } else if (!['string', 'variable', 'expression'].includes(elems[0].kind)) {
+                const article = elems[0].getArticleKind();
+                const extra = ` (\`${elems[0].getErrorText()}\`)`;
+                keyError(this, `only strings can be used as keys in JSON dict, found \
+${article}${extra}`);
+            } else if (ender === '}' || ender === ',') {
+                const after = elems[0].getErrorText();
+                keyError(this, `expected \`:\` after \`${after}\`, found \`${ender}\``);
+                // If `ender === '}'`, it will stop the loop because of the loop's condition.
+                continue;
+            } else if (this.errors.length > nbErrors) {
+                keyError(this, this.errors[this.errors.length - 1].message);
+                if (this.hasFatalError) {
+                    return;
+                }
+            }
+            const key = elems[0];
+
+            this.increasePos(); // Moving past `:`.
+            elems = [];
+            ender = this.parse([',', '}'], elems, null, ` for key \`${key.getErrorText()}\``)[1];
+            if (elems.length > 1) {
+                const newErr = `expected \`,\` or \`}\` after \`${elems[0].getErrorText()}\`, \
+found \`${elems[1].getErrorText()}\``;
+                keyError(this, newErr);
+
+                const fullText = this.text.substring(start, this.pos + 1);
+                this.push(
+                    new JsonElement(json, start, this.pos, fullText, startLine, newErr),
+                    pushTo,
+                );
+                return;
+            } else if (ender === ':') {
+                let newErr = 'unexpected `:` ';
+                if (elems.length !== 0) {
+                    newErr += `after key \`${elems[0].getErrorText()}\``;
+                } else {
+                    newErr += `after key \`${key.getErrorText()}\``;
+                }
+                keyError(this, newErr);
+
+                const fullText = this.text.substring(start, this.pos + 1);
+                this.push(
+                    new JsonElement(json, start, this.pos, fullText, startLine, newErr),
+                    pushTo,
+                );
+                return;
+            } else if (elems.length === 0) {
+                const newErr = `expected a value for key \`${key.getErrorText()}\`, found nothing`;
+                keyError(this, newErr, ender === '}');
+                const fullText = this.text.substring(start, this.pos + 1);
+                this.push(
+                    new JsonElement(json, start, this.pos, fullText, startLine, newErr),
+                    pushTo,
+                );
+                return;
+            } else if (this.errors.length > nbErrors) {
+                const newErr = this.errors[this.errors.length - 1].message;
+                keyError(this, newErr);
+                if (this.hasFatalError) {
+                    const fullText = this.text.substring(start, this.pos + 1);
+                    this.push(
+                        new JsonElement(json, start, this.pos, fullText, startLine, newErr),
+                        pushTo,
+                    );
+                    return;
+                }
+            }
+
+            if (ender === ',') {
+                this.increasePos(); // Moving past `,`.
+            }
+
+            if (elems.length === 1) {
+                json.push({'key': key, 'value': elems[0]});
+            }
+        }
+        if (ender !== '}') {
+            if (json.length === 0) {
+                error = 'unclosed empty JSON object';
+                this.setError(error, true);
+            } else {
+                const last = json[json.length - 1].value;
+                error = `unclosed JSON object: expected \`}\` after \`${last.getErrorText()}\``;
+                this.setError(error, true);
+            }
+        }
+
+        const extra = ender === '}' ? 1 : 0;
+        const fullText = this.text.substring(start, this.pos + extra);
+        this.push(
+            new JsonElement(json, start, this.pos + extra, fullText, startLine, error),
+            pushTo,
+        );
+    }
+}
+
+class ExpressionsValidator {
+    constructor(elems, inferVariablesValue, text) {
+        this.inferVariablesValue = inferVariablesValue;
+        this.text = text;
+        this.hasFatalError = false;
+        this.errors = [];
+        this.handleExpressions(elems, false);
+        if (this.errors.length === 0) {
+            this.checkElements(elems);
+        }
+    }
+
+    setError(error, line, isFatal) {
+        addErrorTo(error, line, isFatal, this.errors);
+        if (isFatal) {
+            this.hasFatalError = true;
+        }
+    }
+
+    hasErrors() {
+        return this.errors.length !== 0;
+    }
+
+    checkElements(elems) {
+        for (const elem of elems) {
+            if (elem.kind === 'array') {
+                const error = elem.validate(false);
+                if (error !== null) {
+                    this.setError(error, false);
+                }
+                this.checkElements(elem.value);
+            } else if (elem.kind === 'tuple') {
+                this.checkElements(elem.value);
+            } else if (elem.kind === 'json') {
+                for (const entry of elem.value) {
+                    if (entry.key.kind !== 'string') {
+                        const article = entry.getArticleKind();
+                        const extra = ` (\`${entry.getErrorText()}\`)`;
+                        this.setError(`only strings can be used as keys in JSON dict, found \
+${article}${extra}`);
+                    } else {
+                        this.checkElements([entry]);
+                    }
+                }
+            }
+        }
+    }
+
+    handleExpressions(elems, handleTuples) {
+        for (let i = 0, len = elems.length; i < len && !this.hasFatalError; ++i) {
+            const elem = elems[i];
+            // eslint-disable-next-line no-extra-parens
+            if (elem.kind === 'expression' || (handleTuples && isExpressionCompatible(elem))) {
+                const ret = this.handleExpression(elem);
+                if (ret !== null) {
+                    elems[i] = ret;
+                }
+            } else if (elem.kind === 'json') {
+                for (const entry of elem.value) {
+                    if (isExpressionCompatible(entry.key)) {
+                        const ret = this.handleExpression(entry.key);
+                        if (ret !== null) {
+                            entry.key = ret;
+                        }
+                    }
+                    if (isExpressionCompatible(entry.value)) {
+                        const ret = this.handleExpression(entry.key);
+                        if (ret !== null) {
+                            entry.key = ret;
+                        }
+                    }
+                }
+            } else if (['tuple', 'array'].includes(elem.kind)) {
+                this.handleExpressions(elem.value, false);
             }
         }
     }
@@ -1100,7 +1771,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         const elems = expr.value;
         // First, we check all sub-expressions.
         this.handleExpressions(elems, true);
-        if (this.error !== null) {
+        if (this.hasErrors()) {
             return null;
         }
 
@@ -1150,7 +1821,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                 ) {
                     elem.error = `\`${elem.value}\` is not supported for ${currentType} \
 elements (in \`${this.elemsText(elems)}\`)`;
-                    this.setError(elem.error);
+                    this.setError(elem.error, elem.line, false);
                     return null;
                 }
                 prevOperator = elem;
@@ -1162,13 +1833,13 @@ elements (in \`${this.elemsText(elems)}\`)`;
             ) {
                 elem.error = `\`${prevOperator.value}\` is not supported for ${elem.kind} \
 elements (in \`${this.elemsText(elems)}\`)`;
-                this.setError(elem.error);
+                this.setError(elem.error, elem.line, false);
                 return null;
             } else if (currentType === null) {
-                currentType = elem.kind;
+                currentType = elemKind;
             } else if (elem.kind !== currentType && currentType !== 'string') {
                 if (elem.kind === 'string' || elem.kind === 'number') {
-                    currentType = elem.kind;
+                    currentType = elemKind;
                 }
             }
         }
@@ -1194,7 +1865,7 @@ elements (in \`${this.elemsText(elems)}\`)`;
                 if (current === null) {
                     // Should never happen but just in case...
                     elem.error = `unexpected operator \`${elem.value}\``;
-                    this.setError(elem.error);
+                    this.setError(elem.error, elem.line, false);
                     return null;
                 }
                 current.endOperator = elem.value;
@@ -1214,7 +1885,7 @@ elements (in \`${this.elemsText(elems)}\`)`;
                     if (comparisonOperator !== null) {
                         elem.error = `unexpected \`${elem.value}\` operator when there is already \
 \`${comparisonOperator.value}\` (in \`${this.segmentText(segment)}\`)`;
-                        this.setError(elem.error);
+                        this.setError(elem.error, elem.line, false);
                         return null;
                     }
                     comparisonOperator = elem;
@@ -1227,27 +1898,27 @@ elements (in \`${this.elemsText(elems)}\`)`;
                 if (right.length === 0) {
                     // should never happen but just in case...
                     expr.error = `expected something before \`${segment.endOperator}\``;
-                    this.setError(expr.error);
+                    this.setError(expr.error, expr.line, false);
                     return null;
                 }
                 const evaluatedType = this.checkExprOperations(right);
-                if (this.error !== null) {
+                if (this.hasErrors()) {
                     return null;
                 }
                 if (!isTypeCompatibleWith(evaluatedType, 'boolean')) {
                     expr.error = `expected expression \`${this.segmentText(segment)}\` to be \
 evaluated as boolean, instead it was evaluated as ${evaluatedType} (in \
 \`${this.elemsText(expr.value)}\`)`;
-                    this.setError(expr.error);
+                    this.setError(expr.error, expr.line, false);
                     return null;
                 }
             } else {
                 const evaluatedType1 = this.checkExprOperations(right);
-                if (this.error !== null) {
+                if (this.hasErrors()) {
                     return null;
                 }
                 const evaluatedType2 = this.checkExprOperations(left);
-                if (this.error !== null) {
+                if (this.hasErrors()) {
                     return null;
                 }
                 // Now checking both parts of the comparison operator.
@@ -1266,7 +1937,7 @@ evaluated as boolean, instead it was evaluated as ${evaluatedType} (in \
                         expr.error = `\`${comparisonOperator.value}\` is only supported for number \
 elements, \`${this.elemsText(errPart)}\` was evaluated as ${evalError} (in \
 \`${this.segmentText(segment)}\`)`;
-                        this.setError(expr.error);
+                        this.setError(expr.error, expr.line, false);
                         return null;
                     }
                 } else {
@@ -1276,7 +1947,7 @@ elements, \`${this.elemsText(errPart)}\` was evaluated as ${evalError} (in \
                         expr.error = `\`${comparisonOperator.value}\` cannot be used to compare \
 ${evaluatedType1} (\`${this.elemsText(right)}\`) and ${evaluatedType2} (\
 \`${this.elemsText(left)}\`) elements`;
-                        this.setError(expr.error);
+                        this.setError(expr.error, expr.line, false);
                         return null;
                     }
                 }
@@ -1296,421 +1967,24 @@ ${evaluatedType1} (\`${this.elemsText(right)}\`) and ${evaluatedType2} (\
         const last = elems[elems.length - 1];
         return this.text.substring(elems[0].startPos, last.endPos);
     }
-
-    parseComment(pushTo = null) {
-        const start = this.pos;
-        if (this.text.charAt(this.pos + 1) === '/') {
-            while (this.pos < this.text.length && this.text.charAt(this.pos) !== '\n') {
-                this.pos += 1;
-            }
-        } else {
-            this.push(new UnknownElement('/', start, this.pos, this.currentLine), pushTo);
-        }
-    }
-
-    parseList(endChar, constructor, pushTo = null) {
-        const start = this.pos;
-        const elems = [];
-        const startLine = this.currentLine;
-
-        this.increasePos();
-        const [prev, ender, foundSeparator] = this.parse([endChar], elems, ',');
-        const full = this.text.substring(start, this.pos + 1);
-        if (elems.length > 0 && elems[elems.length - 1].error !== null) {
-            this.push(
-                new constructor(
-                    elems,
-                    start,
-                    this.pos + 1,
-                    full,
-                    this.currentLine,
-                    foundSeparator,
-                    elems[elems.length - 1].error,
-                ),
-                pushTo,
-            );
-        } else if (this.pos >= this.text.length || ender !== endChar) {
-            if (elems.length === 0) {
-                this.push(
-                    new constructor(elems, start, this.pos, full, startLine, foundSeparator,
-                        `expected ${showChar(endChar)} at the end`),
-                    pushTo);
-            } else {
-                let err;
-
-                if (prev === ',') {
-                    const last = elems[elems.length - 1].getErrorText();
-                    err = `expected ${showChar(endChar)} after \`${last}\``;
-                } else {
-                    err = `expected ${showChar(endChar)} or \`,\` after ` +
-                        `\`${elems[elems.length - 1].getErrorText()}\``;
-                }
-                this.push(
-                    new constructor(elems, start, this.pos, full, startLine, foundSeparator, err),
-                    pushTo,
-                );
-            }
-        } else {
-            this.push(
-                new constructor(elems, start, this.pos + 1, full, startLine, foundSeparator),
-                pushTo,
-            );
-        }
-    }
-
-    parseTuple(pushTo = null) {
-        const tmp = [];
-        this.parseList(')', TupleElement, tmp);
-        this.push(tmp[0], pushTo);
-    }
-
-    parseArray(pushTo = null) {
-        const tmp = [];
-        this.parseList(']', ArrayElement, tmp);
-        if (tmp[0].error !== null) {
-            // nothing to do
-        } else if (tmp[0].getRaw().length > 1) {
-            const values = tmp[0].getRaw();
-
-            for (let i = 1; i < values.length; ++i) {
-                if (values[i].kind !== values[0].kind) {
-                    tmp[0].error = 'all array\'s elements must be of the same kind: expected ' +
-                        `array of \`${values[0].kind}\` (because the first element is of this ` +
-                        `kind), found \`${values[i].kind}\` at position ${i}`;
-                    break;
-                }
-            }
-        }
-        this.push(tmp[0], pushTo);
-    }
-
-    parseString(pushTo = null) {
-        const start = this.pos;
-        const endChar = this.text.charAt(this.pos);
-
-        this.increasePos();
-        while (this.pos < this.text.length) {
-            const c = this.text.charAt(this.pos);
-            if (c === endChar) {
-                const value = this.text.substring(start + 1, this.pos);
-                const full = this.text.substring(start, this.pos + 1);
-                const e = new StringElement(value, start, this.pos + 1, full, this.currentLine);
-                this.push(e, pushTo);
-                return;
-            } else if (c === '\\') {
-                this.pos += 1;
-            }
-            this.increasePos();
-        }
-        const value = this.text.substring(start + 1, this.pos);
-        const full = this.text.substring(start, this.pos);
-        const e = new StringElement(value, start, this.pos, full, this.currentLine,
-            `expected \`${endChar}\` at the end of the string`);
-        this.push(e, pushTo);
-    }
-
-    parseIdent(pushTo = null, specialChars = null) {
-        if (specialChars === null) {
-            specialChars = [];
-        } else if (!Array.isArray(specialChars)) {
-            throw new Error('`specialChars` variable should be an array!');
-        }
-        const start = this.pos;
-        // Loop as long as it is a latin letter or a number.
-        while (isIdentChar(this.getCurrentChar(), start, this.pos, specialChars)) {
-            this.increasePos();
-        }
-        const ident = this.text.substring(start, this.pos);
-        if (ident.length === 0) {
-            this.push(
-                new UnknownElement(this.text.charAt(start), start, this.pos, this.currentLine),
-                pushTo,
-            );
-            return false;
-        }
-        if (ident === 'block') {
-            this.push(new BlockElement(start, this.pos, this.currentLine, this), pushTo);
-        } else {
-            this.push(new IdentElement(ident, start, this.pos, this.currentLine), pushTo);
-            this.decreasePos(); // Need to go back to last "good" letter.
-        }
-        return true;
-    }
-
-    parseVariable(pushTo = null) {
-        const start = this.pos;
-
-        this.increasePos();
-        while (this.pos < this.text.length) {
-            const c = this.text.charAt(this.pos);
-            if (c === '|') {
-                const variableName = this.text.substring(start + 1, this.pos);
-                if (!this.inferVariablesValue) {
-                    this.push(
-                        new VariableElement(variableName, start, this.pos + 1, this.currentLine),
-                        pushTo,
-                    );
-                    return;
-                }
-                const associatedValue = this.getVariableValue(variableName);
-                if (associatedValue === null) {
-                    this.pos = this.text.length + 1;
-                    this.push(
-                        new VariableElement(variableName, start, this.pos + 1, this.currentLine,
-                            `variable \`${variableName}\` not found in options nor environment`),
-                        pushTo,
-                    );
-                    return;
-                }
-                if (associatedValue instanceof Element) {
-                    // Nothing to be done in here.
-                    this.push(associatedValue, pushTo);
-                } else if (['number', 'string', 'boolean'].includes(typeof associatedValue)) {
-                    if (typeof associatedValue === 'boolean') {
-                        this.push(
-                            new IdentElement(
-                                associatedValue.toString(), start, this.pos, this.currentLine,
-                            ),
-                            pushTo,
-                        );
-                    } else if (typeof associatedValue === 'number' ||
-                        // eslint-disable-next-line no-extra-parens
-                        (!this.forceVariableAsString && matchInteger(associatedValue) === true)) {
-                        this.push(
-                            new NumberElement(associatedValue, start, this.pos, this.currentLine),
-                            pushTo,
-                        );
-                    } else {
-                        this.push(
-                            new StringElement(
-                                associatedValue,
-                                start,
-                                this.pos,
-                                `"${cleanString(associatedValue)}"`,
-                                this.currentLine,
-                            ),
-                            pushTo,
-                        );
-                    }
-                } else {
-                    // this is a JSON dict and it should be parsed.
-                    const p = new Parser(JSON.stringify(associatedValue), this.variables);
-                    p.parseJson();
-                    this.push(p.elems[0], pushTo);
-                }
-                return;
-            } else if (!isIdentChar(c, start, this.pos)) {
-                const variableName = this.text.substring(start + 1, this.pos);
-                const e = new VariableElement(variableName, start, this.pos, this.currentLine,
-                    `unexpected character \`${c}\` after \`${variableName}\``);
-                this.push(e, pushTo);
-                return;
-            }
-            this.increasePos();
-        }
-        const variableName = this.text.substring(start + 1, this.pos);
-        const e = new VariableElement(variableName, start, this.pos, this.currentLine,
-            `expected \`|\` after the variable name \`${variableName}\``);
-        this.push(e, pushTo);
-    }
-
-    getVariableValue(variableName) {
-        return getVariableValue(this.variables, variableName, this.functionArgs);
-    }
-
-    parseNumber(pushTo = null) {
-        const start = this.pos;
-        let hasDot = false;
-        let nbDigit = 0;
-
-        while (this.pos < this.text.length) {
-            const c = this.text.charAt(this.pos);
-
-            if (c === '-' && nbDigit === 0 && hasDot === false) {
-                // Nothing to do.
-            } else if (c === '.') {
-                if (hasDot === true) {
-                    const nb = this.text.substring(start, this.pos);
-                    this.push(new NumberElement(nb, start, this.pos, this.currentLine,
-                        `unexpected \`.\` after \`${nb}\``), pushTo);
-                    this.pos = this.text.length;
-                    return;
-                }
-                hasDot = true;
-            } else if (isNumber(c) === false) {
-                if (nbDigit < 1) {
-                    const nb = this.text.substring(start, this.pos);
-                    this.push(new NumberElement(nb, start, this.pos, this.currentLine,
-                        `unexpected \`${c}\` after \`${nb}\``), pushTo);
-                    this.pos = this.text.length;
-                    return;
-                }
-                const nb = this.text.substring(start, this.pos);
-                this.push(new NumberElement(nb, start, this.pos, this.currentLine), pushTo);
-                this.decreasePos();
-                return;
-            } else {
-                nbDigit += 1;
-            }
-            this.increasePos();
-        }
-        const nb = this.text.substring(start, this.pos);
-        this.push(new NumberElement(nb, start, this.pos, this.currentLine), pushTo);
-    }
-
-    push(e, pushTo = null) {
-        if (pushTo !== null) {
-            pushTo.push(e);
-        } else {
-            this.elems.push(e);
-        }
-        if (e.error !== null) {
-            this.setError(e.error);
-        }
-    }
-
-    parseJson(pushTo = null) {
-        const start = this.pos;
-        const startLine = this.currentLine;
-        const json = [];
-
-        const keyError = (obj, error, addExtra = false) => {
-            const extra = addExtra ? 1 : 0;
-            const fullText = obj.text.substring(start, this.pos + extra);
-            obj.push(
-                new JsonElement(json, start, obj.pos, fullText, startLine, error),
-                pushTo,
-            );
-            obj.error = error;
-        };
-
-        // Moving past the `{` character.
-        this.increasePos();
-
-        let ender = '';
-        let elems = [];
-
-        while (ender !== '}' && this.pos < this.text.length && this.error === null) {
-            elems = [];
-
-            // We force variables' value to be strings when looking for keys.
-            this.forceVariableAsString = true;
-
-            ender = this.parse([':', '}', ','], elems)[1];
-
-            // Then we disable this setting.
-            this.forceVariableAsString = false;
-
-            if (elems.length > 1) {
-                keyError(this, `expected \`:\` after \`${elems[0].getErrorText()}\`, found \
-\`${elems[1].getErrorText()}\``);
-                return;
-            } else if (elems.length === 0) {
-                if (ender === ':') {
-                    keyError(this, 'expected key before `:`');
-                    return;
-                } else if (ender === ',') {
-                    if (json.length === 0) {
-                        keyError(this, 'expected a key after `{`, found `,`');
-                    } else {
-                        const last = json[json.length - 1];
-                        keyError(
-                            this,
-                            `expected a key after \`${last.value.getErrorText()}\`, found \`,\``,
-                        );
-                    }
-                    return;
-                }
-                break;
-            } else if (elems[0].error !== null && elems[0].kind !== 'unknown') {
-                keyError(this, elems[0].error);
-                return;
-            } else if (elems[0].kind !== 'string') {
-                const article = elems[0].getArticleKind();
-                const extra = ` (\`${elems[0].getErrorText()}\`)`;
-                keyError(this, `only strings can be used as keys in JSON dict, found \
-${article}${extra}`);
-                return;
-            } else if (ender === '}' || ender === ',') {
-                const after = elems[0].getErrorText();
-                keyError(this, `expected \`:\` after \`${after}\`, found \`${ender}\``);
-                return;
-            } else if (this.error !== null) {
-                keyError(this, this.error);
-                return;
-            }
-            const key = elems[0];
-
-            this.increasePos(); // Moving past `:`.
-            elems = [];
-            ender = this.parse(
-                [',', '}', ':'],
-                elems,
-                null,
-                ` for key \`${key.getErrorText()}\``,
-            )[1];
-            if (elems.length > 1) {
-                keyError(this, `expected \`,\` or \`}\` after \`${elems[0].getErrorText()}\`, \
-found \`${elems[1].getErrorText()}\``);
-                return;
-            } else if (ender === ':') {
-                let error = 'unexpected `:` ';
-                if (elems.length !== 0) {
-                    error += `after key \`${elems[0].getErrorText()}\``;
-                } else {
-                    error += `after key \`${key.getErrorText()}\``;
-                }
-                keyError(this, error);
-                return;
-            } else if (elems.length === 0) {
-                keyError(
-                    this,
-                    `expected a value for key \`${key.getErrorText()}\`, found nothing`,
-                    ender === '}',
-                );
-                return;
-            } else if (this.error !== null) {
-                keyError(this, this.error);
-                return;
-            }
-
-            if (ender === ',') {
-                this.increasePos(); // Moving past `,`.
-            }
-
-            json.push({'key': key, 'value': elems[0]});
-        }
-        let error = null;
-        if (ender !== '}') {
-            if (json.length === 0) {
-                error = 'unclosed empty JSON object';
-            } else {
-                const last = json[json.length - 1].value;
-                error = `unclosed JSON object: expected \`}\` after \`${last.getErrorText()}\``;
-            }
-        }
-        const extra = error === null ? 1 : 0;
-        const fullText = this.text.substring(start, this.pos + extra);
-        this.push(
-            new JsonElement(json, start, this.pos + extra, fullText, startLine, error),
-            pushTo,
-        );
-    }
 }
 
 module.exports = {
-    'Parser': Parser,
-    'Element': Element,
-    'CharElement': CharElement,
-    'TupleElement': TupleElement,
     'ArrayElement': TupleElement,
-    'IdentElement': IdentElement,
-    'StringElement': StringElement,
-    'NumberElement': NumberElement,
-    'UnknownElement': UnknownElement,
-    'JsonElement': JsonElement,
+    'CharElement': CharElement,
     'cleanString': cleanString,
+    'Element': Element,
+    'ExpressionsValidator': ExpressionsValidator,
     'getSelector': getSelector,
-    'isWhiteSpace': isWhiteSpace,
+    'IdentElement': IdentElement,
     'isStringChar': isStringChar,
+    'isWhiteSpace': isWhiteSpace,
+    'JsonElement': JsonElement,
+    'matchInteger': matchInteger,
+    'NumberElement': NumberElement,
+    'TupleElement': TupleElement,
+    'Parser': Parser,
+    'StringElement': StringElement,
+    'UnknownElement': UnknownElement,
+    'VariableElement': VariableElement,
 };

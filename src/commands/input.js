@@ -435,7 +435,7 @@ function parseDragAndDrop(parser) {
                 return ret;
             }
         }
-        return {};
+        return Object.create(null);
     };
     let ret = checkArg(tuple[0]);
     if (ret.error !== undefined) {
