@@ -1,1 +1,1 @@
-error = """expected nothing, found `2` after `12`"""
+error = """expected nothing after `12`, found `24`"""

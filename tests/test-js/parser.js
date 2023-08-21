@@ -1499,6 +1499,11 @@ assert-css: (".item-left sup", {"color": |color|})`);
     p = new Parser('("hello",{"a": "1"))');
     p.parse();
     x.assert(p.error, 'expected `,` or `}` after `"1"`, found `)`');
+
+    p = new Parser('{"x": |a|}');
+    p.parse();
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, null);
 }
 
 function checkComment(x) {

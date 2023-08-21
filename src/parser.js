@@ -1755,9 +1755,9 @@ ${article}${extra}`);
                         }
                     }
                     if (isExpressionCompatible(entry.value)) {
-                        const ret = this.handleExpression(entry.key);
+                        const ret = this.handleExpression(entry.value);
                         if (ret !== null) {
-                            entry.key = ret;
+                            entry.value = ret;
                         }
                     }
                 }

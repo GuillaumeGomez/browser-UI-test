@@ -1,1 +1,1 @@
-error = """expected nothing, found `2` after `{\"a\": 2}`"""
+error = """expected nothing after `{\"a\": 2}`, found `2`"""
