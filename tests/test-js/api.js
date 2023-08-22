@@ -1,7 +1,6 @@
 const process = require('process');
 process.env.debug_tests = '1'; // We enable this to get all items from `commands.js`.
 const parserFuncs = require('../../src/commands.js');
-const {Parser} = require('../../src/parser.js');
 const Options = require('../../src/options.js').Options;
 const { RESERVED_VARIABLE_NAME } = require('../../src/utils.js');
 const {Assert, plural, print} = require('./utils.js');
@@ -69,13 +68,18 @@ function wrapper(callback, x, arg, name, options) {
     } else {
         expected = `no file \`${filePath}\``;
     }
-    const p = new Parser(arg, options.variables);
-    p.parse();
+    const context = new parserFuncs.ParserWithContext('<test>', options, 'go-to:' + arg);
     let res;
-    if (p.error !== null) {
-        res = {'error': p.error};
+    if (context.get_parser_errors().length !== 0) {
+        res = {'error': context.get_parser_errors().map(e => e.message).join('\n')};
     } else {
-        res = callback(p, options);
+        const inferred = context.get_current_command().getInferredAst(context.variables, {});
+        if (inferred.errors.length !== 0) {
+            res = {'error': inferred.errors.map(e => e.message).join('\n')};
+        } else {
+            context.elems = inferred.ast;
+            res = callback(context, options);
+        }
     }
     if (!x.assertOrBless(res, expected, (value1, _) => {
         if (!fs.existsSync(parent)) {
@@ -92,7 +96,10 @@ function wrapperParseContent(arg, options) {
     if (typeof options === 'undefined') {
         options = new Options();
     }
-    const parser = new parserFuncs.ParserWithContext(arg, options);
+    const parser = new parserFuncs.ParserWithContext('<test>', options, arg);
+    if (parser.get_parser_errors().length !== 0) {
+        return parser.get_parser_errors();
+    }
     const res = [];
     while (true) { // eslint-disable-line no-constant-condition
         const tmp = parser.get_next_command();
@@ -112,13 +119,13 @@ function wrapperDefineFunction(callback, arg, options) {
         options = new Options();
     }
 
-    const p = new Parser(arg, options.variables, null);
-    p.inferVariablesValue = false;
-    p.parse();
-    if (p.error !== null) {
-        return [{'error': p.error}, p];
+    const context = new parserFuncs.ParserWithContext('<test>', options, 'go-to:' + arg);
+    if (context.get_parser_errors().length !== 0) {
+        return [{'error': context.get_parser_errors().map(e => e.message).join('\n')}, context];
     }
-    return [callback(p, options), p];
+    const inferred = context.get_current_command().getInferredAst(context.variables, {});
+    context.elems = inferred.ast;
+    return [callback(context, options), context];
 }
 
 function checkAssert(x, func) {
@@ -234,6 +241,7 @@ function checkAssertObjProperty(x, func) {
     func('("a::after", {"a": 1}, ALLO)', 'err-7');
     func('({"b": "c", "b": "d"})', 'err-8');
     func('({"": "b"})', 'err-9');
+    func('  ["a"]', 'err-10');
 
     func('{"a": "b"}', 'basic-1');
     func('({"a": "b"})', 'basic-2');
@@ -904,67 +912,113 @@ function checkCallFunction(x, func) {
         'error': 'no function called `1`. To define a function, use the `define-function` command',
     });
 
-    let p = new Parser('("hello",())', {});
-    p.parse();
-    p.definedFunctions['hello'] = {'arguments': ['a'], 'content': 'a'};
-
-    x.assert(parserFuncs.parseCallFunction(p), {
-        'error': 'function `hello` expected 1 argument, found 0',
+    const pcontext = new parserFuncs.ParserWithContext(
+        '<test>',
+        new Options(),
+        `\
+define-function: ("hello", (a), block {})
+call-function: ("hello",())`,
+    );
+    x.assert(pcontext.get_parser_errors().length, 0);
+    // Running `define-function`.
+    x.assert(pcontext.get_next_command().error === undefined);
+    // Running `call-function`.
+    x.assert(pcontext.get_next_command(), {
+        'error': 'function `hello` expected 1 argument, found 0 (from command `("hello",())`)',
+        'line': '2',
     });
 
-    p = new Parser('("hello",("1"))', {});
-    p.parse();
-    p.definedFunctions['hello'] = {'arguments': ['a'], 'content': 'a'};
+    function callFunc(x, data, toCheck) {
+        const pcontext = new parserFuncs.ParserWithContext(
+            '<test>',
+            new Options(),
+            data,
+        );
+        x.assert(pcontext.get_parser_errors().length, 0);
+        // Running `define-function`.
+        x.assert(pcontext.get_next_command().error === undefined);
+        // Running `call-function`.
+        const context = pcontext.get_current_context();
+        const command = pcontext.get_current_command();
+        const inferred = command.getInferredAst(pcontext.variables, context.functionArgs);
+        x.assert(inferred.errors.length === 0);
+        pcontext.elems = inferred.ast;
+        x.assert(parserFuncs.parseCallFunction(pcontext), toCheck);
+    }
 
-    x.assert(parserFuncs.parseCallFunction(p), {
-        'function': 'hello',
-        'args': [
-            {
-                'kind': 'string',
-                'value': '1',
-                'startPos': 10,
-                'endPos': 13,
-                'error': null,
-                'line': 1,
-                'fullText': '"1"',
-            },
-        ],
-        'args_kind': 'tuple',
-    });
-
-    p = new Parser('("hello",{"a": "1"})', {});
-    p.parse();
-    p.definedFunctions['hello'] = {'arguments': ['a'], 'content': 'a'};
-
-    x.assert(parserFuncs.parseCallFunction(p), {
-        'function': 'hello',
-        'args': [
-            {
-                'key': {
-                    'kind': 'string',
-                    'value': 'a',
-                    'startPos': 10,
-                    'endPos': 13,
-                    'error': null,
-                    'line': 1,
-                    'fullText': '"a"',
-                },
-                'value': {
+    callFunc(
+        x,
+        `\
+define-function: ("hello", (a), block {})
+call-function: ("hello",("1"))`,
+        {
+            'function': 'hello',
+            'args': [
+                {
                     'kind': 'string',
                     'value': '1',
-                    'startPos': 15,
-                    'endPos': 18,
-                    'error': null,
-                    'line': 1,
+                    'startPos': 67,
+                    'endPos': 70,
                     'fullText': '"1"',
+                    'line': 2,
+                    'error': null,
                 },
-            },
-        ],
-        'args_kind': 'json',
-    });
+            ],
+            'args_kind': 'tuple',
+        },
+    );
+    callFunc(
+        x,
+        `\
+define-function: ("hello", (a), block {})
+call-function: ("hello",{"a": "1"})`,
+        {
+            'function': 'hello',
+            'args': [
+                {
+                    'key': {
+                        'kind': 'string',
+                        'value': 'a',
+                        'startPos': 67,
+                        'endPos': 70,
+                        'fullText': '"a"',
+                        'line': 2,
+                        'error': null,
+                    },
+                    'value': {
+                        'kind': 'string',
+                        'value': '1',
+                        'startPos': 72,
+                        'endPos': 75,
+                        'fullText': '"1"',
+                        'line': 2,
+                        'error': null,
+                    },
+                },
+            ],
+            'args_kind': 'json',
+        },
+    );
 }
 
 function checkDefineFunction(x, func) {
+    const transform = data => {
+        const ret = Object.create(null);
+        for (const [key, value] of Object.entries(data)) {
+            ret[key] = {
+                'arguments': value.arguments,
+                'commands': value.commands.map(c => {
+                    return {
+                        'name': c.commandName,
+                        'line': c.line,
+                        'text': c.getOriginalCommand(),
+                    };
+                }),
+                'start_line': value.start_line,
+            };
+        }
+        return ret;
+    };
     x.assert(func('')[0], {'error': 'expected a tuple of 3 elements, found nothing'});
     x.assert(func('hello')[0], {
         'error': 'expected a tuple of 3 elements, found an ident (`hello`)',
@@ -992,20 +1046,32 @@ function checkDefineFunction(x, func) {
 
     const [res, parser] = func('("a",(a), block { assert-css:\n})');
     x.assert(res, {'instructions': [], 'wait': false});
-    x.assert(parser.definedFunctions, {
+    x.assert(transform(parser.definedFunctions), {
         'a': {
             'arguments': ['a'],
-            'content': ' assert-css:\n',
+            'commands': [
+                {
+                    'name': 'assert-css',
+                    'line': 1,
+                    'text': 'assert-css:',
+                },
+            ],
             'start_line': 1,
         },
     });
 
     const [res2, parser2] = func('("a",(a), block { assert-css: ("a", c)\n})');
     x.assert(res2, {'instructions': [], 'wait': false});
-    x.assert(parser2.definedFunctions, {
+    x.assert(transform(parser2.definedFunctions), {
         'a': {
             'arguments': ['a'],
-            'content': ' assert-css: ("a", c)\n',
+            'commands': [
+                {
+                    'name': 'assert-css',
+                    'line': 1,
+                    'text': 'assert-css: ("a", c)',
+                },
+            ],
             'start_line': 1,
         },
     });
@@ -1023,17 +1089,26 @@ function checkDefineFunction(x, func) {
     },
 )`);
     x.assert(res3, {'instructions': [], 'wait': false});
-    x.assert(parser3.definedFunctions, {
+    x.assert(transform(parser3.definedFunctions), {
         'check-result': {
             'arguments': ['result_kind', 'color', 'hover_color'],
-            'content': `
-        assert-css: (".result-" + |result_kind| + " ." + |result_kind|, {"color": |color|}, ALL)
-        // hello
-        assert-attribute: (
+            'commands': [
+                {
+                    'name': 'assert-css',
+                    'line': 5,
+                    'text': '\
+assert-css: (".result-" + |result_kind| + " ." + |result_kind|, {"color": |color|}, ALL)',
+                },
+                {
+                    'name': 'assert-attribute',
+                    'line': 7,
+                    'text': `\
+assert-attribute: (
             ".result-" + |result_kind|,
             {"color": |entry_color|, "background-color": |background_color|},
-        )
-    `,
+        )`,
+                },
+            ],
             'start_line': 4,
         },
     });
@@ -1047,13 +1122,21 @@ function checkDefineFunction(x, func) {
     },
 )`);
     x.assert(res4, {'instructions': [], 'wait': false});
-    x.assert(parser4.definedFunctions, {
+    x.assert(transform(parser4.definedFunctions), {
         'check-result': {
             'arguments': ['result_kind'],
-            'content': `
-        move-cursor-to: ".result-" + |result_kind|
-        move-cursor-to: ".result-"
-    `,
+            'commands': [
+                {
+                    'name': 'move-cursor-to',
+                    'line': 5,
+                    'text': 'move-cursor-to: ".result-" + |result_kind|',
+                },
+                {
+                    'name': 'move-cursor-to',
+                    'line': 6,
+                    'text': 'move-cursor-to: ".result-"',
+                },
+            ],
             'start_line': 4,
         },
     });
@@ -1072,16 +1155,27 @@ function checkDefineFunction(x, func) {
     },
 )`);
     x.assert(res5, {'instructions': [], 'wait': false});
-    x.assert(parser5.definedFunctions, {
+    x.assert(transform(parser5.definedFunctions), {
         'check-result': {
             'arguments': ['theme', 'color'],
-            'content': `
-        // hello
-        set-local-storage: {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}
-        // We reload the page so the local storage settings are being used.
-        reload:
-        assert-css: (".item-left sup", {"color": |color|})
-    `,
+            'commands': [
+                {
+                    'name': 'set-local-storage',
+                    'line': 6,
+                    'text': '\
+set-local-storage: {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}',
+                },
+                {
+                    'name': 'reload',
+                    'line': 8,
+                    'text': 'reload:',
+                },
+                {
+                    'name': 'assert-css',
+                    'line': 9,
+                    'text': 'assert-css: (".item-left sup", {"color": |color|})',
+                },
+            ],
             'start_line': 4,
         },
     });
@@ -1097,15 +1191,31 @@ function checkDefineFunction(x, func) {
     },
 )`);
     x.assert(res6, {'instructions': [], 'wait': false});
-    x.assert(parser6.definedFunctions, {
+    x.assert(transform(parser6.definedFunctions), {
         'check-result': {
             'arguments': [],
-            'content': `
-        set-local-storage: ["a"]
-        set-local-storage: 12
-        set-local-storage: ALL
-        set-local-storage: "ab"
-    `,
+            'commands': [
+                {
+                    'name': 'set-local-storage',
+                    'line': 5,
+                    'text': 'set-local-storage: ["a"]',
+                },
+                {
+                    'name': 'set-local-storage',
+                    'line': 6,
+                    'text': 'set-local-storage: 12',
+                },
+                {
+                    'name': 'set-local-storage',
+                    'line': 7,
+                    'text': 'set-local-storage: ALL',
+                },
+                {
+                    'name': 'set-local-storage',
+                    'line': 8,
+                    'text': 'set-local-storage: "ab"',
+                },
+            ],
             'start_line': 4,
         },
     });
@@ -1336,14 +1446,17 @@ function checkParseContent(x, func) {
     x.assert(func(''), []);
     x.assert(func('// just a comment'), []);
     x.assert(func('  // just a comment'), []);
-    x.assert(func('a: '), [{'error': 'Unknown command "a"', 'line': 1}]);
-    x.assert(func(':'), [{'error': 'Unexpected `:` when parsing command', 'line': 1}]);
+    x.assert(func('a: '), [{'message': 'Unknown command "a"', 'isFatal': false, 'line': 1}]);
+    x.assert(
+        func(':'),
+        [{'message': 'Unexpected `:` when parsing command', 'isFatal': true, 'line': 1}],
+    );
 
     x.assert(func('go-to: "file:///home"'), [
         {
             'fatal_error': true,
             'original': 'go-to: "file:///home"',
-            'line': 1,
+            'line': '1',
             'instructions': [
                 `\
 const url = "file:///home";
@@ -1365,20 +1478,20 @@ try {
             '`call-function`, `debug`, `define-function`, `emulate`, `expect-failure`, ' +
             '`fail-on-js-error`, `fail-on-request-error`, `javascript`, `screenshot-comparison`, ' +
             '`screenshot-on-failure`, `store-value` or `set-timeout` can be used before)!',
-        'line': 1,
+        'line': '1',
     }]);
     x.assert(func('expect-failure: true\ngo-to: "file:///home"'), [
         {
             'fatal_error': false,
             'wait': false,
             'original': 'expect-failure: true',
-            'line': 1,
+            'line': '1',
             'instructions': ['arg.expectedToFail = true;'],
         },
         {
             'fatal_error': true,
             'original': 'go-to: "file:///home"',
-            'line': 2,
+            'line': '2',
             'instructions': [
                 `\
 const url = "file:///home";
@@ -1399,7 +1512,7 @@ try {
         {
             'fatal_error': true,
             'original': 'go-to: "file:///home"',
-            'line': 1,
+            'line': '1',
             'instructions': [
                 `\
 const url = "file:///home";
@@ -1418,7 +1531,7 @@ try {
         {
             'fatal_error': false,
             'original': 'reload:',
-            'line': 2,
+            'line': '2',
             'instructions': [`\
 const ret = page.reload({'waitUntil': 'domcontentloaded', 'timeout': 30000});
 await ret;`,
@@ -1427,7 +1540,7 @@ await ret;`,
         {
             'fatal_error': true,
             'original': 'go-to: "file:///home"',
-            'line': 3,
+            'line': '3',
             'instructions': [
                 `\
 const url = "file:///home";
@@ -1444,12 +1557,15 @@ try {
             ],
         },
     ]);
-    x.assert(func('// just a comment\na: b'), [{'error': 'Unknown command "a"', 'line': 2}]);
+    x.assert(
+        func('// just a comment\na: b'),
+        [{'message': 'Unknown command "a"', 'isFatal': false, 'line': 2}],
+    );
     x.assert(func('go-to: "file:///home"\nemulate: "test"'), [
         {
             'fatal_error': true,
             'original': 'go-to: "file:///home"',
-            'line': 1,
+            'line': '1',
             'instructions': [
                 `\
 const url = "file:///home";
@@ -1467,14 +1583,14 @@ try {
         },
         {
             'error': 'Command `emulate` must be used before first `go-to`!',
-            'line': 2,
+            'line': '2',
         },
     ]);
     x.assert(func('go-to: "file:///home"\nassert-text: ("a", "b")'), [
         {
             'fatal_error': true,
             'original': 'go-to: "file:///home"',
-            'line': 1,
+            'line': '1',
             'instructions': [
                 `\
 const url = "file:///home";
@@ -1495,7 +1611,7 @@ try {
             'wait': false,
             'checkResult': true,
             'original': 'assert-text: ("a", "b")',
-            'line': 2,
+            'line': '2',
             'instructions': [`\
 async function checkTextForElem(elem) {
     await elem.evaluate(e => {
