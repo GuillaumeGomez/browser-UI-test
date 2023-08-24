@@ -1451,6 +1451,19 @@ assert-css: (".item-left sup", {"color": |color|})`);
     x.assert(p.elems[0].getRaw()[0].value.getRaw(), '2');
 
 
+    p = inferredValues('{"x": 2 + |y|}', {'y': 'a'});
+    x.assert(p.errors.length === 0);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getErrorText(), '{"x": 2 + |y|}');
+    x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
+    x.assert(p.elems[0].getRaw()[0].key.getErrorText(), '"x"');
+    x.assert(p.elems[0].getRaw()[0].value.kind, 'string');
+    x.assert(p.elems[0].getRaw()[0].value.getErrorText(), '2 + |y|');
+    x.assert(p.elems[0].getRaw()[0].value.getRaw(), '2a');
+
+
     p = new Parser('{"x" {"y": 1}}');
     p.parse();
     x.assert(p.errors[0].message, 'expected `:` after `"x"`, found `{"y": 1}`');
