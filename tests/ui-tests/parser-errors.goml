@@ -1,0 +1,4 @@
+// This test ensure that the parsing doesn't stop at the first error.
+assert-css: ("a", foo {1: 2})
+assert: ["a", 2] + ["a" |b]
+assert: (a b) + (a |b)

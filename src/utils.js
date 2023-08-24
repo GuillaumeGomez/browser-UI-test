@@ -1,5 +1,6 @@
 const fs = require('fs');
 const config = require('./config.js');
+const path = require('path');
 const process = require('process');
 const {PuppeteerWrapper} = require('./puppeteer-wrapper.js');
 
@@ -86,6 +87,10 @@ function getVariableValue(variables, variableName, functionArgs = null) {
     return null;
 }
 
+function extractFileNameWithoutExtension(filePath) {
+    return path.parse(filePath).name;
+}
+
 function loadPuppeteerWrapper() {
     return new PuppeteerWrapper();
 }
@@ -112,4 +117,5 @@ module.exports = {
     'loadPuppeteerWrapper': loadPuppeteerWrapper,
     'RESERVED_VARIABLE_NAME': RESERVED_VARIABLE_NAME,
     'escapeBackslahes': escapeBackslahes,
+    'extractFileNameWithoutExtension': extractFileNameWithoutExtension,
 };

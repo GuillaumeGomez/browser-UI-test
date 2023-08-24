@@ -1,0 +1,19 @@
+// This test ensures that all commands in a `block {}` are executed.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+show-text: true
+define-function: (
+    "fn1",
+    (),
+    block {
+        assert-css: ("header", {"background-color": "a"})
+        assert-css: ("header", {"background-color": "b"})
+        assert-css: ("header", {"background-color": "c"})
+        assert-css: ("header", {"background-color": "d"})
+        assert-css: ("header", {"background-color": "e"})
+        assert-css: ("header", {"background-color": "f"})
+        assert-css: ("header", {"background-color": "g"})
+        assert-css: ("header", {"background-color": "h"})
+        assert-css: ("header", {"background-color": "i"})
+    },
+)
+call-function: ("fn1", ())

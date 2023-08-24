@@ -1,4 +1,4 @@
-const { Parser } = require('./parser.js');
+const { AstLoader } = require('./ast.js');
 const process = require('process');
 const commands = require('./commands/all.js');
 const consts = require('./consts.js');
@@ -165,49 +165,70 @@ const BEFORE_GOTO = [
 ];
 
 class ParserWithContext {
-    constructor(content, options) {
-        this.parser = new Parser(content, options.variables);
+    constructor(filePath, options, content = null) {
+        this.ast = new AstLoader(filePath, content);
         this.firstGotoParsed = false;
         this.options = options;
         this.callingFunc = [];
+        this.variables = options.variables;
+        this.definedFunctions = Object.create(null);
+        this.contexts = [
+            {
+                'commands': this.ast.commands,
+                'currentCommand': 0,
+                'functionArgs': Object.create(null),
+            },
+        ];
     }
 
-    variables() {
-        return this.parser.variables;
+    get_parser_errors() {
+        return this.ast.errors;
     }
 
-    get_current_line() {
-        if (this.callingFunc.length === 0) {
-            return this.parser.currentLine;
+    get_current_context() {
+        if (this.contexts.length === 0) {
+            return null;
         }
-        const last = this.callingFunc[this.callingFunc.length - 1];
-        return `${last.currentLine} from ${this.parser.currentLine}`;
+        return this.contexts[this.contexts.length - 1];
+    }
+
+    get_current_command() {
+        const context = this.get_current_context();
+        if (context !== null) {
+            return context.commands[context.currentCommand];
+        }
+        return null;
+    }
+
+    increase_context_pos() {
+        const c = this.get_current_context();
+        if (c !== null) {
+            c.currentCommand += 1;
+        }
     }
 
     get_current_command_line() {
-        if (this.callingFunc.length !== 0) {
-            for (let i = this.callingFunc.length - 1; i >= 0; --i) {
-                const parser = this.callingFunc[i];
-                if (parser.command !== null) {
-                    return `${parser.command.line} from ${this.parser.command.line}`;
-                }
-            }
+        const command = this.get_current_command();
+        const text = [`${command.line}`];
+        for (let i = this.contexts.length - 2; i >= 0; --i) {
+            const c = this.contexts[i];
+            text.push(`from line ${c.commands[c.currentCommand].line}`);
         }
-        return this.parser.command.line;
+        // return text.join('    \n');
+        return text.join(' ');
     }
 
-    setup_user_function_call() {
-        const parser = this.get_current_parser();
-        const ret = commands.parseCallFunction(parser);
+    setup_user_function_call(ast) {
+        const ret = commands.parseCallFunction(this);
         if (ret.error !== undefined) {
-            ret.line = this.get_current_line();
-            if (parser.elems.length !== 0) {
-                ret.error += ` (from command \`${parser.elems[0].getErrorText()}\`)`;
+            ret.line = this.get_current_command_line();
+            if (ast.length !== 0) {
+                ret.error += ` (from command \`${ast[0].getErrorText()}\`)`;
             }
             return ret;
         }
         const args = Object.create(null);
-        const func = this.parser.definedFunctions[ret['function']];
+        const func = this.definedFunctions[ret['function']];
         if (ret['args_kind'] === 'tuple') {
             for (let i = 0; i < ret['args'].length; ++i) {
                 args[func['arguments'][i]] = ret['args'][i];
@@ -225,31 +246,32 @@ class ParserWithContext {
                 args[arg_name] = ret['args'][index].value;
             }
         }
-        const newParser = new Parser(
-            func['content'], parser.variables, args, this.parser.definedFunctions);
-        // We change the "currentLine" of the parser so it points to the right place when an error
-        // occurs.
-        newParser.currentLine = func['start_line'];
-        this.callingFunc.push(newParser);
-        // FIXME: allow to change max call stack?
-        if (this.callingFunc.length > 100) {
+        this.contexts.push({
+            'commands': func.commands,
+            'currentCommand': 0,
+            'functionArgs': Object.assign({}, this.get_current_context().functionArgs, args),
+        });
+        if (this.contexts.length > 100) {
             return {
                 'error': 'reached maximum stack size (100)',
                 'line': this.get_current_command_line(),
                 'fatal_error': true,
             };
         }
-        return this.get_next_command();
+        return this.get_next_command(false);
     }
 
-    run_order(order) {
+    run_order(order, ast) {
+        // This is needed because for now, all commands get access to the ast
+        // through `ParserWithContext`.
+        this.elems = ast;
+
         if (order === 'call-function') {
             // We need to special-case `call-function` since it needs to be interpreted when called.
-            return this.setup_user_function_call();
+            return this.setup_user_function_call(ast);
         } else if (!Object.prototype.hasOwnProperty.call(ORDERS, order)) {
-            return {'error': `Unknown command "${order}"`, 'line': this.get_current_line()};
+            return {'error': `Unknown command "${order}"`, 'line': this.get_current_command_line()};
         }
-        const parser = this.get_current_parser();
         if (this.firstGotoParsed === false) {
             if (order !== 'go-to' && NO_INTERACTION_COMMANDS.indexOf(order) === -1) {
                 const cmds = NO_INTERACTION_COMMANDS.map(x => `\`${x}\``);
@@ -257,22 +279,22 @@ class ParserWithContext {
                 const text = cmds.join(', ') + ` or ${last}`;
                 return {
                     'error': `First command must be \`go-to\` (${text} can be used before)!`,
-                    'line': this.get_current_line(),
+                    'line': this.get_current_command_line(),
                 };
             }
             this.firstGotoParsed = order === 'go-to';
         } else if (BEFORE_GOTO.indexOf(order) !== -1) {
             return {
                 'error': `Command \`${order}\` must be used before first \`go-to\`!`,
-                'line': this.get_current_line(),
+                'line': this.get_current_command_line(),
             };
         }
 
-        const res = ORDERS[order](parser, this.options);
+        const res = ORDERS[order](this, this.options);
         if (res.error !== undefined) {
             res.line = this.get_current_command_line();
-            if (parser.elems.length !== 0) {
-                res.error += ` (from command \`${parser.elems[0].getErrorText()}\`)`;
+            if (this.elems.length !== 0) {
+                res.error += ` (from command \`${this.elems[0].getErrorText()}\`)`;
             }
             return res;
         }
@@ -280,7 +302,7 @@ class ParserWithContext {
             'fatal_error': FATAL_ERROR_COMMANDS.indexOf(order) !== -1,
             'wait': res['wait'],
             'checkResult': res['checkResult'],
-            'original': parser.getOriginalCommand(),
+            'original': this.getOriginalCommand(),
             'line': this.get_current_command_line(),
             'instructions': res['instructions'],
             'infos': res['infos'],
@@ -288,32 +310,50 @@ class ParserWithContext {
         };
     }
 
-    get_current_parser() {
-        if (this.callingFunc.length === 0) {
-            return this.parser;
+    get_next_command(increasePos = true) {
+        let context = this.get_current_context();
+        while (context !== null && context.currentCommand >= context.commands.length) {
+            this.contexts.pop();
+            context = this.get_current_context();
+            if (context !== null) {
+                context.currentCommand += 1;
+            }
         }
-        return this.callingFunc[this.callingFunc.length - 1];
+        if (context === null) {
+            return null;
+        }
+        const command = context.commands[context.currentCommand];
+        const inferred = command.getInferredAst(this.variables, context.functionArgs);
+        if (inferred.errors.length !== 0) {
+            return {
+                'line': command.line,
+                'errors': inferred.errors,
+            };
+        }
+        const ret = this.run_order(command.commandName, inferred.ast);
+        if (increasePos) {
+            this.increase_context_pos();
+        }
+        return ret;
     }
 
-    get_next_command() {
-        const parser = this.get_current_parser();
-        if (!parser.parseNextCommand()) {
-            if (parser.error) {
-                return {
-                    'error': parser.error,
-                    'line': this.get_current_line(),
-                };
-            }
-            if (this.callingFunc.length !== 0) {
-                // We reached the end of this function!
-                this.callingFunc.pop();
-                return this.get_next_command();
-            } else {
-                // We reached the end of the file!
-                return null;
-            }
+    getRawArgs() {
+        const command = this.get_current_command();
+        if (command === null) {
+            return '';
         }
-        return this.run_order(parser.command.getRaw().toLowerCase());
+        if (command.argsEnd - command.argsStart > 100) {
+            return command.text.slice(command.argsStart, command.argsStart + 100) + '…';
+        }
+        return command.text.slice(command.argsStart, command.argsEnd);
+    }
+
+    getOriginalCommand() {
+        const command = this.get_current_command();
+        if (command === null) {
+            return '';
+        }
+        return command.getOriginalCommand();
     }
 }
 
