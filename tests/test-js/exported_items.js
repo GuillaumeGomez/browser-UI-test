@@ -91,7 +91,10 @@ async function checkRunTestCode(x, func) {
 
     // what about some js?
     await x.assertTry(func, ['test', 'let x = true;'],
-        ['test... FAILED\n[ERROR] line 1: Unexpected `x` when parsing command (after `let`)', 1]);
+        [`\
+test... FAILED
+Syntax errors:
+line 1: Unexpected \`x\` when parsing command (after \`let\`)`, 1]);
 
     // Check a failing code
     await x.assertTry(func, ['test',
@@ -345,72 +348,72 @@ async function checkOptions(x) {
     options = new Options();
     options.runId = true;
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.runId` field is supposed to be a string!');
+        '`Options.runId` field is supposed to be a string! (Type is boolean)');
 
     options = new Options();
     options.generateImages = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.generateImages` field is supposed to be a boolean!');
+        '`Options.generateImages` field is supposed to be a boolean! (Type is string)');
 
     options = new Options();
     options.headless = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.headless` field is supposed to be a boolean!');
+        '`Options.headless` field is supposed to be a boolean! (Type is string)');
 
     options = new Options();
     options.testFolder = 1;
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.testFolder` field is supposed to be a string!');
+        '`Options.testFolder` field is supposed to be a string! (Type is number)');
 
     options = new Options();
     options.failureFolder = 1;
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.failureFolder` field is supposed to be a string!');
+        '`Options.failureFolder` field is supposed to be a string! (Type is number)');
 
     options = new Options();
     options.showText = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.showText` field is supposed to be a boolean!');
+        '`Options.showText` field is supposed to be a boolean! (Type is string)');
 
     options = new Options();
     options.debug = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.debug` field is supposed to be a boolean!');
+        '`Options.debug` field is supposed to be a boolean! (Type is string)');
 
     options = new Options();
     options.screenshotComparison = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.screenshotComparison` field is supposed to be a boolean!');
+        '`Options.screenshotComparison` field is supposed to be a boolean! (Type is string)');
 
     options = new Options();
     options.testFiles = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.testFiles` field is supposed to be an array!');
+        '`Options.testFiles` field is supposed to be an array! (Type is string)');
 
     options = new Options();
     options.variables = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.variables` field is supposed to be a dictionary-like!');
+        '`Options.variables` field is supposed to be a dictionary-like! (Type is string)');
 
     options = new Options();
     options.browser = 12;
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.browser` field is supposed to be a string!');
+        '`Options.browser` field is supposed to be a string! (Type is number)');
 
     options = new Options();
     options.incognito = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.incognito` field is supposed to be a boolean!');
+        '`Options.incognito` field is supposed to be a boolean! (Type is string)');
 
     options = new Options();
     options.emulate = 12;
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.emulate` field is supposed to be a string!');
+        '`Options.emulate` field is supposed to be a string! (Type is number)');
 
     options = new Options();
     options.timeout = 'a';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.timeout` field is supposed to be a number!');
+        '`Options.timeout` field is supposed to be a number! (Type is string)');
 
     options = new Options();
     options.timeout = -1;
@@ -420,12 +423,12 @@ async function checkOptions(x) {
     options = new Options();
     options.permissions = 'la';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.permissions` field is supposed to be an array!');
+        '`Options.permissions` field is supposed to be an array! (Type is string)');
 
     options = new Options();
     options.onPageCreatedCallback = 'la';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.onPageCreatedCallback` field is supposed to be a function!');
+        '`Options.onPageCreatedCallback` field is supposed to be a function! (Type is string)');
 
     options = new Options();
     options.onPageCreatedCallback = () => {};
@@ -446,32 +449,32 @@ async function checkOptions(x) {
     options = new Options();
     options.failOnJsError = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.failOnJsError` field is supposed to be a boolean!');
+        '`Options.failOnJsError` field is supposed to be a boolean! (Type is string)');
 
     options = new Options();
     options.noSandbox = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.noSandbox` field is supposed to be a boolean!');
+        '`Options.noSandbox` field is supposed to be a boolean! (Type is string)');
 
     options = new Options();
     options.failOnRequestError = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.failOnRequestError` field is supposed to be a boolean!');
+        '`Options.failOnRequestError` field is supposed to be a boolean! (Type is string)');
 
     options = new Options();
     options.allowFileAccessFromFiles = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.allowFileAccessFromFiles` field is supposed to be a boolean!');
+        '`Options.allowFileAccessFromFiles` field is supposed to be a boolean! (Type is string)');
 
     options = new Options();
     options.screenshotOnFailure = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.screenshotOnFailure` field is supposed to be a boolean!');
+        '`Options.screenshotOnFailure` field is supposed to be a boolean! (Type is string)');
 
     options = new Options();
     options.nbThreads = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.nbThreads` field is supposed to be a number!');
+        '`Options.nbThreads` field is supposed to be a number! (Type is string)');
 }
 
 const TO_CHECK = [
