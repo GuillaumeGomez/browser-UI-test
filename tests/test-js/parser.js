@@ -169,6 +169,14 @@ function checkCssParser(x) {
     p = new CssParser('rgba(255, 180, 76, 0.85)');
     p2 = new CssParser('#ffb44cd9');
     x.assert(p2.sameFormatAs(p), 'rgba(255, 180, 76, 0.85)');
+
+    p = new CssParser('white');
+    p2 = new CssParser('#f5f5f4');
+    x.assert(p2.sameFormatAs(p), 'rgb(245, 245, 244)');
+
+    p = new CssParser('white');
+    p2 = new CssParser('#f00');
+    x.assert(p2.sameFormatAs(p), 'red');
 }
 
 function checkTuple(x) {
