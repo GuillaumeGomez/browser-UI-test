@@ -148,8 +148,11 @@ class CssParser {
             } else if (otherElem.colorKind.startsWith('rgb')) {
                 output += fromRgba(elem.color).toRgbString(otherElem.hasAlpha);
             } else {
-                const ret = Object.entries(allColors).find(([key, _]) => {
-                    return key === otherElem.value;
+                const ret = Object.entries(allColors).find(([_, v]) => {
+                    return v[0] === elem.color[0] &&
+                        v[1] === elem.color[1] &&
+                        v[2] === elem.color[2] &&
+                        v[3] === elem.color[3];
                 });
                 if (ret !== undefined) {
                     output += ret[0];
