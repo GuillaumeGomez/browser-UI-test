@@ -7,7 +7,7 @@ functions... FAILED
 [ERROR] (line 8 from line 22) The following errors happened (for selector `header`): [expected `a` for key `background-color`, found `rgb(17, 17, 17)`; expected `y` for key `color`, found `rgb(255, 255, 255)`]: for command `assert-css: ("header", {"background-color": |background_color|, "color": |color|})`
 [ERROR] (line 9 from line 22) The following errors happened (for selector `header`): [expected `a` for key `color`, found `rgb(255, 255, 255)`]: for command `assert-css: ("header", |whole_check|)`
 [ERROR] (line 12 from line 15 from line 22) Error: Evaluation failed: The following errors happened (for selector `header`): [No attribute named `color`]: for command `assert-attribute: ("header", {"color": "blue"})`
-[ERROR] (line 16 from line 22) The following errors happened (for selector `header`): [expected `red` for key `color`, found `red`]: for command `assert-css: ("header", {"color": "red"})`
+[ERROR] (line 16 from line 22) The following errors happened (for selector `header`): [expected `red` for key `color`, found `white`]: for command `assert-css: ("header", {"color": "red"})`
 [ERROR] (line 27 from line 32) The following errors happened (for selector `header`): [expected `a` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": |background_color|})`
 [ERROR] (line 28 from line 32) The following errors happened (for selector `header`): [expected `a` for key `color`, found `rgb(255, 255, 255)`]: for command `assert-css: ("header", |whole_check|)`
 [ERROR] line 34: Missing argument "whole_check"
