@@ -752,7 +752,7 @@ function parseWaitForProperty(parser) {
     const varValue = varName + 'Value';
 
     const { checks, hasSpecialChecks } = makeExtendedChecks(
-        enabledChecks, false, 'nonMatchingAttrs', 'property', 'prop', varKey, varValue);
+        enabledChecks, false, 'nonMatchingProps', 'property', 'prop', varKey, varValue);
 
     let checker;
     if (!enabledChecks['ALL']) {
