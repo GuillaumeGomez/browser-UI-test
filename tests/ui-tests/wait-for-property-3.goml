@@ -1,0 +1,6 @@
+// This test ensures that the `wait-for-property` command is behaving like expected.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+set-timeout: 500
+// Try a property with a different type.
+// This should give a failure, not an internal error.
+wait-for-property: ("html", {"offsetLeft": "0"})
