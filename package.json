@@ -22,6 +22,7 @@
         "doc-test": "node tests/test-js/doc.js",
         "parser-test": "node tests/test-js/parser.js",
         "exported-test": "node tests/test-js/exported_items.js",
+        "generated-test": "node tests/test-js/generated.js",
         "lint": "eslint src tests/test-js",
         "lint-fix": "eslint --fix src tests/test-js"
     },
@@ -39,8 +40,9 @@
         "css-unit-converter": "^1.1.2"
     },
     "devDependencies": {
-        "babel-eslint": "^10.0.2",
-        "eslint": "^6.1.0",
+        "@babel/eslint-parser": "^7.5.4",
+        "@babel/core": "^7.11.0",
+        "eslint": "^8.49.0",
         "@iarna/toml": "2.2.5"
     }
 }
