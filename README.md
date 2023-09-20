@@ -276,6 +276,15 @@ If you want to run test suites separately:
 $ npm run api-test
 $ npm run parser-test
 $ npm run exported-test
+$ npm run generated-test
+$ npm run ui-test
+```
+
+To be noted, `ui-test` and `api-test` can be run with `--bless` to fix the differences:
+
+```bash
+$ npm run api-test -- --bless
+$ npm run ui-test -- --bless
 ```
 
 ## Donations

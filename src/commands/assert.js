@@ -839,7 +839,7 @@ function compareArrayLike(t1, t2) {
     if (t1.length !== t2.length) {
         return false;
     }
-    for ([index, value] of t1.entries()) {
+    for (const [index, value] of t1.entries()) {
         if (value !== t2[index]) {
             return false;
         }

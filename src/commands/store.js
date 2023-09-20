@@ -187,7 +187,7 @@ const jsHandle = await ${varName}.evaluateHandle(e => {
     }
     return ret;
 });
-data = await jsHandle.jsonValue();
+const data = await jsHandle.jsonValue();
 ${code.join('\n')}`;
 
     return {
@@ -244,7 +244,7 @@ const jsHandle = await ${varName}.evaluateHandle(e => {
     }
     return ret;
 });
-data = await jsHandle.jsonValue();
+const data = await jsHandle.jsonValue();
 ${code.join('\n')}`;
 
     return {
