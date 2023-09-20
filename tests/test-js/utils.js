@@ -245,9 +245,25 @@ function removeFolder(entry) {
     }
 }
 
+function getAllFiles(dirPath) {
+    const allFiles = [];
+
+    for (const file of fs.readdirSync(dirPath, {'encoding': 'utf8'})) {
+        const fullPath = path.join(dirPath, file);
+        if (fs.statSync(fullPath).isDirectory()) {
+            allFiles.push(...getAllFiles(fullPath));
+        } else {
+            allFiles.push(fullPath);
+        }
+    }
+    return allFiles;
+}
+
 module.exports = {
     'Assert': Assert,
     'plural': plural,
     'print': print,
     'removeFolder': removeFolder,
+    'API_OUTPUT': path.join(__dirname, 'api-output'),
+    'getAllFiles': getAllFiles,
 };

@@ -20,7 +20,7 @@ const jsHandle = await parseStoreCss.evaluateHandle(e => {
     }
     return ret;
 });
-data = await jsHandle.jsonValue();
+const data = await jsHandle.jsonValue();
 arg.setVariable(\"a\", data[\"blop\"]);""",
 ]
 wait = false

@@ -3,7 +3,7 @@ process.env.debug_tests = '1'; // We enable this to get all items from `commands
 const parserFuncs = require('../../src/commands.js');
 const Options = require('../../src/options.js').Options;
 const { RESERVED_VARIABLE_NAME } = require('../../src/utils.js');
-const {Assert, plural, print} = require('./utils.js');
+const {Assert, plural, print, API_OUTPUT} = require('./utils.js');
 const path = require('path');
 const fs = require('fs');
 const toml = require('@iarna/toml');
@@ -48,7 +48,7 @@ function wrapper(callback, x, arg, name, options) {
         options = new Options();
     }
     let expected;
-    const parent = path.join(__dirname, 'api-output', callback.name);
+    const parent = path.join(API_OUTPUT, callback.name);
     const filePath = path.join(parent, `${name}.toml`);
     if (!Object.prototype.hasOwnProperty.call(uniqueFileOutput, callback.name)) {
         uniqueFileOutput[callback.name] = Object.create(null);
@@ -2850,6 +2850,7 @@ async function checkCommands(x) {
     print('');
     // The goal in this one is to check that all commands are tested.
     x.startTestSuite('Commands tested', false);
+    print('=> Starting checking if all commands are tested...');
 
     for (const order of Object.keys(parserFuncs.ORDERS)) {
         if (TO_CHECK.findIndex(c => c.name === order) === -1) {
