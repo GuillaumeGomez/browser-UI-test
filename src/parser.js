@@ -1083,10 +1083,6 @@ missing \`)\` at the end of the expression started line ${startLine}`;
                 this.parseJson(elems);
             } else if (c === '(') {
                 this.parseTuple(elems);
-            } else if (c === '(') {
-                // Sub-expression.
-                this.increasePos();
-                this.parseExpression([], [')'], elems);
             } else if (isLetter(c)) {
                 this.parseIdent(elems);
                 const last = elems[elems.length - 1];

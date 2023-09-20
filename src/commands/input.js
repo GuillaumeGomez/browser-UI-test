@@ -165,7 +165,7 @@ function parseWrite(parser) {
         '("CSS selector" or "XPath", integer)';
     const elems = parser.elems;
 
-    if (elems.length !== 1) {
+    if (elems.length === 0) {
         return {'error': err + ', found nothing'};
     } else if (elems.length !== 1) {
         return {'error': err + `, found \`${parser.getRawArgs()}\``};
