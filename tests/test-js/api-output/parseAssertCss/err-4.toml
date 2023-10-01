@@ -1,1 +1,4 @@
-error = """expected `,` or `)` after `\"b\"`, found `\"c\"`"""
+error = """expected `,` or `)` after `\"b\"`, found `\"c\"`
+expected nothing after `(\"a\", \"b\" \"c\",`, found `ALL`
+expected nothing after `ALL`, found `)`
+unexpected token `)` after `ALL`"""
