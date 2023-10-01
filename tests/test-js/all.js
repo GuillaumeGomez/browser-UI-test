@@ -17,7 +17,7 @@ async function runAllTests() {
 
     fs.readdirSync(__dirname).forEach(function(file) {
         const fullPath = path.join(__dirname, file);
-        if (file.endsWith('.js') && fs.lstatSync(fullPath).isFile()) {
+        if (file.endsWith('.js') && file !== 'all.js' && fs.lstatSync(fullPath).isFile()) {
             files.push(fullPath);
         }
     });
