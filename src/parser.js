@@ -1,4 +1,4 @@
-const { escapeBackslahes, RESERVED_VARIABLE_NAME } = require('./utils.js');
+const { escapeBackslahes, RESERVED_VARIABLE_NAME, compareArrays } = require('./utils.js');
 
 const SUPPORTED_OPERATORS = ['>', '>=', '<', '<=', '==', '!=', '+', '-', '/', '*', '%', '||', '&&'];
 
@@ -842,6 +842,7 @@ class Parser {
         if (exclude === null) {
             exclude = [];
         }
+        let stopLoop = false;
 
         const checker = (t, c, toCall) => {
             const elems = t.getElems(pushTo);
@@ -896,9 +897,10 @@ found \`${showEnd(prevElem)}\``;
             // We put back the errors we removed in the right order.
             removedErrors.reverse();
             this.errors.push(...removedErrors);
+            stopLoop = !compareArrays(endChars, ['\n']);
         };
 
-        while (!this.hasFatalError) {
+        while (!this.hasFatalError && !stopLoop) {
             const c = this.getCurrentChar();
             if (c === null) {
                 break;
@@ -1461,6 +1463,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                     pushTo,
                 );
                 this.setError(e, false);
+                this.decreasePos();
                 return;
             }
             this.increasePos();
@@ -1553,88 +1556,90 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
 
         let ender = '';
         let elems = [];
+        let key = null;
 
         while (ender !== '}' && this.pos < this.text.length && !this.hasFatalError) {
             const nbErrors = this.errors.length;
             elems = [];
 
-            ender = this.parse([':', '}', ','], elems, null, ' of JSON dict key', ['}', ','])[1];
-            if (elems.length > 1) {
-                keyError(this, `expected \`:\` after \`${elems[0].getErrorText()}\`, found \
-\`${elems[1].getErrorText()}\``);
-                if (this.hasFatalError) {
-                    return;
-                }
-            } else if (elems.length === 0) {
-                if (ender === ':') {
-                    keyError(this, 'expected key before `:`');
-                } else if (ender === ',') {
-                    if (json.length === 0) {
-                        keyError(this, 'expected a key after `{`, found `,`');
-                    } else {
-                        const last = json[json.length - 1];
-                        keyError(
-                            this,
-                            `expected a key after \`${last.value.getErrorText()}\`, found \`,\``,
-                        );
+            if (key === null) {
+                ender = this.parse(
+                    [':', '}', ','], elems, null, ' of JSON dict key', ['}', ','])[1];
+                if (elems.length === 0) {
+                    if (ender === ':') {
+                        keyError(this, 'expected key before `:`');
+                    } else if (ender === ',') {
+                        if (json.length === 0) {
+                            if (error === null) {
+                                keyError(this, 'expected a key after `{`, found `,`');
+                            }
+                        } else {
+                            const err = json[json.length - 1].value.getErrorText();
+                            keyError(this, `expected a key after \`${err}\`, found \`,\``);
+                        }
+                    } else if (ender === '}') {
+                        break;
                     }
-                } else if (ender === '}') {
-                    break;
-                }
-                this.increasePos(); // Moving past whatever we encountered.
-                continue;
-            } else if (elems[0].error !== null && elems[0].kind !== 'unknown') {
-                keyError(this, elems[0].error);
-                if (this.hasFatalError) {
-                    return;
-                }
-            } else if (!['string', 'variable', 'expression'].includes(elems[0].kind)) {
-                const article = elems[0].getArticleKind();
-                const extra = ` (\`${elems[0].getErrorText()}\`)`;
-                keyError(this, `only strings can be used as keys in JSON dict, found \
+                    this.increasePos(); // Moving past whatever we encountered.
+                    continue;
+                } else if (elems.length > 1) {
+                    if (this.hasFatalError) {
+                        return;
+                    }
+                    if (elems[elems.length - 1].error !== null) {
+                        error = elems[elems.length - 1].error;
+                    }
+                    // We go to the next key (or whatever looks like to be the next key).
+                    while (this.pos < this.text.length && ![',', '}', ':'].includes(
+                        this.getCurrentChar())) {
+                        this.increasePos();
+                    }
+                    if (this.pos < this.text.length) {
+                        if (this.getCurrentChar() !== ':') {
+                            ender = this.getCurrentChar();
+                            continue;
+                        }
+                    } else {
+                        continue;
+                    }
+                } else if (elems[0].error !== null && elems[0].kind !== 'unknown') {
+                    keyError(this, elems[0].error);
+                    if (this.hasFatalError) {
+                        return;
+                    }
+                } else if (!['string', 'variable', 'expression'].includes(elems[0].kind)) {
+                    const article = elems[0].getArticleKind();
+                    const extra = ` (\`${elems[0].getErrorText()}\`)`;
+                    keyError(this, `only strings can be used as keys in JSON dict, found \
 ${article}${extra}`);
-            } else if (ender === '}' || ender === ',') {
-                const after = elems[0].getErrorText();
-                keyError(this, `expected \`:\` after \`${after}\`, found \`${ender}\``);
-                // If `ender === '}'`, it will stop the loop because of the loop's condition.
-                continue;
-            } else if (this.errors.length > nbErrors) {
-                keyError(this, this.errors[this.errors.length - 1].message);
-                if (this.hasFatalError) {
-                    return;
+                } else if (ender === '}' || ender === ',') {
+                    const after = elems[0].getErrorText();
+                    keyError(this, `expected \`:\` after \`${after}\`, found \`${ender}\``);
+                    continue;
+                } else if (this.errors.length > nbErrors) {
+                    keyError(this, this.errors[this.errors.length - 1].message);
+                    if (this.hasFatalError) {
+                        return;
+                    }
                 }
+                key = elems[0];
             }
-            const key = elems[0];
 
-            this.increasePos(); // Moving past `:`.
+            if (this.getCurrentChar() === ':') {
+                this.increasePos(); // Moving past `:`.
+            }
+
             elems = [];
-            ender = this.parse([',', '}'], elems, null, ` for key \`${key.getErrorText()}\``)[1];
+            ender = this.parse(
+                [',', ':', '}'], elems, null, ` for key \`${key.getErrorText()}\``, [':'])[1];
             if (elems.length > 1) {
                 const newErr = `expected \`,\` or \`}\` after \`${elems[0].getErrorText()}\`, \
 found \`${elems[1].getErrorText()}\``;
                 keyError(this, newErr);
 
-                const fullText = this.text.substring(start, this.pos + 1);
-                this.push(
-                    new JsonElement(json, start, this.pos, fullText, startLine, newErr),
-                    pushTo,
-                );
-                return;
-            } else if (ender === ':') {
-                let newErr = 'unexpected `:` ';
-                if (elems.length !== 0) {
-                    newErr += `after key \`${elems[0].getErrorText()}\``;
-                } else {
-                    newErr += `after key \`${key.getErrorText()}\``;
-                }
-                keyError(this, newErr);
+                json.push({'key': key, 'value': elems[0]});
 
-                const fullText = this.text.substring(start, this.pos + 1);
-                this.push(
-                    new JsonElement(json, start, this.pos, fullText, startLine, newErr),
-                    pushTo,
-                );
-                return;
+                key = elems[1];
             } else if (elems.length === 0) {
                 const newErr = `expected a value for key \`${key.getErrorText()}\`, found nothing`;
                 keyError(this, newErr, ender === '}');
@@ -1644,6 +1649,9 @@ found \`${elems[1].getErrorText()}\``;
                     pushTo,
                 );
                 return;
+            } else if (ender === ':') {
+                keyError(this, `expected \`,\` or \`}\` after \`${elems[0].getErrorText()}\`, \
+found \`:\``);
             } else if (this.errors.length > nbErrors) {
                 const newErr = this.errors[this.errors.length - 1].message;
                 keyError(this, newErr);
@@ -1663,6 +1671,7 @@ found \`${elems[1].getErrorText()}\``;
 
             if (elems.length === 1) {
                 json.push({'key': key, 'value': elems[0]});
+                key = null;
             }
         }
         if (ender !== '}') {
