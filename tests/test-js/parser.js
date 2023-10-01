@@ -516,6 +516,21 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw()[3].error, null);
     x.assert(p.elems[0].getRaw()[3].kind, 'ident');
     x.assert(p.elems[0].getRaw()[3].value, 'ALL');
+
+    p = new Parser('("a", "b" "c", ALL)');
+    p.parse();
+    x.assert(p.errors.length, 1);
+    x.assert(p.errors[0].message, 'expected `,` or `)` after `"b"`, found `"c"`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].getRaw().length, 4);
+    x.assert(p.elems[0].getRaw()[0].kind, 'string');
+    x.assert(p.elems[0].getRaw()[0].value, 'a');
+    x.assert(p.elems[0].getRaw()[1].kind, 'string');
+    x.assert(p.elems[0].getRaw()[1].value, 'b');
+    x.assert(p.elems[0].getRaw()[2].kind, 'string');
+    x.assert(p.elems[0].getRaw()[2].value, 'c');
+    x.assert(p.elems[0].getRaw()[3].kind, 'ident');
+    x.assert(p.elems[0].getRaw()[3].value, 'ALL');
 }
 
 function checkArray(x) {
