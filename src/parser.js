@@ -1,4 +1,4 @@
-const { escapeBackslahes, RESERVED_VARIABLE_NAME, compareArrays } = require('./utils.js');
+const { escapeBackslahes, RESERVED_VARIABLE_NAME } = require('./utils.js');
 
 const SUPPORTED_OPERATORS = ['>', '>=', '<', '<=', '==', '!=', '+', '-', '/', '*', '%', '||', '&&'];
 
@@ -834,7 +834,14 @@ class Parser {
         return elems[elems.length - 1];
     }
 
-    parse(endChars = ['\n'], pushTo = null, separator = null, extra = '', exclude = null) {
+    parse(
+        endChars = ['\n'],
+        pushTo = null,
+        separator = null,
+        extra = '',
+        exclude = null,
+        stopAtFirstError = false,
+    ) {
         let prev = '';
         let endChar = null;
         let foundSeparator = 0;
@@ -897,7 +904,9 @@ found \`${showEnd(prevElem)}\``;
             // We put back the errors we removed in the right order.
             removedErrors.reverse();
             this.errors.push(...removedErrors);
-            stopLoop = !compareArrays(endChars, ['\n']);
+            if (stopAtFirstError) {
+                stopLoop = true;
+            }
         };
 
         while (!this.hasFatalError && !stopLoop) {
@@ -1564,7 +1573,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
 
             if (key === null) {
                 ender = this.parse(
-                    [':', '}', ','], elems, null, ' of JSON dict key', ['}', ','])[1];
+                    [':', '}', ','], elems, null, ' of JSON dict key', ['}', ','], true)[1];
                 if (elems.length === 0) {
                     if (ender === ':') {
                         keyError('expected key before `:`');
@@ -1631,7 +1640,7 @@ ${article}${extra}`);
 
             elems = [];
             ender = this.parse(
-                [',', ':', '}'], elems, null, ` for key \`${key.getErrorText()}\``, [':'])[1];
+                [',', ':', '}'], elems, null, ` for key \`${key.getErrorText()}\``, [':'], true)[1];
             if (elems.length > 1) {
                 const newErr = `expected \`,\` or \`}\` after \`${elems[0].getErrorText()}\`, \
 found \`${elems[1].getErrorText()}\``;
