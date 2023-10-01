@@ -844,12 +844,12 @@ class Parser {
         }
         let stopLoop = false;
 
-        const checker = (t, c, toCall) => {
-            const elems = t.getElems(pushTo);
+        const checker = (c, toCall) => {
+            const elems = this.getElems(pushTo);
             const nbElems = elems.length;
             const isError = elems.length > 0 && prev !== separator;
             const checkerNbErrors = this.errors.length;
-            t[toCall](pushTo);
+            this[toCall](pushTo);
             if (!isError) {
                 prev = '';
                 return;
@@ -889,7 +889,7 @@ found \`${showEnd(prevElem)}\``;
             }
             if (nbElems === elems.length) {
                 // In case no new element was added.
-                t.push(new CharElement(c, t.pos, this.currentLine, err), pushTo);
+                this.push(new CharElement(c, this.pos, this.currentLine, err), pushTo);
             } else {
                 prevElem.error = err;
             }
@@ -910,9 +910,9 @@ found \`${showEnd(prevElem)}\``;
                 endChar = c;
                 break;
             } else if (isStringChar(c)) {
-                checker(this, c, 'parseString');
+                checker(c, 'parseString');
             } else if (c === '{') {
-                checker(this, c, 'parseJson');
+                checker(c, 'parseJson');
             } else if (isWhiteSpace(c)) {
                 // do nothing
             } else if (c === separator) {
@@ -936,23 +936,23 @@ found \`${showEnd(prevElem)}\``;
                     prev = separator;
                 }
             } else if (isNumber(c)) {
-                checker(this, c, 'parseNumber');
+                checker(c, 'parseNumber');
             // If it's a negative number, check is a bit trickier since it can also be an
             // expression like in `1-2`.
             } else if (c === '-' && this.isNumberStart() &&
                 (this.getElems(pushTo).length === 0 || prev !== '')
             ) {
-                checker(this, c, 'parseNumber');
+                checker(c, 'parseNumber');
             } else if (c === '(') {
-                checker(this, c, 'parseTuple');
+                checker(c, 'parseTuple');
             } else if (c === '[') {
-                checker(this, c, 'parseArray');
+                checker(c, 'parseArray');
             } else if (this.isCommentStart()) {
                 this.parseComment(pushTo);
                 // We want to keep the backline in case this is the end char.
                 continue;
             } else if (this.isVariableStart(c)) {
-                checker(this, c, 'parseVariable');
+                checker(c, 'parseVariable');
             } else if (isExprChar(c) &&
                 this.getElems(pushTo).length !== 0 &&
                 this.parseOperator(pushTo)
@@ -972,7 +972,7 @@ found \`${showEnd(prevElem)}\``;
                 // Don't increment position.
                 continue;
             } else {
-                checker(this, c, 'parseIdent');
+                checker(c, 'parseIdent');
                 const elems = this.getElems(pushTo);
                 const el = elems[elems.length - 1];
                 if (el.kind === 'unknown') {
@@ -1544,7 +1544,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         const json = [];
         let error = null;
 
-        const keyError = (obj, errorMsg) => {
+        const keyError = errorMsg => {
             this.setError(errorMsg, false);
             if (error === null) {
                 error = errorMsg;
@@ -1567,15 +1567,15 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                     [':', '}', ','], elems, null, ' of JSON dict key', ['}', ','])[1];
                 if (elems.length === 0) {
                     if (ender === ':') {
-                        keyError(this, 'expected key before `:`');
+                        keyError('expected key before `:`');
                     } else if (ender === ',') {
                         if (json.length === 0) {
                             if (error === null) {
-                                keyError(this, 'expected a key after `{`, found `,`');
+                                keyError('expected a key after `{`, found `,`');
                             }
                         } else {
                             const err = json[json.length - 1].value.getErrorText();
-                            keyError(this, `expected a key after \`${err}\`, found \`,\``);
+                            keyError(`expected a key after \`${err}\`, found \`,\``);
                         }
                     } else if (ender === '}') {
                         break;
@@ -1603,21 +1603,21 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                         continue;
                     }
                 } else if (elems[0].error !== null && elems[0].kind !== 'unknown') {
-                    keyError(this, elems[0].error);
+                    keyError(elems[0].error);
                     if (this.hasFatalError) {
                         return;
                     }
                 } else if (!['string', 'variable', 'expression'].includes(elems[0].kind)) {
                     const article = elems[0].getArticleKind();
                     const extra = ` (\`${elems[0].getErrorText()}\`)`;
-                    keyError(this, `only strings can be used as keys in JSON dict, found \
+                    keyError(`only strings can be used as keys in JSON dict, found \
 ${article}${extra}`);
                 } else if (ender === '}' || ender === ',') {
                     const after = elems[0].getErrorText();
-                    keyError(this, `expected \`:\` after \`${after}\`, found \`${ender}\``);
+                    keyError(`expected \`:\` after \`${after}\`, found \`${ender}\``);
                     continue;
                 } else if (this.errors.length > nbErrors) {
-                    keyError(this, this.errors[this.errors.length - 1].message);
+                    keyError(this.errors[this.errors.length - 1].message);
                     if (this.hasFatalError) {
                         return;
                     }
@@ -1635,14 +1635,14 @@ ${article}${extra}`);
             if (elems.length > 1) {
                 const newErr = `expected \`,\` or \`}\` after \`${elems[0].getErrorText()}\`, \
 found \`${elems[1].getErrorText()}\``;
-                keyError(this, newErr);
+                keyError(newErr);
 
                 json.push({'key': key, 'value': elems[0]});
 
                 key = elems[1];
             } else if (elems.length === 0) {
                 const newErr = `expected a value for key \`${key.getErrorText()}\`, found nothing`;
-                keyError(this, newErr, ender === '}');
+                keyError(newErr, ender === '}');
                 const fullText = this.text.substring(start, this.pos + 1);
                 this.push(
                     new JsonElement(json, start, this.pos, fullText, startLine, newErr),
@@ -1650,11 +1650,11 @@ found \`${elems[1].getErrorText()}\``;
                 );
                 return;
             } else if (ender === ':') {
-                keyError(this, `expected \`,\` or \`}\` after \`${elems[0].getErrorText()}\`, \
+                keyError(`expected \`,\` or \`}\` after \`${elems[0].getErrorText()}\`, \
 found \`:\``);
             } else if (this.errors.length > nbErrors) {
                 const newErr = this.errors[this.errors.length - 1].message;
-                keyError(this, newErr);
+                keyError(newErr);
                 if (this.hasFatalError) {
                     const fullText = this.text.substring(start, this.pos + 1);
                     this.push(
