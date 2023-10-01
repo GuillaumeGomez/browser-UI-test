@@ -1091,6 +1091,38 @@ function checkJson(x) {
     x.assert(p.elems[0].getRaw()[0].value.getErrorText(), '2');
 
 
+    p = new Parser('{color": "blue"}');
+    p.parse();
+    x.assert(p.errors.length, 1);
+    x.assert(p.errors[0].message, 'expected `:` after `color`, found `": "`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].fullText, '{color": "blue"}');
+    x.assert(p.elems[0].value.length, 0);
+    x.assert(p.elems[0].error, 'expected `:` after `color`, found `": "`');
+
+
+    p = new Parser('{"a"}');
+    p.parse();
+    x.assert(p.errors.length, 1);
+    x.assert(p.errors[0].message, 'expected `:` after `"a"`, found `}`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].fullText, '{"a"}');
+    x.assert(p.elems[0].value.length, 0);
+    x.assert(p.elems[0].error, 'expected `:` after `"a"`, found `}`');
+
+    p = new Parser('{"a",}');
+    p.parse();
+    x.assert(p.errors.length, 1);
+    x.assert(p.errors[0].message, 'expected `:` after `"a"`, found `,`');
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'json');
+    x.assert(p.elems[0].fullText, '{"a",}');
+    x.assert(p.elems[0].value.length, 0);
+    x.assert(p.elems[0].error, 'expected `:` after `"a"`, found `,`');
+
+
     process.env['variable'] = '1';
     process.env['variable_value'] = 'a';
     p = inferredValues('{|variable|: 2}');
@@ -1344,7 +1376,11 @@ assert-css: (".item-left sup", {"color": |color|})`);
     x.assert(p.elems[0].kind, 'json');
     x.assert(p.elems[0].error, 'expected `,` or `}` after `"a"`, found `"y"`');
     x.assert(p.elems[0].getErrorText(), '{"x": "a" "y": 2}');
-    x.assert(p.elems[0].getRaw().length, 0);
+    x.assert(p.elems[0].getRaw().length, 2);
+    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
+    x.assert(p.elems[0].getRaw()[0].value.getRaw(), 'a');
+    x.assert(p.elems[0].getRaw()[1].key.getRaw(), 'y');
+    x.assert(p.elems[0].getRaw()[1].value.getRaw(), '2');
 
 
     p = new Parser('{"x" 2}');
@@ -1352,7 +1388,7 @@ assert-css: (".item-left sup", {"color": |color|})`);
     x.assert(p.errors[0].message, 'expected `:` after `"x"`, found `2`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'expected a value for key `"x"`, found nothing');
+    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `2`');
     x.assert(p.elems[0].getErrorText(), '{"x" 2}');
     x.assert(p.elems[0].getRaw().length, 0);
 
@@ -1362,7 +1398,7 @@ assert-css: (".item-left sup", {"color": |color|})`);
     x.assert(p.errors[0].message, 'expected `:` after `"x"`, found `"a"`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'expected a value for key `"x"`, found nothing');
+    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `"a"`');
     x.assert(p.elems[0].getErrorText(), '{"x" "a"}');
     x.assert(p.elems[0].getRaw().length, 0);
 
@@ -1384,7 +1420,11 @@ assert-css: (".item-left sup", {"color": |color|})`);
     x.assert(p.elems[0].kind, 'json');
     x.assert(p.elems[0].error, 'expected `,` or `}` after `"a"`, found `:`');
     x.assert(p.elems[0].getErrorText(), '{"x": "a": "y": "b"}');
-    x.assert(p.elems[0].getRaw().length, 0);
+    x.assert(p.elems[0].getRaw().length, 2);
+    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
+    x.assert(p.elems[0].getRaw()[0].value.getRaw(), 'a');
+    x.assert(p.elems[0].getRaw()[1].key.getRaw(), 'y');
+    x.assert(p.elems[0].getRaw()[1].value.getRaw(), 'b');
 
 
     p = new Parser('{, "a"}');
@@ -1418,7 +1458,11 @@ assert-css: (".item-left sup", {"color": |color|})`);
     x.assert(p.elems[0].kind, 'json');
     x.assert(p.elems[0].error, 'expected `,` or `}` after `2`, found `|`');
     x.assert(p.elems[0].getErrorText(), '{"x": 2|"y": "a"}');
-    x.assert(p.elems[0].getRaw().length, 0);
+    x.assert(p.elems[0].getRaw().length, 2);
+    x.assert(p.elems[0].getRaw()[0].key.getRaw(), 'x');
+    x.assert(p.elems[0].getRaw()[0].value.getRaw(), '2');
+    x.assert(p.elems[0].getRaw()[1].key.getRaw(), '|');
+    x.assert(p.elems[0].getRaw()[1].value.getRaw(), 'y');
 
 
     p = new Parser('{"x": 2,|y: "a"}');
@@ -1426,7 +1470,7 @@ assert-css: (".item-left sup", {"color": |color|})`);
     x.assert(p.errors[0].message, 'unexpected character `:` after `|y`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'expected a value for key `|y`, found nothing');
+    x.assert(p.elems[0].error, 'unexpected character `:` after `|y`');
     x.assert(p.elems[0].getErrorText(), '{"x": 2,|y: "a"}');
     x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
     x.assert(p.elems[0].getRaw()[0].key.getErrorText(), '"x"');
@@ -1477,7 +1521,7 @@ assert-css: (".item-left sup", {"color": |color|})`);
     x.assert(p.errors[0].message, 'expected `:` after `"x"`, found `{"y": 1}`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'expected a value for key `"x"`, found nothing');
+    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `{"y": 1}`');
     x.assert(p.elems[0].getErrorText(), '{"x" {"y": 1}}');
     x.assert(p.elems[0].getRaw().length, 0);
 
@@ -1487,7 +1531,7 @@ assert-css: (".item-left sup", {"color": |color|})`);
     x.assert(p.errors[0].message, 'expected `:` after `"x"`, found `true`');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
-    x.assert(p.elems[0].error, 'expected a value for key `"x"`, found nothing');
+    x.assert(p.elems[0].error, 'expected `:` after `"x"`, found `true`');
     x.assert(p.elems[0].getErrorText(), '{"x" true}');
     x.assert(p.elems[0].getRaw().length, 0);
 

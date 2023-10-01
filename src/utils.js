@@ -95,6 +95,27 @@ function loadPuppeteerWrapper() {
     return new PuppeteerWrapper();
 }
 
+function compareArrays(a1, a2) {
+    if (!(a1 instanceof Array) || !(a2 instanceof Array) || a1.length !== a2.length) {
+        return false;
+    }
+    for (let i = 0, len = a1.length; i < len; i++) {
+        if (a1[i] instanceof Array) {
+            if (a2[i] instanceof Array) {
+                if (!compareArrays(a1[i], a2[i])) {
+                    return false;
+                }
+            } else {
+                return false;
+            }
+        // eslint-disable-next-line eqeqeq
+        } else if (a1[i] != a2[i]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 async function loadPuppeteer(options) {
     const puppeteer = loadPuppeteerWrapper();
     await puppeteer.init(options);
@@ -118,4 +139,5 @@ module.exports = {
     'RESERVED_VARIABLE_NAME': RESERVED_VARIABLE_NAME,
     'escapeBackslahes': escapeBackslahes,
     'extractFileNameWithoutExtension': extractFileNameWithoutExtension,
+    'compareArrays': compareArrays,
 };
