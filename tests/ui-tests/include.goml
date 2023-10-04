@@ -1,0 +1,6 @@
+// This test ensures that the `include` commands is working as expected and contains the output
+// of `sub/include.goml` as well.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+assert-text: ("header", "tadam")
+include: "sub/include.goml"
+assert-text: ("header", "tadam")

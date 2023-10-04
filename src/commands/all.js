@@ -68,6 +68,7 @@ module.exports = {
     'parseGoTo': navigation.parseGoTo,
     'parseHistoryGoBack': navigation.parseHistoryGoBack,
     'parseHistoryGoForward': navigation.parseHistoryGoForward,
+    'parseInclude': general.parseInclude,
     'parseJavascript': emulation.parseJavascript,
     'parseMoveCursorTo': input.parseMoveCursorTo,
     'parsePauseOnError': context_setters.parsePauseOnError,

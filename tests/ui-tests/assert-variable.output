@@ -1,8 +1,8 @@
 => Starting doc-ui tests...
 
 assert-variable... FAILED
-[ERROR] (line 9) The following errors happened: [`10` is within 1 of `9` (for NEAR check)]: for command `assert-variable-false: (variable_name, 9, NEAR)`
-[ERROR] (line 12) The following errors happened: [`10` is not within 1 of `8` (for NEAR check)]: for command `assert-variable: (variable_name, 8, NEAR)`
+[ERROR] `tests/ui-tests/assert-variable.goml` line 9: The following errors happened: [`10` is within 1 of `9` (for NEAR check)]: for command `assert-variable-false: (variable_name, 9, NEAR)`
+[ERROR] `tests/ui-tests/assert-variable.goml` line 12: The following errors happened: [`10` is not within 1 of `8` (for NEAR check)]: for command `assert-variable: (variable_name, 8, NEAR)`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

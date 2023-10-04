@@ -2,6 +2,6 @@
 
 error-before-variable-inference... FAILED
 Syntax errors:
-line 3: Unknown command "whatever"
+`tests/ui-tests/error-before-variable-inference.goml` line 3: Unknown command "whatever"
 
 <= doc-ui tests done: 0 succeeded, 1 failed

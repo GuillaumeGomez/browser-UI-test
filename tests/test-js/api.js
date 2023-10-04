@@ -1382,6 +1382,14 @@ function checkHistory(x, func) {
     func('0', 'basic-4');
 }
 
+function checkInclude(x, func) {
+    func('-12', 'err-1');
+    func('(-12, "a")', 'err-2');
+
+    func('"a"', 'basic-1');
+    func('"/a"', 'basic-2');
+}
+
 function checkJavascript(x, func) {
     func('', 'err-1');
     func('"a"', 'err-2');
@@ -1476,8 +1484,9 @@ try {
     x.assert(func('focus: "#foo"'), [{
         'error': 'First command must be `go-to` (`assert-variable`, `assert-variable-false`, ' +
             '`call-function`, `debug`, `define-function`, `emulate`, `expect-failure`, ' +
-            '`fail-on-js-error`, `fail-on-request-error`, `javascript`, `screenshot-comparison`, ' +
-            '`screenshot-on-failure`, `store-value` or `set-timeout` can be used before)!',
+            '`fail-on-js-error`, `fail-on-request-error`, `include`, `javascript`, ' +
+            '`screenshot-comparison`, `screenshot-on-failure`, `store-value` or `set-timeout` ' +
+            'can be used before)!',
         'line': '1',
     }]);
     x.assert(func('expect-failure: true\ngo-to: "file:///home"'), [
@@ -2606,6 +2615,11 @@ const TO_CHECK = [
         'name': 'history-go-forward',
         'func': checkHistory,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseHistoryGoForward, x, e, name, o),
+    },
+    {
+        'name': 'include',
+        'func': checkInclude,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseInclude, x, e, name, o),
     },
     {
         'name': 'javascript',

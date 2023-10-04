@@ -37,8 +37,8 @@ async function checkRunTest(x, func) {
     // empty options
     const res = await func('./tests/scripts/basic.goml');
     x.assert(res[0],
-        'basic... FAILED\n[ERROR] line 1: variable `DOC_PATH` not found in options ' +
-        'nor environment');
+        'basic... FAILED\n[ERROR] `tests/scripts/basic.goml` line 1: variable `DOC_PATH` not ' +
+        'found in options nor environment');
     x.assert(res[1], 1);
 
     // everything is supposed to work

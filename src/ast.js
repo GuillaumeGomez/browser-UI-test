@@ -10,6 +10,9 @@ const {
     VariableElement,
 } = require('./parser.js');
 const utils = require('./utils');
+const path = require('path');
+
+const savedAsts = new Map();
 
 function replaceVariable(elem, variables, functionArgs, forceVariableAsString, errors) {
     const makeError = (message, line) => {
@@ -92,7 +95,6 @@ class CommandNode {
             this.argsStart = 0;
             this.argsEnd = 0;
         }
-        this.errors = [];
         this.text = text;
     }
 
@@ -100,26 +102,26 @@ class CommandNode {
         // We clone the AST to not modify the original. And because it's JS, it's super annoying
         // to do...
         let inferred = [];
+        const errors = [];
         if (!this.hasVariable) {
             inferred = this.ast.map(e => e.clone());
         } else {
             for (const elem of this.ast) {
-                const e = replaceVariables(
-                    elem.clone(), variables, functionArgs, false, this.errors);
+                const e = replaceVariables(elem.clone(), variables, functionArgs, false, errors);
                 if (e !== null) {
                     inferred.push(e);
                 }
             }
         }
-        if (this.errors.length === 0) {
+        if (errors.length === 0) {
             const validation = new ExpressionsValidator(inferred, true, this.text);
             if (validation.errors.length !== 0) {
-                this.errors.push(...validation.errors);
+                errors.push(...validation.errors);
             }
         }
         return {
             'ast': inferred,
-            'errors': this.errors,
+            'errors': errors,
         };
     }
 
@@ -147,14 +149,31 @@ class CommandNode {
             this.commandStart,
             this.text,
         );
-        n.errors.push(...this.errors);
         return n;
     }
 }
 
 class AstLoader {
-    constructor(filePath, content = null) {
-        this.text = content === null ? utils.readFile(filePath) : content;
+    constructor(filePath, currentDir, content = null) {
+        this.filePath = filePath;
+        this.absolutePath = null;
+        if (content === null) {
+            if (currentDir === null || path.isAbsolute(filePath)) {
+                this.absolutePath = path.normalize(filePath);
+            } else {
+                this.absolutePath = path.normalize(path.resolve(currentDir, filePath));
+            }
+            if (savedAsts.has(this.absolutePath)) {
+                const ast = savedAsts.get(this.absolutePath);
+                this.commands = ast.commands;
+                this.text = ast.text;
+                this.errors = ast.errors;
+                return;
+            }
+            this.text = utils.readFile(this.absolutePath);
+        } else {
+            this.text = content;
+        }
         const parser = new Parser(this.text);
         this.commands = [];
         this.errors = [];
@@ -182,6 +201,13 @@ class AstLoader {
                     this.text,
                 ));
             }
+        }
+        if (this.absolutePath !== null) {
+            savedAsts.set(this.absolutePath, {
+                'commands': this.commands,
+                'text': this.text,
+                'errors': this.errors,
+            });
         }
     }
 

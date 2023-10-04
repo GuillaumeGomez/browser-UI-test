@@ -197,10 +197,31 @@ function parseSetWindowProperty(parser) {
     return parseObjPropertyInner(parser, 'window');
 }
 
+// Possible inputs:
+//
+// * "file path"
+function parseInclude(parser) {
+    const elems = parser.elems;
+
+    if (elems.length === 0) {
+        return {'error': 'expected a file path, found nothing'};
+    } else if (elems.length !== 1) {
+        return {'error': `expected a file path, found \`${parser.getRawArgs()}\``};
+    } else if (elems[0].kind !== 'string') {
+        return {
+            'error': `expected a JSON dict, found \`${elems[0].getErrorText()}\` \
+(${elems[0].getArticleKind()})`,
+        };
+    }
+
+    return {'path': elems[0].value };
+}
+
 module.exports = {
     'parseSetLocalStorage': parseSetLocalStorage,
     'parseScreenshot': parseScreenshot,
     'innerParseScreenshot': innerParseScreenshot,
     'parseSetDocumentProperty': parseSetDocumentProperty,
     'parseSetWindowProperty': parseSetWindowProperty,
+    'parseInclude': parseInclude,
 };

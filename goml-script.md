@@ -159,6 +159,7 @@ Here's the command list:
  * [`go-to`](#go-to)
  * [`history-go-back`](#history-go-back)
  * [`history-go-forward`](#history-go-forward)
+ * [`include`](#include)
  * [`javascript`](#javascript)
  * [`move-cursor-to`](#move-cursor-to)
  * [`pause-on-error`](#pause-on-error)
@@ -1294,6 +1295,16 @@ history-go-back: 0 // disable timeout, be careful when using it!
 ```
 
 Please note that if no `timeout` is specified, the one from the [`timeout`](#timeout) command is used.
+
+#### include
+
+**include** command loads the given path then runs it. If the path is not absolute, it'll be relative to the current file. The file is not loaded until the `include` command is run. Example:
+
+```
+// current file: /bar/foo.goml
+include: "bar.goml"        // It will load `/bar/bar.goml`
+include: "/babar/foo.goml" // It will load `/babar/foo.goml`
+```
 
 #### javascript
 

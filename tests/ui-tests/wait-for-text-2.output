@@ -1,7 +1,7 @@
 => Starting doc-ui tests...
 
 wait-for-text-2... FAILED
-[ERROR] (line 11) Error: The following CSS selector "#i-dont-exist" was not found: for command `wait-for-text: ("#i-dont-exist", "oho")`
+[ERROR] `tests/ui-tests/wait-for-text-2.goml` line 11: Error: The following CSS selector "#i-dont-exist" was not found: for command `wait-for-text: ("#i-dont-exist", "oho")`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

@@ -1,8 +1,8 @@
 => Starting doc-ui tests...
 
 wait-for-count... FAILED
-[ERROR] (line 10) Error: Still didn't find 3 instance of ".random-class" (found 2): for command `wait-for-count: (".random-class", 3)`
-[ERROR] (line 12) expected 3 elements, found 2: for command `assert-count: ("//*[@class='random-class']", 3)`
+[ERROR] `tests/ui-tests/wait-for-count.goml` line 10: Error: Still didn't find 3 instance of ".random-class" (found 2): for command `wait-for-count: (".random-class", 3)`
+[ERROR] `tests/ui-tests/wait-for-count.goml` line 12: expected 3 elements, found 2: for command `assert-count: ("//*[@class='random-class']", 3)`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

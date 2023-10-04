@@ -376,8 +376,9 @@ class ExpressionElement extends Element {
     }
 
     clone() {
+        const elems = this.value.map(elem => elem.clone());
         return new this.constructor(
-            this.value, this.startPos, this.endPos, this.fullText, this.line, this.error,
+            elems, this.startPos, this.endPos, this.fullText, this.line, this.error,
         );
     }
 }
@@ -514,7 +515,7 @@ class JsonElement extends Element {
 
     clone() {
         const elems = this.value.map(elem => {
-            return {'key': elem.key, 'value': elem.value.clone()};
+            return {'key': elem.key.clone(), 'value': elem.value.clone()};
         });
         return new this.constructor(
             elems, this.startPos, this.endPos, this.fullText, this.line, this.error,
