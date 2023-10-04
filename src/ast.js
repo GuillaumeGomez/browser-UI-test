@@ -158,21 +158,21 @@ class CommandNode {
 class AstLoader {
     constructor(filePath, currentDir, content = null) {
         this.filePath = filePath;
-        let absolute = null;
+        this.absolutePath = null;
         if (content === null) {
             if (currentDir === null || path.isAbsolute(filePath)) {
-                absolute = path.resolve(filePath);
+                this.absolutePath = path.normalize(filePath);
             } else {
-                absolute = path.resolve(currentDir, filePath);
+                this.absolutePath = path.normalize(path.resolve(currentDir, filePath));
             }
-            if (savedAsts.has(absolute)) {
-                const ast = savedAsts.get(absolute);
+            if (savedAsts.has(this.absolutePath)) {
+                const ast = savedAsts.get(this.absolutePath);
                 this.commands = ast.commands;
                 this.text = ast.text;
                 this.errors = ast.errors;
                 return;
             }
-            this.text = utils.readFile(absolute);
+            this.text = utils.readFile(this.absolutePath);
         } else {
             this.text = content;
         }
@@ -204,8 +204,8 @@ class AstLoader {
                 ));
             }
         }
-        if (absolute !== null) {
-            savedAsts.set(absolute, {
+        if (this.absolutePath !== null) {
+            savedAsts.set(this.absolutePath, {
                 'commands': this.commands,
                 'text': this.text,
                 'errors': this.errors,

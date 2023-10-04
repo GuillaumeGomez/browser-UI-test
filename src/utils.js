@@ -122,6 +122,50 @@ async function loadPuppeteer(options) {
     return puppeteer;
 }
 
+function splitPath(path) {
+    const pathParts = [];
+
+    let start = 0;
+    let i = 0;
+    for (; i < path.length; ++i) {
+        if (path[i] === '/' || path[i] === '\\') {
+            const p = path.slice(start, i);
+            if (p.length !== 0) {
+                pathParts.push(p);
+            }
+            start = i + 1;
+        }
+    }
+    if (start < i) {
+        pathParts.push(path.slice(start, i));
+    }
+    return pathParts;
+}
+
+function stripCommonPathsPrefix(path, path2 = null) {
+    if (path === null) {
+        return "";
+    } else if (path2 === null) {
+        path2 = getCurrentDir();
+    }
+    const pathParts = splitPath(path);
+    if (pathParts.length === 0) {
+        return path;
+    }
+    const pathParts2 = splitPath(path2);
+
+    let i = 0;
+    for (; i < pathParts.length && i < pathParts2.length; ++i) {
+        if (pathParts[i] !== pathParts2[i]) {
+            return pathParts.slice(i, pathParts.length).join('/');
+        }
+    }
+    if (i < pathParts.length) {
+        return pathParts.slice(i, pathParts.length).join('/');
+    }
+    return pathParts[pathParts.length - 1];
+}
+
 module.exports = {
     'addSlash': addSlash,
     'getCurrentDir': getCurrentDir,
@@ -140,4 +184,5 @@ module.exports = {
     'escapeBackslahes': escapeBackslahes,
     'extractFileNameWithoutExtension': extractFileNameWithoutExtension,
     'compareArrays': compareArrays,
+    'stripCommonPathsPrefix': stripCommonPathsPrefix,
 };

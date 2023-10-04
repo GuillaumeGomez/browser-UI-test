@@ -176,6 +176,15 @@ async function runInstruction(loadedInstruction, page, extras) {
     await loadedInstruction(page, extras);
 }
 
+function getFileInfo(context_parser, line, isExact = true) {
+    const file = utils.stripCommonPathsPrefix(context_parser.getCurrentFile());
+    const file_s = file.length > 0 ? `\`${file}\` ` : '';
+    if (isExact) {
+        return `${file_s}line ${line}`;
+    }
+    return `${file_s}around line ${line}`;
+}
+
 async function runAllCommands(loaded, logs, options, browser) {
     const commandLogs = new Logs(false);
     logs.append(loaded['file'] + '... ');
@@ -265,8 +274,8 @@ async function runAllCommands(loaded, logs, options, browser) {
             if (!extras[option] || extras[field].length === 0) {
                 return false;
             }
-            error_log += `[ERROR] (around line ${line_number}): ${message}: ` +
-                extras[field].join('\n');
+            const info = getFileInfo(context_parser, line_number, false);
+            error_log += `[ERROR] ${info}: ${message}: ` + extras[field].join('\n');
             // We empty the errors to prevent having it duplicated.
             extras[field].splice(0, extras[field].length);
             return true;
@@ -294,16 +303,17 @@ async function runAllCommands(loaded, logs, options, browser) {
             }
             if (command['warnings'] !== undefined) {
                 for (const warning of command['warnings']) {
-                    warnings.push(`line ${command['line']}: ${warning}`);
+                    warnings.push(`${getFileInfo(context_parser, command['line'])}: ${warning}`);
                 }
             }
             // FIXME: This is ugly to have both 'error' and 'errors'. Clean that up!
             if (command['error'] !== undefined) {
-                error_log += `[ERROR] line ${command['line']}: ${command['error']}`;
+                error_log += `[ERROR] ${getFileInfo(context_parser, command['line'])}: \
+${command['error']}`;
                 break;
             } else if (command['errors'] !== undefined && command['errors'].length > 0) {
                 error_log += command['errors'].map(e => {
-                    return `[ERROR] line ${e['line']}: ${e['message']}`;
+                    return `[ERROR] ${getFileInfo(context_parser, e['line'])}: ${e['message']}`;
                 }).join('\n');
                 break;
             }
@@ -323,7 +333,8 @@ async function runAllCommands(loaded, logs, options, browser) {
                 try {
                     loadedInstruction = loadContent(instruction);
                 } catch (error) { // parsing error
-                    error_log += `(line ${line_number}) output:\n${error.message}\n`;
+                    error_log += `${getFileInfo(context_parser, line_number)} output:\n\
+${error.message}\n`;
                     if (debug_log.isEnabled()) {
                         error_log += `command \`${command['original']}\` failed on ` +
                             `\`${instruction}\`\n`;
@@ -334,15 +345,16 @@ async function runAllCommands(loaded, logs, options, browser) {
                     await runInstruction(loadedInstruction, page, extras);
                 } catch (err) { // execution error
                     if (err === commands_parser.COLOR_CHECK_ERROR) {
-                        error_log += `[ERROR] (line ${line_number}): ${err}\n`;
+                        error_log += `[ERROR] ${getFileInfo(context_parser, line_number)}: \
+${err}\n`;
                         stopLoop = true;
                     } else {
                         failed = true;
                         const s_err = err.toString();
                         if (extras.expectedToFail !== true) {
                             const original = command['original'];
-                            error_log += `[ERROR] (line ${line_number}) ${s_err}: for ` +
-                                `command \`${original}\`\n`;
+                            error_log += `[ERROR] ${getFileInfo(context_parser, line_number)}: \
+${s_err}: for command \`${original}\`\n`;
                             stopInnerLoop = true;
                             if (extras.screenshotOnFailure) {
                                 stopLoop = true;
@@ -350,7 +362,8 @@ async function runAllCommands(loaded, logs, options, browser) {
                         } else {
                             // it's an expected failure so no need to log it
                             debug_log.append(
-                                `[EXPECTED FAILURE] (line ${line_number}): ${s_err}`);
+                                `[EXPECTED FAILURE] ${getFileInfo(context_parser, line_number)}: \
+${s_err}`);
                         }
                     }
                 }
@@ -365,8 +378,8 @@ async function runAllCommands(loaded, logs, options, browser) {
                 && command['checkResult'] === true
                 && extras.expectedToFail === true
             ) {
-                error_log += `(line ${line_number}) command \`${command['original']}\` was ` +
-                    'supposed to fail but succeeded\n';
+                error_log += `${getFileInfo(context_parser, line_number)}: command \
+\`${command['original']}\` was supposed to fail but succeeded\n`;
             }
             let shouldWait = false;
             if (failed === true && extras.expectedToFail === false) {
@@ -626,7 +639,7 @@ async function innerRunTestCode(
             return [logs.logs, 1];
         } else if (loaded.parser.get_parser_errors().length !== 0) {
             const errors = loaded.parser.get_parser_errors()
-                .map(e => `line ${e.line}: ${e.message}`)
+                .map(e => `${getFileInfo(loaded.parser, e.line)}: ${e.message}`)
                 .join('\n');
             logs.append(testName + '... FAILED');
             logs.append(`Syntax errors:\n${errors}`);

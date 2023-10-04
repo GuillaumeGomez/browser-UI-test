@@ -3,6 +3,7 @@ const process = require('process');
 const commands = require('./commands/all.js');
 const consts = require('./consts.js');
 const path = require('path');
+const { stripCommonPathsPrefix } = require('./utils.js');
 
 const ORDERS = {
     'assert': commands.parseAssert,
@@ -179,7 +180,6 @@ class ParserWithContext {
         this.contexts = [
             {
                 'ast': ast,
-                'dirPath': path.dirname(ast.filePath),
                 'commands': ast.commands,
                 'currentCommand': 0,
                 'functionArgs': Object.create(null),
@@ -222,10 +222,10 @@ class ParserWithContext {
         const text = [`${command.line}`];
         for (let i = this.contexts.length - 2; i >= 0; --i) {
             const c = this.contexts[i];
-            text.push(`from line ${c.commands[c.currentCommand].line}`);
+            const shortPath = stripCommonPathsPrefix(c.ast.absolutePath);
+            text.push(`    from \`${shortPath}\` line ${c.commands[c.currentCommand].line}`);
         }
-        // return text.join('    \n');
-        return text.join(' ');
+        return text.join('\n');
     }
 
     pushNewContext(context) {
@@ -270,11 +270,11 @@ class ParserWithContext {
         const context = this.get_current_context();
         this.pushNewContext({
             'ast': context.ast,
-            'dirPath': context.dirPath,
             'commands': func.commands,
             'currentCommand': 0,
             'functionArgs': Object.assign({}, context.functionArgs, args),
         });
+        // We disable the `increasePos` in the context to prevent it to be done twice.
         return this.get_next_command(false);
     }
 
@@ -287,18 +287,27 @@ class ParserWithContext {
             }
             return ret;
         }
-        const ast = new AstLoader(ret.path, this.get_current_context().dirPath);
-        if (ast.hasErrors) {
+        const dirPath = path.dirname(this.get_current_context().ast.absolutePath);
+        const ast = new AstLoader(ret.path, dirPath);
+        if (ast.hasErrors()) {
             return {'errors': ast.errors};
         }
         this.pushNewContext({
             'ast': ast,
-            'dirPath': path.dirname(ast.filePath),
             'commands': ast.commands,
             'currentCommand': 0,
             'functionArgs': Object.create(null),
         });
+        // We disable the `increasePos` in the context to prevent it to be done twice.
         return this.get_next_command(false);
+    }
+
+    getCurrentFile() {
+        const context = this.get_current_context();
+        if (context === null) {
+            return '';
+        }
+        return context.ast.absolutePath;
     }
 
     run_order(order, ast) {
@@ -370,6 +379,7 @@ class ParserWithContext {
         const inferred = command.getInferredAst(this.variables, context.functionArgs);
         if (inferred.errors.length !== 0) {
             return {
+                'filePath': context.ast.absolutePath,
                 'line': command.line,
                 'errors': inferred.errors,
             };
