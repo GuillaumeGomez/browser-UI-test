@@ -1,0 +1,5 @@
+// This test ensures that the `include` commands is working as expected.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
+assert-text: ("header", "hoho")
+include: "../text.goml"
+assert-text: ("header", "hoho")
