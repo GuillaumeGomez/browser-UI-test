@@ -144,7 +144,7 @@ function splitPath(path) {
 
 function stripCommonPathsPrefix(path, path2 = null) {
     if (path === null) {
-        return "";
+        return '';
     } else if (path2 === null) {
         path2 = getCurrentDir();
     }

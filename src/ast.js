@@ -95,7 +95,6 @@ class CommandNode {
             this.argsStart = 0;
             this.argsEnd = 0;
         }
-        this.errors = [];
         this.text = text;
     }
 
@@ -103,26 +102,26 @@ class CommandNode {
         // We clone the AST to not modify the original. And because it's JS, it's super annoying
         // to do...
         let inferred = [];
+        const errors = [];
         if (!this.hasVariable) {
             inferred = this.ast.map(e => e.clone());
         } else {
             for (const elem of this.ast) {
-                const e = replaceVariables(
-                    elem.clone(), variables, functionArgs, false, this.errors);
+                const e = replaceVariables(elem.clone(), variables, functionArgs, false, errors);
                 if (e !== null) {
                     inferred.push(e);
                 }
             }
         }
-        if (this.errors.length === 0) {
+        if (errors.length === 0) {
             const validation = new ExpressionsValidator(inferred, true, this.text);
             if (validation.errors.length !== 0) {
-                this.errors.push(...validation.errors);
+                errors.push(...validation.errors);
             }
         }
         return {
             'ast': inferred,
-            'errors': this.errors,
+            'errors': errors,
         };
     }
 
@@ -150,7 +149,6 @@ class CommandNode {
             this.commandStart,
             this.text,
         );
-        n.errors.push(...this.errors);
         return n;
     }
 }
