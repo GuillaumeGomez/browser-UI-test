@@ -2,6 +2,7 @@ const { AstLoader } = require('./ast.js');
 const process = require('process');
 const commands = require('./commands/all.js');
 const consts = require('./consts.js');
+const path = require('path');
 
 const ORDERS = {
     'assert': commands.parseAssert,
@@ -59,6 +60,7 @@ const ORDERS = {
     'go-to': commands.parseGoTo,
     'history-go-back': commands.parseHistoryGoBack,
     'history-go-forward': commands.parseHistoryGoForward,
+    'include': commands.parseInclude,
     'javascript': commands.parseJavascript,
     'move-cursor-to': commands.parseMoveCursorTo,
     'pause-on-error': commands.parsePauseOnError,
@@ -114,6 +116,7 @@ const FATAL_ERROR_COMMANDS = [
     'emulate',
     'focus',
     'go-to',
+    'include',
     'move-cursor-to',
     'screenshot',
     'scroll-to',
@@ -152,6 +155,7 @@ const NO_INTERACTION_COMMANDS = [
     'expect-failure',
     'fail-on-js-error',
     'fail-on-request-error',
+    'include',
     'javascript',
     'screenshot-comparison',
     'screenshot-on-failure',
@@ -166,7 +170,7 @@ const BEFORE_GOTO = [
 
 class ParserWithContext {
     constructor(filePath, options, content = null) {
-        this.ast = new AstLoader(filePath, content);
+        const ast = new AstLoader(filePath, null, content);
         this.firstGotoParsed = false;
         this.options = options;
         this.callingFunc = [];
@@ -174,7 +178,9 @@ class ParserWithContext {
         this.definedFunctions = Object.create(null);
         this.contexts = [
             {
-                'commands': this.ast.commands,
+                'ast': ast,
+                'dirPath': path.dirname(ast.filePath),
+                'commands': ast.commands,
                 'currentCommand': 0,
                 'functionArgs': Object.create(null),
             },
@@ -182,7 +188,11 @@ class ParserWithContext {
     }
 
     get_parser_errors() {
-        return this.ast.errors;
+        const context = this.get_current_context();
+        if (context === null) {
+            return null;
+        }
+        return context.ast.errors;
     }
 
     get_current_context() {
@@ -218,6 +228,17 @@ class ParserWithContext {
         return text.join(' ');
     }
 
+    pushNewContext(context) {
+        this.contexts.push(context);
+        if (this.contexts.length > 100) {
+            return {
+                'error': 'reached maximum recursion size (100)',
+                'line': this.get_current_command_line(),
+                'fatal_error': true,
+            };
+        }
+    }
+
     setup_user_function_call(ast) {
         const ret = commands.parseCallFunction(this);
         if (ret.error !== undefined) {
@@ -246,18 +267,37 @@ class ParserWithContext {
                 args[arg_name] = ret['args'][index].value;
             }
         }
-        this.contexts.push({
+        const context = this.get_current_context();
+        this.pushNewContext({
+            'ast': context.ast,
+            'dirPath': context.dirPath,
             'commands': func.commands,
             'currentCommand': 0,
-            'functionArgs': Object.assign({}, this.get_current_context().functionArgs, args),
+            'functionArgs': Object.assign({}, context.functionArgs, args),
         });
-        if (this.contexts.length > 100) {
-            return {
-                'error': 'reached maximum stack size (100)',
-                'line': this.get_current_command_line(),
-                'fatal_error': true,
-            };
+        return this.get_next_command(false);
+    }
+
+    setup_include() {
+        const ret = commands.parseInclude(this);
+        if (ret.error !== undefined) {
+            ret.line = this.get_current_command_line();
+            if (ast.length !== 0) {
+                ret.error += ` (from command \`${ast[0].getErrorText()}\`)`;
+            }
+            return ret;
         }
+        const ast = new AstLoader(ret.path, this.get_current_context().dirPath);
+        if (ast.hasErrors) {
+            return {'errors': ast.errors};
+        }
+        this.pushNewContext({
+            'ast': ast,
+            'dirPath': path.dirname(ast.filePath),
+            'commands': ast.commands,
+            'currentCommand': 0,
+            'functionArgs': Object.create(null),
+        });
         return this.get_next_command(false);
     }
 
@@ -267,8 +307,12 @@ class ParserWithContext {
         this.elems = ast;
 
         if (order === 'call-function') {
-            // We need to special-case `call-function` since it needs to be interpreted when called.
+            // We need to special-case `call-function` since it needs to access variables of this
+            // class.
             return this.setup_user_function_call(ast);
+        } else if (order === 'include') {
+            // We need to special-case `include` since it needs to parse a new file when called.
+            return this.setup_include();
         } else if (!Object.prototype.hasOwnProperty.call(ORDERS, order)) {
             return {'error': `Unknown command "${order}"`, 'line': this.get_current_command_line()};
         }

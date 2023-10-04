@@ -10,6 +10,9 @@ const {
     VariableElement,
 } = require('./parser.js');
 const utils = require('./utils');
+const path = require('path');
+
+const savedAsts = new Map();
 
 function replaceVariable(elem, variables, functionArgs, forceVariableAsString, errors) {
     const makeError = (message, line) => {
@@ -153,8 +156,26 @@ class CommandNode {
 }
 
 class AstLoader {
-    constructor(filePath, content = null) {
-        this.text = content === null ? utils.readFile(filePath) : content;
+    constructor(filePath, currentDir, content = null) {
+        this.filePath = filePath;
+        let absolute = null;
+        if (content === null) {
+            if (currentDir === null || path.isAbsolute(filePath)) {
+                absolute = path.resolve(filePath);
+            } else {
+                absolute = path.resolve(currentDir, filePath);
+            }
+            if (savedAsts.has(absolute)) {
+                const ast = savedAsts.get(absolute);
+                this.commands = ast.commands;
+                this.text = ast.text;
+                this.errors = ast.errors;
+                return;
+            }
+            this.text = utils.readFile(absolute);
+        } else {
+            this.text = content;
+        }
         const parser = new Parser(this.text);
         this.commands = [];
         this.errors = [];
@@ -182,6 +203,13 @@ class AstLoader {
                     this.text,
                 ));
             }
+        }
+        if (absolute !== null) {
+            savedAsts.set(absolute, {
+                'commands': this.commands,
+                'text': this.text,
+                'errors': this.errors,
+            });
         }
     }
 
