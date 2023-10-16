@@ -672,10 +672,8 @@ function checkExtras(extras) {
     if (extras === undefined || extras === null) {
         extras = Object.create(null);
     }
-    let browser;
-    if (extras['browser'] === undefined) {
-        browser = null;
-    } else {
+    let browser = null;
+    if (extras['browser'] !== undefined) {
         browser = extras['browser'];
     }
     let options;
