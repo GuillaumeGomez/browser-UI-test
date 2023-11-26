@@ -198,6 +198,7 @@ Here's the command list:
  * [`wait-for-css`](#wait-for-css)
  * [`wait-for-document-property`](#wait-for-document-property)
  * [`wait-for-local-storage`](#wait-for-local-storage)
+ * [`wait-for-position`](#wait-for-position)
  * [`wait-for-property`](#wait-for-property)
  * [`wait-for-text`](#wait-for-text)
  * [`wait-for-window-property`](#wait-for-window-property)
@@ -1851,6 +1852,19 @@ Examples:
 ```
 wait-for-local-storage: {"key": "value"}
 wait-for-local-storage: {"key": "value", "key2": "value2"}
+```
+
+#### wait-for-position
+
+**wait-for-position** command waits for the element(s) position to match the expected values. Only `x` and `y` values are accepted as keys for the positions. Examples:
+
+```
+wait-for-position: (".class", {"x": 1, "y": 2})
+wait-for-position: ("//*[@class='class']", {"x": 1, "y": 2})
+
+// If you want to wait for all elements matching this selector/XPath, use `ALL`:
+wait-for-position: (".class", {"x": 1, "y": 2}, ALL)
+wait-for-position: ("//*[@class='class']", {"x": 1, "y": 2}, ALL)
 ```
 
 #### wait-for-property

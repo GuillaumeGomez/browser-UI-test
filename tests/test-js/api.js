@@ -377,7 +377,7 @@ function checkAssertProperty(x, func) {
     func('("a", {"a": null}, [STARTS_WITH, STARTS_WITH])', 'undef-2');
 }
 
-function checkAssertPosition(x, func) {
+function checkAssertWaitPosition(x, func) {
     func('("a", "b", )', 'err-1');
     func('("a", "b")', 'err-2');
     func('("a", "b" "c")', 'err-3');
@@ -2358,12 +2358,12 @@ const TO_CHECK = [
     },
     {
         'name': 'assert-position',
-        'func': checkAssertPosition,
+        'func': checkAssertWaitPosition,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertPosition, x, e, name, o),
     },
     {
         'name': 'assert-position-false',
-        'func': checkAssertPosition,
+        'func': checkAssertWaitPosition,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertPositionFalse, x, e, name, o),
     },
     {
@@ -2782,6 +2782,11 @@ const TO_CHECK = [
         'name': 'wait-for-local-storage',
         'func': checkWaitForLocalStorage,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForLocalStorage, x, e, name, o),
+    },
+    {
+        'name': 'wait-for-position',
+        'func': checkAssertWaitPosition,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForPosition, x, e, name, o),
     },
     {
         'name': 'wait-for-property',
