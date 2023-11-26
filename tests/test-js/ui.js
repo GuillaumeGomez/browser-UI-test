@@ -71,6 +71,11 @@ async function compareOutput(x) {
     const browser = await utils.loadPuppeteer(new Options());
 
     for (const file of filesToTest) {
+        if (x.extraArgs.length !== 0 &&
+            x.extraArgs.findIndex(arg => file.indexOf(arg) !== -1) === -1) {
+            // We filter out arguments since we only want to run a few of them...
+            continue;
+        }
         const outputFile = file.replace('.goml', '.output');
         let output;
 
@@ -92,6 +97,11 @@ async function compareOutput(x) {
 }
 
 function checkImageFileForTest(x, screenshotFile, testName) {
+    if (x.extraArgs.length !== 0 &&
+        x.extraArgs.findIndex(arg => testName.indexOf(arg) !== -1) === -1) {
+        // This test was not run so nothing to do in here...
+        return;
+    }
     if (fs.existsSync(screenshotFile) === false) {
         x.addError(`\`${testName}\` should have generated a \`${screenshotFile}\` file!`);
     } else {
@@ -128,7 +138,13 @@ async function checkUi(x) {
 
 if (require.main === module) {
     const x = new Assert();
-    x.blessEnabled = process.argv.findIndex(arg => arg === '--bless') !== -1;
+    for (const arg of process.argv.slice(2)) {
+        if (arg === '--bless') {
+            x.blessEnabled = true;
+        } else {
+            x.extraArgs.push(arg);
+        }
+    }
     checkUi(x).then(nbErrors => {
         process.exit(nbErrors !== 0 ? 1 : 0);
     });

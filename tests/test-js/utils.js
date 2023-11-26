@@ -47,6 +47,8 @@ class Assert {
         this.testSuite = [];
         // If `--bless` option is used.
         this.blessEnabled = false;
+        // Arguments that can be of use in tests.
+        this.extraArgs = [];
     }
 
     assertOrBless(value1, value2, errCallback, pos, extraInfo, toJson = true, out = undefined) {
