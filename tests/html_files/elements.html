@@ -74,6 +74,7 @@ header {
 		<button id="js-wait-document-prop" onclick="updateWaitDocumentProp()">hey</button>
 		<button id="js-wait-prop" onclick="updateWaitElementProp()">hey</button>
 		<button id="js-change-colors" onclick="updateButtonsColor()">hey</button>
+		<button id="js-change-pos" onclick="updateWaitElementPosition()">hey</button>
 		<script>
 window.windowProp = null;
 document.windowProp = null;
@@ -124,6 +125,12 @@ setTimeout(() => {
 function updateWaitElementProp() {
 setTimeout(() => {
   document.getElementById("js-wait-prop")["someProp"] = "hello";
+}, 250);
+}
+function updateWaitElementPosition() {
+setTimeout(() => {
+  document.getElementById("js-change-pos").style.marginLeft = "3px";
+  document.getElementById("js-change-pos").style.marginTop = "3px";
 }, 250);
 }
 document.getElementById("js-wait-prop")["hehe"] = "hoho";

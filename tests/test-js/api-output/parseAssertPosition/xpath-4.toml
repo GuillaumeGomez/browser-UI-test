@@ -1,9 +1,10 @@
 instructions = [
-  """let parseAssertPosition = await page.$x(\"//a\");
-if (parseAssertPosition.length === 0) { throw 'XPath \"//a\" not found'; }
-parseAssertPosition = parseAssertPosition[0];
-await page.evaluate(elem => {
-    const errors = [];
+  """let assertPosition = await page.$x(\"//a\");
+if (assertPosition.length === 0) { throw 'XPath \"//a\" not found'; }
+assertPosition = assertPosition[0];
+const errors = [];
+errors.push(...await page.evaluate(elem => {
+    const innerErrors = [];
     function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
         const v = browserUiTestHelpers.getElementPosition(e, \"\", field, styleField);
         const roundedV = Math.round(v);
@@ -11,13 +12,12 @@ await page.evaluate(elem => {
             errors.push(\"different \" + kind + \" values: \" + v + \" (or \" + roundedV + \") != \" + value);
         }
     }
-    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, errors);
-    checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 2, errors);
-    if (errors.length !== 0) {
-        const errs = errors.join(\"; \");
-        throw \"The following errors happened: [\" + errs + \"]\";
-    }
-}, parseAssertPosition);""",
+    checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, innerErrors);
+    checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 2, innerErrors);
+    return innerErrors;
+}, assertPosition));if (errors.length > 0) {
+    throw \"The following errors happened: [\" + errors.join(\"; \") + \"]\";
+}""",
 ]
 warnings = [
 ]

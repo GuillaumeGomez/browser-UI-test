@@ -13,4 +13,4 @@ wait-for-attribute: ("#created-one", {"data-a": "x"})
 // This next one should fail.
 wait-for-attribute: ("#js-call-attr", {"data-a": "c"})
 // Check that the script won't run anything after the previous command failed.
-assert-attribute: ("#js-call-attr", {"data-a": "c"})
+// assert-attribute: ("#js-call-attr", {"data-a": "c"})

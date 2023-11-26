@@ -1,8 +1,9 @@
 instructions = [
-  """let parseAssertPosition = await page.$(\"a\");
-if (parseAssertPosition === null) { throw '\"a\" not found'; }
-await page.evaluate(elem => {
-    const errors = [];
+  """let assertPosition = await page.$(\"a\");
+if (assertPosition === null) { throw '\"a\" not found'; }
+const errors = [];
+errors.push(...await page.evaluate(elem => {
+    const innerErrors = [];
     function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
         const v = browserUiTestHelpers.getElementPosition(e, \"\", field, styleField);
         const roundedV = Math.round(v);
@@ -10,12 +11,11 @@ await page.evaluate(elem => {
             errors.push(\"different \" + kind + \" values: \" + v + \" (or \" + roundedV + \") != \" + value);
         }
     }
-    checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 1, errors);
-    if (errors.length !== 0) {
-        const errs = errors.join(\"; \");
-        throw \"The following errors happened: [\" + errs + \"]\";
-    }
-}, parseAssertPosition);""",
+    checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 1, innerErrors);
+    return innerErrors;
+}, assertPosition));if (errors.length > 0) {
+    throw \"The following errors happened: [\" + errors.join(\"; \") + \"]\";
+}""",
 ]
 warnings = [
 ]

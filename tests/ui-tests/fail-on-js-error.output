@@ -2,7 +2,7 @@
 
 fail-on-js-error... FAILED
 [ERROR] `tests/ui-tests/fail-on-js-error.goml` around line 4: JS errors occurred: Error: TypeError: Cannot read properties of null (reading 'hello')
-    at invalid_js (file://$CURRENT_DIR/tests/html_files/elements.html:104:6)
+    at invalid_js (file://$CURRENT_DIR/tests/html_files/elements.html:105:6)
     at HTMLButtonElement.onclick (file://$CURRENT_DIR/tests/html_files/elements.html:69:55)
 
 <= doc-ui tests done: 0 succeeded, 1 failed
