@@ -12,6 +12,8 @@ const {
     makeExtendedChecks,
     makeTextExtendedChecks,
     getSizes,
+    validatePositionDict,
+    commonPositionCheckCode,
 } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 const { cleanString } = require('../parser.js');
@@ -923,83 +925,31 @@ function parseAssertPositionInner(parser, assertFalse) {
         return selector;
     }
 
-    const isPseudo = !selector.isXPath && selector.pseudo !== null;
-
-    const checkAllElements = selector.checkAllElements;
-
-    const json = selector.tuple[1].getRaw();
-
-    const entries = validateJson(json, {'number': []}, 'JSON dict key');
-
-    if (entries.error !== undefined) {
-        return entries;
+    const checks = validatePositionDict(selector.tuple[1]);
+    if (checks.error !== undefined) {
+        return checks;
     }
 
-    const varName = 'parseAssertPosition';
+    const errorsVarName = 'errors';
+    const varName = 'assertPosition';
 
-    let checks = '';
-    for (const [key, value] of Object.entries(entries.values)) {
-        if (key === 'x') {
-            checks += `
-checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', ${value.value}, errors);`;
-        } else if (key === 'y') {
-            checks += `
-checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', ${value.value}, errors);`;
-        } else {
-            return {
-                'error': 'Only accepted keys are "x" and "y", found `' +
-                    `"${key}"\` (in \`${selector.tuple[1].getErrorText()}\`)`,
-            };
-        }
-    }
-
-    let check;
-    if (assertFalse) {
-        check = `\
-if (v === value || roundedV === Math.round(value)) {
-    errors.push("same " + kind + " values (whereas it shouldn't): " + v + " (or " + roundedV + ") \
-!= " + value);
+    let whole = commonPositionCheckCode(
+        selector,
+        checks.checks,
+        selector.checkAllElements,
+        varName,
+        errorsVarName,
+        assertFalse,
+        getAndSetElements(selector, varName, selector.checkAllElements) + '\n',
+    );
+    whole += `\
+if (${errorsVarName}.length > 0) {
+    throw "The following errors happened: [" + ${errorsVarName}.join("; ") + "]";
 }`;
-    } else {
-        check = `\
-if (v !== value && roundedV !== Math.round(value)) {
-    errors.push("different " + kind + " values: " + v + " (or " + roundedV + ") != " + value);
-}`;
-    }
-
-    const pseudo = isPseudo ? selector.pseudo : '';
-    const code = `\
-function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
-    const v = browserUiTestHelpers.getElementPosition(e, "${pseudo}", field, styleField);
-    const roundedV = Math.round(v);
-${indentString(check, 1)}
-}${checks}`;
-
-    let whole = getAndSetElements(selector, varName, checkAllElements) + '\n';
-    let indent = 0;
-    if (checkAllElements) {
-        whole += `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n`;
-        indent = 1;
-    }
-    whole += indentString(`\
-await page.evaluate(elem => {
-    const errors = [];
-${indentString(code, 1)}
-    if (errors.length !== 0) {
-        const errs = errors.join("; ");
-        throw "The following errors happened: [" + errs + "]";
-    }
-`, indent);
-    if (checkAllElements) {
-        whole += `    }, ${varName}[i]);
-}`;
-    } else {
-        whole += `}, ${varName});`;
-    }
 
     return {
         'instructions': [whole],
-        'warnings': entries.warnings,
+        'warnings': checks.warnings,
         'wait': false,
         'checkResult': true,
     };

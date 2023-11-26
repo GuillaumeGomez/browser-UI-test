@@ -465,6 +465,82 @@ const height = e.offsetHeight;
 const width = e.offsetWidth;`;
 }
 
+function validatePositionDict(json) {
+    const entries = validateJson(json.getRaw(), {'number': []}, 'JSON dict key');
+
+    if (entries.error !== undefined) {
+        return entries;
+    }
+
+    let checks = '';
+    for (const [key, value] of Object.entries(entries.values)) {
+        if (key === 'x') {
+            checks += `
+checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', ${value.value}, innerErrors);`;
+        } else if (key === 'y') {
+            checks += `
+checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', ${value.value}, innerErrors);`;
+        } else {
+            return {
+                'error': 'Only accepted keys are "x" and "y", found `' +
+                    `"${key}"\` (in \`${json.getErrorText()}\`)`,
+            };
+        }
+    }
+    return {
+        'checks': checks,
+        'warnings': entries.warnings,
+    };
+}
+
+function commonPositionCheckCode(
+    selector, checks, checkAllElements, varName, errorsVarName, assertFalse, whole,
+) {
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+
+    let check;
+    if (assertFalse) {
+        check = `\
+if (v === value || roundedV === Math.round(value)) {
+    errors.push("same " + kind + " values (whereas it shouldn't): " + v + " (or " + roundedV + ") \
+!= " + value);
+}`;
+    } else {
+        check = `\
+if (v !== value && roundedV !== Math.round(value)) {
+    errors.push("different " + kind + " values: " + v + " (or " + roundedV + ") != " + value);
+}`;
+    }
+
+    const pseudo = isPseudo ? selector.pseudo : '';
+    const code = `\
+function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+    const v = browserUiTestHelpers.getElementPosition(e, "${pseudo}", field, styleField);
+    const roundedV = Math.round(v);
+${indentString(check, 1)}
+}${checks}`;
+
+    let indent = 0;
+    whole += `const ${errorsVarName} = [];\n`;
+    if (checkAllElements) {
+        whole += `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n`;
+        indent = 1;
+    }
+    whole += indentString(`\
+${errorsVarName}.push(...await page.evaluate(elem => {
+    const innerErrors = [];
+${indentString(code, 1)}
+    return innerErrors;
+`, indent);
+    if (checkAllElements) {
+        whole += `    }, ${varName}[i]));
+}`;
+    } else {
+        whole += `}, ${varName}));`;
+    }
+    return whole;
+}
+
 module.exports = {
     'getAndSetElements': getAndSetElements,
     'checkIntegerTuple': checkIntegerTuple,
@@ -478,4 +554,6 @@ module.exports = {
     'makeExtendedChecks': makeExtendedChecks,
     'makeTextExtendedChecks': makeTextExtendedChecks,
     'getSizes': getSizes,
+    'validatePositionDict': validatePositionDict,
+    'commonPositionCheckCode': commonPositionCheckCode,
 };

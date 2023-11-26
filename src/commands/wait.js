@@ -9,6 +9,8 @@ const {
     fillEnabledChecks,
     makeExtendedChecks,
     makeTextExtendedChecks,
+    validatePositionDict,
+    commonPositionCheckCode,
 } = require('./utils.js');
 
 function incrWait(error) {
@@ -949,6 +951,77 @@ ${indentString(incr, 1)}
     };
 }
 
+// Possible inputs:
+//
+// * ("CSS selector", JSON dict)
+// * ("XPath", JSON dict)
+function parseWaitForPosition(parser) {
+    const checker = waitForChecker(parser, true);
+    if (checker.error !== undefined) {
+        return checker;
+    }
+
+    const enabledChecks = Object.create(null);
+    const warnings = [];
+
+    if (checker.tuple.length === 3) {
+        const identifiers = ['ALL'];
+        const ret = fillEnabledChecks(
+            checker.tuple[2], identifiers, enabledChecks, warnings, 'third');
+        if (ret !== null) {
+            return ret;
+        }
+    }
+
+    const checkAllElements = enabledChecks['ALL'];
+
+    const checks = validatePositionDict(checker.tuple[1]);
+    if (checks.error !== undefined) {
+        return checks;
+    }
+    if (checks.warnings) {
+        warnings.push(...checks.warnings);
+    }
+
+    const selector = checker.selector;
+    const varName = 'assertPosition';
+    const errorsVarName = 'errors';
+
+    const whole = commonPositionCheckCode(
+        selector,
+        checks.checks,
+        checkAllElements,
+        varName,
+        errorsVarName,
+        false,
+        '',
+    );
+
+    const [init, looper] = waitForElement(selector, varName, enabledChecks['ALL'] === true);
+    const incr = incrWait(`\
+const err = ${errorsVarName}.join(", ");
+throw new Error("The following checks still fail: [" + err + "]");`);
+
+    const instructions = `\
+${init}
+while (true) {
+${indentString(looper, 1)}
+${indentString(whole, 1)}
+    if (errors.length === 0) {
+        break;
+    }
+
+${indentString(incr, 1)}
+}`;
+
+    return {
+        'instructions': [instructions],
+        'wait': false,
+        'warnings': warnings,
+        'checkResult': true,
+    };
+}
+
 module.exports = {
     'parseWaitFor': parseWaitFor,
     'parseWaitForAttribute': parseWaitForAttribute,
@@ -956,6 +1029,7 @@ module.exports = {
     'parseWaitForCss': parseWaitForCss,
     'parseWaitForDocumentProperty': parseWaitForDocumentProperty,
     'parseWaitForLocalStorage': parseWaitForLocalStorage,
+    'parseWaitForPosition': parseWaitForPosition,
     'parseWaitForProperty': parseWaitForProperty,
     'parseWaitForText': parseWaitForText,
     'parseWaitForWindowProperty': parseWaitForWindowProperty,
