@@ -1,0 +1,14 @@
+// This test ensures that the `wait-for-size` command is behaving like expected.
+screenshot-comparison: false
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+set-timeout: 500
+// Shouldn't wait here since it's already the case.
+wait-for-size: ("#js-change-size", {"width": 30, "height": 20})
+click: "#js-change-size"
+// Should wait for 250ms here.
+wait-for-size: ("#js-change-size", {"width": 33})
+click: "#js-change-size"
+// Should wait for 250ms here.
+wait-for-size: ("#js-change-size", {"height": 26}, ALL)
+// This next one should fail.
+wait-for-size: ("#js-change-size", {"height": 26, "width": 33})

@@ -13,7 +13,8 @@ errors.push(...await page.evaluate(elem => {
     }
     checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 1, innerErrors);
     return innerErrors;
-}, assertPosition));if (errors.length > 0) {
+}, assertPosition));
+if (errors.length > 0) {
     throw \"The following errors happened: [\" + errors.join(\"; \") + \"]\";
 }""",
 ]

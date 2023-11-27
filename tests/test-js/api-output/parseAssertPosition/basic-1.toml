@@ -12,7 +12,8 @@ errors.push(...await page.evaluate(elem => {
         }
     }
     return innerErrors;
-}, assertPosition));if (errors.length > 0) {
+}, assertPosition));
+if (errors.length > 0) {
     throw \"The following errors happened: [\" + errors.join(\"; \") + \"]\";
 }""",
 ]

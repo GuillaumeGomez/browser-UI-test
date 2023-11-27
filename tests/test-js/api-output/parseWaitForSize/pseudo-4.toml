@@ -1,0 +1,57 @@
+instructions = [
+  """const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let assertSize = null;
+while (true) {
+    while (true) {
+        assertSize = await page.$$(\"a:focus\");
+        if (assertSize.length !== 0) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error(\"The following CSS selector \\\"a:focus\\\" was not found\");
+        }
+    }
+    async function checkElemSize(elem) {
+        return await elem.evaluate(e => {
+            const innerErrors = [];
+            const height = e.offsetHeight;
+            const width = e.offsetWidth;
+            if (height !== 1) {
+                innerErrors.push(\"expected a height of `1`, found `\" + height + \"`\");
+            }
+            return innerErrors;
+        });
+    }
+    const errors = [];
+    for (const elem of assertSize) {
+        errors.push(...await checkElemSize(elem));
+        if (errors.length !== 0) {
+            break;
+        }
+    }
+    if (errors.length === 0) {
+        break;
+    }
+
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const err = errors.join(\", \");
+        throw new Error(\"The following checks still fail: [\" + err + \"]\");
+    }
+}""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

@@ -33,6 +33,9 @@ while (true) {
             checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 2, innerErrors);
             return innerErrors;
         }, assertPosition[i]));
+        if (errors.length !== 0) {
+            break;
+        }
     }
     if (errors.length === 0) {
         break;

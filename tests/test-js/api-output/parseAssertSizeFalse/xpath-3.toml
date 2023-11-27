@@ -1,20 +1,23 @@
 instructions = [
-  """async function checkElemSize(elem) {
+  """let assertSizeElem = await page.$x(\"//a\");
+if (assertSizeElem.length === 0) { throw 'XPath \"//a\" not found'; }
+async function checkElemSize(elem) {
     return await elem.evaluate(e => {
-        const errors = [];
+        const innerErrors = [];
         const height = e.offsetHeight;
         const width = e.offsetWidth;
         if (width === 1) {
-            errors.push(\"width is equal to `1`\");
+            innerErrors.push(\"width is equal to `1`\");
         }
-        return errors;
+        return innerErrors;
     });
 }
-let assertSizeElem = await page.$x(\"//a\");
-if (assertSizeElem.length === 0) { throw 'XPath \"//a\" not found'; }
 const errors = [];
 for (const elem of assertSizeElem) {
     errors.push(...await checkElemSize(elem));
+    if (errors.length !== 0) {
+        break;
+    }
 }
 if (errors.length !== 0) {
     const errs = errors.join(\"; \");
