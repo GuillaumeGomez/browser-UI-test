@@ -1,18 +1,18 @@
 instructions = [
-  """async function checkElemSize(elem) {
+  """let assertSizeElem = await page.$x(\"//a\");
+if (assertSizeElem.length === 0) { throw 'XPath \"//a\" not found'; }
+assertSizeElem = assertSizeElem[0];
+async function checkElemSize(elem) {
     return await elem.evaluate(e => {
-        const errors = [];
+        const innerErrors = [];
         const height = e.offsetHeight;
         const width = e.offsetWidth;
         if (width === 1) {
-            errors.push(\"width is equal to `1`\");
+            innerErrors.push(\"width is equal to `1`\");
         }
-        return errors;
+        return innerErrors;
     });
 }
-let assertSizeElem = await page.$x(\"//a\");
-if (assertSizeElem.length === 0) { throw 'XPath \"//a\" not found'; }
-assertSizeElem = assertSizeElem[0];
 const errors = [];
 errors.push(...await checkElemSize(assertSizeElem));
 if (errors.length !== 0) {

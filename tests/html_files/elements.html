@@ -75,6 +75,7 @@ header {
 		<button id="js-wait-prop" onclick="updateWaitElementProp()">hey</button>
 		<button id="js-change-colors" onclick="updateButtonsColor()">hey</button>
 		<button id="js-change-pos" onclick="updateWaitElementPosition()">hey</button>
+		<button id="js-change-size" onclick="updateWaitElementSize()" style="width:30px;height:20px;">hey</button>
 		<script>
 window.windowProp = null;
 document.windowProp = null;
@@ -131,6 +132,13 @@ function updateWaitElementPosition() {
 setTimeout(() => {
   document.getElementById("js-change-pos").style.marginLeft = "3px";
   document.getElementById("js-change-pos").style.marginTop = "3px";
+}, 250);
+}
+function updateWaitElementSize() {
+setTimeout(() => {
+  const elem = document.getElementById("js-change-size");
+  elem.style.width = parseInt(elem.style.width) + 3 + "px";
+  elem.style.height = parseInt(elem.style.height) + 3 + "px";
 }, 250);
 }
 document.getElementById("js-wait-prop")["hehe"] = "hoho";

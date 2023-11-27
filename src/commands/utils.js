@@ -442,29 +442,6 @@ function checkJsonEntry(json, callback) {
     return warnings;
 }
 
-function getSizes(selector) {
-    const isPseudo = !selector.isXPath && selector.pseudo !== null;
-
-    // To get the size of a pseudo element, we need to get the computed style for it. There is
-    // one thing to be careful about: if the `box-sizing` is "border-box", "height" and "width"
-    // already include the border and the padding.
-    if (isPseudo) {
-        return `\
-const style = getComputedStyle(e, "${selector.pseudo}");
-let height = parseFloat(style["height"]);
-let width = parseFloat(style["width"]);
-if (style["box-sizing"] !== "border-box") {
-    height += parseFloat(style["padding-top"]) + parseFloat(style["padding-bottom"]);
-    height += parseFloat(style["border-top-width"]) + parseFloat(style["border-bottom-width"]);
-    width += parseFloat(style["padding-left"]) + parseFloat(style["padding-right"]);
-    width += parseFloat(style["border-left-width"]) + parseFloat(style["border-right-width"]);
-}`;
-    }
-    return `\
-const height = e.offsetHeight;
-const width = e.offsetWidth;`;
-}
-
 function validatePositionDict(json) {
     const entries = validateJson(json.getRaw(), {'number': []}, 'JSON dict key');
 
@@ -494,7 +471,7 @@ checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', ${value.value}, innerErrors
 }
 
 function commonPositionCheckCode(
-    selector, checks, checkAllElements, varName, errorsVarName, assertFalse, whole,
+    selector, checks, checkAllElements, varName, errorsVarName, assertFalse,
 ) {
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
 
@@ -521,7 +498,7 @@ ${indentString(check, 1)}
 }${checks}`;
 
     let indent = 0;
-    whole += `const ${errorsVarName} = [];\n`;
+    let whole = `const ${errorsVarName} = [];\n`;
     if (checkAllElements) {
         whole += `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n`;
         indent = 1;
@@ -534,11 +511,95 @@ ${indentString(code, 1)}
 `, indent);
     if (checkAllElements) {
         whole += `    }, ${varName}[i]));
+    if (${errorsVarName}.length !== 0) {
+        break;
+    }
 }`;
     } else {
         whole += `}, ${varName}));`;
     }
     return whole;
+}
+
+function getSizes(selector) {
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+
+    // To get the size of a pseudo element, we need to get the computed style for it. There is
+    // one thing to be careful about: if the `box-sizing` is "border-box", "height" and "width"
+    // already include the border and the padding.
+    if (isPseudo) {
+        return `\
+const style = getComputedStyle(e, "${selector.pseudo}");
+let height = parseFloat(style["height"]);
+let width = parseFloat(style["width"]);
+if (style["box-sizing"] !== "border-box") {
+    height += parseFloat(style["padding-top"]) + parseFloat(style["padding-bottom"]);
+    height += parseFloat(style["border-top-width"]) + parseFloat(style["border-bottom-width"]);
+    width += parseFloat(style["padding-left"]) + parseFloat(style["padding-right"]);
+    width += parseFloat(style["border-left-width"]) + parseFloat(style["border-right-width"]);
+}`;
+    }
+    return `\
+const height = e.offsetHeight;
+const width = e.offsetWidth;`;
+}
+
+function commonSizeCheckCode(
+    selector, checkAllElements, assertFalse, json, varName, errorsVarName,
+) {
+    const checks = [];
+    for (const [k, v] of Object.entries(json.values)) {
+        if (k === 'width') {
+            if (assertFalse) {
+                checks.push(`\
+if (width === ${v.value}) {
+    innerErrors.push("width is equal to \`${v.value}\`");
+}`);
+            } else {
+                checks.push(`\
+if (width !== ${v.value}) {
+    innerErrors.push("expected a width of \`${v.value}\`, found \`" + width + "\`");
+}`);
+            }
+        } else if (k === 'height') {
+            if (assertFalse) {
+                checks.push(`\
+if (height === ${v.value}) {
+    innerErrors.push("height is equal to \`${v.value}\`");
+}`);
+            } else {
+                checks.push(`\
+if (height !== ${v.value}) {
+    innerErrors.push("expected a height of \`${v.value}\`, found \`" + height + "\`");
+}`);
+            }
+        }
+    }
+
+    let checker;
+    if (checkAllElements) {
+        checker = `\
+for (const elem of ${varName}) {
+    ${errorsVarName}.push(...await checkElemSize(elem));
+    if (${errorsVarName}.length !== 0) {
+        break;
+    }
+}`;
+    } else {
+        checker = `${errorsVarName}.push(...await checkElemSize(${varName}));`;
+    }
+
+    return `\
+async function checkElemSize(elem) {
+    return await elem.evaluate(e => {
+        const innerErrors = [];
+${indentString(getSizes(selector), 2)}
+${indentString(checks.join('\n'), 2)}
+        return innerErrors;
+    });
+}
+const ${errorsVarName} = [];
+${checker}`;
 }
 
 module.exports = {
@@ -556,4 +617,5 @@ module.exports = {
     'getSizes': getSizes,
     'validatePositionDict': validatePositionDict,
     'commonPositionCheckCode': commonPositionCheckCode,
+    'commonSizeCheckCode': commonSizeCheckCode,
 };

@@ -52,6 +52,7 @@ ${content['instructions'].join('\n// ----------\n')}
                 rules: {
                     'no-unused-vars': 'off',
                     'no-useless-escape': 'off',
+                    'no-inner-declarations': 'off',
                     'no-constant-condition': ['error', { 'checkLoops': false }],
                 },
             },

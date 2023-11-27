@@ -109,6 +109,7 @@ module.exports = {
     'parseWaitForLocalStorage': wait.parseWaitForLocalStorage,
     'parseWaitForPosition': wait.parseWaitForPosition,
     'parseWaitForProperty': wait.parseWaitForProperty,
+    'parseWaitForSize': wait.parseWaitForSize,
     'parseWaitForText': wait.parseWaitForText,
     'parseWaitForWindowProperty': wait.parseWaitForWindowProperty,
     'parseWrite': input.parseWrite,

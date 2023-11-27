@@ -11,9 +11,9 @@ const {
     checkJsonEntry,
     makeExtendedChecks,
     makeTextExtendedChecks,
-    getSizes,
     validatePositionDict,
     commonPositionCheckCode,
+    commonSizeCheckCode,
 } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 const { cleanString } = require('../parser.js');
@@ -933,16 +933,11 @@ function parseAssertPositionInner(parser, assertFalse) {
     const errorsVarName = 'errors';
     const varName = 'assertPosition';
 
-    let whole = commonPositionCheckCode(
-        selector,
-        checks.checks,
-        selector.checkAllElements,
-        varName,
-        errorsVarName,
-        assertFalse,
-        getAndSetElements(selector, varName, selector.checkAllElements) + '\n',
-    );
-    whole += `\
+    const whole = `\
+${getAndSetElements(selector, varName, selector.checkAllElements)}
+${commonPositionCheckCode(
+        selector, checks.checks, selector.checkAllElements, varName, errorsVarName, assertFalse,
+    )}
 if (${errorsVarName}.length > 0) {
     throw "The following errors happened: [" + ${errorsVarName}.join("; ") + "]";
 }`;
@@ -1219,58 +1214,10 @@ function parseAssertSizeInner(parser, assertFalse) {
         return entries;
     }
 
-    const checks = [];
-    for (const [k, v] of Object.entries(entries.values)) {
-        if (k === 'width') {
-            if (assertFalse) {
-                checks.push(`\
-if (width === ${v.value}) {
-    errors.push("width is equal to \`${v.value}\`");
-}`);
-            } else {
-                checks.push(`\
-if (width !== ${v.value}) {
-    errors.push("expected a width of \`${v.value}\`, found \`" + width + "\`");
-}`);
-            }
-        } else if (k === 'height') {
-            if (assertFalse) {
-                checks.push(`\
-if (height === ${v.value}) {
-    errors.push("height is equal to \`${v.value}\`");
-}`);
-            } else {
-                checks.push(`\
-if (height !== ${v.value}) {
-    errors.push("expected a height of \`${v.value}\`, found \`" + height + "\`");
-}`);
-            }
-        }
-    }
-
     const varName = 'assertSizeElem';
-    let checker;
-    if (checkAllElements) {
-        checker = `\
-for (const elem of ${varName}) {
-    errors.push(...await checkElemSize(elem));
-}`;
-    } else {
-        checker = `errors.push(...await checkElemSize(${varName}));`;
-    }
-
     const instructions = `\
-async function checkElemSize(elem) {
-    return await elem.evaluate(e => {
-        const errors = [];
-${indentString(getSizes(selector), 2)}
-${indentString(checks.join('\n'), 2)}
-        return errors;
-    });
-}
 ${getAndSetElements(selector, varName, checkAllElements)}
-const errors = [];
-${checker}
+${commonSizeCheckCode(selector, checkAllElements, assertFalse, entries, varName, 'errors')}
 if (errors.length !== 0) {
     const errs = errors.join("; ");
     throw "The following errors happened: [" + errs + "]";

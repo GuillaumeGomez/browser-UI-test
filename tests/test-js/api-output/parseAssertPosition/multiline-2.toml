@@ -16,7 +16,11 @@ for (let i = 0, len = assertPosition.length; i < len; ++i) {
         checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', 2, innerErrors);
         return innerErrors;
     }, assertPosition[i]));
-}if (errors.length > 0) {
+    if (errors.length !== 0) {
+        break;
+    }
+}
+if (errors.length > 0) {
     throw \"The following errors happened: [\" + errors.join(\"; \") + \"]\";
 }""",
 ]

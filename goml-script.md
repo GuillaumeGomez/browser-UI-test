@@ -201,6 +201,7 @@ Here's the command list:
  * [`wait-for-position`](#wait-for-position)
  * [`wait-for-property`](#wait-for-property)
  * [`wait-for-text`](#wait-for-text)
+ * [`wait-for-size`](#wait-for-size)
  * [`wait-for-window-property`](#wait-for-window-property)
  * [`write`](#write)
 
@@ -1869,7 +1870,7 @@ wait-for-position: ("//*[@class='class']", {"x": 1, "y": 2}, ALL)
 
 #### wait-for-property
 
-**wait-for-property** command waits for the given element to have the expected values for the given properties. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-property** command waits for the given element(s) to have the expected values for the given properties. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
 
 Examples:
 
@@ -1909,9 +1910,30 @@ wait-for-property: (
 )
 ```
 
+#### wait-for-size
+
+**wait-for-size** command wait for the given element(s) that either the "width" or the "height" (or both) have the expected value. Examples:
+
+```
+wait-for-size: ("button", {"width": 200, "height": 20})
+// Same with XPath
+wait-for-size: ("//button", {"width": 200, "height": 20})
+```
+
+If you want to check all the elements matching the given selector, use `ALL`:
+
+```
+wait-for-size: ("button", {"width": 200, "height": 20}, ALL)
+// Same with XPath
+wait-for-size: ("//button", {"width": 200, "height": 20}, ALL)
+```
+
+To be more exact, this command compares the "offsetWidth" and "offsetHeight", which include the content
+size, the padding and the border.
+
 #### wait-for-text
 
-**wait-for-text** command waits for the given element to have the expected text. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-text** command waits for the given element(s) to have the expected text. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
 
 Examples:
 

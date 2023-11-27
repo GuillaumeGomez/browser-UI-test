@@ -1,15 +1,15 @@
 instructions = [
-  """async function checkElemSize(elem) {
+  """let assertSizeElem = await page.$(\"a\");
+if (assertSizeElem === null) { throw '\"a\" not found'; }
+async function checkElemSize(elem) {
     return await elem.evaluate(e => {
-        const errors = [];
+        const innerErrors = [];
         const height = e.offsetHeight;
         const width = e.offsetWidth;
 
-        return errors;
+        return innerErrors;
     });
 }
-let assertSizeElem = await page.$(\"a\");
-if (assertSizeElem === null) { throw '\"a\" not found'; }
 const errors = [];
 errors.push(...await checkElemSize(assertSizeElem));
 if (errors.length !== 0) {
