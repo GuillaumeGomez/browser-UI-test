@@ -102,6 +102,7 @@ const ORDERS = {
     'wait-for-local-storage': commands.parseWaitForLocalStorage,
     'wait-for-position': commands.parseWaitForPosition,
     'wait-for-property': commands.parseWaitForProperty,
+    'wait-for-size': commands.parseWaitForSize,
     'wait-for-text': commands.parseWaitForText,
     'wait-for-window-property': commands.parseWaitForWindowProperty,
     'write': commands.parseWrite,

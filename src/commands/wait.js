@@ -11,6 +11,7 @@ const {
     makeTextExtendedChecks,
     validatePositionDict,
     commonPositionCheckCode,
+    commonSizeCheckCode,
 } = require('./utils.js');
 
 function incrWait(error) {
@@ -994,10 +995,73 @@ function parseWaitForPosition(parser) {
         varName,
         errorsVarName,
         false,
-        '',
     );
 
-    const [init, looper] = waitForElement(selector, varName, enabledChecks['ALL'] === true);
+    const [init, looper] = waitForElement(selector, varName, checkAllElements);
+    const incr = incrWait(`\
+const err = ${errorsVarName}.join(", ");
+throw new Error("The following checks still fail: [" + err + "]");`);
+
+    const instructions = `\
+${init}
+while (true) {
+${indentString(looper, 1)}
+${indentString(whole, 1)}
+    if (errors.length === 0) {
+        break;
+    }
+
+${indentString(incr, 1)}
+}`;
+
+    return {
+        'instructions': [instructions],
+        'wait': false,
+        'warnings': warnings,
+        'checkResult': true,
+    };
+}
+// Possible inputs:
+//
+// * ("CSS selector", JSON dict)
+// * ("XPath", JSON dict)
+function parseWaitForSize(parser) {
+    const checker = waitForChecker(parser, true);
+    if (checker.error !== undefined) {
+        return checker;
+    }
+
+    const enabledChecks = Object.create(null);
+    const warnings = [];
+
+    if (checker.tuple.length === 3) {
+        const identifiers = ['ALL'];
+        const ret = fillEnabledChecks(
+            checker.tuple[2], identifiers, enabledChecks, warnings, 'third');
+        if (ret !== null) {
+            return ret;
+        }
+    }
+
+    const checkAllElements = enabledChecks['ALL'];
+
+    const entries = validateJson(
+        checker.json, {'number': []}, 'JSON dict key', ['height', 'width']);
+    if (entries.error !== undefined) {
+        return entries;
+    }
+    if (entries.warnings) {
+        warnings.push(...entries.warnings);
+    }
+
+    const selector = checker.selector;
+    const varName = 'assertSize';
+    const errorsVarName = 'errors';
+
+    const whole = commonSizeCheckCode(
+        selector, checkAllElements, false, entries, varName, errorsVarName);
+
+    const [init, looper] = waitForElement(selector, varName, checkAllElements);
     const incr = incrWait(`\
 const err = ${errorsVarName}.join(", ");
 throw new Error("The following checks still fail: [" + err + "]");`);
@@ -1033,4 +1097,5 @@ module.exports = {
     'parseWaitForProperty': parseWaitForProperty,
     'parseWaitForText': parseWaitForText,
     'parseWaitForWindowProperty': parseWaitForWindowProperty,
+    'parseWaitForSize': parseWaitForSize,
 };
