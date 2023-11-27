@@ -1,23 +1,26 @@
 instructions = [
   """async function checkElemSize(elem) {
-    await elem.evaluate(e => {
+    return await elem.evaluate(e => {
         const errors = [];
         const height = e.offsetHeight;
         const width = e.offsetWidth;
         if (width !== 1.14) {
             errors.push(\"expected a width of `1.14`, found `\" + width + \"`\");
         }
-        if (errors.length !== 0) {
-            const errs = errors.join(\"; \");
-            throw \"The following errors happened: [\" + errs + \"]\";
-        }
+        return errors;
     });
 }
 let assertSizeElem = await page.$$(\"a ::after\");
 if (assertSizeElem.length === 0) { throw '\"a ::after\" not found'; }
+const errors = [];
 for (const elem of assertSizeElem) {
-    await checkElemSize(elem);
-}""",
+    errors.push(...await checkElemSize(elem));
+}
+if (errors.length !== 0) {
+    const errs = errors.join(\"; \");
+    throw \"The following errors happened: [\" + errs + \"]\";
+}
+""",
 ]
 wait = false
 warnings = [

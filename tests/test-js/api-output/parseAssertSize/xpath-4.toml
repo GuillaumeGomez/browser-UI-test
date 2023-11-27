@@ -1,6 +1,6 @@
 instructions = [
   """async function checkElemSize(elem) {
-    await elem.evaluate(e => {
+    return await elem.evaluate(e => {
         const errors = [];
         const height = e.offsetHeight;
         const width = e.offsetWidth;
@@ -10,16 +10,19 @@ instructions = [
         if (height !== 2) {
             errors.push(\"expected a height of `2`, found `\" + height + \"`\");
         }
-        if (errors.length !== 0) {
-            const errs = errors.join(\"; \");
-            throw \"The following errors happened: [\" + errs + \"]\";
-        }
+        return errors;
     });
 }
 let assertSizeElem = await page.$x(\"//a\");
 if (assertSizeElem.length === 0) { throw 'XPath \"//a\" not found'; }
 assertSizeElem = assertSizeElem[0];
-await checkElemSize(assertSizeElem);""",
+const errors = [];
+errors.push(...await checkElemSize(assertSizeElem));
+if (errors.length !== 0) {
+    const errs = errors.join(\"; \");
+    throw \"The following errors happened: [\" + errs + \"]\";
+}
+""",
 ]
 wait = false
 warnings = [

@@ -1253,26 +1253,29 @@ if (height !== ${v.value}) {
     if (checkAllElements) {
         checker = `\
 for (const elem of ${varName}) {
-    await checkElemSize(elem);
+    errors.push(...await checkElemSize(elem));
 }`;
     } else {
-        checker = `await checkElemSize(${varName});`;
+        checker = `errors.push(...await checkElemSize(${varName}));`;
     }
 
     const instructions = `\
 async function checkElemSize(elem) {
-    await elem.evaluate(e => {
+    return await elem.evaluate(e => {
         const errors = [];
 ${indentString(getSizes(selector), 2)}
 ${indentString(checks.join('\n'), 2)}
-        if (errors.length !== 0) {
-            const errs = errors.join("; ");
-            throw "The following errors happened: [" + errs + "]";
-        }
+        return errors;
     });
 }
 ${getAndSetElements(selector, varName, checkAllElements)}
-${checker}`;
+const errors = [];
+${checker}
+if (errors.length !== 0) {
+    const errs = errors.join("; ");
+    throw "The following errors happened: [" + errs + "]";
+}
+`;
 
     return {
         'instructions': [instructions],
