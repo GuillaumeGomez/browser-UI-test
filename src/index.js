@@ -488,7 +488,11 @@ ${s_err}`);
         }
     } catch (err) {
         logs.append('FAILED', true);
-        logs.append(loaded['file'] + ' output:\n' + err.message + '\n');
+        let msg = loaded['file'] + ' output:\n' + err.message + '\n';
+        if (err.stack !== undefined) {
+            msg += `stack: ${err.stack}\n`;
+        }
+        logs.append(msg);
         notOk = true;
         returnValue = Status.ExecutionError;
     }

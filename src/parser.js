@@ -261,6 +261,16 @@ function convertExprAs(elem, convertAs) {
     return ret;
 }
 
+function getArticleKind(kind) {
+    if (kind === 'unknown') {
+        return 'an unknown item';
+    } else if (kind === 'json') {
+        return 'a JSON dict';
+    }
+    const contains = ['array', 'expression', 'ident', 'operator'].includes(kind);
+    return (contains ? 'an ' : 'a ') + kind;
+}
+
 class Element {
     constructor(kind, value, startPos, endPos, fullText, line, error = null) {
         this.kind = kind;
@@ -312,11 +322,7 @@ class Element {
 
     // Used for error messages.
     getArticleKind() {
-        if (this.kind === 'unknown') {
-            return 'an unknown item';
-        }
-        const contains = ['array', 'expression', 'ident', 'operator'].includes(this.kind);
-        return (contains ? 'an ' : 'a ') + this.kind;
+        return getArticleKind(this.kind);
     }
 
     displayInCode() {
@@ -1990,6 +1996,7 @@ module.exports = {
     'cleanString': cleanString,
     'Element': Element,
     'ExpressionsValidator': ExpressionsValidator,
+    'getArticleKind': getArticleKind,
     'getSelector': getSelector,
     'IdentElement': IdentElement,
     'isStringChar': isStringChar,

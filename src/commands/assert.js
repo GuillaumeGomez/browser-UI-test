@@ -3,6 +3,7 @@
 const {
     buildPropertyDict,
     fillEnabledChecks,
+    fillEnabledChecksV2,
     getAndSetElements,
     getAssertSelector,
     getInsertStrings,
@@ -17,6 +18,7 @@ const {
 } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 const { cleanString } = require('../parser.js');
+const { validator } = require('../validator.js');
 
 function parseAssertCssInner(parser, assertFalse) {
     const selector = getAssertSelector(parser);
@@ -132,37 +134,54 @@ function parseAssertCssFalse(parser) {
 }
 
 function parseAssertObjPropertyInner(parser, assertFalse, objName) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple or a JSON dict, found nothing'};
-    // eslint-disable-next-line no-extra-parens
-    } else if (elems.length !== 1 || (elems[0].kind !== 'tuple' && elems[0].kind !== 'json')) {
-        return {'error': `expected a tuple or a JSON dict, found \`${parser.getRawArgs()}\``};
+    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH', 'NEAR'];
+    const jsonValidator = {
+        kind: 'json',
+        keyTypes: {
+            'string': [],
+        },
+        valueTypes: {
+            'string': [], 'number': [], 'ident': ['null'],
+        },
+    };
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                jsonValidator,
+                {
+                    kind: 'ident',
+                    allowed: identifiers,
+                    optional: true,
+                    alternatives: [
+                        {
+                            kind: 'array',
+                            valueTypes: {
+                                'ident': identifiers,
+                            },
+                        },
+                    ],
+                },
+            ],
+            alternatives: [jsonValidator],
+        },
+    );
+    if (ret.error !== undefined) {
+        return ret;
     }
 
-    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH', 'NEAR'];
-    const enabledChecks = Object.create(null);
+    const enabledChecks = new Set();
     const warnings = [];
     let json_dict;
 
-    if (elems[0].kind === 'tuple') {
-        const tuple = elems[0].getRaw();
-        if (tuple.length < 1 || tuple.length > 2) {
-            return {
-                'error': `expected a tuple of one or two elements, found ${tuple.length} elements`,
-            };
-        } else if (tuple[0].kind !== 'json') {
-            return {
-                'error': 'expected first element of the tuple to be a JSON dict, found `' +
-                    `${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
-            };
-        }
-        json_dict = tuple[0].getRaw();
+    if (ret.kind === 'json') {
+        json_dict = ret.value;
+    } else {
+        const tuple = ret.value;
+        json_dict = tuple[0].value;
         if (tuple.length > 1) {
-            const ret = fillEnabledChecks(
+            const ret = fillEnabledChecksV2(
                 tuple[1],
-                identifiers,
                 enabledChecks,
                 warnings,
                 'second',
@@ -171,18 +190,9 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
                 return ret;
             }
         }
-    } else {
-        json_dict = elems[0].getRaw();
     }
 
-    const entries = validateJson(
-        json_dict, {'string': [], 'number': [], 'ident': ['null']}, 'property');
-    if (entries.error !== undefined) {
-        return entries;
-    }
-    warnings.push(...entries.warnings);
-
-    if (Object.entries(entries.values).length === 0) {
+    if (json_dict.size === 0) {
         return {
             'instructions': [],
             'wait': false,
@@ -199,7 +209,7 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
     // JSON.stringify produces a problematic output so instead we use this.
     const values = [];
     const undefProps = [];
-    for (const [k, v] of Object.entries(entries.values)) {
+    for (const [k, v] of json_dict) {
         if (v.kind !== 'ident') {
             values.push(`"${k}":"${v.value}"`);
         } else {
@@ -217,8 +227,8 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
     );
 
     if (undefProps.length > 0 && hasSpecialChecks) {
-        const k = Object.entries(enabledChecks).map(([k, _]) => k);
-        warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
+        const k = [...enabledChecks].join(', ');
+        warnings.push(`Special checks (${k}) will be ignored for \`null\``);
     }
 
     let err = '';
@@ -308,43 +318,52 @@ function parseAssertWindowPropertyFalse(parser) {
 }
 
 function parseAssertPropertyInner(parser, assertFalse) {
-    const err = 'Read the documentation to see the accepted inputs';
-    const elems = parser.elems;
-    const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH', 'NEAR'];
+    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH', 'NEAR', 'ALL'];
+    const jsonValidator = {
+        kind: 'json',
+        keyTypes: {
+            'string': [],
+        },
+        valueTypes: {
+            'string': [], 'number': [], 'ident': ['null'],
+        },
+    };
+    const selectorValidator = { kind: 'selector' };
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                selectorValidator,
+                jsonValidator,
+                {
+                    kind: 'ident',
+                    allowed: identifiers,
+                    optional: true,
+                    alternatives: [
+                        {
+                            kind: 'array',
+                            valueTypes: {
+                                'ident': identifiers,
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+    );
+    if (ret.error !== undefined) {
+        return ret;
+    }
+
+    const tuple = ret.value;
     const warnings = [];
-    const enabledChecks = Object.create(null);
+    const enabledChecks = new Set();
 
-    if (elems.length === 0) {
-        return {
-            'error': 'expected a tuple, found nothing. ' + err,
-        };
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {'error': `expected a tuple, found \`${parser.getRawArgs()}\`. ${err}`};
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length < 2 || tuple.length > 3) {
-        return {
-            'error': 'invalid number of values in the tuple (expected 2 or 3, found ' +
-                tuple.length + '), ' + err,
-        };
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected a CSS selector or an XPath as first argument, ' +
-                `found ${tuple[0].getArticleKind()}`,
-        };
-    } else if (tuple[1].kind !== 'json') {
-        return {
-            'error': 'expected a JSON dictionary as second argument, found ' +
-                `\`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
-        };
-    } else if (tuple.length === 3) {
-        const ret = fillEnabledChecks(tuple[2], identifiers, enabledChecks, warnings, 'third');
-        if (ret !== null) {
-            return ret;
-        }
+    if (tuple.length > 2) {
+        fillEnabledChecksV2(tuple[2], enabledChecks, warnings, 'third');
     }
 
-    const selector = tuple[0].getSelector();
+    const selector = tuple[0].value;
     const xpath = selector.isXPath ? 'XPath ' : 'selector ';
 
     const varName = 'parseAssertElemProp';
@@ -355,13 +374,7 @@ function parseAssertPropertyInner(parser, assertFalse) {
     const { checks, hasSpecialChecks } = makeExtendedChecks(
         enabledChecks, assertFalse, 'nonMatchingProps', 'property', 'prop', varKey, varValue);
 
-    const json = tuple[1].getRaw();
-    const entries = validateJson(
-        json, {'string': [], 'number': [], 'ident': ['null']}, 'property');
-    if (entries.error !== undefined) {
-        return entries;
-    }
-    warnings.push(...entries.warnings);
+    const json = tuple[1].value;
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
         warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have properties so \
@@ -371,7 +384,7 @@ the check will be performed on the element itself`);
     // JSON.stringify produces a problematic output so instead we use this.
     const props = [];
     const undefProps = [];
-    for (const [k, v] of Object.entries(entries.values)) {
+    for (const [k, v] of json) {
         if (v.kind !== 'ident') {
             props.push(`"${k}":"${v.value}"`);
         } else {
@@ -380,10 +393,8 @@ the check will be performed on the element itself`);
     }
 
     if (undefProps.length > 0 && hasSpecialChecks) {
-        const k = Object.entries(enabledChecks)
-            .filter(([k, v]) => v && k !== 'ALL')
-            .map(([k, _]) => k);
-        warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
+        const k = [...enabledChecks].filter(k => k !== 'ALL').join(', ');
+        warnings.push(`Special checks (${k}) will be ignored for \`null\``);
     }
 
     let expectedPropError = '';
@@ -400,7 +411,7 @@ the check will be performed on the element itself`);
         nonMatchingProps.push("Property named \`" + prop + "\` doesn't exist");`;
     }
 
-    const checkAllElements = enabledChecks['ALL'] === true;
+    const checkAllElements = enabledChecks.has('ALL') === true;
     const indent = checkAllElements ? 1 : 0;
     let whole = getAndSetElements(selector, varName, checkAllElements) + '\n';
     if (checkAllElements) {
