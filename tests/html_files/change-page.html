@@ -24,11 +24,23 @@ header {
 	text-decoration: none;
 	color: #111;
 }
+#before-1::after {
+        content: "a";
+}
+#before::after {
+        content: "b";
+}
+#before-::after {
+        content: "c";
+}
 		</style>
 	</head>
 	<body>
 		<header>change page</header>
 		<button id="js-wait-nav" onclick="changePage()">hey</button>
+                <div id="before-1"></div>
+                <div id="before"></div>
+                <div id="before-"></div>
 <script>
 function changePage() {
 setTimeout(() => {

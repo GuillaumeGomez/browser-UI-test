@@ -1,0 +1,11 @@
+// Checks that pseudo element selection is working correctly (with one `:` and ending with an integer).
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/change-page.html"
+assert-css: ("#before-1::after", {"content": '"a"'})
+// Should fail (not a pseudo element).
+assert-css: ("#before-1:after", {"content": '"a"'})
+assert-css: ("#before::after", {"content": '"b"'})
+// Should fail (not a pseudo element).
+assert-css: ("#before:after", {"content": '"b"'})
+assert-css: ("#before-::after", {"content": '"c"'})
+// Should fail (not a pseudo element).
+assert-css: ("#before-:after", {"content": '"c"'})
