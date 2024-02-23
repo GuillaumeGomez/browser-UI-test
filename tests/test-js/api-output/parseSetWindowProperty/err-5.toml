@@ -1,1 +1,1 @@
-error = """only string and number types are allowed as value, found `{\"b\": 1}` (a json)"""
+error = """only string and number types are allowed as value, found `{\"b\": 1}` (a JSON dict)"""

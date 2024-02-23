@@ -1,1 +1,5 @@
-error = """Forbidden `ident` used (`undefined`). Allowed idents: [null]"""
+level = 2
+error = """unexpected ident `undefined`. Allowed idents are: [`null`]"""
+path = [
+]
+typeError = false

@@ -166,6 +166,13 @@ function stripCommonPathsPrefix(path, path2 = null) {
     return pathParts[pathParts.length - 1];
 }
 
+function plural(x, nb) {
+    if (nb !== 1) {
+        return `${x}s`;
+    }
+    return x;
+}
+
 module.exports = {
     'addSlash': addSlash,
     'getCurrentDir': getCurrentDir,
@@ -185,4 +192,5 @@ module.exports = {
     'extractFileNameWithoutExtension': extractFileNameWithoutExtension,
     'compareArrays': compareArrays,
     'stripCommonPathsPrefix': stripCommonPathsPrefix,
+    'plural': plural,
 };

@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const process = require('process');
+const { plural } = require('../../src/utils.js');
 
 function toJSON(value) {
     if (typeof value === 'object') {
@@ -24,13 +25,6 @@ function print(x, out) {
     } else {
         process.stdout.write(`${x}\n`);
     }
-}
-
-function plural(x, nb) {
-    if (nb !== 1) {
-        return `${x}s`;
-    }
-    return x;
 }
 
 function printDiff(i, value, out) {

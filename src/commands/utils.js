@@ -177,7 +177,7 @@ function fillEnabledChecks(elem, identifiers, enabled_checks, warnings, err_pos)
         enabled_checks[elem.getRaw()] = true;
     } else if (elem.kind === 'array') {
         const array = elem.getRaw();
-        const duplicated = Object.create(null);
+        const duplicated = new Set();
 
         if (array.length > 0 && array[0].kind !== 'ident') {
             return {
@@ -195,12 +195,12 @@ function fillEnabledChecks(elem, identifiers, enabled_checks, warnings, err_pos)
                 };
             }
             if (enabled_checks[entry.getRaw()] === true) {
-                duplicated[entry.getRaw()] = true;
+                duplicated.add(entry.getRaw());
             } else {
                 enabled_checks[entry.getRaw()] = true;
             }
         }
-        for (const duplicata of Object.keys(duplicated)) {
+        for (const duplicata of duplicated) {
             warnings.push(
                 `\`${duplicata}\` is present more than once in the ${err_pos} argument array`);
         }
@@ -215,10 +215,37 @@ function fillEnabledChecks(elem, identifiers, enabled_checks, warnings, err_pos)
     return null;
 }
 
+function fillEnabledChecksV2(elem, enabled_checks, warnings, err_pos) {
+    if (elem.kind === 'ident') {
+        enabled_checks.add(elem.getRaw());
+    } else if (elem.kind === 'array') {
+        const array = elem.value;
+
+        for (const entry of array) {
+            const v = entry.getRaw();
+            if (enabled_checks.has(v)) {
+                warnings.push(
+                    `\`${v}\` is present more than once in the ${err_pos} argument array`);
+            }
+            enabled_checks.add(v);
+        }
+    } else {
+        return {
+            error: `expected an ident or an array, found \`${elem}\``,
+        };
+    }
+    return null;
+}
+
+// FIXME: to be removed once all `enabledChecks` will be `Set` type.
+function has(obj, key) {
+    return typeof obj.has === 'function' ? obj.has(key) : obj[key];
+}
+
 function makeExtendedChecks(enabledChecks, assertFalse, pushTo, kind, storedVar, varKey, varValue) {
     const checks = [];
 
-    if (enabledChecks['CONTAINS']) {
+    if (has(enabledChecks, 'CONTAINS')) {
         if (assertFalse) {
             checks.push(`\
 if (${storedVar}.includes(${varValue})) {
@@ -233,7 +260,7 @@ if (!${storedVar}.includes(${varValue})) {
 }`);
         }
     }
-    if (enabledChecks['STARTS_WITH']) {
+    if (has(enabledChecks, 'STARTS_WITH')) {
         if (assertFalse) {
             checks.push(`\
 if (${storedVar}.startsWith(${varValue})) {
@@ -248,7 +275,7 @@ if (!${storedVar}.startsWith(${varValue})) {
 }`);
         }
     }
-    if (enabledChecks['ENDS_WITH']) {
+    if (has(enabledChecks, 'ENDS_WITH')) {
         if (assertFalse) {
             checks.push(`\
 if (${storedVar}.endsWith(${varValue})) {
@@ -263,7 +290,7 @@ if (!${storedVar}.endsWith(${varValue})) {
 }`);
         }
     }
-    if (enabledChecks['NEAR']) {
+    if (has(enabledChecks, 'NEAR')) {
         checks.push(`\
 const tmpNb = parseFloat(${storedVar});
 const tmpNb2 = parseFloat(${varValue});
@@ -288,7 +315,8 @@ ${varValue} + '\` (for NEAR check)');
         }
     }
     // eslint-disable-next-line no-extra-parens
-    const hasSpecialChecks = (enabledChecks['ALL'] && checks.length > 1) || checks.length !== 0;
+    const hasSpecialChecks = (
+        has(enabledChecks, 'ALL') && checks.length > 1) || checks.length !== 0;
     if (checks.length === 0) {
         if (assertFalse) {
             checks.push(`\
@@ -314,7 +342,7 @@ if (${storedVar} !== ${varValue}) {
 function makeTextExtendedChecks(enabledChecks, assertFalse) {
     const checks = [];
 
-    if (enabledChecks['CONTAINS']) {
+    if (has(enabledChecks, 'CONTAINS')) {
         if (assertFalse) {
             checks.push(`\
 if (elemText.includes(value)) {
@@ -327,7 +355,7 @@ if (!elemText.includes(value)) {
 }`);
         }
     }
-    if (enabledChecks['STARTS_WITH']) {
+    if (has(enabledChecks, 'STARTS_WITH')) {
         if (assertFalse) {
             checks.push(`\
 if (elemText.startsWith(value)) {
@@ -341,7 +369,7 @@ check)");
 }`);
         }
     }
-    if (enabledChecks['ENDS_WITH']) {
+    if (has(enabledChecks, 'ENDS_WITH')) {
         if (assertFalse) {
             checks.push(`\
 if (elemText.endsWith(value)) {
@@ -609,6 +637,7 @@ module.exports = {
     'getInsertStrings': getInsertStrings,
     'getAssertSelector': getAssertSelector,
     'fillEnabledChecks': fillEnabledChecks,
+    'fillEnabledChecksV2': fillEnabledChecksV2,
     'buildPropertyDict': buildPropertyDict,
     'indentString': indentString,
     'checkJsonEntry': checkJsonEntry,
