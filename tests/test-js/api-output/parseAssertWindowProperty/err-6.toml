@@ -1,1 +1,5 @@
-error = """unknown identifier `all`. Available identifiers are: [`CONTAINS`, `ENDS_WITH`, `STARTS_WITH`, `NEAR`]"""
+level = 2
+error = """unexpected ident `all`. Allowed idents are: [`CONTAINS`, `ENDS_WITH`, `STARTS_WITH`, `NEAR`]"""
+path = [
+]
+typeError = false

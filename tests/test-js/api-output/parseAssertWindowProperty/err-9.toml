@@ -1,1 +1,5 @@
-error = """empty name of properties (\"\" or '') are not allowed"""
+level = 2
+error = """empty keys are not allowed in JSON dict"""
+path = [
+]
+typeError = false

@@ -1236,12 +1236,12 @@ assert-css: (".item-left sup", {"color": |color|})`);
     p.parse();
     x.assert(
         p.errors[0].message,
-        'only strings can be used as keys in JSON dict, found a json (`{"a": 2}`)');
+        'only strings can be used as keys in JSON dict, found a JSON dict (`{"a": 2}`)');
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
     x.assert(
         p.elems[0].error,
-        'only strings can be used as keys in JSON dict, found a json (`{"a": 2}`)',
+        'only strings can be used as keys in JSON dict, found a JSON dict (`{"a": 2}`)',
     );
     x.assert(p.elems[0].getErrorText(), '{{"a": 2}: 1}');
     x.assert(p.elems[0].getRaw().length, 1);
