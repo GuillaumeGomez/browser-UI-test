@@ -1,1 +1,5 @@
-error = """expected a JSON dictionary as second argument, found `\"b\"` (a string)"""
+level = 1
+error = """expected second element of the tuple to be a JSON dict, found `\"b\"` (a string)"""
+path = [
+]
+typeError = false
