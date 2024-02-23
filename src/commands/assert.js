@@ -478,43 +478,51 @@ function parseAssertPropertyFalse(parser) {
 }
 
 function parseAssertAttributeInner(parser, assertFalse) {
-    const err = 'Read the documentation to see the accepted inputs';
-    const elems = parser.elems;
-    const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH', 'NEAR'];
+    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH', 'NEAR', 'ALL'];
+    const jsonValidator = {
+        kind: 'json',
+        keyTypes: {
+            'string': [],
+        },
+        valueTypes: {
+            'string': [], 'number': [], 'ident': ['null'],
+        },
+    };
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                jsonValidator,
+                {
+                    kind: 'ident',
+                    allowed: identifiers,
+                    optional: true,
+                    alternatives: [
+                        {
+                            kind: 'array',
+                            valueTypes: {
+                                'ident': identifiers,
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+    );
+    if (ret.error !== undefined) {
+        return ret;
+    }
+
+    const tuple = ret.value;
     const warnings = [];
-    const enabledChecks = Object.create(null);
+    const enabledChecks = new Set();
 
-    if (elems.length === 0) {
-        return {
-            'error': 'expected a tuple, found nothing. ' + err,
-        };
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {'error': `expected a tuple, found \`${parser.getRawArgs()}\`. ${err}`};
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length < 2 || tuple.length > 3) {
-        return {
-            'error': 'invalid number of values in the tuple (expected 2 or 3, found ' +
-                tuple.length + '), ' + err,
-        };
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected a CSS selector or an XPath as first argument, ' +
-                `found ${tuple[0].getArticleKind()}`,
-        };
-    } else if (tuple[1].kind !== 'json') {
-        return {
-            'error': 'expected a JSON dictionary as second argument, found ' +
-                `\`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
-        };
-    } else if (tuple.length === 3) {
-        const ret = fillEnabledChecks(tuple[2], identifiers, enabledChecks, warnings, 'third');
-        if (ret !== null) {
-            return ret;
-        }
+    if (tuple.length > 2) {
+        fillEnabledChecksV2(tuple[2], enabledChecks, warnings, 'third');
     }
 
-    const selector = tuple[0].getSelector();
+    const selector = tuple[0].value;
     const xpath = selector.isXPath ? 'XPath ' : 'selector ';
 
     const varName = 'parseAssertElemAttr';
@@ -525,17 +533,8 @@ function parseAssertAttributeInner(parser, assertFalse) {
     const { checks, hasSpecialChecks } = makeExtendedChecks(
         enabledChecks, assertFalse, 'nonMatchingAttrs', 'attribute', 'attr', varKey, varValue);
 
-    const json = tuple[1].getRaw();
-    const entries = validateJson(
-        json,
-        {'string': [], 'number': [], 'ident': ['null']},
-        'attribute',
-    );
-    if (entries.error !== undefined) {
-        return entries;
-    }
+    const json = tuple[1].value;
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
-    warnings.push(...entries.warnings);
     if (isPseudo) {
         warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
 the check will be performed on the element itself`);
@@ -544,7 +543,7 @@ the check will be performed on the element itself`);
     // JSON.stringify produces a problematic output so instead we use this.
     const tests = [];
     const nullAttributes = [];
-    for (const [k, v] of Object.entries(entries.values)) {
+    for (const [k, v] of json) {
         if (v.kind !== 'ident') {
             tests.push(`"${k}":"${v.value}"`);
         } else {
@@ -553,10 +552,8 @@ the check will be performed on the element itself`);
     }
 
     if (nullAttributes.length > 0 && hasSpecialChecks) {
-        const k = Object.entries(enabledChecks)
-            .filter(([k, v]) => v && k !== 'ALL')
-            .map(([k, _]) => k);
-        warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
+        const k = [...enabledChecks].filter(k => k !== 'ALL').join(', ');
+        warnings.push(`Special checks (${k}) will be ignored for \`null\``);
     }
 
     let noAttrError = '';
@@ -594,7 +591,7 @@ if (nonMatchingAttrs.length !== 0) {
 }`;
 
     let instructions;
-    if (enabledChecks['ALL'] === true) {
+    if (enabledChecks.has('ALL')) {
         instructions = `\
 ${getAndSetElements(selector, varName, true)}
 for (let i = 0, len = ${varName}.length; i < len; ++i) {

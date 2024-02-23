@@ -152,7 +152,7 @@ function validateIdent(parser, allowedSyntax, validator) {
     } else if (!allowedSyntax.allowed.includes(parser.value)) {
         return validator.makeError(
             `unexpected ${parser.kind} \`${parser.getErrorText()}\`. Allowed ${parser.kind}s are: \
-[${allowedSyntax.allowed.map(v => `\`${v}\``).join(', ')}]`,
+${listValues(allowedSyntax.allowed)}`,
         );
     }
     return parser;
@@ -294,7 +294,7 @@ this JSON dict, allowed types are: ${Object.keys(allowedSyntax.valueTypes).join(
         } else if (allowedForValue.length !== 0 && !allowedForValue.includes(value.value)) {
             return validator.makeError(
                 `unexpected ${value.kind} \`${value.getErrorText()}\`. Allowed ${value.kind}s are: \
-[${allowedForValue.map(v => `\`${v}\``).join(', ')}]`,
+${listValues(allowedForValue)}`,
             );
         }
         entries.set(key_s, {
@@ -303,6 +303,11 @@ this JSON dict, allowed types are: ${Object.keys(allowedSyntax.valueTypes).join(
         });
     }
     return entries;
+}
+
+function listValues(values) {
+    values.sort();
+    return `[${values.map(v => `\`${v}\``).join(', ')}]`;
 }
 
 function isObject(obj) {
