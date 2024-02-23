@@ -1,5 +1,5 @@
 level = 2
-error = """unexpected ident `all`. Allowed idents are: [`CONTAINS`, `ENDS_WITH`, `STARTS_WITH`, `NEAR`, `ALL`]"""
+error = """unexpected ident `all`. Allowed idents are: [`ALL`, `CONTAINS`, `ENDS_WITH`, `NEAR`, `STARTS_WITH`]"""
 path = [
 ]
 typeError = false
