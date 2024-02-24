@@ -81,6 +81,10 @@ function wrapper(callback, x, arg, name, options) {
             res = callback(context, options);
         }
     }
+    if (res.error !== undefined) {
+        // We remove fields we don't care about.
+        res = {'error': res.error};
+    }
     if (!x.assertOrBless(res, expected, (value1, _) => {
         if (!fs.existsSync(parent)) {
             fs.mkdirSync(parent, { recursive: true });

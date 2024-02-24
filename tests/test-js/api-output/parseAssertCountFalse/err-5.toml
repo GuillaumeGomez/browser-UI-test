@@ -1,1 +1,1 @@
-error = """expected integer for number of occurences, found float: `-1.0`"""
+error = """expected integer, found float: `-1.0` (second element of the tuple)"""

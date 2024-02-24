@@ -1,1 +1,1 @@
-error = """unexpected ident `undefined`. Allowed idents are: [`null`]"""
+error = """unexpected ident `undefined`. Allowed idents are: [`null`] (first element of the tuple)"""

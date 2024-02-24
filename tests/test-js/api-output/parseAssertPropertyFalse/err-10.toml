@@ -1,1 +1,1 @@
-error = """unexpected ident `gateau`. Allowed idents are: [`null`]"""
+error = """unexpected ident `gateau`. Allowed idents are: [`null`] (second element of the tuple)"""
