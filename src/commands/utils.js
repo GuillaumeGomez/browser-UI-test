@@ -220,12 +220,16 @@ function fillEnabledChecksV2(elem, enabled_checks, warnings, err_pos) {
         enabled_checks.add(elem.getRaw());
     } else if (elem.kind === 'array') {
         const array = elem.value;
+        const warned = new Set();
 
         for (const entry of array) {
             const v = entry.getRaw();
             if (enabled_checks.has(v)) {
-                warnings.push(
-                    `\`${v}\` is present more than once in the ${err_pos} argument array`);
+                if (!warned.has(v)) {
+                    warned.add(v);
+                    warnings.push(
+                        `\`${v}\` is present more than once in the ${err_pos} argument array`);
+                }
             }
             enabled_checks.add(v);
         }

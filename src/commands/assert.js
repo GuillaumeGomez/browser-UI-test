@@ -700,41 +700,42 @@ function parseAssertCountFalse(parser) {
 }
 
 function parseAssertTextInner(parser, assertFalse) {
-    const err = 'expected a tuple, read the documentation to see the accepted inputs';
-    const elems = parser.elems;
-    const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
+    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH', 'NEAR', 'ALL'];
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                { kind: 'string' },
+                {
+                    kind: 'ident',
+                    allowed: identifiers,
+                    optional: true,
+                    alternatives: [
+                        {
+                            kind: 'array',
+                            valueTypes: {
+                                'ident': identifiers,
+                            },
+                        },
+                    ],
+                },
+            ],
+        },
+    );
+    if (ret.error !== undefined) {
+        return ret;
+    }
+
+    const tuple = ret.value;
     const warnings = [];
-    const enabledChecks = Object.create(null);
+    const enabledChecks = new Set();
 
-    if (elems.length === 0) {
-        return {'error': err + ', found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {'error': err + `, found \`${parser.getRawArgs()}\``};
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length < 2 || tuple.length > 3) {
-        return {
-            'error': 'invalid number of values in the tuple: expected 2 or 3, found ' +
-                tuple.length,
-        };
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected first argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[0].getArticleKind()}`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': `expected second argument to be a string, found \`\
-${tuple[1].getErrorText()}\``,
-        };
-    } else if (tuple.length === 3) {
-        const ret = fillEnabledChecks(tuple[2], identifiers, enabledChecks, warnings, 'third');
-        if (ret !== null) {
-            return ret;
-        }
+    if (tuple.length > 2) {
+        fillEnabledChecksV2(tuple[2], enabledChecks, warnings, 'third');
     }
 
-    const selector = tuple[0].getSelector();
+    const selector = tuple[0].value;
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
         warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have text so \
@@ -746,7 +747,7 @@ the check will be performed on the element itself`);
     const checks = makeTextExtendedChecks(enabledChecks, assertFalse);
 
     let checker;
-    if (enabledChecks['ALL'] === true) {
+    if (enabledChecks.has('ALL')) {
         checker = `\
 for (const elem of ${varName}) {
     await checkTextForElem(elem);
@@ -769,7 +770,7 @@ ${indentString(checks.join('\n'), 2)}
     });
 }
 
-${getAndSetElements(selector, varName, enabledChecks['ALL'] === true)}
+${getAndSetElements(selector, varName, enabledChecks.has('ALL'))}
 ${checker}`;
 
     return {

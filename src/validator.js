@@ -188,6 +188,17 @@ function validateBlock(parser, allowedSyntax, validator) {
 }
 
 function validateTuple(parser, allowedSyntax, validator) {
+    function tupleSize() {
+        const len = allowedSyntax.elements.length;
+        let s;
+        if (len > 0 && allowedSyntax.elements[len - 1].optional) {
+            s = `${len - 1} or ${len} ${plural('element', len)}`;
+        } else {
+            s = `${len} ${plural('element', len)}`;
+        }
+        return `expected a tuple of ${s}, found ${tupleElems.length}`;
+    }
+
     if (parser.kind !== 'tuple') {
         return validator.makeError(
             `expected a tuple, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
@@ -199,10 +210,7 @@ function validateTuple(parser, allowedSyntax, validator) {
     }
     const tupleElems = parser.getRaw();
     if (tupleElems.length > allowedSyntax.elements) {
-        const nb = allowedSyntax.elements;
-        return this.makeError(
-            `expected a tuple of ${nb} ${plural('element', nb)}, found ${tupleElems.length}`,
-        );
+        return validator.makeError(tupleSize());
     }
     const values = [];
     const allowedSyntaxes = allowedSyntax.elements;
@@ -211,6 +219,7 @@ function validateTuple(parser, allowedSyntax, validator) {
             if (allowedSyntaxes[i].optional) {
                 return values;
             }
+            return validator.makeError(tupleSize());
         }
         const ret = validator.validatorInner(tupleElems[i], allowedSyntaxes[i], i);
         if (ret.error !== undefined && ret.error !== null) {
