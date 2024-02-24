@@ -1,5 +1,1 @@
-level = 1
 error = """expected first element of the tuple to be a JSON dict, found `\"a::after\"` (a string)"""
-path = [
-]
-typeError = false

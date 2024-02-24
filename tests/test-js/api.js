@@ -81,9 +81,17 @@ function wrapper(callback, x, arg, name, options) {
             res = callback(context, options);
         }
     }
+    if (res.error !== undefined) {
+        // We remove fields we don't care about.
+        res = {'error': res.error};
+    }
     if (!x.assertOrBless(res, expected, (value1, _) => {
         if (!fs.existsSync(parent)) {
             fs.mkdirSync(parent, { recursive: true });
+        }
+        if (value1.error !== undefined) {
+            // To prevent putting too much internal information into the blessed file.
+            value1 = { 'error': value1.error };
         }
         fs.writeFileSync(filePath, writeToml(value1));
         print(`Blessed \`${filePath}\``);

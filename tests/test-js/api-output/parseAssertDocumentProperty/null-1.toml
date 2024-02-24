@@ -1,5 +1,1 @@
-level = 2
-error = """unexpected ident `undefined`. Allowed idents are: [`null`]"""
-path = [
-]
-typeError = false
+error = """unexpected ident `undefined`. Allowed idents are: [`null`] (first element of the tuple)"""

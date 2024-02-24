@@ -26,6 +26,13 @@ class Validator {
         this.indexes = [];
     }
 
+    maybeMakeError(value) {
+        if (value.error !== undefined && value.error !== null) {
+            return this.makeError(value.error);
+        }
+        return value;
+    }
+
     makeError(errorText, notExpectedKind = false) {
         const level = notExpectedKind ? this.level - 1 : this.level;
         const error = {
@@ -70,6 +77,8 @@ class Validator {
         const ret = this.callValidator(parser, allowedSyntax);
         if (ret.error === undefined || ret.error === null) {
             return ret;
+        } else if (!ret.typeError) {
+            return withExtraInfo(ret, tuplePosition);
         }
         let out = '';
         if (allowedSyntax.alternatives !== undefined && allowedSyntax.alternatives.length > 0) {
@@ -82,7 +91,7 @@ class Validator {
                     if (sub_ret.typeError) {
                         continue;
                     }
-                    return sub_ret;
+                    return withExtraInfo(sub_ret, tuplePosition);
                 }
                 return sub_ret;
             }
@@ -109,14 +118,25 @@ ${parser.getArticleKind()})`,
     }
 }
 
-// FIXME: Allow to add more checks like "only positive" or only float, or stuff like that...
 function validateNumber(parser, allowedSyntax, validator) {
     if (parser.kind !== 'number') {
         return validator.makeError(
             `expected a number, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
             true);
     }
-    return parser;
+    if (allowedSyntax.allowFloat === undefined) {
+        throw new Error('Missing `allowFloat` value in number validator');
+    } else if (allowedSyntax.allowNegative === undefined) {
+        throw new Error('Missing `allowNegative` value in number validator');
+    }
+    if (!allowedSyntax.allowFloat) {
+        return validator.maybeMakeError(parser.getIntegerValueV2(allowedSyntax.allowNegative));
+    } else if (!allowedSyntax.allowNegative && parser.isNegative) {
+        return validator.makeError(
+            `expected only positive numbers, found \`${parser.getErrorText()}\``,
+        );
+    }
+    return {'value': parser.getRaw()};
 }
 
 function validateString(parser, allowedSyntax, validator) {
@@ -136,7 +156,7 @@ function validateSelector(parser, allowedSyntax, validator) {
             true);
     }
     // It'll generate an error if it's invalid in any case.
-    return parser.getSelector();
+    return validator.maybeMakeError(parser.getSelector());
 }
 
 function validateIdent(parser, allowedSyntax, validator) {
@@ -194,7 +214,7 @@ function validateTuple(parser, allowedSyntax, validator) {
         }
         const ret = validator.validatorInner(tupleElems[i], allowedSyntaxes[i], i);
         if (ret.error !== undefined && ret.error !== null) {
-            return ret;
+            return validator.makeError(ret.error);
         }
         values.push(ret);
     }
@@ -325,6 +345,13 @@ function nth_elem(nth) {
     return ['first', 'second', 'third', 'fourth', 'fifth'][nth];
 }
 
+function withExtraInfo(ret, tuplePosition) {
+    if (tuplePosition !== null) {
+        ret.error += ` (${nth_elem(tuplePosition)} element of the tuple)`;
+    }
+    return ret;
+}
+
 /*
 Format looks like this:
 
@@ -335,7 +362,9 @@ Format looks like this:
             kind: 'string',
         },
         {
-            kind: 'integer',
+            kind: 'number',
+            allowFloat: false,
+            allowNegative: false,
             optional: true,
         },
     ],

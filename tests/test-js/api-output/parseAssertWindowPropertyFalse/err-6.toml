@@ -1,5 +1,1 @@
-level = 2
-error = """unexpected ident `all`. Allowed idents are: [`CONTAINS`, `ENDS_WITH`, `NEAR`, `STARTS_WITH`]"""
-path = [
-]
-typeError = false
+error = """unexpected ident `all`. Allowed idents are: [`CONTAINS`, `ENDS_WITH`, `NEAR`, `STARTS_WITH`] (second element of the tuple)"""

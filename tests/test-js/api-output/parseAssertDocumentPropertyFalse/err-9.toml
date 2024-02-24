@@ -1,5 +1,1 @@
-level = 2
-error = """empty keys are not allowed in JSON dict"""
-path = [
-]
-typeError = false
+error = """empty keys are not allowed in JSON dict (first element of the tuple)"""

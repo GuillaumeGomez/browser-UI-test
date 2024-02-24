@@ -74,6 +74,15 @@ function checkInteger(nb, text, negativeCheck = false) {
     return {'value': nb.getRaw()};
 }
 
+function checkIntegerV2(nb, allowNegative) {
+    if (nb.isFloat === true) {
+        return {'error': `expected integer, found float: \`${nb.getErrorText()}\``};
+    } else if (allowNegative !== true && nb.isNegative === true) {
+        return {'error': `expected only positive numbers, found \`${nb.getErrorText()}\``};
+    }
+    return {'value': nb.getRaw()};
+}
+
 function showEnd(elem) {
     const text = elem.getErrorText();
 
@@ -300,6 +309,10 @@ class Element {
 
     getIntegerValue(text, negativeCheck = false) {
         return checkInteger(this, text, negativeCheck);
+    }
+
+    getIntegerValueV2(allowNegative) {
+        return checkIntegerV2(this, allowNegative);
     }
 
     getRaw() {
