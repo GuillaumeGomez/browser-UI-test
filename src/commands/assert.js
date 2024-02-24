@@ -639,38 +639,29 @@ function parseAssertAttributeFalse(parser) {
 }
 
 function parseAssertCountInner(parser, assertFalse) {
-    const err = 'expected a tuple or a string, read the documentation to see the accepted inputs';
-    const elems = parser.elems;
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                {
+                    kind: 'number',
+                    allowFloat: false,
+                    allowNegative: false,
+                },
+            ],
+        },
+    );
+    if (ret.error !== undefined) {
+        return ret;
+    }
 
-    if (elems.length === 0) {
-        return {'error': err + ', found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {'error': err + `, found \`${parser.getRawArgs()}\``};
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        return {'error': `expected 2 elements in the tuple, found ${tuple.length}`};
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected first argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[0].getArticleKind()}`,
-        };
-    } else if (tuple[1].kind !== 'number') {
-        return {
-            'error': `expected second argument to be a number, found \
-\`${tuple[1].getErrorText()}\``,
-        };
-    }
+    const tuple = ret.value;
+
+    const selector = tuple[0].value;
+    const occurences = tuple[1].value;
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
-    const selector = tuple[0].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
-    const occurences = tuple[1].getIntegerValue('number of occurences', true);
-    if (occurences.error !== undefined) {
-        return occurences;
-    }
     const varName = 'parseAssertElemCount';
     let start;
     if (selector.isXPath) {
