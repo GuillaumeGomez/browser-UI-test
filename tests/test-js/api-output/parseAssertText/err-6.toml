@@ -1,1 +1,1 @@
-error = """unknown identifier `ALLO`. Available identifiers are: [`ALL`, `CONTAINS`, `STARTS_WITH`, `ENDS_WITH`]"""
+error = """unexpected value `ALLO`, allowed values are: [`CONTAINS`, `ENDS_WITH`, `STARTS_WITH`, `NEAR`, `ALL`] (third element of the tuple)"""

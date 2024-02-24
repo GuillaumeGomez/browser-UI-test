@@ -1,1 +1,1 @@
-error = """expected an identifier or an array of identifiers as third argument (among `ALL`, `CONTAINS`, `STARTS_WITH`, `ENDS_WITH`), found an array of `string` (in `[\"c\"]`)"""
+error = """expected an array of ident elements, found an array of string (\"c\") (third element of the tuple)"""
