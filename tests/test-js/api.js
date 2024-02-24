@@ -85,6 +85,10 @@ function wrapper(callback, x, arg, name, options) {
         if (!fs.existsSync(parent)) {
             fs.mkdirSync(parent, { recursive: true });
         }
+        if (value1.error !== undefined) {
+            // To prevent putting too much internal information into the blessed file.
+            value1 = { 'error': value1.error };
+        }
         fs.writeFileSync(filePath, writeToml(value1));
         print(`Blessed \`${filePath}\``);
     }) && !x.blessEnabled) {

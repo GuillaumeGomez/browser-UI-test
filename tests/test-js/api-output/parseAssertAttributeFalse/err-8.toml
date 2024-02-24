@@ -1,5 +1,1 @@
-level = 2
 error = """`b` key is duplicated in JSON dict"""
-path = [
-]
-typeError = false
