@@ -9,7 +9,6 @@ const {
     getInsertStrings,
     validateJson,
     indentString,
-    checkJsonEntry,
     makeExtendedChecks,
     makeTextExtendedChecks,
     validatePositionDictV2,
@@ -994,43 +993,43 @@ function parseAssertPositionFalse(parser) {
 }
 
 function parseAssertLocalStorageInner(parser, assertFalse) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected JSON, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'json') {
-        return {'error': `expected JSON, found \`${parser.getRawArgs()}\``};
+    const ret = validator(parser,
+        {
+            kind: 'json',
+            keyTypes: {
+                'string': [],
+            },
+            valueTypes: {
+                'string': [],
+                'number': [],
+                'ident': ['null'],
+            },
+        },
+    );
+    if (ret.error !== undefined) {
+        return ret;
     }
 
-    const json = elems[0].getRaw();
-    let d = '';
-    let error = null;
+    const json = ret.value;
 
-    const warnings = checkJsonEntry(json, entry => {
-        if (error !== null) {
-            return;
-        }
-        const key_s = entry['key'].getStringValue();
+    let d = '';
+    for (const [key, value] of json) {
         let value_s;
-        if (entry['value'].kind === 'ident') {
-            value_s = entry['value'].getStringValue();
-            if (value_s !== 'null') {
-                error = `Only \`null\` ident is allowed, found \`${value_s}\``;
-            }
+        if (value.kind === 'ident') {
+            value_s = value.value;
         } else {
-            value_s = `"${entry['value'].getStringValue()}"`;
+            value_s = `"${value.value}"`;
         }
         if (d.length > 0) {
             d += ',';
         }
-        d += `"${key_s}":${value_s}`;
-    });
-    if (error !== null) {
-        return {'error': error};
-    } else if (d.length === 0) {
+        d += `"${key}":${value_s}`;
+    }
+
+    if (d.length === 0) {
         return {
             'instructions': [],
-            'warnings': warnings,
+            'warnings': [],
             'wait': false,
         };
     }
@@ -1060,7 +1059,7 @@ await page.evaluate(() => {
 });`;
     return {
         'instructions': [code],
-        'warnings': warnings,
+        'warnings': [],
         'wait': false,
         'checkResult': true,
     };
