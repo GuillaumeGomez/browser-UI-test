@@ -12,7 +12,7 @@ const {
     checkJsonEntry,
     makeExtendedChecks,
     makeTextExtendedChecks,
-    validatePositionDict,
+    validatePositionDictV2,
     commonPositionCheckCode,
     commonSizeCheckCode,
 } = require('./utils.js');
@@ -920,23 +920,50 @@ function parseAssertFalse(parser) {
 }
 
 function parseAssertPositionInner(parser, assertFalse) {
-    const selector = getAssertSelector(parser);
-    if (selector.error !== undefined) {
-        return selector;
+    const jsonValidator = {
+        kind: 'json',
+        keyTypes: {
+            'string': ['x', 'y'],
+        },
+        valueTypes: {
+            'number': [],
+        },
+    };
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                jsonValidator,
+                {
+                    kind: 'ident',
+                    allowed: ['ALL'],
+                    optional: true,
+                },
+            ],
+        },
+    );
+    if (ret.error !== undefined) {
+        return ret;
     }
 
-    const checks = validatePositionDict(selector.tuple[1]);
-    if (checks.error !== undefined) {
-        return checks;
+    const tuple = ret.value;
+    const warnings = [];
+    const enabledChecks = new Set();
+
+    if (tuple.length > 2) {
+        fillEnabledChecksV2(tuple[2], enabledChecks, warnings, 'third');
     }
 
+    const selector = tuple[0].value;
+    const checks = validatePositionDictV2(tuple[1].value);
     const errorsVarName = 'errors';
     const varName = 'assertPosition';
 
     const whole = `\
-${getAndSetElements(selector, varName, selector.checkAllElements)}
+${getAndSetElements(selector, varName, enabledChecks.has('ALL'))}
 ${commonPositionCheckCode(
-        selector, checks.checks, selector.checkAllElements, varName, errorsVarName, assertFalse,
+        selector, checks, enabledChecks.has('ALL'), varName, errorsVarName, assertFalse,
     )}
 if (${errorsVarName}.length > 0) {
     throw "The following errors happened: [" + ${errorsVarName}.join("; ") + "]";
@@ -944,7 +971,7 @@ if (${errorsVarName}.length > 0) {
 
     return {
         'instructions': [whole],
-        'warnings': checks.warnings,
+        'warnings': warnings,
         'wait': false,
         'checkResult': true,
     };
