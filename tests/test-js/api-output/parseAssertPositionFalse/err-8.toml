@@ -1,1 +1,1 @@
-error = """only number type is allowed as value, found `\"c\"` (a string)"""
+error = """unexpected key `\"b\"`, allowed keys are: [`x`, `y`] (second element of the tuple)"""
