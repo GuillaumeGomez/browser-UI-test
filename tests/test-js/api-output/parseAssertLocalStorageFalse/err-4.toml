@@ -1,6 +1,1 @@
-instructions = [
-]
-warnings = [
-  """Ignoring recursive entry with key `\"a\"`""",
-]
-wait = false
+error = """type \"json\" (`{\"a\": \"x\"}`) is not allowed as value in this JSON dict, allowed types are: [`ident`, `number`, `string`]"""

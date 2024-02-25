@@ -315,7 +315,7 @@ ${listValues(allowedForKey)}`,
 
         if (allowedForValue === undefined) {
             return validator.makeError(
-                `type "${value.kind}" (\`${value.getErrorText()}\`) as value is not allowed in \
+                `type "${value.kind}" (\`${value.getErrorText()}\`) is not allowed as value in \
 this JSON dict, allowed types are: ${listValues(Object.keys(allowedSyntax.valueTypes))}`,
             );
         } else if (!Array.isArray(allowedForValue)) {
