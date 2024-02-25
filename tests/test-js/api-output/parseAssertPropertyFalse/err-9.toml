@@ -1,1 +1,1 @@
-error = """type \"array\" (`[]`) as value is not allowed in this JSON dict, allowed types are: string, number, ident (second element of the tuple)"""
+error = """type \"array\" (`[]`) as value is not allowed in this JSON dict, allowed types are: [`ident`, `number`, `string`] (second element of the tuple)"""

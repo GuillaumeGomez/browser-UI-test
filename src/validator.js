@@ -259,8 +259,8 @@ ${arrayElems[0].kind} (${arrayElems[0].getErrorText()})`);
         for (const value of arrayElems) {
             if (!allowedForType.includes(value.getRaw())) {
                 return validator.makeError(
-                    `unexpected value \`${value.getErrorText()}\`, allowed values are: [\
-${allowedForType.map(v => `\`${v}\``).join(', ')}]`,
+                    `unexpected value \`${value.getErrorText()}\`, allowed values are: \
+${listValues(allowedForType)}`,
                 );
             }
         }
@@ -292,14 +292,14 @@ function validateJson(parser, allowedSyntax, validator) {
         if (allowedForKey === undefined) {
             return validator.makeError(
                 `type "${key.kind}" (\`${key.getErrorText()}\`) as key is not allowed in this JSON \
-dict, allowed types are: ${allowedSyntax.keyTypes.join(', ')}`,
+dict, allowed types are: ${listValues(allowedSyntax.keyTypes)}`,
             );
         } else if (!Array.isArray(allowedForKey)) {
             throw new Error('"keyTypes" should be an object of array (in JSON validator)');
         } else if (allowedForKey.length !== 0 && !allowedForKey.includes(key.value)) {
             return validator.makeError(
                 `unexpected key \`${key.getErrorText()}\`, allowed keys are: \
-${allowedForKey.join(', ')}`,
+${listValues(allowedForKey)}`,
             );
         }
 
@@ -316,7 +316,7 @@ ${allowedForKey.join(', ')}`,
         if (allowedForValue === undefined) {
             return validator.makeError(
                 `type "${value.kind}" (\`${value.getErrorText()}\`) as value is not allowed in \
-this JSON dict, allowed types are: ${Object.keys(allowedSyntax.valueTypes).join(', ')}`,
+this JSON dict, allowed types are: ${listValues(Object.keys(allowedSyntax.valueTypes))}`,
             );
         } else if (!Array.isArray(allowedForValue)) {
             throw new Error('"valueTypes" should be an object of array (in JSON validator)');

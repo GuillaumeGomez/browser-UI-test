@@ -1,1 +1,1 @@
-error = """Only accepted keys are \"x\" and \"y\", found `\"z\"` (in `{\"z\": 12}`)"""
+error = """unexpected key `\"z\"`, allowed keys are: [`x`, `y`] (second element of the tuple)"""

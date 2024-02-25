@@ -502,6 +502,20 @@ checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', ${value.value}, innerErrors
     };
 }
 
+function validatePositionDictV2(json) {
+    let checks = '';
+    for (const [key, value] of json) {
+        if (key === 'x') {
+            checks += `
+checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', ${value.value}, innerErrors);`;
+        } else if (key === 'y') {
+            checks += `
+checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', ${value.value}, innerErrors);`;
+        }
+    }
+    return checks;
+}
+
 function commonPositionCheckCode(
     selector, checks, checkAllElements, varName, errorsVarName, assertFalse,
 ) {
@@ -649,6 +663,7 @@ module.exports = {
     'makeTextExtendedChecks': makeTextExtendedChecks,
     'getSizes': getSizes,
     'validatePositionDict': validatePositionDict,
+    'validatePositionDictV2': validatePositionDictV2,
     'commonPositionCheckCode': commonPositionCheckCode,
     'commonSizeCheckCode': commonSizeCheckCode,
 };
