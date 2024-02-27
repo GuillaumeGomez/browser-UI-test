@@ -80,7 +80,7 @@ function checkIntegerV2(nb, allowNegative) {
     } else if (allowNegative !== true && nb.isNegative === true) {
         return {'error': `expected only positive numbers, found \`${nb.getErrorText()}\``};
     }
-    return {'value': nb.getRaw()};
+    return nb;
 }
 
 function showEnd(elem) {

@@ -2,7 +2,6 @@
 
 const {
     buildPropertyDict,
-    fillEnabledChecks,
     fillEnabledChecksV2,
     getAndSetElements,
     getAssertSelector,
@@ -176,10 +175,10 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
     let json_dict;
 
     if (ret.kind === 'json') {
-        json_dict = ret.value;
+        json_dict = ret.value.entries;
     } else {
-        const tuple = ret.value;
-        json_dict = tuple[0].value;
+        const tuple = ret.value.entries;
+        json_dict = tuple[0].value.entries;
         if (tuple.length > 1) {
             const ret = fillEnabledChecksV2(
                 tuple[1],
@@ -356,7 +355,7 @@ function parseAssertPropertyInner(parser, assertFalse) {
         return ret;
     }
 
-    const tuple = ret.value;
+    const tuple = ret.value.entries;
     const warnings = [];
     const enabledChecks = new Set();
 
@@ -375,7 +374,7 @@ function parseAssertPropertyInner(parser, assertFalse) {
     const { checks, hasSpecialChecks } = makeExtendedChecks(
         enabledChecks, assertFalse, 'nonMatchingProps', 'property', 'prop', varKey, varValue);
 
-    const json = tuple[1].value;
+    const json = tuple[1].value.entries;
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
         warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have properties so \
@@ -515,7 +514,7 @@ function parseAssertAttributeInner(parser, assertFalse) {
         return ret;
     }
 
-    const tuple = ret.value;
+    const tuple = ret.value.entries;
     const warnings = [];
     const enabledChecks = new Set();
 
@@ -534,7 +533,7 @@ function parseAssertAttributeInner(parser, assertFalse) {
     const { checks, hasSpecialChecks } = makeExtendedChecks(
         enabledChecks, assertFalse, 'nonMatchingAttrs', 'attribute', 'attr', varKey, varValue);
 
-    const json = tuple[1].value;
+    const json = tuple[1].value.entries;
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
         warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
@@ -657,10 +656,10 @@ function parseAssertCountInner(parser, assertFalse) {
         return ret;
     }
 
-    const tuple = ret.value;
+    const tuple = ret.value.entries;
 
     const selector = tuple[0].value;
-    const occurences = tuple[1].value;
+    const occurences = tuple[1].value.getRaw();
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
     const varName = 'parseAssertElemCount';
@@ -675,8 +674,8 @@ function parseAssertCountInner(parser, assertFalse) {
         'instructions': [
             start +
             // TODO: maybe check differently depending on the tag kind?
-            `${insertBefore}if (${varName} !== ${occurences.value}) {\n` +
-            `throw 'expected ${occurences.value} elements, found ' + ${varName};\n` +
+            `${insertBefore}if (${varName} !== ${occurences}) {\n` +
+            `throw 'expected ${occurences} elements, found ' + ${varName};\n` +
             `}${insertAfter}`,
         ],
         'wait': false,
@@ -728,7 +727,7 @@ function parseAssertTextInner(parser, assertFalse) {
         return ret;
     }
 
-    const tuple = ret.value;
+    const tuple = ret.value.entries;
     const warnings = [];
     const enabledChecks = new Set();
 
@@ -826,7 +825,7 @@ function parseAssertInner(parser, assertFalse) {
 
     let value = ret.value;
     if (ret.kind === 'tuple') {
-        value = value[0].value;
+        value = value.entries[0].value;
     }
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
@@ -939,7 +938,7 @@ function parseAssertPositionInner(parser, assertFalse) {
         return ret;
     }
 
-    const tuple = ret.value;
+    const tuple = ret.value.entries;
     const warnings = [];
     const enabledChecks = new Set();
 
@@ -948,7 +947,7 @@ function parseAssertPositionInner(parser, assertFalse) {
     }
 
     const selector = tuple[0].value;
-    const checks = validatePositionDictV2(tuple[1].value);
+    const checks = validatePositionDictV2(tuple[1].value.entries);
     const errorsVarName = 'errors';
     const varName = 'assertPosition';
 
@@ -1003,7 +1002,7 @@ function parseAssertLocalStorageInner(parser, assertFalse) {
         return ret;
     }
 
-    const json = ret.value;
+    const json = ret.value.entries;
 
     let d = '';
     for (const [key, value] of json) {
@@ -1073,45 +1072,63 @@ function parseAssertLocalStorageFalse(parser) {
 }
 
 function parseAssertVariableInner(parser, assertFalse) {
-    const elems = parser.elems;
-    const enabled_checks = Object.create(null);
-    const warnings = [];
+    const identifiers = ['CONTAINS', 'STARTS_WITH', 'ENDS_WITH', 'NEAR'];
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'ident' },
+                {
+                    kind: 'json',
+                    keyTypes: {
+                        'string': [],
+                    },
+                    valueTypes: {
+                        'string': [],
+                        'number': [],
+                        'ident': [],
+                    },
+                    alternatives: [
+                        { kind: 'string' },
+                        {
+                            kind: 'number',
+                            allowFloat: true,
+                            allowNegative: true,
+                        },
+                    ],
+                },
+                {
+                    kind: 'ident',
+                    allowed: identifiers,
+                    optional: true,
+                    alternatives: [
+                        {
+                            kind: 'array',
+                            valueTypes: {
+                                'ident': identifiers,
+                            },
+                        },
+                    ],
+                },
 
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {'error': `expected a tuple, found \`${parser.getRawArgs()}\``};
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
     }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2 && tuple.length !== 3) {
-        let err = `expected 2 or 3 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'ident') {
-        return {
-            'error': 'expected first argument to be an ident, ' +
-                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getErrorText()}\`)`,
-        };
-    } else if (tuple[1].kind !== 'number' &&
-        tuple[1].kind !== 'string' &&
-        tuple[1].kind !== 'json') {
-        return {
-            'error': `expected second argument to be a number, a string or a JSON dict, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
-        };
-    } else if (tuple.length > 2) {
-        const identifiers = ['CONTAINS', 'STARTS_WITH', 'ENDS_WITH', 'NEAR'];
-        const ret = fillEnabledChecks(tuple[2], identifiers, enabled_checks, warnings, 'third');
-        if (ret !== null) {
-            return ret;
-        }
+
+    const tuple = ret.value.entries;
+    const warnings = [];
+    const enabledChecks = new Set();
+
+    if (tuple.length > 2) {
+        fillEnabledChecksV2(tuple[2], enabledChecks, warnings, 'third');
     }
 
     const checks = [];
 
-    if (enabled_checks['CONTAINS']) {
+    if (enabledChecks.has('CONTAINS')) {
         if (assertFalse) {
             checks.push(`\
 if (value1.indexOf(value2) !== -1) {
@@ -1124,7 +1141,7 @@ if (value1.indexOf(value2) === -1) {
 }`);
         }
     }
-    if (enabled_checks['STARTS_WITH']) {
+    if (enabledChecks.has('STARTS_WITH')) {
         if (assertFalse) {
             checks.push(`\
 if (value1.startsWith(value2)) {
@@ -1137,7 +1154,7 @@ if (!value1.startsWith(value2)) {
 }`);
         }
     }
-    if (enabled_checks['ENDS_WITH']) {
+    if (enabledChecks.has('ENDS_WITH')) {
         if (assertFalse) {
             checks.push(`\
 if (value1.endsWith(value2)) {
@@ -1150,7 +1167,7 @@ if (!value1.endsWith(value2)) {
 }`);
         }
     }
-    if (enabled_checks['NEAR']) {
+    if (enabledChecks.has('NEAR')) {
         if (assertFalse) {
             checks.push(`\
 if (Number.isNaN(value1)) {
@@ -1190,8 +1207,8 @@ function stringifyValue(value) {
     }
     return JSON.stringify(value);
 }
-const value1 = stringifyValue(arg.variables["${tuple[0].displayInCode()}"]);
-const value2 = stringifyValue(${tuple[1].displayInCode()});
+const value1 = stringifyValue(arg.variables["${tuple[0].value.displayInCode()}"]);
+const value2 = stringifyValue(${tuple[1].value.displayInCode()});
 const errors = [];
 ${checks.join('\n')}
 if (errors.length !== 0) {
@@ -1200,21 +1217,21 @@ if (errors.length !== 0) {
 }`,
         ],
         'wait': false,
-        'warnings': warnings.length > 0 ? warnings : undefined,
+        'warnings': warnings,
         'checkResult': true,
     };
 }
 
 // Possible inputs:
 //
-// * (ident, "string" | number)
+// * (ident, "string" | number | JSON dict)
 function parseAssertVariable(parser) {
     return parseAssertVariableInner(parser, false);
 }
 
 // Possible inputs:
 //
-// * (ident, "string" | number)
+// * (ident, "string" | number | JSON dict)
 function parseAssertVariableFalse(parser) {
     return parseAssertVariableInner(parser, true);
 }
