@@ -219,7 +219,7 @@ function fillEnabledChecksV2(elem, enabled_checks, warnings, err_pos) {
     if (elem.kind === 'ident') {
         enabled_checks.add(elem.value.getRaw());
     } else if (elem.kind === 'array') {
-        const array = elem.value;
+        const array = elem.value.entries;
         const warned = new Set();
 
         for (const entry of array) {

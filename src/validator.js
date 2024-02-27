@@ -57,6 +57,11 @@ class Validator {
     callValidator(parser, allowedSyntax) {
         if (!VALIDATORS.has(allowedSyntax.kind)) {
             throw new Error(`Unknown kind "${allowedSyntax.kind}" (in validator)`);
+        } else if (parser === undefined) {
+            return this.makeError(
+                `expected ${getArticleKind(allowedSyntax.kind)}, found nothing`,
+                true,
+            );
         }
         this.level += 1;
         const ret = VALIDATORS.get(allowedSyntax.kind)(parser, allowedSyntax, this);
@@ -112,10 +117,9 @@ class Validator {
         const extra = tuplePosition !== null ?
             `${nth_elem(tuplePosition)} element of the tuple to be ` :
             '';
-        return this.makeError(
-            `expected ${extra}${out}, found \`${parser.getErrorText()}\` (\
-${parser.getArticleKind()})`,
-        );
+        const input = parser === undefined ?
+            'nothing' : `\`${parser.getErrorText()}\` (${parser.getArticleKind()})`;
+        return this.makeError(`expected ${extra}${out}, found ${input}`);
     }
 }
 
@@ -137,7 +141,7 @@ function validateNumber(parser, allowedSyntax, validator) {
             `expected only positive numbers, found \`${parser.getErrorText()}\``,
         );
     }
-    return {'value': parser.getRaw()};
+    return parser;
 }
 
 function validateString(parser, allowedSyntax, validator) {
@@ -176,7 +180,7 @@ function validateIdent(parser, allowedSyntax, validator) {
             true);
     }
     if (allowedSyntax.allowed === undefined) {
-        return {};
+        return parser;
     } else if (!Array.isArray(allowedSyntax.allowed)) {
         throw new Error('Expected an array for `allowed` (in ident validator)');
     } else if (!allowedSyntax.allowed.includes(parser.value)) {
@@ -223,11 +227,12 @@ function validateTuple(parser, allowedSyntax, validator) {
         return validator.makeError(tupleSize());
     }
     const values = [];
+    parser.entries = values;
     const allowedSyntaxes = allowedSyntax.elements;
     for (let i = 0, len = allowedSyntaxes.length; i < len; ++i) {
         if (i >= tupleElems.length) {
             if (allowedSyntaxes[i].optional) {
-                return values;
+                return parser;
             }
             return validator.makeError(tupleSize());
         }
@@ -237,7 +242,7 @@ function validateTuple(parser, allowedSyntax, validator) {
         }
         values.push(ret);
     }
-    return values;
+    return parser;
 }
 
 function validateArray(parser, allowedSyntax, validator) {
@@ -251,8 +256,9 @@ function validateArray(parser, allowedSyntax, validator) {
         throw new Error('"valueTypes" should be an object (in array validator)');
     }
     const arrayElems = parser.getRaw();
+    parser.entries = arrayElems;
     if (arrayElems.length === 0) {
-        return {};
+        return parser;
     }
     const allowedForType = getObjectValue(allowedSyntax.valueTypes, arrayElems[0].kind);
     if (allowedForType === undefined) {
@@ -275,7 +281,7 @@ ${listValues(allowedForType)}`,
             }
         }
     }
-    return arrayElems;
+    return parser;
 }
 
 function validateJson(parser, allowedSyntax, validator) {
@@ -341,7 +347,8 @@ ${listValues(allowedForValue)}`,
             'kind': value.kind,
         });
     }
-    return entries;
+    parser.entries = entries;
+    return parser;
 }
 
 function listValues(values) {
