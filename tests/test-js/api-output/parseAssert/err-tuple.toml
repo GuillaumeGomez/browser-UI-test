@@ -1,1 +1,1 @@
-error = """expected only a CSS selector, an XPath or a boolean in the tuple, found 2 elements"""
+error = """expected a tuple of 1 element, found 2"""

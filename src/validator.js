@@ -6,7 +6,7 @@
 // selector).
 
 const { getArticleKind } = require('./parser.js');
-const { plural } = require('./utils.js');
+const { plural, hasError } = require('./utils.js');
 
 const VALIDATORS = new Map([
     ['tuple', validateTuple],
@@ -17,6 +17,7 @@ const VALIDATORS = new Map([
     ['array', validateArray],
     ['ident', validateIdent],
     ['block', validateBlock],
+    ['boolean', validateBoolean],
 ]);
 
 class Validator {
@@ -27,7 +28,7 @@ class Validator {
     }
 
     maybeMakeError(value) {
-        if (value.error !== undefined && value.error !== null) {
+        if (hasError(value)) {
             return this.makeError(value.error);
         }
         return value;
@@ -60,7 +61,7 @@ class Validator {
         this.level += 1;
         const ret = VALIDATORS.get(allowedSyntax.kind)(parser, allowedSyntax, this);
         this.level -= 1;
-        if (ret.error !== undefined) {
+        if (hasError(ret)) {
             return ret;
         }
         return {
@@ -75,7 +76,7 @@ class Validator {
         }
 
         const ret = this.callValidator(parser, allowedSyntax);
-        if (ret.error === undefined || ret.error === null) {
+        if (!hasError(ret)) {
             return ret;
         } else if (!ret.typeError) {
             return withExtraInfo(ret, tuplePosition);
@@ -87,7 +88,7 @@ class Validator {
             }
             for (const syntax of allowedSyntax.alternatives) {
                 const sub_ret = this.callValidator(parser, syntax);
-                if (sub_ret.error !== undefined && sub_ret.error !== null) {
+                if (hasError(sub_ret)) {
                     if (sub_ret.typeError) {
                         continue;
                     }
@@ -143,6 +144,15 @@ function validateString(parser, allowedSyntax, validator) {
     if (parser.kind !== 'string') {
         return validator.makeError(
             `expected a string, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
+            true);
+    }
+    return parser;
+}
+
+function validateBoolean(parser, allowedSyntax, validator) {
+    if (parser.kind !== 'boolean') {
+        return validator.makeError(
+            `expected a boolean, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
             true);
     }
     return parser;
@@ -209,7 +219,7 @@ function validateTuple(parser, allowedSyntax, validator) {
         throw new Error('Expected "elements" to be an array (in tuple validator)');
     }
     const tupleElems = parser.getRaw();
-    if (tupleElems.length > allowedSyntax.elements) {
+    if (tupleElems.length > allowedSyntax.elements.length) {
         return validator.makeError(tupleSize());
     }
     const values = [];
@@ -222,7 +232,7 @@ function validateTuple(parser, allowedSyntax, validator) {
             return validator.makeError(tupleSize());
         }
         const ret = validator.validatorInner(tupleElems[i], allowedSyntaxes[i], i);
-        if (ret.error !== undefined && ret.error !== null) {
+        if (hasError(ret)) {
             return validator.makeError(ret.error);
         }
         values.push(ret);
@@ -414,7 +424,7 @@ function validator(parser, allowedSyntax) {
     }
     const validator = new Validator();
     const ret = validator.validatorInner(parser.elems[0], allowedSyntax);
-    if (ret.error !== undefined) {
+    if (hasError(ret)) {
         return validator.generateError(parser);
     }
     return ret;
