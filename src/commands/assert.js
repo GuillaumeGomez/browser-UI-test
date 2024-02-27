@@ -18,6 +18,8 @@ const {
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 const { cleanString } = require('../parser.js');
 const { validator } = require('../validator.js');
+// Not the same `utils.js`!
+const { hasError } = require('../utils.js');
 
 function parseAssertCssInner(parser, assertFalse) {
     const selector = getAssertSelector(parser);
@@ -165,7 +167,7 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
             alternatives: [jsonValidator],
         },
     );
-    if (ret.error !== undefined) {
+    if (hasError(ret)) {
         return ret;
     }
 
@@ -350,7 +352,7 @@ function parseAssertPropertyInner(parser, assertFalse) {
             ],
         },
     );
-    if (ret.error !== undefined) {
+    if (hasError(ret)) {
         return ret;
     }
 
@@ -509,7 +511,7 @@ function parseAssertAttributeInner(parser, assertFalse) {
             ],
         },
     );
-    if (ret.error !== undefined) {
+    if (hasError(ret)) {
         return ret;
     }
 
@@ -651,7 +653,7 @@ function parseAssertCountInner(parser, assertFalse) {
             ],
         },
     );
-    if (ret.error !== undefined) {
+    if (hasError(ret)) {
         return ret;
     }
 
@@ -722,7 +724,7 @@ function parseAssertTextInner(parser, assertFalse) {
             ],
         },
     );
-    if (ret.error !== undefined) {
+    if (hasError(ret)) {
         return ret;
     }
 
@@ -759,7 +761,7 @@ for (const elem of ${varName}) {
 async function checkTextForElem(elem) {
     await elem.evaluate(e => {
         const errors = [];
-        const value = ${tuple[1].displayInCode()};
+        const value = ${tuple[1].value.displayInCode()};
         const elemText = browserUiTestHelpers.getElemText(e, value);
 ${indentString(checks.join('\n'), 2)}
         if (errors.length !== 0) {
@@ -801,39 +803,35 @@ function parseAssertTextFalse(parser) {
 }
 
 function parseAssertInner(parser, assertFalse) {
-    const err = 'expected a boolean, a CSS selector or an XPath';
-    const elems = parser.elems;
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                {
+                    kind: 'boolean',
+                    alternatives: [
+                        { kind: 'selector' },
+                    ],
+                },
+            ],
+            alternatives: [
+                { kind: 'boolean' },
+                { kind: 'selector' },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
+    }
 
-    let tuple;
-    if (elems.length === 0) {
-        return {'error': err + ', found nothing'};
-    } else if (elems.length !== 1) {
-        return {'error': `expected a CSS selector, an XPath or a boolean, \
-found \`${parser.getRawArgs()}\``};
-    } else if (elems[0].kind === 'string' || elems[0].kind === 'boolean') {
-        tuple = elems;
-    } else if (elems[0].kind === 'tuple') {
-        tuple = elems[0].getRaw();
-        if (tuple.length !== 1) {
-            return {
-                'error': 'expected only a CSS selector, an XPath or a boolean in the tuple, found' +
-                    ` ${tuple.length} elements`,
-            };
-        } else if (tuple[0].kind !== 'string' && tuple[0].kind !== 'boolean') {
-            return {
-                'error': 'expected argument to be a CSS selector, an XPath or a boolean, ' +
-                    `found \`${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
-            };
-        }
-    } else {
-        return {
-            'error': err + `, found \`${elems[0].getErrorText()}\` (${elems[0].getArticleKind()})`,
-        };
+    let value = ret.value;
+    if (ret.kind === 'tuple') {
+        value = value[0].value;
     }
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
 
-    if (tuple[0].kind === 'boolean') {
+    if (value.kind === 'boolean') {
         return {
             'instructions': [`\
 function compareArrayLike(t1, t2) {
@@ -861,30 +859,25 @@ function compareJson(j1, j2) {
     return true;
 }
 
-const check = ${tuple[0].value};
+const check = ${value.value};
 ${insertBefore}if (!check) {
-    throw "Condition \`${cleanString(tuple[0].getRaw())}\` was evaluated as false";
+    throw "Condition \`${cleanString(value.getRaw())}\` was evaluated as false";
 }${insertAfter}`],
             'wait': false,
             'checkResult': true,
         };
     }
-    const selector = tuple[0].getSelector();
-
-    if (selector.error !== undefined) {
-        return selector;
-    }
 
     let instructions;
-    if (selector.isXPath) {
+    if (value.isXPath) {
         instructions = [
-            `${insertBefore}if ((await page.$x("${selector.value}")).length === 0) { ` +
-            `throw 'XPath "${selector.value}" not found'; }${insertAfter}`,
+            `${insertBefore}if ((await page.$x("${value.value}")).length === 0) { ` +
+            `throw 'XPath "${value.value}" not found'; }${insertAfter}`,
         ];
     } else {
         instructions = [
-            `${insertBefore}if ((await page.$("${selector.value}")) === null) { ` +
-            `throw '"${selector.value}" not found'; }${insertAfter}`,
+            `${insertBefore}if ((await page.$("${value.value}")) === null) { ` +
+            `throw '"${value.value}" not found'; }${insertAfter}`,
         ];
     }
     return {
@@ -942,7 +935,7 @@ function parseAssertPositionInner(parser, assertFalse) {
             ],
         },
     );
-    if (ret.error !== undefined) {
+    if (hasError(ret)) {
         return ret;
     }
 
@@ -1006,7 +999,7 @@ function parseAssertLocalStorageInner(parser, assertFalse) {
             },
         },
     );
-    if (ret.error !== undefined) {
+    if (hasError(ret)) {
         return ret;
     }
 

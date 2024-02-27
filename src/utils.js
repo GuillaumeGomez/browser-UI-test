@@ -173,6 +173,10 @@ function plural(x, nb) {
     return x;
 }
 
+function hasError(x) {
+    return x.error !== undefined && x.error !== null;
+}
+
 module.exports = {
     'addSlash': addSlash,
     'getCurrentDir': getCurrentDir,
@@ -193,4 +197,5 @@ module.exports = {
     'compareArrays': compareArrays,
     'stripCommonPathsPrefix': stripCommonPathsPrefix,
     'plural': plural,
+    'hasError': hasError,
 };
