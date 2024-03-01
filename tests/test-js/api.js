@@ -475,8 +475,8 @@ function checkAssertSize(x, func) {
     func('("a", "b" "c")', 'err-3');
     func('("a", "b" "c", ALL)', 'err-4');
     func('("a", "b", "c")', 'err-5');
-    func('("a::after", {"a": 1}, all)', 'err-6');
-    func('("a::after", {"a": 1}, ALLO)', 'err-7');
+    func('("a::after", {"width": 1}, all)', 'err-6');
+    func('("a::after", {"height": 1}, ALLO)', 'err-7');
     func('("a", {"b": "c", "b": "d"})', 'err-8');
     func('("a", {"b": ""})', 'err-9');
     func('("a", {"z": 12})', 'err-10');

@@ -243,7 +243,13 @@ function fillEnabledChecksV2(elem, enabled_checks, warnings, err_pos) {
 
 // FIXME: to be removed once all `enabledChecks` will be `Set` type.
 function has(obj, key) {
-    return typeof obj.has === 'function' ? obj.has(key) : obj[key];
+    return typeof obj.has === 'function' ?
+        obj.has(key) : Object.prototype.hasOwnProperty.call(obj, key);
+}
+
+// FIXME: to be removed once all `enabledChecks` will be `Set` type.
+function get(obj, key) {
+    return typeof obj.has === 'function' ? obj.get(key) : obj[key];
 }
 
 function makeExtendedChecks(enabledChecks, assertFalse, pushTo, kind, storedVar, varKey, varValue) {
@@ -594,31 +600,33 @@ function commonSizeCheckCode(
     selector, checkAllElements, assertFalse, json, varName, errorsVarName,
 ) {
     const checks = [];
-    for (const [k, v] of Object.entries(json.values)) {
-        if (k === 'width') {
-            if (assertFalse) {
-                checks.push(`\
-if (width === ${v.value}) {
-    innerErrors.push("width is equal to \`${v.value}\`");
+    const width = get(json, 'width');
+    if (width !== undefined) {
+        if (assertFalse) {
+            checks.push(`\
+if (width === ${width.value}) {
+    innerErrors.push("width is equal to \`${width.value}\`");
 }`);
-            } else {
-                checks.push(`\
-if (width !== ${v.value}) {
-    innerErrors.push("expected a width of \`${v.value}\`, found \`" + width + "\`");
+        } else {
+            checks.push(`\
+if (width !== ${width.value}) {
+    innerErrors.push("expected a width of \`${width.value}\`, found \`" + width + "\`");
 }`);
-            }
-        } else if (k === 'height') {
-            if (assertFalse) {
-                checks.push(`\
-if (height === ${v.value}) {
-    innerErrors.push("height is equal to \`${v.value}\`");
+        }
+    }
+
+    const height = get(json, 'height');
+    if (height !== undefined) {
+        if (assertFalse) {
+            checks.push(`\
+if (height === ${height.value}) {
+    innerErrors.push("height is equal to \`${height.value}\`");
 }`);
-            } else {
-                checks.push(`\
-if (height !== ${v.value}) {
-    innerErrors.push("expected a height of \`${v.value}\`, found \`" + height + "\`");
+        } else {
+            checks.push(`\
+if (height !== ${height.value}) {
+    innerErrors.push("expected a height of \`${height.value}\`, found \`" + height + "\`");
 }`);
-            }
         }
     }
 

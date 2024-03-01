@@ -1059,7 +1059,7 @@ function parseWaitForSize(parser) {
     const errorsVarName = 'errors';
 
     const whole = commonSizeCheckCode(
-        selector, checkAllElements, false, entries, varName, errorsVarName);
+        selector, checkAllElements, false, entries.values, varName, errorsVarName);
 
     const [init, looper] = waitForElement(selector, varName, checkAllElements);
     const incr = incrWait(`\
