@@ -1237,23 +1237,42 @@ function parseAssertVariableFalse(parser) {
 }
 
 function parseAssertSizeInner(parser, assertFalse) {
-    const selector = getAssertSelector(parser);
-    if (selector.error !== undefined) {
-        return selector;
+    const jsonValidator = {
+        kind: 'json',
+        keyTypes: {
+            'string': ['height', 'width'],
+        },
+        valueTypes: {
+            'number': [],
+        },
+    };
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                jsonValidator,
+                {
+                    kind: 'ident',
+                    allowed: ['ALL'],
+                    optional: true,
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
     }
 
-    const checkAllElements = selector.checkAllElements;
-    const json = selector.tuple[1].getRaw();
-
-    const entries = validateJson(json, {'number': []}, 'JSON dict key', ['height', 'width']);
-    if (entries.error !== undefined) {
-        return entries;
-    }
+    const tuple = ret.value.entries;
+    const checkAllElements = tuple.length > 2;
+    const json = tuple[1].value.entries;
+    const selector = tuple[0].value;
 
     const varName = 'assertSizeElem';
     const instructions = `\
 ${getAndSetElements(selector, varName, checkAllElements)}
-${commonSizeCheckCode(selector, checkAllElements, assertFalse, entries, varName, 'errors')}
+${commonSizeCheckCode(selector, checkAllElements, assertFalse, json, varName, 'errors')}
 if (errors.length !== 0) {
     const errs = errors.join("; ");
     throw "The following errors happened: [" + errs + "]";
@@ -1263,7 +1282,6 @@ if (errors.length !== 0) {
     return {
         'instructions': [instructions],
         'wait': false,
-        'warnings': entries.warnings,
         'checkResult': true,
     };
 }
