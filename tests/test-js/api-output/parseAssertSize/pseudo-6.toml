@@ -26,6 +26,4 @@ if (errors.length !== 0) {
 """,
 ]
 wait = false
-warnings = [
-]
 checkResult = true
