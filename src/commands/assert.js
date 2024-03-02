@@ -1,12 +1,10 @@
 // All `assert*` commands.
 
+// FIXME: rename this `utils.js` into `command_utils.js`.
 const {
-    buildPropertyDict,
     fillEnabledChecksV2,
     getAndSetElements,
-    getAssertSelector,
     getInsertStrings,
-    validateJson,
     indentString,
     makeExtendedChecks,
     makeTextExtendedChecks,
@@ -21,28 +19,45 @@ const { validator } = require('../validator.js');
 const { hasError } = require('../utils.js');
 
 function parseAssertCssInner(parser, assertFalse) {
-    const selector = getAssertSelector(parser);
-    if (selector.error !== undefined) {
-        return selector;
+    const jsonValidator = {
+        kind: 'json',
+        allowEmptyValues: false,
+        keyTypes: {
+            'string': [],
+        },
+        valueTypes: {
+            'string': [],
+            'number': [],
+        },
+    };
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                jsonValidator,
+                {
+                    kind: 'ident',
+                    allowed: ['ALL'],
+                    optional: true,
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
     }
-    const checkAllElements = selector.checkAllElements;
+
+    const tuple = ret.value.entries;
+    const checkAllElements = tuple.length > 2;
+    const propertyDict = tuple[1].value.entries;
+    const selector = tuple[0].value;
 
     const xpath = selector.isXPath ? 'XPath ' : 'selector ';
     const pseudo = !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '';
 
-    const json = selector.tuple[1].getRaw();
-    const entries = validateJson(json, {'string': [], 'number': []}, 'CSS property');
-
-    if (entries.error !== undefined) {
-        return entries;
-    }
-
     const varName = 'parseAssertElemCss';
     const varDict = varName + 'Dict';
-    const propertyDict = buildPropertyDict(entries, 'CSS property', false);
-    if (propertyDict.error !== undefined) {
-        return propertyDict;
-    }
 
     let extra;
     if (checkAllElements) {
@@ -64,11 +79,22 @@ if (localErr.length === 0) {
     }
 
     const instructions = [];
-    if (propertyDict['needColorCheck']) {
+    if (propertyDict.has('color')) {
         instructions.push(`\
 if (!arg.showText) {
     throw "${COLOR_CHECK_ERROR}";
 }`);
+    }
+
+    let keys = '';
+    let values = '';
+    for (const [key, value] of propertyDict) {
+        if (keys.length !== 0) {
+            keys += ',';
+            values += ',';
+        }
+        keys += `"${key}"`;
+        values += `"${value.value}"`;
     }
 
     instructions.push(`\
@@ -77,7 +103,7 @@ const { checkCssProperty } = require('command-helpers.js');
 async function checkElem(elem) {
     const nonMatchingProps = [];
     const jsHandle = await elem.evaluateHandle(e => {
-        const ${varDict} = [${propertyDict['keys'].join(',')}];
+        const ${varDict} = [${keys}];
         const assertComputedStyle = window.getComputedStyle(e${pseudo});
         const simple = [];
         const computed = [];
@@ -91,7 +117,7 @@ async function checkElem(elem) {
         return [keys, simple, computed];
     });
     const [keys, simple, computed] = await jsHandle.jsonValue();
-    const values = [${propertyDict['values'].join(',')}];
+    const values = [${values}];
 
     for (const [i, key] of keys.entries()) {
         const localErr = [];
@@ -108,7 +134,6 @@ ${extra}`);
     return {
         'instructions': instructions,
         'wait': false,
-        'warnings': entries.warnings,
         'checkResult': true,
     };
 }

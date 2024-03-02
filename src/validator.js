@@ -298,6 +298,9 @@ function validateJson(parser, allowedSyntax, validator) {
     } else if (!isObject(allowedSyntax.keyTypes)) {
         throw new Error('"keyTypes" should be an object (in JSON validator)');
     }
+    // Allowed by default and optional to specify.
+    const allowEmptyValues = allowedSyntax.allowEmptyValues !== false;
+
     const json = parser.getRaw();
     const entries = new Map();
 
@@ -340,6 +343,12 @@ this JSON dict, allowed types are: ${listValues(Object.keys(allowedSyntax.valueT
             return validator.makeError(
                 `unexpected ${value.kind} \`${value.getErrorText()}\`. Allowed ${value.kind}s are: \
 ${listValues(allowedForValue)}`,
+            );
+        }
+        const value_s = value.getStringValue();
+        if (!allowEmptyValues && value_s.length === 0) {
+            return validator.makeError(
+                `empty values are not allowed: \`${key_s}\` has an empty value`,
             );
         }
         entries.set(key_s, {
