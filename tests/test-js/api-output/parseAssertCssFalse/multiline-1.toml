@@ -1,1 +1,1 @@
-error = """CSS property `b` is duplicated"""
+error = """`b` key is duplicated in JSON dict (second element of the tuple)"""

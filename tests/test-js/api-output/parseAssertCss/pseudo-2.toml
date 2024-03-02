@@ -37,6 +37,4 @@ for (const elem of parseAssertElemCss) {
 }""",
 ]
 wait = false
-warnings = [
-]
 checkResult = true

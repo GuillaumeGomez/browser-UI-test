@@ -36,6 +36,4 @@ parseAssertElemCss = parseAssertElemCss[0];
 await checkElem(parseAssertElemCss);""",
 ]
 wait = false
-warnings = [
-]
 checkResult = true

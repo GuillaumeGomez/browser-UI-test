@@ -35,6 +35,4 @@ if (parseAssertElemCss === null) { throw '\"a\" not found'; }
 await checkElem(parseAssertElemCss);""",
 ]
 wait = false
-warnings = [
-]
 checkResult = true

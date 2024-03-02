@@ -1,1 +1,1 @@
-error = """expected JSON dictionary as second argument, found `\"b\"`"""
+error = """expected second element of the tuple to be a JSON dict, found `\"b\"` (a string)"""
