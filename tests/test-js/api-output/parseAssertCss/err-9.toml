@@ -1,1 +1,1 @@
-error = """Empty values are not allowed: `b` has an empty value"""
+error = """empty values are not allowed: `b` has an empty value (second element of the tuple)"""

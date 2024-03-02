@@ -118,54 +118,6 @@ function getInsertStrings(assertFalse, insideLoop, extra = '', backlineAtEnd = t
     return ['', ''];
 }
 
-function getAssertSelector(parser) {
-    const err = 'expected a tuple, read the documentation to see the accepted inputs';
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': err + ', found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {'error': err + `, found \`${parser.getRawArgs()}\``};
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length < 2 || tuple.length > 3) {
-        return {
-            'error': 'invalid number of values in the tuple: expected 2 or 3, found ' +
-                tuple.length,
-        };
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected first argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[0].getArticleKind()}`,
-        };
-    } else if (tuple[1].kind !== 'json') {
-        return {
-            'error': `expected JSON dictionary as second argument, found \
-\`${tuple[1].getErrorText()}\``,
-        };
-    } else if (tuple.length === 3) {
-        if (tuple[2].kind !== 'ident') {
-            return {
-                'error': 'expected identifier `ALL` as third argument or nothing, found `' +
-                    `${tuple[2].getRaw()}\``,
-            };
-        } else if (tuple[2].getRaw() !== 'ALL') {
-            return {
-                'error': 'expected identifier `ALL` as third argument or nothing, found `' +
-                    `${tuple[2].getRaw()}\``,
-            };
-        }
-    }
-
-    const selector = tuple[0].getSelector();
-    if (tuple.length === 3) {
-        // We already checked it above so let's go!
-        selector.checkAllElements = true;
-    }
-    selector.tuple = tuple;
-    return selector;
-}
-
 function fillEnabledChecks(elem, identifiers, enabled_checks, warnings, err_pos) {
     if (elem.kind === 'ident') {
         if (identifiers.indexOf(elem.getRaw()) === -1) {
@@ -661,7 +613,6 @@ module.exports = {
     'checkIntegerTuple': checkIntegerTuple,
     'validateJson': validateJson,
     'getInsertStrings': getInsertStrings,
-    'getAssertSelector': getAssertSelector,
     'fillEnabledChecks': fillEnabledChecks,
     'fillEnabledChecksV2': fillEnabledChecksV2,
     'buildPropertyDict': buildPropertyDict,
