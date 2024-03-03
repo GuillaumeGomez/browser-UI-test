@@ -210,32 +210,38 @@ function parseCompareElementsCssInner(parser, assertFalse) {
     const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
         getAndSetElements(selector2, varName + '2', false) + '\n';
 
-    const code = `const properties = [${properties}];\n` +
-    'for (const css_property of properties) {\n' +
-        `${insertBefore}let style1_1 = e1.style[css_property];\n` +
-            'let style1_2 = computed_style1[css_property];\n' +
-            'let style2_1 = e2.style[css_property];\n' +
-            'let style2_2 = computed_style2[css_property];\n' +
-            'if (style1_1 != style2_1 && style1_1 != style2_2 && ' +
-            'style1_2 != style2_1 && style1_2 != style2_2) {\n' +
-            'throw \'CSS property `\' + css_property + \'` did not match: \' + ' +
-            `style1_2 + ' != ' + style2_2; }${insertAfter}\n` +
-    '}\n';
+    const code = `\
+const properties = [${properties}];
+for (const css_prop of properties) {
+    ${insertBefore}let style1_1 = e1.style[css_prop];
+    let style1_2 = computed_style1[css_prop];
+    let style2_1 = e2.style[css_prop];
+    let style2_2 = computed_style2[css_prop];
+    if (style1_1 != style2_1 && style1_1 != style2_2 &&
+        style1_2 != style2_1 && style1_2 != style2_2)
+    {
+        throw 'CSS property \`' + css_prop + '\` did not match: ' + style1_2 + ' != ' + style2_2;
+    }${insertAfter}
+}
+`;
 
     const instructions = [];
     if (needColorCheck) {
-        instructions.push('if (!arg.showText) {\n' +
-            `throw "${COLOR_CHECK_ERROR}";\n` +
-            '}',
+        instructions.push(
+            `\
+if (!arg.showText) {
+    throw "${COLOR_CHECK_ERROR}";
+}`,
         );
     }
     instructions.push(
-        selectors +
-        'await page.evaluate((e1, e2) => {' +
-        `let computed_style1 = getComputedStyle(e1${pseudo1});\n` +
-        `let computed_style2 = getComputedStyle(e2${pseudo2});\n` +
-        code +
-        `}, ${varName}1, ${varName}2);`,
+        `\
+${selectors}
+await page.evaluate((e1, e2) => {
+    let computed_style1 = getComputedStyle(e1${pseudo1});
+    let computed_style2 = getComputedStyle(e2${pseudo2});
+${indentString(code, 1)}
+}, ${varName}1, ${varName}2);`,
     );
     return {
         'instructions': instructions,
