@@ -69,7 +69,6 @@ function parseCompareElementsTextFalse(parser) {
     return parseCompareElementsTextInner(parser, true);
 }
 
-// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2, ["attr"])
 function parseCompareElementsAttributeInner(parser, assertFalse) {
     const operators = ['<', '<=', '>', '>=', '='];
     const ret = validator(parser,
@@ -160,6 +159,7 @@ ${indentString(comparison, 1)}
 // Possible inputs:
 //
 // * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2, ["attr"])
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2, ["attr"], "operator")
 function parseCompareElementsAttribute(parser) {
     return parseCompareElementsAttributeInner(parser, false);
 }
@@ -167,61 +167,42 @@ function parseCompareElementsAttribute(parser) {
 // Possible inputs:
 //
 // * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2", ["attr"])
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2, ["attr"], "operator")
 function parseCompareElementsAttributeFalse(parser) {
     return parseCompareElementsAttributeInner(parser, true);
 }
 
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2, ["CSS properties"])
 function parseCompareElementsCssInner(parser, assertFalse) {
-    const elems = parser.elems;
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                { kind: 'selector' },
+                {
+                    kind: 'array',
+                    allowEmpty: false,
+                    valueTypes: {
+                        'string': [],
+                    },
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
+    }
 
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 3) {
-        let err = `expected 3 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected first argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[0].getArticleKind()}`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': 'expected second argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[1].getArticleKind()}`,
-        };
-    } else if (tuple[2].kind !== 'array') {
-        return {
-            'error': 'expected third argument to be an array of string, ' +
-                `found ${tuple[2].getArticleKind()}`,
-        };
-    }
-    const array = tuple[2].getRaw();
-    if (array.length > 0 && array[0].kind !== 'string') {
-        return {'error': `expected an array of strings, found \`${tuple[2].getErrorText()}\``};
-    }
+    const tuple = ret.value.entries;
+    const selector1 = tuple[0].value;
+    const selector2 = tuple[1].value;
+    const properties = tuple[2].value.entries.map(e => `"${e.getStringValue()}"`).join(',');
+    const needColorCheck = tuple[2].value.entries.some(e => e.getStringValue() === 'color');
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
-
-    const selector1 = tuple[0].getSelector();
-    if (selector1.error !== undefined) {
-        return selector1;
-    }
     const pseudo1 = !selector1.isXPath && selector1.pseudo !== null ?
         `, "${selector1.pseudo}"` : '';
-
-    const selector2 = tuple[1].getSelector();
-    if (selector2.error !== undefined) {
-        return selector2;
-    }
     const pseudo2 = !selector2.isXPath && selector2.pseudo !== null ?
         `, "${selector2.pseudo}"` : '';
 
@@ -229,25 +210,7 @@ function parseCompareElementsCssInner(parser, assertFalse) {
     const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
         getAndSetElements(selector2, varName + '2', false) + '\n';
 
-    let arr = '';
-    let needColorCheck = false;
-    for (const entry of array) {
-        const key = entry.getStringValue();
-        if (key.length === 0) {
-            return {
-                'error': 'Empty CSS property keys ("" or \'\') are not allowed',
-            };
-        }
-        if (arr.length > 0) {
-            arr += ',';
-        }
-        if (key === 'color') {
-            needColorCheck = true;
-        }
-        arr += `"${key}"`;
-    }
-
-    const code = `const properties = [${arr}];\n` +
+    const code = `const properties = [${properties}];\n` +
     'for (const css_property of properties) {\n' +
         `${insertBefore}let style1_1 = e1.style[css_property];\n` +
             'let style1_2 = computed_style1[css_property];\n' +
