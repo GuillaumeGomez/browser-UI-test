@@ -69,83 +69,45 @@ function parseCompareElementsTextFalse(parser) {
     return parseCompareElementsTextInner(parser, true);
 }
 
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2, ["attr"])
 function parseCompareElementsAttributeInner(parser, assertFalse) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length < 3 || tuple.length > 4) {
-        let err = `expected 3 or 4 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected first argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[0].getArticleKind()}`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': 'expected second argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[1].getArticleKind()}`,
-        };
-    } else if (tuple[2].kind !== 'array') {
-        return {
-            'error': 'expected third argument to be an array of string, ' +
-                `found ${tuple[1].getArticleKind()}`,
-        };
-    } else if (tuple.length === 4) {
-        const operators = ['<', '<=', '>', '>=', '='];
-
-        if (tuple[3].kind !== 'string') {
-            return {
-                'error': 'expected fourth argument to be a string of an operator (one of ' +
-                    operators.map(x => `\`${x}\``).join(', ') + '), found ' +
-                    tuple[3].getArticleKind(),
-            };
-        } else if (operators.indexOf(tuple[3].getRaw()) === -1) {
-            return {
-                'error': `Unknown operator \`${tuple[3].getRaw()}\` in fourth argument. Expected ` +
-                    `one of [${operators.map(x => `\`${x}\``).join(', ')}]`,
-            };
-        }
+    const operators = ['<', '<=', '>', '>=', '='];
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                { kind: 'selector' },
+                {
+                    kind: 'array',
+                    valueTypes: {
+                        'string': [],
+                    },
+                },
+                {
+                    kind: 'string',
+                    allowed: operators,
+                    optional: true,
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
     }
 
-    const operator = tuple.length === 4 ? tuple[3].getRaw() : '=';
+    const tuple = ret.value.entries;
+    const selector1 = tuple[0].value;
+    const selector2 = tuple[1].value;
+    const attrs = tuple[2].value.entries.map(e => `"${e.getStringValue()}"`).join(',');
 
-    const array = tuple[2].getRaw();
-    if (array.length > 0 && array[0].kind !== 'string') {
-        return {'error': `expected an array of strings, found \`${tuple[2].getErrorText()}\``};
-    }
+    const operator = tuple.length === 4 ? tuple[3].value.getRaw() : '=';
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
 
-    const selector1 = tuple[0].getSelector();
-    if (selector1.error !== undefined) {
-        return selector1;
-    }
-    const selector2 = tuple[1].getSelector();
-    if (selector2.error !== undefined) {
-        return selector2;
-    }
     const varName = 'parseCompareElementsAttr';
     const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
         getAndSetElements(selector2, varName + '2', false) + '\n';
-
-    let arr = '';
-    for (const entry of array) {
-        if (arr.length > 0) {
-            arr += ',';
-        }
-        arr += `"${entry.getStringValue()}"`;
-    }
 
     let comparison;
 
@@ -177,7 +139,7 @@ ${insertBefore}if (value1 ${matchings[operator]} value2) {
 }${insertAfter}`;
     }
 
-    const code = `const attributes = [${arr}];
+    const code = `const attributes = [${attrs}];
 for (const attr of attributes) {
 ${indentString(comparison, 1)}
 }
