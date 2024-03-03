@@ -1,1 +1,1 @@
-error = """expected fourth argument to be a string of an operator (one of `<`, `<=`, `>`, `>=`, `=`), found a number"""
+error = """expected fourth element of the tuple to be a string (one of [`<`, `<=`, `=`, `>`, `>=`]), found `1` (a number)"""
