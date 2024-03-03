@@ -113,6 +113,9 @@ class Validator {
             out += ` or ${possibilities[len]}`;
         } else {
             out = getArticleKind(allowedSyntax.kind);
+            if (allowedSyntax.kind === 'string' && allowedSyntax.allowed !== undefined) {
+                out += ` (one of ${listValues(allowedSyntax.allowed)})`;
+            }
         }
         const extra = tuplePosition !== null ?
             `${nth_elem(tuplePosition)} element of the tuple to be ` :
@@ -149,6 +152,15 @@ function validateString(parser, allowedSyntax, validator) {
         return validator.makeError(
             `expected a string, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
             true);
+    }
+    if (allowedSyntax.allowed !== undefined) {
+        if (!Array.isArray(allowedSyntax.allowed)) {
+            throw new Error('`allowed` value is supposed to be an array in string validator');
+        } else if (!allowedSyntax.allowed.includes(parser.value)) {
+            return validator.makeError(
+                `unexpected value \`${parser.getErrorText()}\`, allowed values are: \
+${listValues(allowedSyntax.allowed)}`);
+        }
     }
     return parser;
 }

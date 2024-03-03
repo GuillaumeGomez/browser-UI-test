@@ -1,1 +1,1 @@
-error = """expected a tuple with 2 CSS selectors/XPathes, found 4 elements"""
+error = """expected a tuple of 2 elements, found 4"""

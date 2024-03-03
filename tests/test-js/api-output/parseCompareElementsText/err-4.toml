@@ -1,1 +1,1 @@
-error = """expected a tuple of CSS selector/XPath, found `[]`"""
+error = """expected a tuple, found `[]` (an array)"""
