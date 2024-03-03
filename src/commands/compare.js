@@ -4,42 +4,27 @@ const {
     getAndSetElements, getInsertStrings, validateJson, indentString, getSizes,
 } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
+const { validator } = require('../validator.js');
+// Not the same `utils.js`!
+const { hasError } = require('../utils.js');
 
 function parseCompareElementsTextInner(parser, assertFalse) {
-    const elems = parser.elems;
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                { kind: 'selector' },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
+    }
 
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple of CSS selector/XPath, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': `expected a tuple of CSS selector/XPath, found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        let err = `expected a tuple with 2 CSS selectors/XPathes, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected first argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[0].getArticleKind()}`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': 'expected second argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[1].getArticleKind()}`};
-    }
-    const selector1 = tuple[0].getSelector();
-    if (selector1.error !== undefined) {
-        return selector1;
-    }
-    const selector2 = tuple[1].getSelector();
-    if (selector2.error !== undefined) {
-        return selector2;
-    }
+    const tuple = ret.value.entries;
+    const selector1 = tuple[0].value;
+    const selector2 = tuple[1].value;
     const varName = 'parseCompareElementsText';
     const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
         getAndSetElements(selector2, varName + '2', false) + '\n';
