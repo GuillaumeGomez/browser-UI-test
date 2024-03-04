@@ -1,1 +1,1 @@
-error = """Only accepted values are \"x\" and \"y\", found `\"yo\"` (in `(\"x\", \"yo\")`)"""
+error = """unexpected value `\"yo\"`, allowed values are: [`x`, `y`] (third element of the tuple)"""

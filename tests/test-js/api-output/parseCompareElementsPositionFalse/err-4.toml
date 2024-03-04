@@ -1,1 +1,1 @@
-error = """expected a tuple, found `[]`"""
+error = """expected a tuple, found `[]` (an array)"""

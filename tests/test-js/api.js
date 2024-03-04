@@ -693,34 +693,34 @@ function checkCompareElementsPosition(x, func) {
     func('[]', 'err-4');
     func('("a")', 'err-5');
     func('("a", 1)', 'err-6');
-    func('(1, "a", ("a"))', 'err-7');
-    func('((), "a", ("a"))', 'err-8');
+    func('(1, "a", ["a"])', 'err-7');
+    func('((), "a", ["a"])', 'err-8');
     func('("a", "a", "b", "c")', 'err-9');
     func('("a", "b", 1)', 'err-10');
-    func('("a", "b", (1))', 'err-11');
-    func('("a", "b", ("x", "yo"))', 'err-12');
-    func('("a", "b", ("x", "y", "x"))', 'err-13');
-    func('("a", "b", ("x", "y", "y"))', 'err-14');
+    func('("a", "b", [1])', 'err-11');
+    func('("a", "b", ["x", "yo"])', 'err-12');
+    func('("a", "b", ["x", "y", "x"])', 'err-13');
+    func('("a", "b", ["x", "y", "y"])', 'err-14');
 
-    func('("a", "b", ())', 'basic-1');
-    func('("a", "b", ("x"))', 'basic-2');
-    func('("a", "b", ("y"))', 'basic-3');
-    func('("a", "b", ("x", "y"))', 'basic-4');
-    func('("a", "b", ("y", "x"))', 'basic-5');
+    func('("a", "b", [])', 'basic-1');
+    func('("a", "b", ["x"])', 'basic-2');
+    func('("a", "b", ["y"])', 'basic-3');
+    func('("a", "b", ["x", "y"])', 'basic-4');
+    func('("a", "b", ["y", "x"])', 'basic-5');
 
     // Pseudo element
-    func('("a::after", "b", ("y", "x"))', 'pseudo-1');
-    func('("a", "b::after", ("y", "x"))', 'pseudo-2');
-    func('("a::after", "b::after", ("y", "x"))', 'pseudo-3');
+    func('("a::after", "b", ["y", "x"])', 'pseudo-1');
+    func('("a", "b::after", ["y", "x"])', 'pseudo-2');
+    func('("a::after", "b::after", ["y", "x"])', 'pseudo-3');
 
     // XPath
-    func('("//a", "b", ("y", "x"))', 'xpath-1');
-    func('("a", "//b", ("y", "x"))', 'xpath-2');
-    func('("//a", "//b", ("y", "x"))', 'xpath-3');
+    func('("//a", "b", ["y", "x"])', 'xpath-1');
+    func('("a", "//b", ["y", "x"])', 'xpath-2');
+    func('("//a", "//b", ["y", "x"])', 'xpath-3');
 
     // Multiline
-    func('("a", \n"b", \n("x",\n "y", "y"))', 'multiline-1');
-    func('("a",\n "b", (\n"x"))', 'multiline-2');
+    func('("a", \n"b", \n["x",\n "y", "y"])', 'multiline-1');
+    func('("a",\n "b", [\n"x"])', 'multiline-2');
 }
 
 function checkCompareElementsPositionNear(x, func) {
