@@ -1,1 +1,1 @@
-error = """Duplicated \"width\" value in `(\"width\", \"height\", \"width\")`"""
+error = """Duplicated \"width\" value in `[\"width\", \"height\", \"width\"]`"""

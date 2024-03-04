@@ -797,34 +797,34 @@ function checkCompareElementsSize(x, func) {
     func('[]', 'err-4');
     func('("a")', 'err-5');
     func('("a", 1)', 'err-6');
-    func('(1, "a", ("a"))', 'err-7');
-    func('((), "a", ("a"))', 'err-8');
+    func('(1, "a", ["a"])', 'err-7');
+    func('((), "a", ["a"])', 'err-8');
     func('("a", "a", "b", "c")', 'err-9');
     func('("a", "b", 1)', 'err-10');
-    func('("a", "b", (1))', 'err-11');
-    func('("a", "b", ("width", "heighto"))', 'err-12');
-    func('("a", "b", ("width", "height", "width"))', 'err-13');
-    func('("a", "b", ("width", "height", "height"))', 'err-14');
+    func('("a", "b", [1])', 'err-11');
+    func('("a", "b", ["width", "heighto"])', 'err-12');
+    func('("a", "b", ["width", "height", "width"])', 'err-13');
+    func('("a", "b", ["width", "height", "height"])', 'err-14');
 
-    func('("a", "b", ())', 'basic-1');
-    func('("a", "b", ("width"))', 'basic-2');
-    func('("a", "b", ("height"))', 'basic-3');
-    func('("a", "b", ("width", "height"))', 'basic-4');
-    func('("a", "b", ("height", "width"))', 'basic-5');
+    func('("a", "b", [])', 'basic-1');
+    func('("a", "b", ["width"])', 'basic-2');
+    func('("a", "b", ["height"])', 'basic-3');
+    func('("a", "b", ["width", "height"])', 'basic-4');
+    func('("a", "b", ["height", "width"])', 'basic-5');
 
     // Pseudo element
-    func('("a::after", "b", ("height", "width"))', 'pseudo-1');
-    func('("a", "b::after", ("height", "width"))', 'pseudo-2');
-    func('("a::after", "b::after", ("height", "width"))', 'pseudo-3');
+    func('("a::after", "b", ["height", "width"])', 'pseudo-1');
+    func('("a", "b::after", ["height", "width"])', 'pseudo-2');
+    func('("a::after", "b::after", ["height", "width"])', 'pseudo-3');
 
     // XPath
-    func('("//a", "b", ("height", "width"))', 'xpath-1');
-    func('("a", "//b", ("height", "width"))', 'xpath-2');
-    func('("//a", "//b", ("height", "width"))', 'xpath-3');
+    func('("//a", "b", ["height", "width"])', 'xpath-1');
+    func('("a", "//b", ["height", "width"])', 'xpath-2');
+    func('("//a", "//b", ["height", "width"])', 'xpath-3');
 
     // Multiline
-    func('("a", \n"b", \n("width",\n "height", "height"))', 'multiline-1');
-    func('("a",\n "b", (\n"width"))', 'multiline-2');
+    func('("a", \n"b", \n["width",\n "height", "height"])', 'multiline-1');
+    func('("a",\n "b", [\n"width"])', 'multiline-2');
 }
 
 function checkCompareElementsSizeNear(x, func) {
