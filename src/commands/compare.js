@@ -80,7 +80,7 @@ function parseCompareElementsAttributeInner(parser, assertFalse) {
                 {
                     kind: 'array',
                     valueTypes: {
-                        'string': [],
+                        'string': {},
                     },
                 },
                 {
@@ -183,7 +183,7 @@ function parseCompareElementsCssInner(parser, assertFalse) {
                     kind: 'array',
                     allowEmpty: false,
                     valueTypes: {
-                        'string': [],
+                        'string': {},
                     },
                 },
             ],
@@ -274,7 +274,7 @@ function parseCompareElementsPropertyInner(parser, assertFalse) {
                     kind: 'array',
                     allowEmpty: false,
                     valueTypes: {
-                        'string': [],
+                        'string': {},
                     },
                 },
             ],
@@ -351,7 +351,9 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
                 {
                     kind: 'array',
                     valueTypes: {
-                        'string': ['x', 'y'],
+                        'string': {
+                            allowed: ['x', 'y'],
+                        },
                     },
                 },
             ],
@@ -583,7 +585,9 @@ function parseCompareElementsSizeInner(parser, assertFalse) {
                 {
                     kind: 'array',
                     valueTypes: {
-                        'string': ['width', 'height'],
+                        'string': {
+                            allowed: ['width', 'height'],
+                        },
                     },
                 },
             ],

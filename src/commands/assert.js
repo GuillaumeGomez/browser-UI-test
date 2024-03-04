@@ -26,8 +26,11 @@ function parseAssertCssInner(parser, assertFalse) {
             'string': [],
         },
         valueTypes: {
-            'string': [],
-            'number': [],
+            'string': {},
+            'number': {
+                allowNegative: true,
+                allowFloat: true,
+            },
         },
     };
     const ret = validator(parser,
@@ -166,7 +169,14 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
             'string': [],
         },
         valueTypes: {
-            'string': [], 'number': [], 'ident': ['null'],
+            'string': {},
+            'number': {
+                allowNegative: true,
+                allowFloat: true,
+            },
+            'ident': {
+                allowed: ['null'],
+            },
         },
     };
     const ret = validator(parser,
@@ -182,7 +192,9 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
                         {
                             kind: 'array',
                             valueTypes: {
-                                'ident': identifiers,
+                                'ident': {
+                                    allowed: identifiers,
+                                },
                             },
                         },
                     ],
@@ -350,7 +362,14 @@ function parseAssertPropertyInner(parser, assertFalse) {
             'string': [],
         },
         valueTypes: {
-            'string': [], 'number': [], 'ident': ['null'],
+            'string': {},
+            'number': {
+                allowNegative: true,
+                allowFloat: true,
+            },
+            'ident': {
+                allowed: ['null'],
+            },
         },
     };
     const selectorValidator = { kind: 'selector' };
@@ -368,7 +387,9 @@ function parseAssertPropertyInner(parser, assertFalse) {
                         {
                             kind: 'array',
                             valueTypes: {
-                                'ident': identifiers,
+                                'ident': {
+                                    allowed: identifiers,
+                                },
                             },
                         },
                     ],
@@ -510,7 +531,14 @@ function parseAssertAttributeInner(parser, assertFalse) {
             'string': [],
         },
         valueTypes: {
-            'string': [], 'number': [], 'ident': ['null'],
+            'string': {},
+            'number': {
+                allowNegative: true,
+                allowFloat: true,
+            },
+            'ident': {
+                allowed: ['null'],
+            },
         },
     };
     const ret = validator(parser,
@@ -527,7 +555,9 @@ function parseAssertAttributeInner(parser, assertFalse) {
                         {
                             kind: 'array',
                             valueTypes: {
-                                'ident': identifiers,
+                                'ident': {
+                                    allowed: identifiers,
+                                },
                             },
                         },
                     ],
@@ -740,7 +770,9 @@ function parseAssertTextInner(parser, assertFalse) {
                         {
                             kind: 'array',
                             valueTypes: {
-                                'ident': identifiers,
+                                'ident': {
+                                    allowed: identifiers,
+                                },
                             },
                         },
                     ],
@@ -942,7 +974,10 @@ function parseAssertPositionInner(parser, assertFalse) {
             'string': ['x', 'y'],
         },
         valueTypes: {
-            'number': [],
+            'number': {
+                allowNegative: true,
+                allowFloat: true,
+            },
         },
     };
     const ret = validator(parser,
@@ -1017,9 +1052,14 @@ function parseAssertLocalStorageInner(parser, assertFalse) {
                 'string': [],
             },
             valueTypes: {
-                'string': [],
-                'number': [],
-                'ident': ['null'],
+                'string': {},
+                'number': {
+                    allowNegative: true,
+                    allowFloat: true,
+                },
+                'ident': {
+                    allowed: ['null'],
+                },
             },
         },
     );
@@ -1109,9 +1149,12 @@ function parseAssertVariableInner(parser, assertFalse) {
                         'string': [],
                     },
                     valueTypes: {
-                        'string': [],
-                        'number': [],
-                        'ident': [],
+                        'string': {},
+                        'number': {
+                            allowNegative: true,
+                            allowFloat: true,
+                        },
+                        'ident': {},
                     },
                     alternatives: [
                         { kind: 'string' },
@@ -1130,7 +1173,9 @@ function parseAssertVariableInner(parser, assertFalse) {
                         {
                             kind: 'array',
                             valueTypes: {
-                                'ident': identifiers,
+                                'ident': {
+                                    allowed: identifiers,
+                                },
                             },
                         },
                     ],
@@ -1268,7 +1313,10 @@ function parseAssertSizeInner(parser, assertFalse) {
             'string': ['height', 'width'],
         },
         valueTypes: {
-            'number': [],
+            'number': {
+                allowNegative: true,
+                allowFloat: true,
+            },
         },
     };
     const ret = validator(parser,
