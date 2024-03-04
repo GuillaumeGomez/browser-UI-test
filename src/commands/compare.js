@@ -196,7 +196,6 @@ function parseCompareElementsCssInner(parser, assertFalse) {
     const tuple = ret.value.entries;
     const selector1 = tuple[0].value;
     const selector2 = tuple[1].value;
-    const properties = tuple[2].value.entries.map(e => `"${e.getStringValue()}"`).join(',');
     const needColorCheck = tuple[2].value.entries.some(e => e.getStringValue() === 'color');
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
@@ -210,7 +209,7 @@ function parseCompareElementsCssInner(parser, assertFalse) {
         getAndSetElements(selector2, varName + '2', false) + '\n';
 
     const code = `\
-const properties = [${properties}];
+const properties = ${tuple[2].value.displayInCode()};
 for (const css_prop of properties) {
     ${insertBefore}let style1_1 = e1.style[css_prop];
     let style1_2 = computed_style1[css_prop];
