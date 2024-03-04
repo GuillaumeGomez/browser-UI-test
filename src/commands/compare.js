@@ -502,38 +502,62 @@ function parseCompareElementsPositionNearCommon(parser, assertFalse) {
 }
 
 function parseCompareElementsPositionNearInner(parser, assertFalse) {
-    const ret = parseCompareElementsPositionNearCommon(parser, assertFalse);
-    if (ret.error !== undefined) {
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                { kind: 'selector' },
+                {
+                    kind: 'json',
+                    keyTypes: {
+                        'string': ['x', 'y'],
+                    },
+                    valueTypes: {
+                        'number': {
+                            allowNegative: false,
+                            allowFloat: false,
+                        },
+                    },
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
         return ret;
     }
-    const warnings = ret.entries.warnings;
+
+    const tuple = ret.value.entries;
+    const selector1 = tuple[0].value;
+    const selector2 = tuple[1].value;
+    const json = tuple[2].value;
+
+    let errHandling;
+    if (assertFalse) {
+        errHandling = 'if (err === null) { throw "comparison didn\'t fail"; }';
+    } else {
+        errHandling = 'if (err !== null) { throw err; }';
+    }
+
     let code = `\
 function browserComparePositionNear(e1, e2, kind, property, maxDelta) {
     let err = null;
     let val1 = e1.getBoundingClientRect()[property];
-${indentString(handlePseudo(ret.selector1, '1'), 1)}\
+${indentString(handlePseudo(selector1, '1'), 1)}\
     let val2 = e2.getBoundingClientRect()[property];
-${indentString(handlePseudo(ret.selector2, '2'), 1)}\
+${indentString(handlePseudo(selector2, '2'), 1)}\
     let delta = Math.abs(val1 - val2);
     if (delta > maxDelta) {
         err = "delta " + kind + " values too large: " + delta + " > " + maxDelta;
     }
-    ${ret.errHandling}
+    ${errHandling}
 }
 `;
+    const warnings = [];
     let added = 0;
-    for (const [key, value] of Object.entries(ret.entries.values)) {
+    for (const [key, value] of json.entries) {
         const v = parseInt(value.value, 10);
-        if (key !== 'x' && key !== 'y') {
-            return {
-                'error': 'Only accepted keys are "x" and "y", found `' +
-                    `"${key}"\` (in \`${ret.tuple[2].getErrorText()}\`)`,
-            };
-        } else if (v < 0) {
-            return {
-                'error': `Delta cannot be negative (in \`"${key}": ${v}\`)`,
-            };
-        } else if (v === 0) {
+        if (v === 0) {
             warnings.push(
                 `Delta is 0 for "${key}", maybe try to use \`compare-elements-position\` instead?`);
         }
@@ -546,8 +570,8 @@ ${indentString(handlePseudo(ret.selector2, '2'), 1)}\
     }
 
     const varName = 'parseCompareElementsPosNear';
-    let instructions = getAndSetElements(ret.selector1, varName + '1', false) + '\n' +
-        getAndSetElements(ret.selector2, varName + '2', false) + '\n';
+    let instructions = getAndSetElements(selector1, varName + '1', false) + '\n' +
+        getAndSetElements(selector2, varName + '2', false) + '\n';
     if (added !== 0) {
         instructions += `\
 await page.evaluate((elem1, elem2) => {
