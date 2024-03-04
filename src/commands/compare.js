@@ -172,7 +172,6 @@ function parseCompareElementsAttributeFalse(parser) {
     return parseCompareElementsAttributeInner(parser, true);
 }
 
-// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2, ["CSS properties"])
 function parseCompareElementsCssInner(parser, assertFalse) {
     const ret = validator(parser,
         {
@@ -264,70 +263,50 @@ function parseCompareElementsCssFalse(parser) {
     return parseCompareElementsCssInner(parser, true);
 }
 
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2, ["CSS properties"])
 function parseCompareElementsPropertyInner(parser, assertFalse) {
-    const elems = parser.elems;
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                { kind: 'selector' },
+                {
+                    kind: 'array',
+                    allowEmpty: false,
+                    valueTypes: {
+                        'string': [],
+                    },
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
+    }
 
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 3) {
-        let err = `expected 3 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected first argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[0].getArticleKind()}`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': 'expected second argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[1].getArticleKind()}`,
-        };
-    } else if (tuple[2].kind !== 'array') {
-        return {
-            'error': 'expected third argument to be an array of string, ' +
-                `found ${tuple[2].getArticleKind()}`,
-        };
-    }
-    const array = tuple[2].getRaw();
-    if (array.length > 0 && array[0].kind !== 'string') {
-        return {'error': `expected an array of strings, found \`${tuple[2].getErrorText()}\``};
-    }
+    const tuple = ret.value.entries;
+    const selector1 = tuple[0].value;
+    const selector2 = tuple[1].value;
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
-
-    const selector1 = tuple[0].getSelector();
-    if (selector1.error !== undefined) {
-        return selector1;
-    }
-    const selector2 = tuple[1].getSelector();
-    if (selector2.error !== undefined) {
-        return selector2;
-    }
 
     const varName = 'parseCompareElementsProp';
     const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
         getAndSetElements(selector2, varName + '2', false) + '\n';
 
-    const code = `const ${varName}s = ${tuple[2].displayInCode()};\n` +
-    `for (const property of ${varName}s) {\n` +
-        `${insertBefore}const value = await ${varName}1.evaluateHandle((e, p) => {\n` +
-            'return String(e[p]);\n' +
-        '}, property);\n' +
-        `await ${varName}2.evaluate((e, v, p) => {\n` +
-            'if (v !== String(e[p])) {\n' +
-            'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
-            '}\n' +
-        `}, value, property);${insertAfter}\n` +
-    '}';
+    const code = `\
+const ${varName}s = ${tuple[2].value.displayInCode()};
+for (const property of ${varName}s) {
+    ${insertBefore}const value = await ${varName}1.evaluateHandle((e, p) => {
+        return String(e[p]);
+    }, property);
+    await ${varName}2.evaluate((e, v, p) => {
+        if (v !== String(e[p])) {
+            throw p + ": \`" + v + "\` !== \`" + String(e[p]) + "\`";
+        }
+    }, value, property);${insertAfter}
+}`;
     return {
         'instructions': [
             selectors + code,
