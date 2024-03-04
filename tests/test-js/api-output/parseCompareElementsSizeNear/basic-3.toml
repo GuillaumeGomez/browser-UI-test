@@ -1,1 +1,1 @@
-error = """Only accepted keys are \"width\" and \"height\", found `\"heighto\"` (in `{\"width\": 1, \"heighto\": 2}`)"""
+error = """unexpected key `\"heighto\"`, allowed keys are: [`height`, `width`] (third element of the tuple)"""
