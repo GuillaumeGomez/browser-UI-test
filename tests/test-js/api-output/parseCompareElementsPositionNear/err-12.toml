@@ -1,1 +1,1 @@
-error = """JSON dict key `x` is duplicated"""
+error = """`x` key is duplicated in JSON dict (third element of the tuple)"""
