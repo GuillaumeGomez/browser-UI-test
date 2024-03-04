@@ -1,1 +1,1 @@
-error = """Empty CSS property keys (\"\" or '') are not allowed"""
+error = """empty values (`\"\"`) are not allowed (third element of the tuple)"""

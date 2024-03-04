@@ -272,6 +272,9 @@ function validateArray(parser, allowedSyntax, validator) {
     if (arrayElems.length === 0) {
         return parser;
     }
+    // Allowed by default and optional to specify.
+    const allowEmpty = allowedSyntax.allowEmpty !== false;
+
     const allowedForType = getObjectValue(allowedSyntax.valueTypes, arrayElems[0].kind);
     if (allowedForType === undefined) {
         const exp = Object.keys(allowedSyntax.valueTypes).join(' or ');
@@ -289,6 +292,15 @@ ${arrayElems[0].kind} (${arrayElems[0].getErrorText()})`);
                 return validator.makeError(
                     `unexpected value \`${value.getErrorText()}\`, allowed values are: \
 ${listValues(allowedForType)}`,
+                );
+            }
+        }
+    }
+    if (!allowEmpty) {
+        for (const value of arrayElems) {
+            if (value.getStringValue().length === 0) {
+                return validator.makeError(
+                    `empty values (\`${value.getErrorText()}\`) are not allowed`,
                 );
             }
         }
