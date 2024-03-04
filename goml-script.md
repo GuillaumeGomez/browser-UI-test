@@ -932,32 +932,32 @@ Another thing to be noted: if you don't care whether the selector exists or not 
 
 #### compare-elements-position
 
-**compare-elements-position** command allows you to check that two DOM elements' X/Y positions are equal. Examples:
+**compare-elements-position** command allows you to check that two DOM elements X/Y positions are equal. Examples:
 
 ```
 // Compare the X position.
-compare-elements-position: ("//element1", "element2", ("x"))
+compare-elements-position: ("//element1", "element2", ["x"])
 // Compare the Y position.
-compare-elements-position: ("element1", "//element2", ("y"))
+compare-elements-position: ("element1", "//element2", ["y"])
 // Compare the X and Y positions.
-compare-elements-position: ("//element1", "//element2", ("x", "y"))
+compare-elements-position: ("//element1", "//element2", ["x", "y"])
 // Compare the Y and X positions.
-compare-elements-position: ("element1", "element2", ("y", "x"))
+compare-elements-position: ("element1", "element2", ["y", "x"])
 ```
 
 #### compare-elements-position-false
 
-**compare-elements-position-false** command allows you to check that two DOM elements' X/Y positions are different. If one of the elements doesn't exist, the command will fail. Examples:
+**compare-elements-position-false** command allows you to check that two DOM elements X/Y positions are different. If one of the elements doesn't exist, the command will fail. Examples:
 
 ```
 // Compare the X position.
-compare-elements-position-false: ("//element1", "element2", ("x"))
+compare-elements-position-false: ("//element1", "element2", ["x"])
 // Compare the Y position.
-compare-elements-position-false: ("element1", "//element2", ("y"))
+compare-elements-position-false: ("element1", "//element2", ["y"])
 // Compare the X and Y positions.
-compare-elements-position-false: ("//element1", "//element2", ("x", "y"))
+compare-elements-position-false: ("//element1", "//element2", ["x", "y"])
 // Compare the Y and X positions.
-compare-elements-position-false: ("element1", "element2", ("y", "x"))
+compare-elements-position-false: ("element1", "element2", ["y", "x"])
 ```
 
 #### compare-elements-position-near
