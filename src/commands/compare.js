@@ -341,72 +341,6 @@ browserUiTestHelpers.extractFloatOrZero(style${end}["margin-" + property]);
 `;
 }
 
-function parseCompareElementsCommon(parser, assertFalse) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 3) {
-        let err = `expected 3 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected first argument to be a CSS selector or an XPath, ' +
-                `found \`${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': 'expected second argument to be a CSS selector or an XPath, ' +
-                `found \`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
-        };
-    } else if (tuple[2].kind !== 'tuple') {
-        return {
-            'error': `expected third argument to be a tuple, found \`${tuple[2].getErrorText()}\` \
-(${tuple[2].getArticleKind()})`,
-        };
-    }
-    const checks = tuple[2].getRaw();
-    if (checks.length > 0) {
-        for (const check of checks) {
-            if (check.kind !== 'string') {
-                return { 'error': `\`${tuple[2].getErrorText()}\` should only contain strings, \
-found \`${check.getErrorText()}\` (${check.getArticleKind()})` };
-            }
-        }
-    }
-
-    const selector1 = tuple[0].getSelector();
-    if (selector1.error !== undefined) {
-        return selector1;
-    }
-    const selector2 = tuple[1].getSelector();
-    if (selector2.error !== undefined) {
-        return selector2;
-    }
-    let errHandling;
-    if (assertFalse) {
-        errHandling = 'if (err === null) { throw "comparison didn\'t fail"; }';
-    } else {
-        errHandling = 'if (err !== null) { throw err; }';
-    }
-    return {
-        'errHandling': errHandling,
-        'checks': checks,
-        'selector1': selector1,
-        'selector2': selector2,
-        'tuple': tuple,
-    };
-}
-
 function parseCompareElementsPositionInner(parser, assertFalse) {
     const ret = validator(parser,
         {
@@ -640,19 +574,45 @@ function parseCompareElementsPositionNearFalse(parser) {
 }
 
 function parseCompareElementsSizeInner(parser, assertFalse) {
-    const ret = parseCompareElementsCommon(parser, assertFalse);
-    if (ret.error !== undefined) {
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                { kind: 'selector' },
+                {
+                    kind: 'array',
+                    valueTypes: {
+                        'string': ['width', 'height'],
+                    },
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
         return ret;
     }
+
+    const tuple = ret.value.entries;
+    const selector1 = tuple[0].value;
+    const selector2 = tuple[1].value;
+
+    let errHandling;
+    if (assertFalse) {
+        errHandling = 'if (err === null) { throw "comparison didn\'t fail"; }';
+    } else {
+        errHandling = 'if (err !== null) { throw err; }';
+    }
+
     let width = false;
     let height = false;
     let code = `\
 function browserGetElementSizes1(e) {
-${indentString(getSizes(ret.selector1), 1)}
+${indentString(getSizes(selector1), 1)}
     return [Math.round(width), Math.round(height)];
 }
 function browserGetElementSizes2(e) {
-${indentString(getSizes(ret.selector2), 1)}
+${indentString(getSizes(selector2), 1)}
     return [Math.round(width), Math.round(height)];
 }
 const [width1, height1] = browserGetElementSizes1(elem1);
@@ -660,48 +620,39 @@ const [width2, height2] = browserGetElementSizes2(elem2);
 let err = null;
 `;
 
-    for (const sub of ret.checks) {
-        if (sub.kind !== 'string') {
-            return { 'error': `\`${ret.tuple[2].getErrorText()}\` should only contain strings` };
-        }
-        const value = sub.getRaw();
-        if (value === 'width') {
+    for (const value of tuple[2].value.entries) {
+        if (value.value === 'width') {
             if (width) {
                 return {
-                    'error': `Duplicated "width" value in \`${ret.tuple[2].getErrorText()}\``,
+                    'error': `Duplicated "width" value in \`${tuple[2].value.getErrorText()}\``,
                 };
             }
             code += `\
 if (width1 !== width2) {
     err = "widths don't match: " + width1 + " != " + width2;
 }
-${ret.errHandling}
+${errHandling}
 `;
             width = true;
-        } else if (value === 'height') {
+        } else if (value.value === 'height') {
             if (height) {
                 return {
-                    'error': `Duplicated "height" value in \`${ret.tuple[2].getErrorText()}\``,
+                    'error': `Duplicated "height" value in \`${tuple[2].value.getErrorText()}\``,
                 };
             }
             code += `\
 if (height1 !== height2) {
     err = "heights don't match: " + height1 + " != " + height2;
 }
-${ret.errHandling}
+${errHandling}
 `;
             height = true;
-        } else {
-            return {
-                'error': 'Only accepted values are "width" and "height", found `' +
-                    `${sub.getErrorText()}\` (in \`${ret.tuple[2].getErrorText()}\`)`,
-            };
         }
     }
 
     const varName = 'parseCompareElementsSize';
-    let instructions = getAndSetElements(ret.selector1, varName + '1', false) + '\n' +
-        getAndSetElements(ret.selector2, varName + '2', false) + '\n';
+    let instructions = getAndSetElements(selector1, varName + '1', false) + '\n' +
+        getAndSetElements(selector2, varName + '2', false) + '\n';
     if (width || height) {
         instructions += `\
 await page.evaluate((elem1, elem2) => {

@@ -1018,12 +1018,12 @@ Another thing to be noted: if you don't care whether the selector exists or not 
 
 ```
 // Compare the width.
-compare-elements-size: ("//element1", "element2", ("x"))
+compare-elements-size: ("//element1", "element2", ["width"])
 // Compare the height
-compare-elements-size: ("element1", "//element2", ("y"))
+compare-elements-size: ("element1", "//element2", ["height"])
 // Compare the width and the height.
-compare-elements-size: ("//element1", "//element2", ("x", "y"))
-compare-elements-size: ("element1", "element2", ("y", "x"))
+compare-elements-size: ("//element1", "//element2", ["width", "height"])
+compare-elements-size: ("element1", "element2", ["height", "width"])
 ```
 
 #### compare-elements-size-false
@@ -1032,12 +1032,12 @@ compare-elements-size: ("element1", "element2", ("y", "x"))
 
 ```
 // Compare the width.
-compare-elements-size-false: ("//element1", "element2", ("x"))
+compare-elements-size-false: ("//element1", "element2", ["width"])
 // Compare the height
-compare-elements-size-false: ("element1", "//element2", ("y"))
+compare-elements-size-false: ("element1", "//element2", ["height"])
 // Compare the width and the height.
-compare-elements-size-false: ("//element1", "//element2", ("x", "y"))
-compare-elements-size-false: ("element1", "element2", ("y", "x"))
+compare-elements-size-false: ("//element1", "//element2", ["width", "height"])
+compare-elements-size-false: ("element1", "element2", ["height", "width"])
 ```
 
 #### compare-elements-size-near
@@ -1046,12 +1046,12 @@ compare-elements-size-false: ("element1", "element2", ("y", "x"))
 
 ```
 // Compare the width.
-compare-elements-size-near: ("//element1", "element2", {"x": 1})
+compare-elements-size-near: ("//element1", "element2", {"width": 1})
 // Compare the height
-compare-elements-size-near: ("element1", "//element2", {"y": 4})
+compare-elements-size-near: ("element1", "//element2", {"height": 4})
 // Compare the width and the height.
-compare-elements-size-near: ("//element1", "//element2", {"x": 2, "y": 1})
-compare-elements-size-near: ("element1", "element2", {"y": 1, "x": 2})
+compare-elements-size-near: ("//element1", "//element2", {"width": 2, "height": 1})
+compare-elements-size-near: ("element1", "element2", {"width": 1, "height": 2})
 ```
 
 #### compare-elements-size-near-false
@@ -1060,12 +1060,12 @@ compare-elements-size-near: ("element1", "element2", {"y": 1, "x": 2})
 
 ```
 // Compare the width.
-compare-elements-size-near-false: ("//element1", "element2", {"x": 1})
+compare-elements-size-near-false: ("//element1", "element2", {"width": 1})
 // Compare the height
-compare-elements-size-near-false: ("element1", "//element2", {"y": 4})
+compare-elements-size-near-false: ("element1", "//element2", {"height": 4})
 // Compare the width and the height.
-compare-elements-size-near-false: ("//element1", "//element2", {"x": 2, "y": 1})
-compare-elements-size-near-false: ("element1", "element2", {"y": 1, "x": 2})
+compare-elements-size-near-false: ("//element1", "//element2", {"width": 2, "height": 1})
+compare-elements-size-near-false: ("element1", "element2", {"height": 1, "width": 2})
 ```
 
 #### compare-elements-text
