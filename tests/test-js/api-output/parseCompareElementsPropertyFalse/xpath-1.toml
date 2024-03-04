@@ -6,15 +6,15 @@ let parseCompareElementsProp2 = await page.$(\"b\");
 if (parseCompareElementsProp2 === null) { throw '\"b\" not found'; }
 const parseCompareElementsProps = [\"margin\"];
 for (const property of parseCompareElementsProps) {
-try {
+    try {
 const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {
-return String(e[p]);
-}, property);
-await parseCompareElementsProp2.evaluate((e, v, p) => {
-if (v !== String(e[p])) {
-throw p + \": `\" + v + \"` !== `\" + String(e[p]) + \"`\";
-}
-}, value, property);
+        return String(e[p]);
+    }, property);
+    await parseCompareElementsProp2.evaluate((e, v, p) => {
+        if (v !== String(e[p])) {
+            throw p + \": `\" + v + \"` !== `\" + String(e[p]) + \"`\";
+        }
+    }, value, property);
 } catch(e) { continue; } throw \"assert didn't fail\";
 }""",
 ]
