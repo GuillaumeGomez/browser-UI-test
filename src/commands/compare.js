@@ -1,7 +1,7 @@
 // All `compare*` commands.
 
 const {
-    getAndSetElements, getInsertStrings, validateJson, indentString, getSizes,
+    getAndSetElements, getInsertStrings, indentString, getSizes,
 } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 const { validator } = require('../validator.js');
@@ -80,7 +80,7 @@ function parseCompareElementsAttributeInner(parser, assertFalse) {
                 {
                     kind: 'array',
                     valueTypes: {
-                        'string': [],
+                        'string': {},
                     },
                 },
                 {
@@ -183,7 +183,7 @@ function parseCompareElementsCssInner(parser, assertFalse) {
                     kind: 'array',
                     allowEmpty: false,
                     valueTypes: {
-                        'string': [],
+                        'string': {},
                     },
                 },
             ],
@@ -274,7 +274,7 @@ function parseCompareElementsPropertyInner(parser, assertFalse) {
                     kind: 'array',
                     allowEmpty: false,
                     valueTypes: {
-                        'string': [],
+                        'string': {},
                     },
                 },
             ],
@@ -351,7 +351,9 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
                 {
                     kind: 'array',
                     valueTypes: {
-                        'string': ['x', 'y'],
+                        'string': {
+                            allowed: ['x', 'y'],
+                        },
                     },
                 },
             ],
@@ -435,54 +437,36 @@ function parseCompareElementsPositionFalse(parser) {
     return parseCompareElementsPositionInner(parser, true);
 }
 
-function parseCompareElementsPositionNearCommon(parser, assertFalse) {
-    const elems = parser.elems;
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 3) {
-        let err = `expected 3 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected first argument to be a CSS selector or an XPath, ' +
-                `found \`${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': 'expected second argument to be a CSS selector or an XPath, ' +
-                `found \`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
-        };
-    } else if (tuple[2].kind !== 'json') {
-        return {
-            'error': 'expected third argument to be a JSON dict, found ' +
-                `found \`${tuple[2].getErrorText()}\` (${tuple[2].getArticleKind()})`,
-        };
+function parseCompareElementsPositionNearInner(parser, assertFalse) {
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                { kind: 'selector' },
+                {
+                    kind: 'json',
+                    keyTypes: {
+                        'string': ['x', 'y'],
+                    },
+                    valueTypes: {
+                        'number': {
+                            allowNegative: false,
+                            allowFloat: false,
+                        },
+                    },
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
     }
 
-    const json = tuple[2].getRaw();
-    const entries = validateJson(json, {'number': []}, 'JSON dict key');
-
-    if (entries.error !== undefined) {
-        return entries;
-    }
-
-    const selector1 = tuple[0].getSelector();
-    if (selector1.error !== undefined) {
-        return selector1;
-    }
-    const selector2 = tuple[1].getSelector();
-    if (selector2.error !== undefined) {
-        return selector2;
-    }
+    const tuple = ret.value.entries;
+    const selector1 = tuple[0].value;
+    const selector2 = tuple[1].value;
+    const json = tuple[2].value;
 
     let errHandling;
     if (assertFalse) {
@@ -490,48 +474,26 @@ function parseCompareElementsPositionNearCommon(parser, assertFalse) {
     } else {
         errHandling = 'if (err !== null) { throw err; }';
     }
-    return {
-        'entries': entries,
-        'errHandling': errHandling,
-        'selector1': selector1,
-        'selector2': selector2,
-        'tuple': tuple,
-    };
-}
 
-function parseCompareElementsPositionNearInner(parser, assertFalse) {
-    const ret = parseCompareElementsPositionNearCommon(parser, assertFalse);
-    if (ret.error !== undefined) {
-        return ret;
-    }
-    const warnings = ret.entries.warnings;
     let code = `\
 function browserComparePositionNear(e1, e2, kind, property, maxDelta) {
     let err = null;
     let val1 = e1.getBoundingClientRect()[property];
-${indentString(handlePseudo(ret.selector1, '1'), 1)}\
+${indentString(handlePseudo(selector1, '1'), 1)}\
     let val2 = e2.getBoundingClientRect()[property];
-${indentString(handlePseudo(ret.selector2, '2'), 1)}\
+${indentString(handlePseudo(selector2, '2'), 1)}\
     let delta = Math.abs(val1 - val2);
     if (delta > maxDelta) {
         err = "delta " + kind + " values too large: " + delta + " > " + maxDelta;
     }
-    ${ret.errHandling}
+    ${errHandling}
 }
 `;
+    const warnings = [];
     let added = 0;
-    for (const [key, value] of Object.entries(ret.entries.values)) {
+    for (const [key, value] of json.entries) {
         const v = parseInt(value.value, 10);
-        if (key !== 'x' && key !== 'y') {
-            return {
-                'error': 'Only accepted keys are "x" and "y", found `' +
-                    `"${key}"\` (in \`${ret.tuple[2].getErrorText()}\`)`,
-            };
-        } else if (v < 0) {
-            return {
-                'error': `Delta cannot be negative (in \`"${key}": ${v}\`)`,
-            };
-        } else if (v === 0) {
+        if (v === 0) {
             warnings.push(
                 `Delta is 0 for "${key}", maybe try to use \`compare-elements-position\` instead?`);
         }
@@ -544,8 +506,8 @@ ${indentString(handlePseudo(ret.selector2, '2'), 1)}\
     }
 
     const varName = 'parseCompareElementsPosNear';
-    let instructions = getAndSetElements(ret.selector1, varName + '1', false) + '\n' +
-        getAndSetElements(ret.selector2, varName + '2', false) + '\n';
+    let instructions = getAndSetElements(selector1, varName + '1', false) + '\n' +
+        getAndSetElements(selector2, varName + '2', false) + '\n';
     if (added !== 0) {
         instructions += `\
 await page.evaluate((elem1, elem2) => {
@@ -583,7 +545,9 @@ function parseCompareElementsSizeInner(parser, assertFalse) {
                 {
                     kind: 'array',
                     valueTypes: {
-                        'string': ['width', 'height'],
+                        'string': {
+                            allowed: ['width', 'height'],
+                        },
                     },
                 },
             ],
@@ -680,18 +644,50 @@ function parseCompareElementsSizeFalse(parser) {
 }
 
 function parseCompareElementsSizeNearInner(parser, assertFalse) {
-    const ret = parseCompareElementsPositionNearCommon(parser, assertFalse);
-    if (ret.error !== undefined) {
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                { kind: 'selector' },
+                {
+                    kind: 'json',
+                    keyTypes: {
+                        'string': ['width', 'height'],
+                    },
+                    valueTypes: {
+                        'number': {
+                            allowNegative: false,
+                            allowFloat: false,
+                        },
+                    },
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
         return ret;
     }
-    const warnings = ret.entries.warnings;
+
+    const tuple = ret.value.entries;
+    const selector1 = tuple[0].value;
+    const selector2 = tuple[1].value;
+    const json = tuple[2].value;
+
+    let errHandling;
+    if (assertFalse) {
+        errHandling = 'if (err === null) { throw "comparison didn\'t fail"; }';
+    } else {
+        errHandling = 'if (err !== null) { throw err; }';
+    }
+
     let code = `\
 function browserGetElementSizes1(e) {
-${indentString(getSizes(ret.selector1), 1)}
+${indentString(getSizes(selector1), 1)}
     return [Math.round(width), Math.round(height)];
 }
 function browserGetElementSizes2(e) {
-${indentString(getSizes(ret.selector2), 1)}
+${indentString(getSizes(selector2), 1)}
     return [Math.round(width), Math.round(height)];
 }
 function browserCompareValuesNear(v1, v2, kind, maxDelta) {
@@ -699,26 +695,18 @@ function browserCompareValuesNear(v1, v2, kind, maxDelta) {
     if (delta > maxDelta) {
         err = "delta for " + kind + " values too large: " + delta + " > " + maxDelta;
     }
-    ${ret.errHandling}
+    ${errHandling}
 }
 const [width1, height1] = browserGetElementSizes1(elem1);
 const [width2, height2] = browserGetElementSizes2(elem2);
 let err = null;
 let delta;
 `;
+    const warnings = [];
     let added = 0;
-    for (const [key, value] of Object.entries(ret.entries.values)) {
+    for (const [key, value] of json.entries) {
         const v = parseInt(value.value, 10);
-        if (key !== 'width' && key !== 'height') {
-            return {
-                'error': 'Only accepted keys are "width" and "height", found `' +
-                    `"${key}"\` (in \`${ret.tuple[2].getErrorText()}\`)`,
-            };
-        } else if (v < 0) {
-            return {
-                'error': `Delta cannot be negative (in \`"${key}": ${v}\`)`,
-            };
-        } else if (v === 0) {
+        if (v === 0) {
             warnings.push(
                 `Delta is 0 for "${key}", maybe try to use \`compare-elements-size\` instead?`);
         }
@@ -731,8 +719,8 @@ let delta;
     }
 
     const varName = 'parseCompareElementsSizeNear';
-    let instructions = getAndSetElements(ret.selector1, varName + '1', false) + '\n' +
-        getAndSetElements(ret.selector2, varName + '2', false) + '\n';
+    let instructions = getAndSetElements(selector1, varName + '1', false) + '\n' +
+        getAndSetElements(selector2, varName + '2', false) + '\n';
     if (added !== 0) {
         instructions += `\
 await page.evaluate((elem1, elem2) => {

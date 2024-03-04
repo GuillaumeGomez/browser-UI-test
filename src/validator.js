@@ -250,7 +250,7 @@ function validateTuple(parser, allowedSyntax, validator) {
         }
         const ret = validator.validatorInner(tupleElems[i], allowedSyntaxes[i], i);
         if (hasError(ret)) {
-            return validator.makeError(ret.error);
+            return ret;
         }
         values.push(ret);
     }
@@ -281,28 +281,19 @@ function validateArray(parser, allowedSyntax, validator) {
         return validator.makeError(
             `expected an array of ${exp} elements, found an array of \
 ${arrayElems[0].kind} (${arrayElems[0].getErrorText()})`);
+    } else if (!isObject(allowedForType)) {
+        throw new Error('"valueTypes" values should be objects (in array validator)');
     }
-    if (!Array.isArray(allowedForType)) {
-        throw new Error('"valueTypes" should be an object of array (in array validator)');
-    }
-    if (allowedForType.length !== 0) {
-        // Nothing to validate, we can move on.
-        for (const value of arrayElems) {
-            if (!allowedForType.includes(value.getRaw())) {
-                return validator.makeError(
-                    `unexpected value \`${value.getErrorText()}\`, allowed values are: \
-${listValues(allowedForType)}`,
-                );
-            }
+    allowedForType.kind = arrayElems[0].kind;
+    for (const value of arrayElems) {
+        const ret = validator.validatorInner(value, allowedForType);
+        if (hasError(ret)) {
+            return ret;
         }
-    }
-    if (!allowEmpty) {
-        for (const value of arrayElems) {
-            if (value.getStringValue().length === 0) {
-                return validator.makeError(
-                    `empty values (\`${value.getErrorText()}\`) are not allowed`,
-                );
-            }
+        if (!allowEmpty && value.getStringValue().length === 0) {
+            return validator.makeError(
+                `empty values (\`${value.getErrorText()}\`) are not allowed`,
+            );
         }
     }
     return parser;
@@ -361,13 +352,13 @@ ${listValues(allowedForKey)}`,
                 `type "${value.kind}" (\`${value.getErrorText()}\`) is not allowed as value in \
 this JSON dict, allowed types are: ${listValues(Object.keys(allowedSyntax.valueTypes))}`,
             );
-        } else if (!Array.isArray(allowedForValue)) {
-            throw new Error('"valueTypes" should be an object of array (in JSON validator)');
-        } else if (allowedForValue.length !== 0 && !allowedForValue.includes(value.value)) {
-            return validator.makeError(
-                `unexpected ${value.kind} \`${value.getErrorText()}\`. Allowed ${value.kind}s are: \
-${listValues(allowedForValue)}`,
-            );
+        } else if (!isObject(allowedForValue)) {
+            throw new Error('"valueTypes" values should be an object (in JSON validator)');
+        }
+        allowedForValue.kind = value.kind;
+        const parser_value = validator.validatorInner(value, allowedForValue);
+        if (hasError(parser_value)) {
+            return parser_value;
         }
         const value_s = value.getStringValue();
         if (!allowEmptyValues && value_s.length === 0) {
@@ -376,8 +367,9 @@ ${listValues(allowedForValue)}`,
             );
         }
         entries.set(key_s, {
-            'value': value.getStringValue(),
-            'kind': value.kind,
+            value: value.getStringValue(),
+            kind: value.kind,
+            parser: parser_value,
         });
     }
     parser.entries = entries;
@@ -419,6 +411,13 @@ Format looks like this:
     elements: [
         {
             kind: 'string',
+            // optional
+            allowed: ['values'],
+        },
+        {
+            kind: 'ident',
+            // optional
+            allowed: ['values'],
         },
         {
             kind: 'number',
@@ -431,10 +430,15 @@ Format looks like this:
         {
             kind: 'array',
             valueTypes: {
-                // 'accepted kind': [accepted values] (if empty, all accepted)
-                'string': [],
-                'number': [],
-                'ident': ['null'],
+                // Each value is the same validator as stand-alone elements
+                'string': {},
+                'number': {
+                    allowFloat: truee,
+                    allowNegative: true,
+                },
+                'ident': {
+                    allowed: ['null'],
+                },
             },
         },
         {
@@ -445,11 +449,18 @@ Format looks like this:
                 'number': [],
             },
             valueTypes: {
-                // 'accepted kind': [accepted values] (if empty, all accepted)
-                'string': [],
-                'number': [],
-                'ident': ['null'],
+                // Each value is the same validator as stand-alone elements
+                'string': {},
+                'number': {
+                    allowFloat: truee,
+                    allowNegative: true,
+                },
+                'ident': {
+                    allowed: ['null'],
+                },
             },
+            // optional
+            allowEmpty: false,
         },
     ],
 }

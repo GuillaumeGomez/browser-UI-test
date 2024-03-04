@@ -1,1 +1,1 @@
-error = """Delta cannot be negative (in `\"x\": -1`)"""
+error = """expected only positive numbers, found `-1` (third element of the tuple)"""
