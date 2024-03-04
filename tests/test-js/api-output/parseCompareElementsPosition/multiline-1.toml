@@ -1,2 +1,2 @@
-error = """Duplicated \"y\" value in `(\"x\",
- \"y\", \"y\")`"""
+error = """Duplicated \"y\" value in `[\"x\",
+ \"y\", \"y\"]`"""

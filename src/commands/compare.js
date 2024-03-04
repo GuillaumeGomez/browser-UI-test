@@ -172,7 +172,6 @@ function parseCompareElementsAttributeFalse(parser) {
     return parseCompareElementsAttributeInner(parser, true);
 }
 
-// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2, ["CSS properties"])
 function parseCompareElementsCssInner(parser, assertFalse) {
     const ret = validator(parser,
         {
@@ -197,7 +196,6 @@ function parseCompareElementsCssInner(parser, assertFalse) {
     const tuple = ret.value.entries;
     const selector1 = tuple[0].value;
     const selector2 = tuple[1].value;
-    const properties = tuple[2].value.entries.map(e => `"${e.getStringValue()}"`).join(',');
     const needColorCheck = tuple[2].value.entries.some(e => e.getStringValue() === 'color');
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
@@ -211,7 +209,7 @@ function parseCompareElementsCssInner(parser, assertFalse) {
         getAndSetElements(selector2, varName + '2', false) + '\n';
 
     const code = `\
-const properties = [${properties}];
+const properties = ${tuple[2].value.displayInCode()};
 for (const css_prop of properties) {
     ${insertBefore}let style1_1 = e1.style[css_prop];
     let style1_2 = computed_style1[css_prop];
@@ -264,70 +262,50 @@ function parseCompareElementsCssFalse(parser) {
     return parseCompareElementsCssInner(parser, true);
 }
 
+// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2, ["CSS properties"])
 function parseCompareElementsPropertyInner(parser, assertFalse) {
-    const elems = parser.elems;
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                { kind: 'selector' },
+                {
+                    kind: 'array',
+                    allowEmpty: false,
+                    valueTypes: {
+                        'string': [],
+                    },
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
+    }
 
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 3) {
-        let err = `expected 3 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected first argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[0].getArticleKind()}`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': 'expected second argument to be a CSS selector or an XPath, ' +
-                `found ${tuple[1].getArticleKind()}`,
-        };
-    } else if (tuple[2].kind !== 'array') {
-        return {
-            'error': 'expected third argument to be an array of string, ' +
-                `found ${tuple[2].getArticleKind()}`,
-        };
-    }
-    const array = tuple[2].getRaw();
-    if (array.length > 0 && array[0].kind !== 'string') {
-        return {'error': `expected an array of strings, found \`${tuple[2].getErrorText()}\``};
-    }
+    const tuple = ret.value.entries;
+    const selector1 = tuple[0].value;
+    const selector2 = tuple[1].value;
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
-
-    const selector1 = tuple[0].getSelector();
-    if (selector1.error !== undefined) {
-        return selector1;
-    }
-    const selector2 = tuple[1].getSelector();
-    if (selector2.error !== undefined) {
-        return selector2;
-    }
 
     const varName = 'parseCompareElementsProp';
     const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
         getAndSetElements(selector2, varName + '2', false) + '\n';
 
-    const code = `const ${varName}s = ${tuple[2].displayInCode()};\n` +
-    `for (const property of ${varName}s) {\n` +
-        `${insertBefore}const value = await ${varName}1.evaluateHandle((e, p) => {\n` +
-            'return String(e[p]);\n' +
-        '}, property);\n' +
-        `await ${varName}2.evaluate((e, v, p) => {\n` +
-            'if (v !== String(e[p])) {\n' +
-            'throw p + ": `" + v + "` !== `" + String(e[p]) + "`";\n' +
-            '}\n' +
-        `}, value, property);${insertAfter}\n` +
-    '}';
+    const code = `\
+const ${varName}s = ${tuple[2].value.displayInCode()};
+for (const property of ${varName}s) {
+    ${insertBefore}const value = await ${varName}1.evaluateHandle((e, p) => {
+        return String(e[p]);
+    }, property);
+    await ${varName}2.evaluate((e, v, p) => {
+        if (v !== String(e[p])) {
+            throw p + ": \`" + v + "\` !== \`" + String(e[p]) + "\`";
+        }
+    }, value, property);${insertAfter}
+}`;
     return {
         'instructions': [
             selectors + code,
@@ -363,123 +341,74 @@ browserUiTestHelpers.extractFloatOrZero(style${end}["margin-" + property]);
 `;
 }
 
-function parseCompareElementsCommon(parser, assertFalse) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 3) {
-        let err = `expected 3 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected first argument to be a CSS selector or an XPath, ' +
-                `found \`${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': 'expected second argument to be a CSS selector or an XPath, ' +
-                `found \`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
-        };
-    } else if (tuple[2].kind !== 'tuple') {
-        return {
-            'error': `expected third argument to be a tuple, found \`${tuple[2].getErrorText()}\` \
-(${tuple[2].getArticleKind()})`,
-        };
-    }
-    const checks = tuple[2].getRaw();
-    if (checks.length > 0) {
-        for (const check of checks) {
-            if (check.kind !== 'string') {
-                return { 'error': `\`${tuple[2].getErrorText()}\` should only contain strings, \
-found \`${check.getErrorText()}\` (${check.getArticleKind()})` };
-            }
-        }
+function parseCompareElementsPositionInner(parser, assertFalse) {
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                { kind: 'selector' },
+                {
+                    kind: 'array',
+                    valueTypes: {
+                        'string': ['x', 'y'],
+                    },
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
     }
 
-    const selector1 = tuple[0].getSelector();
-    if (selector1.error !== undefined) {
-        return selector1;
-    }
-    const selector2 = tuple[1].getSelector();
-    if (selector2.error !== undefined) {
-        return selector2;
-    }
+    const tuple = ret.value.entries;
+    const selector1 = tuple[0].value;
+    const selector2 = tuple[1].value;
+
     let errHandling;
     if (assertFalse) {
         errHandling = 'if (err === null) { throw "comparison didn\'t fail"; }';
     } else {
         errHandling = 'if (err !== null) { throw err; }';
     }
-    return {
-        'errHandling': errHandling,
-        'checks': checks,
-        'selector1': selector1,
-        'selector2': selector2,
-        'tuple': tuple,
-    };
-}
 
-function parseCompareElementsPositionInner(parser, assertFalse) {
-    const ret = parseCompareElementsCommon(parser, assertFalse);
-    if (ret.error !== undefined) {
-        return ret;
-    }
     let x = false;
     let y = false;
     let code = `\
 function browserComparePosition(e1, e2, kind, property) {
     let err = null;
     let val1 = e1.getBoundingClientRect()[property];
-${indentString(handlePseudo(ret.selector1, '1'), 1)}\
+${indentString(handlePseudo(selector1, '1'), 1)}\
     let val2 = e2.getBoundingClientRect()[property];
-${indentString(handlePseudo(ret.selector2, '2'), 1)}\
+${indentString(handlePseudo(selector2, '2'), 1)}\
     if (val1 !== val2) { err = "different " + kind + " values: " + val1 + " != " + val2; }
-    ${ret.errHandling}
+    ${errHandling}
 }
 `;
 
-    for (const sub of ret.checks) {
-        if (sub.kind !== 'string') {
-            return { 'error': `\`${ret.tuple[2].getErrorText()}\` should only contain strings` };
-        }
-        const value = sub.getRaw();
-        if (value === 'x') {
+    for (const value of tuple[2].value.entries) {
+        if (value.value === 'x') {
             if (x) {
                 return {
-                    'error': `Duplicated "x" value in \`${ret.tuple[2].getErrorText()}\``,
+                    'error': `Duplicated "x" value in \`${tuple[2].value.getErrorText()}\``,
                 };
             }
             code += 'browserComparePosition(elem1, elem2, "X", "left");\n';
             x = true;
-        } else if (value === 'y') {
+        } else if (value.value === 'y') {
             if (y) {
                 return {
-                    'error': `Duplicated "y" value in \`${ret.tuple[2].getErrorText()}\``,
+                    'error': `Duplicated "y" value in \`${tuple[2].value.getErrorText()}\``,
                 };
             }
             code += 'browserComparePosition(elem1, elem2, "Y", "top");\n';
             y = true;
-        } else {
-            return {
-                'error': 'Only accepted values are "x" and "y", found `' +
-                    `${sub.getErrorText()}\` (in \`${ret.tuple[2].getErrorText()}\`)`,
-            };
         }
     }
 
     const varName = 'parseCompareElementsPos';
-    let instructions = getAndSetElements(ret.selector1, varName + '1', false) + '\n' +
-        getAndSetElements(ret.selector2, varName + '2', false) + '\n';
+    let instructions = getAndSetElements(selector1, varName + '1', false) + '\n' +
+        getAndSetElements(selector2, varName + '2', false) + '\n';
     if (x || y) {
         instructions += `\
 await page.evaluate((elem1, elem2) => {
@@ -645,19 +574,45 @@ function parseCompareElementsPositionNearFalse(parser) {
 }
 
 function parseCompareElementsSizeInner(parser, assertFalse) {
-    const ret = parseCompareElementsCommon(parser, assertFalse);
-    if (ret.error !== undefined) {
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                { kind: 'selector' },
+                { kind: 'selector' },
+                {
+                    kind: 'array',
+                    valueTypes: {
+                        'string': ['width', 'height'],
+                    },
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
         return ret;
     }
+
+    const tuple = ret.value.entries;
+    const selector1 = tuple[0].value;
+    const selector2 = tuple[1].value;
+
+    let errHandling;
+    if (assertFalse) {
+        errHandling = 'if (err === null) { throw "comparison didn\'t fail"; }';
+    } else {
+        errHandling = 'if (err !== null) { throw err; }';
+    }
+
     let width = false;
     let height = false;
     let code = `\
 function browserGetElementSizes1(e) {
-${indentString(getSizes(ret.selector1), 1)}
+${indentString(getSizes(selector1), 1)}
     return [Math.round(width), Math.round(height)];
 }
 function browserGetElementSizes2(e) {
-${indentString(getSizes(ret.selector2), 1)}
+${indentString(getSizes(selector2), 1)}
     return [Math.round(width), Math.round(height)];
 }
 const [width1, height1] = browserGetElementSizes1(elem1);
@@ -665,48 +620,39 @@ const [width2, height2] = browserGetElementSizes2(elem2);
 let err = null;
 `;
 
-    for (const sub of ret.checks) {
-        if (sub.kind !== 'string') {
-            return { 'error': `\`${ret.tuple[2].getErrorText()}\` should only contain strings` };
-        }
-        const value = sub.getRaw();
-        if (value === 'width') {
+    for (const value of tuple[2].value.entries) {
+        if (value.value === 'width') {
             if (width) {
                 return {
-                    'error': `Duplicated "width" value in \`${ret.tuple[2].getErrorText()}\``,
+                    'error': `Duplicated "width" value in \`${tuple[2].value.getErrorText()}\``,
                 };
             }
             code += `\
 if (width1 !== width2) {
     err = "widths don't match: " + width1 + " != " + width2;
 }
-${ret.errHandling}
+${errHandling}
 `;
             width = true;
-        } else if (value === 'height') {
+        } else if (value.value === 'height') {
             if (height) {
                 return {
-                    'error': `Duplicated "height" value in \`${ret.tuple[2].getErrorText()}\``,
+                    'error': `Duplicated "height" value in \`${tuple[2].value.getErrorText()}\``,
                 };
             }
             code += `\
 if (height1 !== height2) {
     err = "heights don't match: " + height1 + " != " + height2;
 }
-${ret.errHandling}
+${errHandling}
 `;
             height = true;
-        } else {
-            return {
-                'error': 'Only accepted values are "width" and "height", found `' +
-                    `${sub.getErrorText()}\` (in \`${ret.tuple[2].getErrorText()}\`)`,
-            };
         }
     }
 
     const varName = 'parseCompareElementsSize';
-    let instructions = getAndSetElements(ret.selector1, varName + '1', false) + '\n' +
-        getAndSetElements(ret.selector2, varName + '2', false) + '\n';
+    let instructions = getAndSetElements(selector1, varName + '1', false) + '\n' +
+        getAndSetElements(selector2, varName + '2', false) + '\n';
     if (width || height) {
         instructions += `\
 await page.evaluate((elem1, elem2) => {
