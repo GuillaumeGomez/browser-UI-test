@@ -1,1 +1,1 @@
-error = """expected `true` or `false` value, found `tru`"""
+error = """expected a boolean, found `tru` (an ident)"""

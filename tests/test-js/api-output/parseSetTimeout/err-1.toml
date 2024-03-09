@@ -1,1 +1,1 @@
-error = """expected integer for number of milliseconds, found nothing"""
+error = """expected a number, found nothing"""
