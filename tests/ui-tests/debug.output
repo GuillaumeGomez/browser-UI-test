@@ -20,8 +20,8 @@ try {
 [DEBUG] EXECUTING (line 4) "arg.showText = true;"
 [DEBUG] Done!
 [DEBUG] EXECUTING (line 4) "await page.evaluate(() => {
-let tmp = document.getElementById('browser-ui-test-style-text-hide');
-if (tmp) { tmp.remove(); }
+    let tmp = document.getElementById('browser-ui-test-style-text-hide');
+    if (tmp) { tmp.remove(); }
 });"
 [DEBUG] Done!
 [DEBUG] EXECUTING (line 5) "if (!arg.showText) {

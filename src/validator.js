@@ -425,6 +425,12 @@ Format looks like this:
             allowNegative: false,
             optional: true,
         },
+        {
+            kind: 'boolean',
+        },
+        {
+            kind: 'selector',
+        },
     ],
     alternatives: [
         {

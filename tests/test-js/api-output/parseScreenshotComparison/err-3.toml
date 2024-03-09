@@ -1,1 +1,1 @@
-error = """expected boolean or CSS selector or XPath, found `tru`"""
+error = """expected a boolean or a selector, found `tru` (an ident)"""

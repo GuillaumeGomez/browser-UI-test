@@ -1,7 +1,7 @@
 instructions = [
   """arg.showText = true;""",
   """await page.evaluate(() => {
-let tmp = document.getElementById('browser-ui-test-style-text-hide');
-if (tmp) { tmp.remove(); }
+    let tmp = document.getElementById('browser-ui-test-style-text-hide');
+    if (tmp) { tmp.remove(); }
 });""",
 ]
