@@ -1,20 +1,21 @@
 // Commands changing the browser-ui-test state of the current test.
 
 const consts = require('../consts.js');
+const { validator } = require('../validator.js');
+const { hasError } = require('../utils.js');
 
 // Possible inputs:
 //
 // * boolean value (`true` or `false`)
 function parseExpectFailure(parser) {
-    const elems = parser.elems;
-    if (elems.length === 0) {
-        return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
-        return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
+    const ret = validator(parser, { kind: 'boolean' });
+    if (hasError(ret)) {
+        return ret;
     }
+
     return {
         'instructions': [
-            `arg.expectedToFail = ${elems[0].getRaw()};`,
+            `arg.expectedToFail = ${ret.value.getRaw()};`,
         ],
         'wait': false,
     };
@@ -24,25 +25,28 @@ function parseExpectFailure(parser) {
 //
 // * boolean value (`true` or `false`)
 function parseShowText(parser) {
-    const elems = parser.elems;
-    if (elems.length === 0) {
-        return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
-        return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
+    const ret = validator(parser, { kind: 'boolean' });
+    if (hasError(ret)) {
+        return ret;
     }
+
     // We need the value to be updated first.
-    const instructions = [`arg.showText = ${elems[0].getRaw()};`];
+    const instructions = [`arg.showText = ${ret.value.getRaw()};`];
     // And then to make the expected changes to the DOM.
-    if (elems[0].getRaw() === 'true') {
-        instructions.push('await page.evaluate(() => {\n' +
-            `let tmp = document.getElementById('${consts.STYLE_HIDE_TEXT_ID}');\n` +
-            'if (tmp) { tmp.remove(); }\n' +
-            '});');
+    if (ret.value.getRaw() === 'true') {
+        instructions.push(`\
+await page.evaluate(() => {
+    let tmp = document.getElementById('${consts.STYLE_HIDE_TEXT_ID}');
+    if (tmp) { tmp.remove(); }
+});`,
+        );
     } else {
-        instructions.push('await page.evaluate(() => {\n' +
-            `window.${consts.STYLE_ADDER_FUNCTION}('${consts.CSS_TEXT_HIDE}', ` +
-            `'${consts.STYLE_HIDE_TEXT_ID}');\n` +
-            '});');
+        const text_hide = consts.CSS_TEXT_HIDE;
+        instructions.push(`\
+await page.evaluate(() => {
+    window.${consts.STYLE_ADDER_FUNCTION}('${text_hide}', '${consts.STYLE_HIDE_TEXT_ID}');
+});`,
+        );
     }
     return {
         'instructions': instructions,
@@ -55,35 +59,31 @@ function parseShowText(parser) {
 // * "CSS selector"
 // * "XPath"
 function parseScreenshotComparison(parser) {
-    const elems = parser.elems;
-    if (elems.length === 0) {
-        return {'error': 'expected boolean or CSS selector or XPath, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'boolean' && elems[0].kind !== 'string') {
-        return {
-            'error': `expected boolean or CSS selector or XPath, found \`${parser.getRawArgs()}\``,
-        };
-    } else if (elems[0].kind === 'boolean') {
+    const ret = validator(parser, {
+        kind: 'boolean',
+        alternatives: [
+            {
+                kind: 'selector',
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    if (ret.value.kind === 'boolean') {
         return {
             'instructions': [
-                `arg.screenshotComparison = ${elems[0].getRaw()};`,
+                `arg.screenshotComparison = ${ret.value.getRaw()};`,
             ],
             'wait': false,
         };
     }
-    const warnings = [];
-    const selector = elems[0].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    } else if (selector.value === 'true' || selector.value === 'false') {
-        warnings.push(`\`${elems[0].getErrorText()}\` is a string and will be used as CSS ` +
-            'selector. If you want to set `true` or `false` value, remove quotes.');
-    }
     return {
         'instructions': [
-            `arg.screenshotComparison = "${selector.value}";`,
+            `arg.screenshotComparison = "${ret.value.value}";`,
         ],
         'wait': false,
-        'warnings': warnings.length > 0 ? warnings.join('\n') : undefined,
     };
 }
 
@@ -91,19 +91,18 @@ function parseScreenshotComparison(parser) {
 //
 // * boolean value (`true` or `false`)
 function parseDebug(parser) {
-    const elems = parser.elems;
-    if (elems.length === 0) {
-        return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
-        return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
+    const ret = validator(parser, { kind: 'boolean' });
+    if (hasError(ret)) {
+        return ret;
     }
+
     return {
-        'instructions': [
-            'if (arg && arg.debug_log && arg.debug_log.setDebugEnabled) {\n' +
-            `arg.debug_log.setDebugEnabled(${elems[0].getRaw()});\n` +
-            '} else {\n' +
-            'throw "`debug` command needs an object with a `debug_log` field of `Debug` type!";\n' +
-            '}',
+        'instructions': [`\
+if (arg && arg.debug_log && arg.debug_log.setDebugEnabled) {
+    arg.debug_log.setDebugEnabled(${ret.value.getRaw()});
+} else {
+    throw "\`debug\` command needs an object with a \`debug_log\` field of \`Debug\` type!";
+}`,
         ],
         'wait': false,
     };
@@ -113,15 +112,14 @@ function parseDebug(parser) {
 //
 // * boolean value (`true` or `false`)
 function parseScreenshotOnFailure(parser) {
-    const elems = parser.elems;
-    if (elems.length === 0) {
-        return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
-        return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
+    const ret = validator(parser, { kind: 'boolean' });
+    if (hasError(ret)) {
+        return ret;
     }
+
     return {
         'instructions': [
-            `arg.screenshotOnFailure = ${elems[0].getRaw()};`,
+            `arg.screenshotOnFailure = ${ret.value.getRaw()};`,
         ],
         'wait': false,
     };
@@ -131,15 +129,14 @@ function parseScreenshotOnFailure(parser) {
 //
 // * boolean value (`true` or `false`)
 function parsePauseOnError(parser) {
-    const elems = parser.elems;
-    if (elems.length === 0) {
-        return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
-        return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
+    const ret = validator(parser, { kind: 'boolean' });
+    if (hasError(ret)) {
+        return ret;
     }
+
     return {
         'instructions': [
-            `arg.pauseOnError = ${elems[0].getRaw()};`,
+            `arg.pauseOnError = ${ret.value.getRaw()};`,
         ],
         'wait': false,
     };
@@ -149,47 +146,45 @@ function parsePauseOnError(parser) {
 //
 // * number
 function parseSetTimeout(parser) {
-    const warnings = [];
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected integer for number of milliseconds, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'number') {
-        return {
-            'error': 'expected integer for number of milliseconds, found' +
-                ` \`${parser.getRawArgs()}\``,
-        };
-    }
-    const ret = elems[0].getIntegerValue('number of milliseconds', true);
-    if (ret.error !== undefined) {
+    const ret = validator(parser, {
+        kind: 'number',
+        allowFloat: false,
+        allowNegative: false,
+    });
+    if (hasError(ret)) {
         return ret;
     }
-    if (parseInt(ret.value) === 0) {
+
+    const warnings = [];
+    if (parseInt(ret.value.value) === 0) {
         warnings.push('You passed 0 as timeout, it means the timeout has been disabled on ' +
             'this reload');
     }
     return {
         'instructions': [
-            `page.setDefaultTimeout(${ret.value})`,
+            `page.setDefaultTimeout(${ret.value.value})`,
         ],
         'wait': false,
         'warnings': warnings.length > 0 ? warnings : undefined,
     };
 }
 
+// Possible inputs:
+//
+// * boolean value (`true` or `false`)
 function parseFailOnJsError(parser) {
-    const elems = parser.elems;
-    if (elems.length === 0) {
-        return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
-        return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
+    const ret = validator(parser, { kind: 'boolean' });
+    if (hasError(ret)) {
+        return ret;
     }
-    const instructions = [
-        `const oldValue = arg.failOnJsError;
-arg.failOnJsError = ${elems[0].getRaw()};
+
+    const instructions = [`\
+const oldValue = arg.failOnJsError;
+arg.failOnJsError = ${ret.value.getRaw()};
 if (oldValue !== true) {
     arg.jsErrors.splice(0, arg.jsErrors.length);
-}`];
+}`,
+    ];
 
     return {
         'instructions': instructions,
@@ -197,16 +192,17 @@ if (oldValue !== true) {
     };
 }
 
+// Possible inputs:
+//
+// * boolean value (`true` or `false`)
 function parseFailOnRequestError(parser) {
-    const elems = parser.elems;
-    if (elems.length === 0) {
-        return {'error': 'expected `true` or `false` value, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'boolean') {
-        return {'error': `expected \`true\` or \`false\` value, found \`${parser.getRawArgs()}\``};
+    const ret = validator(parser, { kind: 'boolean' });
+    if (hasError(ret)) {
+        return ret;
     }
-    const instructions = [
-        `const oldValue = arg.failOnRequestError;
-arg.failOnRequestError = ${elems[0].getRaw()};
+    const instructions = [`\
+const oldValue = arg.failOnRequestError;
+arg.failOnRequestError = ${ret.value.getRaw()};
 if (oldValue !== true) {
     arg.requestErrors.splice(0, arg.requestErrors.length);
 }`];
