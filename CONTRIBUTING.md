@@ -25,7 +25,7 @@ UI and API tests.
 To add an API test, if you added a new command, first add a new entry into the `TO_CHECK` array then
 add the tests into the related function.
 
-Once done, you can generate the `.json` file by using `npm run api-test -- --bless`. Then check the
+Once done, you can generate the `.json` file by using `npm run api-test --bless`. Then check the
 generated output files to ensure it is generating the expected code. Don't forget to check each
 variant of the command!
 
@@ -35,4 +35,4 @@ in the file: check it fails when it's supposed to and works when it's supposed t
 variants as well.
 
 Once done, just like for API tests, you can generate the output file using
-`npm run ui-test -- --bless`. Then once check if its content is what's expected.
+`npm run ui-test --bless`. Then once check if its content is what's expected.

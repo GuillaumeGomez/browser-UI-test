@@ -2901,6 +2901,9 @@ async function checkCommands(x) {
 if (require.main === module) {
     const x = new Assert();
     x.blessEnabled = process.argv.findIndex(arg => arg === '--bless') !== -1;
+    if (!x.blessEnabled) {
+        x.blessEnabled = process.env.npm_config_bless === 'true';
+    }
     checkCommands(x).then(nbErrors => {
         process.exit(nbErrors !== 0 ? 1 : 0);
     });

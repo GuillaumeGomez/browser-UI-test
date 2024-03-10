@@ -10,6 +10,9 @@ async function runAllTests() {
     const files = [];
     const x = new Assert();
     x.blessEnabled = process.argv.findIndex(arg => arg === '--bless') !== -1;
+    if (!x.blessEnabled) {
+        x.blessEnabled = process.env.npm_config_bless === 'true';
+    }
 
     x.startTestSuite('all', false);
     print('> Starting all tests...');

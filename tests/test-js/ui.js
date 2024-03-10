@@ -145,6 +145,9 @@ if (require.main === module) {
             x.extraArgs.push(arg);
         }
     }
+    if (!x.blessEnabled) {
+        x.blessEnabled = process.env.npm_config_bless === 'true';
+    }
     checkUi(x).then(nbErrors => {
         process.exit(nbErrors !== 0 ? 1 : 0);
     });
