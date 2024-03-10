@@ -6,5 +6,3 @@ await page.evaluate(e => {
     e.style[\"b\"] = \"c\";
 }, parseSetCssElem);""",
 ]
-warnings = [
-]

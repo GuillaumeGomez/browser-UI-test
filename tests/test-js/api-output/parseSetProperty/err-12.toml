@@ -1,1 +1,1 @@
-error = """Forbidden `ident` used (`a`). Allowed idents: [null]"""
+error = """unexpected ident `a`. Allowed idents are: [`null`] (second element of the tuple)"""
