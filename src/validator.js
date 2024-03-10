@@ -192,7 +192,7 @@ ${listValues(allowedSyntax.allowed)}`);
     if (allowedSyntax.allowEmpty === false) {
         if (parser.getStringValue().length === 0) {
             return validator.makeError(
-                `empty strings (\`${parser.value.getErrorText()}\`) are not allowed`,
+                `empty strings (\`${parser.getErrorText()}\`) are not allowed`,
             );
         }
     }
@@ -224,6 +224,16 @@ function validateIdent(parser, allowedSyntax, validator) {
         return validator.makeError(
             `expected an ident, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
             true);
+    }
+    if (allowedSyntax.notAllowed !== undefined) {
+        if (!Array.isArray(allowedSyntax.notAllowed)) {
+            throw new Error('Expected an array for `notAllowed` (in ident validator)');
+        } else if (allowedSyntax.notAllowed.includes(parser.value)) {
+            return validator.makeError(
+                `unexpected not allowed ${parser.kind} \`${parser.getErrorText()}\`. Not allowed \
+${parser.kind} are ${listValues(allowedSyntax.notAllowed)}`,
+            );
+        }
     }
     if (allowedSyntax.allowed === undefined) {
         return parser;
@@ -349,6 +359,8 @@ function validateJson(parser, allowedSyntax, validator) {
     }
     // Allowed by default and optional to specify.
     const allowEmptyValues = allowedSyntax.allowEmptyValues !== false;
+    // Denied by default and optional to specify.
+    const allowAllValues = allowedSyntax.allowAllValues === true;
 
     const json = parser.getRaw();
     const entries = new Map();
@@ -379,32 +391,40 @@ ${listValues(allowedForKey)}`,
         }
 
         const value = entry.value;
-        const allowedForValue = getObjectValue(allowedSyntax.valueTypes, value.kind);
+        if (!allowAllValues) {
+            const allowedForValue = getObjectValue(allowedSyntax.valueTypes, value.kind);
 
-        if (allowedForValue === undefined) {
-            return validator.makeError(
-                `type "${value.kind}" (\`${value.getErrorText()}\`) is not allowed as value in \
+            if (allowedForValue === undefined) {
+                return validator.makeError(
+                    `type "${value.kind}" (\`${value.getErrorText()}\`) is not allowed as value in \
 this JSON dict, allowed types are: ${listValues(Object.keys(allowedSyntax.valueTypes))}`,
-            );
-        } else if (!isObject(allowedForValue)) {
-            throw new Error('"valueTypes" values should be an object (in JSON validator)');
+                );
+            } else if (!isObject(allowedForValue)) {
+                throw new Error('"valueTypes" values should be an object (in JSON validator)');
+            }
+            allowedForValue.kind = value.kind;
+            const parser_value = validator.validatorInner(value, allowedForValue);
+            if (hasError(parser_value)) {
+                return parser_value;
+            }
+            const value_s = value.getStringValue();
+            if (!allowEmptyValues && value_s.length === 0) {
+                return validator.makeError(
+                    `empty values are not allowed: \`${key_s}\` has an empty value`,
+                );
+            }
+            entries.set(key_s, {
+                value: value.getStringValue(),
+                kind: value.kind,
+                parser: parser_value,
+            });
+        } else {
+            entries.set(key_s, {
+                value: value.getStringValue(),
+                kind: value.kind,
+                parser: value,
+            });
         }
-        allowedForValue.kind = value.kind;
-        const parser_value = validator.validatorInner(value, allowedForValue);
-        if (hasError(parser_value)) {
-            return parser_value;
-        }
-        const value_s = value.getStringValue();
-        if (!allowEmptyValues && value_s.length === 0) {
-            return validator.makeError(
-                `empty values are not allowed: \`${key_s}\` has an empty value`,
-            );
-        }
-        entries.set(key_s, {
-            value: value.getStringValue(),
-            kind: value.kind,
-            parser: parser_value,
-        });
     }
     parser.entries = entries;
     return parser;
@@ -453,6 +473,7 @@ Format looks like this:
             kind: 'ident',
             // optional
             allowed: ['values'],
+            notAllowed: ['something'],
         },
         {
             kind: 'number',

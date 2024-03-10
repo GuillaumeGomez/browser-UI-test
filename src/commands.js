@@ -252,22 +252,16 @@ class ParserWithContext {
         }
         const args = Object.create(null);
         const func = this.definedFunctions[ret['function']];
-        if (ret['args_kind'] === 'tuple') {
-            for (let i = 0; i < ret['args'].length; ++i) {
-                args[func['arguments'][i]] = ret['args'][i];
+        for (const arg_name of func['arguments']) {
+            const index = ret['args'].findIndex(arg => arg.key.value === arg_name);
+            if (index === -1) {
+                return {
+                    'error': `Missing argument "${arg_name}"`,
+                    'line': this.get_current_command_line(),
+                    'fatal_error': true,
+                };
             }
-        } else {
-            for (const arg_name of func['arguments']) {
-                const index = ret['args'].findIndex(arg => arg.key.value === arg_name);
-                if (index === -1) {
-                    return {
-                        'error': `Missing argument "${arg_name}"`,
-                        'line': this.get_current_command_line(),
-                        'fatal_error': true,
-                    };
-                }
-                args[arg_name] = ret['args'][index].value;
-            }
+            args[arg_name] = ret['args'][index].value;
         }
         const context = this.get_current_context();
         this.pushNewContext({
