@@ -1,0 +1,10 @@
+=> Starting doc-ui tests...
+
+wait-for-window-property... FAILED
+[WARNING] `tests/ui/wait-for-window-property.goml` line 12: Special checks (ENDS_WITH) will be ignored for `null`
+
+[ERROR] `tests/ui/wait-for-window-property.goml` line 14: Error: The following window properties still don't match: [expected `tadam` for window property `windowProp`, found `hello1`]: for command `wait-for-window-property: {"windowProp": "tadam"}`
+[ERROR] `tests/ui/wait-for-window-property.goml` line 16: Error: Evaluation failed: The following errors happened: [expected `tadam` for window property `windowProp`, found `hello1`]: for command `assert-window-property: {"windowProp": "tadam"}`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed

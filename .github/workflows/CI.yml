@@ -23,7 +23,7 @@ jobs:
       - name: Build docker image
         run: docker build -t gomezguillaume/browser-ui-test .
       - name: Run GUI tests
-        run: docker run -v "$PWD:/data" gomezguillaume/browser-ui-test --test-folder /data/tests/scripts/ --failure-folder /data/failures --variable DOC_PATH /data/tests/html_files
+        run: docker run -v "$PWD:/data" gomezguillaume/browser-ui-test --test-folder /data/tests/full-check/ --failure-folder /data/failures --variable DOC_PATH /data/tests/html_files
   deploy:
     runs-on: ubuntu-latest
     needs: test

@@ -1,0 +1,59 @@
+=> Starting doc-ui tests...
+
+debug... 
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 2) "arg.screenshotComparison = false;"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 3) "const url = "file://$CURRENT_DIR/tests/html_files/elements.html";
+try {
+    await page.goto(url);
+} catch(exc) {
+    if (exc instanceof arg.puppeteer.ProtocolError) {
+        throw "Cannot navigate to invalid URL `" + url + "`";
+    } else {
+        throw exc;
+    }
+}"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 3) "await arg.browser.overridePermissions(page.url(), arg.permissions);"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 4) "arg.showText = true;"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 4) "await page.evaluate(() => {
+    let tmp = document.getElementById('browser-ui-test-style-text-hide');
+    if (tmp) { tmp.remove(); }
+});"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 5) "if (!arg.showText) {
+    throw "`show-text: true` needs to be used before checking for `color` (otherwise the browser doesn't compute it)";
+}"
+[DEBUG] Done!
+[DEBUG] EXECUTING (line 5) "let parseCompareElementsCss1 = await page.$(".content>.right>p");
+if (parseCompareElementsCss1 === null) { throw '".content>.right>p" not found'; }
+let parseCompareElementsCss2 = await page.$(".content>.left");
+if (parseCompareElementsCss2 === null) { throw '".content>.left" not found'; }
+
+await page.evaluate((e1, e2) => {
+    let computed_style1 = getComputedStyle(e1);
+    let computed_style2 = getComputedStyle(e2);
+    const properties = ["color"];
+    for (const css_prop of properties) {
+        try {
+    let style1_1 = e1.style[css_prop];
+        let style1_2 = computed_style1[css_prop];
+        let style2_1 = e2.style[css_prop];
+        let style2_2 = computed_style2[css_prop];
+        if (style1_1 != style2_1 && style1_1 != style2_2 &&
+            style1_2 != style2_1 && style1_2 != style2_2)
+        {
+            throw 'CSS property `' + css_prop + '` did not match: ' + style1_2 + ' != ' + style2_2;
+        }
+    } catch(e) { continue; } throw "assert didn't fail";
+    }
+
+}, parseCompareElementsCss1, parseCompareElementsCss2);"
+[DEBUG] Done!FAILED
+[ERROR] `tests/ui/debug.goml` line 5: Error: Evaluation failed: assert didn't fail: for command `compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed

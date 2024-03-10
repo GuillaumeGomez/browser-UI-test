@@ -1,7 +1,0 @@
-=> Starting doc-ui tests...
-
-wait-for-position... FAILED
-[ERROR] `tests/ui-tests/wait-for-position.goml` line 16: Error: The following checks still fail: [different Y values: 91 (or 91) != 16]: for command `wait-for-position: ("#js-change-pos", {"y": 16})`
-
-
-<= doc-ui tests done: 0 succeeded, 1 failed

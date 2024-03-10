@@ -1,0 +1,7 @@
+=> Starting doc-ui tests...
+
+assert-css-color... FAILED
+[ERROR] `tests/ui/assert-css-color.goml` line 9: `show-text: true` needs to be used before checking for `color` (otherwise the browser doesn't compute it)
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed

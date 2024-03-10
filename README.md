@@ -283,8 +283,8 @@ $ npm run ui-test
 To be noted, `ui-test` and `api-test` can be run with `--bless` to fix the differences:
 
 ```bash
-$ npm run api-test -- --bless
-$ npm run ui-test -- --bless
+$ npm run api-test --bless
+$ npm run ui-test --bless
 ```
 
 ## Donations

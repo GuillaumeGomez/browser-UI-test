@@ -1,6 +1,0 @@
-=> Starting doc-ui tests...
-
-function-named-map-extra-argument... FAILED
-[ERROR] `tests/ui-tests/function-named-map-extra-argument.goml` line 14: function `fn1` expected 2 arguments, found 3 (from command `("fn1", {"background_color": "a", "whole_check": {"color": "a"}, "k": {"color": "a"}})`)
-
-<= doc-ui tests done: 0 succeeded, 1 failed

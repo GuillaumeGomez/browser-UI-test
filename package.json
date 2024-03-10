@@ -15,16 +15,16 @@
         "browser-ui-test": "src/index.js"
     },
     "scripts": {
-        "test": "node src/index.js --test-folder tests/scripts/ --failure-folder failures --variable DOC_PATH tests/html_files --no-sandbox",
-        "all-test": "node tests/test-js/all.js",
-        "api-test": "node tests/test-js/api.js",
-        "ui-test": "node tests/test-js/ui.js",
-        "doc-test": "node tests/test-js/doc.js",
-        "parser-test": "node tests/test-js/parser.js",
-        "exported-test": "node tests/test-js/exported_items.js",
-        "generated-test": "node tests/test-js/generated.js",
-        "lint": "eslint src tests/test-js",
-        "lint-fix": "eslint --fix src tests/test-js"
+        "test": "node src/index.js --test-folder tests/full-check/ --failure-folder failures --variable DOC_PATH tests/html_files --no-sandbox",
+        "all-test": "node tools/all.js",
+        "api-test": "node tools/api.js",
+        "ui-test": "node tools/ui.js",
+        "doc-test": "node tools/doc.js",
+        "parser-test": "node tools/parser.js",
+        "exported-test": "node tools/exported_items.js",
+        "generated-test": "node tools/generated.js",
+        "lint": "eslint src tools",
+        "lint-fix": "eslint --fix src tools"
     },
     "files": [
         "src"

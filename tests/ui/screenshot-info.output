@@ -1,0 +1,7 @@
+=> Starting doc-ui tests...
+
+screenshot-info... OK
+[INFO] Generating screenshot for CSS selector `#js-call-attr` into `tests/ui/tadam.png`
+
+
+<= doc-ui tests done: 1 succeeded, 0 failed

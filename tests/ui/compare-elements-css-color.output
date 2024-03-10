@@ -1,0 +1,7 @@
+=> Starting doc-ui tests...
+
+compare-elements-css-color... FAILED
+[ERROR] `tests/ui/compare-elements-css-color.goml` line 4: `show-text: true` needs to be used before checking for `color` (otherwise the browser doesn't compute it)
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed
