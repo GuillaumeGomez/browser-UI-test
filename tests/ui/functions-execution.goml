@@ -3,7 +3,7 @@ go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 show-text: true
 define-function: (
     "fn1",
-    (),
+    [],
     block {
         assert-css: ("header", {"background-color": "a"})
         assert-css: ("header", {"background-color": "b"})
@@ -16,4 +16,4 @@ define-function: (
         assert-css: ("header", {"background-color": "i"})
     },
 )
-call-function: ("fn1", ())
+call-function: ("fn1", {})

@@ -3,32 +3,35 @@ go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 show-text: true
 define-function: (
     "fn1",
-    (background_color, whole_check),
+    [background_color, whole_check],
     block {
         assert-css: ("header", {"background-color": |background_color|, "color": |color|})
         assert-css: ("header", |whole_check|)
         // We overwrite the existing function.
-        define-function: ("fn1", (), block {
+        define-function: ("fn1", [], block {
             assert-attribute: ("header", {"color": "blue"})
         })
         // Then we call it again. If it works as expected, it shouldn't loop infinitely.
-        call-function: ("fn1", ())
+        call-function: ("fn1", {})
         assert-css: ("header", {"color": "red"})
     },
 )
 // We define this variable to ensure that it will use the argument in the function call.
 store-value: (whole_check, {"color": "yellow"})
 store-value: (color, "y")
-call-function: ("fn1", ("a", {"color": "a"}))
+call-function: ("fn1", {
+    "background_color": "a",
+    "whole_check": {"color": "a"},
+})
 define-function: (
     "fn1",
-    (background_color, whole_check),
+    [background_color, whole_check],
     block {
         assert-css: ("header", {"background-color": |background_color|})
         assert-css: ("header", |whole_check|)
     },
 )
-// Same but with named arguments
+// Again...
 call-function: ("fn1", {"background_color": "a", "whole_check": {"color": "a"}})
 // Error because there is a missing argument.
 call-function: ("fn1", {"background_color": "a", "k": {"color": "a"}})

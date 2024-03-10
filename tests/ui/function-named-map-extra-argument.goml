@@ -4,7 +4,7 @@ go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 
 define-function: (
     "fn1",
-    (background_color, whole_check),
+    [background_color, whole_check],
     block {
         assert-css: ("header", {"background-color": |background_color|})
         assert-css: ("header", |whole_check|)
