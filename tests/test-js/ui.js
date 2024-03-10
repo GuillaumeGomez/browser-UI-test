@@ -39,7 +39,10 @@ function runAsyncUiTest(x, file, output, tests_queue, browser) {
         s => testOutput += s + '\n',
         (value1, _) => {
             const filePath = file.replace('.goml', '.output');
-            fs.writeFileSync(filePath, value1);
+            fs.writeFileSync(
+                filePath,
+                value1.replaceAll(`file://${utils.getCurrentDir()}`, 'file://$CURRENT_DIR'),
+            );
             print(`Blessed \`${filePath}\``);
         },
     ).finally(() => {
