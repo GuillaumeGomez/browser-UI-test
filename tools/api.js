@@ -902,39 +902,35 @@ function checkDebug(x, func) {
 }
 
 function checkCallFunction(x, func) {
-    x.assert(func('')[0], {'error': 'expected a tuple of 2 elements, found nothing'});
-    x.assert(func('hello')[0], {
-        'error': 'expected a tuple of 2 elements, found an ident (`hello`)',
-    });
-    x.assert(func('(a)')[0], {
-        'error': 'expected a tuple of 2 elements, found 1',
-    });
-    x.assert(func('(1,1)')[0], {
-        'error': 'expected a string as first element of the tuple, found a number `1`',
-    });
-    x.assert(func('("1",1)')[0], {
-        'error': 'expected a tuple or a JSON dictionary as second element of the tuple or nothing' +
-            ', found a number `1`',
-    });
-    x.assert(func('("1",(1))')[0], {
-        'error': 'no function called `1`. To define a function, use the `define-function` command',
-    });
+    x.assertError(func('')[0], 'expected a tuple, found nothing');
+    x.assertError(func('hello')[0], 'expected a tuple, found `hello` (an ident)');
+    x.assertError(func('(a)')[0],
+        'expected first element of the tuple to be a string, found `a` (an ident)',
+    );
+    x.assertError(func('(1,1)')[0],
+        'expected first element of the tuple to be a string, found `1` (a number)',
+    );
+    x.assertError(func('("1",1)')[0],
+        'expected second element of the tuple to be a JSON dict, found `1` (a number)',
+    );
+    x.assertError(func('("1",{"a": 1})')[0],
+        'no function called `1`. To define a function, use the `define-function` command',
+    );
 
     const pcontext = new parserFuncs.ParserWithContext(
         '<test>',
         new Options(),
         `\
-define-function: ("hello", (a), block {})
-call-function: ("hello",())`,
+define-function: ("hello", [a], block {})
+call-function: ("hello",{})`,
     );
     x.assert(pcontext.get_parser_errors().length, 0);
     // Running `define-function`.
     x.assert(pcontext.get_next_command().error === undefined);
     // Running `call-function`.
-    x.assert(pcontext.get_next_command(), {
-        'error': 'function `hello` expected 1 argument, found 0 (from command `("hello",())`)',
-        'line': '2',
-    });
+    x.assertError(pcontext.get_next_command(),
+        'function `hello` expected 1 argument, found 0 (from command `("hello",{})`)',
+    );
 
     function callFunc(x, data, toCheck) {
         const pcontext = new parserFuncs.ParserWithContext(
@@ -957,54 +953,63 @@ call-function: ("hello",())`,
     callFunc(
         x,
         `\
-define-function: ("hello", (a), block {})
-call-function: ("hello",("1"))`,
+define-function: ("hello", [a], block {})
+call-function: ("hello",{"a": "1"})`,
         {
-            'function': 'hello',
-            'args': [
+            function: 'hello',
+            args: [
                 {
-                    'kind': 'string',
-                    'value': '1',
-                    'startPos': 67,
-                    'endPos': 70,
-                    'fullText': '"1"',
-                    'line': 2,
-                    'error': null,
+                    key: {
+                        kind: 'string',
+                        value: 'a',
+                        startPos: 67,
+                        endPos: 70,
+                        fullText: '"a"',
+                        line: 2,
+                        error: null,
+                    },
+                    value: {
+                        kind: 'string',
+                        value: '1',
+                        startPos: 72,
+                        endPos: 75,
+                        fullText: '"1"',
+                        line: 2,
+                        error: null,
+                    },
                 },
             ],
-            'args_kind': 'tuple',
         },
     );
     callFunc(
         x,
         `\
-define-function: ("hello", (a), block {})
+define-function: ("hello", [a], block {})
 call-function: ("hello",{"a": "1"})`,
         {
-            'function': 'hello',
-            'args': [
+            function: 'hello',
+            args: [
                 {
-                    'key': {
-                        'kind': 'string',
-                        'value': 'a',
-                        'startPos': 67,
-                        'endPos': 70,
-                        'fullText': '"a"',
-                        'line': 2,
-                        'error': null,
+                    key: {
+                        kind: 'string',
+                        value: 'a',
+                        startPos: 67,
+                        endPos: 70,
+                        fullText: '"a"',
+                        line: 2,
+                        error: null,
                     },
-                    'value': {
-                        'kind': 'string',
-                        'value': '1',
-                        'startPos': 72,
-                        'endPos': 75,
-                        'fullText': '"1"',
-                        'line': 2,
-                        'error': null,
+                    value: {
+                        kind: 'string',
+                        value: '1',
+                        startPos: 72,
+                        endPos: 75,
+                        fullText: '"1"',
+                        line: 2,
+                        error: null,
                     },
                 },
             ],
-            'args_kind': 'json',
         },
     );
 }
@@ -1027,32 +1032,33 @@ function checkDefineFunction(x, func) {
         }
         return ret;
     };
-    x.assert(func('')[0], {'error': 'expected a tuple of 3 elements, found nothing'});
-    x.assert(func('hello')[0], {
-        'error': 'expected a tuple of 3 elements, found an ident (`hello`)',
-    });
-    x.assert(func('(a)')[0], {'error': 'expected a tuple of 3 elements, found 1'});
-    x.assert(func('(1,1,1)')[0], {
-        'error': 'expected a non-empty string as first element of the tuple, found a number `1`',
-    });
-    x.assert(func('("",1,1)')[0], {
-        'error': 'expected a non-empty string as first element of the tuple',
-    });
-    x.assert(func('("a",1,1)')[0], {
-        'error': 'expected a tuple as second element of the tuple, found a number `1`',
-    });
-    x.assert(func('("a",(1),1)')[0], {
-        'error': 'expected a block as third element of the tuple, found a number `1`',
-    });
-    x.assert(func('("a",(a),block {b:\n})')[0], {
-        'error': 'Unknown command "b" (in `block { ... }`)',
-    });
-    x.assert(func('("a",(CURRENT_DIR), block { assert-css:\n})')[0], {
-        'error': '`CURRENT_DIR` is a reserved name, so a function argument cannot be ' +
-            'named like this',
-    });
+    x.assertError(func('')[0], 'expected a tuple, found nothing');
+    x.assertError(func('hello')[0],
+        'expected a tuple, found `hello` (an ident)',
+    );
+    x.assertError(func('(a)')[0],
+        'expected first element of the tuple to be a string, found `a` (an ident)');
+    x.assertError(func('(1,1,1)')[0],
+        'expected first element of the tuple to be a string, found `1` (a number)',
+    );
+    x.assertError(func('("",1,1)')[0],
+        'empty strings (`""`) are not allowed (first element of the tuple)',
+    );
+    x.assertError(func('("a",1,1)')[0],
+        'expected second element of the tuple to be an array, found `1` (a number)',
+    );
+    x.assertError(func('("a",[a],1)')[0],
+        'expected third element of the tuple to be a block, found `1` (a number)',
+    );
+    x.assertError(func('("a",[a],block {b:\n})')[0],
+        'Unknown command "b" (in `block { ... }`)',
+    );
+    x.assertError(func('("a",[CURRENT_DIR], block { assert-css:\n})')[0],
+        'unexpected not allowed ident `CURRENT_DIR`. Not allowed ident are ' +
+            '[`CURRENT_DIR`] (second element of the tuple)',
+    );
 
-    const [res, parser] = func('("a",(a), block { assert-css:\n})');
+    const [res, parser] = func('("a",[a], block { assert-css:\n})');
     x.assert(res, {'instructions': [], 'wait': false});
     x.assert(transform(parser.definedFunctions), {
         'a': {
@@ -1068,7 +1074,7 @@ function checkDefineFunction(x, func) {
         },
     });
 
-    const [res2, parser2] = func('("a",(a), block { assert-css: ("a", c)\n})');
+    const [res2, parser2] = func('("a",[a], block { assert-css: ("a", c)\n})');
     x.assert(res2, {'instructions': [], 'wait': false});
     x.assert(transform(parser2.definedFunctions), {
         'a': {
@@ -1086,7 +1092,7 @@ function checkDefineFunction(x, func) {
 
     const [res3, parser3] = func(`(
     "check-result",
-    (result_kind, color, hover_color),
+    [result_kind, color, hover_color],
     block {
         assert-css: (".result-" + |result_kind| + " ." + |result_kind|, {"color": |color|}, ALL)
         // hello
@@ -1123,7 +1129,7 @@ assert-attribute: (
 
     const [res4, parser4] = func(`(
     "check-result",
-    (result_kind),
+    [result_kind],
     block {
         move-cursor-to: ".result-" + |result_kind|
         move-cursor-to: ".result-"
@@ -1153,7 +1159,7 @@ assert-attribute: (
     // because there is no way to know if it's just empty lines or lines with comments.
     const [res5, parser5] = func(`(
     "check-result",
-    (theme, color),
+    [theme, color],
     block {
         // hello
         set-local-storage: {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false"}
@@ -1190,7 +1196,7 @@ set-local-storage: {"rustdoc-theme": |theme|, "rustdoc-use-system-theme": "false
 
     const [res6, parser6] = func(`(
     "check-result",
-    (),
+    [],
     block {
         set-local-storage: ["a"]
         set-local-storage: 12

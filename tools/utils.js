@@ -53,6 +53,26 @@ class Assert {
         return this.assert(value1, value2, pos, extraInfo, toJson, out, callback);
     }
 
+    // Checks that it failed as expected.
+    assertError(value, errorMessage) {
+        this._addTest();
+        if (value.error !== undefined && value.error === errorMessage) {
+            return true;
+        }
+        const pos = getStackInfo(new Error().stack);
+        print(`[${pos.file}:${pos.line}] failed:`);
+        if (value.error === undefined) {
+            print(
+                `Expected an error (\`${errorMessage}\`)\n===============\n   FOUND: \
+\`${JSON.stringify(value)}\``,
+            );
+        } else {
+            print(`EXPECTED: \`${errorMessage}\`\n===============\n   FOUND: \`${value.error}\``);
+        }
+        this._incrError();
+        return false;
+    }
+
     // `extraInfo` is used as an additional message in case the test fails.
     assert(
         value1, value2, pos, extraInfo, toJson = true, out = undefined, errCallback = undefined,
@@ -98,7 +118,7 @@ class Assert {
             if (typeof pos === 'undefined') {
                 pos = getStackInfo(new Error().stack);
             }
-            print(`[${pos.file}:${pos.line}] failed: \`${value1}\` is evalued to false`, out);
+            print(`[${pos.file}:${pos.line}] failed: \`${value1}\` is evaluated to false`, out);
             this._incrError();
             return false;
         }

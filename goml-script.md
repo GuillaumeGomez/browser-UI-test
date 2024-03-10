@@ -807,19 +807,13 @@ assert-windo-property-false: (
 ```
 define-function: (
     "fn1",
-    (background_color, whole_check),
+    [background_color, whole_check],
     block {
         assert-css: ("header", {"background-color": |background_color|, "color": "red"})
         assert-attribute: ("header", |whole_check|)
     },
 )
 
-call-function: (
-    "fn1", // the function name
-    ("yellow", {"class": "the-header"}), // the arguments
-)
-
-// If you prefer named arguments:
 call-function: (
     "fn1", // the function name
     // the arguments
@@ -1104,7 +1098,7 @@ debug: true // enabling it again
 ```
 define-function: (
     "fn1", // The function name.
-    (background_color, whole_check), // The names of the arguments of the function.
+    [background_color, whole_check], // The names of the arguments of the function.
     // And below the commands to be called.
     block {
         // First is the command-name, then its arguments like you would pass them normally to the command.
@@ -1114,7 +1108,10 @@ define-function: (
 )
 
 // Then you can call the function like this:
-call-function: ("fn1", ("yellow", {"class": "the-header"}))
+call-function: ("fn1", {
+    "background_color": "yellow",
+    "whole_check": {"class": "the-header"},
+})
 ```
 
 As you can see, a few variables are used inside `define-function`. However, they are only interpreted when the function is actually called with `call-function` and not when the function is declared! So if you use a variable that is declared after the function, it's completely fine.
@@ -1135,18 +1132,18 @@ define-function: (
         // We overwrite "fn1".
         define-function: (
             "fn1",
-            (),
+            [],
             block { assert-attribute: ("header", {"class": "blue"}) },
         )
         // A "normal" command.
         assert-css: ("header", {"color": "red"})
         // Then we call again "fn1".
-        call-function: ("fn1", ())
+        call-function: ("fn1", {})
         assert-position: ("header", {"y": 12})
     },
 )
 
-call-function: ("fn1", ())
+call-function: ("fn1", {})
 ```
 
 So in this case, here is what will happen:

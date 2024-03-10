@@ -2,7 +2,7 @@
 // inside will fail if needed.
 define-function: (
     "fn1",
-    (background_color, whole_check),
+    [background_color, whole_check],
     block {
         assert-css: ("header", {"background-color": |background_color|, "color": |color|})
         assert-css: ("header", |whole_check|)
@@ -11,7 +11,7 @@ define-function: (
             assert-attribute: ("header", {"color": "blue"})
         })
         // Then we call it again. If it works as expected, it shouldn't loop infinitely.
-        call-function: ("fn1", ())
+        call-function: ("fn1", {})
         assert-css: ("header", {"color": "red"})
     },
 )
@@ -20,5 +20,8 @@ store-value: (whole_check, {"color": "yellow"})
 store-value: (color, "y")
 // Calling "call-function" before "goto" is valid but then it's the instructions inside
 // that are checked.
-call-function: ("fn1", ("a", {"color": "a"}))
+call-function: ("fn1", {
+    "background_color": "a",
+    "whole_check": {"color": "a"},
+})
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
