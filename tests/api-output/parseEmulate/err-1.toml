@@ -1,1 +1,1 @@
-error = """expected string for \"device name\", found nothing"""
+error = """expected a string, found nothing"""

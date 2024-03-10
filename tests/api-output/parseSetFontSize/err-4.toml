@@ -1,1 +1,1 @@
-error = """expected a font size (in pixels), found `tru`"""
+error = """expected a number, found `tru` (an ident)"""

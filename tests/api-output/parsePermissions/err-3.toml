@@ -1,1 +1,1 @@
-error = """expected an array of strings, found `(\"a\", \"b\")`"""
+error = """expected an array, found `(\"a\", \"b\")` (a tuple)"""

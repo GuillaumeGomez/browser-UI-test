@@ -1,1 +1,1 @@
-error = """expected (longitude [number], latitude [number]), found `\"a\"`"""
+error = """expected a tuple, found `\"a\"` (a string)"""

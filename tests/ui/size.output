@@ -1,6 +1,6 @@
 => Starting doc-ui tests...
 
 size... FAILED
-[ERROR] `tests/ui/size.goml` line 7: width cannot be negative: `-10` (from command `(-10, 0.2)`)
+[ERROR] `tests/ui/size.goml` line 7: expected only positive numbers, found `-10` (first element of the tuple) (from command `(-10, 0.2)`)
 
 <= doc-ui tests done: 0 succeeded, 1 failed

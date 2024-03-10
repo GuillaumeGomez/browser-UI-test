@@ -1,1 +1,1 @@
-error = """expected `([number], [number])`, found `hello`"""
+error = """expected a tuple, found `hello` (an ident)"""

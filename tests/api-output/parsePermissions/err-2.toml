@@ -1,1 +1,1 @@
-error = """expected an array of strings, found `\"a\"`"""
+error = """expected an array, found `\"a\"` (a string)"""

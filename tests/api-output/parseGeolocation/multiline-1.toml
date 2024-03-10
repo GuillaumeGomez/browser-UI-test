@@ -1,1 +1,1 @@
-error = """expected number for latitude (second argument), found `\"13\"`"""
+error = """expected second element of the tuple to be a number, found `\"13\"` (a string)"""

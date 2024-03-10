@@ -1,1 +1,1 @@
-error = """expected \"([number], [number])\", found `(a,2)`"""
+error = """expected first element of the tuple to be a number, found `a` (an ident)"""
