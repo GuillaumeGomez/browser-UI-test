@@ -1,7 +1,0 @@
-=> Starting doc-ui tests...
-
-wait-for-css... FAILED
-[ERROR] `tests/ui-tests/wait-for-css.goml` line 19: Error: The following CSS properties still don't match: [expected `13px` for key `margin-top`, found `12px`]: for command `wait-for-css: ("#js-call", {"margin-top": "13px"})`
-
-
-<= doc-ui tests done: 0 succeeded, 1 failed

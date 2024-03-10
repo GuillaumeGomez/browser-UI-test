@@ -1,6 +1,0 @@
-=> Starting doc-ui tests...
-
-device-pixel-ratio... FAILED
-[ERROR] `tests/ui-tests/device-pixel-ratio.goml` line 7: device pixel ratio cannot be less than or equal to 0 (from command `-2`)
-
-<= doc-ui tests done: 0 succeeded, 1 failed

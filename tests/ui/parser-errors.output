@@ -1,0 +1,14 @@
+=> Starting doc-ui tests...
+
+parser-errors... FAILED
+Syntax errors:
+`tests/ui/parser-errors.goml` line 2: expected `,` or `)` after `foo`, found `{1: 2}`
+`tests/ui/parser-errors.goml` line 2: only strings can be used as keys in JSON dict, found a number (`1`)
+`tests/ui/parser-errors.goml` line 3: all array's elements must be of the same kind: expected array of `string` (because the first element is of this kind), found `number` at position 1
+`tests/ui/parser-errors.goml` line 3: expected `,` or `]` after `"a"`, found `|b`
+`tests/ui/parser-errors.goml` line 3: unexpected character `]` after `|b`
+`tests/ui/parser-errors.goml` line 4: expected `,` or `)` after `a`, found `b`
+`tests/ui/parser-errors.goml` line 4: expected `,` or `)` after `a`, found `|b`
+`tests/ui/parser-errors.goml` line 4: unexpected character `)` after `|b`
+
+<= doc-ui tests done: 0 succeeded, 1 failed

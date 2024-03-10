@@ -1,0 +1,23 @@
+=> Starting doc-ui tests...
+
+functions... FAILED
+[WARNING] `tests/ui/functions.goml` line 12
+[WARNING]     from `tests/ui/functions.goml` line 22: overwriting existing `fn1` function
+[WARNING] `tests/ui/functions.goml` line 28: overwriting existing `fn1` function
+
+[ERROR] `tests/ui/functions.goml` line 8
+    from `tests/ui/functions.goml` line 22: The following errors happened (for selector `header`): [expected `a` for key `background-color`, found `rgb(17, 17, 17)`; expected `y` for key `color`, found `rgb(255, 255, 255)`]: for command `assert-css: ("header", {"background-color": |background_color|, "color": |color|})`
+[ERROR] `tests/ui/functions.goml` line 9
+    from `tests/ui/functions.goml` line 22: The following errors happened (for selector `header`): [expected `a` for key `color`, found `rgb(255, 255, 255)`]: for command `assert-css: ("header", |whole_check|)`
+[ERROR] `tests/ui/functions.goml` line 12
+    from `tests/ui/functions.goml` line 15
+    from `tests/ui/functions.goml` line 22: Error: Evaluation failed: The following errors happened (for selector `header`): [No attribute named `color`]: for command `assert-attribute: ("header", {"color": "blue"})`
+[ERROR] `tests/ui/functions.goml` line 16
+    from `tests/ui/functions.goml` line 22: The following errors happened (for selector `header`): [expected `red` for key `color`, found `white`]: for command `assert-css: ("header", {"color": "red"})`
+[ERROR] `tests/ui/functions.goml` line 27
+    from `tests/ui/functions.goml` line 32: The following errors happened (for selector `header`): [expected `a` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": |background_color|})`
+[ERROR] `tests/ui/functions.goml` line 28
+    from `tests/ui/functions.goml` line 32: The following errors happened (for selector `header`): [expected `a` for key `color`, found `rgb(255, 255, 255)`]: for command `assert-css: ("header", |whole_check|)`
+[ERROR] `tests/ui/functions.goml` line 34: Missing argument "whole_check"
+
+<= doc-ui tests done: 0 succeeded, 1 failed

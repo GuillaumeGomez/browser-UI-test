@@ -1,7 +1,0 @@
-=> Starting doc-ui tests...
-
-wait-for-text... FAILED
-[ERROR] `tests/ui-tests/wait-for-text.goml` line 13: Error: The following checks still fail: [`hello` isn't equal to `hello bis`]: for command `wait-for-text: ("#js-call-attr", "hello bis")`
-
-
-<= doc-ui tests done: 0 succeeded, 1 failed

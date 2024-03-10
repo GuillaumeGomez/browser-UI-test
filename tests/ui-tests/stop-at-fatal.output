@@ -1,7 +1,0 @@
-=> Starting doc-ui tests...
-
-stop-at-fatal... FAILED
-[ERROR] `tests/ui-tests/stop-at-fatal.goml` line 4: "#something" not found: for command `click: "#something"`
-
-
-<= doc-ui tests done: 0 succeeded, 1 failed
