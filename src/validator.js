@@ -140,9 +140,36 @@ function validateNumber(parser, allowedSyntax, validator) {
     if (!allowedSyntax.allowFloat) {
         return validator.maybeMakeError(parser.getIntegerValueV2(allowedSyntax.allowNegative));
     } else if (!allowedSyntax.allowNegative && parser.isNegative) {
-        return validator.makeError(
-            `expected only positive numbers, found \`${parser.getErrorText()}\``,
-        );
+        if (allowedSyntax.allowZero === false) {
+            return validator.makeError(
+                `expected numbers above 0, found \`${parser.getErrorText()}\``,
+            );
+        } else {
+            return validator.makeError(
+                `expected only positive numbers, found \`${parser.getErrorText()}\``,
+            );
+        }
+    } else if (allowedSyntax.allowZero === false) {
+        if (!allowedSyntax.allowNegative) {
+            if (Math.ceil(parseFloat(parser.value)) <= 0) {
+                return validator.makeError(
+                    `expected numbers above 0, found \`${parser.getErrorText()}\``,
+                );
+            }
+        } else if (allowedSyntax.allowFloat) {
+            for (let i = 0; i < parser.value.length; i++) {
+                const c = parser.value.charAt(i);
+                if (c !== '-' && c !== '0' && c !== '.') {
+                    return validator.makeError(
+                        `0 is not allowed (in \`${parser.getErrorText()}\`)`,
+                    );
+                }
+            }
+        } else if (parseInt(parser.value) === 0) {
+            return validator.makeError(
+                `0 is not allowed (in \`${parser.getErrorText()}\`)`,
+            );
+        }
     }
     return parser;
 }
@@ -160,6 +187,13 @@ function validateString(parser, allowedSyntax, validator) {
             return validator.makeError(
                 `unexpected value \`${parser.getErrorText()}\`, allowed values are: \
 ${listValues(allowedSyntax.allowed)}`);
+        }
+    }
+    if (allowedSyntax.allowEmpty === false) {
+        if (parser.getStringValue().length === 0) {
+            return validator.makeError(
+                `empty strings (\`${parser.value.getErrorText()}\`) are not allowed`,
+            );
         }
     }
     return parser;
@@ -413,6 +447,7 @@ Format looks like this:
             kind: 'string',
             // optional
             allowed: ['values'],
+            allowEmpty: false,
         },
         {
             kind: 'ident',
@@ -424,6 +459,8 @@ Format looks like this:
             allowFloat: false,
             allowNegative: false,
             optional: true,
+            // optional
+            allowZero: false,
         },
         {
             kind: 'boolean',
