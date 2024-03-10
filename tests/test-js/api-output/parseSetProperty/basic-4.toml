@@ -6,5 +6,3 @@ await page.evaluate(e => {
     e[\"d\"] = \"e\";
 }, parseSetPropertyElem);""",
 ]
-warnings = [
-]

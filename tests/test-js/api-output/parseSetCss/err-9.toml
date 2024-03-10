@@ -1,1 +1,1 @@
-error = """expected a tuple of two elements, found 4"""
+error = """expected a tuple of 2 elements, found 4"""

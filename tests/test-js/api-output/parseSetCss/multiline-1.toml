@@ -1,1 +1,1 @@
-error = """empty name of properties (\"\" or '') are not allowed"""
+error = """empty keys are not allowed in JSON dict (second element of the tuple)"""
