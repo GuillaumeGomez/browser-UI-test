@@ -1,1 +1,1 @@
-error = """only string and number types are allowed as value, found `{\"b\": 1}` (a JSON dict)"""
+error = """`a` key is duplicated in JSON dict"""

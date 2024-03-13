@@ -3,5 +3,3 @@ instructions = [
 localStorage.removeItem(\"a\");
 })""",
 ]
-warnings = [
-]

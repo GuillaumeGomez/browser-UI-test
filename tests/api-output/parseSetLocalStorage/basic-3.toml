@@ -4,5 +4,3 @@ localStorage.setItem(\"a\", \"1\");
 localStorage.setItem(\"b\", \"2px\");
 })""",
 ]
-warnings = [
-]
