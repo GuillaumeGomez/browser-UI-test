@@ -361,6 +361,8 @@ function validateJson(parser, allowedSyntax, validator) {
     const allowEmptyValues = allowedSyntax.allowEmptyValues !== false;
     // Denied by default and optional to specify.
     const allowAllValues = allowedSyntax.allowAllValues === true;
+    // Denied by default and optional to specify.
+    const allowRecursiveValues = allowedSyntax.allowRecursiveValues === true;
 
     const json = parser.getRaw();
     const entries = new Map();
@@ -391,40 +393,41 @@ ${listValues(allowedForKey)}`,
         }
 
         const value = entry.value;
-        if (!allowAllValues) {
-            const allowedForValue = getObjectValue(allowedSyntax.valueTypes, value.kind);
+        const allowedForValue = getObjectValue(allowedSyntax.valueTypes, value.kind);
+        let parser_value = value;
 
-            if (allowedForValue === undefined) {
+        if (allowedForValue === undefined) {
+            if (!allowAllValues) {
                 return validator.makeError(
                     `type "${value.kind}" (\`${value.getErrorText()}\`) is not allowed as value in \
 this JSON dict, allowed types are: ${listValues(Object.keys(allowedSyntax.valueTypes))}`,
                 );
-            } else if (!isObject(allowedForValue)) {
-                throw new Error('"valueTypes" values should be an object (in JSON validator)');
+            } else if (!allowRecursiveValues && value.isRecursive()) {
+                return validator.makeError(
+                    `recursive types (\`${value.getErrorText()}\`) are not allowed as value in \
+this JSON dict`,
+                );
             }
+        } else if (!isObject(allowedForValue)) {
+            throw new Error('"valueTypes" values should be an object (in JSON validator)');
+        } else {
             allowedForValue.kind = value.kind;
-            const parser_value = validator.validatorInner(value, allowedForValue);
+            parser_value = validator.validatorInner(value, allowedForValue);
             if (hasError(parser_value)) {
                 return parser_value;
             }
-            const value_s = value.getStringValue();
-            if (!allowEmptyValues && value_s.length === 0) {
-                return validator.makeError(
-                    `empty values are not allowed: \`${key_s}\` has an empty value`,
-                );
-            }
-            entries.set(key_s, {
-                value: value.getStringValue(),
-                kind: value.kind,
-                parser: parser_value,
-            });
-        } else {
-            entries.set(key_s, {
-                value: value.getStringValue(),
-                kind: value.kind,
-                parser: value,
-            });
         }
+        const value_s = value.getStringValue();
+        if (!allowEmptyValues && value_s.length === 0) {
+            return validator.makeError(
+                `empty values are not allowed: \`${key_s}\` has an empty value`,
+            );
+        }
+        entries.set(key_s, {
+            value: value_s,
+            kind: value.kind,
+            parser: parser_value,
+        });
     }
     parser.entries = entries;
     return parser;
@@ -495,12 +498,12 @@ Format looks like this:
             kind: 'array',
             valueTypes: {
                 // Each value is the same validator as stand-alone elements
-                'string': {},
-                'number': {
-                    allowFloat: truee,
+                string: {},
+                number: {
+                    allowFloat: true,
                     allowNegative: true,
                 },
-                'ident': {
+                ident: {
                     allowed: ['null'],
                 },
             },
@@ -509,22 +512,24 @@ Format looks like this:
             kind: 'json',
             keyTypes: {
                 // 'accepted kind': [accepted values] (if empty, all accepted)
-                'string': ['x', 'X'],
-                'number': [],
+                string: ['x', 'X'],
+                number: [],
             },
             valueTypes: {
                 // Each value is the same validator as stand-alone elements
-                'string': {},
-                'number': {
+                string: {},
+                number: {
                     allowFloat: truee,
                     allowNegative: true,
                 },
-                'ident': {
+                ident: {
                     allowed: ['null'],
                 },
             },
             // optional
             allowEmpty: false,
+            allowAllValues: false,
+            allowRecursiveValues: false,
         },
     ],
 }
