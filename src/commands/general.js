@@ -1,52 +1,54 @@
 // Contains commands which don't really have a "category".
 
 const path = require('path');
-const { getAndSetElements, checkJsonEntry, validateJson } = require('./utils.js');
+const { getAndSetElements, indentString } = require('./utils.js');
+const { validator } = require('../validator.js');
+// Not the same `utils.js`!
+const { hasError } = require('../utils.js');
 
 // Possible inputs:
 //
 // * JSON object (for example: {"key": "value", "another key": "another value"})
 function parseSetLocalStorage(parser) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected JSON, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'json') {
-        return {'error': `expected JSON, found \`${parser.getRawArgs()}\``};
+    const ret = validator(parser,
+        {
+            kind: 'json',
+            keyTypes: {
+                string: [],
+            },
+            allowAllValues: true,
+            allowRecursiveValues: false,
+            valueTypes: {
+                // In case it's an ident, we only want to allow `null`.
+                ident: {
+                    allowed: ['null'],
+                },
+            },
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
     }
 
-    const json = elems[0].getRaw();
+    const json = ret.value.entries;
     const content = [];
-    let error = null;
 
-    const warnings = checkJsonEntry(json, entry => {
-        if (error !== null) {
-            return;
-        }
-        const key_s = entry['key'].getStringValue();
-        const value_s = entry['value'].getStringValue();
-        if (entry['value'].kind === 'ident') {
-            if (value_s !== 'null') {
-                error = `Only \`null\` ident is allowed, found \`${value_s}\``;
-            }
-            content.push(`localStorage.removeItem("${key_s}");`);
+    for (const [key, value] of json) {
+        if (value.kind === 'ident') {
+            content.push(`localStorage.removeItem("${key}");`);
         } else {
-            content.push(`localStorage.setItem("${key_s}", "${value_s}");`);
+            content.push(`localStorage.setItem("${key}", "${value.value}");`);
         }
-    });
-    if (error !== null) {
-        return {'error': error};
-    } else if (content.length === 0) {
+    }
+    if (content.length === 0) {
         return {
             'instructions': [],
-            'warnings': warnings,
         };
     }
     return {
         'instructions': [
             `await page.evaluate(() => {\n${content.join('\n')}\n})`,
         ],
-        'warnings': warnings,
     };
 }
 
@@ -84,73 +86,67 @@ function innerParseScreenshot(options, filename, selector) {
 
 // Possible inputs:
 //
-// * "name"
 // * ("name")
 // * ("name", "element to screenshot")
 function parseScreenshot(parser, options) {
-    const elems = parser.elems;
-    let filename;
-    let selector = null;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a string or a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple' && elems[0].kind !== 'string') {
-        return {'error': `expected a string or a tuple, found \`${parser.getRawArgs()}\``};
-    } else if (elems[0].kind === 'string') {
-        filename = elems[0].getStringValue();
-    } else {
-        const tuple = elems[0].getRaw();
-        if (tuple.length !== 1 && tuple.length !== 2) {
-            let err = `expected a tuple with one or two strings, found \`${tuple.length}\` element`;
-            if (tuple.length > 1) {
-                err += 's';
-            }
-            return {'error': err};
-        }
-        for (const el of tuple) {
-            if (el.kind !== 'string') {
-                return {
-                    'error': `expected all tuple elements to be strings, found \`\
-${el.getErrorText()}\``,
-                };
-            }
-        }
-        filename = tuple[0].getStringValue();
-        if (tuple.length === 2) {
-            selector = tuple[1].getSelector();
-            if (selector.error !== undefined) {
-                return selector;
-            }
-        }
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                {
+                    kind: 'string',
+                    allowEmpty: false,
+                },
+                {
+                    kind: 'selector',
+                    optional: true,
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
     }
-    return innerParseScreenshot(options, filename, selector);
+
+    const tuple = ret.value.entries;
+    return innerParseScreenshot(
+        options,
+        tuple[0].value.getStringValue(), tuple.length > 1 ? tuple[1].value : null,
+    );
 }
 
 function parseObjPropertyInner(parser, objName) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple or a JSON dict, found nothing'};
-    // eslint-disable-next-line no-extra-parens
-    } else if (elems.length !== 1) {
-        return {'error': `expected a JSON dict, found \`${parser.getRawArgs()}\``};
-    } else if (elems[0].kind !== 'json') {
-        return {
-            'error': `expected a JSON dict, found \`${elems[0].getErrorText()}\` \
-(${elems[0].getArticleKind()})`,
-        };
+    const ret = validator(parser,
+        {
+            kind: 'json',
+            keyTypes: {
+                string: [],
+            },
+            valueTypes: {
+                // In case it's an ident, we only want to allow `null`.
+                string: {},
+                number: {
+                    allowFloat: true,
+                    allowNegative: true,
+                },
+            },
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
     }
 
-    const entries = validateJson(elems[0].getRaw(), {'string': [], 'number': []}, 'property');
-    if (entries.error !== undefined) {
-        return entries;
+    const json = ret.value.entries;
+    const content = [];
+
+    for (const [key, value] of json) {
+        content.push(`["${key}", "${value.value}"]`);
     }
 
-    if (Object.entries(entries.values).length === 0) {
+    if (content.length === 0) {
         return {
             'instructions': [],
             'wait': false,
-            'warnings': entries.warnings,
             'checkResult': true,
         };
     }
@@ -161,15 +157,13 @@ function parseObjPropertyInner(parser, objName) {
     const varKey = varName + 'Key';
     const varValue = varName + 'Value';
     // JSON.stringify produces a problematic output so instead we use this.
-    const props = [];
-    for (const [k, v] of Object.entries(entries.values)) {
-        props.push(`"${k}":"${v.value}"`);
-    }
 
     const instructions = [`\
 await page.evaluate(() => {
-    const ${varDict} = {${props.join(',')}};
-    for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
+    const ${varDict} = new Map([
+${indentString(content.join(',\n'), 2)}
+    ]);
+    for (const [${varKey}, ${varValue}] of ${varDict}) {
         ${objName}[${varKey}] = ${varValue};
     }
 });`,
@@ -178,7 +172,6 @@ await page.evaluate(() => {
     return {
         'instructions': instructions,
         'wait': false,
-        'warnings': entries.warnings,
         'checkResult': true,
     };
 }
@@ -201,20 +194,12 @@ function parseSetWindowProperty(parser) {
 //
 // * "file path"
 function parseInclude(parser) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a file path, found nothing'};
-    } else if (elems.length !== 1) {
-        return {'error': `expected a file path, found \`${parser.getRawArgs()}\``};
-    } else if (elems[0].kind !== 'string') {
-        return {
-            'error': `expected a JSON dict, found \`${elems[0].getErrorText()}\` \
-(${elems[0].getArticleKind()})`,
-        };
+    const ret = validator(parser, { kind: 'string' });
+    if (hasError(ret)) {
+        return ret;
     }
 
-    return {'path': elems[0].value };
+    return {'path': ret.value.value };
 }
 
 module.exports = {

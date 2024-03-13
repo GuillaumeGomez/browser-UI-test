@@ -1381,8 +1381,7 @@ Please note that if no `timeout` is specified, the one from the [`timeout`](#tim
 
 ```
 // Generates a screenshot for the whole page named `a.png`.
-screenshot: "a"
-screenshot: ("a") // It does exactly the same thing.
+screenshot: ("a")
 
 // To generate a screenshot of a specific element:
 screenshot: ("a", "#some-id")

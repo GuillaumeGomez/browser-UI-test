@@ -3,5 +3,3 @@ instructions = [
 localStorage.setItem(\"a\", \"1\");
 })""",
 ]
-warnings = [
-]

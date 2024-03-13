@@ -1,1 +1,1 @@
-error = """expected a JSON dict, found `(-12, \"a\")` (a tuple)"""
+error = """expected a string, found `(-12, \"a\")` (a tuple)"""

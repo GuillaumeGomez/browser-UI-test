@@ -1,5 +1,1 @@
-instructions = [
-]
-warnings = [
-  """Ignoring recursive entry with key `\"a\"`""",
-]
+error = """recursive types (`{\"a\": \"x\"}`) are not allowed as value in this JSON dict"""

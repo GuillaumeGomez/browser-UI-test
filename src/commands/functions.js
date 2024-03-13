@@ -72,6 +72,7 @@ function parseCallFunction(parser) {
                         'string': [],
                     },
                     allowAllValues: true,
+                    allowRecursiveValues: true,
                     valueTypes: {},
                 },
             ],

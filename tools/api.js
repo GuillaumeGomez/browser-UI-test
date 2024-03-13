@@ -1741,10 +1741,10 @@ function checkReload(x, func) {
 function checkScreenshot(x, func) {
     func('', 'err-1');
     func('hello', 'err-2');
+    func('"a"', 'err-3');
 
-    func('"a"', 'basic-1');
-    func('("a")', 'basic-2');
-    func('("a", "b")', 'basic-3');
+    func('("a")', 'basic-1');
+    func('("a", "b")', 'basic-2');
 
     // XPath
     func('("a", "//b")', 'xpath-1');

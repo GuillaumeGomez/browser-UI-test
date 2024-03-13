@@ -1,8 +1,9 @@
 instructions = [
-  """const screenshotElem = page;
-await screenshotElem.screenshot({\"path\":\"a.png\",\"fullPage\":true});""",
+  """let screenshotElem = await page.$(\"b\");
+if (screenshotElem === null) { throw '\"b\" not found'; }
+await screenshotElem.screenshot({\"path\":\"a.png\",\"fullPage\":false});""",
 ]
 wait = false
 infos = [
-  """Generating screenshot into `a.png`""",
+  """Generating screenshot for CSS selector `b` into `a.png`""",
 ]
