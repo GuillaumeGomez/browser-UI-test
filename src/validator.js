@@ -519,7 +519,7 @@ Format looks like this:
                 // Each value is the same validator as stand-alone elements
                 string: {},
                 number: {
-                    allowFloat: truee,
+                    allowFloat: true,
                     allowNegative: true,
                 },
                 ident: {
