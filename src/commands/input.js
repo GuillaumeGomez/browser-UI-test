@@ -143,92 +143,98 @@ function parseFocus(parser) {
 
 // Possible inputs:
 //
-// * ("CSS selector" or "XPath", "text")
-// * ("CSS selector" or "XPath", keycode)
 // * "text" (in here, it'll write into the current focused element)
 // * keycode (in here, it'll write the given keycode into the current focused element)
 function parseWrite(parser) {
-    const err = 'expected "string" or integer or ("CSS selector" or "XPath", "string") or ' +
-        '("CSS selector" or "XPath", integer)';
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': err + ', found nothing'};
-    } else if (elems.length !== 1) {
-        return {'error': err + `, found \`${parser.getRawArgs()}\``};
-    } else if (elems[0].kind === 'string') {
-        return {
-            'instructions': [
-                `await page.keyboard.type("${elems[0].getStringValue()}");`,
-            ],
-        };
-    } else if (elems[0].kind === 'number') {
-        const ret = elems[0].getIntegerValue('keycode', true);
-        if (ret.error !== undefined) {
-            return ret;
-        }
-        return {
-            'instructions': [
-                `await page.keyboard.press(String.fromCharCode(${ret.value}));`,
-            ],
-        };
-    } else if (elems[0].kind !== 'tuple') {
-        return {'error': err + `, found \`${parser.getRawArgs()}\``};
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        return {
-            'error': 'invalid number of arguments in tuple, ' + err,
-        };
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected a CSS selector or an XPath as tuple first argument, found ' +
-                tuple[0].getArticleKind(),
-        };
-    } else if (tuple[1].kind !== 'string' && tuple[1].kind !== 'number') {
-        return {
-            'error': 'expected a string or an integer as tuple second argument, found ' +
-                tuple[1].getArticleKind(),
-        };
-    }
-    const selector = tuple[0].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
-    const varName = 'parseWriteVar';
-    if (tuple[1].kind === 'string') {
-        if (selector.isXPath) {
-            return {
-                'instructions': [
-                    getAndSetElements(selector, varName, false) + '\n' +
-                    `await ${varName}.type("${tuple[1].getStringValue()}");`,
-                ],
-            };
-        }
-        return {
-            'instructions': [
-                `await page.type("${selector.value}", "${tuple[1].getStringValue()}");`,
-            ],
-        };
-    }
-    const ret = tuple[1].getIntegerValue('keycode', true);
-    if (ret.error !== undefined) {
+    const ret = validator(parser, {
+        kind: 'string',
+        alternatives: [
+            {
+                kind: 'number',
+                allowNegative: false,
+                allowFloat: false,
+            },
+        ],
+    });
+    if (hasError(ret)) {
         return ret;
     }
-    if (selector.isXPath) {
+
+    const value = ret.value;
+    if (value.kind === 'number') {
         return {
             'instructions': [
-                getAndSetElements(selector, varName, false) + '\n' +
-                `${varName}.focus();`,
-                `await page.keyboard.press(String.fromCharCode(${ret.value}));`,
+                `await page.keyboard.press(String.fromCharCode(${value.value}));`,
             ],
         };
     }
     return {
         'instructions': [
-            `await page.focus("${selector.value}");`,
-            `await page.keyboard.press(String.fromCharCode(${ret.value}));`,
+            `await page.keyboard.type("${value.getStringValue()}");`,
         ],
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector" or "XPath", "text")
+// * ("CSS selector" or "XPath", keycode)
+function parseWriteInto(parser) {
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'string',
+                alternatives: [
+                    {
+                        kind: 'number',
+                        allowNegative: false,
+                        allowFloat: false,
+                    },
+                ],
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+    const varName = 'parseWriteVar';
+    const value = tuple[1].value;
+    if (value.kind === 'string') {
+        if (selector.isXPath) {
+            return {
+                'instructions': [
+                    getAndSetElements(selector, varName, false) + '\n' +
+                    `await ${varName}.type("${value.getStringValue()}");`,
+                ],
+            };
+        }
+        return {
+            'instructions': [
+                `await page.type("${selector.value}", "${value.getStringValue()}");`,
+            ],
+        };
+    }
+    let content = '';
+    if (selector.isXPath) {
+        content += `\
+${getAndSetElements(selector, varName, false)}
+${varName}.focus();
+await ${varName}`;
+    } else {
+        content += `await page.focus("${selector.value}");
+page`;
+    }
+
+    content += `.keyboard.press(String.fromCharCode(${value.value}));`;
+    return {
+        'instructions': [content],
     };
 }
 
@@ -424,4 +430,5 @@ module.exports = {
     'parsePressKey': parsePressKey,
     'parseScrollTo': parseScrollTo,
     'parseWrite': parseWrite,
+    'parseWriteInto': parseWriteInto,
 };
