@@ -1,8 +1,8 @@
 instructions = [
   """const start = [1, 2];
 await page.mouse.move(start[0], start[1]);
-await page.mouse.down();""",
-  """let parseDragAndDropElem2 = await page.$(\"a\");
+await page.mouse.down();
+let parseDragAndDropElem2 = await page.$(\"a\");
 if (parseDragAndDropElem2 === null) { throw '\"a\" not found'; }
 const parseDragAndDropElem2_box = await parseDragAndDropElem2.boundingBox();
 const end = [parseDragAndDropElem2_box.x + parseDragAndDropElem2_box.width / 2, parseDragAndDropElem2_box.y + parseDragAndDropElem2_box.height / 2];

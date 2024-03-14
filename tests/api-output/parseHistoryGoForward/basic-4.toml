@@ -1,8 +1,10 @@
 instructions = [
   """const ret = page.goForward({'waitUntil': 'domcontentloaded', 'timeout': 0});
 if (ret === null) {
-throw \"cannot go forward in history\";
+    throw \"cannot go forward in history\";
 }
 await ret;""",
 ]
-warnings = """You passed 0 as timeout, it means the timeout has been disabled on this history-go-forward"""
+warnings = [
+  """You passed 0 as timeout, it means the timeout has been disabled on this history-go-forward""",
+]

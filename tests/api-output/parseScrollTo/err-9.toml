@@ -1,1 +1,1 @@
-error = """X position cannot be negative: `-1`"""
+error = """expected only positive numbers, found `-1` (first element of the tuple)"""

@@ -1,1 +1,1 @@
-error = """expected an integer as tuple second argument, found a string"""
+error = """expected second element of the tuple to be a number, found `\"a\"` (a string)"""

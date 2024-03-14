@@ -561,12 +561,11 @@ function checkClick(x, func) {
     func('(1.0,2)', 'err-10');
     func('(2,-1.0)', 'err-11');
     func('(2,1.0)', 'err-12');
-    func('(1,2)', 'err-13');
-    func('(-1,2)', 'err-14');
-    func('(-2,1)', 'err-15');
-
+    func('(-1,2)', 'err-13');
+    func('(-2,1)', 'err-14');
 
     func('(1,2,)', 'pos-1');
+    func('(1,2)', 'pos-2');
 
     // Check css selector
     func('"', 'basic-1');
@@ -586,6 +585,7 @@ function checkClick(x, func) {
     // Multiline
     func('(a\n,\n2)', 'multiline-1');
     func('(\n-2\n,\n1)', 'multiline-2');
+    func('(1,2,)', 'multiline-3');
 }
 
 function checkClickWithOffset(x, func) {
@@ -1559,6 +1559,7 @@ try {
 const ret = page.reload({'waitUntil': 'domcontentloaded', 'timeout': 30000});
 await ret;`,
             ],
+            'warnings': [],
         },
         {
             'fatal_error': true,

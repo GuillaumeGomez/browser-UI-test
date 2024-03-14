@@ -1,1 +1,1 @@
-error = """expected integer for timeout, found float: `-12.0`"""
+error = """expected integer, found float: `-12.0`"""
