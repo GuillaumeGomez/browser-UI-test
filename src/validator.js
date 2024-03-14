@@ -34,7 +34,7 @@ class Validator {
         return value;
     }
 
-    makeError(errorText, { notExpectedKind = false, isEmpty = false } = {}) {
+    makeError(errorText, { notExpectedKind = false, isEmpty = false, help = null } = {}) {
         const level = notExpectedKind ? this.level - 1 : this.level;
         const error = {
             level: level,
@@ -44,6 +44,7 @@ class Validator {
             path: this.indexes.slice(),
             typeError: notExpectedKind,
             isEmpty: isEmpty,
+            help: help,
         };
         if (this.error === null || error.level >= this.error.level) {
             this.error = error;
@@ -52,6 +53,9 @@ class Validator {
     }
 
     generateError() {
+        if (this.error.help !== null) {
+            this.error.error += `. ${this.error.help}`;
+        }
         return this.error;
     }
 
@@ -245,8 +249,11 @@ function validateIdent(parser, allowedSyntax, validator) {
             throw new Error('Expected an array for `notAllowed` (in ident validator)');
         } else if (allowedSyntax.notAllowed.includes(parser.value)) {
             return validator.makeError(
-                `unexpected not allowed ${parser.kind} \`${parser.getErrorText()}\`. Not allowed \
-${parser.kind} are ${listValues(allowedSyntax.notAllowed)}`,
+                `unexpected ${parser.kind} \`${parser.getErrorText()}\``,
+                {
+                    help: `Not allowed ${plural(parser.kind, allowedSyntax.notAllowed)} are \
+${listValues(allowedSyntax.notAllowed)}`,
+                },
             );
         }
     }
@@ -256,8 +263,10 @@ ${parser.kind} are ${listValues(allowedSyntax.notAllowed)}`,
         throw new Error('Expected an array for `allowed` (in ident validator)');
     } else if (!allowedSyntax.allowed.includes(parser.value)) {
         return validator.makeError(
-            `unexpected ${parser.kind} \`${parser.getErrorText()}\`. Allowed ${parser.kind}s are: \
-${listValues(allowedSyntax.allowed)}`,
+            `unexpected ${parser.kind} \`${parser.getErrorText()}\``,
+            {
+                help: `Allowed ${parser.kind}s are: ${listValues(allowedSyntax.allowed)}`,
+            },
         );
     }
     return parser;
@@ -382,6 +391,8 @@ function validateJson(parser, allowedSyntax, validator) {
     const allowAllValues = allowedSyntax.allowAllValues === true;
     // Denied by default and optional to specify.
     const allowRecursiveValues = allowedSyntax.allowRecursiveValues === true;
+    // Allowed by default and optional to specify.
+    const allowDuplicatedValue = allowedSyntax.allowDuplicatedValue !== false;
 
     const json = parser.getRaw();
     const entries = new Map();
@@ -435,6 +446,8 @@ this JSON dict`,
             if (hasError(parser_value)) {
                 return parser_value;
             }
+            // We remove one level.
+            parser_value = parser_value.value;
         }
         const value_s = value.getStringValue();
         if (!allowEmptyValues && value_s.length === 0) {
@@ -447,6 +460,21 @@ this JSON dict`,
             kind: value.kind,
             parser: parser_value,
         });
+    }
+    if (!allowDuplicatedValue) {
+        const values = new Set();
+
+        for (const [key, value] of entries) {
+            if (values.has(value.value)) {
+                return validator.makeError(
+                    `duplicated value \`${value.parser.getErrorText()}\` (for \`${key}\` key)`,
+                    {
+                        help: 'Duplicated values are not allowed in this JSON dict',
+                    },
+                );
+            }
+            values.add(value.value);
+        }
     }
     parser.entries = entries;
     return parser;
@@ -549,6 +577,7 @@ Format looks like this:
             allowEmpty: false,
             allowAllValues: false,
             allowRecursiveValues: false,
+            allowDuplicatedValue: true,
         },
     ],
 }

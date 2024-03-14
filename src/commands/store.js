@@ -1,120 +1,66 @@
 // All `compare*` commands.
 
-const { getAndSetElements, indentString, validateJson, getSizes } = require('./utils.js');
-const { RESERVED_VARIABLE_NAME } = require('../utils.js');
-
-function checkJsonInner(rawElem, allowedKeys, extra, callback) {
-    if (rawElem.kind !== 'json') {
-        return {
-            'error': `expected${extra} a JSON dict, found \
-${rawElem.getArticleKind()} (\`${rawElem.getErrorText()}\`)`,
-        };
-    }
-    const json = rawElem.getRaw();
-    const entries = validateJson(json, {'ident': []}, 'JSON dict key', allowedKeys);
-    if (entries.error !== undefined) {
-        return entries;
-    }
-    for (const v of json) {
-        if (v.value.isReservedVariableName()) {
-            return {
-                'error': `\`${v.value.value}\` is a reserved name, so an ident cannot be named \
-like this`,
-            };
-        }
-    }
-
-    const variables = new Set();
-    for (const [k, v] of Object.entries(entries.values)) {
-        if (variables.has(v.value)) {
-            return {
-                'error': `duplicated variable \`${v.value}\` (in \`${rawElem.getErrorText()}\`)`,
-            };
-        }
-        variables.add(v.value);
-        callback(k, v);
-    }
-    return entries;
-}
-
-function checkJson(parser, allowedKeys, callback) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a JSON dict, found nothing'};
-    } else if (elems.length !== 1) {
-        return {'error': `expected a JSON dict, found \`${parser.getRawArgs()}\``};
-    }
-    return checkJsonInner(elems[0], allowedKeys, '', callback);
-}
-
-function checkSelectorAndJson(parser, allowedKeys, callback) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {'error': `expected a tuple, found \`${parser.getRawArgs()}\``};
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        let err = `expected 2 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected first argument to be a string, ' +
-                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getErrorText()}\`)`,
-        };
-    }
-
-    const selector = tuple[0].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
-    const entries = checkJsonInner(tuple[1], allowedKeys, ' second argument to be', callback);
-    if (entries.error !== undefined) {
-        return entries;
-    }
-    return {
-        'warnings': entries.warnings,
-        'selector': selector,
-        'isPseudo': !selector.isXPath && selector.pseudo !== null,
-    };
-}
+const { getAndSetElements, indentString, getSizes } = require('./utils.js');
+const { validator } = require('../validator.js');
+// Not the same `utils.js`!
+const { RESERVED_VARIABLE_NAME, hasError } = require('../utils.js');
 
 // Possible inputs:
 //
 // * ("CSS selector" | "XPath", {"attribute": ident})
 function parseStoreAttribute(parser) {
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'json',
+                keyTypes: {
+                    string: [],
+                },
+                valueTypes: {
+                    ident: {
+                        notAllowed: [RESERVED_VARIABLE_NAME, 'null'],
+                    },
+                },
+                allowDuplicatedValue: false,
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+    const json = tuple[1].value.entries;
+
     const code = [];
     const getter = [];
-    const data = checkSelectorAndJson(parser, null, (k, v) => {
-        code.push(`arg.setVariable("${v.value}", data["${k}"]);`);
-        getter.push(`"${k}"`);
-    });
-    if (data.error !== undefined) {
-        return data;
+    for (const [key, value] of json) {
+        code.push(`arg.setVariable("${value.value}", data["${key}"]);`);
+        getter.push(`"${key}"`);
     }
 
     if (code.length === 0) {
         return {
             'instructions': [],
             'wait': false,
-            'warnings': data.warnings,
         };
     }
 
-    if (data.isPseudo) {
-        data.warnings.push(`Pseudo-elements (\`${data.selector.pseudo}\`) don't have attributes so \
+    const warnings = [];
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    if (isPseudo) {
+        warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
 it will be performed on the element itself`);
     }
 
     const varName = 'elem';
     const instructions = `\
-${getAndSetElements(data.selector, varName, false)}
+${getAndSetElements(selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
     const attrs = [${getter}];
     const ret = Object.create(null);
@@ -138,7 +84,7 @@ ${code.join('\n')}`;
     return {
         'instructions': [instructions],
         'wait': false,
-        'warnings': data.warnings,
+        'warnings': warnings,
     };
 }
 
@@ -146,29 +92,53 @@ ${code.join('\n')}`;
 //
 // * ("CSS selector" | "XPath", {"CSS property": ident})
 function parseStoreCss(parser) {
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'json',
+                keyTypes: {
+                    string: [],
+                },
+                valueTypes: {
+                    ident: {
+                        notAllowed: [RESERVED_VARIABLE_NAME, 'null'],
+                    },
+                },
+                allowDuplicatedValue: false,
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+    const json = tuple[1].value.entries;
     const code = [];
     const getter = [];
-    const data = checkSelectorAndJson(parser, null, (k, v) => {
-        code.push(`arg.setVariable("${v.value}", data["${k}"]);`);
-        getter.push(`"${k}"`);
-    });
-    if (data.error !== undefined) {
-        return data;
+    for (const [key, value] of json) {
+        code.push(`arg.setVariable("${value.value}", data["${key}"]);`);
+        getter.push(`"${key}"`);
     }
 
     if (code.length === 0) {
         return {
             'instructions': [],
             'wait': false,
-            'warnings': data.warnings,
         };
     }
 
-    const pseudo = data.isPseudo ? `, "${data.selector.pseudo}"` : '';
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    const pseudo = isPseudo ? `, "${selector.pseudo}"` : '';
 
     const varName = 'parseStoreCss';
     const instructions = `\
-${getAndSetElements(data.selector, varName, false)}
+${getAndSetElements(selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
     const style = getComputedStyle(e${pseudo});
     const props = [${getter.join(',')}];
@@ -193,7 +163,6 @@ ${code.join('\n')}`;
     return {
         'instructions': [instructions],
         'wait': false,
-        'warnings': data.warnings,
     };
 }
 
@@ -201,32 +170,66 @@ ${code.join('\n')}`;
 //
 // * ("CSS selector" | "XPath", {"property": ident})
 function parseStoreProperty(parser) {
-    const code = [];
-    const getter = [];
-    const data = checkSelectorAndJson(parser, null, (k, v) => {
-        code.push(`arg.setVariable("${v.value}", data["${k}"]);`);
-        getter.push(`"${k}"`);
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'json',
+                keyTypes: {
+                    string: [],
+                },
+                valueTypes: {
+                    ident: {
+                        notAllowed: [RESERVED_VARIABLE_NAME, 'null'],
+                    },
+                },
+                allowDuplicatedValue: false,
+            },
+        ],
     });
-    if (data.error !== undefined) {
-        return data;
+    if (hasError(ret)) {
+        return ret;
     }
 
-    if (data.isPseudo) {
-        data.warnings.push(`Pseudo-elements (\`${data.selector.pseudo}\`) don't have attributes so \
-the check will be performed on the element itself`);
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+    const json = tuple[1].value.entries;
+
+    const code = [];
+    const getter = [];
+    for (const [key, value] of json) {
+        code.push(`arg.setVariable("${value.value}", data["${key}"]);`);
+        getter.push(`"${key}"`);
     }
 
     if (code.length === 0) {
         return {
             'instructions': [],
             'wait': false,
-            'warnings': data.warnings,
+        };
+    }
+
+    const warnings = [];
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    if (isPseudo) {
+        warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have properties so \
+it will be performed on the element itself`);
+    }
+
+    if (code.length === 0) {
+        return {
+            'instructions': [],
+            'wait': false,
+            'warnings': warnings,
         };
     }
 
     const varName = 'elem';
     const instructions = `\
-${getAndSetElements(data.selector, varName, false)}
+${getAndSetElements(selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
     const props = [${getter.join(',')}];
     const ret = Object.create(null);
@@ -250,7 +253,7 @@ ${code.join('\n')}`;
     return {
         'instructions': [instructions],
         'wait': false,
-        'warnings': data.warnings,
+        'warnings': warnings,
     };
 }
 
@@ -258,24 +261,54 @@ ${code.join('\n')}`;
 //
 // * ("CSS selector" | "XPath", {"width"|"height": ident})
 function parseStoreSize(parser) {
-    const code = [];
-    const data = checkSelectorAndJson(parser, ['height', 'width'], (k, v) => {
-        if (k === 'width') {
-            code.push(`arg.setVariable("${v.value}", data["offsetWidth"]);`);
-        } else {
-            code.push(`arg.setVariable("${v.value}", data["offsetHeight"]);`);
-        }
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'json',
+                keyTypes: {
+                    string: ['height', 'width'],
+                },
+                valueTypes: {
+                    ident: {
+                        notAllowed: [RESERVED_VARIABLE_NAME, 'null'],
+                    },
+                },
+                allowDuplicatedValue: false,
+            },
+        ],
     });
-    if (data.error !== undefined) {
-        return data;
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+    const json = tuple[1].value.entries;
+
+    const code = [];
+    if (json.has('width')) {
+        code.push(`arg.setVariable("${json.get('width').value}", data["offsetWidth"]);`);
+    }
+    if (json.has('height')) {
+        code.push(`arg.setVariable("${json.get('height').value}", data["offsetHeight"]);`);
+    }
+
+    if (code.length === 0) {
+        return {
+            'instructions': [],
+            'wait': false,
+        };
     }
 
     const varName = 'elem';
-
     const instructions = `\
-${getAndSetElements(data.selector, varName, false)}
+${getAndSetElements(selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
-${indentString(getSizes(data.selector), 1)}
+${indentString(getSizes(selector), 1)}
     return {"offsetHeight": Math.round(height), "offsetWidth": Math.round(width)};
 });
 const data = await jsHandle.jsonValue();
@@ -284,7 +317,6 @@ ${code.join('\n')}`;
     return {
         'instructions': [instructions],
         'wait': false,
-        'warnings': data.warnings,
     };
 }
 
@@ -292,22 +324,55 @@ ${code.join('\n')}`;
 //
 // * ("CSS selector" | "XPath", {"width"|"height": ident})
 function parseStorePosition(parser) {
-    const code = [];
-    const data = checkSelectorAndJson(parser, ['x', 'X', 'y', 'Y'], (k, v) => {
-        if (k === 'x' || k === 'X') {
-            code.push(`arg.setVariable("${v.value}", data["x"]);`);
-        } else {
-            code.push(`arg.setVariable("${v.value}", data["y"]);`);
-        }
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'json',
+                keyTypes: {
+                    string: ['x', 'X', 'y', 'Y'],
+                },
+                valueTypes: {
+                    ident: {
+                        notAllowed: [RESERVED_VARIABLE_NAME, 'null'],
+                    },
+                },
+                allowDuplicatedValue: false,
+            },
+        ],
     });
-    if (data.error !== undefined) {
-        return data;
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+    const json = tuple[1].value.entries;
+
+    const code = [];
+    for (const [key, value] of json) {
+        if (key === 'x' || key === 'X') {
+            code.push(`arg.setVariable("${value.value}", data["x"]);`);
+        } else {
+            code.push(`arg.setVariable("${value.value}", data["y"]);`);
+        }
+    }
+
+    if (code.length === 0) {
+        return {
+            'instructions': [],
+            'wait': false,
+        };
     }
 
     const varName = 'elem';
-    const pseudo = data.isPseudo ? data.selector.pseudo : '';
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    const pseudo = isPseudo ? selector.pseudo : '';
     const instructions = `\
-${getAndSetElements(data.selector, varName, false)}
+${getAndSetElements(selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
     const x = browserUiTestHelpers.getElementPosition(e, "${pseudo}", "left", "marginLeft");
     const y = browserUiTestHelpers.getElementPosition(e, "${pseudo}", "top", "marginTop");
@@ -319,7 +384,6 @@ ${code.join('\n')}`;
     return {
         'instructions': [instructions],
         'wait': false,
-        'warnings': data.warnings,
     };
 }
 
@@ -327,44 +391,41 @@ ${code.join('\n')}`;
 //
 // * (ident, "string" | number | json)
 function parseStoreValue(parser) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {'error': `expected a tuple, found \`${parser.getRawArgs()}\``};
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        let err = `expected 2 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'ident') {
-        return {
-            'error': 'expected first argument to be an ident, ' +
-                `found ${tuple[0].getArticleKind()} (\`${tuple[0].getErrorText()}\`)`,
-        };
-    } else if (tuple[1].kind !== 'number' &&
-        tuple[1].kind !== 'string' &&
-        tuple[1].kind !== 'json') {
-        return {
-            'error': `expected second argument to be a number, a string or a JSON dict, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
-        };
-    }
-
-    if (tuple[0].isReservedVariableName()) {
-        return {
-            'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so an ident cannot be \
-named like this`,
-        };
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'ident',
+                notAllowed: [RESERVED_VARIABLE_NAME, 'null'],
+            },
+            {
+                kind: 'number',
+                allowNegative: true,
+                allowFloat: true,
+                alternatives: [
+                    {
+                        kind: 'string',
+                    },
+                    {
+                        kind: 'json',
+                        keyTypes: {
+                            string: [],
+                        },
+                        allowAllValues: true,
+                        valueTypes: {},
+                    },
+                ],
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
     }
 
+    const tuple = ret.value.entries;
     return {
-        'instructions': [
-            `arg.variables["${tuple[0].displayInCode()}"] = ${tuple[1].displayInCode()};`,
+        'instructions': [`\
+arg.variables["${tuple[0].value.displayInCode()}"] = ${tuple[1].value.displayInCode()};`,
         ],
         'wait': false,
     };
@@ -374,14 +435,29 @@ named like this`,
 //
 // * {"string": ident}
 function parseStoreLocalStorage(parser) {
+    const ret = validator(parser, {
+        kind: 'json',
+        keyTypes: {
+            string: [],
+        },
+        valueTypes: {
+            ident: {
+                notAllowed: [RESERVED_VARIABLE_NAME, 'null'],
+            },
+        },
+        allowDuplicatedValue: false,
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const json = ret.value.entries;
+
     const code = [];
     const getter = [];
-    const ret = checkJson(parser, null, (k, v) => {
-        code.push(`arg.setVariable("${v.value}", data["${k}"]);`);
-        getter.push(`"${k}": window.localStorage.getItem("${k}"),`);
-    });
-    if (ret.error !== undefined) {
-        return ret;
+    for (const [key, value] of json) {
+        code.push(`arg.setVariable("${value.value}", data["${key}"]);`);
+        getter.push(`"${key}": window.localStorage.getItem("${key}"),`);
     }
 
     if (code.length === 0) {
@@ -409,45 +485,24 @@ ${code.join('\n')}`,
 //
 // * (ident, "CSS selector" | "XPath")
 function parseStoreText(parser) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        let err = `expected 2 elements in the tuple, found ${tuple.length} element`;
-        if (tuple.length > 1) {
-            err += 's';
-        }
-        return {'error': err};
-    } else if (tuple[0].kind !== 'ident') {
-        return {
-            'error': `expected first argument to be an ident, found ${tuple[0].getArticleKind()} \
-(\`${tuple[0].getErrorText()}\`)`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': `expected second argument to be a CSS selector or an XPath, found \
-${tuple[1].getArticleKind()} (\`${tuple[1].getErrorText()}\`)`,
-        };
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'ident',
+                notAllowed: [RESERVED_VARIABLE_NAME, 'null'],
+            },
+            {
+                kind: 'selector',
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
     }
 
-    if (tuple[0].isReservedVariableName()) {
-        return {
-            'error': `\`${RESERVED_VARIABLE_NAME}\` is a reserved name, so an ident cannot be \
-named like this`,
-        };
-    }
-
-    const selector = tuple[1].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
+    const tuple = ret.value.entries;
+    const selector = tuple[1].value;
     const warnings = [];
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
@@ -461,24 +516,38 @@ ${getAndSetElements(selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
     return browserUiTestHelpers.getElemText(e, "");
 });
-arg.setVariable("${tuple[0].displayInCode()}", await jsHandle.jsonValue());`;
+arg.setVariable("${tuple[0].value.displayInCode()}", await jsHandle.jsonValue());`;
 
     return {
         'instructions': [code],
         'wait': false,
-        'warnings': warnings.length !== 0 ? warnings : undefined,
+        'warnings': warnings,
     };
 }
 
 function parseStoreObjectInner(parser, objName) {
+    const ret = validator(parser, {
+        kind: 'json',
+        keyTypes: {
+            string: [],
+        },
+        valueTypes: {
+            ident: {
+                notAllowed: [RESERVED_VARIABLE_NAME, 'null'],
+            },
+        },
+        allowDuplicatedValue: false,
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const json = ret.value.entries;
     const code = [];
     const getter = [];
-    const ret = checkJson(parser, null, (k, v) => {
-        code.push(`arg.setVariable("${v.value}", data["${k}"]);`);
-        getter.push(`"${k}"`);
-    });
-    if (ret.error !== undefined) {
-        return ret;
+    for (const [key, value] of json) {
+        code.push(`arg.setVariable("${value.value}", data["${key}"]);`);
+        getter.push(`"${key}"`);
     }
 
     if (code.length === 0) {
