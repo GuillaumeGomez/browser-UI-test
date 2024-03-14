@@ -34,15 +34,16 @@ class Validator {
         return value;
     }
 
-    makeError(errorText, notExpectedKind = false) {
+    makeError(errorText, { notExpectedKind = false, isEmpty = false } = {}) {
         const level = notExpectedKind ? this.level - 1 : this.level;
         const error = {
-            'level': level,
-            'error': errorText,
+            level: level,
+            error: errorText,
             // We need to clone the data to prevent its value to change when we
             // update "this.indexes".
-            'path': this.indexes.slice(),
-            'typeError': notExpectedKind,
+            path: this.indexes.slice(),
+            typeError: notExpectedKind,
+            isEmpty: isEmpty,
         };
         if (this.error === null || error.level >= this.error.level) {
             this.error = error;
@@ -60,7 +61,7 @@ class Validator {
         } else if (parser === undefined) {
             return this.makeError(
                 `expected ${getArticleKind(allowedSyntax.kind)}, found nothing`,
-                true,
+                { notExpectedKind: false, isEmpty: true },
             );
         }
         this.level += 1;
@@ -84,6 +85,10 @@ class Validator {
         if (!hasError(ret)) {
             return ret;
         } else if (!ret.typeError) {
+            if (ret.isEmpty && allowedSyntax.optional) {
+                // Having no input is allowed.
+                return {};
+            }
             return withExtraInfo(ret, tuplePosition);
         }
         let out = '';
@@ -103,6 +108,9 @@ class Validator {
             }
             const possibilities = [getArticleKind(allowedSyntax.kind)];
             possibilities.push(...allowedSyntax.alternatives.map(a => getArticleKind(a.kind)));
+            if (allowedSyntax.optional) {
+                possibilities.push('nothing');
+            }
             const len = possibilities.length - 1;
             for (let i = 0; i < len; ++i) {
                 if (out.length !== 0) {
@@ -111,6 +119,8 @@ class Validator {
                 out += possibilities[i];
             }
             out += ` or ${possibilities[len]}`;
+        } else if (allowedSyntax.optional) {
+            out = `${getArticleKind(allowedSyntax.kind)} or nothing`;
         } else {
             out = getArticleKind(allowedSyntax.kind);
             if (allowedSyntax.kind === 'string' && allowedSyntax.allowed !== undefined) {
@@ -130,7 +140,8 @@ function validateNumber(parser, allowedSyntax, validator) {
     if (parser.kind !== 'number') {
         return validator.makeError(
             `expected a number, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
-            true);
+            { notExpectedKind: true },
+        );
     }
     if (allowedSyntax.allowFloat === undefined) {
         throw new Error('Missing `allowFloat` value in number validator');
@@ -178,7 +189,8 @@ function validateString(parser, allowedSyntax, validator) {
     if (parser.kind !== 'string') {
         return validator.makeError(
             `expected a string, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
-            true);
+            { notExpectedKind: true },
+        );
     }
     if (allowedSyntax.allowed !== undefined) {
         if (!Array.isArray(allowedSyntax.allowed)) {
@@ -203,7 +215,8 @@ function validateBoolean(parser, allowedSyntax, validator) {
     if (parser.kind !== 'boolean') {
         return validator.makeError(
             `expected a boolean, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
-            true);
+            { notExpectedKind: true },
+        );
     }
     return parser;
 }
@@ -213,7 +226,8 @@ function validateSelector(parser, allowedSyntax, validator) {
         return validator.makeError(
             `expected an XPATH or a CSS selector, found \`${parser.getErrorText()}\` \
 (${parser.getArticleKind()})`,
-            true);
+            { notExpectedKind: true },
+        );
     }
     // It'll generate an error if it's invalid in any case.
     return validator.maybeMakeError(parser.getSelector());
@@ -223,7 +237,8 @@ function validateIdent(parser, allowedSyntax, validator) {
     if (parser.kind !== 'ident') {
         return validator.makeError(
             `expected an ident, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
-            true);
+            { notExpectedKind: true },
+        );
     }
     if (allowedSyntax.notAllowed !== undefined) {
         if (!Array.isArray(allowedSyntax.notAllowed)) {
@@ -252,7 +267,8 @@ function validateBlock(parser, allowedSyntax, validator) {
     if (parser.kind !== 'block') {
         return validator.makeError(
             `expected a block, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
-            true);
+            { notExpectedKind: true },
+        );
     }
     return parser;
 }
@@ -272,7 +288,8 @@ function validateTuple(parser, allowedSyntax, validator) {
     if (parser.kind !== 'tuple') {
         return validator.makeError(
             `expected a tuple, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
-            true);
+            { notExpectedKind: true },
+        );
     } else if (allowedSyntax.elements === undefined) {
         throw new Error('Missing "elements" (in tuple validator)');
     } else if (!Array.isArray(allowedSyntax.elements)) {
@@ -305,7 +322,8 @@ function validateArray(parser, allowedSyntax, validator) {
     if (parser.kind !== 'array') {
         return validator.makeError(
             `expected an array, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
-            true);
+            { notExpectedKind: true },
+        );
     } else if (allowedSyntax.valueTypes === undefined) {
         throw new Error('Missing "valueTypes" (in array validator)');
     } else if (!isObject(allowedSyntax.valueTypes)) {
@@ -347,7 +365,8 @@ function validateJson(parser, allowedSyntax, validator) {
     if (parser.kind !== 'json') {
         return validator.makeError(
             `expected a JSON dict, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
-            true);
+            { notExpectedKind: true },
+        );
     } else if (allowedSyntax.valueTypes === undefined) {
         throw new Error('Missing "valueTypes" (in JSON validator)');
     } else if (!isObject(allowedSyntax.valueTypes)) {
@@ -519,7 +538,7 @@ Format looks like this:
                 // Each value is the same validator as stand-alone elements
                 string: {},
                 number: {
-                    allowFloat: truee,
+                    allowFloat: true,
                     allowNegative: true,
                 },
                 ident: {
