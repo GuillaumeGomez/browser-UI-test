@@ -7,6 +7,10 @@ write: "test"
 assert-text: ("#the-input", "test")
 write: 113 // Equivalent of the 'q' letter.
 assert-text: ("#the-input", "testq")
+press-key: 113 // Equivalent of the 'q' letter.
+assert-text: ("#the-input", "testqq")
+press-key: "a"
+assert-text: ("#the-input", "testqqa")
 
 // Checking for `write-into` command.
 assert-text: ("#useless\.input", "")
