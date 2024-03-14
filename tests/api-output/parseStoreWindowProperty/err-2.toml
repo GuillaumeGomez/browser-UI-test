@@ -1,1 +1,1 @@
-error = """expected a JSON dict, found an ident (`hello`)"""
+error = """expected a JSON dict, found `hello` (an ident)"""

@@ -19,7 +19,7 @@ function parseDefineFunction(parser) {
                     kind: 'array',
                     valueTypes: {
                         'ident': {
-                            notAllowed: [RESERVED_VARIABLE_NAME],
+                            notAllowed: [RESERVED_VARIABLE_NAME, 'null'],
                         },
                     },
                 },

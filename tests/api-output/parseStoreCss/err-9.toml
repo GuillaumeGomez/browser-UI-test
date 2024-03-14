@@ -1,1 +1,1 @@
-error = """duplicated variable `a` (in `{\"xi\": a, \"yi\": a}`)"""
+error = """duplicated value `a` (for `yi` key) (second element of the tuple). Duplicated values are not allowed in this JSON dict"""

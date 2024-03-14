@@ -1,1 +1,1 @@
-error = """expected first argument to be a string, found a number (`1`)"""
+error = """expected first element of the tuple to be a selector, found `1` (a number)"""

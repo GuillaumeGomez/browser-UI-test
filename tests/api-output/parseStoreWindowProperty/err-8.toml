@@ -1,1 +1,1 @@
-error = """only ident type is allowed as value, found `2` (a number)"""
+error = """type \"number\" (`2`) is not allowed as value in this JSON dict, allowed types are: [`ident`]"""

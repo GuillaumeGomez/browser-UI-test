@@ -1054,8 +1054,8 @@ function checkDefineFunction(x, func) {
         'Unknown command "b" (in `block { ... }`)',
     );
     x.assertError(func('("a",[CURRENT_DIR], block { assert-css:\n})')[0],
-        'unexpected not allowed ident `CURRENT_DIR`. Not allowed ident are ' +
-            '[`CURRENT_DIR`] (second element of the tuple)',
+        'unexpected ident `CURRENT_DIR` (second element of the tuple). Not allowed idents are \
+[`CURRENT_DIR`, `null`]',
     );
 
     const [res, parser] = func('("a",[a], block { assert-css:\n})');

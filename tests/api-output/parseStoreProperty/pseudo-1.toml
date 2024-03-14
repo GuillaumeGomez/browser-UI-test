@@ -23,5 +23,5 @@ arg.setVariable(\"a\", data[\"x\"]);""",
 ]
 wait = false
 warnings = [
-  """Pseudo-elements (`::after`) don't have attributes so the check will be performed on the element itself""",
+  """Pseudo-elements (`::after`) don't have properties so it will be performed on the element itself""",
 ]

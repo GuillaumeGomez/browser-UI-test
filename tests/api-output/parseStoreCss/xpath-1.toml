@@ -24,5 +24,3 @@ const data = await jsHandle.jsonValue();
 arg.setVariable(\"a\", data[\"blop\"]);""",
 ]
 wait = false
-warnings = [
-]

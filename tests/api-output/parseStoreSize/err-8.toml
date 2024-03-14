@@ -1,1 +1,1 @@
-error = """Unexpected key `hoho`, allowed keys: [height, width]"""
+error = """unexpected key `\"hoho\"`, allowed keys are: [`height`, `width`] (second element of the tuple)"""

@@ -10,5 +10,3 @@ const data = await jsHandle.jsonValue();
 arg.setVariable(\"a\", data[\"y\"]);""",
 ]
 wait = false
-warnings = [
-]
