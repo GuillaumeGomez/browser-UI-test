@@ -11,5 +11,3 @@ arg.setVariable(\"a\", data[\"offsetWidth\"]);
 arg.setVariable(\"b\", data[\"offsetHeight\"]);""",
 ]
 wait = false
-warnings = [
-]

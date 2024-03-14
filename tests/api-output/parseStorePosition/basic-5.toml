@@ -11,5 +11,3 @@ arg.setVariable(\"a\", data[\"x\"]);
 arg.setVariable(\"b\", data[\"y\"]);""",
 ]
 wait = false
-warnings = [
-]

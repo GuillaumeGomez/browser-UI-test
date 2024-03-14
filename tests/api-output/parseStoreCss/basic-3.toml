@@ -24,5 +24,3 @@ arg.setVariable(\"a\", data[\"yaya\"]);
 arg.setVariable(\"b\", data[\"yiyi\"]);""",
 ]
 wait = false
-warnings = [
-]

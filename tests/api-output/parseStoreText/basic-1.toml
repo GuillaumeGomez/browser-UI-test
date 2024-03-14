@@ -7,3 +7,5 @@ const jsHandle = await parseStoreText.evaluateHandle(e => {
 arg.setVariable(\"VAR\", await jsHandle.jsonValue());""",
 ]
 wait = false
+warnings = [
+]

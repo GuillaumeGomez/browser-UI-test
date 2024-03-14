@@ -1,1 +1,1 @@
-error = """`CURRENT_DIR` is a reserved name, so an ident cannot be named like this"""
+error = """unexpected ident `CURRENT_DIR` (first element of the tuple). Not allowed idents are [`CURRENT_DIR`, `null`]"""
