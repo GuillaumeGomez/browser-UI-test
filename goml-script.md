@@ -23,7 +23,7 @@ go-to: "https://somewhere.com" // let's start somewhere!
 You can have a command/string on more than one line. For example:
 
 ```
-write: (
+write-into: (
     ".elements",
     "multi
 line
@@ -204,6 +204,7 @@ Here's the command list:
  * [`wait-for-size`](#wait-for-size)
  * [`wait-for-window-property`](#wait-for-window-property)
  * [`write`](#write)
+ * [`write-into`](#write-into)
 
 #### assert
 
@@ -1975,7 +1976,20 @@ wait-for-window-property: ({"key": "value", "key2": "value2"}, [ENDS_WITH, START
 
 #### write
 
-**write** command sends keyboard inputs on given element. If no element is provided, it'll write into the currently focused element. Examples:
+**write** command sends keyboard inputs on the currently focused element. Examples:
+
+```
+// It'll write into the currently focused element.
+write: "text"
+write: 13 // this is the keycode for "enter"
+```
+
+If you want to write into a specific element by specifying its path, use [`write-into`](#write-into)
+instead.
+
+#### write-into
+
+**write-into** command sends keyboard inputs on a given element. Examples:
 
 ```
 // It'll write into the given element if it exists:
@@ -1983,8 +1997,4 @@ write: (".element", "text")
 write: ("//*[@class='element']", "text")
 write: ("#element", 13) // this is the keycode for "enter"
 write: ("//*[@id='element']", 13) // this is the keycode for "enter"
-
-// It'll write into the currently focused element.
-write: "text"
-write: 13 // this is the keycode for "enter"
 ```
