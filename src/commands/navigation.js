@@ -1,6 +1,8 @@
 // Commands changing the current location or reloading the page.
 
 const { cleanString } = require('../parser.js');
+const { hasError } = require('../utils.js');
+const { validator } = require('../validator.js');
 
 // Possible inputs:
 //
@@ -12,27 +14,24 @@ const { cleanString } = require('../parser.js');
 // * full URL (for example: https://doc.rust-lang.org/std/struct.Path.html)
 // * local path (example: file://some-file.html)
 function parseGoTo(parser) {
-    if (parser.elems.length === 0) {
-        return {'error': 'Expected a URL, found nothing'};
-    } else if (parser.elems.length !== 1) {
-        return {'error': `Expected a URL, found \`${parser.getRawArgs()}\``};
+    const ret = validator(parser, {
+        kind: 'string',
+        allowEmpty: false,
+    });
+    if (hasError(ret)) {
+        return ret;
     }
 
-    let path = parser.elems[0];
-    if (path.kind !== 'string') {
-        return {'error': `Expected a URL (inside a string), found \`${path.getArticleKind()}\` (\`\
-${path.getErrorText()}\`)`};
-    }
+    const path = ret.value.value.trim();
 
-    path = path.value.trim();
-    // There will always be one element...
     let goto_arg;
     const permissions = 'await arg.browser.overridePermissions(page.url(), arg.permissions);';
     // We just check if it goes to an HTML file, not checking much though...
     if (path.startsWith('http://') === true
         || path.startsWith('https://') === true
         || path.startsWith('www.') === true
-        || path.startsWith('file://') === true) {
+        || path.startsWith('file://') === true
+    ) {
         goto_arg = `"${cleanString(path)}"`;
     } else if (path.startsWith('.')) {
         goto_arg = `page.url().split("/").slice(0, -1).join("/") + "/${cleanString(path)}"`;
@@ -61,45 +60,40 @@ try {
 }
 
 function innerReloadAndHistory(parser, options, command, jsFunc, errorMessage) {
+    const ret = validator(parser, {
+        kind: 'number',
+        allowFloat: false,
+        allowNegative: false,
+        optional: true,
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
     let timeout = options.timeout;
     const warnings = [];
-    const elems = parser.elems;
 
-    if (elems.length > 1) {
-        return {
-            'error': `expected either [integer] or no arguments, got ${elems.length} arguments`,
-        };
-    } else if (elems.length !== 0) {
-        if (elems[0].kind !== 'number') {
-            return {
-                'error': 'expected either [integer] or no arguments, found ' +
-                    elems[0].getArticleKind(),
-            };
-        }
-        const ret = elems[0].getIntegerValue('timeout', true);
-        if (ret.error !== undefined) {
-            return ret;
-        }
-        timeout = ret.value;
+    if (ret.value !== undefined) {
+        timeout = ret.value.value;
         if (parseInt(timeout, 10) === 0) {
-            warnings.push('You passed 0 as timeout, it means the timeout has been disabled on ' +
-                `this ${command}`);
+            warnings.push(`\
+You passed 0 as timeout, it means the timeout has been disabled on this ${command}`);
         }
     }
+
     let insertAfter = '';
     if (errorMessage !== null) {
-        insertAfter = 'if (ret === null) {\n' +
-            `throw "${errorMessage}";\n` +
-            '}\n';
+        insertAfter = `\
+if (ret === null) {
+    throw "${errorMessage}";
+}\n`;
     }
     return {
-        'instructions': [
-            `const ret = page.${jsFunc}({'waitUntil': 'domcontentloaded', ` +
-                `'timeout': ${timeout}});\n` +
-                insertAfter +
-                'await ret;',
+        'instructions': [`\
+const ret = page.${jsFunc}({'waitUntil': 'domcontentloaded', 'timeout': ${timeout}});
+${insertAfter}await ret;`,
         ],
-        'warnings': warnings.length > 0 ? warnings.join('\n') : undefined,
+        'warnings': warnings,
     };
 }
 

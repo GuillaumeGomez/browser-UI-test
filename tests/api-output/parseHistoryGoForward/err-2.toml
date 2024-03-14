@@ -1,1 +1,1 @@
-error = """timeout cannot be negative: `-12`"""
+error = """expected only positive numbers, found `-12`"""

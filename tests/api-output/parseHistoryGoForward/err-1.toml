@@ -1,1 +1,1 @@
-error = """expected either [integer] or no arguments, found a string"""
+error = """expected a number or nothing, found `\"a\"` (a string)"""

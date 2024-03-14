@@ -1,8 +1,10 @@
 instructions = [
   """const ret = page.goBack({'waitUntil': 'domcontentloaded', 'timeout': 0});
 if (ret === null) {
-throw \"cannot go back in history\";
+    throw \"cannot go back in history\";
 }
 await ret;""",
 ]
-warnings = """You passed 0 as timeout, it means the timeout has been disabled on this history-go-back"""
+warnings = [
+  """You passed 0 as timeout, it means the timeout has been disabled on this history-go-back""",
+]

@@ -1559,6 +1559,7 @@ try {
 const ret = page.reload({'waitUntil': 'domcontentloaded', 'timeout': 30000});
 await ret;`,
             ],
+            'warnings': [],
         },
         {
             'fatal_error': true,
