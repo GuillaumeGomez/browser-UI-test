@@ -1,7 +1,7 @@
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
 focus: "//*[@id='the-input']"
 assert: "#the-input:focus"
-write: ("//*[@id='the-input']", "hello")
+write-into: ("//*[@id='the-input']", "hello")
 assert-text: ("//*[@id='the-input']", "hello")
 expect-failure: true
 assert-text-false: ("//*[@id='the-input']", "hello")

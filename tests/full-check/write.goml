@@ -1,6 +1,6 @@
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html" // still the same...
 assert-text: ("#the-input", "")
-write: ("#the-input", "hello")
+write-into: ("#the-input", "hello")
 assert-text: ("#the-input", "hello")
-write: ("#the-input", 71) // 71 is the letter 'G'
+write-into: ("#the-input", 71) // 71 is the letter 'G'
 assert-text: ("#the-input", "helloG")
