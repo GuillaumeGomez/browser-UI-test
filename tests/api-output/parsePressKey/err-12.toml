@@ -1,1 +1,1 @@
-error = """delay cannot be negative: `-13`"""
+error = """expected only positive numbers, found `-13` (second element of the tuple)"""

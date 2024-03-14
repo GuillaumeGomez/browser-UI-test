@@ -1,1 +1,1 @@
-error = """keycode cannot be negative: `-13`"""
+error = """expected only positive numbers, found `-13`"""

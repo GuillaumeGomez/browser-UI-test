@@ -1,1 +1,1 @@
-error = """expected an integer as tuple second argument, found a string"""
+error = """empty strings (`''`) are not allowed (first element of the tuple)"""

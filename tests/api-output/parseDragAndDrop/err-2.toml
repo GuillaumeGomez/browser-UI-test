@@ -1,1 +1,1 @@
-error = """expected tuple with two elements being either a position `(x, y)` or a CSS selector or an XPath"""
+error = """expected first element of the tuple to be a selector or a tuple, found `true` (a boolean)"""

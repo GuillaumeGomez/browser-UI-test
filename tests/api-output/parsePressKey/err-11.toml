@@ -1,1 +1,1 @@
-error = """expected integer for delay, found float: `-13.2`"""
+error = """expected integer, found float: `-13.2` (second element of the tuple)"""

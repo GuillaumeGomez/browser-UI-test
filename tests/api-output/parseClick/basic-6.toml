@@ -3,3 +3,5 @@ instructions = [
 if (parseClickVar === null) { throw '\"a\" not found'; }
 await parseClickVar.click();""",
 ]
+warnings = [
+]
