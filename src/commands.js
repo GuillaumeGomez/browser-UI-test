@@ -106,6 +106,7 @@ const ORDERS = {
     'wait-for-text': commands.parseWaitForText,
     'wait-for-window-property': commands.parseWaitForWindowProperty,
     'write': commands.parseWrite,
+    'write-into': commands.parseWriteInto,
 };
 
 // If the command fails, the script should stop right away because everything coming after will
@@ -145,6 +146,7 @@ const FATAL_ERROR_COMMANDS = [
     'wait-for-property',
     'wait-for-text',
     'write',
+    'write-into',
 ];
 
 // Commands which do not run JS commands but change the behavior of the commands following.

@@ -113,4 +113,5 @@ module.exports = {
     'parseWaitForText': wait.parseWaitForText,
     'parseWaitForWindowProperty': wait.parseWaitForWindowProperty,
     'parseWrite': input.parseWrite,
+    'parseWriteInto': input.parseWriteInto,
 };
