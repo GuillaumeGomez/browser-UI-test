@@ -1,1 +1,1 @@
-error = """invalid number of arguments in tuple, expected [string] or [integer] or ([string], [integer]) or ([integer], [integer])"""
+error = """expected a tuple of 2 elements, found 1"""

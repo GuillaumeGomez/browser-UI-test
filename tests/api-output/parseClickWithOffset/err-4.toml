@@ -1,1 +1,1 @@
-error = """expected `([\"CSS Selector\"|\"XPath\"], [JSON])`, found `(1)`"""
+error = """expected first element of the tuple to be a selector, found `1` (a number)"""

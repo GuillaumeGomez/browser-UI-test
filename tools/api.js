@@ -561,12 +561,11 @@ function checkClick(x, func) {
     func('(1.0,2)', 'err-10');
     func('(2,-1.0)', 'err-11');
     func('(2,1.0)', 'err-12');
-    func('(1,2)', 'err-13');
-    func('(-1,2)', 'err-14');
-    func('(-2,1)', 'err-15');
-
+    func('(-1,2)', 'err-13');
+    func('(-2,1)', 'err-14');
 
     func('(1,2,)', 'pos-1');
+    func('(1,2)', 'pos-2');
 
     // Check css selector
     func('"', 'basic-1');
@@ -586,6 +585,7 @@ function checkClick(x, func) {
     // Multiline
     func('(a\n,\n2)', 'multiline-1');
     func('(\n-2\n,\n1)', 'multiline-2');
+    func('(1,2,)', 'multiline-3');
 }
 
 function checkClickWithOffset(x, func) {
@@ -2254,21 +2254,6 @@ function checkObjProperty(x, func) {
 }
 
 function checkWrite(x, func) {
-    // check tuple argument
-    func('"', 'err-1');
-    func('("a", "b"', 'err-2');
-    func('("a")', 'err-3');
-    func('("a", )', 'err-4');
-    func('("a", "b", "c")', 'err-5');
-    func('("a", "b" "c")', 'err-6');
-    func('(\'\', "b")', 'err-7');
-    func('("a", 13.2)', 'err-8');
-    func('("a", -13.2)', 'err-9');
-    func('("a", -13)', 'err-10');
-
-    func('("a", "b")', 'basic-1');
-    func('("a", 13)', 'basic-2');
-
     // check string argument
     func('"', 'str-1');
     func('\'', 'str-2');
@@ -2282,6 +2267,22 @@ function checkWrite(x, func) {
     func('-13.2', 'int-2');
     func('-13', 'int-3');
     func('13', 'int-4');
+}
+
+function checkWriteInto(x, func) {
+    func('"', 'err-1');
+    func('("a", "b"', 'err-2');
+    func('("a")', 'err-3');
+    func('("a", )', 'err-4');
+    func('("a", "b", "c")', 'err-5');
+    func('("a", "b" "c")', 'err-6');
+    func('(\'\', "b")', 'err-7');
+    func('("a", 13.2)', 'err-8');
+    func('("a", -13.2)', 'err-9');
+    func('("a", -13)', 'err-10');
+
+    func('("a", "b")', 'basic-1');
+    func('("a", 13)', 'basic-2');
 
     // XPath
     func('("/a", 13)', 'xpath-1');
@@ -2831,6 +2832,11 @@ const TO_CHECK = [
         'name': 'write',
         'func': checkWrite,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWrite, x, e, name, o),
+    },
+    {
+        'name': 'write-into',
+        'func': checkWriteInto,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWriteInto, x, e, name, o),
     },
     // This one is a bit "on its own".
     {

@@ -1,0 +1,20 @@
+// This test ensures that the `text` command works as expected.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+// Checking for `write` command.
+assert-text: ("#the-input", "")
+focus: "#the-input"
+write: "test"
+assert-text: ("#the-input", "test")
+write: 113 // Equivalent of the 'q' letter.
+assert-text: ("#the-input", "testq")
+press-key: 113 // Equivalent of the 'q' letter.
+assert-text: ("#the-input", "testqq")
+press-key: "a"
+assert-text: ("#the-input", "testqqa")
+
+// Checking for `write-into` command.
+assert-text: ("#useless\.input", "")
+write-into: ("#useless\.input", "bla")
+assert-text: ("#useless\.input", "bla")
+write-into: ("#useless\.input", 113) // Equivalent of 'q' letter.
+assert-text: ("#useless\.input", "blaq")

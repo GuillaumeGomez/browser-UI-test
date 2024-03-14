@@ -5,8 +5,8 @@ parseDragAndDropElem = parseDragAndDropElem[0];
 const parseDragAndDropElem_box = await parseDragAndDropElem.boundingBox();
 const start = [parseDragAndDropElem_box.x + parseDragAndDropElem_box.width / 2, parseDragAndDropElem_box.y + parseDragAndDropElem_box.height / 2];
 await page.mouse.move(start[0], start[1]);
-await page.mouse.down();""",
-  """let parseDragAndDropElem2 = await page.$x(\"//b\");
+await page.mouse.down();
+let parseDragAndDropElem2 = await page.$x(\"//b\");
 if (parseDragAndDropElem2.length === 0) { throw 'XPath \"//b\" not found'; }
 parseDragAndDropElem2 = parseDragAndDropElem2[0];
 const parseDragAndDropElem2_box = await parseDragAndDropElem2.boundingBox();

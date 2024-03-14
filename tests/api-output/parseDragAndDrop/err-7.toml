@@ -1,1 +1,1 @@
-error = """expected \"([number], [number])\", found `(1,2,3)`"""
+error = """expected a tuple of 2 elements, found 3 (first element of the tuple)"""

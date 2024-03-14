@@ -1,1 +1,1 @@
-error = """only number type is allowed as value, found `{\"a\": \"b\"}` (a JSON dict)"""
+error = """unexpected key `\"a\"`, allowed keys are: [`x`, `y`] (second element of the tuple)"""

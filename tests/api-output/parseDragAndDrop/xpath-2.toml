@@ -1,8 +1,8 @@
 instructions = [
   """const start = [1, 2];
 await page.mouse.move(start[0], start[1]);
-await page.mouse.down();""",
-  """let parseDragAndDropElem2 = await page.$x(\"//a\");
+await page.mouse.down();
+let parseDragAndDropElem2 = await page.$x(\"//a\");
 if (parseDragAndDropElem2.length === 0) { throw 'XPath \"//a\" not found'; }
 parseDragAndDropElem2 = parseDragAndDropElem2[0];
 const parseDragAndDropElem2_box = await parseDragAndDropElem2.boundingBox();

@@ -18,24 +18,6 @@ function getAndSetElements(selector, varName, checkAllElements) {
     return code;
 }
 
-function checkIntegerTuple(tuple, text1, text2, negativeCheck = false) {
-    const value = tuple.getRaw();
-    if (value.length !== 2 || value[0].kind !== 'number' || value[1].kind !== 'number') {
-        return {
-            'error': `expected "([number], [number])", found \`${tuple.getErrorText()}\``,
-        };
-    }
-    const ret = value[0].getIntegerValue(text1, negativeCheck);
-    if (ret.error !== undefined) {
-        return ret;
-    }
-    const ret2 = value[1].getIntegerValue(text2, negativeCheck);
-    if (ret2.error !== undefined) {
-        return ret2;
-    }
-    return {'value': [ret.value, ret2.value]};
-}
-
 function validateJson(json, allowedValueTypes, keyName, allowedKeys = null) {
     const entries = Object.create(null);
     const warnings = [];
@@ -610,7 +592,6 @@ ${checker}`;
 
 module.exports = {
     'getAndSetElements': getAndSetElements,
-    'checkIntegerTuple': checkIntegerTuple,
     'validateJson': validateJson,
     'getInsertStrings': getInsertStrings,
     'fillEnabledChecks': fillEnabledChecks,

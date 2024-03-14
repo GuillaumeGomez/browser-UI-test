@@ -1,0 +1,4 @@
+instructions = [
+  """await page.focus(\"a\");
+page.keyboard.press(String.fromCharCode(13));""",
+]

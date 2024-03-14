@@ -1,11 +1,9 @@
 // List commands handling inputs.
 
-const {
-    getAndSetElements,
-    checkIntegerTuple,
-    validateJson,
-    buildPropertyDict,
-} = require('./utils.js');
+const { getAndSetElements } = require('./utils.js');
+const { validator } = require('../validator.js');
+// Not the same `utils.js`!
+const { hasError } = require('../utils.js');
 
 // Possible inputs:
 //
@@ -13,50 +11,49 @@ const {
 // * "CSS selector" (for example: "#elementID")
 // * "XPath" (for example: "//*[@id='elementID']")
 function parseClick(parser) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a position or a CSS selector or an XPath, found nothing'};
-    } else if (elems.length !== 1) {
-        return {
-            'error': 'expected a position or a CSS selector or an XPath, ' +
-                `found \`${parser.getRawArgs()}\``,
-        };
-    } else if (elems[0].kind === 'string') {
-        const selector = elems[0].getSelector();
-        if (selector.error !== undefined) {
-            return selector;
-        }
-        const varName = 'parseClickVar';
-
-        const isPseudo = !selector.isXPath && selector.pseudo !== null;
-        const warnings = [];
-        if (isPseudo) {
-            warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) can't be retrieved so \
-\`click\` will be performed on the element directly`);
-        }
-
-        return {
-            'instructions': [
-                getAndSetElements(selector, varName, false) + '\n' +
-                `await ${varName}.click();`,
+    const number = {
+        kind: 'number',
+        allowFloat: false,
+        allowNegative: false,
+    };
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [number, number],
+            alternatives: [
+                { kind: 'selector' },
             ],
-            'warnings': warnings.length !== 0 ? warnings : undefined,
-        };
-    } else if (elems[0].kind !== 'tuple') {
-        return {
-            'error': 'expected a position or a CSS selector or an XPath, ' +
-                `found \`${parser.getRawArgs()}\``};
-    }
-    const ret = checkIntegerTuple(elems[0], 'X position', 'Y position');
-    if (ret.error !== undefined) {
+        },
+    );
+    if (hasError(ret)) {
         return ret;
     }
-    const [x, y] = ret.value;
+
+    const p = ret.value;
+
+    if (p.kind === 'tuple') {
+        const tuple = p.entries;
+        return {
+            'instructions': [
+                `await page.mouse.click(${tuple[0].value.value}, ${tuple[1].value.value});`,
+            ],
+        };
+    }
+    const selector = p;
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+    const warnings = [];
+    if (isPseudo) {
+        warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) can't be retrieved so \
+\`click\` will be performed on the element directly`);
+    }
+    const varName = 'parseClickVar';
+
     return {
         'instructions': [
-            `await page.mouse.click(${x}, ${y});`,
+            getAndSetElements(selector, varName, false) + '\n' +
+            `await ${varName}.click();`,
         ],
+        'warnings': warnings,
     };
 }
 
@@ -64,61 +61,56 @@ function parseClick(parser) {
 //
 // * ("CSS selector"|"XPath", {"x"|"y": [number]})
 function parseClickWithOffset(parser) {
-    const elems = parser.elems;
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                {
+                    kind: 'selector',
+                },
+                {
+                    kind: 'json',
+                    keyTypes: {
+                        string: ['x', 'y'],
+                    },
+                    valueTypes: {
+                        number: {
+                            allowFloat: false,
+                            allowNegative: true,
+                        },
+                    },
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
+    }
 
-    if (elems.length === 0) {
-        return {'error': 'expected a tuple, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': `expected a tuple, found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        return {
-            'error': 'expected `(["CSS Selector"|"XPath"], [JSON])`, ' +
-                `found \`${elems[0].getErrorText()}\``,
-        };
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected first argument of tuple to be a "CSS selector" or ' +
-                `an "XPath", found \`${tuple[0].getErrorText()}\``,
-        };
-    } else if (tuple[1].kind !== 'json') {
-        return {
-            'error': 'expected second argument of tuple to be a JSON dictionary, found ' +
-                `\`${tuple[1].getErrorText()}\``,
-        };
-    }
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
 
-    const json = tuple[1].getRaw();
-    const entries = validateJson(json, {'number': []}, 'JSON dict key', ['x', 'y']);
-    if (entries.error !== undefined) {
-        return entries;
-    }
-    const values = buildPropertyDict(entries, 'JSON dict key', false, false);
-    if (values.error !== undefined) {
-        return values;
-    }
-    const selector = tuple[0].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
+    const warnings = [];
     const varName = 'parseClickWithOffsetVar';
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
-        entries.warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) can't be retrieved so \
+        warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) can't be retrieved so \
 \`click\` will be performed on the element directly`);
+    }
+
+    const content = [];
+    for (const [key, value] of tuple[1].value.entries) {
+        content.push(`"${key}": ${value.value}`);
     }
 
     return {
         'instructions': [`\
 ${getAndSetElements(selector, varName, false)}
 await ${varName}.click({
-    "offset": {${values.dict}},
+    "offset": {${content.join(', ')}},
 });`,
         ],
-        'warnings': entries.warnings,
+        'warnings': warnings,
     };
 }
 
@@ -127,17 +119,12 @@ await ${varName}.click({
 // * "CSS selector" (for example: "#elementID")
 // * "XPath" (for example: "//*[@id='elementID']")
 function parseFocus(parser) {
-    const elems = parser.elems;
+    const ret = validator(parser, { kind: 'selector' });
+    if (hasError(ret)) {
+        return ret;
+    }
 
-    if (elems.length === 0) {
-        return {'error': 'expected a CSS selector or an XPath, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'string') {
-        return {'error': `expected a CSS selector or an XPath, found \`${parser.getRawArgs()}\``};
-    }
-    const selector = elems[0].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
+    const selector = ret.value;
     if (selector.isXPath) {
         const varName = 'parseFocusVar';
         return {
@@ -156,92 +143,98 @@ function parseFocus(parser) {
 
 // Possible inputs:
 //
-// * ("CSS selector" or "XPath", "text")
-// * ("CSS selector" or "XPath", keycode)
 // * "text" (in here, it'll write into the current focused element)
 // * keycode (in here, it'll write the given keycode into the current focused element)
 function parseWrite(parser) {
-    const err = 'expected "string" or integer or ("CSS selector" or "XPath", "string") or ' +
-        '("CSS selector" or "XPath", integer)';
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': err + ', found nothing'};
-    } else if (elems.length !== 1) {
-        return {'error': err + `, found \`${parser.getRawArgs()}\``};
-    } else if (elems[0].kind === 'string') {
-        return {
-            'instructions': [
-                `await page.keyboard.type("${elems[0].getStringValue()}");`,
-            ],
-        };
-    } else if (elems[0].kind === 'number') {
-        const ret = elems[0].getIntegerValue('keycode', true);
-        if (ret.error !== undefined) {
-            return ret;
-        }
-        return {
-            'instructions': [
-                `await page.keyboard.press(String.fromCharCode(${ret.value}));`,
-            ],
-        };
-    } else if (elems[0].kind !== 'tuple') {
-        return {'error': err + `, found \`${parser.getRawArgs()}\``};
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        return {
-            'error': 'invalid number of arguments in tuple, ' + err,
-        };
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected a CSS selector or an XPath as tuple first argument, found ' +
-                tuple[0].getArticleKind(),
-        };
-    } else if (tuple[1].kind !== 'string' && tuple[1].kind !== 'number') {
-        return {
-            'error': 'expected a string or an integer as tuple second argument, found ' +
-                tuple[1].getArticleKind(),
-        };
-    }
-    const selector = tuple[0].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
-    const varName = 'parseWriteVar';
-    if (tuple[1].kind === 'string') {
-        if (selector.isXPath) {
-            return {
-                'instructions': [
-                    getAndSetElements(selector, varName, false) + '\n' +
-                    `await ${varName}.type("${tuple[1].getStringValue()}");`,
-                ],
-            };
-        }
-        return {
-            'instructions': [
-                `await page.type("${selector.value}", "${tuple[1].getStringValue()}");`,
-            ],
-        };
-    }
-    const ret = tuple[1].getIntegerValue('keycode', true);
-    if (ret.error !== undefined) {
+    const ret = validator(parser, {
+        kind: 'string',
+        alternatives: [
+            {
+                kind: 'number',
+                allowNegative: false,
+                allowFloat: false,
+            },
+        ],
+    });
+    if (hasError(ret)) {
         return ret;
     }
-    if (selector.isXPath) {
+
+    const value = ret.value;
+    if (value.kind === 'number') {
         return {
             'instructions': [
-                getAndSetElements(selector, varName, false) + '\n' +
-                `${varName}.focus();`,
-                `await page.keyboard.press(String.fromCharCode(${ret.value}));`,
+                `await page.keyboard.press(String.fromCharCode(${value.value}));`,
             ],
         };
     }
     return {
         'instructions': [
-            `await page.focus("${selector.value}");`,
-            `await page.keyboard.press(String.fromCharCode(${ret.value}));`,
+            `await page.keyboard.type("${value.getStringValue()}");`,
         ],
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector" or "XPath", "text")
+// * ("CSS selector" or "XPath", keycode)
+function parseWriteInto(parser) {
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'string',
+                alternatives: [
+                    {
+                        kind: 'number',
+                        allowNegative: false,
+                        allowFloat: false,
+                    },
+                ],
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+    const varName = 'parseWriteVar';
+    const value = tuple[1].value;
+    if (value.kind === 'string') {
+        if (selector.isXPath) {
+            return {
+                'instructions': [
+                    getAndSetElements(selector, varName, false) + '\n' +
+                    `await ${varName}.type("${value.getStringValue()}");`,
+                ],
+            };
+        }
+        return {
+            'instructions': [
+                `await page.type("${selector.value}", "${value.getStringValue()}");`,
+            ],
+        };
+    }
+    let content = '';
+    if (selector.isXPath) {
+        content += `\
+${getAndSetElements(selector, varName, false)}
+${varName}.focus();
+await ${varName}`;
+    } else {
+        content += `await page.focus("${selector.value}");
+page`;
+    }
+
+    content += `.keyboard.press(String.fromCharCode(${value.value}));`;
+    return {
+        'instructions': [content],
     };
 }
 
@@ -256,79 +249,63 @@ function parseWrite(parser) {
 // The key codes (both strings and integers) can be found here:
 // https://github.com/puppeteer/puppeteer/blob/v1.14.0/lib/USKeyboardLayout.js
 function parsePressKey(parser) {
-    const elems = parser.elems;
-    const err = 'expected [string] or [integer] or ([string], [integer]) or ([integer], [integer])';
-
-    if (elems.length === 0) {
-        return {'error': err + ', found nothing'};
-    } else if (elems.length !== 1) {
-        return {'error': err + `, found \`${parser.getRawArgs()}\``};
-    } else if (elems[0].kind === 'string') {
-        const s = elems[0].getStringValue();
-        if (s.length === 0) {
-            return {'error': 'key cannot be empty'};
-        }
-        return {
-            'instructions': [
-                `await page.keyboard.press("${s}")`,
-            ],
-        };
-    } else if (elems[0].kind === 'number') {
-        const ret = elems[0].getIntegerValue('keycode', true);
-        if (ret.error !== undefined) {
-            return ret;
-        }
-        return {
-            'instructions': [
-                'await page.keyboard.press(String.fromCharCode' +
-                `(${ret.value}))`,
-            ],
-        };
-    } else if (elems[0].kind !== 'tuple') {
-        return {'error': err + `, found \`${parser.getRawArgs()}\``};
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        return {
-            'error': 'invalid number of arguments in tuple, ' + err,
-        };
-    } else if (tuple[0].kind !== 'string' && tuple[0].kind !== 'number') {
-        return {
-            'error': 'expected a string or an integer as tuple first argument, found ' +
-                tuple[0].getArticleKind(),
-        };
-    } else if (tuple[1].kind !== 'number') {
-        return {
-            'error':
-            `expected an integer as tuple second argument, found ${tuple[1].getArticleKind()}`,
-        };
-    }
-    // First we get the delay value.
-    const ret = tuple[1].getIntegerValue('delay', true);
-    if (ret.error !== undefined) {
+    const number = {
+        kind: 'number',
+        allowNegative: false,
+        allowFloat: false,
+    };
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'string',
+                allowEmpty: false,
+                alternatives: [number],
+            },
+            number,
+        ],
+        alternatives: [
+            {
+                kind: 'string',
+                allowEmpty: false,
+            },
+            number,
+        ],
+    });
+    if (hasError(ret)) {
         return ret;
     }
-    const delay = `, ${ret.value}`;
 
-    // Then we get the keycode.
-    if (tuple[0].kind === 'string') {
-        const s = tuple[0].getStringValue();
-        if (s.length === 0) {
-            return {'error': 'key cannot be empty'};
-        }
+    const value = ret.value;
+    if (value.kind === 'number') {
         return {
             'instructions': [
-                `await page.keyboard.press("${s}"${delay})`,
+                `await page.keyboard.press(String.fromCharCode(${value.value}))`,
+            ],
+        };
+    } else if (value.kind === 'string') {
+        return {
+            'instructions': [
+                `await page.keyboard.press("${value.getStringValue()}")`,
             ],
         };
     }
-    const ret2 = tuple[0].getIntegerValue('keycode', true);
-    if (ret2.error !== undefined) {
-        return ret2;
+
+    const tuple = value.entries;
+    // First we get the delay value.
+    const delay = tuple[1].value.value;
+
+    // Then we get the keycode.
+    if (tuple[0].value.kind === 'string') {
+        return {
+            'instructions': [
+                `await page.keyboard.press("${tuple[0].value.getStringValue()}", ${delay})`,
+            ],
+        };
     }
     return {
         'instructions': [
-            `await page.keyboard.press(String.fromCharCode(${ret2.value})${delay})`,
+            `await page.keyboard.press(String.fromCharCode(${tuple[0].value.value}), ${delay})`,
         ],
     };
 }
@@ -339,48 +316,43 @@ function parsePressKey(parser) {
 // * "CSS selector" (for example: "#elementID")
 // * "XPath" (for example: "//*[@id='elementID']")
 function parseMoveCursorTo(parser) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected a position or a CSS selector or an XPath, found nothing'};
-    } else if (elems.length !== 1) {
-        return {
-            'error': 'expected a position or a CSS selector or an XPath, ' +
-                `found \`${parser.getRawArgs()}\``,
-        };
-    } else if (elems[0].kind === 'string') {
-        const selector = elems[0].getSelector();
-        if (selector.error !== undefined) {
-            return selector;
-        }
-        if (selector.isXPath) {
-            const varName = 'parseMoveCursorToVar';
-            return {
-                'instructions': [
-                    getAndSetElements(selector, varName, false) + '\n' +
-                    `await ${varName}.hover();`,
-                ],
-            };
-        }
-        return {
-            'instructions': [
-                `await page.hover("${selector.value}");`,
-            ],
-        };
-    } else if (elems[0].kind !== 'tuple') {
-        return {
-            'error': 'expected a position or a CSS selector or an XPath, ' +
-                `found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const ret = checkIntegerTuple(elems[0], 'X position', 'Y position', true);
-    if (ret.error !== undefined) {
+    const number = {
+        kind: 'number',
+        allowNegative: false,
+        allowFloat: false,
+    };
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [number, number],
+        alternatives: [
+            { kind: 'selector' },
+        ],
+    });
+    if (hasError(ret)) {
         return ret;
     }
-    const [x, y] = ret.value;
+
+    const value = ret.value;
+    if (value.kind === 'tuple') {
+        const [x, y] = value.entries;
+        return {
+            'instructions': [
+                `await page.mouse.move(${x.value.value}, ${y.value.value});`,
+            ],
+        };
+    }
+    if (value.isXPath) {
+        const varName = 'parseMoveCursorToVar';
+        return {
+            'instructions': [`\
+${getAndSetElements(value, varName, false)}
+await ${varName}.hover();`,
+            ],
+        };
+    }
     return {
         'instructions': [
-            `await page.mouse.move(${x}, ${y});`,
+            `await page.hover("${value.value}");`,
         ],
     };
 }
@@ -398,83 +370,54 @@ function parseScrollTo(parser) {
 // Possible inputs:
 //
 // * ((x, y), (x, y))
-// * ((x, y), "CSS selector")
-// * ("CSS selector", (x, y))
-// * ("XPath", (x, y))
-// * ("CSS selector" or "XPath", "CSS selector" or "XPath")
+// * ((x, y), "selector")
+// * ("selector", (x, y))
+// * ("selector", "selector")
 function parseDragAndDrop(parser) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {
-            'error': 'expected tuple with two elements being either a position `(x, y)` or a ' +
-                'CSS selector or an XPath, found nothing',
-        };
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': 'expected tuple with two elements being either a position `(x, y)` or a ' +
-                `CSS selector or an XPath, found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        return {
-            'error': 'expected tuple with two elements being either a position `(x, y)` or a ' +
-                'CSS selector or an XPath',
-        };
-    }
-    const checkArg = arg => {
-        if (arg.kind !== 'tuple' && arg.kind !== 'string') {
-            return {
-                'error': 'expected tuple with two elements being either a position `(x, y)` or a ' +
-                    `CSS selector or an XPath, found \`${arg.getErrorText()}\``,
-            };
-        } else if (arg.kind === 'tuple') {
-            const ret = checkIntegerTuple(arg, 'X position', 'Y position', true);
-            if (ret.error !== undefined) {
-                return ret;
-            }
-        }
-        return Object.create(null);
+    const number = {
+        kind: 'number',
+        allowNegative: false,
+        allowFloat: false,
     };
-    let ret = checkArg(tuple[0]);
-    if (ret.error !== undefined) {
+    const tupleValidator = {
+        kind: 'tuple',
+        elements: [number, number],
+    };
+    const selectorOrTuple = {
+        kind: 'selector',
+        alternatives: [tupleValidator],
+    };
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [selectorOrTuple, selectorOrTuple],
+    });
+    if (hasError(ret)) {
         return ret;
     }
-    ret = checkArg(tuple[1]);
-    if (ret.error !== undefined) {
-        return ret;
-    }
-    const instructions = [];
-    const setupThings = (arg, varName, posName, pos) => {
+
+    const tuple = ret.value.entries;
+
+    function setupThings(arg, varName, posName) {
         let code = '';
-        if (arg.kind === 'string') {
-            const selector = arg.getSelector(`(${pos} argument)`);
-            if (selector.error !== undefined) {
-                return selector;
-            }
+        if (arg.kind !== 'tuple') {
             const box = `${varName}_box`;
-            code += getAndSetElements(selector, varName, false) + '\n' +
+            code += getAndSetElements(arg.value, varName, false) + '\n' +
                 `const ${box} = await ${varName}.boundingBox();\n` +
                 `const ${posName} = [${box}.x + ${box}.width / 2, ${box}.y + ${box}.height / 2];\n`;
         } else {
-            const elems = arg.getRaw();
-            code += `const ${posName} = [${elems[0].getRaw()}, ${elems[1].getRaw()}];\n`;
+            const args = arg.value.entries;
+            code += `const ${posName} = [${args[0].value.getRaw()}, ${args[1].value.getRaw()}];\n`;
         }
         return `${code}await page.mouse.move(${posName}[0], ${posName}[1]);`;
-    };
-    ret = setupThings(tuple[0], 'parseDragAndDropElem', 'start', 'first');
-    if (ret.error !== undefined) {
-        return ret;
     }
-    instructions.push(ret + '\nawait page.mouse.down();');
-    ret = setupThings(tuple[1], 'parseDragAndDropElem2', 'end', 'second');
-    if (ret.error !== undefined) {
-        return ret;
-    }
-    instructions.push(ret + '\nawait page.mouse.up();');
+
     return {
-        'instructions': instructions,
+        'instructions': [`\
+${setupThings(tuple[0], 'parseDragAndDropElem', 'start')}
+await page.mouse.down();
+${setupThings(tuple[1], 'parseDragAndDropElem2', 'end')}
+await page.mouse.up();`,
+        ],
     };
 }
 
@@ -487,4 +430,5 @@ module.exports = {
     'parsePressKey': parsePressKey,
     'parseScrollTo': parseScrollTo,
     'parseWrite': parseWrite,
+    'parseWriteInto': parseWriteInto,
 };
