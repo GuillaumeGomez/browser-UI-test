@@ -1,6 +1,6 @@
 // List commands handling inputs.
 
-const { getAndSetElements, checkIntegerTuple } = require('./utils.js');
+const { getAndSetElements } = require('./utils.js');
 const { validator } = require('../validator.js');
 // Not the same `utils.js`!
 const { hasError } = require('../utils.js');
@@ -409,7 +409,7 @@ function parseDragAndDrop(parser) {
             code += `const ${posName} = [${args[0].value.getRaw()}, ${args[1].value.getRaw()}];\n`;
         }
         return `${code}await page.mouse.move(${posName}[0], ${posName}[1]);`;
-    };
+    }
 
     return {
         'instructions': [`\
