@@ -1,1 +1,1 @@
-error = """expected first element of the tuple to be a number, found `\"12\"` (a string)"""
+error = """expected a number, found `\"12\"` (a string) (first element of the tuple)"""

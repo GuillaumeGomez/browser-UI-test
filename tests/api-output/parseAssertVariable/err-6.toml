@@ -1,1 +1,1 @@
-error = """expected second element of the tuple to be a JSON dict, a string or a number, found `b` (an ident)"""
+error = """expected a JSON dict, a string or a number, found `b` (an ident) (second element of the tuple)"""

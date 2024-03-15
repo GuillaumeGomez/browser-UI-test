@@ -1,1 +1,1 @@
-error = """expected a CSS selector or an XPath as first tuple element, found `1` (a number)"""
+error = """expected a selector, found `1` (a number) (first element of the tuple)"""

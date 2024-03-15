@@ -1,1 +1,1 @@
-error = """only number type is allowed as value, found `\"\"` (a string)"""
+error = """type \"string\" (`\"\"`) is not allowed as value in this JSON dict, allowed types are: [`number`] (second element of the tuple)"""

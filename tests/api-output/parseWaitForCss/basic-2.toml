@@ -63,6 +63,4 @@ while (true) {
 }""",
 ]
 wait = false
-warnings = [
-]
 checkResult = true

@@ -1,1 +1,1 @@
-error = """expected second element of the tuple to be a selector, found `1` (a number)"""
+error = """expected a selector, found `1` (a number) (second element of the tuple)"""
