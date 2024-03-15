@@ -18,72 +18,6 @@ function getAndSetElements(selector, varName, checkAllElements) {
     return code;
 }
 
-function validateJson(json, allowedValueTypes, keyName, allowedKeys = null) {
-    const entries = Object.create(null);
-    const warnings = [];
-
-    for (const entry of json) {
-        if (entry['value'] === undefined) {
-            warnings.push(`No value for key \`${entry['key'].getErrorText()}\``);
-            continue;
-        } else if (!Object.prototype.hasOwnProperty.call(allowedValueTypes, entry['value'].kind)) {
-            let allowed = '';
-            const types = Object.keys(allowedValueTypes);
-            // Keep this loop like this because of `length - 1`!!
-            for (let i = 0; i < types.length - 1; ++i) {
-                if (allowed.length !== 0) {
-                    allowed += ', ';
-                }
-                allowed += types[i];
-            }
-            if (allowed.length !== 0) {
-                allowed += ' and ';
-            }
-            allowed += types[types.length - 1];
-            const article = types.length > 1 ? 'are' : 'is';
-            const extra = types.length > 1 ? 's' : '';
-            return {
-                'error': `only ${allowed} type${extra} ${article} allowed as value, found \`` +
-                    `${entry['value'].getErrorText()}\` (${entry['value'].getArticleKind()})`,
-            };
-        }
-        const key_s = entry['key'].getStringValue();
-        if (key_s.length < 1) {
-            return {
-                'error': 'empty name of properties ("" or \'\') are not allowed',
-            };
-        }
-        const kind = entry['value'].kind;
-        const value_s = entry['value'].getStringValue();
-        const allowedValues = allowedValueTypes[kind];
-        // If `allowedValues` is empty, all values are allowed. Otherwise, only the provided values
-        // can be used.
-        if (allowedValues.length !== 0 && allowedValues.indexOf(value_s) === -1) {
-            return {
-                'error': `Forbidden \`${kind}\` used (\`${value_s}\`). Allowed idents: \
-[${allowedValues.join(', ')}]`,
-            };
-        }
-        if (Object.prototype.hasOwnProperty.call(entries, key_s)) {
-            return {
-                'error': `${keyName} \`${key_s}\` is duplicated`,
-            };
-        } else if (allowedKeys !== null && allowedKeys.indexOf(key_s) === -1) {
-            return {
-                'error': `Unexpected key \`${key_s}\`, allowed keys: [${allowedKeys.join(', ')}]`,
-            };
-        }
-        entries[key_s] = {
-            'value': value_s,
-            'kind': kind,
-        };
-    }
-    return {
-        'values': entries,
-        'warnings': warnings,
-    };
-}
-
 function getInsertStrings(assertFalse, insideLoop, extra = '', backlineAtEnd = true) {
     const backlineStart = backlineAtEnd === true ? '' : '\n';
     const backlineEnd = backlineAtEnd === true ? '\n' : '';
@@ -98,55 +32,6 @@ function getInsertStrings(assertFalse, insideLoop, extra = '', backlineAtEnd = t
         }
     }
     return ['', ''];
-}
-
-function fillEnabledChecks(elem, identifiers, enabled_checks, warnings, err_pos) {
-    if (elem.kind === 'ident') {
-        if (identifiers.indexOf(elem.getRaw()) === -1) {
-            return {
-                'error': `unknown identifier \`${elem.getRaw()}\`. Available identifiers ` +
-                    'are: [' + identifiers.map(x => `\`${x}\``).join(', ') + ']',
-            };
-        }
-        enabled_checks[elem.getRaw()] = true;
-    } else if (elem.kind === 'array') {
-        const array = elem.getRaw();
-        const duplicated = new Set();
-
-        if (array.length > 0 && array[0].kind !== 'ident') {
-            return {
-                'error': `expected an identifier or an array of identifiers as ${err_pos} ` +
-                    'argument (among ' + identifiers.map(x => `\`${x}\``).join(', ') +
-                    `), found an array of \`${array[0].kind}\` (in \`${elem.getErrorText()}\`)`,
-            };
-        }
-
-        for (const entry of array) {
-            if (identifiers.indexOf(entry.getRaw()) === -1) {
-                return {
-                    'error': `unknown identifier \`${entry.getRaw()}\`. Available identifiers` +
-                        ' are: [' + identifiers.map(x => `\`${x}\``).join(', ') + ']',
-                };
-            }
-            if (enabled_checks[entry.getRaw()] === true) {
-                duplicated.add(entry.getRaw());
-            } else {
-                enabled_checks[entry.getRaw()] = true;
-            }
-        }
-        for (const duplicata of duplicated) {
-            warnings.push(
-                `\`${duplicata}\` is present more than once in the ${err_pos} argument array`);
-        }
-    } else {
-        return {
-            'error': 'expected an identifier or an array of identifiers (among ' +
-                identifiers.map(x => `\`${x}\``).join(', ') +
-                `) as ${err_pos} argument or nothing, found \`${elem.getRaw()}\` ` +
-                `(${elem.getArticleKind()})`,
-        };
-    }
-    return null;
 }
 
 function fillEnabledChecksV2(elem, enabled_checks, warnings, err_pos) {
@@ -175,21 +60,10 @@ function fillEnabledChecksV2(elem, enabled_checks, warnings, err_pos) {
     return null;
 }
 
-// FIXME: to be removed once all `enabledChecks` will be `Set` type.
-function has(obj, key) {
-    return typeof obj.has === 'function' ?
-        obj.has(key) : Object.prototype.hasOwnProperty.call(obj, key);
-}
-
-// FIXME: to be removed once all `enabledChecks` will be `Set` type.
-function get(obj, key) {
-    return typeof obj.has === 'function' ? obj.get(key) : obj[key];
-}
-
 function makeExtendedChecks(enabledChecks, assertFalse, pushTo, kind, storedVar, varKey, varValue) {
     const checks = [];
 
-    if (has(enabledChecks, 'CONTAINS')) {
+    if (enabledChecks.has('CONTAINS')) {
         if (assertFalse) {
             checks.push(`\
 if (${storedVar}.includes(${varValue})) {
@@ -204,7 +78,7 @@ if (!${storedVar}.includes(${varValue})) {
 }`);
         }
     }
-    if (has(enabledChecks, 'STARTS_WITH')) {
+    if (enabledChecks.has('STARTS_WITH')) {
         if (assertFalse) {
             checks.push(`\
 if (${storedVar}.startsWith(${varValue})) {
@@ -219,7 +93,7 @@ if (!${storedVar}.startsWith(${varValue})) {
 }`);
         }
     }
-    if (has(enabledChecks, 'ENDS_WITH')) {
+    if (enabledChecks.has('ENDS_WITH')) {
         if (assertFalse) {
             checks.push(`\
 if (${storedVar}.endsWith(${varValue})) {
@@ -234,7 +108,7 @@ if (!${storedVar}.endsWith(${varValue})) {
 }`);
         }
     }
-    if (has(enabledChecks, 'NEAR')) {
+    if (enabledChecks.has('NEAR')) {
         checks.push(`\
 const tmpNb = parseFloat(${storedVar});
 const tmpNb2 = parseFloat(${varValue});
@@ -259,8 +133,7 @@ ${varValue} + '\` (for NEAR check)');
         }
     }
     // eslint-disable-next-line no-extra-parens
-    const hasSpecialChecks = (
-        has(enabledChecks, 'ALL') && checks.length > 1) || checks.length !== 0;
+    const hasSpecialChecks = checks.length !== 0;
     if (checks.length === 0) {
         if (assertFalse) {
             checks.push(`\
@@ -286,7 +159,7 @@ if (${storedVar} !== ${varValue}) {
 function makeTextExtendedChecks(enabledChecks, assertFalse) {
     const checks = [];
 
-    if (has(enabledChecks, 'CONTAINS')) {
+    if (enabledChecks.has('CONTAINS')) {
         if (assertFalse) {
             checks.push(`\
 if (elemText.includes(value)) {
@@ -299,7 +172,7 @@ if (!elemText.includes(value)) {
 }`);
         }
     }
-    if (has(enabledChecks, 'STARTS_WITH')) {
+    if (enabledChecks.has('STARTS_WITH')) {
         if (assertFalse) {
             checks.push(`\
 if (elemText.startsWith(value)) {
@@ -313,7 +186,7 @@ check)");
 }`);
         }
     }
-    if (has(enabledChecks, 'ENDS_WITH')) {
+    if (enabledChecks.has('ENDS_WITH')) {
         if (assertFalse) {
             checks.push(`\
 if (elemText.endsWith(value)) {
@@ -342,43 +215,6 @@ if (elemText !== value) {
     return checks;
 }
 
-function buildPropertyDict(entries, errorText, allowEmptyValues, valuesAsStrings = true) {
-    const ret = {
-        'needColorCheck': false,
-        'dict': '',
-        'keys': [],
-        'values': [],
-    };
-
-    // JSON.stringify produces a problematic output so instead we use this.
-    for (const [k, v] of Object.entries(entries.values)) {
-        if (k.length === 0) {
-            return {
-                'error': `Empty ${errorText} keys ("" or '') are not allowed`,
-            };
-        } else if (v.value.length === 0 && allowEmptyValues !== true) {
-            return {
-                'error': `Empty values are not allowed: \`${k}\` has an empty value`,
-            };
-        }
-        if (k === 'color') {
-            ret['needColorCheck'] = true;
-        }
-        if (ret['dict'].length > 0) {
-            ret['dict'] += ',';
-        }
-        if (valuesAsStrings === true) {
-            ret['dict'] += `"${k}":"${v.value}"`;
-            ret['values'].push(`"${v.value}"`);
-        } else {
-            ret['dict'] += `"${k}":${v.value}`;
-            ret['values'].push(`${v.value}`);
-        }
-        ret['keys'].push(`"${k}"`);
-    }
-    return ret;
-}
-
 function indentString(s, indentLevel) {
     let indent = '';
 
@@ -396,50 +232,6 @@ function indentString(s, indentLevel) {
         }
         return p;
     }).join('\n');
-}
-
-function checkJsonEntry(json, callback) {
-    const warnings = [];
-
-    for (const entry of json) {
-        if (entry['value'] === undefined) {
-            warnings.push(`No value for key \`${entry['key'].getErrorText()}\``);
-            continue;
-        } else if (entry['value'].isRecursive() === true) {
-            warnings.push(`Ignoring recursive entry with key \`${entry['key'].getErrorText()}\``);
-            continue;
-        }
-        callback(entry);
-    }
-    return warnings;
-}
-
-function validatePositionDict(json) {
-    const entries = validateJson(json.getRaw(), {'number': []}, 'JSON dict key');
-
-    if (entries.error !== undefined) {
-        return entries;
-    }
-
-    let checks = '';
-    for (const [key, value] of Object.entries(entries.values)) {
-        if (key === 'x') {
-            checks += `
-checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', ${value.value}, innerErrors);`;
-        } else if (key === 'y') {
-            checks += `
-checkAssertPosBrowser(elem, 'top', 'marginTop', 'Y', ${value.value}, innerErrors);`;
-        } else {
-            return {
-                'error': 'Only accepted keys are "x" and "y", found `' +
-                    `"${key}"\` (in \`${json.getErrorText()}\`)`,
-            };
-        }
-    }
-    return {
-        'checks': checks,
-        'warnings': entries.warnings,
-    };
 }
 
 function validatePositionDictV2(json) {
@@ -534,7 +326,7 @@ function commonSizeCheckCode(
     selector, checkAllElements, assertFalse, json, varName, errorsVarName,
 ) {
     const checks = [];
-    const width = get(json, 'width');
+    const width = json.get('width');
     if (width !== undefined) {
         if (assertFalse) {
             checks.push(`\
@@ -549,7 +341,7 @@ if (width !== ${width.value}) {
         }
     }
 
-    const height = get(json, 'height');
+    const height = json.get('height');
     if (height !== undefined) {
         if (assertFalse) {
             checks.push(`\
@@ -592,17 +384,12 @@ ${checker}`;
 
 module.exports = {
     'getAndSetElements': getAndSetElements,
-    'validateJson': validateJson,
     'getInsertStrings': getInsertStrings,
-    'fillEnabledChecks': fillEnabledChecks,
     'fillEnabledChecksV2': fillEnabledChecksV2,
-    'buildPropertyDict': buildPropertyDict,
     'indentString': indentString,
-    'checkJsonEntry': checkJsonEntry,
     'makeExtendedChecks': makeExtendedChecks,
     'makeTextExtendedChecks': makeTextExtendedChecks,
     'getSizes': getSizes,
-    'validatePositionDict': validatePositionDict,
     'validatePositionDictV2': validatePositionDictV2,
     'commonPositionCheckCode': commonPositionCheckCode,
     'commonSizeCheckCode': commonSizeCheckCode,

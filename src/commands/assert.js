@@ -971,10 +971,10 @@ function parseAssertPositionInner(parser, assertFalse) {
     const jsonValidator = {
         kind: 'json',
         keyTypes: {
-            'string': ['x', 'y'],
+            string: ['x', 'y'],
         },
         valueTypes: {
-            'number': {
+            number: {
                 allowNegative: true,
                 allowFloat: true,
             },
