@@ -1,1 +1,1 @@
-error = """expected a boolean, found nothing"""
+error = """expected a boolean or a selector, found nothing"""

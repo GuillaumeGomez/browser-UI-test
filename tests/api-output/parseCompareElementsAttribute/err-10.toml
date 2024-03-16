@@ -1,1 +1,1 @@
-error = """expected third element of the tuple to be an array, found `\"b\"` (a string)"""
+error = """expected an array, found `\"b\"` (a string) (third element of the tuple)"""

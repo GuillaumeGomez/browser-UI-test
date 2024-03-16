@@ -63,6 +63,9 @@ class Validator {
         if (!VALIDATORS.has(allowedSyntax.kind)) {
             throw new Error(`Unknown kind "${allowedSyntax.kind}" (in validator)`);
         } else if (parser === undefined) {
+            if (allowedSyntax.optional) {
+                return {};
+            }
             return this.makeError(
                 `expected ${getArticleKind(allowedSyntax.kind)}, found nothing`,
                 { notExpectedKind: false, isEmpty: true },
@@ -88,11 +91,7 @@ class Validator {
         const ret = this.callValidator(parser, allowedSyntax);
         if (!hasError(ret)) {
             return ret;
-        } else if (!ret.typeError) {
-            if (ret.isEmpty && allowedSyntax.optional) {
-                // Having no input is allowed.
-                return {};
-            }
+        } else if (!ret.typeError && !ret.isEmpty) {
             return withExtraInfo(ret, tuplePosition);
         }
         let out = '';
@@ -103,7 +102,7 @@ class Validator {
             for (const syntax of allowedSyntax.alternatives) {
                 const sub_ret = this.callValidator(parser, syntax);
                 if (hasError(sub_ret)) {
-                    if (sub_ret.typeError) {
+                    if (sub_ret.typeError || sub_ret.isEmpty) {
                         continue;
                     }
                     return withExtraInfo(sub_ret, tuplePosition);
@@ -131,12 +130,9 @@ class Validator {
                 out += ` (one of ${listValues(allowedSyntax.allowed)})`;
             }
         }
-        const extra = tuplePosition !== null ?
-            `${nth_elem(tuplePosition)} element of the tuple to be ` :
-            '';
         const input = parser === undefined ?
             'nothing' : `\`${parser.getErrorText()}\` (${parser.getArticleKind()})`;
-        return this.makeError(`expected ${extra}${out}, found ${input}`);
+        return withExtraInfo(this.makeError(`expected ${out}, found ${input}`), tuplePosition);
     }
 }
 

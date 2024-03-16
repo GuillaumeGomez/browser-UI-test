@@ -1,1 +1,1 @@
-error = """unknown identifier `ALLO`. Available identifiers are: [`ALL`]"""
+error = """unexpected ident `ALLO` (third element of the tuple). Allowed idents are: [`ALL`]"""

@@ -1,1 +1,1 @@
-error = """unknown identifier `A`. Available identifiers are: [`ALL`, `CONTAINS`, `STARTS_WITH`, `ENDS_WITH`]"""
+error = """unexpected ident `A` (third element of the tuple). Allowed idents are: [`ALL`, `CONTAINS`, `ENDS_WITH`, `STARTS_WITH`]"""

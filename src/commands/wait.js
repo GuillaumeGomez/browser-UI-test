@@ -2,17 +2,17 @@
 
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 const {
-    buildPropertyDict,
-    validateJson,
     indentString,
-    checkJsonEntry,
-    fillEnabledChecks,
+    fillEnabledChecksV2,
     makeExtendedChecks,
     makeTextExtendedChecks,
-    validatePositionDict,
+    validatePositionDictV2,
     commonPositionCheckCode,
     commonSizeCheckCode,
 } = require('./utils.js');
+const { validator } = require('../validator.js');
+// Not the same `utils.js`!
+const { hasError } = require('../utils.js');
 
 function incrWait(error) {
     return `\
@@ -91,160 +91,63 @@ if (${varName}.length !== 0) {
 // Possible inputs:
 //
 // * Number of milliseconds
-// * "CSS selector" (for example: "#elementID")
-// * "XPath" (for example: "//a")
+// * "selector"
 function parseWaitFor(parser) {
-    const elems = parser.elems;
+    const ret = validator(parser, {
+        kind: 'selector',
+        alternatives: [
+            {
+                kind: 'number',
+                allowFloat: false,
+                allowNegative: false,
+                allowZero: false,
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
 
-    if (elems.length === 0) {
-        return {'error': 'expected an integer or a CSS selector or an XPath, found nothing'};
-    } else if (elems.length !== 1) {
-        return {
-            'error': 'expected an integer or a CSS selector or an XPath, ' +
-                `found \`${parser.getRawArgs()}\``,
-        };
-    } else if (elems[0].kind === 'number') {
-        const ret = elems[0].getIntegerValue('number of milliseconds', true);
-        if (ret.error !== undefined) {
-            return ret;
-        }
+    const value = ret.value;
+    if (value.kind === 'number') {
         return {
             'instructions': [
-                `await new Promise(r => setTimeout(r, ${ret.value}));`,
+                `await new Promise(r => setTimeout(r, ${ret.value.value}));`,
             ],
             'wait': false,
         };
-    } else if (elems[0].kind !== 'string') {
-        return {
-            'error': 'expected an integer or a CSS selector or an XPath, ' +
-                `found \`${parser.getRawArgs()}\``,
-        };
     }
-    const selector = elems[0].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
-    const [init, looper] = waitForElement(selector, 'parseWaitFor');
+    const [init, looper] = waitForElement(value, 'parseWaitFor');
     return {
         'instructions': [init + '\n' + looper],
         'wait': false,
     };
 }
 
-function waitForChecker(parser, allowExtra) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {
-            'error': 'expected a tuple with a string and a JSON dict, found nothing',
-        };
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': 'expected a tuple with a string and a JSON dict, ' +
-                `found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2 && (!allowExtra || tuple.length !== 3)) {
-        if (!allowExtra) {
-            return {
-                'error': 'expected a tuple with a string and a JSON dict, ' +
-                    `found \`${parser.getRawArgs()}\``,
-            };
-        } else {
-            return {
-                'error': 'invalid number of values in the tuple: expected 2 or 3, found ' +
-                    tuple.length,
-            };
-        }
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected a CSS selector or an XPath as first tuple element, ' +
-                `found \`${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
-        };
-    } else if (tuple[1].kind !== 'json') {
-        return {
-            'error': 'expected a JSON dict as second tuple element, ' +
-                `found \`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
-        };
-    }
-    const selector = tuple[0].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
-    return {
-        'tuple': tuple,
-        'json': tuple[1].getRaw(),
-        'selector': selector,
-    };
-}
-
-function waitForInitializer(parser, errorMessage, allowEmptyValues, allowExtra) {
-    const checker = waitForChecker(parser, allowExtra);
-    if (checker.error !== undefined) {
-        return checker;
-    }
-
-    const entries = validateJson(checker.json, {'string': [], 'number': []}, errorMessage);
-    if (entries.error !== undefined) {
-        return entries;
-    }
-
-    const propertyDict = buildPropertyDict(entries, errorMessage, allowEmptyValues);
-    if (propertyDict.error !== undefined) {
-        return propertyDict;
-    }
-
-    const selector = checker.selector;
-    return {
-        'selector': selector,
-        'warnings': entries.warnings,
-        'pseudo': !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '',
-        'propertyDict': propertyDict,
-        'tuple': checker.tuple,
-    };
-}
-
 // Possible inputs:
 //
-// * ("CSS selector", number)
-// * ("XPath", number)
+// * ("selector", number)
 function parseWaitForCount(parser) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {
-            'error': 'expected a tuple with a string and a number, found nothing',
-        };
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': 'expected a tuple with a string and a number, ' +
-                `found \`${parser.getRawArgs()}\``,
-        };
-    }
-    const tuple = elems[0].getRaw();
-    if (tuple.length !== 2) {
-        return {
-            'error': 'expected a tuple with a string and a number, ' +
-                `found \`${parser.getRawArgs()}\``,
-        };
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected a CSS selector or an XPath as first tuple element, ' +
-                `found \`${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
-        };
-    } else if (tuple[1].kind !== 'number') {
-        return {
-            'error': 'expected a number as second tuple element, ' +
-                `found \`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
-        };
-    }
-    const selector = tuple[0].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'number',
+                allowFloat: false,
+                allowNegative: false,
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
     }
 
-    const count = tuple[1].getRaw();
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+    const count = tuple[1].value.getRaw();
     const varName = 'parseWaitForCount';
     let method = '$$';
 
@@ -275,43 +178,35 @@ if (${varName} === ${count}) {
 //
 // * JSON dict
 function parseWaitForLocalStorage(parser) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected JSON, found nothing'};
-    } else if (elems.length !== 1 || elems[0].kind !== 'json') {
-        return {'error': `expected JSON, found \`${parser.getRawArgs()}\``};
+    const ret = validator(parser, {
+        kind: 'json',
+        keyTypes: {
+            string: [],
+        },
+        allowAllValues: true,
+        valueTypes: {
+            ident: {
+                allowed: ['null'],
+            },
+        },
+    });
+    if (hasError(ret)) {
+        return ret;
     }
 
-    const json = elems[0].getRaw();
-    let d = '';
-    let error = null;
+    const json = ret.value.entries;
 
-    const warnings = checkJsonEntry(json, entry => {
-        if (error !== null) {
-            return;
-        }
-        const key_s = entry['key'].getStringValue();
-        let value_s;
-        if (entry['value'].kind === 'ident') {
-            value_s = entry['value'].getStringValue();
-            if (value_s !== 'null') {
-                error = `Only \`null\` ident is allowed, found \`${value_s}\``;
-            }
+    const code = [];
+    for (const [key, value] of json) {
+        if (value.kind === 'ident') {
+            code.push(`"${key}": ${value.value}`);
         } else {
-            value_s = `"${entry['value'].getStringValue()}"`;
+            code.push(`"${key}": "${value.parser.getStringValue()}"`);
         }
-        if (d.length > 0) {
-            d += ',';
-        }
-        d += `"${key_s}":${value_s}`;
-    });
-    if (error !== null) {
-        return {'error': error};
-    } else if (d.length === 0) {
+    }
+    if (code.length === 0) {
         return {
             'instructions': [],
-            'warnings': warnings,
             'wait': false,
         };
     }
@@ -326,7 +221,9 @@ function parseWaitForLocalStorage(parser) {
         `\
 ${varName} = await page.evaluate(() => {
     const errors = [];
-    const ${varDict} = {${d}};
+    const ${varDict} = {
+${indentString(code.join(',\n'), 2)}
+    };
     for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
         let ${varName} = window.localStorage.getItem(${varKey});
         if (${varName} != ${varValue}) {
@@ -348,76 +245,82 @@ throw new Error("The following local storage entries still don't match: [" + err
         'instructions': [instructions.join('\n')],
         'wait': false,
         'checkResult': true,
-        'warnings': warnings,
     };
 }
 
 function parseWaitForObjectProperty(parser, objName) {
-    const elems = parser.elems;
-
-    if (elems.length === 0) {
-        return {'error': 'expected JSON or tuple, found nothing'};
-    // eslint-disable-next-line no-extra-parens
-    } else if (elems.length !== 1 || (elems[0].kind !== 'json' && elems[0].kind !== 'tuple')) {
-        return {'error': `expected JSON or tuple, found \`${parser.getRawArgs()}\``};
+    const identifiers = ['CONTAINS', 'ENDS_WITH', 'NEAR', 'STARTS_WITH'];
+    const jsonValidator = {
+        kind: 'json',
+        keyTypes: {
+            string: [],
+        },
+        allowAllValues: true,
+        valueTypes: {
+            ident: {
+                allowed: ['null'],
+            },
+        },
+    };
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            jsonValidator,
+            {
+                kind: 'ident',
+                allowed: identifiers,
+                optional: true,
+                alternatives: [
+                    {
+                        kind: 'array',
+                        valueTypes: {
+                            'ident': {
+                                allowed: identifiers,
+                            },
+                        },
+                    },
+                ],
+            },
+        ],
+        alternatives: [
+            jsonValidator,
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
     }
 
-    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH', 'NEAR'];
-    const enabledChecks = Object.create(null);
+    const value = ret.value;
+    // It's safe to do `value.entries` because it's either a json or an array, and both
+    // have `entries`.
+    let json = value.entries;
+    const enabledChecks = new Set();
     const warnings = [];
-    let json;
-    if (elems[0].kind === 'tuple') {
-        const tuple = elems[0].getRaw();
-        if (tuple.length < 1 || tuple.length > 2) {
-            return {
-                'error': `expected a tuple of one or two elements, found ${tuple.length} elements`,
-            };
-        } else if (tuple[0].kind !== 'json') {
-            return {
-                'error': 'expected first element of the tuple to be a JSON dict, found `' +
-                    `${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
-            };
-        }
-        json = tuple[0].getRaw();
-        if (tuple.length > 1) {
-            const ret = fillEnabledChecks(
-                tuple[1],
-                identifiers,
+    if (value.kind === 'tuple') {
+        json = value.entries[0].value.entries;
+        if (value.entries.length > 1) {
+            const checked = fillEnabledChecksV2(
+                value.entries[1],
                 enabledChecks,
                 warnings,
                 'second',
             );
-            if (ret !== null) {
-                return ret;
+            if (checked !== null) {
+                return checked;
             }
         }
-    } else {
-        json = elems[0].getRaw();
     }
-
-    let error = null;
 
     const undefProps = [];
     const values = [];
-    warnings.push(...checkJsonEntry(json, entry => {
-        if (error !== null) {
-            return;
-        }
-        const key_s = entry['key'].getStringValue();
-        if (entry['value'].kind === 'ident') {
-            const value_s = entry['value'].getStringValue();
-            if (value_s !== 'null') {
-                error = `Only \`null\` ident is allowed, found \`${value_s}\``;
-            }
-            undefProps.push(`"${key_s}"`);
+    for (const [key, value] of json) {
+        if (value.kind !== 'ident') {
+            values.push(`"${key}":"${value.parser.getStringValue()}"`);
         } else {
-            const value_s = `"${entry['value'].getStringValue()}"`;
-            values.push(`"${key_s}":${value_s}`);
+            undefProps.push(`"${key}"`);
         }
-    }));
-    if (error !== null) {
-        return {'error': error};
-    } else if (values.length === 0 && undefProps.length === 0) {
+    }
+    if (values.length === 0 && undefProps.length === 0) {
         return {
             'instructions': [],
             'warnings': warnings,
@@ -434,8 +337,8 @@ function parseWaitForObjectProperty(parser, objName) {
         enabledChecks, false, 'errors', `${objName} property`, varName, varKey, varValue);
 
     if (undefProps.length > 0 && hasSpecialChecks) {
-        const k = Object.entries(enabledChecks).map(([k, _]) => k);
-        warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
+        const k = [...enabledChecks].join(', ');
+        warnings.push(`Special checks (${k}) will be ignored for \`null\``);
     }
 
     const instructions = getWaitForElems(
@@ -493,28 +396,54 @@ function parseWaitForWindowProperty(parser) {
 
 // Possible inputs:
 //
-// * ("CSS selector", {"CSS property name": "expected CSS property value"})
-// * ("XPath", {"CSS property name": "expected CSS property value"})
-// * ("CSS selector", {"CSS property name": "expected CSS property value"}, ALL)
-// * ("XPath", {"CSS property name": "expected CSS property value"}, ALL)
+// * ("selector", {"CSS property name": "expected CSS property value"})
+// * ("selector", {"CSS property name": "expected CSS property value"}, ALL)
 function parseWaitForCss(parser) {
-    const data = waitForInitializer(parser, 'CSS property', false, true);
-    let checkAll = false;
-    if (data.error !== undefined) {
-        return data;
-    } else if (data.tuple.length === 3) {
-        if (data.tuple[2].kind !== 'ident') {
-            return {
-                'error': 'expected identifier `ALL` as third argument or nothing, found `' +
-                    `${data.tuple[2].getRaw()}\``,
-            };
-        } else if (data.tuple[2].getRaw() !== 'ALL') {
-            return {
-                'error': 'expected identifier `ALL` as third argument or nothing, found `' +
-                    `${data.tuple[2].getRaw()}\``,
-            };
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'json',
+                keyTypes: {
+                    string: [],
+                },
+                valueTypes: {
+                    string: {},
+                    number: {
+                        allowFloat: true,
+                        allowNegative: true,
+                    },
+                },
+            },
+            {
+                kind: 'ident',
+                allowed: ['ALL'],
+                optional: true,
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+    const json = tuple[1].value.entries;
+
+    const checkAll = tuple.length > 2;
+    let needColorCheck = false;
+    const keys = [];
+    const values = [];
+
+    for (const [key, value] of json) {
+        if (key === 'color') {
+            needColorCheck = true;
         }
-        checkAll = true;
+        keys.push(`"${key}"`);
+        values.push(`"${value.parser.getStringValue()}"`);
     }
 
     const varName = 'parseWaitForCss';
@@ -535,8 +464,7 @@ for (const elem of ${varName}) {
     }
 
     const instructions = [];
-    const propertyDict = data['propertyDict'];
-    if (propertyDict['needColorCheck']) {
+    if (needColorCheck) {
         instructions.push(`\
 if (!arg.showText) {
     throw "${COLOR_CHECK_ERROR}";
@@ -547,14 +475,15 @@ if (!arg.showText) {
 const props = nonMatchingProps.join(", ");
 throw new Error("The following CSS properties still don't match: [" + props + "]");`);
 
-    const [init, looper] = waitForElement(data['selector'], varName, checkAll);
+    const pseudo = !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '';
+    const [init, looper] = waitForElement(selector, varName, checkAll);
     instructions.push(`\
 const { checkCssProperty } = require('command-helpers.js');
 
 async function checkCssForElem(elem) {
     const jsHandle = await elem.evaluateHandle(e => {
-        const entries = [${propertyDict['keys'].join(',')}];
-        const assertComputedStyle = window.getComputedStyle(e${data['pseudo']});
+        const entries = [${keys.join(',')}];
+        const assertComputedStyle = window.getComputedStyle(e${pseudo});
         const simple = [];
         const computed = [];
         const keys = [];
@@ -567,7 +496,7 @@ async function checkCssForElem(elem) {
         return [keys, simple, computed];
     });
     const [keys, simple, computed] = await jsHandle.jsonValue();
-    const values = [${propertyDict['values'].join(',')}];
+    const values = [${values.join(',')}];
     const nonMatchingProps = [];
 
     for (const [i, key] of keys.entries()) {
@@ -591,7 +520,6 @@ ${indentString(incr, 1)}
     return {
         'instructions': instructions,
         'wait': false,
-        'warnings': data['warnings'],
         'checkResult': true,
     };
 }
@@ -601,24 +529,60 @@ ${indentString(incr, 1)}
 // * ("CSS selector", {"attribute name": "expected attribute value"})
 // * ("XPath", {"attribute name": "expected attribute value"})
 function parseWaitForAttribute(parser) {
-    const waitChecker = waitForChecker(parser, true);
-    if (waitChecker.error !== undefined) {
-        return waitChecker;
+    const identifiers = ['ALL', 'CONTAINS', 'ENDS_WITH', 'NEAR', 'STARTS_WITH'];
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'json',
+                keyTypes: {
+                    string: [],
+                },
+                valueTypes: {
+                    string: {},
+                    number: {
+                        allowFloat: true,
+                        allowNegative: true,
+                    },
+                    ident: {
+                        allowed: ['null'],
+                    },
+                },
+            },
+            {
+                kind: 'ident',
+                allowed: identifiers,
+                optional: true,
+                alternatives: [
+                    {
+                        kind: 'array',
+                        valueTypes: {
+                            'ident': {
+                                allowed: identifiers,
+                            },
+                        },
+                    },
+                ],
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
     }
 
-    const entries = validateJson(
-        waitChecker.json, {'string': [], 'number': [], 'ident': ['null']}, 'attribute');
-    if (entries.error !== undefined) {
-        return entries;
-    }
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+    const json = tuple[1].value.entries;
 
-    const warnings = entries.warnings !== undefined ? entries.warnings : [];
-    const enabledChecks = Object.create(null);
+    const enabledChecks = new Set();
+    const warnings = [];
 
-    if (waitChecker.tuple.length === 3) {
-        const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH', 'NEAR'];
-        const ret = fillEnabledChecks(
-            waitChecker.tuple[2], identifiers, enabledChecks, warnings, 'third');
+    if (tuple.length > 2) {
+        const ret = fillEnabledChecksV2(
+            tuple[2], enabledChecks, warnings, 'third');
         if (ret !== null) {
             return ret;
         }
@@ -633,7 +597,7 @@ function parseWaitForAttribute(parser) {
         enabledChecks, false, 'nonMatchingAttrs', 'attribute', 'attr', varKey, varValue);
 
     let checker;
-    if (!enabledChecks['ALL']) {
+    if (!enabledChecks.has('ALL')) {
         checker = `const nonMatchingAttrs = await checkAttrForElem(${varName});`;
     } else {
         checker = `\
@@ -647,7 +611,6 @@ for (const elem of ${varName}) {
 }`;
     }
 
-    const selector = waitChecker.selector;
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
         warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have attributes so \
@@ -657,22 +620,22 @@ the check will be performed on the element itself`);
     // JSON.stringify produces a problematic output so instead we use this.
     const tests = [];
     const nullAttributes = [];
-    for (const [k, v] of Object.entries(entries.values)) {
-        if (v.kind !== 'ident') {
-            tests.push(`"${k}":"${v.value}"`);
+    for (const [key, value] of json) {
+        if (value.kind !== 'ident') {
+            tests.push(`"${key}":"${value.value}"`);
         } else {
-            nullAttributes.push(`"${k}"`);
+            nullAttributes.push(`"${key}"`);
         }
     }
 
     if (nullAttributes.length > 0 && hasSpecialChecks) {
-        const k = Object.entries(enabledChecks)
-            .filter(([k, v]) => v && k !== 'ALL')
-            .map(([k, _]) => k);
+        const k = [...enabledChecks.keys()]
+            .filter(k => k !== 'ALL')
+            .map(k => k);
         warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
     }
 
-    const [init, looper] = waitForElement(selector, varName, enabledChecks['ALL'] === true);
+    const [init, looper] = waitForElement(selector, varName, enabledChecks.has('ALL'));
     const incr = incrWait(`\
 const props = nonMatchingAttrs.join(", ");
 throw new Error("The following attributes still don't match: [" + props + "]");`);
@@ -726,24 +689,60 @@ ${indentString(incr, 1)}
 // * ("CSS selector", {"property name": "expected property value"})
 // * ("XPath", {"property name": "expected property value"})
 function parseWaitForProperty(parser) {
-    const waitChecker = waitForChecker(parser, true);
-    if (waitChecker.error !== undefined) {
-        return waitChecker;
+    const identifiers = ['ALL', 'CONTAINS', 'ENDS_WITH', 'NEAR', 'STARTS_WITH'];
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'json',
+                keyTypes: {
+                    string: [],
+                },
+                valueTypes: {
+                    string: {},
+                    number: {
+                        allowFloat: true,
+                        allowNegative: true,
+                    },
+                    ident: {
+                        allowed: ['null'],
+                    },
+                },
+            },
+            {
+                kind: 'ident',
+                allowed: identifiers,
+                optional: true,
+                alternatives: [
+                    {
+                        kind: 'array',
+                        valueTypes: {
+                            'ident': {
+                                allowed: identifiers,
+                            },
+                        },
+                    },
+                ],
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
     }
 
-    const entries = validateJson(
-        waitChecker.json, {'string': [], 'number': [], 'ident': ['null']}, 'property');
-    if (entries.error !== undefined) {
-        return entries;
-    }
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+    const json = tuple[1].value.entries;
 
-    const warnings = entries.warnings !== undefined ? entries.warnings : [];
-    const enabledChecks = Object.create(null);
+    const enabledChecks = new Set();
+    const warnings = [];
 
-    if (waitChecker.tuple.length === 3) {
-        const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH', 'NEAR'];
-        const ret = fillEnabledChecks(
-            waitChecker.tuple[2], identifiers, enabledChecks, warnings, 'third');
+    if (tuple.length > 2) {
+        const ret = fillEnabledChecksV2(
+            tuple[2], enabledChecks, warnings, 'third');
         if (ret !== null) {
             return ret;
         }
@@ -758,7 +757,7 @@ function parseWaitForProperty(parser) {
         enabledChecks, false, 'nonMatchingProps', 'property', 'prop', varKey, varValue);
 
     let checker;
-    if (!enabledChecks['ALL']) {
+    if (!enabledChecks.has('ALL')) {
         checker = `const nonMatchingProps = await checkPropForElem(${varName});`;
     } else {
         checker = `\
@@ -772,7 +771,6 @@ for (const elem of ${varName}) {
 }`;
     }
 
-    const selector = waitChecker.selector;
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
         warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have properties so \
@@ -782,22 +780,22 @@ the check will be performed on the element itself`);
     // JSON.stringify produces a problematic output so instead we use this.
     const tests = [];
     const nullProps = [];
-    for (const [k, v] of Object.entries(entries.values)) {
-        if (v.kind !== 'ident') {
-            tests.push(`"${k}":"${v.value}"`);
+    for (const [key, value] of json) {
+        if (value.kind !== 'ident') {
+            tests.push(`"${key}":"${value.value}"`);
         } else {
-            nullProps.push(`"${k}"`);
+            nullProps.push(`"${key}"`);
         }
     }
 
     if (nullProps.length > 0 && hasSpecialChecks) {
-        const k = Object.entries(enabledChecks)
-            .filter(([k, v]) => v && k !== 'ALL')
-            .map(([k, _]) => k);
+        const k = [...enabledChecks.keys()]
+            .filter(k => k !== 'ALL')
+            .map(k => k);
         warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
     }
 
-    const [init, looper] = waitForElement(selector, varName, enabledChecks['ALL']);
+    const [init, looper] = waitForElement(selector, varName, enabledChecks.has('ALL'));
     const incr = incrWait(`\
 const props = nonMatchingProps.join(", ");
 throw new Error("The following properties still don't match: [" + props + "]");`);
@@ -848,51 +846,53 @@ ${indentString(incr, 1)}
 
 // Possible inputs:
 //
-// * ("CSS selector", "text")
-// * ("XPath", "text")
+// * ("selector", "text")
 function parseWaitForText(parser) {
-    const elems = parser.elems;
-    const identifiers = ['ALL', 'CONTAINS', 'STARTS_WITH', 'ENDS_WITH'];
-    const warnings = [];
-    const enabledChecks = Object.create(null);
-
-    if (elems.length === 0) {
-        return {
-            'error': 'expected a tuple with two strings, found nothing',
-        };
-    } else if (elems.length !== 1 || elems[0].kind !== 'tuple') {
-        return {
-            'error': 'expected a tuple with two strings, ' +
-                `found \`${parser.getRawArgs()}\``,
-        };
+    const identifiers = ['ALL', 'CONTAINS', 'ENDS_WITH', 'STARTS_WITH'];
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'string',
+            },
+            {
+                kind: 'ident',
+                allowed: identifiers,
+                optional: true,
+                alternatives: [
+                    {
+                        kind: 'array',
+                        valueTypes: {
+                            'ident': {
+                                allowed: identifiers,
+                            },
+                        },
+                    },
+                ],
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
     }
-    const tuple = elems[0].getRaw();
-    if (tuple.length < 2 || tuple.length > 3) {
-        return {
-            'error': `expected a tuple of 2 or 3 elements, found \`${tuple.length}\``,
-        };
-    } else if (tuple[0].kind !== 'string') {
-        return {
-            'error': 'expected a CSS selector or an XPath as first tuple element, ' +
-                `found \`${tuple[0].getErrorText()}\` (${tuple[0].getArticleKind()})`,
-        };
-    } else if (tuple[1].kind !== 'string') {
-        return {
-            'error': 'expected a string as second tuple element, ' +
-                `found \`${tuple[1].getErrorText()}\` (${tuple[1].getArticleKind()})`,
-        };
-    } else if (tuple.length === 3) {
-        const ret = fillEnabledChecks(tuple[2], identifiers, enabledChecks, warnings, 'third');
+
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+
+    const warnings = [];
+    const enabledChecks = new Set();
+
+    if (tuple.length > 2) {
+        const ret = fillEnabledChecksV2(tuple[2], enabledChecks, warnings, 'third');
         if (ret !== null) {
             return ret;
         }
     }
 
-    const selector = tuple[0].getSelector();
-    if (selector.error !== undefined) {
-        return selector;
-    }
-    const value = tuple[1].getStringValue();
+    const value = tuple[1].value.getStringValue();
     const varName = 'parseWaitForText';
 
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
@@ -904,7 +904,7 @@ the check will be performed on the element itself`);
     const checks = makeTextExtendedChecks(enabledChecks, false);
 
     let checker;
-    if (!enabledChecks['ALL']) {
+    if (!enabledChecks.has('ALL')) {
         checker = `const errors = await checkTextForElem(${varName});`;
     } else {
         checker = `\
@@ -917,7 +917,7 @@ for (const elem of ${varName}) {
 }`;
     }
 
-    const [init, looper] = waitForElement(selector, varName, enabledChecks['ALL'] === true);
+    const [init, looper] = waitForElement(selector, varName, enabledChecks.has('ALL'));
     const incr = incrWait(`\
 const err = errors.join(", ");
 throw new Error("The following checks still fail: [" + err + "]");`);
@@ -957,47 +957,74 @@ ${indentString(incr, 1)}
 // * ("CSS selector", JSON dict)
 // * ("XPath", JSON dict)
 function parseWaitForPosition(parser) {
-    const checker = waitForChecker(parser, true);
-    if (checker.error !== undefined) {
-        return checker;
+    const identifiers = ['ALL'];
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'json',
+                keyTypes: {
+                    string: ['x', 'y'],
+                },
+                valueTypes: {
+                    number: {
+                        allowNegative: true,
+                        allowFloat: true,
+                    },
+                },
+            },
+            {
+                kind: 'ident',
+                allowed: identifiers,
+                optional: true,
+                alternatives: [
+                    {
+                        kind: 'array',
+                        valueTypes: {
+                            'ident': {
+                                allowed: identifiers,
+                            },
+                        },
+                    },
+                ],
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
     }
 
-    const enabledChecks = Object.create(null);
-    const warnings = [];
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
 
-    if (checker.tuple.length === 3) {
-        const identifiers = ['ALL'];
-        const ret = fillEnabledChecks(
-            checker.tuple[2], identifiers, enabledChecks, warnings, 'third');
+    const warnings = [];
+    const enabledChecks = new Set();
+
+    if (tuple.length > 2) {
+        const ret = fillEnabledChecksV2(tuple[2], enabledChecks, warnings, 'third');
         if (ret !== null) {
             return ret;
         }
     }
 
-    const checkAllElements = enabledChecks['ALL'];
+    const checks = validatePositionDictV2(tuple[1].value.entries);
 
-    const checks = validatePositionDict(checker.tuple[1]);
-    if (checks.error !== undefined) {
-        return checks;
-    }
-    if (checks.warnings) {
-        warnings.push(...checks.warnings);
-    }
-
-    const selector = checker.selector;
     const varName = 'assertPosition';
     const errorsVarName = 'errors';
 
     const whole = commonPositionCheckCode(
         selector,
-        checks.checks,
-        checkAllElements,
+        checks,
+        enabledChecks.has('ALL'),
         varName,
         errorsVarName,
         false,
     );
 
-    const [init, looper] = waitForElement(selector, varName, checkAllElements);
+    const [init, looper] = waitForElement(selector, varName, enabledChecks.has('ALL'));
     const incr = incrWait(`\
 const err = ${errorsVarName}.join(", ");
 throw new Error("The following checks still fail: [" + err + "]");`);
@@ -1026,42 +1053,67 @@ ${indentString(incr, 1)}
 // * ("CSS selector", JSON dict)
 // * ("XPath", JSON dict)
 function parseWaitForSize(parser) {
-    const checker = waitForChecker(parser, true);
-    if (checker.error !== undefined) {
-        return checker;
+    const identifiers = ['ALL'];
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'json',
+                keyTypes: {
+                    string: ['height', 'width'],
+                },
+                valueTypes: {
+                    number: {
+                        allowNegative: true,
+                        allowFloat: true,
+                    },
+                },
+            },
+            {
+                kind: 'ident',
+                allowed: identifiers,
+                optional: true,
+                alternatives: [
+                    {
+                        kind: 'array',
+                        valueTypes: {
+                            'ident': {
+                                allowed: identifiers,
+                            },
+                        },
+                    },
+                ],
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
     }
 
-    const enabledChecks = Object.create(null);
-    const warnings = [];
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+    const json = tuple[1].value.entries;
 
-    if (checker.tuple.length === 3) {
-        const identifiers = ['ALL'];
-        const ret = fillEnabledChecks(
-            checker.tuple[2], identifiers, enabledChecks, warnings, 'third');
+    const warnings = [];
+    const enabledChecks = new Set();
+
+    if (tuple.length > 2) {
+        const ret = fillEnabledChecksV2(tuple[2], enabledChecks, warnings, 'third');
         if (ret !== null) {
             return ret;
         }
     }
 
-    const checkAllElements = enabledChecks['ALL'];
-
-    const entries = validateJson(
-        checker.json, {'number': []}, 'JSON dict key', ['height', 'width']);
-    if (entries.error !== undefined) {
-        return entries;
-    }
-    if (entries.warnings) {
-        warnings.push(...entries.warnings);
-    }
-
-    const selector = checker.selector;
     const varName = 'assertSize';
     const errorsVarName = 'errors';
 
     const whole = commonSizeCheckCode(
-        selector, checkAllElements, false, entries.values, varName, errorsVarName);
+        selector, enabledChecks.has('ALL'), false, json, varName, errorsVarName);
 
-    const [init, looper] = waitForElement(selector, varName, checkAllElements);
+    const [init, looper] = waitForElement(selector, varName, enabledChecks.has('ALL'));
     const incr = incrWait(`\
 const err = ${errorsVarName}.join(", ");
 throw new Error("The following checks still fail: [" + err + "]");`);

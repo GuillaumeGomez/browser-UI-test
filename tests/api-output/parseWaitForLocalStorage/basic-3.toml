@@ -6,7 +6,9 @@ let parseWaitForLocalStorage = null;
 while (true) {
     parseWaitForLocalStorage = await page.evaluate(() => {
         const errors = [];
-        const parseWaitForLocalStorageDict = {\"a\":\"b\"};
+        const parseWaitForLocalStorageDict = {
+            \"a\": \"b\"
+        };
         for (const [parseWaitForLocalStorageKey, parseWaitForLocalStorageValue] of Object.entries(parseWaitForLocalStorageDict)) {
             let parseWaitForLocalStorage = window.localStorage.getItem(parseWaitForLocalStorageKey);
             if (parseWaitForLocalStorage != parseWaitForLocalStorageValue) {
@@ -31,5 +33,3 @@ while (true) {
 ]
 wait = false
 checkResult = true
-warnings = [
-]

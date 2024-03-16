@@ -1,1 +1,1 @@
-error = """expected third element of the tuple to be a JSON dict, found `1` (a number)"""
+error = """expected a JSON dict, found `1` (a number) (third element of the tuple)"""

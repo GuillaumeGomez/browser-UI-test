@@ -1,1 +1,1 @@
-error = """expected integer for number of milliseconds, found float: `1.0`"""
+error = """expected integer, found float: `1.0`"""

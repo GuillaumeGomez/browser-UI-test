@@ -391,8 +391,8 @@ function checkAssertWaitPosition(x, func) {
     func('("a", "b" "c")', 'err-3');
     func('("a", "b" "c", ALL)', 'err-4');
     func('("a", "b", "c")', 'err-5');
-    func('("a::after", {"a": 1}, all)', 'err-6');
-    func('("a::after", {"a": 1}, ALLO)', 'err-7');
+    func('("a::after", {"x": 1}, all)', 'err-6');
+    func('("a::after", {"x": 1}, ALLO)', 'err-7');
     func('("a", {"b": "c", "b": "d"})', 'err-8');
     func('("a", {"b": ""})', 'err-9');
     func('("a", {"z": 12})', 'err-10');
@@ -478,7 +478,7 @@ function checkAssertSize(x, func) {
     func('("a::after", {"width": 1}, all)', 'err-6');
     func('("a::after", {"height": 1}, ALLO)', 'err-7');
     func('("a", {"b": "c", "b": "d"})', 'err-8');
-    func('("a", {"b": ""})', 'err-9');
+    func('("a", {"width": ""})', 'err-9');
     func('("a", {"z": 12})', 'err-10');
 
     func('("a", {})', 'basic-1');
@@ -905,13 +905,13 @@ function checkCallFunction(x, func) {
     x.assertError(func('')[0], 'expected a tuple, found nothing');
     x.assertError(func('hello')[0], 'expected a tuple, found `hello` (an ident)');
     x.assertError(func('(a)')[0],
-        'expected first element of the tuple to be a string, found `a` (an ident)',
+        'expected a string, found `a` (an ident) (first element of the tuple)',
     );
     x.assertError(func('(1,1)')[0],
-        'expected first element of the tuple to be a string, found `1` (a number)',
+        'expected a string, found `1` (a number) (first element of the tuple)',
     );
     x.assertError(func('("1",1)')[0],
-        'expected second element of the tuple to be a JSON dict, found `1` (a number)',
+        'expected a JSON dict, found `1` (a number) (second element of the tuple)',
     );
     x.assertError(func('("1",{"a": 1})')[0],
         'no function called `1`. To define a function, use the `define-function` command',
@@ -1037,18 +1037,18 @@ function checkDefineFunction(x, func) {
         'expected a tuple, found `hello` (an ident)',
     );
     x.assertError(func('(a)')[0],
-        'expected first element of the tuple to be a string, found `a` (an ident)');
+        'expected a string, found `a` (an ident) (first element of the tuple)');
     x.assertError(func('(1,1,1)')[0],
-        'expected first element of the tuple to be a string, found `1` (a number)',
+        'expected a string, found `1` (a number) (first element of the tuple)',
     );
     x.assertError(func('("",1,1)')[0],
         'empty strings (`""`) are not allowed (first element of the tuple)',
     );
     x.assertError(func('("a",1,1)')[0],
-        'expected second element of the tuple to be an array, found `1` (a number)',
+        'expected an array, found `1` (a number) (second element of the tuple)',
     );
     x.assertError(func('("a",[a],1)')[0],
-        'expected third element of the tuple to be a block, found `1` (a number)',
+        'expected a block, found `1` (a number) (third element of the tuple)',
     );
     x.assertError(func('("a",[a],block {b:\n})')[0],
         'Unknown command "b" (in `block { ... }`)',

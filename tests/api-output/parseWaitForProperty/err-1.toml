@@ -1,1 +1,1 @@
-error = """expected a tuple with a string and a JSON dict, found nothing"""
+error = """expected a tuple, found nothing"""

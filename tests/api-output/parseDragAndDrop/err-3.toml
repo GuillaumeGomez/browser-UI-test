@@ -1,1 +1,1 @@
-error = """expected first element of the tuple to be a selector or a tuple, found `1` (a number)"""
+error = """expected a selector or a tuple, found `1` (a number) (first element of the tuple)"""
