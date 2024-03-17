@@ -2290,13 +2290,13 @@ function checkObjectPath(x) {
     p.parse();
     x.assert(p.errors.length, 1);
     x.assert(p.errors[0], {
-        message: 'expected a string after `.`, found nothing',
+        message: 'expected a string after `.`',
         isFatal: false,
         line: 1,
     });
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'object-path');
-    x.assert(p.elems[0].error, 'expected a string after `.`, found nothing');
+    x.assert(p.elems[0].error, 'expected a string after `.`');
     x.assert(p.elems[0].value.length, 1);
     x.assert(p.elems[0].fullText, '"a"  .  ');
     x.assert(p.elems[0].value[0].kind, 'string');
@@ -2306,20 +2306,58 @@ function checkObjectPath(x) {
     p.parse();
     x.assert(p.errors, []);
     x.assert(p.elems.length, 1);
-    x.assert(p.elems[0].kind, 'expression');
+    x.assert(p.elems[0].kind, 'object-path');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].value.length, 3);
+    x.assert(p.elems[0].value.length, 2);
     x.assert(p.elems[0].fullText, '"a"."b" + "d"');
-    x.assert(p.elems[0].value[0].kind, 'object-path');
-    x.assert(p.elems[0].value[0].value.length, 2);
-    x.assert(p.elems[0].value[0].value[0].kind, 'string');
-    x.assert(p.elems[0].value[0].value[0].value, 'a');
-    x.assert(p.elems[0].value[0].value[1].kind, 'string');
-    x.assert(p.elems[0].value[0].value[1].value, 'b');
-    x.assert(p.elems[0].value[1].kind, 'operator');
-    x.assert(p.elems[0].value[1].value, '+');
-    x.assert(p.elems[0].value[2].kind, 'string');
-    x.assert(p.elems[0].value[2].value, 'd');
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'expression');
+    x.assert(p.elems[0].value[1].value.length, 3);
+    x.assert(p.elems[0].value[1].value[0].kind, 'string');
+    x.assert(p.elems[0].value[1].value[0].value, 'b');
+    x.assert(p.elems[0].value[1].value[1].kind, 'operator');
+    x.assert(p.elems[0].value[1].value[1].value, '+');
+    x.assert(p.elems[0].value[1].value[2].kind, 'string');
+    x.assert(p.elems[0].value[1].value[2].value, 'd');
+
+    p = new Parser('"a"."b" + |d|');
+    p.parse();
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].fullText, '"a"."b" + |d|');
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'expression');
+    x.assert(p.elems[0].value[1].value.length, 3);
+    x.assert(p.elems[0].value[1].value[0].kind, 'string');
+    x.assert(p.elems[0].value[1].value[0].value, 'b');
+    x.assert(p.elems[0].value[1].value[1].kind, 'operator');
+    x.assert(p.elems[0].value[1].value[1].value, '+');
+    x.assert(p.elems[0].value[1].value[2].kind, 'variable');
+    x.assert(p.elems[0].value[1].value[2].value, 'd');
+
+    p = new Parser('"a".|b| + "d"');
+    p.parse();
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].fullText, '"a".|b| + "d"');
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'expression');
+    x.assert(p.elems[0].value[1].value.length, 3);
+    x.assert(p.elems[0].value[1].value[0].kind, 'variable');
+    x.assert(p.elems[0].value[1].value[0].value, 'b');
+    x.assert(p.elems[0].value[1].value[1].kind, 'operator');
+    x.assert(p.elems[0].value[1].value[1].value, '+');
+    x.assert(p.elems[0].value[1].value[2].kind, 'string');
+    x.assert(p.elems[0].value[1].value[2].value, 'd');
 }
 
 const TO_CHECK = [
