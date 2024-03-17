@@ -666,6 +666,7 @@ class Parser {
         this.hasFatalError = false;
         this.hasVariable = false;
         this.commandStart = 0;
+        this.checkObjectPath = true;
     }
 
     setError(error, isFatal) {
@@ -891,7 +892,7 @@ class Parser {
             const nbElems = elems.length;
             const isError = elems.length > 0 && prev !== separator;
             const checkerNbErrors = this.errors.length;
-            this[toCall](pushTo);
+            toCall.call(this, pushTo);
             if (!isError) {
                 prev = '';
                 return;
@@ -954,9 +955,9 @@ found \`${showEnd(prevElem)}\``;
                 endChar = c;
                 break;
             } else if (isStringChar(c)) {
-                checker(c, 'parseString');
+                checker(c, arg => this.parseString(endChars, arg));
             } else if (c === '{') {
-                checker(c, 'parseJson');
+                checker(c, this.parseJson);
             } else if (isWhiteSpace(c)) {
                 // do nothing
             } else if (c === separator) {
@@ -980,23 +981,23 @@ found \`${showEnd(prevElem)}\``;
                     prev = separator;
                 }
             } else if (isNumber(c)) {
-                checker(c, 'parseNumber');
+                checker(c, this.parseNumber);
             // If it's a negative number, check is a bit trickier since it can also be an
             // expression like in `1-2`.
             } else if (c === '-' && this.isNumberStart() &&
                 (this.getElems(pushTo).length === 0 || prev !== '')
             ) {
-                checker(c, 'parseNumber');
+                checker(c, this.parseNumber);
             } else if (c === '(') {
-                checker(c, 'parseTuple');
+                checker(c, this.parseTuple);
             } else if (c === '[') {
-                checker(c, 'parseArray');
+                checker(c, this.parseArray);
             } else if (this.isCommentStart()) {
                 this.parseComment(pushTo);
                 // We want to keep the backline in case this is the end char.
                 continue;
             } else if (this.isVariableStart(c)) {
-                checker(c, 'parseVariable');
+                checker(c, this.parseVariable);
             } else if (isExprChar(c) &&
                 this.getElems(pushTo).length !== 0 &&
                 this.parseOperator(pushTo)
@@ -1016,7 +1017,7 @@ found \`${showEnd(prevElem)}\``;
                 // Don't increment position.
                 continue;
             } else {
-                checker(c, 'parseIdent');
+                checker(c, this.parseIdent);
                 const elems = this.getElems(pushTo);
                 const el = elems[elems.length - 1];
                 if (el.kind === 'unknown') {
@@ -1103,7 +1104,7 @@ missing \`)\` at the end of the expression started line ${startLine}`;
                     break;
                 }
             } else if (isStringChar(c)) {
-                this.parseString(elems);
+                this.parseString(endChars, elems);
             } else if (isWhiteSpace(c)) {
                 // Do nothing.
             } else if (this.isCommentStart()) {
@@ -1321,59 +1322,33 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         return null;
     }
 
-    parseObjectPath(pushTo = null) {
+    parseObjectPath(endChars, pushTo) {
         const path = [this.getPushTo(pushTo).pop()];
         this.increasePos();
         let error = null;
         const nbErrors = this.errors.length;
-        let c = null;
 
-        while (this.pos < this.text.length) {
-            this.skipWhiteSpaceCharacters();
-            c = this.getCurrentChar();
-            if (isStringChar(c)) {
-                error = `unexpected \`${c}\``;
-                break;
-            } else if (c !== '.') {
-                break;
+        this.checkObjectPath = false;
+        const [prev, _, _1] = this.parse(endChars, path, '.');
+        if (prev !== '') {
+            error = 'expected a string after `.`';
+            if (nbErrors === this.errors.length) {
+                this.setError(error, false);
             }
-            this.increasePos();
-            this.skipWhiteSpaceCharacters();
-            c = this.getCurrentChar();
-            if (isStringChar(c)) {
-                this.parseString(path, false);
-                if (nbErrors !== this.errors.length) {
-                    error = path[path.length - 1].error;
-                    break;
-                }
-            } else if (c === '.') {
-                error = `unexpected \`${c}\` after \`.\``;
-                break;
-            } else {
-                if (c === null) {
-                    c = 'nothing';
-                } else {
-                    c = `\`${c}\``;
-                }
-                error = `expected a string after \`.\`, found ${c}`;
-                break;
-            }
-            this.increasePos();
         }
+        this.checkObjectPath = true;
         const start = path[0].startPos;
         const full = this.text.substring(start, this.pos);
         this.push(
             new ObjectPathElement(path, start, this.pos, full, this.currentLine, error),
             pushTo,
         );
-        if (error !== null) {
-            this.setError(error, false);
-        } else if (c !== null) {
+        if (error === null && nbErrors === this.errors.length) {
             this.decreasePos(); // Need to go back to last "good" letter.
         }
     }
 
-    parseString(pushTo = null, checkObjectPath = true) {
+    parseString(endChars, pushTo = null) {
         const start = this.pos;
         const endChar = this.text.charAt(this.pos);
 
@@ -1386,10 +1361,10 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                 const e = new StringElement(value, start, this.pos + 1, full, this.currentLine);
                 this.push(e, pushTo);
 
-                if (checkObjectPath) {
+                if (this.checkObjectPath) {
                     const nextChar = this.lookAheadNextChar();
                     if (nextChar === '.') {
-                        this.parseObjectPath(pushTo);
+                        this.parseObjectPath(endChars, pushTo);
                     }
                 }
                 return;
