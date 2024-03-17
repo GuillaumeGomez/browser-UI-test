@@ -2244,6 +2244,84 @@ reload: {"a":1}
     x.assert(p.elems[0].value[0].getOriginalCommand(), 'reload: {"a":1}');
 }
 
+function checkObjectPath(x) {
+    let p = new Parser('"a"."b"');
+    p.parse();
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].fullText, '"a"."b"');
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[1].value, 'b');
+
+    p = new Parser('"a"."b"."c"');
+    p.parse();
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 3);
+    x.assert(p.elems[0].fullText, '"a"."b"."c"');
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[1].value, 'b');
+    x.assert(p.elems[0].value[2].kind, 'string');
+    x.assert(p.elems[0].value[2].value, 'c');
+
+    p = new Parser('"a"  .  "b"');
+    p.parse();
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].fullText, '"a"  .  "b"');
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[1].value, 'b');
+
+    p = new Parser('"a"  .  ');
+    p.parse();
+    x.assert(p.errors.length, 1);
+    x.assert(p.errors[0], {
+        message: 'expected a string after `.`, found nothing',
+        isFatal: false,
+        line: 1,
+    });
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, 'expected a string after `.`, found nothing');
+    x.assert(p.elems[0].value.length, 1);
+    x.assert(p.elems[0].fullText, '"a"  .  ');
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+
+    p = new Parser('"a"."b" + "d"');
+    p.parse();
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'expression');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 3);
+    x.assert(p.elems[0].fullText, '"a"."b" + "d"');
+    x.assert(p.elems[0].value[0].kind, 'object-path');
+    x.assert(p.elems[0].value[0].value.length, 2);
+    x.assert(p.elems[0].value[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[0].value[1].value, 'b');
+    x.assert(p.elems[0].value[1].kind, 'operator');
+    x.assert(p.elems[0].value[1].value, '+');
+    x.assert(p.elems[0].value[2].kind, 'string');
+    x.assert(p.elems[0].value[2].value, 'd');
+}
+
 const TO_CHECK = [
     {'name': 'css', 'func': checkCssParser},
     {'name': 'tuple', 'func': checkTuple},
@@ -2255,6 +2333,7 @@ const TO_CHECK = [
     {'name': 'comment', 'func': checkComment},
     {'name': 'expression', 'func': checkExpr},
     {'name': 'block', 'func': checkBlock},
+    {'name': 'object-path', 'func': checkObjectPath},
 ];
 
 async function checkParsers(x = new Assert()) {

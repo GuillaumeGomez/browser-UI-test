@@ -275,6 +275,8 @@ function getArticleKind(kind) {
         return 'an unknown item';
     } else if (kind === 'json') {
         return 'a JSON dict';
+    } else if (kind === 'object-path') {
+        return 'an "object path"';
     }
     const contains = ['array', 'expression', 'ident', 'operator'].includes(kind);
     return (contains ? 'an ' : 'a ') + kind;
@@ -489,6 +491,19 @@ class StringElement extends Element {
     clone() {
         return new this.constructor(
             this.value, this.startPos, this.endPos, this.fullText, this.line, this.error,
+        );
+    }
+}
+
+class ObjectPathElement extends Element {
+    constructor(value, startPos, endPos, fullText, line, error = null) {
+        super('object-path', value, startPos, endPos, fullText, line, error);
+    }
+
+    clone() {
+        const elems = this.value.map(elem => elem.clone());
+        return new this.constructor(
+            elems, this.startPos, this.endPos, this.fullText, this.line, this.error,
         );
     }
 }
@@ -1295,7 +1310,70 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         this.push(tmp[0], pushTo);
     }
 
-    parseString(pushTo = null) {
+    lookAheadNextChar() {
+        for (let pos = this.pos + 1; pos < this.text.length; ++pos) {
+            const c = this.text.charAt(pos);
+            if (isWhiteSpace(c)) {
+                continue;
+            }
+            return c;
+        }
+        return null;
+    }
+
+    parseObjectPath(pushTo = null) {
+        const path = [this.getPushTo(pushTo).pop()];
+        this.increasePos();
+        let error = null;
+        const nbErrors = this.errors.length;
+        let c = null;
+
+        while (this.pos < this.text.length) {
+            this.skipWhiteSpaceCharacters();
+            c = this.getCurrentChar();
+            if (isStringChar(c)) {
+                error = `unexpected \`${c}\``;
+                break;
+            } else if (c !== '.') {
+                break;
+            }
+            this.increasePos();
+            this.skipWhiteSpaceCharacters();
+            c = this.getCurrentChar();
+            if (isStringChar(c)) {
+                this.parseString(path, false);
+                if (nbErrors !== this.errors.length) {
+                    error = path[path.length - 1].error;
+                    break;
+                }
+            } else if (c === '.') {
+                error = `unexpected \`${c}\` after \`.\``;
+                break;
+            } else {
+                if (c === null) {
+                    c = 'nothing';
+                } else {
+                    c = `\`${c}\``;
+                }
+                error = `expected a string after \`.\`, found ${c}`;
+                break;
+            }
+            this.increasePos();
+        }
+        const start = path[0].startPos;
+        const full = this.text.substring(start, this.pos);
+        this.push(
+            new ObjectPathElement(path, start, this.pos, full, this.currentLine, error),
+            pushTo,
+        );
+        if (error !== null) {
+            this.setError(error, false);
+        } else if (c !== null) {
+            this.decreasePos(); // Need to go back to last "good" letter.
+        }
+    }
+
+    parseString(pushTo = null, checkObjectPath = true) {
         const start = this.pos;
         const endChar = this.text.charAt(this.pos);
 
@@ -1307,6 +1385,13 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                 const full = this.text.substring(start, this.pos + 1);
                 const e = new StringElement(value, start, this.pos + 1, full, this.currentLine);
                 this.push(e, pushTo);
+
+                if (checkObjectPath) {
+                    const nextChar = this.lookAheadNextChar();
+                    if (nextChar === '.') {
+                        this.parseObjectPath(pushTo);
+                    }
+                }
                 return;
             } else if (c === '\\') {
                 this.pos += 1;
@@ -1556,15 +1641,15 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         this.push(new NumberElement(nb, start, this.pos, this.currentLine), pushTo);
     }
 
+    getPushTo(pushTo) {
+        return pushTo !== null ? pushTo : this.elems;
+    }
+
     push(e, pushTo) {
         if (e instanceof VariableElement) {
             this.hasVariable = true;
         }
-        if (pushTo !== null) {
-            pushTo.push(e);
-        } else {
-            this.elems.push(e);
-        }
+        this.getPushTo(pushTo).push(e);
     }
 
     parseJson(pushTo = null) {
