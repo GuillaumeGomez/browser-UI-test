@@ -2358,6 +2358,19 @@ function checkObjectPath(x) {
     x.assert(p.elems[0].value[1].value[1].value, '+');
     x.assert(p.elems[0].value[1].value[2].kind, 'string');
     x.assert(p.elems[0].value[1].value[2].value, 'd');
+
+    p = new Parser('|a|."b"');
+    p.parse();
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].fullText, '|a|."b"');
+    x.assert(p.elems[0].value[0].kind, 'variable');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[1].value, 'b');
 }
 
 const TO_CHECK = [

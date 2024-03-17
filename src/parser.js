@@ -500,6 +500,30 @@ class ObjectPathElement extends Element {
         super('object-path', value, startPos, endPos, fullText, line, error);
     }
 
+    validate(checkVariables) {
+        const values = this.value;
+        if (checkVariables &&
+            (values[0].kind === 'variable' || isExpressionCompatible(values[0]))
+        ) {
+            this.needCheck = true;
+            return null;
+        }
+
+        for (let i = 1; i < values.length; ++i) {
+            if (checkVariables &&
+                (values[i].kind === 'variable' || isExpressionCompatible(values[i]))
+            ) {
+                this.needCheck = true;
+                return null;
+            } else if (values[i].kind !== 'string') {
+                this.error = `object paths can only contain string, found \
+\`${values[i].getErrorText()}\` (${getArticleKind(values[i].kind)})`;
+                return this.error;
+            }
+        }
+        return null;
+    }
+
     clone() {
         const elems = this.value.map(elem => elem.clone());
         return new this.constructor(
@@ -997,7 +1021,7 @@ found \`${showEnd(prevElem)}\``;
                 // We want to keep the backline in case this is the end char.
                 continue;
             } else if (this.isVariableStart(c)) {
-                checker(c, this.parseVariable);
+                checker(c, arg => this.parseVariable(endChars, arg));
             } else if (isExprChar(c) &&
                 this.getElems(pushTo).length !== 0 &&
                 this.parseOperator(pushTo)
@@ -1112,7 +1136,7 @@ missing \`)\` at the end of the expression started line ${startLine}`;
                 // We want to keep the backline in case this is the end char.
                 continue;
             } else if (this.isVariableStart(c)) {
-                this.parseVariable(elems);
+                this.parseVariable(endChars, elems);
             } else if (c === '-') {
                 // We need to disambiguate if it's an operator or a number.
                 if (!this.isNumberStart() || !prevIsOperator) {
@@ -1323,6 +1347,14 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
     }
 
     parseObjectPath(endChars, pushTo) {
+        if (!this.checkObjectPath) {
+            return;
+        }
+        const nextChar = this.lookAheadNextChar();
+        if (nextChar !== '.') {
+            return;
+        }
+
         const path = [this.getPushTo(pushTo).pop()];
         this.increasePos();
         let error = null;
@@ -1360,13 +1392,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                 const full = this.text.substring(start, this.pos + 1);
                 const e = new StringElement(value, start, this.pos + 1, full, this.currentLine);
                 this.push(e, pushTo);
-
-                if (this.checkObjectPath) {
-                    const nextChar = this.lookAheadNextChar();
-                    if (nextChar === '.') {
-                        this.parseObjectPath(endChars, pushTo);
-                    }
-                }
+                this.parseObjectPath(endChars, pushTo);
                 return;
             } else if (c === '\\') {
                 this.pos += 1;
@@ -1517,7 +1543,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         this.hasFatalError = hasFatalError || this.hasFatalError;
     }
 
-    parseVariable(pushTo = null) {
+    parseVariable(endChars, pushTo = null) {
         const start = this.pos;
 
         this.increasePos();
@@ -1535,6 +1561,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                     ),
                     pushTo,
                 );
+                this.parseObjectPath(endChars, pushTo);
                 return;
             } else if (!isIdentChar(c, start, this.pos)) {
                 const variableName = this.text.substring(start + 1, this.pos).trim();
@@ -1827,6 +1854,8 @@ ${article}${extra}`);
                         this.checkElements([entry]);
                     }
                 }
+            } else if (elem.kind === 'object-path') {
+                this.checkElements(elem.value);
             }
         }
     }
@@ -1855,7 +1884,7 @@ ${article}${extra}`);
                         }
                     }
                 }
-            } else if (['tuple', 'array'].includes(elem.kind)) {
+            } else if (['tuple', 'array', 'object-path'].includes(elem.kind)) {
                 this.handleExpressions(elem.value, false);
             }
         }
