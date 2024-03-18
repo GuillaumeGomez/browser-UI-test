@@ -64,7 +64,7 @@ function replaceVariable(elem, variables, functionArgs, forceVariableAsString, e
 function replaceVariables(elem, variables, functionArgs, forceVariableAsString, errors) {
     if (elem.kind === 'variable') {
         return replaceVariable(elem, variables, functionArgs, forceVariableAsString, errors);
-    } else if (['expression', 'tuple', 'array'].includes(elem.kind)) {
+    } else if (['expression', 'tuple', 'array', 'object-path'].includes(elem.kind)) {
         elem.value = elem.value
             .map(e => replaceVariables(e, variables, functionArgs, forceVariableAsString, errors))
             .filter(e => e !== null);

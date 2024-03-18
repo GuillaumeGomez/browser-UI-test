@@ -758,6 +758,16 @@ function checkArray(x) {
     x.assert(p.elems[0].getRaw()[1].getRaw()[1].getErrorText(), '"b"');
     x.assert(p.elems[0].getRaw()[1].getRaw()[2].getRaw(), 'c');
     x.assert(p.elems[0].getRaw()[1].getRaw()[2].getErrorText(), '"c"');
+
+    p = inferredValues('[3, |c|]', {'c': 'a'});
+    p.parse();
+    x.assert(p.errors.length, 1);
+    x.assert(
+        p.errors[0].message,
+        'all array\'s elements must be of the same kind: expected array of `number` (because the \
+first element is of this kind), found `string` at position 1',
+    );
+    x.assert(p.elems.length, 1);
 }
 
 function checkIdent(x) {
@@ -2258,6 +2268,26 @@ function checkObjectPath(x) {
     x.assert(p.elems[0].value[1].kind, 'string');
     x.assert(p.elems[0].value[1].value, 'b');
 
+    p = new Parser('"a".2');
+    p.parse();
+    x.assert(p.errors.length, 1);
+    x.assert(
+        p.errors[0].message,
+        'all object path\'s elements must be strings: found `number` (a number)',
+    );
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(
+        p.elems[0].error,
+        'all object path\'s elements must be strings: found `number` (a number)',
+    );
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].fullText, '"a".2');
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'number');
+    x.assert(p.elems[0].value[1].value, '2');
+
     p = new Parser('"a"."b"."c"');
     p.parse();
     x.assert(p.errors, []);
@@ -2371,6 +2401,145 @@ function checkObjectPath(x) {
     x.assert(p.elems[0].value[0].value, 'a');
     x.assert(p.elems[0].value[1].kind, 'string');
     x.assert(p.elems[0].value[1].value, 'b');
+
+    p = inferredValues('"a"."b" + "c"."d"');
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 3);
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[1].value, 'bc');
+    x.assert(p.elems[0].value[2].kind, 'string');
+    x.assert(p.elems[0].value[2].value, 'd');
+
+    p = inferredValues('2 + "c"."d"');
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, '2c');
+    x.assert(p.elems[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[1].value, 'd');
+
+    p = inferredValues('"a"."b" + 2 + "c"."d"');
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 3);
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[1].value, 'b2c');
+    x.assert(p.elems[0].value[2].kind, 'string');
+    x.assert(p.elems[0].value[2].value, 'd');
+
+    p = inferredValues('"a"."b" + "c"');
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[1].value, 'bc');
+
+    p = inferredValues('"a"."b" + 2');
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[1].value, 'b2');
+
+    p = inferredValues('"a"."b" + "c" + 2');
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[1].value, 'bc2');
+
+    p = inferredValues('"a"."b" + |c| + 2', {'c': 'r'});
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[1].value, 'br2');
+
+    p = inferredValues('"a".|c|', {'c': 'r'});
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[1].value, 'r');
+
+    p = inferredValues('|c|."a"', {'c': 'r'});
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'r');
+    x.assert(p.elems[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[1].value, 'a');
+
+    p = inferredValues('"a".|c|', {'c': 2});
+    x.assert(p.errors.length, 1);
+    x.assert(
+        p.errors[0].message,
+        'all object path\'s elements must be strings: found `number` (a number)',
+    );
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(
+        p.elems[0].error,
+        'all object path\'s elements must be strings: found `number` (a number)',
+    );
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].value[0].kind, 'string');
+    x.assert(p.elems[0].value[0].value, 'a');
+    x.assert(p.elems[0].value[1].kind, 'number');
+    x.assert(p.elems[0].value[1].value, 2);
+
+    p = inferredValues('|c|."a"', {'c': 2});
+    x.assert(p.errors.length, 1);
+    x.assert(
+        p.errors[0].message,
+        'all object path\'s elements must be strings: found `number` (a number)',
+    );
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'object-path');
+    x.assert(
+        p.elems[0].error,
+        'all object path\'s elements must be strings: found `number` (a number)',
+    );
+    x.assert(p.elems[0].value.length, 2);
+    x.assert(p.elems[0].value[0].kind, 'number');
+    x.assert(p.elems[0].value[0].value, 2);
+    x.assert(p.elems[0].value[1].kind, 'string');
+    x.assert(p.elems[0].value[1].value, 'a');
 }
 
 const TO_CHECK = [
