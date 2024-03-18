@@ -166,7 +166,25 @@ function concatExprAsString(elems) {
     return out;
 }
 
-// This function is used when generating an expression generating a boolean.
+function concatExprAsObjectPath(elems) {
+    let s = '';
+    const parts = [];
+
+    for (const elem of elems) {
+        if (elem.kind === 'operator') {
+            continue;
+        } else if (elem.kind !== 'object-path') {
+            s += concatExprAsString([elem]);
+        } else {
+            elem.value[0].value = s + elem.value[0].value;
+            parts.push(...elem.value);
+            s = '';
+        }
+    }
+    return parts;
+}
+
+// This function is used when generating an expression interpreted as a boolean.
 function concatExprAsExpr(elems) {
     const out = [];
     for (let i = 0, len = elems.length; i < len; ++i) {
@@ -198,7 +216,7 @@ function concatExprAsExpr(elems) {
 }
 
 function canDoPlus(kind) {
-    return [null, 'expression', 'number', 'variable', 'string'].includes(kind);
+    return [null, 'expression', 'number', 'variable', 'string', 'object-path'].includes(kind);
 }
 
 function canDoMathOperation(kind) {
@@ -214,6 +232,8 @@ function isTypeCompatibleWith(kind, expected) {
         return 'boolean' === kind;
     } else if (expected === 'number') {
         return 'number' === kind;
+    } else if (expected === 'object-path') {
+        return 'object-path' === kind;
     } else if (expected === 'string') {
         return ['number', 'string'].includes(kind);
     }
@@ -234,6 +254,16 @@ function canBeCompared(kind1, kind2) {
 }
 
 function convertAsString(elem) {
+    if (elem.value.some(v => v.kind === 'object-path')) {
+        return new ObjectPathElement(
+            concatExprAsObjectPath(elem.value),
+            elem.startPos,
+            elem.endPos,
+            elem.fullText,
+            elem.line,
+            elem.error,
+        );
+    }
     return new StringElement(
         concatExprAsString(elem.value),
         elem.startPos,
@@ -501,23 +531,14 @@ class ObjectPathElement extends Element {
     }
 
     validate(checkVariables) {
-        const values = this.value;
-        if (checkVariables &&
-            (values[0].kind === 'variable' || isExpressionCompatible(values[0]))
-        ) {
-            this.needCheck = true;
-            return null;
-        }
-
-        for (let i = 1; i < values.length; ++i) {
+        for (const value of this.value) {
             if (checkVariables &&
-                (values[i].kind === 'variable' || isExpressionCompatible(values[i]))
+                (value.kind === 'variable' || isExpressionCompatible(value))
             ) {
-                this.needCheck = true;
-                return null;
-            } else if (values[i].kind !== 'string') {
-                this.error = `object paths can only contain string, found \
-\`${values[i].getErrorText()}\` (${getArticleKind(values[i].kind)})`;
+                continue;
+            } else if (value.kind !== 'string') {
+                this.error = `all object path's elements must be strings: found \`${value.kind}\` \
+(${getArticleKind(value.kind)})`;
                 return this.error;
             }
         }
@@ -1371,10 +1392,14 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         this.checkObjectPath = true;
         const start = path[0].startPos;
         const full = this.text.substring(start, this.pos);
-        this.push(
-            new ObjectPathElement(path, start, this.pos, full, this.currentLine, error),
-            pushTo,
-        );
+        const elem = new ObjectPathElement(path, start, this.pos, full, this.currentLine, error);
+        if (error === null) {
+            error = elem.validate(true);
+            if (error !== null) {
+                this.setError(error, false);
+            }
+        }
+        this.push(elem, pushTo);
         if (error === null && nbErrors === this.errors.length) {
             this.decreasePos(); // Need to go back to last "good" letter.
         }
@@ -1855,6 +1880,10 @@ ${article}${extra}`);
                     }
                 }
             } else if (elem.kind === 'object-path') {
+                const error = elem.validate();
+                if (error !== null) {
+                    this.setError(error, false);
+                }
                 this.checkElements(elem.value);
             }
         }
@@ -1960,8 +1989,16 @@ elements (in \`${this.elemsText(elems)}\`)`;
                 return null;
             } else if (currentType === null) {
                 currentType = elemKind;
-            } else if (elem.kind !== currentType && currentType !== 'string') {
-                if (elem.kind === 'string' || elem.kind === 'number') {
+            } else if (
+                elem.kind !== currentType
+                && currentType !== 'string'
+                && currentType !== 'object-path'
+            ) {
+                if (
+                    elem.kind === 'string'
+                    || elem.kind === 'number'
+                    || elem.kind === 'object-path'
+                ) {
                     currentType = elemKind;
                 }
             }
