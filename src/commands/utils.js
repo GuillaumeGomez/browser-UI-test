@@ -3,17 +3,20 @@
 function getAndSetElements(selector, varName, checkAllElements) {
     let code;
     if (selector.isXPath) {
-        code = `let ${varName} = await page.$x("${selector.value}");\n` +
-        `if (${varName}.length === 0) { throw 'XPath "${selector.value}" not found'; }`;
+        code = `\
+let ${varName} = await page.$x("${selector.value}");
+if (${varName}.length === 0) { throw 'XPath "${selector.value}" not found'; }`;
         if (!checkAllElements) {
             code += `\n${varName} = ${varName}[0];`;
         }
     } else if (!checkAllElements) {
-        code = `let ${varName} = await page.$("${selector.value}");\n` +
-        `if (${varName} === null) { throw '"${selector.value}" not found'; }`;
+        code = `\
+let ${varName} = await page.$("${selector.value}");
+if (${varName} === null) { throw '"${selector.value}" not found'; }`;
     } else {
-        code = `let ${varName} = await page.$$("${selector.value}");\n` +
-        `if (${varName}.length === 0) { throw '"${selector.value}" not found'; }`;
+        code = `\
+let ${varName} = await page.$$("${selector.value}");
+if (${varName}.length === 0) { throw '"${selector.value}" not found'; }`;
     }
     return code;
 }
