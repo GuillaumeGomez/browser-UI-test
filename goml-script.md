@@ -8,6 +8,8 @@ This file describes how the `.goml` format works.
  * [Multiline commands/strings?](#multiline-commandsstrings)
  * [Variables](#variables)
  * [Concatenation](#concatenation)
+ * [Expressions](#expressions)
+ * [Object paths](#object-paths)
  * [Command list](#command-list)
 
 ## Add comments in scripts
@@ -96,6 +98,32 @@ You can also compare arrays, tuples and JSON dictionaries:
 ["a", "b"] != [1, 2] // computed as true
 (1, "a") == (1, "a", "e") // computed as false
 {"1": "a"} != {"1": "e"} // computed as true
+```
+
+## Object paths
+
+Some commands allow "object path" argument. In case you want to access children or deeper properties of an object, you will need to use an object path. For example, if you have something like:
+
+```
+{
+  "a": {
+    "b": {
+      "c": 12,
+    }
+  }
+}
+```
+
+You can access the lower levels using:
+
+```
+"a"."b"."c"
+```
+
+Object paths also work with concatenation and variables:
+
+```
+|var|."a" + "b"."c"
 ```
 
 ## Command list
@@ -504,11 +532,21 @@ Another thing to be noted: if you don't care whether the selector exists or not 
 
 ```
 assert-property: ("#id > .class", { "offsetParent": "null" })
-assert-property: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" })
+assert-property: (
+    "//*[@id='id']/*[@class='class']",
+    { "offsetParent": "null", "clientTop": "10px" },
+)
 
 // If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-property: ("#id > .class", { "offsetParent": "null" }, ALL)
-assert-property: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" }, ALL)
+assert-property: (
+    "//*[@id='id']/*[@class='class']",
+    { "offsetParent": "null", "clientTop": "10px" },
+    ALL,
+)
+
+// To access a child element, you can use object paths:
+assert-property: ("body", { "firstChildElement"."clientTop": "10px" })
 ```
 
 If you want to check that a property doesn't exist, you can use `null`:
@@ -546,11 +584,21 @@ Please note that if you want to compare DOM elements, you should take a look at 
 
 ```
 assert-property-false: ("#id > .class", { "offsetParent": "null" })
-assert-property-false: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" })
+assert-property-false: (
+    "//*[@id='id']/*[@class='class']",
+    { "offsetParent": "null", "clientTop": "10px" },
+)
 
 // If you want to check all elements matching this selector/XPath, use `ALL`:
 assert-property-false: ("#id > .class", { "offsetParent": "null" }, ALL)
-assert-property-false: ("//*[@id='id']/*[@class='class']", { "offsetParent": "null", "clientTop": "10px" }, ALL)
+assert-property-false: (
+    "//*[@id='id']/*[@class='class']",
+    { "offsetParent": "null", "clientTop": "10px" },
+    ALL,
+)
+
+// To access a child element, you can use object paths:
+assert-property-false: ("body", { "firstChildElement"."clientTop": "10px" })
 ```
 
 If you want to check that a property does exist, you can use `null`:
