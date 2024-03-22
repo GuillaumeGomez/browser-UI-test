@@ -18,7 +18,7 @@ for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
         }
 
         const nonMatchingProps = [];
-        const parseAssertElemPropDict = [[[\"a\"],\"1\"]];
+        const parseAssertElemPropDict = [[[\"a\",\"b\"],\"1\"]];
         const undefProps = [];
         for (const prop of undefProps) {
             checkObjectPaths(e, prop, val => {
@@ -56,6 +56,5 @@ for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
 ]
 wait = false
 warnings = [
-  """Pseudo-elements (`::after`) don't have properties so the check will be performed on the element itself""",
 ]
 checkResult = true

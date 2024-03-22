@@ -18,33 +18,34 @@ for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
         }
 
         const nonMatchingProps = [];
-        const parseAssertElemPropDict = [[[\"a\"],\"1\"]];
+        const parseAssertElemPropDict = [[[\"a\",\"b\"],\"1\"]];
         const undefProps = [];
         for (const prop of undefProps) {
             checkObjectPaths(e, prop, val => {
                 if (val !== undefined && val !== null) {
-
+                    const p = prop.map(p => `\"${p}\"`).join('.');
+                    nonMatchingProps.push(\"Expected property `\" + p + \"` to not exist, found: `\" + val + \"`\");
                     return;
                 }
 
-                const p = prop.map(p => `\"${p}\"`).join('.');
-                nonMatchingProps.push(\"Property named `\" + p + \"` doesn't exist\");
             }, prop => {
 
-                const p = prop.map(p => `\"${p}\"`).join('.');
-                nonMatchingProps.push(\"Property named `\" + p + \"` doesn't exist\");
             });
         }
         for (const [parseAssertElemPropKey, parseAssertElemPropValue] of parseAssertElemPropDict) {
             checkObjectPaths(e, parseAssertElemPropKey, val => {
-                if (val === undefined && val === null) {
+                if (val === undefined && val === null) {                const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
+                    nonMatchingProps.push('Unknown property `' + parseAssertElemPropKey + '`');
+
                     return;
                 }
                 const prop = String(val);
-                if (prop === parseAssertElemPropValue) {
-                    nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey.map(p => `\"${p}\"`).join('.') + \"` (`\" + prop + \"`)\");
+                if (prop !== parseAssertElemPropValue) {
+                    nonMatchingProps.push(\"expected `\" + parseAssertElemPropValue + \"` for property `\" + parseAssertElemPropKey.map(p => `\"${p}\"`).join('.') + \"`, found `\" + prop + \"`\");
                 }
             }, parseAssertElemPropKey => {
+                const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
+                nonMatchingProps.push('Unknown property `' + parseAssertElemPropKey + '`');
     });
         }
         if (nonMatchingProps.length !== 0) {
@@ -56,6 +57,5 @@ for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
 ]
 wait = false
 warnings = [
-  """Pseudo-elements (`::after`) don't have properties so the check will be performed on the element itself""",
 ]
 checkResult = true

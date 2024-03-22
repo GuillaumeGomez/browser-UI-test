@@ -2,26 +2,52 @@ instructions = [
   """let parseAssertElemProp = await page.$(\"a\");
 if (parseAssertElemProp === null) { throw '\"a\" not found'; }
 await page.evaluate(e => {
+    function checkObjectPaths(object, path, callback, notFoundCallback) {
+        const found = [];
+
+        for (const subPath of path) {
+            found.push(subPath);
+            if (object === undefined || object === null) {
+                notFoundCallback(found);
+                return;
+            }
+            object = object[subPath];
+        }
+        callback(object);
+    }
+
     const nonMatchingProps = [];
-    const parseAssertElemPropDict = {\"a\":\"1\"};
+    const parseAssertElemPropDict = [[[\"a\"],\"1\"]];
     const undefProps = [];
     for (const prop of undefProps) {
-        if (e[prop] !== undefined && e[prop] !== null) {
-            continue;
-        }
-        nonMatchingProps.push(\"Property named `\" + prop + \"` doesn't exist\");
+        checkObjectPaths(e, prop, val => {
+            if (val !== undefined && val !== null) {
+
+                return;
+            }
+
+            const p = prop.map(p => `\"${p}\"`).join('.');
+            nonMatchingProps.push(\"Property named `\" + p + \"` doesn't exist\");
+        }, prop => {
+
+            const p = prop.map(p => `\"${p}\"`).join('.');
+            nonMatchingProps.push(\"Property named `\" + p + \"` doesn't exist\");
+        });
     }
-    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(parseAssertElemPropDict)) {
-        if (e[parseAssertElemPropKey] === undefined || e[parseAssertElemPropKey] === null) {
-            continue;
-        }
-        const prop = String(e[parseAssertElemPropKey]);
-        if (prop.startsWith(parseAssertElemPropValue)) {
-            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey + \"` (`\" + prop + \"`) (for STARTS_WITH check)\");
-        }
-        if (prop.endsWith(parseAssertElemPropValue)) {
-            nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey + \"` (`\" + prop + \"`) (for ENDS_WITH check)\");
-        }
+    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of parseAssertElemPropDict) {
+        checkObjectPaths(e, parseAssertElemPropKey, val => {
+            if (val === undefined && val === null) {
+                return;
+            }
+            const prop = String(val);
+            if (prop.startsWith(parseAssertElemPropValue)) {
+                nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey.map(p => `\"${p}\"`).join('.') + \"` (`\" + prop + \"`) (for STARTS_WITH check)\");
+            }
+            if (prop.endsWith(parseAssertElemPropValue)) {
+                nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey.map(p => `\"${p}\"`).join('.') + \"` (`\" + prop + \"`) (for ENDS_WITH check)\");
+            }
+        }, parseAssertElemPropKey => {
+});
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(\"; \");

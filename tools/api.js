@@ -358,6 +358,9 @@ function checkAssertProperty(x, func) {
     func('("a", {"a": 1})', 'basic-2');
     func('("a", {"a": 1}, ALL)', 'basic-3');
 
+    func('("a", {"a"."b": 1})', 'object-path-1');
+    func('("a", {"a"."b": 1}, ALL)', 'object-path-2');
+
     // Check the handling of pseudo elements
     func('("a::after", {"a": 1})', 'pseudo-1');
     func('("a::after", {"a": 1}, ALL)', 'pseudo-2');
@@ -383,6 +386,8 @@ function checkAssertProperty(x, func) {
     // 'null' ident
     func('("a", {"b": null})', 'undef-1');
     func('("a", {"a": null}, [STARTS_WITH, STARTS_WITH])', 'undef-2');
+    func('("a", {"b"."c": null})', 'undef-3');
+    func('("a", {"a"."b": null}, [STARTS_WITH, STARTS_WITH])', 'undef-4');
 }
 
 function checkAssertWaitPosition(x, func) {

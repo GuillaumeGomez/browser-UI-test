@@ -3,24 +3,50 @@ instructions = [
 if (parseAssertElemProp.length === 0) { throw 'XPath \"//a\" not found'; }
 parseAssertElemProp = parseAssertElemProp[0];
 await page.evaluate(e => {
+    function checkObjectPaths(object, path, callback, notFoundCallback) {
+        const found = [];
+
+        for (const subPath of path) {
+            found.push(subPath);
+            if (object === undefined || object === null) {
+                notFoundCallback(found);
+                return;
+            }
+            object = object[subPath];
+        }
+        callback(object);
+    }
+
     const nonMatchingProps = [];
-    const parseAssertElemPropDict = {\"a\":\"1\"};
+    const parseAssertElemPropDict = [[[\"a\"],\"1\"]];
     const undefProps = [];
     for (const prop of undefProps) {
-        if (e[prop] !== undefined && e[prop] !== null) {
-            nonMatchingProps.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + e[prop] + \"`\");
-            continue;
-        }
+        checkObjectPaths(e, prop, val => {
+            if (val !== undefined && val !== null) {
+                const p = prop.map(p => `\"${p}\"`).join('.');
+                nonMatchingProps.push(\"Expected property `\" + p + \"` to not exist, found: `\" + val + \"`\");
+                return;
+            }
+
+        }, prop => {
+
+        });
     }
-    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(parseAssertElemPropDict)) {
-        if (e[parseAssertElemPropKey] === undefined || e[parseAssertElemPropKey] === null) {
+    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of parseAssertElemPropDict) {
+        checkObjectPaths(e, parseAssertElemPropKey, val => {
+            if (val === undefined && val === null) {                const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
+                nonMatchingProps.push('Unknown property `' + parseAssertElemPropKey + '`');
+
+                return;
+            }
+            const prop = String(val);
+            if (prop !== parseAssertElemPropValue) {
+                nonMatchingProps.push(\"expected `\" + parseAssertElemPropValue + \"` for property `\" + parseAssertElemPropKey.map(p => `\"${p}\"`).join('.') + \"`, found `\" + prop + \"`\");
+            }
+        }, parseAssertElemPropKey => {
+            const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
             nonMatchingProps.push('Unknown property `' + parseAssertElemPropKey + '`');
-            continue;
-        }
-        const prop = String(e[parseAssertElemPropKey]);
-        if (prop !== parseAssertElemPropValue) {
-            nonMatchingProps.push(\"expected `\" + parseAssertElemPropValue + \"` for property `\" + parseAssertElemPropKey + \"`, found `\" + prop + \"`\");
-        }
+});
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(\"; \");

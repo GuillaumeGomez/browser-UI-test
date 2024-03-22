@@ -17,8 +17,8 @@ await page.evaluate(e => {
     }
 
     const nonMatchingProps = [];
-    const parseAssertElemPropDict = [];
-    const undefProps = [[\"a\"]];
+    const parseAssertElemPropDict = [[[\"a\",\"b\"],\"1\"]];
+    const undefProps = [];
     for (const prop of undefProps) {
         checkObjectPaths(e, prop, val => {
             if (val !== undefined && val !== null) {
@@ -39,8 +39,8 @@ await page.evaluate(e => {
                 return;
             }
             const prop = String(val);
-            if (!prop.startsWith(parseAssertElemPropValue)) {
-                nonMatchingProps.push(\"property `\" + parseAssertElemPropKey.map(p => `\"${p}\"`).join('.') + \"` (`\" + prop + \"`) doesn't start with `\" + parseAssertElemPropValue + \"` (for STARTS_WITH check)\");
+            if (prop !== parseAssertElemPropValue) {
+                nonMatchingProps.push(\"expected `\" + parseAssertElemPropValue + \"` for property `\" + parseAssertElemPropKey.map(p => `\"${p}\"`).join('.') + \"`, found `\" + prop + \"`\");
             }
         }, parseAssertElemPropKey => {
             const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
@@ -55,7 +55,5 @@ await page.evaluate(e => {
 ]
 wait = false
 warnings = [
-  """`STARTS_WITH` is present more than once in the third argument array""",
-  """Special checks (STARTS_WITH) will be ignored for `null`""",
 ]
 checkResult = true
