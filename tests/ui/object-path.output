@@ -1,0 +1,13 @@
+=> Starting doc-ui tests...
+
+object-path... FAILED
+[ERROR] `tests/ui/object-path.goml` line 4: Error: Evaluation failed: The following errors happened (for selector `body`): [expected `Another page` for property `"firstElementChild"."innerText"`, found `Another page!`; expected `200` for property `"offsetWidth"`, found `1000`]: for command `assert-property: ("body", {"firstElementChild"."innerText": "Another page", "offsetWidth": "200"})`
+[ERROR] `tests/ui/object-path.goml` line 8: Error: Evaluation failed: The following errors happened (for selector `body`): [expected `2` for property `"offsetWidth"."whatever"`, found `undefined`]: for command `assert-property: (
+    "body",
+    {"offsetWidth"."whatever": 2},
+)`
+[ERROR] `tests/ui/object-path.goml` line 18: Error: Evaluation failed: The following errors happened (for selector `body`): [assert didn't fail for property `"firstElementChild"."innerText"` (`Another page!`); assert didn't fail for property `"offsetWidth"` (`1000`)]: for command `assert-property-false: ("body", {"firstElementChild"."innerText": "Another page!", "offsetWidth": "1000"})`
+[ERROR] `tests/ui/object-path.goml` line 22: Error: Evaluation failed: The following errors happened (for selector `body`): [Property named `"firstElementChild"."innerTe"` doesn't exist; Property named `"offsetWidth2"` doesn't exist]: for command `assert-property-false: ("body", {"firstElementChild"."innerTe": null, "offsetWidth2": null})`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed

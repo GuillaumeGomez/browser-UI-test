@@ -1,34 +1,3 @@
 instructions = [
-  """let parseAssertElemProp = await page.$x(\"//a\");
-if (parseAssertElemProp.length === 0) { throw 'XPath \"//a\" not found'; }
-parseAssertElemProp = parseAssertElemProp[0];
-await page.evaluate(e => {
-    const nonMatchingProps = [];
-    const parseAssertElemPropDict = {};
-    const undefProps = [];
-    for (const prop of undefProps) {
-        if (e[prop] !== undefined && e[prop] !== null) {
-            nonMatchingProps.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + e[prop] + \"`\");
-            continue;
-        }
-    }
-    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of Object.entries(parseAssertElemPropDict)) {
-        if (e[parseAssertElemPropKey] === undefined || e[parseAssertElemPropKey] === null) {
-            nonMatchingProps.push('Unknown property `' + parseAssertElemPropKey + '`');
-            continue;
-        }
-        const prop = String(e[parseAssertElemPropKey]);
-        if (prop !== parseAssertElemPropValue) {
-            nonMatchingProps.push(\"expected `\" + parseAssertElemPropValue + \"` for property `\" + parseAssertElemPropKey + \"`, found `\" + prop + \"`\");
-        }
-    }
-    if (nonMatchingProps.length !== 0) {
-        const props = nonMatchingProps.join(\"; \");
-        throw \"The following errors happened (for XPath `//a`): [\" + props + \"]\";
-    }
-}, parseAssertElemProp);""",
 ]
 wait = false
-warnings = [
-]
-checkResult = true

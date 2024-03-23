@@ -1,0 +1,22 @@
+screenshot-comparison: false
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+// Should fail.
+assert-property: ("body", {"firstElementChild"."innerText": "Another page", "offsetWidth": "200"})
+// Should not fail.
+assert-property: ("body", {"firstElementChild"."innerText": "Another page!", "offsetWidth": "1000"})
+// Should fail (check that trying to access "whatever" from "offsetWidth", a number, should not crash).
+assert-property: (
+    "body",
+    {"offsetWidth"."whatever": 2},
+)
+// Should not fail.
+assert-property: ("body", {"firstElementChild"."innerTe": null, "offsetWidth2": null})
+
+// Should not fail.
+assert-property-false: ("body", {"firstElementChild"."innerText": "Another page", "offsetWidth": "200"})
+// Should fail.
+assert-property-false: ("body", {"firstElementChild"."innerText": "Another page!", "offsetWidth": "1000"})
+// Should not fail.
+assert-property-false: ("body", {"firstElementChild"."innerText": null, "offsetWidth": null})
+// Should fail.
+assert-property-false: ("body", {"firstElementChild"."innerTe": null, "offsetWidth2": null})

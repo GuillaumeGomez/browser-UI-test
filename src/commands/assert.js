@@ -360,6 +360,7 @@ function parseAssertPropertyInner(parser, assertFalse) {
         kind: 'json',
         keyTypes: {
             'string': [],
+            'object-path': [],
         },
         valueTypes: {
             'string': {},
@@ -418,24 +419,39 @@ function parseAssertPropertyInner(parser, assertFalse) {
     const varValue = varName + 'Value';
 
     const { checks, hasSpecialChecks } = makeExtendedChecks(
-        enabledChecks, assertFalse, 'nonMatchingProps', 'property', 'prop', varKey, varValue);
+        enabledChecks,
+        assertFalse,
+        'nonMatchingProps',
+        'property',
+        'prop',
+        `${varKey}.map(p => \`"\${p}"\`).join('.')`,
+        varValue,
+    );
 
     const json = tuple[1].value.entries;
+
+    const props = [];
+    const undefProps = [];
+    for (const [k, v] of json) {
+        const k_s = v.key.kind === 'object-path' ? k : `["${k}"]`;
+        if (v.kind !== 'ident') {
+            props.push(`[${k_s},"${v.value}"]`);
+        } else {
+            undefProps.push(k_s);
+        }
+    }
+
+    if (props.length + undefProps.length === 0) {
+        return {
+            'instructions': [],
+            'wait': false,
+        };
+    }
+
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
         warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have properties so \
 the check will be performed on the element itself`);
-    }
-
-    // JSON.stringify produces a problematic output so instead we use this.
-    const props = [];
-    const undefProps = [];
-    for (const [k, v] of json) {
-        if (v.kind !== 'ident') {
-            props.push(`"${k}":"${v.value}"`);
-        } else {
-            undefProps.push(`"${k}"`);
-        }
     }
 
     if (undefProps.length > 0 && hasSpecialChecks) {
@@ -447,14 +463,18 @@ the check will be performed on the element itself`);
     let unexpectedPropError = '';
     let unknown = '';
     if (!assertFalse) {
-        unknown = '\n' + indentString(
-            `nonMatchingProps.push('Unknown property \`' + ${varKey} + '\`');`, 3);
-        unexpectedPropError = `
-            nonMatchingProps.push("Expected property \`" + prop + "\` to not exist, found: \
-\`" + e[prop] + "\`");`;
+        unknown = `\
+const p = ${varKey}.map(p => \`"\${p}"\`).join('.');
+nonMatchingProps.push('Unknown property \`' + ${varKey} + '\`');
+`;
+        unexpectedPropError = `\
+const p = prop.map(p => \`"\${p}"\`).join('.');
+nonMatchingProps.push("Expected property \`" + p + "\` to not exist, found: \`" + val + "\`");`;
+
     } else {
         expectedPropError = `
-        nonMatchingProps.push("Property named \`" + prop + "\` doesn't exist");`;
+const p = prop.map(p => \`"\${p}"\`).join('.');
+nonMatchingProps.push("Property named \`" + p + "\` doesn't exist");`;
     }
 
     const checkAllElements = enabledChecks.has('ALL') === true;
@@ -465,20 +485,43 @@ the check will be performed on the element itself`);
     }
     whole += indentString(`\
 await page.evaluate(e => {
+    function checkObjectPaths(object, path, callback, notFoundCallback) {
+        const found = [];
+
+        for (const subPath of path) {
+            found.push(subPath);
+            if (object === undefined || object === null) {
+                notFoundCallback(found);
+                return;
+            }
+            object = object[subPath];
+        }
+        callback(object);
+    }
+
     const nonMatchingProps = [];
-    const ${varDict} = {${props.join(',')}};
+    const ${varDict} = [${props.join(',')}];
     const undefProps = [${undefProps.join(',')}];
     for (const prop of undefProps) {
-        if (e[prop] !== undefined && e[prop] !== null) {${unexpectedPropError}
-            continue;
-        }${expectedPropError}
+        checkObjectPaths(e, prop, val => {
+            if (val !== undefined && val !== null) {
+${indentString(unexpectedPropError, 4)}
+                return;
+            }
+${indentString(expectedPropError, 3)}
+        }, prop => {
+${indentString(expectedPropError, 3)}
+        });
     }
-    for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-        if (e[${varKey}] === undefined || e[${varKey}] === null) {${unknown}
-            continue;
-        }
-        const prop = String(e[${varKey}]);
-${indentString(checks.join('\n'), 2)}
+    for (const [${varKey}, ${varValue}] of ${varDict}) {
+        checkObjectPaths(e, ${varKey}, val => {
+            if (val === undefined && val === null) {${indentString(unknown, 4)}
+                return;
+            }
+            const prop = String(val);
+${indentString(checks.join('\n'), 3)}
+        }, ${varKey} => {
+${indentString(unknown, 3)}});
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join("; ");

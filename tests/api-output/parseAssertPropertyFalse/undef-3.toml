@@ -18,33 +18,32 @@ await page.evaluate(e => {
 
     const nonMatchingProps = [];
     const parseAssertElemPropDict = [];
-    const undefProps = [[\"a\"]];
+    const undefProps = [[\"b\",\"c\"]];
     for (const prop of undefProps) {
         checkObjectPaths(e, prop, val => {
             if (val !== undefined && val !== null) {
-                const p = prop.map(p => `\"${p}\"`).join('.');
-                nonMatchingProps.push(\"Expected property `\" + p + \"` to not exist, found: `\" + val + \"`\");
+
                 return;
             }
 
+            const p = prop.map(p => `\"${p}\"`).join('.');
+            nonMatchingProps.push(\"Property named `\" + p + \"` doesn't exist\");
         }, prop => {
 
+            const p = prop.map(p => `\"${p}\"`).join('.');
+            nonMatchingProps.push(\"Property named `\" + p + \"` doesn't exist\");
         });
     }
     for (const [parseAssertElemPropKey, parseAssertElemPropValue] of parseAssertElemPropDict) {
         checkObjectPaths(e, parseAssertElemPropKey, val => {
-            if (val === undefined && val === null) {                const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
-                nonMatchingProps.push('Unknown property `' + parseAssertElemPropKey + '`');
-
+            if (val === undefined && val === null) {
                 return;
             }
             const prop = String(val);
-            if (!prop.startsWith(parseAssertElemPropValue)) {
-                nonMatchingProps.push(\"property `\" + parseAssertElemPropKey.map(p => `\"${p}\"`).join('.') + \"` (`\" + prop + \"`) doesn't start with `\" + parseAssertElemPropValue + \"` (for STARTS_WITH check)\");
+            if (prop === parseAssertElemPropValue) {
+                nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey.map(p => `\"${p}\"`).join('.') + \"` (`\" + prop + \"`)\");
             }
         }, parseAssertElemPropKey => {
-            const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
-            nonMatchingProps.push('Unknown property `' + parseAssertElemPropKey + '`');
 });
     }
     if (nonMatchingProps.length !== 0) {
@@ -55,7 +54,5 @@ await page.evaluate(e => {
 ]
 wait = false
 warnings = [
-  """`STARTS_WITH` is present more than once in the third argument array""",
-  """Special checks (STARTS_WITH) will be ignored for `null`""",
 ]
 checkResult = true

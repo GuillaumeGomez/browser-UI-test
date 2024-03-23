@@ -18,6 +18,7 @@ const VALIDATORS = new Map([
     ['ident', validateIdent],
     ['block', validateBlock],
     ['boolean', validateBoolean],
+    ['object-path', validateObjectPath],
 ]);
 
 class Validator {
@@ -215,6 +216,17 @@ function validateBoolean(parser, allowedSyntax, validator) {
     if (parser.kind !== 'boolean') {
         return validator.makeError(
             `expected a boolean, found \`${parser.getErrorText()}\` (${parser.getArticleKind()})`,
+            { notExpectedKind: true },
+        );
+    }
+    return parser;
+}
+
+function validateObjectPath(parser, allowedSyntax, validator) {
+    if (parser.kind !== 'object-path') {
+        return validator.makeError(
+            `expected an object-path, found \`${parser.getErrorText()}\` (\
+${parser.getArticleKind()})`,
             { notExpectedKind: true },
         );
     }
@@ -455,6 +467,7 @@ this JSON dict`,
             value: value_s,
             kind: value.kind,
             parser: parser_value,
+            key: key,
         });
     }
     if (!allowDuplicatedValue) {
@@ -534,6 +547,9 @@ Format looks like this:
         },
         {
             kind: 'selector',
+        },
+        {
+            kind: 'object-path',
         },
     ],
     alternatives: [

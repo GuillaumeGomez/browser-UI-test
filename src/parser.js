@@ -530,6 +530,11 @@ class ObjectPathElement extends Element {
         super('object-path', value, startPos, endPos, fullText, line, error);
     }
 
+    getStringValue(trim, clean = true) {
+        const content = this.value.map(v => `"${v.getStringValue(clean)}"`).join(',');
+        return `[${content}]`;
+    }
+
     validate(checkVariables) {
         for (const value of this.value) {
             if (checkVariables &&
@@ -1748,7 +1753,9 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                     if (this.hasFatalError) {
                         return;
                     }
-                } else if (!['string', 'variable', 'expression'].includes(elems[0].kind)) {
+                } else if (!['string', 'variable', 'expression', 'object-path'].includes(
+                    elems[0].kind)
+                ) {
                     const article = elems[0].getArticleKind();
                     const extra = ` (\`${elems[0].getErrorText()}\`)`;
                     keyError(`only strings can be used as keys in JSON dict, found \
@@ -1870,9 +1877,9 @@ class ExpressionsValidator {
                 this.checkElements(elem.value);
             } else if (elem.kind === 'json') {
                 for (const entry of elem.value) {
-                    if (entry.key.kind !== 'string') {
-                        const article = entry.getArticleKind();
-                        const extra = ` (\`${entry.getErrorText()}\`)`;
+                    if (!['string', 'object-path'].includes(entry.key.kind)) {
+                        const article = entry.key.getArticleKind();
+                        const extra = ` (\`${entry.key.getErrorText()}\`)`;
                         this.setError(`only strings can be used as keys in JSON dict, found \
 ${article}${extra}`);
                     } else {
