@@ -1,22 +1,46 @@
 instructions = [
   """await page.evaluate(() => {
-    const nonMatchingProps = [];
-    const parseAssertDictPropDict = {};
-    const undefProps = [\"a\"];
-    for (const prop of undefProps) {
-        if (window[prop] !== undefined && window[prop] !== null) {
-            continue;
+    function checkObjectPaths(object, path, callback, notFoundCallback) {
+        const found = [];
+
+        for (const subPath of path) {
+            found.push(subPath);
+            if (object === undefined || object === null) {
+                notFoundCallback(found);
+                return;
+            }
+            object = object[subPath];
         }
-        nonMatchingProps.push(\"Property named `\" + prop + \"` doesn't exist\");
+        callback(object);
     }
-    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(parseAssertDictPropDict)) {
-        if (window[parseAssertDictPropKey] === undefined) {
-            continue;
-        }
-        const parseAssertDictProp = String(window[parseAssertDictPropKey]);
-        if (parseAssertDictProp === parseAssertDictPropValue) {
-            nonMatchingProps.push(\"assert didn't fail for window property `\" + parseAssertDictPropKey + \"` (`\" + parseAssertDictProp + \"`)\");
-        }
+
+    const nonMatchingProps = [];
+    const parseAssertObjDict = [];
+    const undefProps = [[\"a\"]];
+    for (const prop of undefProps) {
+        checkObjectPaths(window, prop, val => {
+            if (val !== undefined && val !== null) {
+
+                return;
+            }
+            const p = prop.map(p => `\"${p}\"`).join('.');
+            nonMatchingProps.push(\"Property named `\" + p + \"` doesn't exist\");
+        }, prop => {
+            const p = prop.map(p => `\"${p}\"`).join('.');
+            nonMatchingProps.push(\"Property named `\" + p + \"` doesn't exist\");
+        });
+    }
+    for (const [parseAssertObjKey, parseAssertObjValue] of parseAssertObjDict) {
+        checkObjectPaths(window, parseAssertObjKey, val => {
+            if (val === undefined && val === null) {
+                return;
+            }
+            const prop = String(val);
+            if (prop === parseAssertObjValue) {
+                nonMatchingProps.push(\"assert didn't fail for window property `\" + parseAssertObjKey + \"` (`\" + prop + \"`)\");
+            }
+        }, parseAssertObjKey => {
+        });
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(\"; \");
@@ -25,4 +49,6 @@ instructions = [
 });""",
 ]
 wait = false
+warnings = [
+]
 checkResult = true

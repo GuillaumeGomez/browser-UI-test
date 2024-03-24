@@ -1,3 +1,59 @@
 instructions = [
+  """let parseAssertElemProp = await page.$(\"a\");
+if (parseAssertElemProp === null) { throw '\"a\" not found'; }
+await page.evaluate(e => {
+    function checkObjectPaths(object, path, callback, notFoundCallback) {
+        const found = [];
+
+        for (const subPath of path) {
+            found.push(subPath);
+            if (object === undefined || object === null) {
+                notFoundCallback(found);
+                return;
+            }
+            object = object[subPath];
+        }
+        callback(object);
+    }
+
+    const nonMatchingProps = [];
+    const parseAssertElemPropDict = [];
+    const undefProps = [];
+    for (const prop of undefProps) {
+        checkObjectPaths(e, prop, val => {
+            if (val !== undefined && val !== null) {
+                const p = prop.map(p => `\"${p}\"`).join('.');
+                nonMatchingProps.push(\"Expected property `\" + p + \"` to not exist, found: `\" + val + \"`\");
+                return;
+            }
+
+        }, prop => {
+
+        });
+    }
+    for (const [parseAssertElemPropKey, parseAssertElemPropValue] of parseAssertElemPropDict) {
+        checkObjectPaths(e, parseAssertElemPropKey, val => {
+            if (val === undefined && val === null) {                const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
+                nonMatchingProps.push('Unknown property `' + p + '`');
+
+                return;
+            }
+            const prop = String(val);
+            if (prop !== parseAssertElemPropValue) {
+                nonMatchingProps.push(\"expected `\" + parseAssertElemPropValue + \"` for property `\" + parseAssertElemPropKey.map(p => `\"${p}\"`).join('.') + \"`, found `\" + prop + \"`\");
+            }
+        }, parseAssertElemPropKey => {
+            const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
+            nonMatchingProps.push('Unknown property `' + p + '`');
+});
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(\"; \");
+        throw \"The following errors happened (for selector `a`): [\" + props + \"]\";
+    }
+}, parseAssertElemProp);""",
 ]
 wait = false
+warnings = [
+]
+checkResult = true

@@ -35,7 +35,7 @@ await page.evaluate(e => {
     for (const [parseAssertElemPropKey, parseAssertElemPropValue] of parseAssertElemPropDict) {
         checkObjectPaths(e, parseAssertElemPropKey, val => {
             if (val === undefined && val === null) {                const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
-                nonMatchingProps.push('Unknown property `' + parseAssertElemPropKey + '`');
+                nonMatchingProps.push('Unknown property `' + p + '`');
 
                 return;
             }
@@ -45,7 +45,7 @@ await page.evaluate(e => {
             }
         }, parseAssertElemPropKey => {
             const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
-            nonMatchingProps.push('Unknown property `' + parseAssertElemPropKey + '`');
+            nonMatchingProps.push('Unknown property `' + p + '`');
 });
     }
     if (nonMatchingProps.length !== 0) {

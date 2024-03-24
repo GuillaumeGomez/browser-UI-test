@@ -1,0 +1,55 @@
+instructions = [
+  """await page.evaluate(() => {
+    function checkObjectPaths(object, path, callback, notFoundCallback) {
+        const found = [];
+
+        for (const subPath of path) {
+            found.push(subPath);
+            if (object === undefined || object === null) {
+                notFoundCallback(found);
+                return;
+            }
+            object = object[subPath];
+        }
+        callback(object);
+    }
+
+    const nonMatchingProps = [];
+    const parseAssertObjDict = [[[\"a\",\"b\"],\"b\"]];
+    const undefProps = [];
+    for (const prop of undefProps) {
+        checkObjectPaths(document, prop, val => {
+            if (val !== undefined && val !== null) {
+                const p = prop.map(p => `\"${p}\"`).join('.');
+                nonMatchingProps.push(\"Expected property `\" + p + \"` to not exist, found: `\" + val + \"`\");
+                return;
+            }
+        }, prop => {
+        });
+    }
+    for (const [parseAssertObjKey, parseAssertObjValue] of parseAssertObjDict) {
+        checkObjectPaths(document, parseAssertObjKey, val => {
+            if (val === undefined && val === null) {
+                const p = parseAssertObjKey.map(p => `\"${p}\"`).join('.');
+                nonMatchingProps.push('Unknown document property `' + p + '`');
+                return;
+            }
+            const prop = String(val);
+            if (prop !== parseAssertObjValue) {
+                nonMatchingProps.push(\"expected `\" + parseAssertObjValue + \"` for document property `\" + parseAssertObjKey + \"`, found `\" + prop + \"`\");
+            }
+        }, parseAssertObjKey => {
+            const p = parseAssertObjKey.map(p => `\"${p}\"`).join('.');
+            nonMatchingProps.push('Unknown document property `' + p + '`');
+        });
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(\"; \");
+        throw \"The following errors happened: [\" + props + \"]\";
+    }
+});""",
+]
+wait = false
+warnings = [
+]
+checkResult = true
