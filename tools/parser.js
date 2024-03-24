@@ -1063,12 +1063,14 @@ function checkJson(x) {
     let p = new Parser('{1: 2}');
     p.parse();
     x.assert(
-        p.errors[0].message, 'only strings can be used as keys in JSON dict, found a number (`1`)');
+        p.errors[0].message,
+        'only strings and object paths can be used as keys in JSON dict, found a number (`1`)',
+    );
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
     x.assert(
         p.elems[0].error,
-        'only strings can be used as keys in JSON dict, found a number (`1`)',
+        'only strings and object paths can be used as keys in JSON dict, found a number (`1`)',
     );
     x.assert(p.elems[0].getErrorText(), '{1: 2}');
     x.assert(p.elems[0].getRaw().length, 1);
@@ -1082,12 +1084,13 @@ function checkJson(x) {
     p.parse();
     x.assert(
         p.errors[0].message,
-        'only strings can be used as keys in JSON dict, found a number (`-1`)');
+        'only strings and object paths can be used as keys in JSON dict, found a number (`-1`)',
+    );
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
     x.assert(
         p.elems[0].error,
-        'only strings can be used as keys in JSON dict, found a number (`-1`)',
+        'only strings and object paths can be used as keys in JSON dict, found a number (`-1`)',
     );
     x.assert(p.elems[0].getErrorText(), '{-1: 2}');
     x.assert(p.elems[0].getRaw().length, 1);
@@ -1101,12 +1104,13 @@ function checkJson(x) {
     p.parse();
     x.assert(
         p.errors[0].message,
-        'only strings can be used as keys in JSON dict, found a number (`-1.2`)');
+        'only strings and object paths can be used as keys in JSON dict, found a number (`-1.2`)',
+    );
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
     x.assert(
         p.elems[0].error,
-        'only strings can be used as keys in JSON dict, found a number (`-1.2`)',
+        'only strings and object paths can be used as keys in JSON dict, found a number (`-1.2`)',
     );
     x.assert(p.elems[0].getErrorText(), '{-1.2: 2}');
     x.assert(p.elems[0].getRaw().length, 1);
@@ -1218,12 +1222,13 @@ assert-css: (".item-left sup", {"color": |color|})`);
     p.parse();
     x.assert(
         p.errors[0].message,
-        'only strings can be used as keys in JSON dict, found a boolean (`true`)');
+        'only strings and object paths can be used as keys in JSON dict, found a boolean (`true`)',
+    );
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
     x.assert(
         p.elems[0].error,
-        'only strings can be used as keys in JSON dict, found a boolean (`true`)',
+        'only strings and object paths can be used as keys in JSON dict, found a boolean (`true`)',
     );
     x.assert(p.elems[0].getErrorText(), '{true: 1}');
 
@@ -1232,12 +1237,13 @@ assert-css: (".item-left sup", {"color": |color|})`);
     p.parse();
     x.assert(
         p.errors[0].message,
-        'only strings can be used as keys in JSON dict, found an ident (`hello`)');
+        'only strings and object paths can be used as keys in JSON dict, found an ident (`hello`)',
+    );
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
     x.assert(
         p.elems[0].error,
-        'only strings can be used as keys in JSON dict, found an ident (`hello`)',
+        'only strings and object paths can be used as keys in JSON dict, found an ident (`hello`)',
     );
     x.assert(p.elems[0].getErrorText(), '{hello: 1}');
 
@@ -1246,12 +1252,15 @@ assert-css: (".item-left sup", {"color": |color|})`);
     p.parse();
     x.assert(
         p.errors[0].message,
-        'only strings can be used as keys in JSON dict, found a JSON dict (`{"a": 2}`)');
+        'only strings and object paths can be used as keys in JSON dict, found a JSON dict \
+(`{"a": 2}`)',
+    );
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
     x.assert(
         p.elems[0].error,
-        'only strings can be used as keys in JSON dict, found a JSON dict (`{"a": 2}`)',
+        'only strings and object paths can be used as keys in JSON dict, found a JSON dict \
+(`{"a": 2}`)',
     );
     x.assert(p.elems[0].getErrorText(), '{{"a": 2}: 1}');
     x.assert(p.elems[0].getRaw().length, 1);
@@ -1310,12 +1319,13 @@ assert-css: (".item-left sup", {"color": |color|})`);
     p.parse();
     x.assert(
         p.errors[0].message,
-        'only strings can be used as keys in JSON dict, found an array (`[1, 2]`)');
+        'only strings and object paths can be used as keys in JSON dict, found an array (`[1, 2]`)',
+    );
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'json');
     x.assert(
         p.elems[0].error,
-        'only strings can be used as keys in JSON dict, found an array (`[1, 2]`)',
+        'only strings and object paths can be used as keys in JSON dict, found an array (`[1, 2]`)',
     );
     x.assert(p.elems[0].getErrorText(), '{[1, 2]: 1}');
     x.assert(p.elems[0].getRaw().length, 1);

@@ -1758,8 +1758,8 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                 ) {
                     const article = elems[0].getArticleKind();
                     const extra = ` (\`${elems[0].getErrorText()}\`)`;
-                    keyError(`only strings can be used as keys in JSON dict, found \
-${article}${extra}`);
+                    keyError(`only strings and object paths can be used as keys in JSON dict, \
+found ${article}${extra}`);
                 } else if (ender === '}' || ender === ',') {
                     const after = elems[0].getErrorText();
                     keyError(`expected \`:\` after \`${after}\`, found \`${ender}\``);

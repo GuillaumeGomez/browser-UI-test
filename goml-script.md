@@ -421,6 +421,9 @@ Another thing to be noted: if you don't care whether the selector exists or not 
 assert-document-property: ({"URL": "https://some.where", "title": "a title"})
 // If you only provide properties, you can also only provide a JSON dict:
 assert-document-property: {"URL": "https://some.where", "title": "a title"}
+
+// To access a child element, you can use object paths:
+assert-document-property: { "body"."firstChildElement"."clientTop": "10px" }
 ```
 
 If you want to check that a property doesn't exist, you can use `null`:
@@ -450,6 +453,9 @@ assert-document-property: ({"URL": "https://some.where", "title": "a title"}, [S
 assert-document-property-false: ({"URL": "https://some.where", "title": "a title"})
 // If you only provide properties, you can also only provide a JSON dict:
 assert-document-property-false: {"URL": "https://some.where", "title": "a title"}
+
+// To access a child element, you can use object paths:
+assert-document-property-false: { "body"."firstChildElement"."clientTop": "10px" }
 ```
 
 If you want to check that a property does exist, you can use `null`:
@@ -787,6 +793,9 @@ For more information about variables, read the [variables section](#variables).
 assert-window-property: ({"pageYOffset": "0", "location": "https://some.where"})
 // If you only provide properties, you can also only provide a JSON dict:
 assert-window-property: {"pageYOffset": "0", "location": "https://some.where"}
+
+// To access a child element, you can use object paths:
+assert-document-property: { "document"."body"."firstChildElement"."clientTop": "10px" }
 ```
 
 If you want to check that a property doesn't exist, you can use `null`:
@@ -822,6 +831,9 @@ assert-window-property: (
 assert-window-property-false: ({"location": "https://some.where", "pageYOffset": "10"})
 // If you only provide properties, you can also only provide a JSON dict:
 assert-window-property-false: {"location": "https://some.where", "pageYOffset": "10"}
+
+// To access a child element, you can use object paths:
+assert-document-property-false: { "document"."body"."firstChildElement"."clientTop": "10px" }
 ```
 
 If you want to check that a property does exist, you can use `null`:
@@ -843,7 +855,7 @@ assert-window-property-false: (
 You can even combine the checks:
 
 ```
-assert-windo-property-false: (
+assert-window-property-false: (
     {"location": "https://some.where", "pageYOffset": "10"},
     [STARTS_WITH, ENDS_WITH],
 )

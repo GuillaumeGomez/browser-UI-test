@@ -1,5 +1,10 @@
 screenshot-comparison: false
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+
+//
+// assert-property
+//
+
 // Should fail.
 assert-property: ("body", {"firstElementChild"."innerText": "Another page", "offsetWidth": "200"})
 // Should not fail.
@@ -20,3 +25,77 @@ assert-property-false: ("body", {"firstElementChild"."innerText": "Another page!
 assert-property-false: ("body", {"firstElementChild"."innerText": null, "offsetWidth": null})
 // Should fail.
 assert-property-false: ("body", {"firstElementChild"."innerTe": null, "offsetWidth2": null})
+
+//
+// assert-document-property
+//
+
+// Should fail.
+assert-document-property: {
+    "body"."firstElementChild"."innerText": "Another page",
+    "offsetWidth": "200",
+}
+// Should not fail.
+assert-document-property: {
+    "body"."firstElementChild"."innerText": "Another page!",
+    "offsetWidth": "1000",
+}
+// Should fail (check that trying to access "whatever" from "offsetWidth", a number, should not crash).
+assert-document-property: { "body"."offsetWidth"."whatever": 2 }
+// Should not fail.
+assert-document-property: { "body"."firstElementChild"."innerTe": null, "offsetWidth2": null}
+
+// Should not fail.
+assert-document-property-false: {
+    "body"."firstElementChild"."innerText": "Another page",
+    "offsetWidth": "200",
+}
+// Should fail.
+assert-document-property-false: {
+    "body"."firstElementChild"."innerText": "Another page!",
+    "offsetWidth": "1000",
+}
+// Should not fail.
+assert-document-property-false: { "body"."offsetWidth"."whatever": 2 }
+// Should fail.
+assert-document-property-false: { "body"."firstElementChild"."innerTe": null, "offsetWidth2": null}
+
+//
+// assert-window-property
+//
+
+// Should fail.
+assert-window-property: {
+    "document"."body"."firstElementChild"."innerText": "Another page",
+    "innerWidth": "200",
+}
+// Should not fail.
+assert-window-property: {
+    "document"."body"."firstElementChild"."innerText": "Another page!",
+    "innerWidth": "1000",
+}
+// Should fail (check that trying to access "whatever" from "offsetWidth", a number, should not crash).
+assert-window-property: { "document"."body"."offsetWidth"."whatever": 2 }
+// Should not fail.
+assert-window-property: {
+    "document"."body"."firstElementChild"."innerTe": null,
+    "innerWidth2": null,
+}
+
+// Should not fail.
+assert-window-property-false: {
+    "document"."body"."firstElementChild"."innerText": "Another page",
+    "innerWidth": "200",
+}
+// Should fail.
+assert-window-property-false: {
+    "document"."body"."firstElementChild"."innerText": "Another page!",
+    "innerWidth": "1000",
+}
+// Should not fail.
+assert-window-property-false: { "document"."body"."offsetWidth"."whatever": 2 }
+// Should fail.
+assert-window-property-false: {
+    "document"."body"."firstElementChild"."innerTe": null,
+    "offsetWidth2": null,
+}

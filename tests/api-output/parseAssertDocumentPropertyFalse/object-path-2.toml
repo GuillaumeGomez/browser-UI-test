@@ -1,0 +1,54 @@
+instructions = [
+  """await page.evaluate(() => {
+    function checkObjectPaths(object, path, callback, notFoundCallback) {
+        const found = [];
+
+        for (const subPath of path) {
+            found.push(subPath);
+            if (object === undefined || object === null) {
+                notFoundCallback(found);
+                return;
+            }
+            object = object[subPath];
+        }
+        callback(object);
+    }
+
+    const nonMatchingProps = [];
+    const parseAssertObjDict = [[[\"a\",\"b\"],\"b\"]];
+    const undefProps = [];
+    for (const prop of undefProps) {
+        checkObjectPaths(document, prop, val => {
+            if (val !== undefined && val !== null) {
+
+                return;
+            }
+            const p = prop.map(p => `\"${p}\"`).join('.');
+            nonMatchingProps.push(\"Property named `\" + p + \"` doesn't exist\");
+        }, prop => {
+            const p = prop.map(p => `\"${p}\"`).join('.');
+            nonMatchingProps.push(\"Property named `\" + p + \"` doesn't exist\");
+        });
+    }
+    for (const [parseAssertObjKey, parseAssertObjValue] of parseAssertObjDict) {
+        checkObjectPaths(document, parseAssertObjKey, val => {
+            if (val === undefined && val === null) {
+                return;
+            }
+            const prop = String(val);
+            if (prop.includes(parseAssertObjValue)) {
+                nonMatchingProps.push(\"assert didn't fail for document property `\" + parseAssertObjKey + \"` (`\" + prop + \"`) (for CONTAINS check)\");
+            }
+        }, parseAssertObjKey => {
+        });
+    }
+    if (nonMatchingProps.length !== 0) {
+        const props = nonMatchingProps.join(\"; \");
+        throw \"The following errors happened: [\" + props + \"]\";
+    }
+});""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

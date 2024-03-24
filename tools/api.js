@@ -265,6 +265,12 @@ function checkAssertObjProperty(x, func) {
     func('({"a": null}, ENDS_WITH)', 'null-3');
     func('({"a": null}, [STARTS_WITH, NEAR])', 'null-4');
     func('({"a": null, "b": "12"}, [STARTS_WITH, NEAR])', 'null-5');
+
+    // object-path
+    func('{"a"."b": "b"}', 'object-path-1');
+    func('({"a"."b": "b"}, CONTAINS)', 'object-path-2');
+    func('({"a"."b": null})', 'object-path-3');
+    func('({"a"."b": null}, CONTAINS)', 'object-path-4');
 }
 
 function checkAssertVariable(x, func) {

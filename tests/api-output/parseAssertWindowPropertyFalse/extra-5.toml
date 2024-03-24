@@ -1,31 +1,55 @@
 instructions = [
   """await page.evaluate(() => {
+    function checkObjectPaths(object, path, callback, notFoundCallback) {
+        const found = [];
+
+        for (const subPath of path) {
+            found.push(subPath);
+            if (object === undefined || object === null) {
+                notFoundCallback(found);
+                return;
+            }
+            object = object[subPath];
+        }
+        callback(object);
+    }
+
     const nonMatchingProps = [];
-    const parseAssertDictPropDict = {\"a\":\"b\"};
+    const parseAssertObjDict = [[[\"a\"],\"b\"]];
     const undefProps = [];
     for (const prop of undefProps) {
-        if (window[prop] !== undefined && window[prop] !== null) {
-            continue;
-        }
-        nonMatchingProps.push(\"Property named `\" + prop + \"` doesn't exist\");
+        checkObjectPaths(window, prop, val => {
+            if (val !== undefined && val !== null) {
+
+                return;
+            }
+            const p = prop.map(p => `\"${p}\"`).join('.');
+            nonMatchingProps.push(\"Property named `\" + p + \"` doesn't exist\");
+        }, prop => {
+            const p = prop.map(p => `\"${p}\"`).join('.');
+            nonMatchingProps.push(\"Property named `\" + p + \"` doesn't exist\");
+        });
     }
-    for (const [parseAssertDictPropKey, parseAssertDictPropValue] of Object.entries(parseAssertDictPropDict)) {
-        if (window[parseAssertDictPropKey] === undefined) {
-            continue;
-        }
-        const parseAssertDictProp = String(window[parseAssertDictPropKey]);
-        if (parseAssertDictProp.startsWith(parseAssertDictPropValue)) {
-            nonMatchingProps.push(\"assert didn't fail for window property `\" + parseAssertDictPropKey + \"` (`\" + parseAssertDictProp + \"`) (for STARTS_WITH check)\");
-        }
-        const tmpNb = parseFloat(parseAssertDictProp);
-        const tmpNb2 = parseFloat(parseAssertDictPropValue);
-        if (Number.isNaN(tmpNb)) {
-            nonMatchingProps.push('window property `' + parseAssertDictPropKey + '` (`' + parseAssertDictProp + '`) is NaN (for NEAR check)');
-        } else if (Number.isNaN(tmpNb2)) {
-            nonMatchingProps.push('provided value for `' + parseAssertDictPropKey + '` is NaN (for NEAR check)');
-        } else if (Math.abs(tmpNb - tmpNb2) <= 1) {
-            nonMatchingProps.push('window property `' + parseAssertDictPropKey + '` (`' + parseAssertDictProp + '`) is within 1 of `' + parseAssertDictPropValue + '` (for NEAR check)');
-        }
+    for (const [parseAssertObjKey, parseAssertObjValue] of parseAssertObjDict) {
+        checkObjectPaths(window, parseAssertObjKey, val => {
+            if (val === undefined && val === null) {
+                return;
+            }
+            const prop = String(val);
+            if (prop.startsWith(parseAssertObjValue)) {
+                nonMatchingProps.push(\"assert didn't fail for window property `\" + parseAssertObjKey + \"` (`\" + prop + \"`) (for STARTS_WITH check)\");
+            }
+            const tmpNb = parseFloat(prop);
+            const tmpNb2 = parseFloat(parseAssertObjValue);
+            if (Number.isNaN(tmpNb)) {
+                nonMatchingProps.push('window property `' + parseAssertObjKey + '` (`' + prop + '`) is NaN (for NEAR check)');
+            } else if (Number.isNaN(tmpNb2)) {
+                nonMatchingProps.push('provided value for `' + parseAssertObjKey + '` is NaN (for NEAR check)');
+            } else if (Math.abs(tmpNb - tmpNb2) <= 1) {
+                nonMatchingProps.push('window property `' + parseAssertObjKey + '` (`' + prop + '`) is within 1 of `' + parseAssertObjValue + '` (for NEAR check)');
+            }
+        }, parseAssertObjKey => {
+        });
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(\"; \");
@@ -34,4 +58,6 @@ instructions = [
 });""",
 ]
 wait = false
+warnings = [
+]
 checkResult = true

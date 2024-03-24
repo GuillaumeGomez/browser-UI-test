@@ -18,6 +18,23 @@ const { validator } = require('../validator.js');
 // Not the same `utils.js`!
 const { hasError } = require('../utils.js');
 
+function generateCheckObjectPaths() {
+    return `\
+function checkObjectPaths(object, path, callback, notFoundCallback) {
+    const found = [];
+
+    for (const subPath of path) {
+        found.push(subPath);
+        if (object === undefined || object === null) {
+            notFoundCallback(found);
+            return;
+        }
+        object = object[subPath];
+    }
+    callback(object);
+}`;
+}
+
 function parseAssertCssInner(parser, assertFalse) {
     const jsonValidator = {
         kind: 'json',
@@ -167,6 +184,7 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
         kind: 'json',
         keyTypes: {
             'string': [],
+            'object-path': [],
         },
         valueTypes: {
             'string': {},
@@ -233,32 +251,41 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
         return {
             'instructions': [],
             'wait': false,
-            'warnings': warnings.length > 0 ? warnings : undefined,
+            'warnings': warnings,
             'checkResult': true,
         };
     }
 
-    const varName = 'parseAssertDictProp';
+    const varName = 'parseAssertObj';
 
     const varDict = varName + 'Dict';
     const varKey = varName + 'Key';
     const varValue = varName + 'Value';
     // JSON.stringify produces a problematic output so instead we use this.
-    const values = [];
+    const props = [];
     const undefProps = [];
     for (const [k, v] of json_dict) {
+        const k_s = v.key.kind === 'object-path' ? k : `["${k}"]`;
         if (v.kind !== 'ident') {
-            values.push(`"${k}":"${v.value}"`);
+            props.push(`[${k_s},"${v.value}"]`);
         } else {
-            undefProps.push(`"${k}"`);
+            undefProps.push(k_s);
         }
+    }
+    if (props.length + undefProps.length === 0) {
+        // Unlike when elements are involved, if there are no checks, we can return early
+        // because we don't care whether or not the element exists.
+        return {
+            'instructions': [],
+            'wait': false,
+        };
     }
     const { checks, hasSpecialChecks } = makeExtendedChecks(
         enabledChecks,
         assertFalse,
         'nonMatchingProps',
         `${objName} property`,
-        varName,
+        'prop',
         varKey,
         varValue,
     );
@@ -268,37 +295,47 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
         warnings.push(`Special checks (${k}) will be ignored for \`null\``);
     }
 
-    let err = '';
-    let unexpectedPropError = '';
     let expectedPropError = '';
+    let unexpectedPropError = '';
+    let unknown = '';
     if (!assertFalse) {
-        err = '\n';
-        err += indentString(`nonMatchingProps.push('Unknown ${objName} property \`' + ${varKey} + \
-'\`');`, 3);
-        unexpectedPropError = `
-            nonMatchingProps.push("Expected property \`" + prop + "\` to not exist, found: \
-\`" + ${objName}[prop] + "\`");`;
+        unknown = `
+const p = ${varKey}.map(p => \`"\${p}"\`).join('.');
+nonMatchingProps.push('Unknown ${objName} property \`' + p + '\`');`;
+        unexpectedPropError = `\
+const p = prop.map(p => \`"\${p}"\`).join('.');
+nonMatchingProps.push("Expected property \`" + p + "\` to not exist, found: \`" + val + "\`");`;
     } else {
         expectedPropError = `
-        nonMatchingProps.push("Property named \`" + prop + "\` doesn't exist");`;
+const p = prop.map(p => \`"\${p}"\`).join('.');
+nonMatchingProps.push("Property named \`" + p + "\` doesn't exist");`;
     }
 
     const instructions = [`\
 await page.evaluate(() => {
+${indentString(generateCheckObjectPaths(), 1)}
+
     const nonMatchingProps = [];
-    const ${varDict} = {${values.join(',')}};
+    const ${varDict} = [${props.join(',')}];
     const undefProps = [${undefProps.join(',')}];
     for (const prop of undefProps) {
-        if (${objName}[prop] !== undefined && ${objName}[prop] !== null) {${unexpectedPropError}
-            continue;
-        }${expectedPropError}
+        checkObjectPaths(${objName}, prop, val => {
+            if (val !== undefined && val !== null) {
+${indentString(unexpectedPropError, 4)}
+                return;
+            }${indentString(expectedPropError, 3)}
+        }, prop => {${indentString(expectedPropError, 3)}
+        });
     }
-    for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-        if (${objName}[${varKey}] === undefined) {${err}
-            continue;
-        }
-        const ${varName} = String(${objName}[${varKey}]);
-${indentString(checks.join('\n'), 2)}
+    for (const [${varKey}, ${varValue}] of ${varDict}) {
+        checkObjectPaths(${objName}, ${varKey}, val => {
+            if (val === undefined && val === null) {${indentString(unknown, 4)}
+                return;
+            }
+            const prop = String(val);
+${indentString(checks.join('\n'), 3)}
+        }, ${varKey} => {${indentString(unknown, 3)}
+        });
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join("; ");
@@ -309,47 +346,47 @@ ${indentString(checks.join('\n'), 2)}
     return {
         'instructions': instructions,
         'wait': false,
-        'warnings': warnings.length > 0 ? warnings : undefined,
+        'warnings': warnings,
         'checkResult': true,
     };
 }
 
 // Possible inputs:
 //
-// * {"DOM property": "value"}
-// * ({"DOM property": "value"})
-// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH|NEAR)
-// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH|NEAR])
+// * {"DOM property"|object path: "value"}
+// * ({"DOM property"|object path: "value"})
+// * ({"DOM property"|object path: "value"}, CONTAINS|ENDS_WITH|STARTS_WITH|NEAR)
+// * ({"DOM property"|object path: "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH|NEAR])
 function parseAssertDocumentProperty(parser) {
     return parseAssertObjPropertyInner(parser, false, 'document');
 }
 
 // Possible inputs:
 //
-// * {"DOM property": "value"}
-// * ({"DOM property": "value"})
-// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH|NEAR)
-// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH|NEAR])
+// * {"DOM property"|object path: "value"}
+// * ({"DOM property"|object path: "value"})
+// * ({"DOM property"|object path: "value"}, CONTAINS|ENDS_WITH|STARTS_WITH|NEAR)
+// * ({"DOM property"|object path: "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH|NEAR])
 function parseAssertDocumentPropertyFalse(parser) {
     return parseAssertObjPropertyInner(parser, true, 'document');
 }
 
 // Possible inputs:
 //
-// * {"DOM property": "value"}
-// * ({"DOM property": "value"})
-// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH|NEAR)
-// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH|NEAR])
+// * {"DOM property"|object path: "value"}
+// * ({"DOM property"|object path: "value"})
+// * ({"DOM property"|object path: "value"}, CONTAINS|ENDS_WITH|STARTS_WITH|NEAR)
+// * ({"DOM property"|object path: "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH|NEAR])
 function parseAssertWindowProperty(parser) {
     return parseAssertObjPropertyInner(parser, false, 'window');
 }
 
 // Possible inputs:
 //
-// * {"DOM property": "value"}
-// * ({"DOM property": "value"})
-// * ({"DOM property": "value"}, CONTAINS|ENDS_WITH|STARTS_WITH|NEAR)
-// * ({"DOM property": "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH|NEAR])
+// * {"DOM property"|object path: "value"}
+// * ({"DOM property"|object path: "value"})
+// * ({"DOM property"|object path: "value"}, CONTAINS|ENDS_WITH|STARTS_WITH|NEAR)
+// * ({"DOM property"|object path: "value"}, [CONTAINS|ENDS_WITH|STARTS_WITH|NEAR])
 function parseAssertWindowPropertyFalse(parser) {
     return parseAssertObjPropertyInner(parser, true, 'window');
 }
@@ -441,13 +478,6 @@ function parseAssertPropertyInner(parser, assertFalse) {
         }
     }
 
-    if (props.length + undefProps.length === 0) {
-        return {
-            'instructions': [],
-            'wait': false,
-        };
-    }
-
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
         warnings.push(`Pseudo-elements (\`${selector.pseudo}\`) don't have properties so \
@@ -463,14 +493,12 @@ the check will be performed on the element itself`);
     let unexpectedPropError = '';
     let unknown = '';
     if (!assertFalse) {
-        unknown = `\
+        unknown = `
 const p = ${varKey}.map(p => \`"\${p}"\`).join('.');
-nonMatchingProps.push('Unknown property \`' + ${varKey} + '\`');
-`;
+nonMatchingProps.push('Unknown property \`' + p + '\`');`;
         unexpectedPropError = `\
 const p = prop.map(p => \`"\${p}"\`).join('.');
 nonMatchingProps.push("Expected property \`" + p + "\` to not exist, found: \`" + val + "\`");`;
-
     } else {
         expectedPropError = `
 const p = prop.map(p => \`"\${p}"\`).join('.');
@@ -485,19 +513,7 @@ nonMatchingProps.push("Property named \`" + p + "\` doesn't exist");`;
     }
     whole += indentString(`\
 await page.evaluate(e => {
-    function checkObjectPaths(object, path, callback, notFoundCallback) {
-        const found = [];
-
-        for (const subPath of path) {
-            found.push(subPath);
-            if (object === undefined || object === null) {
-                notFoundCallback(found);
-                return;
-            }
-            object = object[subPath];
-        }
-        callback(object);
-    }
+${indentString(generateCheckObjectPaths(), 1)}
 
     const nonMatchingProps = [];
     const ${varDict} = [${props.join(',')}];
@@ -507,10 +523,8 @@ await page.evaluate(e => {
             if (val !== undefined && val !== null) {
 ${indentString(unexpectedPropError, 4)}
                 return;
-            }
-${indentString(expectedPropError, 3)}
-        }, prop => {
-${indentString(expectedPropError, 3)}
+            }${indentString(expectedPropError, 3)}
+        }, prop => {${indentString(expectedPropError, 3)}
         });
     }
     for (const [${varKey}, ${varValue}] of ${varDict}) {
@@ -520,8 +534,8 @@ ${indentString(expectedPropError, 3)}
             }
             const prop = String(val);
 ${indentString(checks.join('\n'), 3)}
-        }, ${varKey} => {
-${indentString(unknown, 3)}});
+        }, ${varKey} => {${indentString(unknown, 3)}
+        });
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join("; ");
