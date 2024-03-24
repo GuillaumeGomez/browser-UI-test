@@ -493,10 +493,9 @@ the check will be performed on the element itself`);
     let unexpectedPropError = '';
     let unknown = '';
     if (!assertFalse) {
-        unknown = `\
+        unknown = `
 const p = ${varKey}.map(p => \`"\${p}"\`).join('.');
-nonMatchingProps.push('Unknown property \`' + p + '\`');
-`;
+nonMatchingProps.push('Unknown property \`' + p + '\`');`;
         unexpectedPropError = `\
 const p = prop.map(p => \`"\${p}"\`).join('.');
 nonMatchingProps.push("Expected property \`" + p + "\` to not exist, found: \`" + val + "\`");`;
@@ -524,10 +523,8 @@ ${indentString(generateCheckObjectPaths(), 1)}
             if (val !== undefined && val !== null) {
 ${indentString(unexpectedPropError, 4)}
                 return;
-            }
-${indentString(expectedPropError, 3)}
-        }, prop => {
-${indentString(expectedPropError, 3)}
+            }${indentString(expectedPropError, 3)}
+        }, prop => {${indentString(expectedPropError, 3)}
         });
     }
     for (const [${varKey}, ${varValue}] of ${varDict}) {
@@ -537,8 +534,8 @@ ${indentString(expectedPropError, 3)}
             }
             const prop = String(val);
 ${indentString(checks.join('\n'), 3)}
-        }, ${varKey} => {
-${indentString(unknown, 3)}});
+        }, ${varKey} => {${indentString(unknown, 3)}
+        });
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join("; ");

@@ -25,11 +25,9 @@ await page.evaluate(e => {
 
                 return;
             }
-
             const p = prop.map(p => `\"${p}\"`).join('.');
             nonMatchingProps.push(\"Property named `\" + p + \"` doesn't exist\");
         }, prop => {
-
             const p = prop.map(p => `\"${p}\"`).join('.');
             nonMatchingProps.push(\"Property named `\" + p + \"` doesn't exist\");
         });
@@ -44,7 +42,7 @@ await page.evaluate(e => {
                 nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey.map(p => `\"${p}\"`).join('.') + \"` (`\" + prop + \"`) (for STARTS_WITH check)\");
             }
         }, parseAssertElemPropKey => {
-});
+        });
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(\"; \");

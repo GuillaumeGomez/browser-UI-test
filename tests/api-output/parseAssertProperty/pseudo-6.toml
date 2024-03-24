@@ -27,16 +27,14 @@ for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
                     nonMatchingProps.push(\"Expected property `\" + p + \"` to not exist, found: `\" + val + \"`\");
                     return;
                 }
-
             }, prop => {
-
             });
         }
         for (const [parseAssertElemPropKey, parseAssertElemPropValue] of parseAssertElemPropDict) {
             checkObjectPaths(e, parseAssertElemPropKey, val => {
-                if (val === undefined && val === null) {                const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
+                if (val === undefined && val === null) {
+                    const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
                     nonMatchingProps.push('Unknown property `' + p + '`');
-
                     return;
                 }
                 const prop = String(val);
@@ -46,7 +44,7 @@ for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
             }, parseAssertElemPropKey => {
                 const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
                 nonMatchingProps.push('Unknown property `' + p + '`');
-    });
+            });
         }
         if (nonMatchingProps.length !== 0) {
             const props = nonMatchingProps.join(\"; \");
