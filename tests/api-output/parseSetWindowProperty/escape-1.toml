@@ -1,11 +1,21 @@
 instructions = [
   """await page.evaluate(() => {
-    const parsePropDict = new Map([
-        [\"a\", \"2\"],
-        [\"\\\"b\", \"\\'b\"]
-    ]);
+    function setObjValue(object, path, value) {
+        for (let i = 0; i < path.length - 1; ++i) {
+            const subPath = path[i];
+            if (object[subPath] === undefined || object[subPath] === null) {
+                object[subPath] = {};
+            }
+            object = object[subPath];
+        }
+        object[path[path.length - 1]] = value;
+    }
+    const parsePropDict = [
+        [[\"a\"], \"2\"],
+        [[\"\\\"b\"], \"\\'b\"]
+    ];
     for (const [parsePropKey, parsePropValue] of parsePropDict) {
-        window[parsePropKey] = parsePropValue;
+        setObjValue(window, parsePropKey, parsePropValue);
     }
 });""",
 ]
