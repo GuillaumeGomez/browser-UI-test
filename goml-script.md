@@ -1560,6 +1560,9 @@ assert-window-property: ({"devicePixelRatio": "0.5"}, [STARTS_WITH])
 
 ```
 set-document-property: {"title": "a", "linkColor": "blue"}
+
+// It works with object paths as well:
+set-document-property: {"activeElement"."innerText": "new text"}
 ```
 
 #### set-font-size
@@ -1627,6 +1630,9 @@ set-timeout: 0 // no more timeout, to be used cautiously!
 
 ```
 set-window-property: {"scrollX": 12, "screenLeft": "a"}
+
+// It works with object paths as well:
+set-window-property: {"document"."activeElement"."innerText": "new text"}
 ```
 
 #### set-window-size
