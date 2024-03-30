@@ -11,29 +11,13 @@ const {
     validatePositionDictV2,
     commonPositionCheckCode,
     commonSizeCheckCode,
+    generateCheckObjectPaths,
 } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 const { cleanString } = require('../parser.js');
 const { validator } = require('../validator.js');
 // Not the same `utils.js`!
 const { hasError } = require('../utils.js');
-
-function generateCheckObjectPaths() {
-    return `\
-function checkObjectPaths(object, path, callback, notFoundCallback) {
-    const found = [];
-
-    for (const subPath of path) {
-        found.push(subPath);
-        if (object === undefined || object === null) {
-            notFoundCallback(found);
-            return;
-        }
-        object = object[subPath];
-    }
-    callback(object);
-}`;
-}
 
 function parseAssertCssInner(parser, assertFalse) {
     const jsonValidator = {

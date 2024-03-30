@@ -1,7 +1,7 @@
 // All `compare*` commands.
 
 const {
-    getAndSetElements, getInsertStrings, indentString, getSizes,
+    getAndSetElements, getInsertStrings, indentString, getSizes, generateCheckObjectPaths,
 } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 const { validator } = require('../validator.js');
@@ -181,7 +181,7 @@ function parseCompareElementsCssInner(parser, assertFalse) {
                 { kind: 'selector' },
                 {
                     kind: 'array',
-                    allowEmpty: false,
+                    allowEmptyValues: false,
                     valueTypes: {
                         'string': {},
                     },
@@ -262,7 +262,7 @@ function parseCompareElementsCssFalse(parser) {
     return parseCompareElementsCssInner(parser, true);
 }
 
-// * ("CSS selector 1" | "XPath 1", "CSS selector 2" | "XPath 2, ["CSS properties"])
+// * ("selector 1, "selector 2", ["object paths"])
 function parseCompareElementsPropertyInner(parser, assertFalse) {
     const ret = validator(parser,
         {
@@ -272,9 +272,10 @@ function parseCompareElementsPropertyInner(parser, assertFalse) {
                 { kind: 'selector' },
                 {
                     kind: 'array',
-                    allowEmpty: false,
+                    allowEmptyValues: false,
                     valueTypes: {
                         'string': {},
+                        'object-path': {},
                     },
                 },
             ],
@@ -289,27 +290,34 @@ function parseCompareElementsPropertyInner(parser, assertFalse) {
     const selector2 = tuple[1].value;
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, true);
+    const elems = tuple[2].value.value.map(e => {
+        const ret = e.getStringValue();
+        return e.kind === 'object-path' ? ret : `["${ret}"]`;
+    });
 
     const varName = 'parseCompareElementsProp';
-    const selectors = getAndSetElements(selector1, varName + '1', false) + '\n' +
-        getAndSetElements(selector2, varName + '2', false) + '\n';
-
     const code = `\
-const ${varName}s = ${tuple[2].value.displayInCode()};
+${getAndSetElements(selector1, varName + '1', false)}
+${getAndSetElements(selector2, varName + '2', false)}
+const ${varName}s = [${elems}];
 for (const property of ${varName}s) {
     ${insertBefore}const value = await ${varName}1.evaluateHandle((e, p) => {
-        return String(e[p]);
+${indentString(generateCheckObjectPaths(), 2)}
+        let ret = 'undefined';
+        checkObjectPaths(e, p, found => ret = String(found), notFound => {});
+        return ret;
     }, property);
     await ${varName}2.evaluate((e, v, p) => {
-        if (v !== String(e[p])) {
-            throw p + ": \`" + v + "\` !== \`" + String(e[p]) + "\`";
+${indentString(generateCheckObjectPaths(), 2)}
+        let ret = 'undefined';
+        checkObjectPaths(e, p, found => ret = String(found), notFound => {});
+        if (v !== ret) {
+            throw p + ": \`" + v + "\` !== \`" + ret + "\`";
         }
     }, value, property);${insertAfter}
 }`;
     return {
-        'instructions': [
-            selectors + code,
-        ],
+        'instructions': [code],
         'wait': false,
         'checkResult': true,
     };
@@ -691,7 +699,7 @@ ${indentString(getSizes(selector2), 1)}
     return [Math.round(width), Math.round(height)];
 }
 function browserCompareValuesNear(v1, v2, kind, maxDelta) {
-    delta = Math.abs(v1 - v2);
+    const delta = Math.abs(v1 - v2);
     if (delta > maxDelta) {
         err = "delta for " + kind + " values too large: " + delta + " > " + maxDelta;
     }
@@ -700,7 +708,6 @@ function browserCompareValuesNear(v1, v2, kind, maxDelta) {
 const [width1, height1] = browserGetElementSizes1(elem1);
 const [width2, height2] = browserGetElementSizes2(elem2);
 let err = null;
-let delta;
 `;
     const warnings = [];
     let added = 0;
