@@ -121,6 +121,7 @@ function parseObjPropertyInner(parser, objName) {
             kind: 'json',
             keyTypes: {
                 string: [],
+                'object-path': [],
             },
             valueTypes: {
                 // In case it's an ident, we only want to allow `null`.
@@ -140,7 +141,8 @@ function parseObjPropertyInner(parser, objName) {
     const content = [];
 
     for (const [key, value] of json) {
-        content.push(`["${key}", "${value.value}"]`);
+        const k_s = value.key.kind === 'object-path' ? key : `["${key}"]`;
+        content.push(`[${k_s}, "${value.value}"]`);
     }
 
     if (content.length === 0) {
@@ -156,15 +158,24 @@ function parseObjPropertyInner(parser, objName) {
     const varDict = varName + 'Dict';
     const varKey = varName + 'Key';
     const varValue = varName + 'Value';
-    // JSON.stringify produces a problematic output so instead we use this.
 
     const instructions = [`\
 await page.evaluate(() => {
-    const ${varDict} = new Map([
+    function setObjValue(object, path, value) {
+        for (let i = 0; i < path.length - 1; ++i) {
+            const subPath = path[i];
+            if (object[subPath] === undefined || object[subPath] === null) {
+                object[subPath] = {};
+            }
+            object = object[subPath];
+        }
+        object[path[path.length - 1]] = value;
+    }
+    const ${varDict} = [
 ${indentString(content.join(',\n'), 2)}
-    ]);
+    ];
     for (const [${varKey}, ${varValue}] of ${varDict}) {
-        ${objName}[${varKey}] = ${varValue};
+        setObjValue(${objName}, ${varKey}, ${varValue});
     }
 });`,
     ];

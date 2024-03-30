@@ -1049,20 +1049,26 @@ Another thing to be noted: if you don't care whether the selector exists or not 
 
 #### compare-elements-property
 
-**compare-elements-property** command allows you to check that two DOM elements' CSS properties are equal. Examples:
+**compare-elements-property** command allows you to check that two DOM elements' properties are equal. Examples:
 
 ```
-compare-elements-property: ("element1", "//element2", ["CSS property1", "CSS property2", ...])
-compare-elements-property: ("//element1", "element2", ["CSS property1", "CSS property2", ...])
+compare-elements-property: ("element1", "//element2", ["property1", "property2", ...])
+compare-elements-property: ("//element1", "element2", ["property1", "property2", ...])
+
+// Object-paths are also supported:
+compare-elements-property: ("//element1", "element2", ["property1"."sub", ...])
 ```
 
 #### compare-elements-property-false
 
-**compare-elements-property-false** command allows you to check that two DOM elements' CSS properties are different. If one of the elements doesn't exist, the command will fail. Examples:
+**compare-elements-property-false** command allows you to check that two DOM elements' properties are different. If one of the elements doesn't exist, the command will fail. Examples:
 
 ```
-compare-elements-property-false: ("element1", "//element2", ["CSS property1", "CSS property2", ...])
-compare-elements-property-false: ("//element1", "element2", ["CSS property1", "CSS property2", ...])
+compare-elements-property-false: ("element1", "//element2", ["property1", "property2", ...])
+compare-elements-property-false: ("//element1", "element2", ["property1", "property2", ...])
+
+// Object-paths are also supported:
+compare-elements-property-false: ("//element1", "element2", ["property1"."sub", ...])
 ```
 
 Another thing to be noted: if you don't care whether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
@@ -1554,6 +1560,9 @@ assert-window-property: ({"devicePixelRatio": "0.5"}, [STARTS_WITH])
 
 ```
 set-document-property: {"title": "a", "linkColor": "blue"}
+
+// It works with object paths as well:
+set-document-property: {"activeElement"."innerText": "new text"}
 ```
 
 #### set-font-size
@@ -1621,6 +1630,9 @@ set-timeout: 0 // no more timeout, to be used cautiously!
 
 ```
 set-window-property: {"scrollX": 12, "screenLeft": "a"}
+
+// It works with object paths as well:
+set-window-property: {"document"."activeElement"."innerText": "new text"}
 ```
 
 #### set-window-size

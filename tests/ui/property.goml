@@ -6,9 +6,17 @@ assert-window-property-false: {"size": "a"}
 set-window-property: {"size": "a"}
 assert-window-property: {"size": "a"}
 
+assert-window-property-false: {"wa"."wo": "a"}
+set-window-property: {"wa"."wo": "a"}
+assert-window-property: {"wa"."wo": "a"}
+
 assert-document-property-false: {"size": "a"}
 set-document-property: {"size": "a"}
 assert-document-property: {"size": "a"}
+
+assert-document-property-false: {"wa"."wo": "a"}
+set-document-property: {"wa"."wo": "a"}
+assert-document-property: {"wa"."wo": "a"}
 
 assert-property-false: ("header", {"yolo": "a"})
 set-property: ("header", {"yolo": "a"})

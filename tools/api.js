@@ -2267,6 +2267,10 @@ function checkObjProperty(x, func) {
 
     func('{"a": 2}', 'basic-1');
     func('{"a": "2", "\\"b": "\'b"}', 'escape-1');
+
+    // object-path
+    func('{"a"."b": 2}', 'object-path-1');
+    func('{"a": "2", "b"."c": "b"}', 'object-path-2');
 }
 
 function checkWrite(x, func) {

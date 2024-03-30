@@ -9,11 +9,11 @@ function innerParseCssAttribute(parser, argName, varName, allowNullIdent, callba
     const jsonValidator = {
         kind: 'json',
         keyTypes: {
-            'string': [],
+            string: [],
         },
         valueTypes: {
-            'string': {},
-            'number': {
+            string: {},
+            number: {
                 allowNegative: true,
                 allowFloat: true,
             },
