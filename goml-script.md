@@ -1049,20 +1049,26 @@ Another thing to be noted: if you don't care whether the selector exists or not 
 
 #### compare-elements-property
 
-**compare-elements-property** command allows you to check that two DOM elements' CSS properties are equal. Examples:
+**compare-elements-property** command allows you to check that two DOM elements' properties are equal. Examples:
 
 ```
-compare-elements-property: ("element1", "//element2", ["CSS property1", "CSS property2", ...])
-compare-elements-property: ("//element1", "element2", ["CSS property1", "CSS property2", ...])
+compare-elements-property: ("element1", "//element2", ["property1", "property2", ...])
+compare-elements-property: ("//element1", "element2", ["property1", "property2", ...])
+
+// Object-paths are also supported:
+compare-elements-property: ("//element1", "element2", ["property1"."sub", ...])
 ```
 
 #### compare-elements-property-false
 
-**compare-elements-property-false** command allows you to check that two DOM elements' CSS properties are different. If one of the elements doesn't exist, the command will fail. Examples:
+**compare-elements-property-false** command allows you to check that two DOM elements' properties are different. If one of the elements doesn't exist, the command will fail. Examples:
 
 ```
-compare-elements-property-false: ("element1", "//element2", ["CSS property1", "CSS property2", ...])
-compare-elements-property-false: ("//element1", "element2", ["CSS property1", "CSS property2", ...])
+compare-elements-property-false: ("element1", "//element2", ["property1", "property2", ...])
+compare-elements-property-false: ("//element1", "element2", ["property1", "property2", ...])
+
+// Object-paths are also supported:
+compare-elements-property-false: ("//element1", "element2", ["property1"."sub", ...])
 ```
 
 Another thing to be noted: if you don't care whether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
