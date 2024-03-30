@@ -799,6 +799,10 @@ function checkCompareElementsProperty(x, func) {
     // Multiline
     func('("a"\n, "b", \n1)', 'multiline-1');
     func('("a",\n "b",\n [\n"margin"])', 'multiline-2');
+
+    // Multiline
+    func('("a", "b", ["a"."b"])', 'object-path-1');
+    func('("a", "b", ["margin", "a"."b"])', 'object-path-2');
 }
 
 function checkCompareElementsSize(x, func) {

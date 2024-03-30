@@ -1,13 +1,11 @@
 instructions = [
-  """let parseCompareElementsProp1 = await page.$x(\"//a\");
-if (parseCompareElementsProp1.length === 0) { throw 'XPath \"//a\" not found'; }
-parseCompareElementsProp1 = parseCompareElementsProp1[0];
+  """let parseCompareElementsProp1 = await page.$(\"a\");
+if (parseCompareElementsProp1 === null) { throw '\"a\" not found'; }
 let parseCompareElementsProp2 = await page.$(\"b\");
 if (parseCompareElementsProp2 === null) { throw '\"b\" not found'; }
-const parseCompareElementsProps = [[\"margin\"]];
+const parseCompareElementsProps = [[\"a\",\"b\"]];
 for (const property of parseCompareElementsProps) {
-    try {
-const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {
+    const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {
         function checkObjectPaths(object, path, callback, notFoundCallback) {
             const found = [];
 
@@ -45,7 +43,6 @@ const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {
             throw p + \": `\" + v + \"` !== `\" + ret + \"`\";
         }
     }, value, property);
-} catch(e) { continue; } throw \"assert didn't fail\";
 }""",
 ]
 wait = false
