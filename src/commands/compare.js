@@ -274,7 +274,7 @@ function parseCompareElementsPropertyInner(parser, assertFalse) {
                     kind: 'array',
                     allowEmptyValues: false,
                     valueTypes: {
-                        'string': {},
+                        string: {},
                         'object-path': {},
                     },
                 },
@@ -359,7 +359,7 @@ function parseCompareElementsPositionInner(parser, assertFalse) {
                 {
                     kind: 'array',
                     valueTypes: {
-                        'string': {
+                        string: {
                             allowed: ['x', 'y'],
                         },
                     },

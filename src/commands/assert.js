@@ -380,16 +380,16 @@ function parseAssertPropertyInner(parser, assertFalse) {
     const jsonValidator = {
         kind: 'json',
         keyTypes: {
-            'string': [],
+            string: [],
             'object-path': [],
         },
         valueTypes: {
-            'string': {},
-            'number': {
+            string: {},
+            number: {
                 allowNegative: true,
                 allowFloat: true,
             },
-            'ident': {
+            ident: {
                 allowed: ['null'],
             },
         },
