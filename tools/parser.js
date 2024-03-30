@@ -768,6 +768,37 @@ function checkArray(x) {
 first element is of this kind), found `string` at position 1',
     );
     x.assert(p.elems.length, 1);
+
+    // Checks that array of strings and of object-path is ok.
+    p = new Parser('["a", "a"."b"]');
+    p.parse();
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].getErrorText(), '["a", "a"."b"]');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw().length, 2);
+    x.assert(p.elems[0].getRaw()[0].error, null);
+    x.assert(p.elems[0].getRaw()[0].kind, 'string');
+    x.assert(p.elems[0].getRaw()[0].getRaw(), 'a');
+    x.assert(p.elems[0].getRaw()[1].error, null);
+    x.assert(p.elems[0].getRaw()[1].kind, 'object-path');
+    x.assert(p.elems[0].getRaw()[1].getRaw().length, 2);
+
+    p = new Parser('["a"."b", "a"]');
+    p.parse();
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'array');
+    x.assert(p.elems[0].getErrorText(), '["a"."b", "a"]');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].getRaw().length, 2);
+    x.assert(p.elems[0].getRaw()[0].error, null);
+    x.assert(p.elems[0].getRaw()[0].kind, 'object-path');
+    x.assert(p.elems[0].getRaw()[0].getRaw().length, 2);
+    x.assert(p.elems[0].getRaw()[1].error, null);
+    x.assert(p.elems[0].getRaw()[1].kind, 'string');
+    x.assert(p.elems[0].getRaw()[1].getRaw(), 'a');
 }
 
 function checkIdent(x) {

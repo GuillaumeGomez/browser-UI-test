@@ -151,6 +151,13 @@ function isExpressionCompatible(elem) {
     return elem.kind === 'tuple' && elem.canBeExpression === true;
 }
 
+function isArrayElementCompatible(expected, elem) {
+    if (['string', 'object-path'].includes(expected.kind)) {
+        return ['string', 'object-path'].includes(elem.kind);
+    }
+    return expected.kind === elem.kind;
+}
+
 // Used to concatenate all elements into a string, like `1 + "a" + 12` -> "1a12".
 function concatExprAsString(elems) {
     let out = '';
@@ -488,7 +495,7 @@ class ArrayElement extends Element {
             ) {
                 this.needCheck = true;
                 return null;
-            } else if (values[i].kind !== values[0].kind) {
+            } else if (!isArrayElementCompatible(values[0], values[i])) {
                 this.error = 'all array\'s elements must be of the same kind: expected ' +
                     `array of \`${values[0].kind}\` (because the first element is of this ` +
                     `kind), found \`${values[i].kind}\` at position ${i}`;
@@ -1005,7 +1012,10 @@ found \`${showEnd(prevElem)}\``;
                 endChar = c;
                 break;
             } else if (isStringChar(c)) {
-                checker(c, arg => this.parseString(endChars, arg));
+                checker(c, arg => this.parseString(
+                    separator !== null ? [...endChars, separator] : endChars,
+                    arg,
+                ));
             } else if (c === '{') {
                 checker(c, this.parseJson);
             } else if (isWhiteSpace(c)) {
