@@ -352,24 +352,25 @@ function validateArray(parser, allowedSyntax, validator) {
         return parser;
     }
     // Allowed by default and optional to specify.
-    const allowEmpty = allowedSyntax.allowEmpty !== false;
+    const allowEmptyValues = allowedSyntax.allowEmptyValues !== false;
 
-    const allowedForType = getObjectValue(allowedSyntax.valueTypes, arrayElems[0].kind);
-    if (allowedForType === undefined) {
-        const exp = Object.keys(allowedSyntax.valueTypes).join(' or ');
-        return validator.makeError(
-            `expected an array of ${exp} elements, found an array of \
-${arrayElems[0].kind} (${arrayElems[0].getErrorText()})`);
-    } else if (!isObject(allowedForType)) {
-        throw new Error('"valueTypes" values should be objects (in array validator)');
-    }
-    allowedForType.kind = arrayElems[0].kind;
     for (const value of arrayElems) {
+        const allowedForType = getObjectValue(allowedSyntax.valueTypes, value.kind);
+        if (allowedForType === undefined) {
+            const exp = Object.keys(allowedSyntax.valueTypes).join(' or ');
+            return validator.makeError(
+                `expected an array of ${exp} elements, found an array of \
+${arrayElems[0].kind} (${arrayElems[0].getErrorText()})`);
+        } else if (!isObject(allowedForType)) {
+            throw new Error('"valueTypes" values should be objects (in array validator)');
+        }
+
+        allowedForType.kind = value.kind;
         const ret = validator.validatorInner(value, allowedForType);
         if (hasError(ret)) {
             return ret;
         }
-        if (!allowEmpty && value.getStringValue().length === 0) {
+        if (!allowEmptyValues && value.getStringValue().length === 0) {
             return validator.makeError(
                 `empty values (\`${value.getErrorText()}\`) are not allowed`,
             );
@@ -566,6 +567,8 @@ Format looks like this:
                     allowed: ['null'],
                 },
             },
+            // optional
+            allowEmptyValues: true,
         },
         {
             kind: 'json',

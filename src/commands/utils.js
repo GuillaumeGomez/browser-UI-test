@@ -385,6 +385,23 @@ const ${errorsVarName} = [];
 ${checker}`;
 }
 
+function generateCheckObjectPaths() {
+    return `\
+function checkObjectPaths(object, path, callback, notFoundCallback) {
+    const found = [];
+
+    for (const subPath of path) {
+        found.push(subPath);
+        if (object === undefined || object === null) {
+            notFoundCallback(found);
+            return;
+        }
+        object = object[subPath];
+    }
+    callback(object);
+}`;
+}
+
 module.exports = {
     'getAndSetElements': getAndSetElements,
     'getInsertStrings': getInsertStrings,
@@ -396,4 +413,5 @@ module.exports = {
     'validatePositionDictV2': validatePositionDictV2,
     'commonPositionCheckCode': commonPositionCheckCode,
     'commonSizeCheckCode': commonSizeCheckCode,
+    'generateCheckObjectPaths': generateCheckObjectPaths,
 };

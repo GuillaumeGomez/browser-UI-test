@@ -15,7 +15,7 @@ function browserGetElementSizes2(e) {
     return [Math.round(width), Math.round(height)];
 }
 function browserCompareValuesNear(v1, v2, kind, maxDelta) {
-    delta = Math.abs(v1 - v2);
+    const delta = Math.abs(v1 - v2);
     if (delta > maxDelta) {
         err = \"delta for \" + kind + \" values too large: \" + delta + \" > \" + maxDelta;
     }
@@ -24,7 +24,6 @@ function browserCompareValuesNear(v1, v2, kind, maxDelta) {
 const [width1, height1] = browserGetElementSizes1(elem1);
 const [width2, height2] = browserGetElementSizes2(elem2);
 let err = null;
-let delta;
 browserCompareValuesNear(height1, height2, \"height\", 1);
 }, parseCompareElementsSizeNear1, parseCompareElementsSizeNear2);""",
 ]
