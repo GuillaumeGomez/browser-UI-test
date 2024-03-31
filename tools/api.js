@@ -2161,6 +2161,10 @@ function checkWaitForProperty(x, func) {
     func('("a", {"x": 1}, ALL)', 'extra-1');
     func('("a", {"x": 1}, CONTAINS)', 'extra-2');
     func('("a", {"x": 1}, [CONTAINS, ALL])', 'extra-3');
+
+    // object-path
+    func('("a", {"x"."y": "1"})', 'object-path-1');
+    func('("a", {"x"."y": "1", "z": 3})', 'object-path-2');
 }
 
 function checkWaitForCount(x, func) {
@@ -2221,6 +2225,10 @@ function checkWaitForObjectProperty(x, func) {
     func('({"a": null}, [STARTS_WITH])', 'extra-3');
     func('({"a": "b"}, [STARTS_WITH, ENDS_WITH])', 'extra-4');
     func('({"a": "b", "c": null}, [STARTS_WITH, ENDS_WITH])', 'extra-5');
+
+    // object-path
+    func('{"x"."y": "1"}', 'object-path-1');
+    func('{"x"."y": "1", "z": 3}', 'object-path-2');
 }
 
 function checkWaitForLocalStorage(x, func) {

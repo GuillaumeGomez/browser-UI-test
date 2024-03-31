@@ -19,8 +19,8 @@ while (true) {
             callback(object);
         }
         const errors = [];
-        const propertyDict = [];
-        const undefProps = [[\"a\"]];
+        const propertyDict = [[[\"x\",\"y\"],\"1\"],[[\"z\"],\"3\"]];
+        const undefProps = [];
         for (const prop of undefProps) {
             checkObjectPaths(document, prop, val => {
                 if (val !== undefined && val !== null) {

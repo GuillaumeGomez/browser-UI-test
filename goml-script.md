@@ -1914,6 +1914,9 @@ Examples:
 ```
 wait-for-document-property: {"key": "value"}
 wait-for-document-property: {"key": "value", "key2": "value2"}
+
+// You can also use object-paths:
+wait-for-document-property: {"key"."sub-key": "value"}
 ```
 
 You can use more specific checks as well by using one of the following identifiers: CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
@@ -1962,6 +1965,9 @@ wait-for-property: ("#element", {"scrollTop": 10, "name": "hello"})
 // Same with an XPath:
 wait-for-property: ("//*[@id='element']", {"scrollTop": 10})
 wait-for-property: ("//*[@id='element']", {"scrollTop": 10, "name": "hello"})
+
+// You can also use object-paths:
+wait-for-property: ("#element", {"key"."sub-key": "value"})
 ```
 
 If you want to check that a property doesn't exist, you can use `null`:
@@ -2047,6 +2053,9 @@ Examples:
 ```
 wait-for-window-property: {"key": "value"}
 wait-for-window-property: {"key": "value", "key2": "value2"}
+
+// You can also use object-paths:
+wait-for-window-property: {"key"."sub-key": "value"}
 ```
 
 You can use more specific checks as well by using one of the following identifiers: CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".

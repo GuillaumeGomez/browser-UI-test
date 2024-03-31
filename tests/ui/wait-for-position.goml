@@ -3,10 +3,10 @@ screenshot-comparison: false
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 set-timeout: 500
 // Shouldn't wait here since it's already the case.
-wait-for-position: ("#js-change-pos", {"x": 418, "y": 88})
+wait-for-position: ("#js-change-pos", {"x": 543, "y": 88})
 click: "#js-change-pos"
 // Should wait for 250ms here.
-wait-for-position: ("#js-change-pos", {"x": 421})
+wait-for-position: ("#js-change-pos", {"x": 546})
 // We reset the "y" position:
 set-css: ("#js-change-pos", {"margin-top": "0"})
 click: "#js-change-pos"

@@ -5,26 +5,49 @@ let allTime = 0;
 let property = null;
 while (true) {
     property = await page.evaluate(() => {
-        const errors = [];
-        const propertyDict = {\"a\":\"b\"};
-        const undefProps = [\"c\"];
-        for (const prop of undefProps) {
-            if (document[prop] !== undefined && document[prop] !== null) {
-                errors.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + document[prop] + \"`\");
-                continue;
+        function checkObjectPaths(object, path, callback, notFoundCallback) {
+            const found = [];
+
+            for (const subPath of path) {
+                found.push(subPath);
+                if (object === undefined || object === null) {
+                    notFoundCallback(found);
+                    return;
+                }
+                object = object[subPath];
             }
+            callback(object);
         }
-        for (const [propertyKey, propertyValue] of Object.entries(propertyDict)) {
-            if (document[propertyKey] === undefined) {
-                errors.push(\"document doesn't have a property named `\" + propertyKey + \"`\");
-            }
-            const property = String(document[propertyKey]);
-            if (!property.startsWith(propertyValue)) {
-                errors.push(\"document property `\" + propertyKey + \"` (`\" + property + \"`) doesn't start with `\" + propertyValue + \"` (for STARTS_WITH check)\");
-            }
-            if (!property.endsWith(propertyValue)) {
-                errors.push(\"document property `\" + propertyKey + \"` (`\" + property + \"`) doesn't end with `\" + propertyValue + \"`\");
-            }
+        const errors = [];
+        const propertyDict = [[[\"a\"],\"b\"]];
+        const undefProps = [[\"c\"]];
+        for (const prop of undefProps) {
+            checkObjectPaths(document, prop, val => {
+                if (val !== undefined && val !== null) {
+                    const p = prop.map(p => `\"${p}\"`).join('.');
+                    errors.push(\"Expected property `\" + p + \"` to not exist, found: `\" + val + \"`\");
+                }
+            }, _notFound => {},
+            );
+        }
+        for (const [propertyKey, propertyValue] of propertyDict) {
+            checkObjectPaths(document, propertyKey, val => {
+                if (val === undefined) {
+                    const p = propertyKey.map(p => `\"${p}\"`).join('.');
+                    errors.push(\"document doesn't have a property `\" + p + \"`\");
+                    return;
+                }
+                const property = String(val);
+                if (!property.startsWith(propertyValue)) {
+                    errors.push(\"document property `\" + propertyKey + \"` (`\" + property + \"`) doesn't start with `\" + propertyValue + \"` (for STARTS_WITH check)\");
+                }
+                if (!property.endsWith(propertyValue)) {
+                    errors.push(\"document property `\" + propertyKey + \"` (`\" + property + \"`) doesn't end with `\" + propertyValue + \"`\");
+                }
+            }, _notFound => {
+                const p = propertyKey.map(p => `\"${p}\"`).join('.');
+                errors.push(\"document doesn't have a property `\" + p + \"`\");
+            });
         }
         return errors;
     });

@@ -9,6 +9,7 @@ const {
     validatePositionDictV2,
     commonPositionCheckCode,
     commonSizeCheckCode,
+    generateCheckObjectPaths,
 } = require('./utils.js');
 const { validator } = require('../validator.js');
 // Not the same `utils.js`!
@@ -254,6 +255,7 @@ function parseWaitForObjectProperty(parser, objName) {
         kind: 'json',
         keyTypes: {
             string: [],
+            'object-path': [],
         },
         allowAllValues: true,
         valueTypes: {
@@ -314,12 +316,14 @@ function parseWaitForObjectProperty(parser, objName) {
     const undefProps = [];
     const values = [];
     for (const [key, value] of json) {
+        const k_s = value.key.kind === 'object-path' ? key : `["${key}"]`;
         if (value.kind !== 'ident') {
-            values.push(`"${key}":"${value.parser.getStringValue()}"`);
+            values.push(`[${k_s},"${value.parser.getStringValue()}"]`);
         } else {
-            undefProps.push(`"${key}"`);
+            undefProps.push(k_s);
         }
     }
+    // No element to check, we can return empty instructions.
     if (values.length === 0 && undefProps.length === 0) {
         return {
             'instructions': [],
@@ -345,22 +349,32 @@ function parseWaitForObjectProperty(parser, objName) {
         varName,
         `\
 ${varName} = await page.evaluate(() => {
+${indentString(generateCheckObjectPaths(), 1)}
     const errors = [];
-    const ${varDict} = {${values.join(',')}};
+    const ${varDict} = [${values.join(',')}];
     const undefProps = [${undefProps.join(',')}];
     for (const prop of undefProps) {
-        if (${objName}[prop] !== undefined && ${objName}[prop] !== null) {
-            errors.push("Expected property \`" + prop + "\` to not exist, found: \
-\`" + ${objName}[prop] + "\`");
-            continue;
-        }
+        checkObjectPaths(${objName}, prop, val => {
+            if (val !== undefined && val !== null) {
+                const p = prop.map(p => \`"\${p}"\`).join('.');
+                errors.push("Expected property \`" + p + "\` to not exist, found: \`" + val + "\`");
+            }
+        }, _notFound => {},
+        );
     }
-    for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-        if (${objName}[${varKey}] === undefined) {
-            errors.push("${objName} doesn't have a property named \`" + ${varKey} + "\`");
-        }
-        const ${varName} = String(${objName}[${varKey}]);
-${indentString(checks.join('\n'), 2)}
+    for (const [${varKey}, ${varValue}] of ${varDict}) {
+        checkObjectPaths(${objName}, ${varKey}, val => {
+            if (val === undefined) {
+                const p = ${varKey}.map(p => \`"\${p}"\`).join('.');
+                errors.push("${objName} doesn't have a property \`" + p + "\`");
+                return;
+            }
+            const ${varName} = String(val);
+${indentString(checks.join('\n'), 3)}
+        }, _notFound => {
+            const p = ${varKey}.map(p => \`"\${p}"\`).join('.');
+            errors.push("${objName} doesn't have a property \`" + p + "\`");
+        });
     }
     return errors;
 });
@@ -686,8 +700,7 @@ ${indentString(incr, 1)}
 
 // Possible inputs:
 //
-// * ("CSS selector", {"property name": "expected property value"})
-// * ("XPath", {"property name": "expected property value"})
+// * ("selector", {"property name": "expected property value"})
 function parseWaitForProperty(parser) {
     const identifiers = ['ALL', 'CONTAINS', 'ENDS_WITH', 'NEAR', 'STARTS_WITH'];
     const ret = validator(parser, {
@@ -700,6 +713,7 @@ function parseWaitForProperty(parser) {
                 kind: 'json',
                 keyTypes: {
                     string: [],
+                    'object-path': [],
                 },
                 valueTypes: {
                     string: {},
@@ -741,8 +755,7 @@ function parseWaitForProperty(parser) {
     const warnings = [];
 
     if (tuple.length > 2) {
-        const ret = fillEnabledChecksV2(
-            tuple[2], enabledChecks, warnings, 'third');
+        const ret = fillEnabledChecksV2(tuple[2], enabledChecks, warnings, 'third');
         if (ret !== null) {
             return ret;
         }
@@ -754,7 +767,7 @@ function parseWaitForProperty(parser) {
     const varValue = varName + 'Value';
 
     const { checks, hasSpecialChecks } = makeExtendedChecks(
-        enabledChecks, false, 'nonMatchingProps', 'property', 'prop', varKey, varValue);
+        enabledChecks, false, 'nonMatchingProps', 'property', 'val', varKey, varValue);
 
     let checker;
     if (!enabledChecks.has('ALL')) {
@@ -781,10 +794,11 @@ the check will be performed on the element itself`);
     const tests = [];
     const nullProps = [];
     for (const [key, value] of json) {
+        const k_s = value.key.kind === 'object-path' ? key : `["${key}"]`;
         if (value.kind !== 'ident') {
-            tests.push(`"${key}":"${value.value}"`);
+            tests.push(`[${k_s},"${value.parser.getStringValue()}"]`);
         } else {
-            nullProps.push(`"${key}"`);
+            nullProps.push(k_s);
         }
     }
 
@@ -803,24 +817,34 @@ throw new Error("The following properties still don't match: [" + props + "]");`
     const instructions = `\
 async function checkPropForElem(elem) {
     return await elem.evaluate(e => {
+${indentString(generateCheckObjectPaths(), 2)}
+
         const nonMatchingProps = [];
-        const ${varDict} = {${tests.join(',')}};
+        const ${varDict} = [${tests.join(',')}];
         const nullProps = [${nullProps.join(',')}];
-        for (const ${varKey} of nullProps) {
-            if (e[${varKey}] !== undefined && e[${varKey}] !== null) {
-                const prop = e[${varKey}];
-                nonMatchingProps.push("Expected property \`" + ${varKey} + "\` to not exist, \
-found: \`" + prop + "\`");
-                continue;
-            }
+        for (const prop of nullProps) {
+            checkObjectPaths(e, prop, val => {
+                if (val !== undefined && val !== null) {
+                    const p = prop.map(p => \`"\${p}"\`).join('.');
+                    nonMatchingProps.push("Expected property \`" + p + "\` to not exist, \
+found: \`" + val + "\`");
+                    return;
+                }
+            }, _notFound => {
+            });
         }
-        for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-            if (e[${varKey}] === undefined || e[${varKey}] === null) {
-                nonMatchingProps.push("Property named \`" + ${varKey} + "\` doesn't exist");
-                continue;
-            }
-            const prop = e[${varKey}];
-${indentString(checks.join('\n'), 3)}
+        for (const [${varKey}, ${varValue}] of ${varDict}) {
+            checkObjectPaths(e, ${varKey}, val => {
+                if (val === undefined) {
+                    const p = ${varKey}.map(p => \`"\${p}"\`).join('.');
+                    nonMatchingProps.push("Property \`" + p + "\` doesn't exist");
+                    return;
+                }
+${indentString(checks.join('\n'), 4)}
+            }, _notFound => {
+                const p = ${varKey}.map(p => \`"\${p}"\`).join('.');
+                nonMatchingProps.push("Property \`" + p + "\` doesn't exist");
+            });
         }
         return nonMatchingProps;
     });
