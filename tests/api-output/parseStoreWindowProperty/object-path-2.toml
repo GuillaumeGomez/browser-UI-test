@@ -13,7 +13,7 @@ instructions = [
         }
         callback(object);
     }
-    const props = [[[\"ye\"], \"a\"]];
+    const props = [[[\"yaya\",\"b\"], \"a\"],[[\"x\"], \"b\"]];
     const errors = [];
     const ret = [];
 

@@ -1908,7 +1908,7 @@ function checkStoreCss(x, func) {
     func('("//a", {"blop": a})', 'xpath-1');
 }
 
-function checkStoreDocumentProperty(x, func) {
+function checkStoreObjectProperty(x, func) {
     func('', 'err-1');
     func('hello', 'err-2');
     func('(', 'err-3');
@@ -1922,22 +1922,10 @@ function checkStoreDocumentProperty(x, func) {
     func('{"ye": a}', 'basic-1');
     func('{\'"ye\': a}', 'basic-2');
     func('{"yaya": a, "yiyi": b}', 'basic-3');
-}
 
-function checkStoreWindowProperty(x, func) {
-    func('', 'err-1');
-    func('hello', 'err-2');
-    func('(', 'err-3');
-    func('(1)', 'err-4');
-    func('(1, 1)', 'err-5');
-    func('(a, 1)', 'err-6');
-    func(`{"xa": ${RESERVED_VARIABLE_NAME}}`, 'err-7');
-    func('{"xo": 2}', 'err-8');
-    func('{"xi": a, "yi": a}', 'err-9');
-
-    func('{"ye": a}', 'basic-1');
-    func('{\'"ye\': a}', 'basic-2');
-    func('{"yaya": a, "yiyi": b}', 'basic-3');
+    // object-path
+    func('{"yaya"."b": a}', 'object-path-1');
+    func('{"yaya"."b": a, "x": b}', 'object-path-2');
 }
 
 function checkStoreLocalStorage(x, func) {
@@ -2746,7 +2734,7 @@ const TO_CHECK = [
     },
     {
         'name': 'store-document-property',
-        'func': checkStoreDocumentProperty,
+        'func': checkStoreObjectProperty,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreDocumentProperty, x, e, name, o),
     },
     {
@@ -2781,7 +2769,7 @@ const TO_CHECK = [
     },
     {
         'name': 'store-window-property',
-        'func': checkStoreWindowProperty,
+        'func': checkStoreObjectProperty,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreWindowProperty, x, e, name, o),
     },
     {

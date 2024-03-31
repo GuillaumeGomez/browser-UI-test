@@ -1,15 +1,34 @@
 instructions = [
   """const jsHandle = await page.evaluateHandle(() => {
-    const properties = [\"ye\"];
-    const errors = [];
-    const ret = Object.create(null);
+    function checkObjectPaths(object, path, callback, notFoundCallback) {
+        const found = [];
 
-    for (const property of properties) {
-        if (document[property] === undefined) {
-            errors.push('\"document doesn\\'t have a property named `' + property + '`\"');
-        } else {
-            ret[property] = document[property];
+        for (const subPath of path) {
+            found.push(subPath);
+            if (object === undefined || object === null) {
+                notFoundCallback(found);
+                return;
+            }
+            object = object[subPath];
         }
+        callback(object);
+    }
+    const props = [[[\"ye\"], \"a\"]];
+    const errors = [];
+    const ret = [];
+
+    for (const [prop, varName] of props) {
+        checkObjectPaths(document, prop, found => {
+            if (found === undefined) {
+                const p = prop.map(p => `\"${p}\"`).join('.');
+                errors.push('\"No property named `' + p + '`\"');
+                return;
+            }
+            ret.push([found, varName]);
+        }, _ => {
+            const p = prop.map(p => `\"${p}\"`).join('.');
+            errors.push('\"No property named `' + p + '`\"');
+        });
     }
     if (errors.length !== 0) {
         throw \"The following errors happened: [\" + errors.join(\", \") + \"]\";
@@ -17,6 +36,8 @@ instructions = [
     return ret;
 });
 const data = await jsHandle.jsonValue();
-arg.setVariable(\"a\", data[\"ye\"]);""",
+for (const [found, varName] of data) {
+    arg.setVariable(varName, found);
+}""",
 ]
 wait = false
