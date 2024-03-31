@@ -529,6 +529,7 @@ function parseStoreObjectInner(parser, objName) {
         kind: 'json',
         keyTypes: {
             string: [],
+            'object-path': [],
         },
         valueTypes: {
             ident: {
@@ -542,14 +543,14 @@ function parseStoreObjectInner(parser, objName) {
     }
 
     const json = ret.value.entries;
-    const code = [];
     const getter = [];
     for (const [key, value] of json) {
-        code.push(`arg.setVariable("${value.value}", data["${key}"]);`);
-        getter.push(`"${key}"`);
+        const k_s = value.key.kind === 'object-path' ? key : `["${key}"]`;
+        getter.push(`[${k_s}, "${value.value}"]`);
     }
 
-    if (code.length === 0) {
+    // No selector to check if it exists or not, we can leave.
+    if (getter.length === 0) {
         return {
             'instructions': [],
             'wait': false,
@@ -558,16 +559,23 @@ function parseStoreObjectInner(parser, objName) {
 
     const instructions = `\
 const jsHandle = await page.evaluateHandle(() => {
-    const properties = [${getter}];
+${indentString(generateCheckObjectPaths(), 1)}
+    const props = [${getter}];
     const errors = [];
-    const ret = Object.create(null);
+    const ret = [];
 
-    for (const property of properties) {
-        if (${objName}[property] === undefined) {
-            errors.push('"${objName} doesn\\'t have a property named \`' + property + '\`"');
-        } else {
-            ret[property] = ${objName}[property];
-        }
+    for (const [prop, varName] of props) {
+        checkObjectPaths(${objName}, prop, found => {
+            if (found === undefined) {
+                const p = prop.map(p => \`"\${p}"\`).join('.');
+                errors.push('"No property named \`' + p + '\`"');
+                return;
+            }
+            ret.push([found, varName]);
+        }, _ => {
+            const p = prop.map(p => \`"\${p}"\`).join('.');
+            errors.push('"No property named \`' + p + '\`"');
+        });
     }
     if (errors.length !== 0) {
         throw "The following errors happened: [" + errors.join(", ") + "]";
@@ -575,7 +583,9 @@ const jsHandle = await page.evaluateHandle(() => {
     return ret;
 });
 const data = await jsHandle.jsonValue();
-${code.join('\n')}`;
+for (const [found, varName] of data) {
+    arg.setVariable(varName, found);
+}`;
 
     return {
         'instructions': [instructions],

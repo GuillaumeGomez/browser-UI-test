@@ -1690,6 +1690,9 @@ store-document-property: {"title": variable_name}
 
 // You can store multiple ones at a time:
 store-document-property: {"URL": variable_name, "title": another_var}
+
+// You can use object-path as well:
+store-document-property: {"body"."scrollHeight": variable_name}
 ```
 
 For more information about variables, read the [variables section](#variables).
@@ -1797,6 +1800,9 @@ store-window-property: {"pageYOffset": variable_name}
 
 // You can store multiple ones at a time:
 store-window-property: {"devicePixelRatio": variable_name, "pageXOffset": another_var}
+
+// You can use object-path as well:
+store-document-property: {"document"."body"."scrollHeight": variable_name}
 ```
 
 For more information about variables, read the [variables section](#variables).

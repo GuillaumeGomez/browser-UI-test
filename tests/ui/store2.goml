@@ -24,6 +24,22 @@ store-window-property: {"pageYOffset": window_v}
 assert-variable: (window_v, "Other")
 
 //
+// store-document-property
+//
+store-document-property: {"title": document_v}
+assert-variable: (document_v, "Other page")
+store-document-property: {"body"."scrollHeight": bodyHeight}
+assert: |bodyHeight| == 500
+
+//
+// store-window-property
+//
+store-window-property: {"innerHeight": windowHeight}
+assert-variable: (windowHeight, 500)
+store-window-property: {"document"."body"."scrollHeight": bodyHeight2}
+assert: |bodyHeight| == |bodyHeight2|
+
+//
 // store-size
 //
 store-size: ("header", {"width": width, "height": height})
