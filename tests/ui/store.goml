@@ -12,6 +12,10 @@ store-property: ("header", {"clientHeight": height})
 store-property: ("header", {"clientTop": top})
 store-property: ("header", {"clientHeight": height2, "clientTop": top2})
 assert: |height| == |height2| && |top| == |top2|
+// Checking object-path
+store-property: ("header", {"innerText": inner1})
+store-property: ("body", {"firstElementChild"."innerText": inner2})
+assert: |inner1| == |inner2|
 // The 4 checks should fail
 assert-variable: (height, "12")
 assert-variable-false: (height, "24")

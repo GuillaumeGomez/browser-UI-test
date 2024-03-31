@@ -1732,10 +1732,13 @@ For more information about variables, read the [variables section](#variables).
 **store-property** command stores an element's property into a variable. Examples:
 
 ```
-store-property: ("#button", {variable_name: "clientHeight"})
+store-property: ("#button", {"clientHeight": variable_name})
 assert-variable: (variable_name, 152)
 // You can set multiple variables at once.
-store-property: ("#button", {variable_name: "scrollHeight", another_var: "clientHeight"})
+store-property: ("#button", {"scrollHeight": variable_name, "clientHeight": another_var})
+
+// You can use object-path as well:
+store-property: ("#button", {"firstChildElement"."clientHeight": variable_name})
 ```
 
 For more information about variables, read the [variables section](#variables).
