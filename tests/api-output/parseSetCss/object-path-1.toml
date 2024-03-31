@@ -1,0 +1,1 @@
+error = """type \"object-path\" (`\"b\".\"a\"`) as key is not allowed in this JSON dict, allowed types are: [`string`] (second element of the tuple)"""

@@ -19,6 +19,7 @@ await page.evaluate(e => {
             object[path[path.length - 1]] = value;
         }
     }
-    setObjValue(e, [\"b\"], \"\\\"c\");
+    setObjValue(e, [\"b\",\"a\"], \"c\");
+    setObjValue(e, [\"d\"], \"x\");
 }, parseSetPropertyElem);""",
 ]
