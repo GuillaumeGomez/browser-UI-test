@@ -1,25 +1,47 @@
 instructions = [
   """async function checkPropForElem(elem) {
     return await elem.evaluate(e => {
-        const nonMatchingProps = [];
-        const parseWaitForPropDict = {\"x\":\"1\"};
-        const nullProps = [];
-        for (const parseWaitForPropKey of nullProps) {
-            if (e[parseWaitForPropKey] !== undefined && e[parseWaitForPropKey] !== null) {
-                const prop = e[parseWaitForPropKey];
-                nonMatchingProps.push(\"Expected property `\" + parseWaitForPropKey + \"` to not exist, found: `\" + prop + \"`\");
-                continue;
+        function checkObjectPaths(object, path, callback, notFoundCallback) {
+            const found = [];
+
+            for (const subPath of path) {
+                found.push(subPath);
+                if (object === undefined || object === null) {
+                    notFoundCallback(found);
+                    return;
+                }
+                object = object[subPath];
             }
+            callback(object);
         }
-        for (const [parseWaitForPropKey, parseWaitForPropValue] of Object.entries(parseWaitForPropDict)) {
-            if (e[parseWaitForPropKey] === undefined || e[parseWaitForPropKey] === null) {
-                nonMatchingProps.push(\"Property named `\" + parseWaitForPropKey + \"` doesn't exist\");
-                continue;
-            }
-            const prop = e[parseWaitForPropKey];
-            if (!prop.includes(parseWaitForPropValue)) {
-                nonMatchingProps.push(\"property `\" + parseWaitForPropKey + \"` (`\" + prop + \"`) doesn't contain `\" + parseWaitForPropValue + \"` (for CONTAINS check)\");
-            }
+
+        const nonMatchingProps = [];
+        const parseWaitForPropDict = [[[\"x\"],\"1\"]];
+        const nullProps = [];
+        for (const prop of nullProps) {
+            checkObjectPaths(e, prop, val => {
+                if (val !== undefined && val !== null) {
+                    const p = prop.map(p => `\"${p}\"`).join('.');
+                    nonMatchingProps.push(\"Expected property `\" + p + \"` to not exist, found: `\" + val + \"`\");
+                    return;
+                }
+            }, _notFound => {
+            });
+        }
+        for (const [parseWaitForPropKey, parseWaitForPropValue] of parseWaitForPropDict) {
+            checkObjectPaths(e, parseWaitForPropKey, val => {
+                if (val === undefined) {
+                    const p = parseWaitForPropKey.map(p => `\"${p}\"`).join('.');
+                    nonMatchingProps.push(\"Property `\" + p + \"` doesn't exist\");
+                    return;
+                }
+                if (!val.includes(parseWaitForPropValue)) {
+                    nonMatchingProps.push(\"property `\" + parseWaitForPropKey + \"` (`\" + val + \"`) doesn't contain `\" + parseWaitForPropValue + \"` (for CONTAINS check)\");
+                }
+            }, _notFound => {
+                const p = parseWaitForPropKey.map(p => `\"${p}\"`).join('.');
+                nonMatchingProps.push(\"Property `\" + p + \"` doesn't exist\");
+            });
         }
         return nonMatchingProps;
     });

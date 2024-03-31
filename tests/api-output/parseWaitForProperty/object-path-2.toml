@@ -16,7 +16,7 @@ instructions = [
         }
 
         const nonMatchingProps = [];
-        const parseWaitForPropDict = [[[\"x\"],\"1\"],[[\"y\"],\"2\"]];
+        const parseWaitForPropDict = [[[\"x\",\"y\"],\"1\"],[[\"z\"],\"3\"]];
         const nullProps = [];
         for (const prop of nullProps) {
             checkObjectPaths(e, prop, val => {

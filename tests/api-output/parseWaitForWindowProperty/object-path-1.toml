@@ -19,10 +19,10 @@ while (true) {
             callback(object);
         }
         const errors = [];
-        const propertyDict = [];
-        const undefProps = [[\"a\"]];
+        const propertyDict = [[[\"x\",\"y\"],\"1\"]];
+        const undefProps = [];
         for (const prop of undefProps) {
-            checkObjectPaths(document, prop, val => {
+            checkObjectPaths(window, prop, val => {
                 if (val !== undefined && val !== null) {
                     const p = prop.map(p => `\"${p}\"`).join('.');
                     errors.push(\"Expected property `\" + p + \"` to not exist, found: `\" + val + \"`\");
@@ -31,19 +31,19 @@ while (true) {
             );
         }
         for (const [propertyKey, propertyValue] of propertyDict) {
-            checkObjectPaths(document, propertyKey, val => {
+            checkObjectPaths(window, propertyKey, val => {
                 if (val === undefined) {
                     const p = propertyKey.map(p => `\"${p}\"`).join('.');
-                    errors.push(\"document doesn't have a property `\" + p + \"`\");
+                    errors.push(\"window doesn't have a property `\" + p + \"`\");
                     return;
                 }
                 const property = String(val);
                 if (property !== propertyValue) {
-                    errors.push(\"expected `\" + propertyValue + \"` for document property `\" + propertyKey + \"`, found `\" + property + \"`\");
+                    errors.push(\"expected `\" + propertyValue + \"` for window property `\" + propertyKey + \"`, found `\" + property + \"`\");
                 }
             }, _notFound => {
                 const p = propertyKey.map(p => `\"${p}\"`).join('.');
-                errors.push(\"document doesn't have a property `\" + p + \"`\");
+                errors.push(\"window doesn't have a property `\" + p + \"`\");
             });
         }
         return errors;
@@ -58,7 +58,7 @@ while (true) {
     allTime += timeAdd;
     if (allTime >= timeLimit) {
         const errs = property.join(\", \");
-        throw new Error(\"The following document properties still don't match: [\" + errs + \"]\");
+        throw new Error(\"The following window properties still don't match: [\" + errs + \"]\");
     }
 }""",
 ]

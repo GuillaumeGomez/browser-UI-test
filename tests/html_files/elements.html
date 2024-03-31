@@ -71,8 +71,11 @@ header {
 		<button id="js-local-storage" onclick="updateLocalStorage()">hey</button>
 		<button id="js-wait-local-storage" onclick="updateWaitLocalStorage()">hey</button>
 		<button id="js-wait-window-prop" onclick="updateWaitWindowProp()">hey</button>
+		<button id="js-wait-window-prop2" onclick="updateWaitWindowProp2()">hey</button>
 		<button id="js-wait-document-prop" onclick="updateWaitDocumentProp()">hey</button>
+		<button id="js-wait-document-prop2" onclick="updateWaitDocumentProp2()">hey</button>
 		<button id="js-wait-prop" onclick="updateWaitElementProp()">hey</button>
+		<button id="js-wait-prop2" onclick="updateWaitElementProp2()">hey</button>
 		<button id="js-change-colors" onclick="updateButtonsColor()">hey</button>
 		<button id="js-change-pos" onclick="updateWaitElementPosition()">hey</button>
 		<button id="js-change-size" onclick="updateWaitElementSize()" style="width:30px;height:20px;">hey</button>
@@ -118,14 +121,29 @@ setTimeout(() => {
   if (!window["windowProp"]) { window["windowProp"] = "hello"; } else { window["windowProp"] += "1"; }
 }, 100);
 }
+function updateWaitWindowProp2() {
+setTimeout(() => {
+  window["ba"] = {"x": 12};
+}, 100);
+}
 function updateWaitDocumentProp() {
 setTimeout(() => {
   if (!document["windowProp"]) { document["windowProp"] = "hello"; } else { document["windowProp"] += "1"; }
 }, 100);
 }
+function updateWaitDocumentProp2() {
+setTimeout(() => {
+  document["bob"] = {"y": 15 };
+}, 100);
+}
 function updateWaitElementProp() {
 setTimeout(() => {
   document.getElementById("js-wait-prop")["someProp"] = "hello";
+}, 250);
+}
+function updateWaitElementProp2() {
+setTimeout(() => {
+  document.getElementById("js-wait-prop2")["toto"] = {"z": 78};
 }, 250);
 }
 function updateWaitElementPosition() {

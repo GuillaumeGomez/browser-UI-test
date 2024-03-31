@@ -5,23 +5,46 @@ let allTime = 0;
 let property = null;
 while (true) {
     property = await page.evaluate(() => {
+        function checkObjectPaths(object, path, callback, notFoundCallback) {
+            const found = [];
+
+            for (const subPath of path) {
+                found.push(subPath);
+                if (object === undefined || object === null) {
+                    notFoundCallback(found);
+                    return;
+                }
+                object = object[subPath];
+            }
+            callback(object);
+        }
         const errors = [];
-        const propertyDict = {\"a\":\"b\"};
+        const propertyDict = [[[\"a\"],\"b\"]];
         const undefProps = [];
         for (const prop of undefProps) {
-            if (window[prop] !== undefined && window[prop] !== null) {
-                errors.push(\"Expected property `\" + prop + \"` to not exist, found: `\" + window[prop] + \"`\");
-                continue;
-            }
+            checkObjectPaths(window, prop, val => {
+                if (val !== undefined && val !== null) {
+                    const p = prop.map(p => `\"${p}\"`).join('.');
+                    errors.push(\"Expected property `\" + p + \"` to not exist, found: `\" + val + \"`\");
+                }
+            }, _notFound => {},
+            );
         }
-        for (const [propertyKey, propertyValue] of Object.entries(propertyDict)) {
-            if (window[propertyKey] === undefined) {
-                errors.push(\"window doesn't have a property named `\" + propertyKey + \"`\");
-            }
-            const property = String(window[propertyKey]);
-            if (!property.startsWith(propertyValue)) {
-                errors.push(\"window property `\" + propertyKey + \"` (`\" + property + \"`) doesn't start with `\" + propertyValue + \"` (for STARTS_WITH check)\");
-            }
+        for (const [propertyKey, propertyValue] of propertyDict) {
+            checkObjectPaths(window, propertyKey, val => {
+                if (val === undefined) {
+                    const p = propertyKey.map(p => `\"${p}\"`).join('.');
+                    errors.push(\"window doesn't have a property `\" + p + \"`\");
+                    return;
+                }
+                const property = String(val);
+                if (!property.startsWith(propertyValue)) {
+                    errors.push(\"window property `\" + propertyKey + \"` (`\" + property + \"`) doesn't start with `\" + propertyValue + \"` (for STARTS_WITH check)\");
+                }
+            }, _notFound => {
+                const p = propertyKey.map(p => `\"${p}\"`).join('.');
+                errors.push(\"window doesn't have a property `\" + p + \"`\");
+            });
         }
         return errors;
     });
