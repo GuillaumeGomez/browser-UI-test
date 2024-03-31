@@ -3,6 +3,23 @@ instructions = [
 if (parseSetPropertyElem.length === 0) { throw 'XPath \"//a\" not found'; }
 parseSetPropertyElem = parseSetPropertyElem[0];
 await page.evaluate(e => {
-    e[\"b\"] = \"c\";
+    function setObjValue(object, path, value) {
+        for (let i = 0; i < path.length - 1; ++i) {
+            const subPath = path[i];
+            if (object[subPath] === undefined || object[subPath] === null) {
+                if (value === undefined) {
+                    return;
+                }
+                object[subPath] = {};
+            }
+            object = object[subPath];
+        }
+        if (value === undefined) {
+            delete object[path[path.length - 1]];
+        } else {
+            object[path[path.length - 1]] = value;
+        }
+    }
+    setObjValue(e, [\"b\"], \"c\");
 }, parseSetPropertyElem);""",
 ]

@@ -556,6 +556,10 @@ function checkAttributeProperty(x, func) {
 
     // Multiline string.
     func('("//a", {"b": "c\n"})', 'multiline-3');
+
+    // object-path
+    func('("a", {"b"."a": "c"})', 'object-path-1');
+    func('("a", {"b"."a": "c", "d": "x"})', 'object-path-2');
 }
 
 function checkClick(x, func) {

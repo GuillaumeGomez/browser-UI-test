@@ -1591,12 +1591,15 @@ set-local-storage: {"key": null}
 ```
 set-property: ("details", {"open": "false"})
 // Same but with a XPath:
-set-property: ("//details", {"attribute-name": "attribute-value"})
+set-property: ("//details", {"property-name": "property-value"})
 
 // Setting multiple properties at once:
 set-property: ("details", {"open": "false", "another": "x"})
 // Same but with a XPath:
 set-property: ("//details", {"open": "false", "another": "x"})
+
+// It works with object-path as well:
+set-property: ("details", {"a"."b": "false"})
 ```
 
 To remove a property, you can use the `null` ident. Please note that the properties set by the browser will only be reset.
