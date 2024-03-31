@@ -491,6 +491,13 @@ this JSON dict`,
 }
 
 function listValues(values) {
+    if (!Array.isArray(values) && isObject(values)) {
+        const tmp = [];
+        for (const property in values) {
+            tmp.push(property);
+        }
+        values = tmp;
+    }
     values.sort();
     return `[${values.map(v => `\`${v}\``).join(', ')}]`;
 }

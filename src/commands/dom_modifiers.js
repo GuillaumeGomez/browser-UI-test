@@ -5,12 +5,18 @@ const { validator } = require('../validator.js');
 // Not the same `utils.js`!
 const { hasError } = require('../utils.js');
 
-function innerParseCssAttribute(parser, argName, varName, allowNullIdent, callback) {
+function innerParseCssAttribute(
+    parser, argName, varName, allowNullIdent, callback, allowObjectPath,
+) {
+    const keyTypes = {
+        string: [],
+    };
+    if (allowObjectPath) {
+        keyTypes['object-path'] = [];
+    }
     const jsonValidator = {
         kind: 'json',
-        keyTypes: {
-            string: [],
-        },
+        keyTypes: keyTypes,
         valueTypes: {
             string: {},
             number: {
@@ -49,14 +55,31 @@ function innerParseCssAttribute(parser, argName, varName, allowNullIdent, callba
     }
     const code = [];
     for (const [key, value] of attributes) {
-        code.push(callback(key, value.value, value.kind === 'ident'));
+        code.push(callback(key, value, value.kind === 'ident'));
     }
+    const func = allowObjectPath ? `
+function setObjValue(object, path, value) {
+    for (let i = 0; i < path.length - 1; ++i) {
+        const subPath = path[i];
+        if (object[subPath] === undefined || object[subPath] === null) {
+            if (value === undefined) {
+                return;
+            }
+            object[subPath] = {};
+        }
+        object = object[subPath];
+    }
+    if (value === undefined) {
+        delete object[path[path.length - 1]];
+    } else {
+        object[path[path.length - 1]] = value;
+    }
+}` : '';
 
     return {
-        'instructions': [
-            `\
+        'instructions': [`\
 ${getAndSetElements(selector, varName, false)}
-await page.evaluate(e => {
+await page.evaluate(e => {${indentString(func, 1)}
 ${indentString(code.join('\n'), 1)}
 }, ${varName});`,
         ],
@@ -65,45 +88,38 @@ ${indentString(code.join('\n'), 1)}
 
 // Possible inputs:
 //
-// * ("CSS selector", "attribute name", "attribute value")
-// * ("XPath", "attribute name", "attribute value")
-// * ("CSS selector", JSON dict)
-// * ("XPath", JSON dict)
+// * ("selector", "attribute name", "attribute value")
+// * ("selector", JSON dict)
 function parseSetAttribute(parser) {
     return innerParseCssAttribute(parser, 'attribute', 'parseSetAttributeElem', true,
         (key, value, isIdent) => {
             if (!isIdent) {
-                return `e.setAttribute("${key}","${value}");`;
+                return `e.setAttribute("${key}","${value.value}");`;
             }
             return `e.removeAttribute("${key}");`;
-        });
+        }, false);
 }
 
 // Possible inputs:
 //
-// * ("CSS selector", "property name", "property value")
-// * ("XPath", "attribute name", "property value")
-// * ("CSS selector", JSON dict)
-// * ("XPath", JSON dict)
+// * ("selector", "property name", "property value")
+// * ("selector", JSON dict)
 function parseSetProperty(parser) {
     return innerParseCssAttribute(parser, 'property', 'parseSetPropertyElem', true,
         (key, value, isIdent) => {
-            if (!isIdent) {
-                return `e["${key}"] = "${value}";`;
-            }
-            return `delete e["${key}"];`;
-        });
+            const k_s = value.key.kind === 'object-path' ? key : `["${key}"]`;
+            const arg = isIdent ? 'undefined' : `"${value.value}"`;
+            return `setObjValue(e, ${k_s}, ${arg});`;
+        }, true);
 }
 
 // Possible inputs:
 //
-// * ("CSS selector", "CSS property name", "CSS property value")
-// * ("XPath", "CSS property name", "CSS property value")
-// * ("CSS selector", JSON dict)
-// * ("XPath", JSON dict)
+// * ("selector", "CSS property name", "CSS property value")
+// * ("selector", JSON dict)
 function parseSetCss(parser) {
     return innerParseCssAttribute(parser, 'CSS property', 'parseSetCssElem', false,
-        (key, value, _isIdent) => `e.style["${key}"] = "${value}";`);
+        (key, value, _isIdent) => `e.style["${key}"] = "${value.value}";`, false);
 }
 
 // Possible inputs:
