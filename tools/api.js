@@ -2001,6 +2001,10 @@ function checkStoreProperty(x, func) {
     func('("a::after", {"bip": a, "bla": b})', 'pseudo-3');
 
     func('("//a", {"blop": a})', 'xpath-1');
+
+    // object-path
+    func('("a", {"ye"."ya": a})', 'object-path-1');
+    func('("a", {"ye"."ya": a, "yo": b})', 'object-path-2');
 }
 
 function checkStoreSize(x, func) {

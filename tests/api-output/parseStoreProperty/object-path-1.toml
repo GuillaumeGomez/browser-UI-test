@@ -15,7 +15,7 @@ const jsHandle = await elem.evaluateHandle(e => {
         }
         callback(object);
     }
-    const props = [[[\"yaya\"], \"a\"],[[\"yiyi\"], \"b\"]];
+    const props = [[[\"ye\",\"ya\"], \"a\"]];
     const ret = [];
     const errors = [];
 
