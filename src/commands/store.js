@@ -1,6 +1,11 @@
 // All `compare*` commands.
 
-const { getAndSetElements, indentString, getSizes } = require('./utils.js');
+const {
+    getAndSetElements,
+    indentString,
+    getSizes,
+    generateCheckObjectPaths,
+} = require('./utils.js');
 const { validator } = require('../validator.js');
 // Not the same `utils.js`!
 const { RESERVED_VARIABLE_NAME, hasError } = require('../utils.js');
@@ -168,7 +173,7 @@ ${code.join('\n')}`;
 
 // Possible inputs:
 //
-// * ("CSS selector" | "XPath", {"property": ident})
+// * ("selector", {"property": ident})
 function parseStoreProperty(parser) {
     const ret = validator(parser, {
         kind: 'tuple',
@@ -180,6 +185,7 @@ function parseStoreProperty(parser) {
                 kind: 'json',
                 keyTypes: {
                     string: [],
+                    'object-path': [],
                 },
                 valueTypes: {
                     ident: {
@@ -198,18 +204,10 @@ function parseStoreProperty(parser) {
     const selector = tuple[0].value;
     const json = tuple[1].value.entries;
 
-    const code = [];
     const getter = [];
     for (const [key, value] of json) {
-        code.push(`arg.setVariable("${value.value}", data["${key}"]);`);
-        getter.push(`"${key}"`);
-    }
-
-    if (code.length === 0) {
-        return {
-            'instructions': [],
-            'wait': false,
-        };
+        const k_s = value.key.kind === 'object-path' ? key : `["${key}"]`;
+        getter.push(`[${k_s}, "${value.value}"]`);
     }
 
     const warnings = [];
@@ -219,28 +217,27 @@ function parseStoreProperty(parser) {
 it will be performed on the element itself`);
     }
 
-    if (code.length === 0) {
-        return {
-            'instructions': [],
-            'wait': false,
-            'warnings': warnings,
-        };
-    }
-
     const varName = 'elem';
     const instructions = `\
 ${getAndSetElements(selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
+${indentString(generateCheckObjectPaths(), 1)}
     const props = [${getter.join(',')}];
-    const ret = Object.create(null);
+    const ret = [];
     const errors = [];
 
-    for (const prop of props) {
-        if (e[prop] === undefined) {
-            errors.push('"No property named \`' + prop + '\`"');
-        } else {
-            ret[prop] = e[prop];
-        }
+    for (const [prop, varName] of props) {
+        checkObjectPaths(e, prop, found => {
+            if (found === undefined) {
+                const p = prop.map(p => \`"\${p}"\`).join('.');
+                errors.push('"No property named \`' + p + '\`"');
+                return;
+            }
+            ret.push([found, varName]);
+        }, _ => {
+            const p = prop.map(p => \`"\${p}"\`).join('.');
+            errors.push('"No property named \`' + p + '\`"');
+        });
     }
     if (errors.length !== 0) {
         throw "The following errors happened: [" + errors.join(", ") + "]";
@@ -248,7 +245,9 @@ const jsHandle = await ${varName}.evaluateHandle(e => {
     return ret;
 });
 const data = await jsHandle.jsonValue();
-${code.join('\n')}`;
+for (const [found, varName] of data) {
+    arg.setVariable(varName, found);
+}`;
 
     return {
         'instructions': [instructions],
