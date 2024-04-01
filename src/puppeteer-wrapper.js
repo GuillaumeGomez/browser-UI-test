@@ -4,6 +4,9 @@ function buildPuppeteerOptions(options) {
     const puppeteer_options = {'args': ['--font-render-hinting=none']};
     if (options.headless === false) {
         puppeteer_options['headless'] = false;
+    } else if (options.browser === 'chrome') {
+        // That's the "new" way to say we want headless mode to chrome.
+        puppeteer_options['headless'] = 'new';
     }
     for (let i = 0; i < options.extensions.length; ++i) {
         puppeteer_options['args'].push(`--load-extension=${options.extensions[i]}`);
