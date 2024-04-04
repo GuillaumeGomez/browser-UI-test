@@ -23,6 +23,7 @@
         "parser-test": "node tools/parser.js",
         "exported-test": "node tools/exported_items.js",
         "generated-test": "node tools/generated.js",
+        "examples-test": "node tools/check-examples.js",
         "lint": "eslint src tools",
         "lint-fix": "eslint --fix src tools"
     },

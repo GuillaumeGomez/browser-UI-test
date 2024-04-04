@@ -1,16 +1,21 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
-const PNG = require('pngjs').PNG;
+const { PNG } = require('pngjs');
 const parser = require('./parser.js');
-const commands_parser = require('./commands.js');
+const { COLOR_CHECK_ERROR, parseTest } = require('./commands.js');
 const { innerParseScreenshot } = require('./commands/general.js');
-const utils = require('./utils.js');
-const Options = require('./options.js').Options;
+const {
+    print,
+    add_warning,
+    loadPuppeteer,
+    getFileInfo,
+    escapeBackslahes,
+    extractFileNameWithoutExtension,
+} = require('./utils.js');
+const { Options } = require('./options.js');
 const {Debug, Logs} = require('./logs.js');
-const add_warn = utils.add_warning;
 const process = require('process');
-const print = utils.print;
 const path = require('path');
 const consts = require('./consts.js');
 const Module = require('module');
@@ -68,7 +73,7 @@ function save_failure(folderIn, failuresFolder, newImage) {
     try {
         fs.renameSync(path.join(folderIn, newImage), path.join(failuresFolder, newImage));
     } catch (err) {
-        add_warn(`Error while trying to move files: "${err.message}"`);
+        add_warning(`Error while trying to move files: "${err.message}"`);
         // failed to move files...
         return false;
     }
@@ -86,20 +91,6 @@ function getGlobalStyle(showText) {
         });
     }
     return css;
-}
-
-function parseTest(testName, testPath, logs, options, content) {
-    try {
-        const parser = new commands_parser.ParserWithContext(testPath, options, content);
-        return {
-            'file': testName,
-            'parser': parser,
-        };
-    } catch (err) {
-        logs.append(testName + '... FAILED (exception occured)');
-        logs.append(`${err.message}\n${err.stack}`);
-    }
-    return null;
 }
 
 function createFolderIfNeeded(path) {
@@ -176,15 +167,6 @@ async function runInstruction(loadedInstruction, page, extras) {
     await loadedInstruction(page, extras);
 }
 
-function getFileInfo(context_parser, line, isExact = true) {
-    const file = utils.stripCommonPathsPrefix(context_parser.getCurrentFile());
-    const file_s = file.length > 0 ? `\`${file}\` ` : '';
-    if (isExact) {
-        return `${file_s}line ${line}`;
-    }
-    return `${file_s}around line ${line}`;
-}
-
 async function runAllCommands(loaded, logs, options, browser) {
     const commandLogs = new Logs(false);
     logs.append(loaded['file'] + '... ');
@@ -217,7 +199,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             'variables': options.variables,
             'setVariable': (varName, value) => {
                 if (typeof value === 'string') {
-                    value = utils.escapeBackslahes(value);
+                    value = escapeBackslahes(value);
                 }
                 extras.variables[varName] = value;
             },
@@ -344,7 +326,7 @@ ${error.message}\n`;
                 try {
                     await runInstruction(loadedInstruction, page, extras);
                 } catch (err) { // execution error
-                    if (err === commands_parser.COLOR_CHECK_ERROR) {
+                    if (err === COLOR_CHECK_ERROR) {
                         error_log += `[ERROR] ${getFileInfo(context_parser, line_number)}: \
 ${err}\n`;
                         stopLoop = true;
@@ -563,13 +545,13 @@ async function innerRunTests(logs, options, browser) {
     try {
         const needCloseBrowser = browser === null;
         if (browser === null) {
-            browser = await utils.loadPuppeteer(options);
+            browser = await loadPuppeteer(options);
         }
         const testsQueue = [];
 
         for (const file of allFiles) {
             total += 1;
-            const testName = utils.extractFileNameWithoutExtension(file);
+            const testName = extractFileNameWithoutExtension(file);
             const optionsCopy = options.clone();
 
             // To make the Options type validation happy.
@@ -652,7 +634,7 @@ async function innerRunTestCode(
 
         const needCloseBrowser = browser === null;
         if (browser === null) {
-            browser = await utils.loadPuppeteer(options);
+            browser = await loadPuppeteer(options);
         }
         const ret = await runAllCommands(loaded, logs, options, browser);
 
@@ -754,7 +736,7 @@ async function runTest(testPath, extras = null) {
     }
 
     return innerRunTestCode(
-        utils.extractFileNameWithoutExtension(testPath),
+        extractFileNameWithoutExtension(testPath),
         testPath,
         optionsCopy,
         browser,
@@ -811,7 +793,7 @@ if (require.main === module) {
         }
         process.exit(1);
     }
-    utils.loadPuppeteer(options).then(browser => {
+    loadPuppeteer(options).then(browser => {
         runTests({'options': options, 'browser': browser, 'showLogs': true}).then(x => {
             const [_output, nb_failures] = x;
             process.exit(nb_failures);
@@ -835,6 +817,6 @@ if (require.main === module) {
         'runTestCode': runTestCode,
         'runTests': runTests,
         'Options': Options,
-        'loadBrowser': utils.loadPuppeteer,
+        'loadBrowser': loadPuppeteer,
     };
 }

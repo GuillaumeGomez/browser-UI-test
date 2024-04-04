@@ -38,14 +38,17 @@ text"
 In this framework, you can use variables defined through the `--variable` option or through your
 environment. For example, if you start your script with:
 
-```
-A_VARIABLE=12 node src/index.js --test-folder tests/scripts/ --variable DOC_PATH tests/html_files --variable ANOTHER_ONE 42
+```bash
+A_VARIABLE=12 node src/index.js \
+    --test-folder tests/scripts/ \
+    --variable DOC_PATH tests/html_files \
+    --variable ANOTHER_ONE 42
 ```
 
 You will have three variables that you'll be able to use (since `A_VARIABLE` is available through your environment). Then, to use them in your scripts, you need to put their name between `|` characters:
 
 ```
-text: ("#an-element", |A_VARIABLE|)
+set-text: ("#an-element", |A_VARIABLE|)
 ```
 
 In here, it'll set "#an-element" element's text to "12".
@@ -60,12 +63,12 @@ You can concatenate numbers and strings using the `+` sign:
 
 ```
 store-value: (effect, ":hover")
-text: ("element" + |effect|, "something " + 2 + " something else")
+set-text: ("element" + |variable|, "something " + 2 + " something else")
 ```
 
 Rules of concatenation are simple: if any of the element is a string, then it'll concatenate as a string. Examples:
 
-```
+```ignore
 1 + 2 + "a" // gives string "12a"
 1 + 2 // gives number 3
 ```
@@ -78,12 +81,12 @@ You can do more advanced things like:
 
 ```
 store-value: (variable, 12)
-12 == |variable| && variable + 1 < 14
+assert: 12 == |variable| && |variable| + 1 < 14
 ```
 
 The expression type will be evaluated depending on its components. If comparisons are being performed, it will be evaluated as booleans. Comparisons can only be performed between elements of the same type, except for numbers and strings which can be compared despite not being the same type.
 
-```
+```ignore
 true != false // ok
 1 != false // not ok
 "a" == "a" // ok
@@ -93,7 +96,7 @@ true != false // ok
 
 You can also compare arrays, tuples and JSON dictionaries:
 
-```
+```ignore
 ["a", "b"] == [1, 2] // computed as false
 ["a", "b"] != [1, 2] // computed as true
 (1, "a") == (1, "a", "e") // computed as false
@@ -104,7 +107,7 @@ You can also compare arrays, tuples and JSON dictionaries:
 
 Some commands allow "object path" argument. In case you want to access children or deeper properties of an object, you will need to use an object path. For example, if you have something like:
 
-```
+```json
 {
   "a": {
     "b": {
@@ -116,13 +119,13 @@ Some commands allow "object path" argument. In case you want to access children 
 
 You can access the lower levels using:
 
-```
+```ignore
 "a"."b"."c"
 ```
 
 Object paths also work with concatenation and variables:
 
-```
+```ignore
 |var|."a" + "b"."c"
 ```
 
@@ -249,8 +252,8 @@ assert: ("#id > .class") // strictly equivalent
 // Will check that the boolean is true:
 store-attribute: ("#id > .class", {"class": class_var})
 // We assume that the window's height is superior than 1000.
-store-window-property: (window_height, "innerHeight")
-assert: |class_var| == "class" && window_height > 1000
+store-window-property: {"innerHeight": window_height}
+assert: |class_var| == "class" && |window_height| > 1000
 // Or more simply:
 assert: true
 ```
@@ -269,8 +272,8 @@ assert-false: ("#id > .class") // strictly equivalent
 // Will check that the boolean is false:
 store-attribute: ("#id > .class", {"class": class_var})
 // We assume that the window's height is superior than 1000.
-store-window-property: (window_height, "innerHeight")
-assert-false: |class_var| != "class" && window_height < 1000
+store-window-property: {"innerHeight": window_height}
+assert-false: |class_var| != "class" && |window_height| < 1000
 // Or more simply:
 assert-false: false
 ```
@@ -932,12 +935,12 @@ click: (10, 12)
 
 ```
 // Clicking on `.element` but adding an offset of 10 on `X`.
-click-with-offset: (".element", {"x": 10}
+click-with-offset: (".element", {"x": 10})
 // Same but with an XPath:
-click-with-offset: ("//*[@class='element']", {"x": 10}
+click-with-offset: ("//*[@class='element']", {"x": 10})
 
-click-with-offset: (".element", {"x": 10, "y": 3}
-click-with-offset: (".element", {"y": 3}
+click-with-offset: (".element", {"x": 10, "y": 3})
+click-with-offset: (".element", {"y": 3})
 ```
 
 #### compare-elements-attribute
@@ -945,12 +948,12 @@ click-with-offset: (".element", {"y": 3}
 **compare-elements-attribute** command allows you to compare two DOM elements' attributes. By default, it's checking if they're equal Examples:
 
 ```
-compare-elements-attribute: ("element1", "element2", ["attribute1", "attributeX", ...])
-compare-elements-attribute: ("//element1", "element2", ["attribute1", "attributeX", ...])
+compare-elements-attribute: ("element1", "element2", ["attribute1", "attributeX"])
+compare-elements-attribute: ("//element1", "element2", ["attribute1", "attributeX"])
 
 // The two previous commands can be written like this too:
-compare-elements-attribute: ("element1", "element2", ["attribute1", "attributeX", ...], "=")
-compare-elements-attribute: ("//element1", "element2", ["attribute1", "attributeX", ...], "=")
+compare-elements-attribute: ("element1", "element2", ["attribute1", "attributeX"], "=")
+compare-elements-attribute: ("//element1", "element2", ["attribute1", "attributeX"], "=")
 ```
 
 Here is the list of the supported operators: `=`, `<`, `>`, `<=`, `>=`.
@@ -958,8 +961,8 @@ Here is the list of the supported operators: `=`, `<`, `>`, `<=`, `>=`.
 Examples:
 
 ```
-compare-elements-attribute: ("element1", "element2", ["attribute1", "attributeX", ...], "<")
-compare-elements-attribute: ("element1", "element2", ["attribute1", "attributeX", ...], ">=")
+compare-elements-attribute: ("element1", "element2", ["attribute1", "attributeX"], "<")
+compare-elements-attribute: ("element1", "element2", ["attribute1", "attributeX"], ">=")
 ```
 
 #### compare-elements-attribute-false
@@ -967,12 +970,12 @@ compare-elements-attribute: ("element1", "element2", ["attribute1", "attributeX"
 **compare-elements-attribute-false** command allows you to check that two DOM elements' attributes (and assuming the comparison will fail). If one of the elements doesn't exist, the command will fail. Examples:
 
 ```
-compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX", ...])
-compare-elements-attribute-false: ("//element1", "element2", ["attribute1", "attributeX", ...])
+compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX"])
+compare-elements-attribute-false: ("//element1", "element2", ["attribute1", "attributeX"])
 
 // The two previous commands can be written like this too:
-compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX", ...], "=")
-compare-elements-attribute-false: ("//element1", "element2", ["attribute1", "attributeX", ...], "=")
+compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX"], "=")
+compare-elements-attribute-false: ("//element1", "element2", ["attribute1", "attributeX"], "=")
 ```
 
 Here is the list of the supported operators: `=`, `<`, `>`, `<=`, `>=`.
@@ -980,8 +983,8 @@ Here is the list of the supported operators: `=`, `<`, `>`, `<=`, `>=`.
 Examples:
 
 ```
-compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX", ...], "<")
-compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX", ...], ">=")
+compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX"], "<")
+compare-elements-attribute-false: ("element1", "element2", ["attribute1", "attributeX"], ">=")
 ```
 
 Another thing to be noted: if you don't care whether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
@@ -991,8 +994,8 @@ Another thing to be noted: if you don't care whether the selector exists or not 
 **compare-elements-css** command allows you to check that two DOM elements' CSS properties are equal. Examples:
 
 ```
-compare-elements-css: ("element1", "//element2", ["CSS property1", "CSS property2", ...])
-compare-elements-css: ("//element1", "element2", ["CSS property1", "CSS property2", ...])
+compare-elements-css: ("element1", "//element2", ["CSS property1", "CSS property2"])
+compare-elements-css: ("//element1", "element2", ["CSS property1", "CSS property2"])
 ```
 
 #### compare-elements-css-false
@@ -1000,8 +1003,8 @@ compare-elements-css: ("//element1", "element2", ["CSS property1", "CSS property
 **compare-elements-css-false** command allows you to check that two DOM elements' CSS properties are different. If one of the elements doesn't exist, the command will fail. Examples:
 
 ```
-compare-elements-css-false: ("element1", "//element2", ["CSS property1", "CSS property2", ...])
-compare-elements-css-false: ("//element1", "element2", ["CSS property1", "CSS property2", ...])
+compare-elements-css-false: ("element1", "//element2", ["CSS property1", "CSS property2"])
+compare-elements-css-false: ("//element1", "element2", ["CSS property1", "CSS property2"])
 ```
 
 Another thing to be noted: if you don't care whether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
@@ -1042,7 +1045,7 @@ compare-elements-position-false: ("element1", "element2", ["y", "x"])
 
 ```
 // Compare the X position.
-compare-elements-position-near: ("//element1", "element2", {"x": 1}))
+compare-elements-position-near: ("//element1", "element2", {"x": 1})
 // Compare the Y position.
 compare-elements-position-near: ("element1", "//element2", {"y": 1})
 // Compare both X and Y positions.
@@ -1057,7 +1060,7 @@ compare-elements-position-near: ("element1", "element2", {"y": 3, "x": 1})
 
 ```
 // Compare the X position.
-compare-elements-position-near-false: ("//element1", "element2", {"x": 1}))
+compare-elements-position-near-false: ("//element1", "element2", {"x": 1})
 // Compare the Y position.
 compare-elements-position-near-false: ("element1", "//element2", {"y": 1})
 // Compare both X and Y positions.
@@ -1073,11 +1076,11 @@ Another thing to be noted: if you don't care whether the selector exists or not 
 **compare-elements-property** command allows you to check that two DOM elements' properties are equal. Examples:
 
 ```
-compare-elements-property: ("element1", "//element2", ["property1", "property2", ...])
-compare-elements-property: ("//element1", "element2", ["property1", "property2", ...])
+compare-elements-property: ("element1", "//element2", ["property1", "property2"])
+compare-elements-property: ("//element1", "element2", ["property1", "property2"])
 
 // Object-paths are also supported:
-compare-elements-property: ("//element1", "element2", ["property1"."sub", ...])
+compare-elements-property: ("//element1", "element2", ["property1"."sub"])
 ```
 
 #### compare-elements-property-false
@@ -1085,11 +1088,11 @@ compare-elements-property: ("//element1", "element2", ["property1"."sub", ...])
 **compare-elements-property-false** command allows you to check that two DOM elements' properties are different. If one of the elements doesn't exist, the command will fail. Examples:
 
 ```
-compare-elements-property-false: ("element1", "//element2", ["property1", "property2", ...])
-compare-elements-property-false: ("//element1", "element2", ["property1", "property2", ...])
+compare-elements-property-false: ("element1", "//element2", ["property1", "property2"])
+compare-elements-property-false: ("//element1", "element2", ["property1", "property2"])
 
 // Object-paths are also supported:
-compare-elements-property-false: ("//element1", "element2", ["property1"."sub", ...])
+compare-elements-property-false: ("//element1", "element2", ["property1"."sub"])
 ```
 
 Another thing to be noted: if you don't care whether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
@@ -1215,7 +1218,7 @@ If you call `define-function` inside the function to overwrite it, it will not o
 ```
 define-function: (
     "fn1",
-    (),
+    [],
     block {
         // We overwrite "fn1".
         define-function: (
@@ -1277,14 +1280,14 @@ You can use it as follows too:
 
 ```
 // text of "#elem" is "hello"
-assert: ("#elem", "hello")
-text: ("#elem", "not hello")
+assert-text: ("#elem", "hello")
+set-text: ("#elem", "not hello")
 // we want to check if the text changed (strangely but whatever)
 expect-failure: true
-assert: ("#elem", "hello")
+assert-text: ("#elem", "hello")
 // now we set it back to false to check the new text
 expect-failure: false
-assert: ("#elem", "not hello")
+assert-text: ("#elem", "not hello")
 ```
 
 #### fail-on-js-error
@@ -1292,7 +1295,7 @@ assert: ("#elem", "not hello")
 **fail-on-js-error** command sets changes the behaviour of `browser-ui-test` when a JS error occurs on the web page. By default, they are ignored. It overloads the value from the `--enable-on-js-error-fail` option. Example:
 
 ```
-# To enable the check:
+// To enable the check:
 fail-on-js-error: true
 ```
 
@@ -1301,7 +1304,7 @@ fail-on-js-error: true
 **fail-on-request-error** command sets changes the behaviour of `browser-ui-test` when a request fails on the web page. By default, this option is enabled. It overloads the value from the `--disable-on-request-error-fail` option. Example:
 
 ```
-# To disable the check:
+// To disable the check:
 fail-on-request-error: false
 ```
 
@@ -1387,7 +1390,7 @@ Please note that if no `timeout` is specified, the one from the [`timeout`](#tim
 
 **include** command loads the given path then runs it. If the path is not absolute, it'll be relative to the current file. The file is not loaded until the `include` command is run. Example:
 
-```
+```ignore
 // current file: /bar/foo.goml
 include: "bar.goml"        // It will load `/bar/bar.goml`
 include: "/babar/foo.goml" // It will load `/babar/foo.goml`
@@ -1398,7 +1401,7 @@ include: "/babar/foo.goml" // It will load `/babar/foo.goml`
 **javascript** command enables/disables the javascript. If you want to render the page without javascript, don't forget to disable it before the call to `goto`! Examples:
 
 ```
-javascript: false // we disable it before using goto to have a page rendered without javascript
+javascript: false // we disable it before using go-to to have a page rendered without javascript
 go-to: "https://somewhere.com" // rendering without javascript
 ```
 
@@ -1527,11 +1530,6 @@ scroll-to: (10, 12)
 **set-attribute** command allows to update an element's attribute. Example:
 
 ```
-set-attribute: ("#button", "attribute-name", "attribute-value")
-// Same but with a XPath:
-set-attribute: ("//*[@id='button']", "attribute-name", "attribute-value")
-
-// To set multiple attributes at once:
 set-attribute: ("#button", {"attribute name": "attribute value", "another": "x"})
 // Same but with a XPath:
 set-attribute: ("//*[@id='button']", {"attribute name": "attribute value", "another": "x"})
@@ -1681,7 +1679,7 @@ show-text: true // text won't be invisible anymore
 
 ```
 store-attribute: ("#button", {"id": variable_name})
-assert: |variable_name| == "button")
+assert: |variable| == "button"
 
 // You can set multiple variables at once too:
 store-attribute: ("#button", {"id": variable_name, "class": another_variable})
@@ -1723,7 +1721,7 @@ For more information about variables, read the [variables section](#variables).
 **store-local-storage** command stores a value from the local storage into a variable. Examples:
 
 ```
-local-storage: {"key": "value"}
+set-local-storage: {"key": "value"}
 store-local-storage: {"key": variable_name}
 assert-variable: (variable_name, "value")
 
@@ -1739,8 +1737,8 @@ For more information about variables, read the [variables section](#variables).
 
 ```
 store-position: ("#button", {"x": x})
-store-position: ("#button", {"y": var2})
-assert: |width| == 30 && |var2| == 10
+store-position: ("#button", {"y": variable})
+assert: |width| == 30 && |variable| == 10
 
 // It could be written like this too:
 store-position: ("#button", {"x": x, "y": var2})
@@ -1773,11 +1771,11 @@ For more information about variables, read the [variables section](#variables).
 
 ```
 store-size: ("#button", {"width": width})
-store-size: ("#button", {"height": var2})
-assert: |width| == 30 && |var2| == 10
+store-size: ("#button", {"height": height})
+assert: |width| == 30 && |height| == 10
 
 // It could be written like this too:
-store-size: ("#button", {"width": width, "height": var2})
+store-size: ("#button", {"width": width, "height": height})
 
 // It also works for pseudo elements:
 store-size: ("#button::after", {"width": width, "height": var2})
@@ -1793,7 +1791,7 @@ For more information about variables, read the [variables section](#variables).
 **store-text** command stores an element's text into a variable. Examples:
 
 ```
-store-property: (variable_name, "#button")
+store-property: ("#button", {"innerText": variable_name})
 assert-variable: (variable_name, "click me")
 ```
 
@@ -2107,8 +2105,8 @@ instead.
 
 ```
 // It'll write into the given element if it exists:
-write: (".element", "text")
-write: ("//*[@class='element']", "text")
-write: ("#element", 13) // this is the keycode for "enter"
-write: ("//*[@id='element']", 13) // this is the keycode for "enter"
+write-into: (".element", "text")
+write-into: ("//*[@class='element']", "text")
+write-into: ("#element", 13) // this is the keycode for "enter"
+write-into: ("//*[@id='element']", 13) // this is the keycode for "enter"
 ```

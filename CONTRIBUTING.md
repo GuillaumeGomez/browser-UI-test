@@ -19,7 +19,7 @@ The other tests are checks for the framework's code itself:
 
 For `ui` tests, you can filter which ones you want to run by passing the test name as argument:
 
-```
+```console
 $ npm run ui-test debug.goml debug2.goml
 ```
 
