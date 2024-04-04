@@ -867,20 +867,19 @@ assert-window-property-false: (
 
 #### block-network-request
 
-**block-network-request** prevents a URL that matches a glob from loading. Asterisks `*` are wildcards:
+**block-network-request** command prevents a URL that matches a glob from loading. Asterisks `*` are wildcards:
 
 ```
 // Prevent search index from loading
 block-network-request: "*/search-index.js"
 ```
 
-By default, a failed network request will cause the test to fail.
-Use the [`fail-on-request-error`](#fail-on-request-error) to change this.
+By default, a failed network request will cause the test to fail. Use the
+[`fail-on-request-error`](#fail-on-request-error) command to change this behaviour.
 
   * If you use `block-network-request` with `fail-on-request-error` turned on,
-    which is the default, the test case will fail if the page makes a blocked
+    which is the default, the test case will fail if the page blocks a
     network request. It acts as an assertion that the request is not made.
-
   * To test the page's functionality after the request fails, turn it off:
 
         fail-on-request-error: false
