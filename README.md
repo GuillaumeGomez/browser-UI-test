@@ -33,7 +33,7 @@ npm install browser-ui-test
 
 In case you can't install puppeteer "normally", you can give a try to `--unsafe-perm=true`:
 
-```bash
+```console
 $ npm install puppeteer --unsafe-perm=true
 ```
 
@@ -41,9 +41,9 @@ $ npm install puppeteer --unsafe-perm=true
 
 You can either use this framework by using it as dependency or running it directly. In both cases you'll need to write some `.goml` scripts. It looks like this:
 
-```
+```goml
 go-to: "https://somewhere.com" // go to this url
-text: ("#button", "hello") // set text of element #button
+set-text: ("#button", "hello") // set text of element #button
 assert-text: ("#button", "hello") // check if #button element's text has been set to "hello"
 ```
 
