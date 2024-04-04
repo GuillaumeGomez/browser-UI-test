@@ -9,6 +9,7 @@ const functions = require('./functions.js');
 const general = require('./general.js');
 const input = require('./input.js');
 const navigation = require('./navigation.js');
+const network = require('./network.js');
 const store = require('./store.js');
 const wait = require('./wait.js');
 
@@ -37,6 +38,7 @@ module.exports = {
     'parseAssertVariableFalse': assert.parseAssertVariableFalse,
     'parseAssertWindowProperty': assert.parseAssertWindowProperty,
     'parseAssertWindowPropertyFalse': assert.parseAssertWindowPropertyFalse,
+    'parseBlockNetworkRequest': network.parseBlockNetworkRequest,
     'parseCallFunction': functions.parseCallFunction,
     'parseClick': input.parseClick,
     'parseClickWithOffset': input.parseClickWithOffset,

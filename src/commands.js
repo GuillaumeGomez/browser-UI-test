@@ -30,6 +30,7 @@ const ORDERS = {
     'assert-variable-false': commands.parseAssertVariableFalse,
     'assert-window-property': commands.parseAssertWindowProperty,
     'assert-window-property-false': commands.parseAssertWindowPropertyFalse,
+    'block-network-request': commands.parseBlockNetworkRequest,
     'click': commands.parseClick,
     'click-with-offset': commands.parseClickWithOffset,
     'call-function': commands.parseCallFunction,

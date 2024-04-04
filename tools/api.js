@@ -273,6 +273,18 @@ function checkAssertObjProperty(x, func) {
     func('({"a"."b": null}, CONTAINS)', 'object-path-4');
 }
 
+function checkBlockNetworkRequest(x, func) {
+    func('"', 'err-quote');
+    func('"x', 'err-quote-2');
+    func('1', 'err-int');
+    func('1.1', 'err-float');
+    func('(a, "b")', 'err-tuple');
+    func('("a", 2)', 'err-tuple-2');
+    func('()', 'err-tuple-3');
+    func('("x")', 'err-tuple-4');
+    func('"x"', 'ok');
+}
+
 function checkAssertVariable(x, func) {
     func('', 'err-1');
     func('hello', 'err-2');
@@ -2446,6 +2458,11 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => {
             return wrapper(parserFuncs.parseAssertWindowPropertyFalse, x, e, name, o);
         },
+    },
+    {
+        'name': 'block-network-request',
+        'func': checkBlockNetworkRequest,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseBlockNetworkRequest, x, e, name, o),
     },
     {
         'name': 'set-attribute',
