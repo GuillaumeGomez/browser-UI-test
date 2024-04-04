@@ -871,6 +871,17 @@ assert-window-property-false: (
 block-network-request: "*/search-index.js"
 ```
 
+By default, a failed network request will cause the test to fail.
+Use the [`fail-on-request-error`](#fail-on-request-error) to change this.
+
+  * If you use `block-network-request` with `fail-on-request-error` turned on,
+    which is the default, the test case will fail if the page makes a blocked
+    network request. It acts as an assertion that the request is not made.
+
+  * To test the page's functionality after the request fails, turn it off:
+
+        fail-on-request-error: false
+
 #### call-function
 
 **call-function** command allows you to call a function defined with `define-function`. It expects a tuple containing the name of the function to call and its arguments (if any). Example:
