@@ -1,0 +1,13 @@
+// This test is meant to ensure that we can block an external script request.
+// Since we are intentionally causing request errors, don't block them.
+fail-on-request-error: false
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/external-script.html"
+assert: "#output"
+// This does not match, so it won't cause a fail.
+block-network-request: "*s6ojwNhzwbj9F2cYwA9tqjtnFyUzt6YhQzfviRjB.js"
+reload:
+assert: "#output"
+// This matches, so the script won't load
+block-network-request: "*.js"
+reload:
+assert-false: "#output"

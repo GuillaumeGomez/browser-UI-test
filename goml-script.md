@@ -156,6 +156,7 @@ Here's the command list:
  * [`assert-variable-false`](#assert-variable-false)
  * [`assert-window-property`](#assert-window-property)
  * [`assert-window-property-false`](#assert-window-property-false)
+ * [`block-network-request`](#block-network-request)
  * [`call-function`](#call-function)
  * [`click`](#click)
  * [`click-with-offset`](#click-with-offset)
@@ -859,6 +860,15 @@ assert-window-property-false: (
     {"location": "https://some.where", "pageYOffset": "10"},
     [STARTS_WITH, ENDS_WITH],
 )
+```
+
+#### block-network-request
+
+**block-network-request** prevents a URL that matches a glob from loading. Asterisks `*` are wildcards:
+
+```
+// Prevent search index from loading
+block-network-request: "*/search-index.js"
 ```
 
 #### call-function
