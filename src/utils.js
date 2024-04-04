@@ -177,6 +177,15 @@ function hasError(x) {
     return x.error !== undefined && x.error !== null;
 }
 
+function getFileInfo(context_parser, line, isExact = true) {
+    const file = stripCommonPathsPrefix(context_parser.getCurrentFile());
+    const file_s = file.length > 0 ? `\`${file}\` ` : '';
+    if (isExact) {
+        return `${file_s}line ${line}`;
+    }
+    return `${file_s}around line ${line}`;
+}
+
 module.exports = {
     'addSlash': addSlash,
     'getCurrentDir': getCurrentDir,
@@ -198,4 +207,5 @@ module.exports = {
     'stripCommonPathsPrefix': stripCommonPathsPrefix,
     'plural': plural,
     'hasError': hasError,
+    'getFileInfo': getFileInfo,
 };

@@ -1,5 +1,6 @@
 const process = require('process');
 process.env.debug_tests = '1'; // We enable this to get all items from `commands.js`.
+
 const parserFuncs = require('../src/commands.js');
 const Options = require('../src/options.js').Options;
 const { RESERVED_VARIABLE_NAME } = require('../src/utils.js');

@@ -409,10 +409,25 @@ class ParserWithContext {
     }
 }
 
+function parseTest(testName, testPath, logs, options, content) {
+    try {
+        const parser = new ParserWithContext(testPath, options, content);
+        return {
+            'file': testName,
+            'parser': parser,
+        };
+    } catch (err) {
+        logs.append(testName + '... FAILED (exception occured)');
+        logs.append(`${err.message}\n${err.stack}`);
+    }
+    return null;
+}
+
 const EXPORTS = {
     'ParserWithContext': ParserWithContext,
     'COLOR_CHECK_ERROR': consts.COLOR_CHECK_ERROR,
     'ORDERS': ORDERS,
+    'parseTest': parseTest,
 };
 
 for (const func of Object.values(ORDERS)) {

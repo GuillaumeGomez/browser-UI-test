@@ -131,6 +131,10 @@ class Assert {
         this._incrError();
     }
 
+    addSuccess() {
+        this._addTest();
+    }
+
     _addTest() {
         if (this.testSuite.length > 0) {
             this.testSuite[this.testSuite.length - 1].ranTests += 1;
