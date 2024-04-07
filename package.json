@@ -36,7 +36,7 @@
     },
     "dependencies": {
         "pngjs": "^3.4.0",
-        "puppeteer": "18.1.0",
+        "puppeteer": "19.4.0",
         "readline-sync": "^1.4.10",
         "css-unit-converter": "^1.1.2"
     },
