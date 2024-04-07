@@ -1,0 +1,7 @@
+define-function: (
+    "sub-func",
+    [],
+    block {
+        click: "#does_not-exist"
+    },
+)

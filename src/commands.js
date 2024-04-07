@@ -272,6 +272,7 @@ class ParserWithContext {
             'commands': func.commands,
             'currentCommand': 0,
             'functionArgs': Object.assign({}, context.functionArgs, args),
+            'filePath': func.filePath,
         });
         // We disable the `increasePos` in the context to prevent it to be done twice.
         return this.get_next_command(false);
@@ -305,6 +306,8 @@ class ParserWithContext {
         const context = this.get_current_context();
         if (context === null) {
             return '';
+        } else if (context.filePath !== undefined) {
+            return context.filePath;
         }
         return context.ast.absolutePath;
     }
