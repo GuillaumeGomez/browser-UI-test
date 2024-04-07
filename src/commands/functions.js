@@ -44,6 +44,7 @@ function parseDefineFunction(parser) {
         'arguments': tuple[1].value.entries.map(e => e.value),
         'commands': tuple[2].value.value,
         'start_line': tuple[2].value.blockLine,
+        'filePath': parser.getCurrentFile(),
     };
     return {
         'instructions': [],
