@@ -4,3 +4,7 @@ go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 assert-text: ("header", "tadam")
 include: "sub/include.goml"
 assert-text: ("header", "tadam")
+
+include: "sub/func.goml"
+// Should fail but it allows to confirm that the right path is displayed.
+call-function: ("sub-func", {})
