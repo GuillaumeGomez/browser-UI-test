@@ -35,9 +35,12 @@ function parseSetWindowSize(parser) {
         'instructions': [
             `\
 const viewport = page.viewport();
-viewport.width = ${width};
-viewport.height = ${height};
-await page.setViewport(viewport);`,
+const newViewport = {
+    ...viewport,
+    width: ${width},
+    height: ${height},
+};
+await page.setViewport(newViewport);`,
         ],
     };
 }
@@ -62,8 +65,11 @@ function parseSetDevicePixelRatio(parser) {
         'instructions': [
             `\
 const viewport = page.viewport();
-viewport.deviceScaleFactor = ${ret.value.getRaw()};
-await page.setViewport(viewport);`,
+const newViewport = {
+    ...viewport,
+    deviceScaleFactor: ${ret.value.getRaw()},
+};
+await page.setViewport(newViewport);`,
         ],
     };
 }

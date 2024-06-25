@@ -1,24 +1,15 @@
 // Utility functions used by the command parsing functions.
 
 function getAndSetElements(selector, varName, checkAllElements) {
-    let code;
-    if (selector.isXPath) {
-        code = `\
-let ${varName} = await page.$x("${selector.value}");
-if (${varName}.length === 0) { throw 'XPath "${selector.value}" not found'; }`;
-        if (!checkAllElements) {
-            code += `\n${varName} = ${varName}[0];`;
-        }
-    } else if (!checkAllElements) {
-        code = `\
-let ${varName} = await page.$("${selector.value}");
+    const selectorS = selector.isXPath ? `::-p-xpath(${selector.value})` : selector.value;
+    if (!checkAllElements) {
+        return `\
+const ${varName} = await page.$("${selectorS}");
 if (${varName} === null) { throw '"${selector.value}" not found'; }`;
-    } else {
-        code = `\
-let ${varName} = await page.$$("${selector.value}");
-if (${varName}.length === 0) { throw '"${selector.value}" not found'; }`;
     }
-    return code;
+    return `\
+const ${varName} = await page.$$("${selectorS}");
+if (${varName}.length === 0) { throw '"${selector.value}" not found'; }`;
 }
 
 function getInsertStrings(assertFalse, insideLoop, extra = '', backlineAtEnd = true) {

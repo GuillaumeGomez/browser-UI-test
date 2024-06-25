@@ -118,9 +118,12 @@ class PuppeteerWrapper {
         if (options.emulate === '') {
             // Setting default size then.
             const viewport = page.viewport();
-            viewport.width = 1000;
-            viewport.height = 1000;
-            await page.setViewport(viewport);
+            const newViewport = {
+                ...viewport,
+                width: 1000,
+                height: 1000,
+            };
+            await page.setViewport(newViewport);
             return;
         }
         if (this.puppeteer.devices[options.emulate] === undefined) {

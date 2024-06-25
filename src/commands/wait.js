@@ -42,27 +42,15 @@ ${indentString(incrWait(error), 1)}
 }
 
 function waitForElement(selector, varName, checkAll = false) {
-    let code;
-    let kind;
+    const kind = selector.isXPath ? 'XPath' : 'CSS selector';
+    const selectorS = selector.isXPath ? `::-p-xpath(${selector.value})` : selector.value;
 
     if (!checkAll) {
-        if (selector.isXPath) {
-            kind = 'XPath';
-            code = `\
-${varName} = await page.$x("${selector.value}");
-if (${varName}.length !== 0) {
-    ${varName} = ${varName}[0];
-    break;
-}`;
-        } else {
-            kind = 'CSS selector';
-            code = `\
-${varName} = await page.$("${selector.value}");
+        const code = `\
+${varName} = await page.$("${selectorS}");
 if (${varName} !== null) {
     break;
 }`;
-        }
-
         return getWaitForElems(
             varName,
             code,
@@ -70,18 +58,11 @@ if (${varName} !== null) {
         );
     }
 
-    if (selector.isXPath) {
-        kind = 'XPath';
-        code = `${varName} = await page.$x("${selector.value}");`;
-    } else {
-        kind = 'CSS selector';
-        code = `${varName} = await page.$$("${selector.value}");`;
-    }
-    code += `
+    const code = `\
+${varName} = await page.$$("${selectorS}");
 if (${varName}.length !== 0) {
     break;
 }`;
-
     return getWaitForElems(
         varName,
         code,
@@ -150,16 +131,12 @@ function parseWaitForCount(parser) {
     const selector = tuple[0].value;
     const count = tuple[1].value.getRaw();
     const varName = 'parseWaitForCount';
-    let method = '$$';
-
-    if (selector.isXPath) {
-        method = '$x';
-    }
+    const selectorS = selector.isXPath ? `::-p-xpath(${selector.value})` : selector.value;
 
     const instructions = getWaitForElems(
         varName,
         `\
-${varName} = await page.${method}("${selector.value}");
+${varName} = await page.$$("${selectorS}");
 ${varName} = ${varName}.length;
 if (${varName} === ${count}) {
     break;
