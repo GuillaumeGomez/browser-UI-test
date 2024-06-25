@@ -1,8 +1,7 @@
 instructions = [
-  """let parseCompareElementsAttr1 = await page.$x(\"//a\");
-if (parseCompareElementsAttr1.length === 0) { throw 'XPath \"//a\" not found'; }
-parseCompareElementsAttr1 = parseCompareElementsAttr1[0];
-let parseCompareElementsAttr2 = await page.$(\"b\");
+  """const parseCompareElementsAttr1 = await page.$(\"::-p-xpath(//a)\");
+if (parseCompareElementsAttr1 === null) { throw '\"//a\" not found'; }
+const parseCompareElementsAttr2 = await page.$(\"b\");
 if (parseCompareElementsAttr2 === null) { throw '\"b\" not found'; }
 await page.evaluate((e1, e2) => {
 const attributes = [];

@@ -1,7 +1,6 @@
 instructions = [
-  """let parseWriteVar = await page.$x(\"//a\");
-if (parseWriteVar.length === 0) { throw 'XPath \"//a\" not found'; }
-parseWriteVar = parseWriteVar[0];
+  """const parseWriteVar = await page.$(\"::-p-xpath(//a)\");
+if (parseWriteVar === null) { throw '\"//a\" not found'; }
 parseWriteVar.focus();
 await parseWriteVar.keyboard.press(String.fromCharCode(13));""",
 ]

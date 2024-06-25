@@ -1,5 +1,5 @@
 instructions = [
-  """let parseStoreText = await page.$(\"a\");
+  """const parseStoreText = await page.$(\"a\");
 if (parseStoreText === null) { throw '\"a\" not found'; }
 const jsHandle = await parseStoreText.evaluateHandle(e => {
     return browserUiTestHelpers.getElemText(e, \"\");

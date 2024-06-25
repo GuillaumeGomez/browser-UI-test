@@ -4,7 +4,7 @@ wait-for-document-property... FAILED
 [WARNING] `tests/ui/wait-for-document-property.goml` line 12: Special checks (ENDS_WITH) will be ignored for `null`
 
 [ERROR] `tests/ui/wait-for-document-property.goml` line 14: Error: The following document properties still don't match: [expected `tadam` for document property `windowProp`, found `hello1`]: for command `wait-for-document-property: {"windowProp": "tadam"}`
-[ERROR] `tests/ui/wait-for-document-property.goml` line 16: Error: Evaluation failed: The following errors happened: [expected `tadam` for document property `windowProp`, found `hello1`]: for command `assert-document-property: {"windowProp": "tadam"}`
+[ERROR] `tests/ui/wait-for-document-property.goml` line 16: The following errors happened: [expected `tadam` for document property `windowProp`, found `hello1`]: for command `assert-document-property: {"windowProp": "tadam"}`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

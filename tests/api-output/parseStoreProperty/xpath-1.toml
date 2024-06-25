@@ -1,7 +1,6 @@
 instructions = [
-  """let elem = await page.$x(\"//a\");
-if (elem.length === 0) { throw 'XPath \"//a\" not found'; }
-elem = elem[0];
+  """const elem = await page.$(\"::-p-xpath(//a)\");
+if (elem === null) { throw '\"//a\" not found'; }
 const jsHandle = await elem.evaluateHandle(e => {
     function checkObjectPaths(object, path, callback, notFoundCallback) {
         const found = [];

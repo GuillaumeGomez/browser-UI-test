@@ -1,5 +1,5 @@
 instructions = [
-  """let assertSizeElem = await page.$(\"a:focus\");
+  """const assertSizeElem = await page.$(\"a:focus\");
 if (assertSizeElem === null) { throw '\"a:focus\" not found'; }
 async function checkElemSize(elem) {
     return await elem.evaluate(e => {

@@ -1,7 +1,6 @@
 instructions = [
-  """let parseClickVar = await page.$x(\"//a\");
-if (parseClickVar.length === 0) { throw 'XPath \"//a\" not found'; }
-parseClickVar = parseClickVar[0];
+  """const parseClickVar = await page.$(\"::-p-xpath(//a)\");
+if (parseClickVar === null) { throw '\"//a\" not found'; }
 await parseClickVar.click();""",
 ]
 warnings = [

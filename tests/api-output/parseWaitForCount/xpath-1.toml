@@ -4,7 +4,7 @@ const timeAdd = 50;
 let allTime = 0;
 let parseWaitForCount = null;
 while (true) {
-    parseWaitForCount = await page.$x(\"//*[@class=\\'a\\']\");
+    parseWaitForCount = await page.$$(\"::-p-xpath(//*[@class=\\'a\\'])\");
     parseWaitForCount = parseWaitForCount.length;
     if (parseWaitForCount === 3) {
         break;

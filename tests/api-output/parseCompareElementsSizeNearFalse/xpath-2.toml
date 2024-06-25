@@ -1,9 +1,8 @@
 instructions = [
-  """let parseCompareElementsSizeNear1 = await page.$(\"a\");
+  """const parseCompareElementsSizeNear1 = await page.$(\"a\");
 if (parseCompareElementsSizeNear1 === null) { throw '\"a\" not found'; }
-let parseCompareElementsSizeNear2 = await page.$x(\"//b\");
-if (parseCompareElementsSizeNear2.length === 0) { throw 'XPath \"//b\" not found'; }
-parseCompareElementsSizeNear2 = parseCompareElementsSizeNear2[0];
+const parseCompareElementsSizeNear2 = await page.$(\"::-p-xpath(//b)\");
+if (parseCompareElementsSizeNear2 === null) { throw '\"//b\" not found'; }
 await page.evaluate((elem1, elem2) => {
 function browserGetElementSizes1(e) {
     const height = e.offsetHeight;

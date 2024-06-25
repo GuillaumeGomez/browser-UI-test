@@ -1,7 +1,6 @@
 instructions = [
-  """let parseSetTextElem = await page.$x(\"//a\");
-if (parseSetTextElem.length === 0) { throw 'XPath \"//a\" not found'; }
-parseSetTextElem = parseSetTextElem[0];
+  """const parseSetTextElem = await page.$(\"::-p-xpath(//a)\");
+if (parseSetTextElem === null) { throw '\"//a\" not found'; }
 await page.evaluate(e => {
     if ([\"input\", \"textarea\"].indexOf(e.tagName.toLowerCase()) !== -1) {
         e.value = \"b\";

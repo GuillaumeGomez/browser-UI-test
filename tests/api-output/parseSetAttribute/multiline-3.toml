@@ -1,7 +1,6 @@
 instructions = [
-  """let parseSetAttributeElem = await page.$x(\"//a\");
-if (parseSetAttributeElem.length === 0) { throw 'XPath \"//a\" not found'; }
-parseSetAttributeElem = parseSetAttributeElem[0];
+  """const parseSetAttributeElem = await page.$(\"::-p-xpath(//a)\");
+if (parseSetAttributeElem === null) { throw '\"//a\" not found'; }
 await page.evaluate(e => {
     e.setAttribute(\"b\",\"c\\n\");
 }, parseSetAttributeElem);""",

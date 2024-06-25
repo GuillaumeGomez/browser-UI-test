@@ -1,6 +1,8 @@
 instructions = [
   """try {
-if ((await page.$(\"a\")) === null) { throw '\"a\" not found'; }
+if ((await page.$(\"a\")) === null) {
+    throw '\"a\" not found';
+}
 } catch(e) { return; } throw \"assert didn't fail\";""",
 ]
 wait = false

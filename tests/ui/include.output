@@ -1,12 +1,12 @@
 => Starting doc-ui tests...
 
 include... FAILED
-[ERROR] `tests/ui/include.goml` line 4: Error: Evaluation failed: The following errors happened: [`Another page!` isn't equal to `tadam`]: for command `assert-text: ("header", "tadam")`
+[ERROR] `tests/ui/include.goml` line 4: The following errors happened: [`Another page!` isn't equal to `tadam`]: for command `assert-text: ("header", "tadam")`
 [ERROR] `tests/ui/sub/include.goml` line 3
-    from `tests/ui/include.goml` line 5: Error: Evaluation failed: The following errors happened: [`Basic test!` isn't equal to `hoho`]: for command `assert-text: ("header", "hoho")`
+    from `tests/ui/include.goml` line 5: The following errors happened: [`Basic test!` isn't equal to `hoho`]: for command `assert-text: ("header", "hoho")`
 [ERROR] `tests/ui/sub/include.goml` line 5
-    from `tests/ui/include.goml` line 5: Error: Evaluation failed: The following errors happened: [`` isn't equal to `hoho`]: for command `assert-text: ("header", "hoho")`
-[ERROR] `tests/ui/include.goml` line 6: Error: Evaluation failed: The following errors happened: [`` isn't equal to `tadam`]: for command `assert-text: ("header", "tadam")`
+    from `tests/ui/include.goml` line 5: The following errors happened: [`` isn't equal to `hoho`]: for command `assert-text: ("header", "hoho")`
+[ERROR] `tests/ui/include.goml` line 6: The following errors happened: [`` isn't equal to `tadam`]: for command `assert-text: ("header", "tadam")`
 [ERROR] `tests/ui/sub/func.goml` line 5
     from `tests/ui/include.goml` line 10: "#does_not-exist" not found: for command `click: "#does_not-exist"`
 

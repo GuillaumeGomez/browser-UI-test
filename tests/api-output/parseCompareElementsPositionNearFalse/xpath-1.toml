@@ -1,8 +1,7 @@
 instructions = [
-  """let parseCompareElementsPosNear1 = await page.$x(\"//a\");
-if (parseCompareElementsPosNear1.length === 0) { throw 'XPath \"//a\" not found'; }
-parseCompareElementsPosNear1 = parseCompareElementsPosNear1[0];
-let parseCompareElementsPosNear2 = await page.$(\"b\");
+  """const parseCompareElementsPosNear1 = await page.$(\"::-p-xpath(//a)\");
+if (parseCompareElementsPosNear1 === null) { throw '\"//a\" not found'; }
+const parseCompareElementsPosNear2 = await page.$(\"b\");
 if (parseCompareElementsPosNear2 === null) { throw '\"b\" not found'; }
 await page.evaluate((elem1, elem2) => {
 function browserComparePositionNear(e1, e2, kind, property, maxDelta) {

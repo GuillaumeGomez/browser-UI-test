@@ -1,7 +1,6 @@
 instructions = [
-  """let parseSetCssElem = await page.$x(\"//a\");
-if (parseSetCssElem.length === 0) { throw 'XPath \"//a\" not found'; }
-parseSetCssElem = parseSetCssElem[0];
+  """const parseSetCssElem = await page.$(\"::-p-xpath(//a)\");
+if (parseSetCssElem === null) { throw '\"//a\" not found'; }
 await page.evaluate(e => {
     e.style[\"b\"] = \"c\\n\";
 }, parseSetCssElem);""",

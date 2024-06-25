@@ -1,7 +1,6 @@
 instructions = [
-  """let parseClickWithOffsetVar = await page.$x(\"//a\");
-if (parseClickWithOffsetVar.length === 0) { throw 'XPath \"//a\" not found'; }
-parseClickWithOffsetVar = parseClickWithOffsetVar[0];
+  """const parseClickWithOffsetVar = await page.$(\"::-p-xpath(//a)\");
+if (parseClickWithOffsetVar === null) { throw '\"//a\" not found'; }
 await parseClickWithOffsetVar.click({
     \"offset\": {\"x\": 1},
 });""",

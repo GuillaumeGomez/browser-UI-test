@@ -1,10 +1,8 @@
 instructions = [
-  """let parseCompareElementsProp1 = await page.$x(\"//a\");
-if (parseCompareElementsProp1.length === 0) { throw 'XPath \"//a\" not found'; }
-parseCompareElementsProp1 = parseCompareElementsProp1[0];
-let parseCompareElementsProp2 = await page.$x(\"//b\");
-if (parseCompareElementsProp2.length === 0) { throw 'XPath \"//b\" not found'; }
-parseCompareElementsProp2 = parseCompareElementsProp2[0];
+  """const parseCompareElementsProp1 = await page.$(\"::-p-xpath(//a)\");
+if (parseCompareElementsProp1 === null) { throw '\"//a\" not found'; }
+const parseCompareElementsProp2 = await page.$(\"::-p-xpath(//b)\");
+if (parseCompareElementsProp2 === null) { throw '\"//b\" not found'; }
 const parseCompareElementsProps = [[\"margin\"]];
 for (const property of parseCompareElementsProps) {
     try {

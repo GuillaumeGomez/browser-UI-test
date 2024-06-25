@@ -1,5 +1,7 @@
 instructions = [
-  """if ((await page.$x(\"//a\\nhello\")).length === 0) { throw 'XPath \"//a\\nhello\" not found'; }""",
+  """if ((await page.$(\"::-p-xpath(//a\\nhello)\")) === null) {
+    throw '\"//a\\nhello\" not found';
+}""",
 ]
 wait = false
 checkResult = true
