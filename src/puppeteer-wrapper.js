@@ -126,13 +126,13 @@ class PuppeteerWrapper {
             await page.setViewport(newViewport);
             return;
         }
-        if (this.puppeteer.devices[options.emulate] === undefined) {
+        if (this.puppeteer.KnownDevices[options.emulate] === undefined) {
             throw new Error(`Unknown device \`${options.emulate}\`. List of available devices ` +
                 'can be found there: ' +
                 'https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js');
         }
         debug_log.append(`Emulating "${options.emulate}" device.`);
-        await page.emulate(this.puppeteer.devices[options.emulate]);
+        await page.emulate(this.puppeteer.KnownDevices[options.emulate]);
     }
 }
 

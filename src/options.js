@@ -62,7 +62,7 @@ function showDeviceList() {
     const b = utils.loadPuppeteerWrapper();
     print('List of available devices:');
     print('');
-    const devices = b.puppeteer.devices;
+    const devices = b.puppeteer.KnownDevices;
     for (let i = 0; i < devices.length; ++i) {
         print(`"${devices[i].name}"`);
     }
