@@ -125,18 +125,12 @@ function parseFocus(parser) {
     }
 
     const selector = ret.value;
-    if (selector.isXPath) {
-        const varName = 'parseFocusVar';
-        return {
-            'instructions': [
-                getAndSetElements(selector, varName, false) + '\n' +
-                `await ${varName}.focus();`,
-            ],
-        };
-    }
+    const varName = 'parseFocusVar';
     return {
         'instructions': [
-            `await page.focus("${selector.value}");`,
+            `\
+${getAndSetElements(selector, varName, false)}
+await ${varName}.focus();`,
         ],
     };
 }
@@ -207,34 +201,19 @@ function parseWriteInto(parser) {
     const varName = 'parseWriteVar';
     const value = tuple[1].value;
     if (value.kind === 'string') {
-        if (selector.isXPath) {
-            return {
-                'instructions': [
-                    getAndSetElements(selector, varName, false) + '\n' +
-                    `await ${varName}.type("${value.getStringValue()}");`,
-                ],
-            };
-        }
         return {
-            'instructions': [
-                `await page.type("${selector.value}", "${value.getStringValue()}");`,
+            'instructions': [`\
+${getAndSetElements(selector, varName, false)}
+await ${varName}.type("${value.getStringValue()}");`,
             ],
         };
     }
-    let content = '';
-    if (selector.isXPath) {
-        content += `\
+    return {
+        'instructions': [`\
 ${getAndSetElements(selector, varName, false)}
 ${varName}.focus();
-await ${varName}`;
-    } else {
-        content += `await page.focus("${selector.value}");
-page`;
-    }
-
-    content += `.keyboard.press(String.fromCharCode(${value.value}));`;
-    return {
-        'instructions': [content],
+await ${varName};
+page.keyboard.press(String.fromCharCode(${value.value}));`],
     };
 }
 
