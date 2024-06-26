@@ -3,6 +3,7 @@ go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 // Checking for `write` command.
 assert-text: ("#the-input", "")
 focus: "#the-input"
+assert: "#the-input:focus"
 write: "test"
 assert-text: ("#the-input", "test")
 write: 113 // Equivalent of the 'q' letter.

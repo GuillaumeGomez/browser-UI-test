@@ -4,6 +4,10 @@ function buildPuppeteerOptions(options) {
     const puppeteer_options = {'args': ['--font-render-hinting=none']};
     if (options.headless === false) {
         puppeteer_options['headless'] = false;
+    } else {
+        // FIXME: Once `:focus` selector is working again, this can be either replaced with
+        // `new` or removed if puppeteer version > 22.
+        puppeteer_options['headless'] = 'old';
     }
     for (let i = 0; i < options.extensions.length; ++i) {
         puppeteer_options['args'].push(`--load-extension=${options.extensions[i]}`);
