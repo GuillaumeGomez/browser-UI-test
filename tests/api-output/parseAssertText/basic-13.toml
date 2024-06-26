@@ -14,7 +14,7 @@ instructions = [
     });
 }
 
-let parseAssertElemStr = await page.$$(\"a\");
+const parseAssertElemStr = await page.$$(\"a\");
 if (parseAssertElemStr.length === 0) { throw '\"a\" not found'; }
 for (const elem of parseAssertElemStr) {
     await checkTextForElem(elem);

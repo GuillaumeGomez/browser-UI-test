@@ -1,9 +1,8 @@
 instructions = [
-  """let parseCompareElementsCss1 = await page.$(\"a\");
+  """const parseCompareElementsCss1 = await page.$(\"a\");
 if (parseCompareElementsCss1 === null) { throw '\"a\" not found'; }
-let parseCompareElementsCss2 = await page.$x(\"//b\");
-if (parseCompareElementsCss2.length === 0) { throw 'XPath \"//b\" not found'; }
-parseCompareElementsCss2 = parseCompareElementsCss2[0];
+const parseCompareElementsCss2 = await page.$(\"::-p-xpath(//b)\");
+if (parseCompareElementsCss2 === null) { throw '\"//b\" not found'; }
 
 await page.evaluate((e1, e2) => {
     let computed_style1 = getComputedStyle(e1);

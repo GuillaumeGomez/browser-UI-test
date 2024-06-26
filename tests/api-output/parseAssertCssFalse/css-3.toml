@@ -32,7 +32,7 @@ async function checkElem(elem) {
         throw \"The following errors happened (for selector `a`): [\" + props + \"]\";
     }
 }
-let parseAssertElemCss = await page.$$(\"a\");
+const parseAssertElemCss = await page.$$(\"a\");
 if (parseAssertElemCss.length === 0) { throw '\"a\" not found'; }
 for (const elem of parseAssertElemCss) {
     await checkElem(elem);

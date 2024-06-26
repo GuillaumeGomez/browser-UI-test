@@ -31,9 +31,8 @@ let allTime = 0;
 let parseWaitForAttr = null;
 while (true) {
     while (true) {
-        parseWaitForAttr = await page.$x(\"//a\");
-        if (parseWaitForAttr.length !== 0) {
-            parseWaitForAttr = parseWaitForAttr[0];
+        parseWaitForAttr = await page.$(\"::-p-xpath(//a)\");
+        if (parseWaitForAttr !== null) {
             break;
         }
         await new Promise(r => setTimeout(r, timeAdd));

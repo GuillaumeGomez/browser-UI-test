@@ -14,9 +14,8 @@ instructions = [
     });
 }
 
-let parseAssertElemStr = await page.$x(\"//a\");
-if (parseAssertElemStr.length === 0) { throw 'XPath \"//a\" not found'; }
-parseAssertElemStr = parseAssertElemStr[0];
+const parseAssertElemStr = await page.$(\"::-p-xpath(//a)\");
+if (parseAssertElemStr === null) { throw '\"//a\" not found'; }
 await checkTextForElem(parseAssertElemStr);""",
 ]
 wait = false

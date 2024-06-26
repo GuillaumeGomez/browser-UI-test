@@ -759,21 +759,16 @@ function parseAssertCountInner(parser, assertFalse) {
 
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
     const varName = 'parseAssertElemCount';
-    let start;
-    if (selector.isXPath) {
-        start = `let ${varName} = await page.$x("${selector.value}");\n`;
-    } else {
-        start = `let ${varName} = await page.$$("${selector.value}");\n`;
-    }
-    start += `${varName} = ${varName}.length;\n`;
+    const selectorS = selector.isXPath ? `::-p-xpath(${selector.value})` : selector.value;
+    // TODO: maybe check differently depending on the tag kind?
+    const code = `\
+let ${varName} = await page.$$("${selectorS}");
+${varName} = ${varName}.length;
+${insertBefore}if (${varName} !== ${occurences}) {
+    throw 'expected ${occurences} elements, found ' + ${varName};
+}${insertAfter}`;
     return {
-        'instructions': [
-            start +
-            // TODO: maybe check differently depending on the tag kind?
-            `${insertBefore}if (${varName} !== ${occurences}) {\n` +
-            `throw 'expected ${occurences} elements, found ' + ${varName};\n` +
-            `}${insertAfter}`,
-        ],
+        'instructions': [code],
         'wait': false,
         'checkResult': true,
     };
@@ -965,20 +960,14 @@ ${insertBefore}if (!check) {
         };
     }
 
-    let instructions;
-    if (value.isXPath) {
-        instructions = [
-            `${insertBefore}if ((await page.$x("${value.value}")).length === 0) { ` +
-            `throw 'XPath "${value.value}" not found'; }${insertAfter}`,
-        ];
-    } else {
-        instructions = [
-            `${insertBefore}if ((await page.$("${value.value}")) === null) { ` +
-            `throw '"${value.value}" not found'; }${insertAfter}`,
-        ];
-    }
+    const selectorS = value.isXPath ? `::-p-xpath(${value.value})` : value.value;
     return {
-        'instructions': instructions,
+        'instructions': [
+            `\
+${insertBefore}if ((await page.$("${selectorS}")) === null) {
+    throw '"${value.value}" not found';
+}${insertAfter}`,
+        ],
         'wait': false,
         'checkResult': true,
     };

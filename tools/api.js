@@ -1684,7 +1684,7 @@ async function checkTextForElem(elem) {
     });
 }
 
-let parseAssertElemStr = await page.$("a");
+const parseAssertElemStr = await page.$("a");
 if (parseAssertElemStr === null) { throw '"a" not found'; }
 await checkTextForElem(parseAssertElemStr);`,
             ],

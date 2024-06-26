@@ -30,8 +30,8 @@ async function checkElem(elem) {
         throw \"The following errors happened (for XPath `//a`): [\" + props + \"]\";
     }
 }
-let parseAssertElemCss = await page.$x(\"//a\");
-if (parseAssertElemCss.length === 0) { throw 'XPath \"//a\" not found'; }
+const parseAssertElemCss = await page.$$(\"::-p-xpath(//a)\");
+if (parseAssertElemCss.length === 0) { throw '\"//a\" not found'; }
 for (const elem of parseAssertElemCss) {
     await checkElem(elem);
 }""",

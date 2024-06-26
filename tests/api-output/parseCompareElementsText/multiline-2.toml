@@ -1,7 +1,7 @@
 instructions = [
-  """let parseCompareElementsText1 = await page.$(\"a\");
+  """const parseCompareElementsText1 = await page.$(\"a\");
 if (parseCompareElementsText1 === null) { throw '\"a\" not found'; }
-let parseCompareElementsText2 = await page.$(\"b\");
+const parseCompareElementsText2 = await page.$(\"b\");
 if (parseCompareElementsText2 === null) { throw '\"b\" not found'; }
 await page.evaluate((e1, e2) => {
 let e1value;

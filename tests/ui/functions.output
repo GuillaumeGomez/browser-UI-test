@@ -11,7 +11,7 @@ functions... FAILED
     from `tests/ui/functions.goml` line 22: The following errors happened (for selector `header`): [expected `a` for key `color`, found `rgb(255, 255, 255)`]: for command `assert-css: ("header", |whole_check|)`
 [ERROR] `tests/ui/functions.goml` line 12
     from `tests/ui/functions.goml` line 15
-    from `tests/ui/functions.goml` line 22: Error: Evaluation failed: The following errors happened (for selector `header`): [No attribute named `color`]: for command `assert-attribute: ("header", {"color": "blue"})`
+    from `tests/ui/functions.goml` line 22: The following errors happened (for selector `header`): [No attribute named `color`]: for command `assert-attribute: ("header", {"color": "blue"})`
 [ERROR] `tests/ui/functions.goml` line 16
     from `tests/ui/functions.goml` line 22: The following errors happened (for selector `header`): [expected `red` for key `color`, found `white`]: for command `assert-css: ("header", {"color": "red"})`
 [ERROR] `tests/ui/functions.goml` line 30

@@ -5,9 +5,8 @@ let allTime = 0;
 let assertSize = null;
 while (true) {
     while (true) {
-        assertSize = await page.$x(\"//a\");
-        if (assertSize.length !== 0) {
-            assertSize = assertSize[0];
+        assertSize = await page.$(\"::-p-xpath(//a)\");
+        if (assertSize !== null) {
             break;
         }
         await new Promise(r => setTimeout(r, timeAdd));

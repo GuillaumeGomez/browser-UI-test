@@ -1,5 +1,5 @@
 instructions = [
-  """let parseAssertElemProp = await page.$$(\"a\");
+  """const parseAssertElemProp = await page.$$(\"a\");
 if (parseAssertElemProp.length === 0) { throw '\"a\" not found'; }
 for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
     await page.evaluate(e => {

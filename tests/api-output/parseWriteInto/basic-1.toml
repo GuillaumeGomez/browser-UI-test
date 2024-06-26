@@ -1,3 +1,5 @@
 instructions = [
-  """await page.type(\"a\", \"b\");""",
+  """const parseWriteVar = await page.$(\"a\");
+if (parseWriteVar === null) { throw '\"a\" not found'; }
+await parseWriteVar.type(\"b\");""",
 ]

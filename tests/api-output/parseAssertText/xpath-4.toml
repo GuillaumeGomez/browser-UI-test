@@ -14,8 +14,8 @@ instructions = [
     });
 }
 
-let parseAssertElemStr = await page.$x(\"//a[text()=\\'l\\']\");
-if (parseAssertElemStr.length === 0) { throw 'XPath \"//a[text()=\\'l\\']\" not found'; }
+const parseAssertElemStr = await page.$$(\"::-p-xpath(//a[text()=\\'l\\'])\");
+if (parseAssertElemStr.length === 0) { throw '\"//a[text()=\\'l\\']\" not found'; }
 for (const elem of parseAssertElemStr) {
     await checkTextForElem(elem);
 }""",

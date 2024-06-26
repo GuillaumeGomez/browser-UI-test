@@ -1,6 +1,8 @@
 instructions = [
   """try {
-if ((await page.$x(\"//a\")).length === 0) { throw 'XPath \"//a\" not found'; }
+if ((await page.$(\"::-p-xpath(//a)\")) === null) {
+    throw '\"//a\" not found';
+}
 } catch(e) { return; } throw \"assert didn't fail\";""",
 ]
 wait = false

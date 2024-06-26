@@ -1,7 +1,6 @@
 instructions = [
-  """let screenshotElem = await page.$x(\"//b\");
-if (screenshotElem.length === 0) { throw 'XPath \"//b\" not found'; }
-screenshotElem = screenshotElem[0];
+  """const screenshotElem = await page.$(\"::-p-xpath(//b)\");
+if (screenshotElem === null) { throw '\"//b\" not found'; }
 await screenshotElem.screenshot({\"path\":\"a.png\",\"fullPage\":false});""",
 ]
 wait = false

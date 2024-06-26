@@ -1,5 +1,5 @@
 instructions = [
-  """let elem = await page.$(\"a\");
+  """const elem = await page.$(\"a\");
 if (elem === null) { throw '\"a\" not found'; }
 const jsHandle = await elem.evaluateHandle(e => {
     const style = getComputedStyle(e, \"::after\");

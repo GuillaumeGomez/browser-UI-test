@@ -34,9 +34,8 @@ let allTime = 0;
 let parseWaitForCss = null;
 while (true) {
     while (true) {
-        parseWaitForCss = await page.$x(\"//a\");
-        if (parseWaitForCss.length !== 0) {
-            parseWaitForCss = parseWaitForCss[0];
+        parseWaitForCss = await page.$(\"::-p-xpath(//a)\");
+        if (parseWaitForCss !== null) {
             break;
         }
         await new Promise(r => setTimeout(r, timeAdd));

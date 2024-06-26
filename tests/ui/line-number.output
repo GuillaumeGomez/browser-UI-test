@@ -1,7 +1,7 @@
 => Starting doc-ui tests...
 
 line-number... FAILED
-[ERROR] `tests/ui/line-number.goml` line 4: Error: Evaluation failed: assert didn't fail: for command `compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])`
+[ERROR] `tests/ui/line-number.goml` line 4: assert didn't fail: for command `compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

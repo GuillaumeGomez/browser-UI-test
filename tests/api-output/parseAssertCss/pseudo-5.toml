@@ -30,7 +30,7 @@ async function checkElem(elem) {
         throw \"The following errors happened (for selector `a ::after`): [\" + props + \"]\";
     }
 }
-let parseAssertElemCss = await page.$(\"a ::after\");
+const parseAssertElemCss = await page.$(\"a ::after\");
 if (parseAssertElemCss === null) { throw '\"a ::after\" not found'; }
 await checkElem(parseAssertElemCss);""",
 ]

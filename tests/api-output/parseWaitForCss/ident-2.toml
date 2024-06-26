@@ -34,7 +34,7 @@ let allTime = 0;
 let parseWaitForCss = null;
 while (true) {
     while (true) {
-        parseWaitForCss = await page.$x(\"//a\");
+        parseWaitForCss = await page.$$(\"::-p-xpath(//a)\");
         if (parseWaitForCss.length !== 0) {
             break;
         }

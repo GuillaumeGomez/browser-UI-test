@@ -1,5 +1,5 @@
 instructions = [
-  """let parseAssertElemProp = await page.$(\"a\");
+  """const parseAssertElemProp = await page.$(\"a\");
 if (parseAssertElemProp === null) { throw '\"a\" not found'; }
 await page.evaluate(e => {
     function checkObjectPaths(object, path, callback, notFoundCallback) {

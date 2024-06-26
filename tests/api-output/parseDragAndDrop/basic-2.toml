@@ -1,5 +1,5 @@
 instructions = [
-  """let parseDragAndDropElem = await page.$(\"a\");
+  """const parseDragAndDropElem = await page.$(\"a\");
 if (parseDragAndDropElem === null) { throw '\"a\" not found'; }
 const parseDragAndDropElem_box = await parseDragAndDropElem.boundingBox();
 const start = [parseDragAndDropElem_box.x + parseDragAndDropElem_box.width / 2, parseDragAndDropElem_box.y + parseDragAndDropElem_box.height / 2];

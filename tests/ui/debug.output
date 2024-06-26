@@ -28,9 +28,9 @@ try {
     throw "`show-text: true` needs to be used before checking for `color` (otherwise the browser doesn't compute it)";
 }"
 [DEBUG] Done!
-[DEBUG] EXECUTING (line 5) "let parseCompareElementsCss1 = await page.$(".content>.right>p");
+[DEBUG] EXECUTING (line 5) "const parseCompareElementsCss1 = await page.$(".content>.right>p");
 if (parseCompareElementsCss1 === null) { throw '".content>.right>p" not found'; }
-let parseCompareElementsCss2 = await page.$(".content>.left");
+const parseCompareElementsCss2 = await page.$(".content>.left");
 if (parseCompareElementsCss2 === null) { throw '".content>.left" not found'; }
 
 await page.evaluate((e1, e2) => {
@@ -53,7 +53,7 @@ await page.evaluate((e1, e2) => {
 
 }, parseCompareElementsCss1, parseCompareElementsCss2);"
 [DEBUG] Done!FAILED
-[ERROR] `tests/ui/debug.goml` line 5: Error: Evaluation failed: assert didn't fail: for command `compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])`
+[ERROR] `tests/ui/debug.goml` line 5: assert didn't fail: for command `compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

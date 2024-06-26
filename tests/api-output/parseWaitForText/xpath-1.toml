@@ -17,9 +17,8 @@ async function checkTextForElem(elem) {
 const value = \"b\";
 while (true) {
     while (true) {
-        parseWaitForText = await page.$x(\"//a\");
-        if (parseWaitForText.length !== 0) {
-            parseWaitForText = parseWaitForText[0];
+        parseWaitForText = await page.$(\"::-p-xpath(//a)\");
+        if (parseWaitForText !== null) {
             break;
         }
         await new Promise(r => setTimeout(r, timeAdd));

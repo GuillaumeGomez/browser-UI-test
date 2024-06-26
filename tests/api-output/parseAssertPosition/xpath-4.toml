@@ -1,7 +1,6 @@
 instructions = [
-  """let assertPosition = await page.$x(\"//a\");
-if (assertPosition.length === 0) { throw 'XPath \"//a\" not found'; }
-assertPosition = assertPosition[0];
+  """const assertPosition = await page.$(\"::-p-xpath(//a)\");
+if (assertPosition === null) { throw '\"//a\" not found'; }
 const errors = [];
 errors.push(...await page.evaluate(elem => {
     const innerErrors = [];

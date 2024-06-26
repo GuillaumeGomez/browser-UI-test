@@ -1,7 +1,7 @@
 instructions = [
-  """let parseCompareElementsPos1 = await page.$(\"a\");
+  """const parseCompareElementsPos1 = await page.$(\"a\");
 if (parseCompareElementsPos1 === null) { throw '\"a\" not found'; }
-let parseCompareElementsPos2 = await page.$(\"b\");
+const parseCompareElementsPos2 = await page.$(\"b\");
 if (parseCompareElementsPos2 === null) { throw '\"b\" not found'; }
 await page.evaluate((elem1, elem2) => {
     function browserComparePosition(e1, e2, kind, property) {

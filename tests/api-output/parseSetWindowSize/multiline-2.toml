@@ -1,6 +1,9 @@
 instructions = [
   """const viewport = page.viewport();
-viewport.width = 1;
-viewport.height = 2;
-await page.setViewport(viewport);""",
+const newViewport = {
+    ...viewport,
+    width: 1,
+    height: 2,
+};
+await page.setViewport(newViewport);""",
 ]

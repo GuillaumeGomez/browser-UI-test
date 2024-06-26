@@ -1,5 +1,5 @@
 instructions = [
-  """let parseStoreCss = await page.$(\"a\");
+  """const parseStoreCss = await page.$(\"a\");
 if (parseStoreCss === null) { throw '\"a\" not found'; }
 const jsHandle = await parseStoreCss.evaluateHandle(e => {
     const style = getComputedStyle(e);
