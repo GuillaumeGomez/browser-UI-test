@@ -2854,6 +2854,11 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForCount, x, e, name, o),
     },
     {
+        'name': 'wait-for-count-false',
+        'func': checkWaitForCount,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForCountFalse, x, e, name, o),
+    },
+    {
         'name': 'wait-for-css',
         'func': checkWaitForCss,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForCss, x, e, name, o),

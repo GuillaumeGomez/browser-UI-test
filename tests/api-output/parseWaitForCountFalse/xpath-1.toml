@@ -6,7 +6,7 @@ let parseWaitForCount = null;
 while (true) {
     parseWaitForCount = await page.$$(\"::-p-xpath(//*[@class=\\'a\\'])\");
     parseWaitForCount = parseWaitForCount.length;
-    if (parseWaitForCount === 3) {
+    if (parseWaitForCount !== 3) {
         break;
     }
     await new Promise(r => setTimeout(r, timeAdd));
@@ -15,7 +15,7 @@ while (true) {
     }
     allTime += timeAdd;
     if (allTime >= timeLimit) {
-        throw new Error(\"Still didn't find 3 instances of \\\"//*[@class=\\'a\\']\\\" (found \" + parseWaitForCount + \")\");
+        throw new Error(\"Still found 3 instances of \\\"//*[@class=\\'a\\']\\\" (found \" + parseWaitForCount + \")\");
     }
 }""",
 ]
