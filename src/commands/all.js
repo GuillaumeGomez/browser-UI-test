@@ -104,6 +104,7 @@ module.exports = {
     'parseStoreValue': store.parseStoreValue,
     'parseStoreWindowProperty': store.parseStoreWindowProperty,
     'parseWaitFor': wait.parseWaitFor,
+    'parseWaitForFalse': wait.parseWaitForFalse,
     'parseWaitForAttribute': wait.parseWaitForAttribute,
     'parseWaitForCss': wait.parseWaitForCss,
     'parseWaitForCount': wait.parseWaitForCount,

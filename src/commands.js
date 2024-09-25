@@ -96,6 +96,7 @@ const ORDERS = {
     'store-value': commands.parseStoreValue,
     'store-window-property': commands.parseStoreWindowProperty,
     'wait-for': commands.parseWaitFor,
+    'wait-for-false': commands.parseWaitForFalse,
     'wait-for-attribute': commands.parseWaitForAttribute,
     'wait-for-css': commands.parseWaitForCss,
     'wait-for-count': commands.parseWaitForCount,
