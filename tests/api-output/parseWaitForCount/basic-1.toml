@@ -15,7 +15,7 @@ while (true) {
     }
     allTime += timeAdd;
     if (allTime >= timeLimit) {
-        throw new Error(\"Still didn't find 3 instance of \\\"a\\\" (found \" + parseWaitForCount + \")\");
+        throw new Error(\"Still didn't find 3 instances of \\\"a\\\" (found \" + parseWaitForCount + \")\");
     }
 }""",
 ]

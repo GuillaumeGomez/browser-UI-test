@@ -13,7 +13,7 @@ const {
 } = require('./utils.js');
 const { validator } = require('../validator.js');
 // Not the same `utils.js`!
-const { hasError } = require('../utils.js');
+const { hasError, plural } = require('../utils.js');
 
 function incrWait(error) {
     return `\
@@ -124,6 +124,17 @@ function parseWaitForFalse(parser) {
 //
 // * ("selector", number)
 function parseWaitForCount(parser) {
+    return parseWaitForCountInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * ("selector", number)
+function parseWaitForCountFalse(parser) {
+    return parseWaitForCountInner(parser, true);
+}
+
+function parseWaitForCountInner(parser, waitFalse) {
     const ret = validator(parser, {
         kind: 'tuple',
         elements: [
@@ -146,17 +157,24 @@ function parseWaitForCount(parser) {
     const count = tuple[1].value.getRaw();
     const varName = 'parseWaitForCount';
     const selectorS = selector.isXPath ? `::-p-xpath(${selector.value})` : selector.value;
+    let comp = '===';
+    let errorMessage = `"Still didn't find ${count} ${plural('instance', count)} of \
+\\"${selector.value}\\" (found " + ${varName} + ")"`;
+    if (waitFalse) {
+        comp = '!==';
+        errorMessage = `"Still found ${count} ${plural('instance', count)} of \
+\\"${selector.value}\\" (found " + ${varName} + ")"`;
+    }
 
     const instructions = getWaitForElems(
         varName,
         `\
 ${varName} = await page.$$("${selectorS}");
 ${varName} = ${varName}.length;
-if (${varName} === ${count}) {
+if (${varName} ${comp} ${count}) {
     break;
 }`,
-        `throw new Error("Still didn't find ${count} instance of \\"${selector.value}\\" (found " \
-+ ${varName} + ")");`,
+        `throw new Error(${errorMessage});`,
     );
 
     return {
@@ -1158,6 +1176,7 @@ module.exports = {
     'parseWaitForFalse': parseWaitForFalse,
     'parseWaitForAttribute': parseWaitForAttribute,
     'parseWaitForCount': parseWaitForCount,
+    'parseWaitForCountFalse': parseWaitForCountFalse,
     'parseWaitForCss': parseWaitForCss,
     'parseWaitForDocumentProperty': parseWaitForDocumentProperty,
     'parseWaitForLocalStorage': parseWaitForLocalStorage,
