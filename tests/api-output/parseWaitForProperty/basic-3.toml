@@ -55,9 +55,9 @@ while (true) {
     while (true) {
         parseWaitForProp = await page.$$(\"a\");
         if (parseWaitForProp.length !== 0) {
+            parseWaitForProp = parseWaitForProp[0];
             break;
         }
-        parseWaitForProp = parseWaitForProp[0];
         await new Promise(r => setTimeout(r, timeAdd));
         if (timeLimit === 0) {
             continue;

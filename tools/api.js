@@ -2849,6 +2849,11 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForAttribute, x, e, name, o),
     },
     {
+        'name': 'wait-for-attribute-false',
+        'func': checkWaitForAttribute,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForAttributeFalse, x, e, name, o),
+    },
+    {
         'name': 'wait-for-count',
         'func': checkWaitForCount,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForCount, x, e, name, o),

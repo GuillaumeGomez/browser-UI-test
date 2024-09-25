@@ -6,9 +6,9 @@ let parseWaitFor = null;
 while (true) {
     parseWaitFor = await page.$$(\"a\");
     if (parseWaitFor.length !== 0) {
+        parseWaitFor = parseWaitFor[0];
         break;
     }
-    parseWaitFor = parseWaitFor[0];
     await new Promise(r => setTimeout(r, timeAdd));
     if (timeLimit === 0) {
         continue;

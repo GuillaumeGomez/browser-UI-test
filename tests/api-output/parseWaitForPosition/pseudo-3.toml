@@ -7,9 +7,9 @@ while (true) {
     while (true) {
         assertPosition = await page.$$(\"a:focus\");
         if (assertPosition.length !== 0) {
+            assertPosition = assertPosition[0];
             break;
         }
-        assertPosition = assertPosition[0];
         await new Promise(r => setTimeout(r, timeAdd));
         if (timeLimit === 0) {
             continue;
