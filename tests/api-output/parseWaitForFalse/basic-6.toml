@@ -1,0 +1,22 @@
+instructions = [
+  """const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForFalse = null;
+while (true) {
+    parseWaitForFalse = await page.$$(\"\\\"a\");
+    if (parseWaitForFalse.length === 0) {
+        break;
+    }
+    parseWaitForFalse = parseWaitForFalse[0];
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error(\"The CSS selector \\\"\\\"a\\\" still exists\");
+    }
+}""",
+]
+wait = false

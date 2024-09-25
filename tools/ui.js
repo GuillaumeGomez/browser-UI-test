@@ -68,10 +68,15 @@ async function compareOutput(x) {
         filesToTest.push(curPath.toString());
     });
 
-    const cpuCount = os.cpus().length / 2 + 1;
+    let cpuCount = os.cpus().length / 2 + 1;
+    if (cpuCount < 1) {
+        cpuCount = 1;
+    }
     process.setMaxListeners(cpuCount);
     const tests_queue = [];
-    const browser = await utils.loadPuppeteer(new Options());
+    const options = new Options();
+    options.noSandbox = true;
+    const browser = await utils.loadPuppeteer(options);
 
     for (const file of filesToTest) {
         if (x.extraArgs.length !== 0 &&

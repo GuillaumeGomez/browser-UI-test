@@ -1,7 +1,9 @@
 => Starting doc-ui tests...
 
 wait-for-position... FAILED
-[ERROR] `tests/ui/wait-for-position.goml` line 16: Error: The following checks still fail: [different Y values: 91 (or 91) != 16]: for command `wait-for-position: ("#js-change-pos", {"y": 16})`
+[ERROR] `tests/ui/wait-for-position.goml` line 6: TypeError: e.getBoundingClientRect is not a function: for command `wait-for-position: ("#js-change-pos", {"x": 543, "y": 88})`
+[ERROR] `tests/ui/wait-for-position.goml` line 9: TypeError: e.getBoundingClientRect is not a function: for command `wait-for-position: ("#js-change-pos", {"x": 546})`
+[ERROR] `tests/ui/wait-for-position.goml` line 16: TypeError: e.getBoundingClientRect is not a function: for command `wait-for-position: ("#js-change-pos", {"y": 16})`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

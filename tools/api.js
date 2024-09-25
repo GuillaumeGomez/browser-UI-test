@@ -2092,14 +2092,39 @@ function checkTimeout(x, func) {
 }
 
 function checkWaitFor(x, func) {
-    // Check integer
+    // Check errors
     func('', 'err-1');
     func('hello', 'err-2');
     func('1 2', 'err-3');
-    func('1', 'err-4');
-    func('-1', 'err-5');
-    func('-1.0', 'err-6');
-    func('1.0', 'err-7');
+
+    // Check integers
+    func('-1', 'int-1');
+    func('-1.0', 'int-2');
+    func('1.0', 'int-3');
+    func('1', 'int-4');
+
+    // Check css selector
+    func('"', 'basic-1');
+    func('\'', 'basic-2');
+    func('\'\'', 'basic-3');
+    func('"a"', 'basic-4');
+    func('\'a\'', 'basic-5');
+    func('\'"a\'', 'basic-6');
+
+    // XPath
+    func('"/a"', 'xpath-1');
+    func('"//a"', 'xpath-2');
+}
+
+function checkWaitForFalse(x, func) {
+    // Check errors
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('1 2', 'err-3');
+    func('-1', 'err-4');
+    func('-1.0', 'err-5');
+    func('1.0', 'err-6');
+    func('1', 'err-7');
 
     // Check css selector
     func('"', 'basic-1');
@@ -2812,6 +2837,11 @@ const TO_CHECK = [
         'name': 'wait-for',
         'func': checkWaitFor,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitFor, x, e, name, o),
+    },
+    {
+        'name': 'wait-for-false',
+        'func': checkWaitForFalse,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForFalse, x, e, name, o),
     },
     {
         'name': 'wait-for-attribute',

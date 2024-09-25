@@ -15,7 +15,7 @@ while (true) {
         }
         allTime += timeAdd;
         if (allTime >= timeLimit) {
-            throw new Error(\"The following CSS selector \\\"a\\\" was not found\");
+            throw new Error(\"The CSS selector \\\"a\\\" was not found\");
         }
     }
     const errors = [];

@@ -1,0 +1,17 @@
+// This test ensures that the `wait-for` command is behaving like expected.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+set-timeout: 200
+// Shouldn't wait here since it's already the case.
+wait-for-false: "#created-one"
+click: "#js-create-elem"
+// Should wait for 100ms here.
+wait-for: "#created-one"
+click: "#js-remove-elem"
+// Should wait for 100ms here.
+wait-for-false: "#created-one"
+
+click: "#js-create-elem"
+// Should wait for 100ms here.
+wait-for: "#created-one"
+// Should fail.
+wait-for-false: "#created-one"

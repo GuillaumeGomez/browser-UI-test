@@ -79,6 +79,7 @@ header {
 		<button id="js-change-colors" onclick="updateButtonsColor()">hey</button>
 		<button id="js-change-pos" onclick="updateWaitElementPosition()">hey</button>
 		<button id="js-change-size" onclick="updateWaitElementSize()" style="width:30px;height:20px;">hey</button>
+		<button id="js-remove-elem" onclick="removeElem()">hey</button>
 		<script>
 window.windowProp = null;
 document.windowProp = null;
@@ -168,6 +169,9 @@ async function updateButtonsColor() {
     but.innerText = "hihi";
     await new Promise(r => setTimeout(r, 5));
   }
+}
+function removeElem() {
+setTimeout(() => document.getElementById('created-one').remove(), 100);
 }
 </script>
 	</body>

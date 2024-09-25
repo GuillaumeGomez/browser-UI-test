@@ -41,33 +41,28 @@ ${indentString(incrWait(error), 1)}
     ];
 }
 
-function waitForElement(selector, varName, checkAll = false) {
+function waitForElement(selector, varName, { checkAll = false, revert = false} = {}) {
     const kind = selector.isXPath ? 'XPath' : 'CSS selector';
     const selectorS = selector.isXPath ? `::-p-xpath(${selector.value})` : selector.value;
+    let comp = '!==';
+    let errorMessage = `\
+throw new Error("The ${kind} \\"${selector.value}\\" was not found");`;
 
-    if (!checkAll) {
-        const code = `\
-${varName} = await page.$("${selectorS}");
-if (${varName} !== null) {
-    break;
-}`;
-        return getWaitForElems(
-            varName,
-            code,
-            `throw new Error("The following ${kind} \\"${selector.value}\\" was not found");`,
-        );
+    if (revert) {
+        comp = '===';
+        errorMessage = `\
+throw new Error("The ${kind} \\"${selector.value}\\" still exists");`;
     }
 
-    const code = `\
+    let code = `\
 ${varName} = await page.$$("${selectorS}");
-if (${varName}.length !== 0) {
+if (${varName}.length ${comp} 0) {
     break;
 }`;
-    return getWaitForElems(
-        varName,
-        code,
-        `throw new Error("The following ${kind} \\"${selector.value}\\" was not found");`,
-    );
+    if (!checkAll) {
+        code += `\n${varName} = ${varName}[0];`;
+    }
+    return getWaitForElems(varName, code, errorMessage);
 }
 
 // Possible inputs:
@@ -100,6 +95,25 @@ function parseWaitFor(parser) {
         };
     }
     const [init, looper] = waitForElement(value, 'parseWaitFor');
+    return {
+        'instructions': [init + '\n' + looper],
+        'wait': false,
+    };
+}
+
+// Possible inputs:
+//
+// * "selector"
+function parseWaitForFalse(parser) {
+    const ret = validator(parser, {
+        kind: 'selector',
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const value = ret.value;
+    const [init, looper] = waitForElement(value, 'parseWaitForFalse', {revert: true});
     return {
         'instructions': [init + '\n' + looper],
         'wait': false,
@@ -467,7 +481,7 @@ const props = nonMatchingProps.join(", ");
 throw new Error("The following CSS properties still don't match: [" + props + "]");`);
 
     const pseudo = !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '';
-    const [init, looper] = waitForElement(selector, varName, checkAll);
+    const [init, looper] = waitForElement(selector, varName, {checkAll});
     instructions.push(`\
 const { checkCssProperty } = require('command-helpers.js');
 
@@ -626,7 +640,7 @@ the check will be performed on the element itself`);
         warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
     }
 
-    const [init, looper] = waitForElement(selector, varName, enabledChecks.has('ALL'));
+    const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
     const incr = incrWait(`\
 const props = nonMatchingAttrs.join(", ");
 throw new Error("The following attributes still don't match: [" + props + "]");`);
@@ -786,7 +800,7 @@ the check will be performed on the element itself`);
         warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
     }
 
-    const [init, looper] = waitForElement(selector, varName, enabledChecks.has('ALL'));
+    const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
     const incr = incrWait(`\
 const props = nonMatchingProps.join(", ");
 throw new Error("The following properties still don't match: [" + props + "]");`);
@@ -918,7 +932,7 @@ for (const elem of ${varName}) {
 }`;
     }
 
-    const [init, looper] = waitForElement(selector, varName, enabledChecks.has('ALL'));
+    const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
     const incr = incrWait(`\
 const err = errors.join(", ");
 throw new Error("The following checks still fail: [" + err + "]");`);
@@ -1025,7 +1039,7 @@ function parseWaitForPosition(parser) {
         false,
     );
 
-    const [init, looper] = waitForElement(selector, varName, enabledChecks.has('ALL'));
+    const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
     const incr = incrWait(`\
 const err = ${errorsVarName}.join(", ");
 throw new Error("The following checks still fail: [" + err + "]");`);
@@ -1114,7 +1128,7 @@ function parseWaitForSize(parser) {
     const whole = commonSizeCheckCode(
         selector, enabledChecks.has('ALL'), false, json, varName, errorsVarName);
 
-    const [init, looper] = waitForElement(selector, varName, enabledChecks.has('ALL'));
+    const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
     const incr = incrWait(`\
 const err = ${errorsVarName}.join(", ");
 throw new Error("The following checks still fail: [" + err + "]");`);
@@ -1141,6 +1155,7 @@ ${indentString(incr, 1)}
 
 module.exports = {
     'parseWaitFor': parseWaitFor,
+    'parseWaitForFalse': parseWaitForFalse,
     'parseWaitForAttribute': parseWaitForAttribute,
     'parseWaitForCount': parseWaitForCount,
     'parseWaitForCss': parseWaitForCss,

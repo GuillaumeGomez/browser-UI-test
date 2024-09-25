@@ -225,6 +225,7 @@ Here's the command list:
  * [`store-value`](#store-value)
  * [`store-window-property`](#store-window-property)
  * [`wait-for`](#wait-for)
+ * [`wait-for-false`](#wait-for-false)
  * [`wait-for-attribute`](#wait-for-attribute)
  * [`wait-for-count`](#wait-for-count)
  * [`wait-for-css`](#wait-for-css)
@@ -1827,9 +1828,9 @@ For more information about variables, read the [variables section](#variables).
 
 #### wait-for
 
-**wait-for** command waits for a given duration or for an element to be created. It expects a CSS selector or an XPath or a duration in milliseconds.
+**wait-for** command waits for a given duration or for an element to exist. It expects a CSS selector or an XPath or a duration in milliseconds.
 
-**/!\\** Be careful when using it: if the given selector never appears, the test will timeout after 30 seconds by default (can be changed with the [`timeout`](#timeout) command).
+**/!\\** Be careful when using it: if the given selector is never created, the test will timeout after 30 seconds by default (can be changed with the [`timeout`](#timeout) command).
 
 Examples:
 
@@ -1844,6 +1845,28 @@ wait-for: "#element > a"
 // Same with an XPath:
 wait-for: "//*[@id='element']/a"
 ```
+
+If you want to wait for an element to be removed, take a look at [`wait-for-false`](#wait-for-false).
+
+#### wait-for-false
+
+**wait-for-false** command waits for an element to not exist. It expects a CSS selector or an XPath.
+
+**/!\\** Be careful when using it: if the given selector exists and never gets removed, the test will timeout after 30 seconds by default (can be changed with the [`timeout`](#timeout) command).
+
+Examples:
+
+```
+wait-for-false: ".element"
+// Same with an XPath:
+wait-for-false: "//*[@class='element']"
+
+wait-for-false: "#element > a"
+// Same with an XPath:
+wait-for-false: "//*[@id='element']/a"
+```
+
+If you want to wait for an element to be created, take a look at [`wait-for`](#wait-for).
 
 #### wait-for-attribute
 
