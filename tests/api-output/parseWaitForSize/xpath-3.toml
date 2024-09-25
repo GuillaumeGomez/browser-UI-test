@@ -15,7 +15,7 @@ while (true) {
         }
         allTime += timeAdd;
         if (allTime >= timeLimit) {
-            throw new Error(\"The following XPath \\\"//a\\\" was not found\");
+            throw new Error(\"The XPath \\\"//a\\\" was not found\");
         }
     }
     async function checkElemSize(elem) {

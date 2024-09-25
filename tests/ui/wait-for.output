@@ -1,0 +1,7 @@
+=> Starting doc-ui tests...
+
+wait-for... FAILED
+[ERROR] `tests/ui/wait-for.goml` line 17: Error: The CSS selector "#created-one" still exists: for command `wait-for-false: "#created-one"`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed

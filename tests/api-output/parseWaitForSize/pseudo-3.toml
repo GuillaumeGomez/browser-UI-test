@@ -5,17 +5,18 @@ let allTime = 0;
 let assertSize = null;
 while (true) {
     while (true) {
-        assertSize = await page.$(\"a:focus\");
-        if (assertSize !== null) {
+        assertSize = await page.$$(\"a:focus\");
+        if (assertSize.length !== 0) {
             break;
         }
+        assertSize = assertSize[0];
         await new Promise(r => setTimeout(r, timeAdd));
         if (timeLimit === 0) {
             continue;
         }
         allTime += timeAdd;
         if (allTime >= timeLimit) {
-            throw new Error(\"The following CSS selector \\\"a:focus\\\" was not found\");
+            throw new Error(\"The CSS selector \\\"a:focus\\\" was not found\");
         }
     }
     async function checkElemSize(elem) {

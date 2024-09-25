@@ -15,7 +15,7 @@ while (true) {
         }
         allTime += timeAdd;
         if (allTime >= timeLimit) {
-            throw new Error(\"The following CSS selector \\\"a:focus\\\" was not found\");
+            throw new Error(\"The CSS selector \\\"a:focus\\\" was not found\");
         }
     }
     async function checkElemSize(elem) {

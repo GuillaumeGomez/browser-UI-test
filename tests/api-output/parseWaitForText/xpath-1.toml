@@ -17,17 +17,18 @@ async function checkTextForElem(elem) {
 const value = \"b\";
 while (true) {
     while (true) {
-        parseWaitForText = await page.$(\"::-p-xpath(//a)\");
-        if (parseWaitForText !== null) {
+        parseWaitForText = await page.$$(\"::-p-xpath(//a)\");
+        if (parseWaitForText.length !== 0) {
             break;
         }
+        parseWaitForText = parseWaitForText[0];
         await new Promise(r => setTimeout(r, timeAdd));
         if (timeLimit === 0) {
             continue;
         }
         allTime += timeAdd;
         if (allTime >= timeLimit) {
-            throw new Error(\"The following XPath \\\"//a\\\" was not found\");
+            throw new Error(\"The XPath \\\"//a\\\" was not found\");
         }
     }
     const errors = await checkTextForElem(parseWaitForText);
