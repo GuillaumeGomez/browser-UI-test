@@ -2,7 +2,6 @@
 
 wait-for-count-false... FAILED
 [ERROR] `tests/ui/wait-for-count-false.goml` line 10: Error: Still found 2 instances of ".random-class" (found 2): for command `wait-for-count-false: (".random-class", 2)`
-[ERROR] `tests/ui/wait-for-count-false.goml` line 12: expected 3 elements, found 2: for command `assert-count: ("//*[@class='random-class']", 3)`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed
