@@ -8,7 +8,6 @@ while (true) {
     if (parseWaitForFalse.length === 0) {
         break;
     }
-    parseWaitForFalse = parseWaitForFalse[0];
     await new Promise(r => setTimeout(r, timeAdd));
     if (timeLimit === 0) {
         continue;

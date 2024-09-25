@@ -1,0 +1,17 @@
+// This test ensures that the `wait-for-attribute` command is behaving like expected.
+screenshot-comparison: false
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+set-timeout: 500
+// Shouldn't wait here since it's already not the case.
+wait-for-attribute-false: ("#js-call-attr", {"data-b": "b"})
+click: "#js-call-attr"
+// Should wait for 250ms here.
+wait-for-attribute-false: ("#js-call-attr", {"data-a": "a"})
+click: "#js-create-elem"
+// Should wait for 100 here (the element is created first).
+wait-for-attribute-false: ("#created-one", {"data-a": "b"})
+wait-for-attribute: ("#created-one", {"data-a": "x"})
+// This next one should fail.
+wait-for-attribute-false: ("#created-one", {"data-a": "x"})
+// Check that the script won't run anything after the previous command failed.
+assert-attribute: ("#js-call-attr", {"data-a": "c"})

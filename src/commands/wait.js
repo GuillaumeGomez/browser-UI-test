@@ -41,27 +41,26 @@ ${indentString(incrWait(error), 1)}
     ];
 }
 
-function waitForElement(selector, varName, { checkAll = false, revert = false} = {}) {
+function waitForElement(selector, varName, { checkAll = false, revert = false } = {}) {
     const kind = selector.isXPath ? 'XPath' : 'CSS selector';
     const selectorS = selector.isXPath ? `::-p-xpath(${selector.value})` : selector.value;
     let comp = '!==';
     let errorMessage = `\
 throw new Error("The ${kind} \\"${selector.value}\\" was not found");`;
+    let extra = checkAll ? 'break;' : `${varName} = ${varName}[0];\nbreak;`;
 
     if (revert) {
         comp = '===';
         errorMessage = `\
 throw new Error("The ${kind} \\"${selector.value}\\" still exists");`;
+        extra = 'break;';
     }
 
-    let code = `\
+    const code = `\
 ${varName} = await page.$$("${selectorS}");
 if (${varName}.length ${comp} 0) {
-    break;
+${indentString(extra, 1)}
 }`;
-    if (!checkAll) {
-        code += `\n${varName} = ${varName}[0];`;
-    }
     return getWaitForElems(varName, code, errorMessage);
 }
 
@@ -552,6 +551,18 @@ ${indentString(incr, 1)}
 // * ("CSS selector", {"attribute name": "expected attribute value"})
 // * ("XPath", {"attribute name": "expected attribute value"})
 function parseWaitForAttribute(parser) {
+    return parseWaitForAttributeInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * ("CSS selector", {"attribute name": "expected attribute value"})
+// * ("XPath", {"attribute name": "expected attribute value"})
+function parseWaitForAttributeFalse(parser) {
+    return parseWaitForAttributeInner(parser, true);
+}
+
+function parseWaitForAttributeInner(parser, waitFalse) {
     const identifiers = ['ALL', 'CONTAINS', 'ENDS_WITH', 'NEAR', 'STARTS_WITH'];
     const ret = validator(parser, {
         kind: 'tuple',
@@ -604,8 +615,7 @@ function parseWaitForAttribute(parser) {
     const warnings = [];
 
     if (tuple.length > 2) {
-        const ret = fillEnabledChecksV2(
-            tuple[2], enabledChecks, warnings, 'third');
+        const ret = fillEnabledChecksV2(tuple[2], enabledChecks, warnings, 'third');
         if (ret !== null) {
             return ret;
         }
@@ -615,20 +625,21 @@ function parseWaitForAttribute(parser) {
     const varDict = varName + 'Dict';
     const varKey = varName + 'Key';
     const varValue = varName + 'Value';
+    const errorsVar = 'nonMatchingAttrs';
 
     const { checks, hasSpecialChecks } = makeExtendedChecks(
-        enabledChecks, false, 'nonMatchingAttrs', 'attribute', 'attr', varKey, varValue);
+        enabledChecks, false, errorsVar, 'attribute', 'attr', varKey, varValue);
 
     let checker;
     if (!enabledChecks.has('ALL')) {
-        checker = `const nonMatchingAttrs = await checkAttrForElem(${varName});`;
+        checker = `const ${errorsVar} = await checkAttrForElem(${varName});`;
     } else {
         checker = `\
-let nonMatchingAttrs = [];
+let ${errorsVar} = [];
 for (const elem of ${varName}) {
     const ret = await checkAttrForElem(elem);
     if (ret.length !== 0) {
-        nonMatchingAttrs = ret;
+        ${errorsVar} = ret;
         break;
     }
 }`;
@@ -658,34 +669,41 @@ the check will be performed on the element itself`);
         warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
     }
 
+    let comp = '=== 0';
+    let errorMessage = '"The following attributes still don\'t match: [" + props + "]"';
+    if (waitFalse) {
+        comp = '!== 0';
+        errorMessage = '"All attributes still match"';
+    }
+
     const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
     const incr = incrWait(`\
-const props = nonMatchingAttrs.join(", ");
-throw new Error("The following attributes still don't match: [" + props + "]");`);
+const props = ${errorsVar}.join(", ");
+throw new Error(${errorMessage});`);
 
     const instructions = `\
 async function checkAttrForElem(elem) {
     return await elem.evaluate(e => {
-        const nonMatchingAttrs = [];
+        const ${errorsVar} = [];
         const ${varDict} = {${tests.join(',')}};
         const nullAttributes = [${nullAttributes.join(',')}];
         for (const ${varKey} of nullAttributes) {
             if (e.hasAttribute(${varKey})) {
                 const attr = e.getAttribute(${varKey});
-                nonMatchingAttrs.push("Expected \`null\` for attribute \`" + ${varKey} + "\`, \
+                ${errorsVar}.push("Expected \`null\` for attribute \`" + ${varKey} + "\`, \
 found: \`" + attr + "\`");
                 continue;
             }
         }
         for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
             if (!e.hasAttribute(${varKey})) {
-                nonMatchingAttrs.push("Attribute named \`" + ${varKey} + "\` doesn't exist");
+                ${errorsVar}.push("Attribute named \`" + ${varKey} + "\` doesn't exist");
                 continue;
             }
             const attr = e.getAttribute(${varKey});
 ${indentString(checks.join('\n'), 3)}
         }
-        return nonMatchingAttrs;
+        return ${errorsVar};
     });
 }
 
@@ -693,7 +711,7 @@ ${init}
 while (true) {
 ${indentString(looper, 1)}
 ${indentString(checker, 1)}
-    if (nonMatchingAttrs.length === 0) {
+    if (${errorsVar}.length ${comp}) {
         break;
     }
 ${indentString(incr, 1)}
@@ -1175,6 +1193,7 @@ module.exports = {
     'parseWaitFor': parseWaitFor,
     'parseWaitForFalse': parseWaitForFalse,
     'parseWaitForAttribute': parseWaitForAttribute,
+    'parseWaitForAttributeFalse': parseWaitForAttributeFalse,
     'parseWaitForCount': parseWaitForCount,
     'parseWaitForCountFalse': parseWaitForCountFalse,
     'parseWaitForCss': parseWaitForCss,

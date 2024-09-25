@@ -1,0 +1,7 @@
+=> Starting doc-ui tests...
+
+wait-for-attribute-false... FAILED
+[ERROR] `tests/ui/wait-for-attribute-false.goml` line 15: Error: All attributes still match: for command `wait-for-attribute-false: ("#created-one", {"data-a": "x"})`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed

@@ -227,6 +227,7 @@ Here's the command list:
  * [`wait-for`](#wait-for)
  * [`wait-for-false`](#wait-for-false)
  * [`wait-for-attribute`](#wait-for-attribute)
+ * [`wait-for-attribute-false`](#wait-for-attribute-false)
  * [`wait-for-count`](#wait-for-count)
  * [`wait-for-count-false`](#wait-for-count-false)
  * [`wait-for-css`](#wait-for-css)
@@ -1910,6 +1911,52 @@ wait-for-attribute: (
     [STARTS_WITH, ENDS_WITH, ALL],
 )
 ```
+
+If you want to wait for attributes to be created or to not have the expected value, take a look at [`wait-for-attribute-false`](#wait-for-attribute-false).
+
+#### wait-for-attribute-false
+
+**wait-for-attribute-false** command waits for at least one of the provided attributes value to be different. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+
+Examples:
+
+```
+wait-for-attribute-false: ("#element", {"class": "hello"})
+wait-for-attribute-false: ("#element", {"class": "hello", "id": "some-id"})
+
+// Same with an XPath:
+wait-for-attribute-false: ("//*[@id='element']", {"class": "hello"})
+wait-for-attribute-false: ("//*[@id='element']", {"class": "hello", "id": "some-id"})
+```
+
+If you want to wait for an attribute to be created, you can use `null`:
+
+```
+// Waiting for "attribute-name" to be created.
+wait-for-attribute-false: ("#id > .class", {"attribute-name": null})
+```
+
+You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
+
+```
+wait-for-attribute-false: (
+    "#id",
+    {"class": "where", "title": "a title"},
+    STARTS_WITH,
+)
+```
+
+You can even combine the checks:
+
+```
+wait-for-attribute-false: (
+    "#id",
+    {"class": "where", "title": "a title"},
+    [STARTS_WITH, ENDS_WITH, ALL],
+)
+```
+
+If you want to wait for attributes to be removed or have the expected value, take a look at [`wait-for-attribute`](#wait-for-attribute).
 
 #### wait-for-count
 

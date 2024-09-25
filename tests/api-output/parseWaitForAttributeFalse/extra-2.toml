@@ -1,0 +1,66 @@
+instructions = [
+  """async function checkAttrForElem(elem) {
+    return await elem.evaluate(e => {
+        const nonMatchingAttrs = [];
+        const parseWaitForAttrDict = {\"x\":\"1\"};
+        const nullAttributes = [];
+        for (const parseWaitForAttrKey of nullAttributes) {
+            if (e.hasAttribute(parseWaitForAttrKey)) {
+                const attr = e.getAttribute(parseWaitForAttrKey);
+                nonMatchingAttrs.push(\"Expected `null` for attribute `\" + parseWaitForAttrKey + \"`, found: `\" + attr + \"`\");
+                continue;
+            }
+        }
+        for (const [parseWaitForAttrKey, parseWaitForAttrValue] of Object.entries(parseWaitForAttrDict)) {
+            if (!e.hasAttribute(parseWaitForAttrKey)) {
+                nonMatchingAttrs.push(\"Attribute named `\" + parseWaitForAttrKey + \"` doesn't exist\");
+                continue;
+            }
+            const attr = e.getAttribute(parseWaitForAttrKey);
+            if (!attr.includes(parseWaitForAttrValue)) {
+                nonMatchingAttrs.push(\"attribute `\" + parseWaitForAttrKey + \"` (`\" + attr + \"`) doesn't contain `\" + parseWaitForAttrValue + \"` (for CONTAINS check)\");
+            }
+        }
+        return nonMatchingAttrs;
+    });
+}
+
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForAttr = null;
+while (true) {
+    while (true) {
+        parseWaitForAttr = await page.$$(\"a\");
+        if (parseWaitForAttr.length !== 0) {
+            parseWaitForAttr = parseWaitForAttr[0];
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error(\"The CSS selector \\\"a\\\" was not found\");
+        }
+    }
+    const nonMatchingAttrs = await checkAttrForElem(parseWaitForAttr);
+    if (nonMatchingAttrs.length !== 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingAttrs.join(\", \");
+        throw new Error(\"All attributes still match\");
+    }
+}""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

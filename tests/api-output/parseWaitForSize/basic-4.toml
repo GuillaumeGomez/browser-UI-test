@@ -7,9 +7,9 @@ while (true) {
     while (true) {
         assertSize = await page.$$(\"a\");
         if (assertSize.length !== 0) {
+            assertSize = assertSize[0];
             break;
         }
-        assertSize = assertSize[0];
         await new Promise(r => setTimeout(r, timeAdd));
         if (timeLimit === 0) {
             continue;
