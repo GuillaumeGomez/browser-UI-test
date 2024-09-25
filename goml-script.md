@@ -228,6 +228,7 @@ Here's the command list:
  * [`wait-for-false`](#wait-for-false)
  * [`wait-for-attribute`](#wait-for-attribute)
  * [`wait-for-count`](#wait-for-count)
+ * [`wait-for-count-false`](#wait-for-count-false)
  * [`wait-for-css`](#wait-for-css)
  * [`wait-for-document-property`](#wait-for-document-property)
  * [`wait-for-local-storage`](#wait-for-local-storage)
@@ -1922,6 +1923,23 @@ wait-for-count: ("#element", 1)
 // Same with an XPath:
 wait-for-count: ("//*[@id='element']", 1)
 ```
+
+If you want to wait for the number of elements to not be there, take a look at [`wait-for-count-false`](#wait-for-count-false).
+
+#### wait-for-count-false
+
+**wait-for-count-false** command waits for the page to not contain the number of elements which match the provided selector. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+
+Examples:
+
+```
+wait-for-count-false: ("#element", 1)
+
+// Same with an XPath:
+wait-for-count-false: ("//*[@id='element']", 1)
+```
+
+If you want to wait for the number of elements, take a look at [`wait-for-count`](#wait-for-count).
 
 #### wait-for-css
 
