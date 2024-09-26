@@ -4,6 +4,7 @@ wait-for-position... FAILED
 [ERROR] `tests/ui/wait-for-position.goml` line 6: Error: The following checks still fail: [different X values: 585.34375 (or 585) != 543]: for command `wait-for-position: ("#js-change-pos", {"x": 543, "y": 88})`
 [ERROR] `tests/ui/wait-for-position.goml` line 9: Error: The following checks still fail: [different X values: 588.34375 (or 588) != 546]: for command `wait-for-position: ("#js-change-pos", {"x": 546})`
 [ERROR] `tests/ui/wait-for-position.goml` line 16: Error: The following checks still fail: [different Y values: 91 (or 91) != 16]: for command `wait-for-position: ("#js-change-pos", {"y": 16})`
+[ERROR] `tests/ui/wait-for-position.goml` line 18: The following errors happened: [different Y values: 91 (or 91) != 16]: for command `assert-position: ("#js-change-pos", {"y": 16})`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

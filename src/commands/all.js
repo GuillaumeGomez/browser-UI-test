@@ -116,6 +116,7 @@ module.exports = {
     'parseWaitForLocalStorage': wait.parseWaitForLocalStorage,
     'parseWaitForLocalStorageFalse': wait.parseWaitForLocalStorageFalse,
     'parseWaitForPosition': wait.parseWaitForPosition,
+    'parseWaitForPositionFalse': wait.parseWaitForPositionFalse,
     'parseWaitForProperty': wait.parseWaitForProperty,
     'parseWaitForSize': wait.parseWaitForSize,
     'parseWaitForText': wait.parseWaitForText,

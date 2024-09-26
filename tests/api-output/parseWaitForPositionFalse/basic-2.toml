@@ -1,0 +1,53 @@
+instructions = [
+  """const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let assertPosition = null;
+while (true) {
+    while (true) {
+        assertPosition = await page.$$(\"a\");
+        if (assertPosition.length !== 0) {
+            assertPosition = assertPosition[0];
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error(\"The CSS selector \\\"a\\\" was not found\");
+        }
+    }
+    const errors = [];
+    errors.push(...await page.evaluate(elem => {
+        const innerErrors = [];
+        function checkAssertPosBrowser(e, field, styleField, kind, value, errors) {
+            const v = browserUiTestHelpers.getElementPosition(e, \"\", field, styleField);
+            const roundedV = Math.round(v);
+            if (v !== value && roundedV !== Math.round(value)) {
+                errors.push(\"different \" + kind + \" values: \" + v + \" (or \" + roundedV + \") != \" + value);
+            }
+        }
+        checkAssertPosBrowser(elem, 'left', 'marginLeft', 'X', 1, innerErrors);
+        return innerErrors;
+    }, assertPosition));
+    if (errors.length !== 0) {
+        break;
+    }
+
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const err = errors.join(\", \");
+        throw new Error(\"All checks still succeed\");
+    }
+}""",
+]
+wait = false
+warnings = [
+]
+checkResult = true
