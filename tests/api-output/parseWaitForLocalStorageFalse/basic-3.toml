@@ -10,7 +10,7 @@ while (true) {
             \"a\": \"b\"
         };
         for (const [parseWaitForLocalStorageKey, parseWaitForLocalStorageValue] of Object.entries(parseWaitForLocalStorageDict)) {
-            let parseWaitForLocalStorage = window.localStorage.getItem(parseWaitForLocalStorageKey);
+            const parseWaitForLocalStorage = window.localStorage.getItem(parseWaitForLocalStorageKey);
             if (parseWaitForLocalStorage != parseWaitForLocalStorageValue) {
                 errors.push(\"localStorage item \\\"\" + parseWaitForLocalStorageKey + \"\\\" (of value \\\"\" + parseWaitForLocalStorageValue + \"\\\") != \\\"\" + parseWaitForLocalStorage + \"\\\"\");
             }

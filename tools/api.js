@@ -2904,6 +2904,11 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForPosition, x, e, name, o),
     },
     {
+        'name': 'wait-for-position-false',
+        'func': checkAssertWaitPosition,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForPositionFalse, x, e, name, o),
+    },
+    {
         'name': 'wait-for-property',
         'func': checkWaitForProperty,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForProperty, x, e, name, o),
