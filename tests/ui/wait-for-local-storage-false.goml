@@ -1,12 +1,12 @@
 // This test ensures that the `wait-for-local-storage-false` command is behaving like expected.
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
-set-timeout: 700
+set-timeout: 500
 // Shouldn't wait here since it's already the case.
-wait-for-local-storage-false: {"something2": "a"}
-click: "#js-wait-local-storage"
+wait-for-local-storage-false: {"something3": "a"}
+click: "#js-wait-local-storage-2"
 // Should wait for 100ms here.
-wait-for-local-storage-false: {"something2": null}
+wait-for-local-storage-false: {"something3": null}
 // This next one should fail.
-wait-for-local-storage-false: {"something2": "hello hi"}
+wait-for-local-storage-false: {"something3": "hello hi"}
 // Check that the script won't stop running anything after the previous command failed.
-assert-local-storage: {"something2": "tadam"}
+assert-local-storage: {"something3": "tadam"}

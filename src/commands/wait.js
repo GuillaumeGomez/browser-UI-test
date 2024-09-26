@@ -252,7 +252,7 @@ ${varName} = await page.evaluate(() => {
 ${indentString(code.join(',\n'), 2)}
     };
     for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-        let ${varName} = window.localStorage.getItem(${varKey});
+        const ${varName} = window.localStorage.getItem(${varKey});
         if (${varName} != ${varValue}) {
             errors.push("localStorage item \\"" + ${varKey} + "\\" (of value \\"" + ${varValue} + \
 "\\") != \\"" + ${varName} + "\\"");

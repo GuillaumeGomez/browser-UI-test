@@ -1,6 +1,6 @@
 // This test ensures that the `wait-for-local-storage` command is behaving like expected.
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
-set-timeout: 700
+set-timeout: 500
 // Shouldn't wait here since it's already the case.
 wait-for-local-storage: {"something2": null}
 click: "#js-wait-local-storage"

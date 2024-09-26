@@ -41,6 +41,8 @@ class Assert {
         this.testSuite = [];
         // If `--bless` option is used.
         this.blessEnabled = false;
+        // If `--no-sandbox` option is used.
+        this.noSandboxEnabled = false;
         // Arguments that can be of use in tests.
         this.extraArgs = [];
     }
