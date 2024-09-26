@@ -1067,6 +1067,18 @@ ${indentString(incr, 1)}
 // * ("CSS selector", JSON dict)
 // * ("XPath", JSON dict)
 function parseWaitForPosition(parser) {
+    return parseWaitForPositionInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * ("CSS selector", JSON dict)
+// * ("XPath", JSON dict)
+function parseWaitForPositionFalse(parser) {
+    return parseWaitForPositionInner(parser, true);
+}
+
+function parseWaitForPositionInner(parser, waitFalse) {
     const identifiers = ['ALL'];
     const ret = validator(parser, {
         kind: 'tuple',
@@ -1134,17 +1146,24 @@ function parseWaitForPosition(parser) {
         false,
     );
 
+    let comp = '===';
+    let errorMessage = '"The following checks still fail: [" + err + "]"';
+    if (waitFalse) {
+        comp = '!==';
+        errorMessage = '"All checks still succeed"';
+    }
+
     const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
     const incr = incrWait(`\
 const err = ${errorsVarName}.join(", ");
-throw new Error("The following checks still fail: [" + err + "]");`);
+throw new Error(${errorMessage});`);
 
     const instructions = `\
 ${init}
 while (true) {
 ${indentString(looper, 1)}
 ${indentString(whole, 1)}
-    if (errors.length === 0) {
+    if (errors.length ${comp} 0) {
         break;
     }
 
@@ -1262,6 +1281,7 @@ module.exports = {
     'parseWaitForLocalStorage': parseWaitForLocalStorage,
     'parseWaitForLocalStorageFalse': parseWaitForLocalStorageFalse,
     'parseWaitForPosition': parseWaitForPosition,
+    'parseWaitForPositionFalse': parseWaitForPositionFalse,
     'parseWaitForProperty': parseWaitForProperty,
     'parseWaitForText': parseWaitForText,
     'parseWaitForWindowProperty': parseWaitForWindowProperty,
