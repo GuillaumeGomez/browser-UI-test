@@ -108,6 +108,7 @@ module.exports = {
     'parseWaitForAttribute': wait.parseWaitForAttribute,
     'parseWaitForAttributeFalse': wait.parseWaitForAttributeFalse,
     'parseWaitForCss': wait.parseWaitForCss,
+    'parseWaitForCssFalse': wait.parseWaitForCssFalse,
     'parseWaitForCount': wait.parseWaitForCount,
     'parseWaitForCountFalse': wait.parseWaitForCountFalse,
     'parseWaitForDocumentProperty': wait.parseWaitForDocumentProperty,

@@ -1,0 +1,67 @@
+instructions = [
+  """const { checkCssProperty } = require('command-helpers.js');
+
+async function checkCssForElem(elem) {
+    const jsHandle = await elem.evaluateHandle(e => {
+        const entries = [\"x\",\"y\"];
+        const assertComputedStyle = window.getComputedStyle(e, \"::after\");
+        const simple = [];
+        const computed = [];
+        const keys = [];
+
+        for (const entry of entries) {
+            simple.push(e.style[entry]);
+            computed.push(assertComputedStyle[entry]);
+            keys.push(entry);
+        }
+        return [keys, simple, computed];
+    });
+    const [keys, simple, computed] = await jsHandle.jsonValue();
+    const values = [\"1\",\"2\"];
+    const nonMatchingProps = [];
+
+    for (const [i, key] of keys.entries()) {
+        const localErr = [];
+        checkCssProperty(key, values[i], simple[i], computed[i], localErr);
+        nonMatchingProps.push(...localErr);
+    }
+    return nonMatchingProps;
+}
+
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForCss = null;
+while (true) {
+    while (true) {
+        parseWaitForCss = await page.$$(\"a\");
+        if (parseWaitForCss.length !== 0) {
+            parseWaitForCss = parseWaitForCss[0];
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error(\"The CSS selector \\\"a\\\" was not found\");
+        }
+    }
+    const nonMatchingProps = await checkCssForElem(parseWaitForCss);
+    if (nonMatchingProps.length !== 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(\", \");
+        throw new Error(\"All CSS properties still match\");
+    }
+}""",
+]
+wait = false
+checkResult = true

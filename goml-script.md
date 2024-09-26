@@ -231,6 +231,7 @@ Here's the command list:
  * [`wait-for-count`](#wait-for-count)
  * [`wait-for-count-false`](#wait-for-count-false)
  * [`wait-for-css`](#wait-for-css)
+ * [`wait-for-css-false`](#wait-for-css-false)
  * [`wait-for-document-property`](#wait-for-document-property)
  * [`wait-for-local-storage`](#wait-for-local-storage)
  * [`wait-for-position`](#wait-for-position)
@@ -2010,6 +2011,33 @@ wait-for-css: ("button", {"font-size": "12px"}, ALL)
 // Same with an XPath:
 wait-for-css: ("//button", {"font-size": "12px"}, ALL)
 ```
+
+If you want to wait for the CSS keys to not have the expected values, take a look at [`wait-for-css-false`](#wait-for-css-false) instead.
+
+#### wait-for-css-false
+
+**wait-for-css-false** command waits for the given element for at least one of the provided CSS keys to not not have the expected value. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+
+Examples:
+
+```
+wait-for-css-false: ("#element", {"font-size": "12px"})
+wait-for-css-false: ("#element", {"font-size": "12px", "margin-top": "12px"})
+
+// Same with an XPath:
+wait-for-css-false: ("//*[@id='element']", {"font-size": "12px"})
+wait-for-css-false: ("//*[@id='element']", {"font-size": "12px", "margin-top": "12px"})
+```
+
+If you want to check all the elements matching the given selector have the given CSS values, you can use the `ALL` ident at the end:
+
+```
+wait-for-css-false: ("button", {"font-size": "12px"}, ALL)
+// Same with an XPath:
+wait-for-css-false: ("//button", {"font-size": "12px"}, ALL)
+```
+
+If you want to wait for all the CSS keys to have the expected values, take a look at [`wait-for-css`](#wait-for-css) instead.
 
 #### wait-for-document-property
 

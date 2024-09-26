@@ -421,6 +421,18 @@ function parseWaitForWindowProperty(parser) {
 // * ("selector", {"CSS property name": "expected CSS property value"})
 // * ("selector", {"CSS property name": "expected CSS property value"}, ALL)
 function parseWaitForCss(parser) {
+    return parseWaitForCssInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * ("selector", {"CSS property name": "expected CSS property value"})
+// * ("selector", {"CSS property name": "expected CSS property value"}, ALL)
+function parseWaitForCssFalse(parser) {
+    return parseWaitForCssInner(parser, true);
+}
+
+function parseWaitForCssInner(parser, waitFalse) {
     const ret = validator(parser, {
         kind: 'tuple',
         elements: [
@@ -469,17 +481,25 @@ function parseWaitForCss(parser) {
     }
 
     const varName = 'parseWaitForCss';
+    const errorsVar = 'nonMatchingProps';
+
+    let comp = '===';
+    let errorMessage = '"The following CSS properties still don\'t match: [" + props + "]"';
+    if (waitFalse) {
+        comp = '!==';
+        errorMessage = '"All CSS properties still match"';
+    }
 
     let checker;
     if (!checkAll) {
-        checker = `const nonMatchingProps = await checkCssForElem(${varName});`;
+        checker = `const ${errorsVar} = await checkCssForElem(${varName});`;
     } else {
         checker = `\
-let nonMatchingProps = [];
+let ${errorsVar} = [];
 for (const elem of ${varName}) {
     const ret = await checkCssForElem(elem);
     if (ret.length !== 0) {
-        nonMatchingProps = ret;
+        ${errorsVar} = ret;
         break;
     }
 }`;
@@ -494,8 +514,8 @@ if (!arg.showText) {
     }
 
     const incr = incrWait(`\
-const props = nonMatchingProps.join(", ");
-throw new Error("The following CSS properties still don't match: [" + props + "]");`);
+const props = ${errorsVar}.join(", ");
+throw new Error(${errorMessage});`);
 
     const pseudo = !selector.isXPath && selector.pseudo !== null ? `, "${selector.pseudo}"` : '';
     const [init, looper] = waitForElement(selector, varName, {checkAll});
@@ -519,21 +539,21 @@ async function checkCssForElem(elem) {
     });
     const [keys, simple, computed] = await jsHandle.jsonValue();
     const values = [${values.join(',')}];
-    const nonMatchingProps = [];
+    const ${errorsVar} = [];
 
     for (const [i, key] of keys.entries()) {
         const localErr = [];
         checkCssProperty(key, values[i], simple[i], computed[i], localErr);
-        nonMatchingProps.push(...localErr);
+        ${errorsVar}.push(...localErr);
     }
-    return nonMatchingProps;
+    return ${errorsVar};
 }
 
 ${init}
 while (true) {
 ${indentString(looper, 1)}
 ${indentString(checker, 1)}
-    if (nonMatchingProps.length === 0) {
+    if (${errorsVar}.length ${comp} 0) {
         break;
     }
 ${indentString(incr, 1)}
@@ -669,10 +689,10 @@ the check will be performed on the element itself`);
         warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
     }
 
-    let comp = '=== 0';
+    let comp = '===';
     let errorMessage = '"The following attributes still don\'t match: [" + props + "]"';
     if (waitFalse) {
-        comp = '!== 0';
+        comp = '!==';
         errorMessage = '"All attributes still match"';
     }
 
@@ -711,7 +731,7 @@ ${init}
 while (true) {
 ${indentString(looper, 1)}
 ${indentString(checker, 1)}
-    if (${errorsVar}.length ${comp}) {
+    if (${errorsVar}.length ${comp} 0) {
         break;
     }
 ${indentString(incr, 1)}
@@ -1197,6 +1217,7 @@ module.exports = {
     'parseWaitForCount': parseWaitForCount,
     'parseWaitForCountFalse': parseWaitForCountFalse,
     'parseWaitForCss': parseWaitForCss,
+    'parseWaitForCssFalse': parseWaitForCssFalse,
     'parseWaitForDocumentProperty': parseWaitForDocumentProperty,
     'parseWaitForLocalStorage': parseWaitForLocalStorage,
     'parseWaitForPosition': parseWaitForPosition,
