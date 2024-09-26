@@ -187,6 +187,17 @@ if (${varName} ${comp} ${count}) {
 //
 // * JSON dict
 function parseWaitForLocalStorage(parser) {
+    return parseWaitForLocalStorageInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * JSON dict
+function parseWaitForLocalStorageFalse(parser) {
+    return parseWaitForLocalStorageInner(parser, true);
+}
+
+function parseWaitForLocalStorageInner(parser, waitFalse) {
     const ret = validator(parser, {
         kind: 'json',
         keyTypes: {
@@ -225,6 +236,13 @@ function parseWaitForLocalStorage(parser) {
     const varKey = `${varName}Key`;
     const varValue = `${varName}Value`;
 
+    let comp = '===';
+    let errorMessage = '"The following local storage entries still don\'t match: [" + errs + "]"';
+    if (waitFalse) {
+        comp = '!==';
+        errorMessage = '"All local storage entries still match"';
+    }
+
     const instructions = getWaitForElems(
         varName,
         `\
@@ -234,7 +252,7 @@ ${varName} = await page.evaluate(() => {
 ${indentString(code.join(',\n'), 2)}
     };
     for (const [${varKey}, ${varValue}] of Object.entries(${varDict})) {
-        let ${varName} = window.localStorage.getItem(${varKey});
+        const ${varName} = window.localStorage.getItem(${varKey});
         if (${varName} != ${varValue}) {
             errors.push("localStorage item \\"" + ${varKey} + "\\" (of value \\"" + ${varValue} + \
 "\\") != \\"" + ${varName} + "\\"");
@@ -242,12 +260,12 @@ ${indentString(code.join(',\n'), 2)}
     }
     return errors;
 });
-if (${varName}.length === 0) {
+if (${varName}.length ${comp} 0) {
     break;
 }`,
         `\
 const errs = ${varName}.join(", ");
-throw new Error("The following local storage entries still don't match: [" + errs + "]");`,
+throw new Error(${errorMessage});`,
     );
 
     return {
@@ -1242,6 +1260,7 @@ module.exports = {
     'parseWaitForDocumentProperty': parseWaitForDocumentProperty,
     'parseWaitForDocumentPropertyFalse': parseWaitForDocumentPropertyFalse,
     'parseWaitForLocalStorage': parseWaitForLocalStorage,
+    'parseWaitForLocalStorageFalse': parseWaitForLocalStorageFalse,
     'parseWaitForPosition': parseWaitForPosition,
     'parseWaitForProperty': parseWaitForProperty,
     'parseWaitForText': parseWaitForText,

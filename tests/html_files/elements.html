@@ -70,6 +70,7 @@ header {
 		<button id="js-create-elem" onclick="addElem()">hey</button>
 		<button id="js-local-storage" onclick="updateLocalStorage()">hey</button>
 		<button id="js-wait-local-storage" onclick="updateWaitLocalStorage()">hey</button>
+		<button id="js-wait-local-storage-2" onclick="updateWaitLocalStorage2()">hey</button>
 		<button id="js-wait-window-prop" onclick="updateWaitWindowProp()">hey</button>
 		<button id="js-wait-window-prop2" onclick="updateWaitWindowProp2()">hey</button>
 		<button id="js-wait-document-prop" onclick="updateWaitDocumentProp()">hey</button>
@@ -115,6 +116,11 @@ window.localStorage.setItem("something", "hello");
 function updateWaitLocalStorage() {
 setTimeout(() => {
   window.localStorage.setItem("something2", "hello hi");
+}, 100);
+}
+function updateWaitLocalStorage2() {
+setTimeout(() => {
+  window.localStorage.setItem("something3", "hello hi");
 }, 100);
 }
 function updateWaitWindowProp() {

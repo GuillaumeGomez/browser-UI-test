@@ -1,0 +1,35 @@
+instructions = [
+  """const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForLocalStorage = null;
+while (true) {
+    parseWaitForLocalStorage = await page.evaluate(() => {
+        const errors = [];
+        const parseWaitForLocalStorageDict = {
+            \"a\": \"b\"
+        };
+        for (const [parseWaitForLocalStorageKey, parseWaitForLocalStorageValue] of Object.entries(parseWaitForLocalStorageDict)) {
+            let parseWaitForLocalStorage = window.localStorage.getItem(parseWaitForLocalStorageKey);
+            if (parseWaitForLocalStorage != parseWaitForLocalStorageValue) {
+                errors.push(\"localStorage item \\\"\" + parseWaitForLocalStorageKey + \"\\\" (of value \\\"\" + parseWaitForLocalStorageValue + \"\\\") != \\\"\" + parseWaitForLocalStorage + \"\\\"\");
+            }
+        }
+        return errors;
+    });
+    if (parseWaitForLocalStorage.length !== 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const errs = parseWaitForLocalStorage.join(\", \");
+        throw new Error(\"All local storage entries still match\");
+    }
+}""",
+]
+wait = false
+checkResult = true

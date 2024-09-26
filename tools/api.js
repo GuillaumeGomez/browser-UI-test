@@ -2893,6 +2893,12 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForLocalStorage, x, e, name, o),
     },
     {
+        'name': 'wait-for-local-storage-false',
+        'func': checkWaitForLocalStorage,
+        'toCall': (x, e, name, o) => wrapper(
+            parserFuncs.parseWaitForLocalStorageFalse, x, e, name, o),
+    },
+    {
         'name': 'wait-for-position',
         'func': checkAssertWaitPosition,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForPosition, x, e, name, o),
