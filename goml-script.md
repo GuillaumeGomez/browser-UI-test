@@ -235,6 +235,7 @@ Here's the command list:
  * [`wait-for-document-property`](#wait-for-document-property)
  * [`wait-for-document-property-false`](#wait-for-document-property-false)
  * [`wait-for-local-storage`](#wait-for-local-storage)
+ * [`wait-for-local-storage-false`](#wait-for-local-storage-false)
  * [`wait-for-position`](#wait-for-position)
  * [`wait-for-property`](#wait-for-property)
  * [`wait-for-text`](#wait-for-text)
@@ -2100,7 +2101,28 @@ Examples:
 ```
 wait-for-local-storage: {"key": "value"}
 wait-for-local-storage: {"key": "value", "key2": "value2"}
+
+// If you want to wait for a key to be removed:
+wait-for-local-storage: {"key": null}
 ```
+
+If you want to wait for any of the keys to not have the expected values, take a look at [`wait-for-local-storage-false`](#wait-for-local-storage-false).
+
+#### wait-for-local-storage-false
+
+**wait-for-local-storage-false** command waits for any of the local storage keys to not have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+
+Examples:
+
+```
+wait-for-local-storage-false: {"key": "value"}
+wait-for-local-storage-false: {"key": "value", "key2": "value2"}
+
+// If you want to wait for a key to be added:
+wait-for-local-storage-false: {"key": null}
+```
+
+If you want to wait for the keys to have the expected values, take a look at [`wait-for-local-storage`](#wait-for-local-storage).
 
 #### wait-for-position
 
