@@ -2869,6 +2869,11 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForCss, x, e, name, o),
     },
     {
+        'name': 'wait-for-css-false',
+        'func': checkWaitForCss,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForCssFalse, x, e, name, o),
+    },
+    {
         'name': 'wait-for-document-property',
         'func': checkWaitForObjectProperty,
         'toCall': (x, e, name, o) => {
