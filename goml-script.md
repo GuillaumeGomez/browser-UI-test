@@ -233,12 +233,14 @@ Here's the command list:
  * [`wait-for-css`](#wait-for-css)
  * [`wait-for-css-false`](#wait-for-css-false)
  * [`wait-for-document-property`](#wait-for-document-property)
+ * [`wait-for-document-property-false`](#wait-for-document-property-false)
  * [`wait-for-local-storage`](#wait-for-local-storage)
  * [`wait-for-position`](#wait-for-position)
  * [`wait-for-property`](#wait-for-property)
  * [`wait-for-text`](#wait-for-text)
  * [`wait-for-size`](#wait-for-size)
  * [`wait-for-window-property`](#wait-for-window-property)
+ * [`wait-for-window-property-false`](#wait-for-window-property-false)
  * [`write`](#write)
  * [`write-into`](#write-into)
 
@@ -2053,7 +2055,7 @@ wait-for-document-property: {"key": "value", "key2": "value2"}
 wait-for-document-property: {"key"."sub-key": "value"}
 ```
 
-You can use more specific checks as well by using one of the following identifiers: CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
 
 Examples:
 
@@ -2061,6 +2063,33 @@ Examples:
 wait-for-document-property: ({"key": "value"}, ENDS_WITH)
 wait-for-document-property: ({"key": "value", "key2": "value2"}, [ENDS_WITH, STARTS_WITH])
 ```
+
+If you want to wait for at least one of the properties to not have the expected value, take a look at [`wait-for-document-property-false`](#wait-for-document-property-false).
+
+#### wait-for-document-property-false
+
+**wait-for-document-property-false** command waits for at least one of the document objects properties to not have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+
+Examples:
+
+```
+wait-for-document-property-false: {"key": "value"}
+wait-for-document-property-false: {"key": "value", "key2": "value2"}
+
+// You can also use object-paths:
+wait-for-document-property-false: {"key"."sub-key": "value"}
+```
+
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
+
+Examples:
+
+```
+wait-for-document-property-false: ({"key": "value"}, ENDS_WITH)
+wait-for-document-property-false: ({"key": "value", "key2": "value2"}, [ENDS_WITH, STARTS_WITH])
+```
+
+If you want to wait for all properties to have the expected value, take a look at [`wait-for-document-property`](#wait-for-document-property).
 
 #### wait-for-local-storage
 
@@ -2192,7 +2221,7 @@ wait-for-window-property: {"key": "value", "key2": "value2"}
 wait-for-window-property: {"key"."sub-key": "value"}
 ```
 
-You can use more specific checks as well by using one of the following identifiers: CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
 
 Examples:
 
@@ -2200,6 +2229,33 @@ Examples:
 wait-for-window-property: ({"key": "value"}, ENDS_WITH)
 wait-for-window-property: ({"key": "value", "key2": "value2"}, [ENDS_WITH, STARTS_WITH])
 ```
+
+If you want to wait for at least one of the properties to not have the expected value, take a look at [`wait-for-window-property-false`](#wait-for-window-property-false).
+
+#### wait-for-window-property-false
+
+**wait-for-window-property-false** command waits for at least one of the window objects properties to not have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+
+Examples:
+
+```
+wait-for-window-property-false: {"key": "value"}
+wait-for-window-property-false: {"key": "value", "key2": "value2"}
+
+// You can also use object-paths:
+wait-for-window-property-false: {"key"."sub-key": "value"}
+```
+
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH", "STARTS_WITH", or "NEAR".
+
+Examples:
+
+```
+wait-for-window-property-false: ({"key": "value"}, ENDS_WITH)
+wait-for-window-property-false: ({"key": "value", "key2": "value2"}, [ENDS_WITH, STARTS_WITH])
+```
+
+If you want to wait for all properties to have the expected value, take a look at [`wait-for-window-property`](#wait-for-window-property).
 
 #### write
 

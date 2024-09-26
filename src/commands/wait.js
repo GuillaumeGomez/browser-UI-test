@@ -257,7 +257,7 @@ throw new Error("The following local storage entries still don't match: [" + err
     };
 }
 
-function parseWaitForObjectProperty(parser, objName) {
+function parseWaitForObjectProperty(parser, objName, waitFalse) {
     const identifiers = ['CONTAINS', 'ENDS_WITH', 'NEAR', 'STARTS_WITH'];
     const jsonValidator = {
         kind: 'json',
@@ -353,6 +353,13 @@ function parseWaitForObjectProperty(parser, objName) {
         warnings.push(`Special checks (${k}) will be ignored for \`null\``);
     }
 
+    let comp = '===';
+    let errorMessage = `"The following ${objName} properties still don't match: [" + errs + "]"`;
+    if (waitFalse) {
+        comp = '!==';
+        errorMessage = `"The ${objName} properties still all match"`;
+    }
+
     const instructions = getWaitForElems(
         varName,
         `\
@@ -386,12 +393,12 @@ ${indentString(checks.join('\n'), 3)}
     }
     return errors;
 });
-if (${varName}.length === 0) {
+if (${varName}.length ${comp} 0) {
     break;
 }`,
         `\
 const errs = ${varName}.join(", ");
-throw new Error("The following ${objName} properties still don't match: [" + errs + "]");`,
+throw new Error(${errorMessage});`,
     );
 
     return {
@@ -406,14 +413,28 @@ throw new Error("The following ${objName} properties still don't match: [" + err
 //
 // * JSON dict
 function parseWaitForDocumentProperty(parser) {
-    return parseWaitForObjectProperty(parser, 'document');
+    return parseWaitForObjectProperty(parser, 'document', false);
+}
+
+// Possible inputs:
+//
+// * JSON dict
+function parseWaitForDocumentPropertyFalse(parser) {
+    return parseWaitForObjectProperty(parser, 'document', true);
 }
 
 // Possible inputs:
 //
 // * JSON dict
 function parseWaitForWindowProperty(parser) {
-    return parseWaitForObjectProperty(parser, 'window');
+    return parseWaitForObjectProperty(parser, 'window', false);
+}
+
+// Possible inputs:
+//
+// * JSON dict
+function parseWaitForWindowPropertyFalse(parser) {
+    return parseWaitForObjectProperty(parser, 'window', true);
 }
 
 // Possible inputs:
@@ -1219,10 +1240,12 @@ module.exports = {
     'parseWaitForCss': parseWaitForCss,
     'parseWaitForCssFalse': parseWaitForCssFalse,
     'parseWaitForDocumentProperty': parseWaitForDocumentProperty,
+    'parseWaitForDocumentPropertyFalse': parseWaitForDocumentPropertyFalse,
     'parseWaitForLocalStorage': parseWaitForLocalStorage,
     'parseWaitForPosition': parseWaitForPosition,
     'parseWaitForProperty': parseWaitForProperty,
     'parseWaitForText': parseWaitForText,
     'parseWaitForWindowProperty': parseWaitForWindowProperty,
+    'parseWaitForWindowPropertyFalse': parseWaitForWindowPropertyFalse,
     'parseWaitForSize': parseWaitForSize,
 };

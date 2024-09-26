@@ -2881,6 +2881,13 @@ const TO_CHECK = [
         },
     },
     {
+        'name': 'wait-for-document-property-false',
+        'func': checkWaitForObjectProperty,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseWaitForDocumentPropertyFalse, x, e, name, o);
+        },
+    },
+    {
         'name': 'wait-for-local-storage',
         'func': checkWaitForLocalStorage,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForLocalStorage, x, e, name, o),
@@ -2909,6 +2916,12 @@ const TO_CHECK = [
         'name': 'wait-for-window-property',
         'func': checkWaitForObjectProperty,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForWindowProperty, x, e, name, o),
+    },
+    {
+        'name': 'wait-for-window-property-false',
+        'func': checkWaitForObjectProperty,
+        'toCall': (x, e, name, o) => wrapper(
+            parserFuncs.parseWaitForWindowPropertyFalse, x, e, name, o),
     },
     {
         'name': 'set-window-property',
