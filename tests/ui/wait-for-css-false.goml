@@ -1,4 +1,4 @@
-// This test ensures that the `wait-for-css` command is behaving like expected.
+// This test ensures that the `wait-for-css-false` command is behaving like expected.
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 set-timeout: 300
 // Shouldn't wait here since it's already not the case.

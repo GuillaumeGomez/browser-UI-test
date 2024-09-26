@@ -1,0 +1,22 @@
+// This test ensures that the `wait-for-document-property-false` command is behaving like expected.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+set-timeout: 300
+// Shouldn't wait here since it's already not the case.
+wait-for-document-property-false: {"windowProp": "bla"}
+assert-document-property: {"windowProp": null}
+click: "#js-wait-document-prop"
+// Should wait for 100ms here.
+wait-for-document-property-false: {"windowProp": null}
+click: "#js-wait-document-prop"
+// Should wait for 100ms here.
+wait-for-document-property-false: ({"windowProp": "0", "non-existent": "bla"}, ENDS_WITH)
+// This next one should fail.
+wait-for-document-property-false: {"windowProp": "tadam"}
+// Check that the script won't stop running anything after the previous command failed.
+assert-document-property: {"windowProp": "tadam"}
+
+// object-path
+assert-document-property: {"bob"."y": null}
+click: "#js-wait-document-prop2"
+// Should wait for 100ms here.
+wait-for-document-property-false: {"bob"."y": null}

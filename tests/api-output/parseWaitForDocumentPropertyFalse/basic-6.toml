@@ -1,0 +1,68 @@
+instructions = [
+  """const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let property = null;
+while (true) {
+    property = await page.evaluate(() => {
+        function checkObjectPaths(object, path, callback, notFoundCallback) {
+            const found = [];
+
+            for (const subPath of path) {
+                found.push(subPath);
+                if (object === undefined || object === null) {
+                    notFoundCallback(found);
+                    return;
+                }
+                object = object[subPath];
+            }
+            callback(object);
+        }
+        const errors = [];
+        const propertyDict = [[[\"\\\"a\"],\"\\'b\"]];
+        const undefProps = [];
+        for (const prop of undefProps) {
+            checkObjectPaths(document, prop, val => {
+                if (val !== undefined && val !== null) {
+                    const p = prop.map(p => `\"${p}\"`).join('.');
+                    errors.push(\"Expected property `\" + p + \"` to not exist, found: `\" + val + \"`\");
+                }
+            }, _notFound => {},
+            );
+        }
+        for (const [propertyKey, propertyValue] of propertyDict) {
+            checkObjectPaths(document, propertyKey, val => {
+                if (val === undefined) {
+                    const p = propertyKey.map(p => `\"${p}\"`).join('.');
+                    errors.push(\"document doesn't have a property `\" + p + \"`\");
+                    return;
+                }
+                const property = String(val);
+                if (property !== propertyValue) {
+                    errors.push(\"expected `\" + propertyValue + \"` for document property `\" + propertyKey + \"`, found `\" + property + \"`\");
+                }
+            }, _notFound => {
+                const p = propertyKey.map(p => `\"${p}\"`).join('.');
+                errors.push(\"document doesn't have a property `\" + p + \"`\");
+            });
+        }
+        return errors;
+    });
+    if (property.length !== 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const errs = property.join(\", \");
+        throw new Error(\"The document properties still all match\");
+    }
+}""",
+]
+wait = false
+checkResult = true
+warnings = [
+]

@@ -1,4 +1,4 @@
-// This test ensures that the `wait-for-attribute` command is behaving like expected.
+// This test ensures that the `wait-for-attribute-false` command is behaving like expected.
 screenshot-comparison: false
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 set-timeout: 500
