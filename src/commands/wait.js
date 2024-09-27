@@ -1213,11 +1213,24 @@ ${indentString(incr, 1)}
         'checkResult': true,
     };
 }
+
 // Possible inputs:
 //
 // * ("CSS selector", JSON dict)
 // * ("XPath", JSON dict)
 function parseWaitForSize(parser) {
+    return parseWaitForSizeInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * ("CSS selector", JSON dict)
+// * ("XPath", JSON dict)
+function parseWaitForSizeFalse(parser) {
+    return parseWaitForSizeInner(parser, true);
+}
+
+function parseWaitForSizeInner(parser, waitFalse) {
     const identifiers = ['ALL'];
     const ret = validator(parser, {
         kind: 'tuple',
@@ -1278,17 +1291,24 @@ function parseWaitForSize(parser) {
     const whole = commonSizeCheckCode(
         selector, enabledChecks.has('ALL'), false, json, varName, errorsVarName);
 
+    let comp = '===';
+    let errorMessage = '"The following checks still fail: [" + err + "]"';
+    if (waitFalse) {
+        comp = '!==';
+        errorMessage = '"All checks still pass"';
+    }
+
     const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
     const incr = incrWait(`\
 const err = ${errorsVarName}.join(", ");
-throw new Error("The following checks still fail: [" + err + "]");`);
+throw new Error(${errorMessage});`);
 
     const instructions = `\
 ${init}
 while (true) {
 ${indentString(looper, 1)}
 ${indentString(whole, 1)}
-    if (errors.length === 0) {
+    if (errors.length ${comp} 0) {
         break;
     }
 
@@ -1325,4 +1345,5 @@ module.exports = {
     'parseWaitForWindowProperty': parseWaitForWindowProperty,
     'parseWaitForWindowPropertyFalse': parseWaitForWindowPropertyFalse,
     'parseWaitForSize': parseWaitForSize,
+    'parseWaitForSizeFalse': parseWaitForSizeFalse,
 };

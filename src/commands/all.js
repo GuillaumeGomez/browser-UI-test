@@ -120,6 +120,7 @@ module.exports = {
     'parseWaitForProperty': wait.parseWaitForProperty,
     'parseWaitForPropertyFalse': wait.parseWaitForPropertyFalse,
     'parseWaitForSize': wait.parseWaitForSize,
+    'parseWaitForSizeFalse': wait.parseWaitForSizeFalse,
     'parseWaitForText': wait.parseWaitForText,
     'parseWaitForTextFalse': wait.parseWaitForTextFalse,
     'parseWaitForWindowProperty': wait.parseWaitForWindowProperty,
