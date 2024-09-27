@@ -976,6 +976,17 @@ ${indentString(incr, 1)}
 //
 // * ("selector", "text")
 function parseWaitForText(parser) {
+    return parseWaitForTextInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * ("selector", "text")
+function parseWaitForTextFalse(parser) {
+    return parseWaitForTextInner(parser, true);
+}
+
+function parseWaitForTextInner(parser, waitFalse) {
     const identifiers = ['ALL', 'CONTAINS', 'ENDS_WITH', 'STARTS_WITH'];
     const ret = validator(parser, {
         kind: 'tuple',
@@ -1045,10 +1056,17 @@ for (const elem of ${varName}) {
 }`;
     }
 
+    let comp = '===';
+    let errorMessage = '"The following checks still fail: [" + err + "]"';
+    if (waitFalse) {
+        comp = '!==';
+        errorMessage = '"All checks still pass"';
+    }
+
     const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
     const incr = incrWait(`\
 const err = errors.join(", ");
-throw new Error("The following checks still fail: [" + err + "]");`);
+throw new Error(${errorMessage});`);
 
     const instructions = `\
 ${init}
@@ -1065,7 +1083,7 @@ const value = "${value}";
 while (true) {
 ${indentString(looper, 1)}
 ${indentString(checker, 1)}
-    if (errors.length === 0) {
+    if (errors.length ${comp} 0) {
         break;
     }
 
@@ -1303,6 +1321,7 @@ module.exports = {
     'parseWaitForProperty': parseWaitForProperty,
     'parseWaitForPropertyFalse': parseWaitForPropertyFalse,
     'parseWaitForText': parseWaitForText,
+    'parseWaitForTextFalse': parseWaitForTextFalse,
     'parseWaitForWindowProperty': parseWaitForWindowProperty,
     'parseWaitForWindowPropertyFalse': parseWaitForWindowPropertyFalse,
     'parseWaitForSize': parseWaitForSize,

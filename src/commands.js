@@ -113,6 +113,7 @@ const ORDERS = {
     'wait-for-property-false': commands.parseWaitForPropertyFalse,
     'wait-for-size': commands.parseWaitForSize,
     'wait-for-text': commands.parseWaitForText,
+    'wait-for-text-false': commands.parseWaitForTextFalse,
     'wait-for-window-property': commands.parseWaitForWindowProperty,
     'wait-for-window-property-false': commands.parseWaitForWindowPropertyFalse,
     'write': commands.parseWrite,
@@ -161,6 +162,7 @@ const FATAL_ERROR_COMMANDS = [
     'wait-for-property',
     'wait-for-property-false',
     'wait-for-text',
+    'wait-for-text-false',
     'write',
     'write-into',
 ];
