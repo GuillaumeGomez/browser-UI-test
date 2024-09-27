@@ -239,6 +239,7 @@ Here's the command list:
  * [`wait-for-position`](#wait-for-position)
  * [`wait-for-position-false`](#wait-for-position-false)
  * [`wait-for-property`](#wait-for-property)
+ * [`wait-for-property-false`](#wait-for-property-false)
  * [`wait-for-text`](#wait-for-text)
  * [`wait-for-size`](#wait-for-size)
  * [`wait-for-window-property`](#wait-for-window-property)
@@ -2173,7 +2174,7 @@ wait-for-property: ("//*[@id='element']", {"scrollTop": 10, "name": "hello"})
 wait-for-property: ("#element", {"key"."sub-key": "value"})
 ```
 
-If you want to check that a property doesn't exist, you can use `null`:
+If you want to wait for a property to be removed, you can use `null`:
 
 ```
 // Checking that "property-name" doesn't exist.
@@ -2199,6 +2200,55 @@ wait-for-property: (
     [STARTS_WITH, ENDS_WITH, ALL],
 )
 ```
+
+If you want to wait for any of the properties to not be the provided ones, take a look at [`wait-for-property-false`](#wait-for-property-false).
+
+#### wait-for-property-false
+
+**wait-for-property-false** command waits for any of the given element(s) to not have the expected values for the given properties. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+
+Examples:
+
+```
+wait-for-property-false: ("#element", {"scrollTop": 10})
+wait-for-property-false: ("#element", {"scrollTop": 10, "name": "hello"})
+
+// Same with an XPath:
+wait-for-property-false: ("//*[@id='element']", {"scrollTop": 10})
+wait-for-property-false: ("//*[@id='element']", {"scrollTop": 10, "name": "hello"})
+
+// You can also use object-paths:
+wait-for-property-false: ("#element", {"key"."sub-key": "value"})
+```
+
+If you want to wait for a property to be created, you can use `null`:
+
+```
+// Checking that "property-name" doesn't exist.
+wait-for-property-false: ("#id > .class", {"property-name": null})
+```
+
+You can use more specific checks as well by using one of the following identifiers: "ALL", "CONTAINS", "ENDS_WITH", "STARTS_WITH" or "NEAR".
+
+```
+wait-for-property-false: (
+    "#id",
+    {"className": "where", "title": "a title"},
+    STARTS_WITH,
+)
+```
+
+You can even combine the checks:
+
+```
+wait-for-property-false: (
+    "#id",
+    {"className": "where", "title": "a title"},
+    [STARTS_WITH, ENDS_WITH, ALL],
+)
+```
+
+If you want to wait for all properties to have the expected values, take a look at [`wait-for-property`](#wait-for-property).
 
 #### wait-for-size
 
