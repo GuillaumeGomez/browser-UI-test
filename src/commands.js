@@ -112,6 +112,7 @@ const ORDERS = {
     'wait-for-property': commands.parseWaitForProperty,
     'wait-for-property-false': commands.parseWaitForPropertyFalse,
     'wait-for-size': commands.parseWaitForSize,
+    'wait-for-size-false': commands.parseWaitForSizeFalse,
     'wait-for-text': commands.parseWaitForText,
     'wait-for-text-false': commands.parseWaitForTextFalse,
     'wait-for-window-property': commands.parseWaitForWindowProperty,
