@@ -118,6 +118,7 @@ module.exports = {
     'parseWaitForPosition': wait.parseWaitForPosition,
     'parseWaitForPositionFalse': wait.parseWaitForPositionFalse,
     'parseWaitForProperty': wait.parseWaitForProperty,
+    'parseWaitForPropertyFalse': wait.parseWaitForPropertyFalse,
     'parseWaitForSize': wait.parseWaitForSize,
     'parseWaitForText': wait.parseWaitForText,
     'parseWaitForWindowProperty': wait.parseWaitForWindowProperty,
