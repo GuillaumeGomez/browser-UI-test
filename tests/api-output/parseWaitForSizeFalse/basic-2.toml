@@ -1,0 +1,53 @@
+instructions = [
+  """const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let assertSize = null;
+while (true) {
+    while (true) {
+        assertSize = await page.$$(\"a\");
+        if (assertSize.length !== 0) {
+            assertSize = assertSize[0];
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error(\"The CSS selector \\\"a\\\" was not found\");
+        }
+    }
+    async function checkElemSize(elem) {
+        return await elem.evaluate(e => {
+            const innerErrors = [];
+            const height = e.offsetHeight;
+            const width = e.offsetWidth;
+            if (width !== 1) {
+                innerErrors.push(\"expected a width of `1`, found `\" + width + \"`\");
+            }
+            return innerErrors;
+        });
+    }
+    const errors = [];
+    errors.push(...await checkElemSize(assertSize));
+    if (errors.length !== 0) {
+        break;
+    }
+
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const err = errors.join(\", \");
+        throw new Error(\"All checks still pass\");
+    }
+}""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

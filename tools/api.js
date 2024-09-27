@@ -2924,6 +2924,11 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForSize, x, e, name, o),
     },
     {
+        'name': 'wait-for-size-false',
+        'func': checkAssertSize,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForSizeFalse, x, e, name, o),
+    },
+    {
         'name': 'wait-for-text',
         'func': checkWaitForText,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForText, x, e, name, o),
