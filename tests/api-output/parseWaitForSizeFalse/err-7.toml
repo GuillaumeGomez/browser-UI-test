@@ -1,0 +1,1 @@
+error = """unexpected ident `ALLO` (third element of the tuple). Allowed idents are: [`ALL`]"""

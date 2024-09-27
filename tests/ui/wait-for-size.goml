@@ -12,3 +12,5 @@ click: "#js-change-size"
 wait-for-size: ("#js-change-size", {"height": 26}, ALL)
 // This next one should fail.
 wait-for-size: ("#js-change-size", {"height": 26, "width": 33})
+// And it should not stop the script.
+assert-size: ("#js-change-size", {"height": 26, "width": 33})
