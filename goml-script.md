@@ -241,6 +241,7 @@ Here's the command list:
  * [`wait-for-property`](#wait-for-property)
  * [`wait-for-property-false`](#wait-for-property-false)
  * [`wait-for-text`](#wait-for-text)
+ * [`wait-for-text-false`](#wait-for-text-false)
  * [`wait-for-size`](#wait-for-size)
  * [`wait-for-window-property`](#wait-for-window-property)
  * [`wait-for-window-property-false`](#wait-for-window-property-false)
@@ -2296,6 +2297,36 @@ wait-for-text: (".class", "hello", [ALL, CONTAINS])
 // To wait for all ".class" elements to start and end with "hello":
 wait-for-text: (".class", "hello", [ALL, STARTS_WITH, ENDS_WITH])
 ```
+
+If you want to wait for any of the given element(s) to not have the expected text, take a look at [`wait-for-text-false`](#wait-for-text-false).
+
+#### wait-for-text-false
+
+**wait-for-text-false** command waits for any of the given element(s) to not have the expected text. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+
+Examples:
+
+```
+wait-for-text-false: ("#element", "text")
+// Same with an XPath:
+wait-for-text-false: ("//*[@id='element']", "text")
+
+// If you want to wait for all elements matching this selector/XPath, use `ALL`:
+wait-for-text-false: ("#id > .class", "hello", ALL)
+wait-for-text-false: ("//*[@id='id']/*[@class='class']", "hello", ALL)
+```
+
+Apart from "ALL", you can also use "CONTAINS", "ENDS_WITH" and "STARTS_WITH" and even combine them if you want. Example:
+
+```
+wait-for-text-false: (".class", "hello", CONTAINS)
+// To wait for all ".class" elements to contain "hello":
+wait-for-text-false: (".class", "hello", [ALL, CONTAINS])
+// To wait for all ".class" elements to start and end with "hello":
+wait-for-text-false: (".class", "hello", [ALL, STARTS_WITH, ENDS_WITH])
+```
+
+If you want to wait for the given element(s) to have the expected text, take a look at [`wait-for-text`](#wait-for-text).
 
 #### wait-for-window-property
 
