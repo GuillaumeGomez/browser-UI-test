@@ -2929,6 +2929,11 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForText, x, e, name, o),
     },
     {
+        'name': 'wait-for-text-false',
+        'func': checkWaitForText,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForTextFalse, x, e, name, o),
+    },
+    {
         'name': 'wait-for-window-property',
         'func': checkWaitForObjectProperty,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForWindowProperty, x, e, name, o),

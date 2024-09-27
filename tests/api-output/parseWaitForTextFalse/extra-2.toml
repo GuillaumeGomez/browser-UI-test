@@ -1,0 +1,53 @@
+instructions = [
+  """const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForText = null;
+async function checkTextForElem(elem) {
+    return await elem.evaluate(e => {
+        const value = \"b\";
+        const elemText = browserUiTestHelpers.getElemText(e, value);
+        const errors = [];
+        if (!elemText.includes(value)) {
+            errors.push(\"`\" + elemText + \"` doesn't contain `\" + value + \"` (for CONTAINS check)\");
+        }
+        return errors;
+    });
+}
+const value = \"b\";
+while (true) {
+    while (true) {
+        parseWaitForText = await page.$$(\"a\");
+        if (parseWaitForText.length !== 0) {
+            parseWaitForText = parseWaitForText[0];
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error(\"The CSS selector \\\"a\\\" was not found\");
+        }
+    }
+    const errors = await checkTextForElem(parseWaitForText);
+    if (errors.length !== 0) {
+        break;
+    }
+
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const err = errors.join(\", \");
+        throw new Error(\"All checks still pass\");
+    }
+}""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

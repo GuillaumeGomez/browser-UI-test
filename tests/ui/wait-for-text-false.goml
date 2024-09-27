@@ -1,0 +1,15 @@
+// This test ensures that the `wait-for-text-false` command is behaving like expected.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+set-timeout: 400
+// Shouldn't wait here since it's already the case.
+wait-for-text-false: ("#js-call-attr", "hoy")
+click: "#js-call-attr"
+// Should wait for 250ms here.
+wait-for-text-false: ("#js-call-attr", "hey")
+click: "#js-create-elem"
+// Should wait for 100 here (the element is created first).
+wait-for-text-false: ("#created-one", "ding ding")
+// This next one should fail.
+wait-for-text-false: ("#js-call-attr", "hello")
+// Check that the script won't stop running anything after the previous command failed.
+assert-text: ("#js-call-attr", "hello bis")

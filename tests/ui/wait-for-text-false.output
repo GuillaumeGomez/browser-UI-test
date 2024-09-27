@@ -1,0 +1,7 @@
+=> Starting doc-ui tests...
+
+wait-for-text-false... FAILED
+[ERROR] `tests/ui/wait-for-text-false.goml` line 13: Error: All checks still pass: for command `wait-for-text-false: ("#js-call-attr", "hello")`
+
+
+<= doc-ui tests done: 0 succeeded, 1 failed
