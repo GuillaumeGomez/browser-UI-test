@@ -243,6 +243,7 @@ Here's the command list:
  * [`wait-for-text`](#wait-for-text)
  * [`wait-for-text-false`](#wait-for-text-false)
  * [`wait-for-size`](#wait-for-size)
+ * [`wait-for-size-false`](#wait-for-size-false)
  * [`wait-for-window-property`](#wait-for-window-property)
  * [`wait-for-window-property-false`](#wait-for-window-property-false)
  * [`write`](#write)
@@ -2253,7 +2254,7 @@ If you want to wait for all properties to have the expected values, take a look 
 
 #### wait-for-size
 
-**wait-for-size** command wait for the given element(s) that either the "width" or the "height" (or both) have the expected value. Examples:
+**wait-for-size** command waits for the given element(s) that either the "width" or the "height" (or both) have the expected value. Examples:
 
 ```
 wait-for-size: ("button", {"width": 200, "height": 20})
@@ -2269,7 +2270,28 @@ wait-for-size: ("button", {"width": 200, "height": 20}, ALL)
 wait-for-size: ("//button", {"width": 200, "height": 20}, ALL)
 ```
 
-To be more exact, this command compares the "offsetWidth" and "offsetHeight", which include the content
+To be more exact, this command compares the "offsetWidth" and "offsetHeight", which includes the content
+size, the padding and the border.
+
+#### wait-for-size-false
+
+**wait-for-size-false** command waits for any of the given element(s) that either the "width" or the "height" (or both) not have the expected value. Examples:
+
+```
+wait-for-size-false: ("button", {"width": 200, "height": 20})
+// Same with XPath
+wait-for-size-false: ("//button", {"width": 200, "height": 20})
+```
+
+If you want to check that any of the elements matching the given selector do not have the expected value(s), use `ALL`:
+
+```
+wait-for-size-false: ("button", {"width": 200, "height": 20}, ALL)
+// Same with XPath
+wait-for-size-false: ("//button", {"width": 200, "height": 20}, ALL)
+```
+
+To be more exact, this command compares the "offsetWidth" and "offsetHeight", which includes the content
 size, the padding and the border.
 
 #### wait-for-text
