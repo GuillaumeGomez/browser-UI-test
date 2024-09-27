@@ -1,0 +1,94 @@
+instructions = [
+  """async function checkPropForElem(elem) {
+    return await elem.evaluate(e => {
+        function checkObjectPaths(object, path, callback, notFoundCallback) {
+            const found = [];
+
+            for (const subPath of path) {
+                found.push(subPath);
+                if (object === undefined || object === null) {
+                    notFoundCallback(found);
+                    return;
+                }
+                object = object[subPath];
+            }
+            callback(object);
+        }
+
+        const nonMatchingProps = [];
+        const parseWaitForPropDict = [[[\"x\"],\"1\"]];
+        const nullProps = [];
+        for (const prop of nullProps) {
+            checkObjectPaths(e, prop, val => {
+                if (val !== undefined && val !== null) {
+                    const p = prop.map(p => `\"${p}\"`).join('.');
+                    nonMatchingProps.push(\"Expected property `\" + p + \"` to not exist, found: `\" + val + \"`\");
+                    return;
+                }
+            }, _notFound => {
+            });
+        }
+        for (const [parseWaitForPropKey, parseWaitForPropValue] of parseWaitForPropDict) {
+            checkObjectPaths(e, parseWaitForPropKey, val => {
+                if (val === undefined) {
+                    const p = parseWaitForPropKey.map(p => `\"${p}\"`).join('.');
+                    nonMatchingProps.push(\"Property `\" + p + \"` doesn't exist\");
+                    return;
+                }
+                if (!val.includes(parseWaitForPropValue)) {
+                    nonMatchingProps.push(\"property `\" + parseWaitForPropKey + \"` (`\" + val + \"`) doesn't contain `\" + parseWaitForPropValue + \"` (for CONTAINS check)\");
+                }
+            }, _notFound => {
+                const p = parseWaitForPropKey.map(p => `\"${p}\"`).join('.');
+                nonMatchingProps.push(\"Property `\" + p + \"` doesn't exist\");
+            });
+        }
+        return nonMatchingProps;
+    });
+}
+
+const timeLimit = page.getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let parseWaitForProp = null;
+while (true) {
+    while (true) {
+        parseWaitForProp = await page.$$(\"a\");
+        if (parseWaitForProp.length !== 0) {
+            break;
+        }
+        await new Promise(r => setTimeout(r, timeAdd));
+        if (timeLimit === 0) {
+            continue;
+        }
+        allTime += timeAdd;
+        if (allTime >= timeLimit) {
+            throw new Error(\"The CSS selector \\\"a\\\" was not found\");
+        }
+    }
+    let nonMatchingProps = [];
+    for (const elem of parseWaitForProp) {
+        const ret = await checkPropForElem(elem);
+        if (ret.length !== 0) {
+            nonMatchingProps = ret;
+            break;
+        }
+    }
+    if (nonMatchingProps.length !== 0) {
+        break;
+    }
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        const props = nonMatchingProps.join(\", \");
+        throw new Error(\"All properties still match\");
+    }
+}""",
+]
+wait = false
+warnings = [
+]
+checkResult = true
