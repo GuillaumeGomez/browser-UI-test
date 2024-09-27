@@ -788,6 +788,17 @@ ${indentString(incr, 1)}
 //
 // * ("selector", {"property name": "expected property value"})
 function parseWaitForProperty(parser) {
+    return parseWaitForPropertyInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * ("selector", {"property name": "expected property value"})
+function parseWaitForPropertyFalse(parser) {
+    return parseWaitForPropertyInner(parser, true);
+}
+
+function parseWaitForPropertyInner(parser, waitFalse) {
     const identifiers = ['ALL', 'CONTAINS', 'ENDS_WITH', 'NEAR', 'STARTS_WITH'];
     const ret = validator(parser, {
         kind: 'tuple',
@@ -895,10 +906,17 @@ the check will be performed on the element itself`);
         warnings.push(`Special checks (${k.join(', ')}) will be ignored for \`null\``);
     }
 
+    let comp = '===';
+    let errorMessage = '"The following properties still don\'t match: [" + props + "]"';
+    if (waitFalse) {
+        comp = '!==';
+        errorMessage = '"All properties still match"';
+    }
+
     const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
     const incr = incrWait(`\
 const props = nonMatchingProps.join(", ");
-throw new Error("The following properties still don't match: [" + props + "]");`);
+throw new Error(${errorMessage});`);
 
     const instructions = `\
 async function checkPropForElem(elem) {
@@ -940,7 +958,7 @@ ${init}
 while (true) {
 ${indentString(looper, 1)}
 ${indentString(checker, 1)}
-    if (nonMatchingProps.length === 0) {
+    if (nonMatchingProps.length ${comp} 0) {
         break;
     }
 ${indentString(incr, 1)}
@@ -1283,6 +1301,7 @@ module.exports = {
     'parseWaitForPosition': parseWaitForPosition,
     'parseWaitForPositionFalse': parseWaitForPositionFalse,
     'parseWaitForProperty': parseWaitForProperty,
+    'parseWaitForPropertyFalse': parseWaitForPropertyFalse,
     'parseWaitForText': parseWaitForText,
     'parseWaitForWindowProperty': parseWaitForWindowProperty,
     'parseWaitForWindowPropertyFalse': parseWaitForWindowPropertyFalse,
