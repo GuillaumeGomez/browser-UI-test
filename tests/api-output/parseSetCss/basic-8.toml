@@ -1,0 +1,7 @@
+instructions = [
+  """const parseSetCssElem = await page.$(\"a\");
+if (parseSetCssElem === null) { throw '\"a\" not found'; }
+await page.evaluate(e => {
+    e.style[\"b\"] = \"12\";
+}, parseSetCssElem);""",
+]

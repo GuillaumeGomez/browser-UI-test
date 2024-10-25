@@ -29,6 +29,7 @@ function innerParseCssAttribute(
         jsonValidator.valueTypes.ident = {
             allowed: ['null'],
         };
+        jsonValidator.valueTypes.boolean = {};
     }
     const ret = validator(parser,
         {
@@ -55,7 +56,7 @@ function innerParseCssAttribute(
     }
     const code = [];
     for (const [key, value] of attributes) {
-        code.push(callback(key, value, value.kind === 'ident'));
+        code.push(callback(key, value, value.kind));
     }
     const func = allowObjectPath ? `
 function setObjValue(object, path, value) {
@@ -92,9 +93,12 @@ ${indentString(code.join('\n'), 1)}
 // * ("selector", JSON dict)
 function parseSetAttribute(parser) {
     return innerParseCssAttribute(parser, 'attribute', 'parseSetAttributeElem', true,
-        (key, value, isIdent) => {
-            if (!isIdent) {
-                return `e.setAttribute("${key}","${value.value}");`;
+        (key, value, kind) => {
+            if (kind !== 'ident') {
+                if (kind !== 'boolean' && kind !== 'number') {
+                    return `e.setAttribute("${key}","${value.value}");`;
+                }
+                return `e.setAttribute("${key}",${value.value});`;
             }
             return `e.removeAttribute("${key}");`;
         }, false);
@@ -106,9 +110,11 @@ function parseSetAttribute(parser) {
 // * ("selector", JSON dict)
 function parseSetProperty(parser) {
     return innerParseCssAttribute(parser, 'property', 'parseSetPropertyElem', true,
-        (key, value, isIdent) => {
+        (key, value, kind) => {
             const k_s = value.key.kind === 'object-path' ? key : `["${key}"]`;
-            const arg = isIdent ? 'undefined' : `"${value.value}"`;
+            const arg = kind === 'ident' ? 'undefined' :
+                // eslint-disable-next-line no-extra-parens
+                (kind === 'boolean' || kind === 'number' ? `${value.value}` : `"${value.value}"`);
             return `setObjValue(e, ${k_s}, ${arg});`;
         }, true);
 }
@@ -119,7 +125,7 @@ function parseSetProperty(parser) {
 // * ("selector", JSON dict)
 function parseSetCss(parser) {
     return innerParseCssAttribute(parser, 'CSS property', 'parseSetCssElem', false,
-        (key, value, _isIdent) => `e.style["${key}"] = "${value.value}";`, false);
+        (key, value, _kind) => `e.style["${key}"] = "${value.value}";`, false);
 }
 
 // Possible inputs:

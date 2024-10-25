@@ -1,0 +1,7 @@
+instructions = [
+  """const parseSetAttributeElem = await page.$(\"a\");
+if (parseSetAttributeElem === null) { throw '\"a\" not found'; }
+await page.evaluate(e => {
+    e.setAttribute(\"b\",true);
+}, parseSetAttributeElem);""",
+]
