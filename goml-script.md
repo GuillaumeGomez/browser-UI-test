@@ -1618,12 +1618,12 @@ set-local-storage: {"key": null}
 **set-property** command allows to update an element's property. Example:
 
 ```
-set-property: ("details", {"open": "false"})
+set-property: ("details", {"open": false})
 // Same but with a XPath:
 set-property: ("//details", {"property-name": "property-value"})
 
 // Setting multiple properties at once:
-set-property: ("details", {"open": "false", "another": "x"})
+set-property: ("details", {"open": false, "another": "x"})
 // Same but with a XPath:
 set-property: ("//details", {"open": "false", "another": "x"})
 
