@@ -94,8 +94,11 @@ ${indentString(code.join('\n'), 1)}
 function parseSetAttribute(parser) {
     return innerParseCssAttribute(parser, 'attribute', 'parseSetAttributeElem', true,
         (key, value, kind) => {
-            if (kind !== 'ident' && kind !== 'boolean') {
-                return `e.setAttribute("${key}","${value.value}");`;
+            if (kind !== 'ident') {
+                if (kind !== 'boolean' && kind !== 'number') {
+                    return `e.setAttribute("${key}","${value.value}");`;
+                }
+                return `e.setAttribute("${key}",${value.value});`;
             }
             return `e.removeAttribute("${key}");`;
         }, false);
@@ -111,7 +114,7 @@ function parseSetProperty(parser) {
             const k_s = value.key.kind === 'object-path' ? key : `["${key}"]`;
             const arg = kind === 'ident' ? 'undefined' :
                 // eslint-disable-next-line no-extra-parens
-                (kind === 'boolean' ? `${value.value}` : `"${value.value}"`);
+                (kind === 'boolean' || kind === 'number' ? `${value.value}` : `"${value.value}"`);
             return `setObjValue(e, ${k_s}, ${arg});`;
         }, true);
 }

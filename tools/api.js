@@ -559,6 +559,7 @@ function checkAttributeProperty(x, func) {
     func('("a", {"b": null, "a": "b"})', 'basic-6');
     // This one will fail for `set-css`.
     func('("a", {"b": true})', 'basic-7');
+    func('("a", {"b": 12})', 'basic-8');
 
     // XPath
     func('("/a", "b", "c")', 'xpath-1');
