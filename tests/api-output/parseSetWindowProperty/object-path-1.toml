@@ -8,10 +8,14 @@ instructions = [
             }
             object = object[subPath];
         }
-        object[path[path.length - 1]] = value;
+        if (value === undefined) {
+            delete object[path[path.length - 1]];
+        } else {
+            object[path[path.length - 1]] = value;
+        }
     }
     const parsePropDict = [
-        [[\"a\",\"b\"], \"2\"]
+        [[\"a\",\"b\"], 2]
     ];
     for (const [parsePropKey, parsePropValue] of parsePropDict) {
         setObjValue(window, parsePropKey, parsePropValue);

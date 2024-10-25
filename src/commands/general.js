@@ -125,7 +125,11 @@ function parseObjPropertyInner(parser, objName) {
             },
             valueTypes: {
                 // In case it's an ident, we only want to allow `null`.
+                ident: {
+                    allowed: ['null'],
+                },
                 string: {},
+                boolean: {},
                 number: {
                     allowFloat: true,
                     allowNegative: true,
@@ -142,7 +146,13 @@ function parseObjPropertyInner(parser, objName) {
 
     for (const [key, value] of json) {
         const k_s = value.key.kind === 'object-path' ? key : `["${key}"]`;
-        content.push(`[${k_s}, "${value.value}"]`);
+        if (value.kind === 'string') {
+            content.push(`[${k_s}, "${value.value}"]`);
+        } else if (value.kind === 'ident') {
+            content.push(`[${k_s}, undefined]`);
+        } else {
+            content.push(`[${k_s}, ${value.value}]`);
+        }
     }
 
     if (content.length === 0) {
@@ -169,7 +179,11 @@ await page.evaluate(() => {
             }
             object = object[subPath];
         }
-        object[path[path.length - 1]] = value;
+        if (value === undefined) {
+            delete object[path[path.length - 1]];
+        } else {
+            object[path[path.length - 1]] = value;
+        }
     }
     const ${varDict} = [
 ${indentString(content.join(',\n'), 2)}

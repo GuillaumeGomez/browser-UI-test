@@ -11,9 +11,19 @@ assert-window-property-false: {"wa"."wo": "a"}
 set-window-property: {"wa"."wo": "a"}
 assert-window-property: {"wa"."wo": "a"}
 
+set-window-property: {"size": true}
+assert-window-property: {"size": true}
+set-window-property: {"size": 12}
+assert-window-property: {"size": 12}
+
 assert-document-property-false: {"size": "a"}
 set-document-property: {"size": "a"}
 assert-document-property: {"size": "a"}
+
+set-document-property: {"size": true}
+assert-document-property: {"size": true}
+set-document-property: {"size": 12}
+assert-document-property: {"size": 12}
 
 // object-path
 assert-document-property-false: {"wa"."wo": "a"}

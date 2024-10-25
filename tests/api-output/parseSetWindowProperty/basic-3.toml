@@ -15,10 +15,10 @@ instructions = [
         }
     }
     const parsePropDict = [
-        [[\"a\",\"b\"], 2]
+        [[\"a\"], \"b\"]
     ];
     for (const [parsePropKey, parsePropValue] of parsePropDict) {
-        setObjValue(document, parsePropKey, parsePropValue);
+        setObjValue(window, parsePropKey, parsePropValue);
     }
 });""",
 ]

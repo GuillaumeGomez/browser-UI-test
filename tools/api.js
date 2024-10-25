@@ -2311,6 +2311,8 @@ function checkObjProperty(x, func) {
     func('{"a": "2", "a": {"b": 1}}', 'err-5');
 
     func('{"a": 2}', 'basic-1');
+    func('{"a": true}', 'basic-2');
+    func('{"a": "b"}', 'basic-3');
     func('{"a": "2", "\\"b": "\'b"}', 'escape-1');
 
     // object-path
