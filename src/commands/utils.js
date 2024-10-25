@@ -126,7 +126,6 @@ ${varValue} + '\` (for NEAR check)');
 }`;
         }
     }
-    // eslint-disable-next-line no-extra-parens
     const hasSpecialChecks = checks.length !== 0;
     if (checks.length === 0) {
         if (assertFalse) {
