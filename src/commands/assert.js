@@ -171,12 +171,13 @@ function parseAssertObjPropertyInner(parser, assertFalse, objName) {
             'object-path': [],
         },
         valueTypes: {
-            'string': {},
-            'number': {
+            string: {},
+            number: {
                 allowNegative: true,
                 allowFloat: true,
             },
-            'ident': {
+            boolean: {},
+            ident: {
                 allowed: ['null'],
             },
         },
