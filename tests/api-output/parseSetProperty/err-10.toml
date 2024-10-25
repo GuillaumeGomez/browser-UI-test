@@ -1,1 +1,1 @@
-error = """type \"json\" (`{\"a\": \"x\"}`) is not allowed as value in this JSON dict, allowed types are: [`ident`, `number`, `string`] (second element of the tuple)"""
+error = """type \"json\" (`{\"a\": \"x\"}`) is not allowed as value in this JSON dict, allowed types are: [`boolean`, `ident`, `number`, `string`] (second element of the tuple)"""
