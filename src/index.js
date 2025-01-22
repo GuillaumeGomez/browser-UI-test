@@ -782,8 +782,7 @@ async function runTests(extras = null) {
 }
 
 process.on('browser-ui-test-puppeter-failure', () => {
-    console.error('ERROR: puppeteer failed when trying to create a new page. Please try again with \
-`--no-sandbox`');
+    console.error('ERROR: puppeteer failed when trying to create a new page.');
     process.exit(1);
 });
 

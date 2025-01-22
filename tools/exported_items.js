@@ -9,17 +9,14 @@ const {Assert, plural, print, removeFolder} = require('./utils.js');
 
 async function wrapRunTests(options = new Options()) {
     options.screenshotComparison = false;
-    options.noSandbox = true;
     return await runTests({'options': options, 'showLogs': false});
 }
 async function wrapRunTest(testPath, options = new Options()) {
     options.screenshotComparison = false;
-    options.noSandbox = true;
     return await runTest(testPath, {'options': options, 'showLogs': false});
 }
 async function wrapRunTestCode(testName, content, options = new Options()) {
     options.screenshotComparison = false;
-    options.noSandbox = true;
     return await runTestCode(testName, content, {'options': options, 'showLogs': false});
 }
 
@@ -305,9 +302,6 @@ async function checkOptions(x) {
     await x.assert(options.screenshotComparison, false);
     await x.assertTry(() => options.parseArguments(['--enable-screenshot-comparison']), [], true);
     await x.assert(options.screenshotComparison, true);
-    await x.assert(options.noSandbox, false);
-    await x.assertTry(() => options.parseArguments(['--no-sandbox']), [], true);
-    await x.assert(options.noSandbox, true);
     await x.assert(options.incognito, false);
     await x.assertTry(() => options.parseArguments(['--incognito']), [], true);
     await x.assert(options.incognito, true);
@@ -450,11 +444,6 @@ async function checkOptions(x) {
     options.failOnJsError = '';
     await x.assertTry(() => options.validateFields(), [],
         '`Options.failOnJsError` field is supposed to be a boolean! (Type is string)');
-
-    options = new Options();
-    options.noSandbox = '';
-    await x.assertTry(() => options.validateFields(), [],
-        '`Options.noSandbox` field is supposed to be a boolean! (Type is string)');
 
     options = new Options();
     options.failOnRequestError = '';

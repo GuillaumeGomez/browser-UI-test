@@ -15,7 +15,7 @@
         "browser-ui-test": "src/index.js"
     },
     "scripts": {
-        "test": "node src/index.js --test-folder tests/full-check/ --failure-folder failures --variable DOC_PATH tests/html_files --no-sandbox",
+        "test": "node src/index.js --test-folder tests/full-check/ --failure-folder failures --variable DOC_PATH tests/html_files",
         "all-test": "node tools/all.js",
         "api-test": "node tools/api.js",
         "ui-test": "node tools/ui.js",
