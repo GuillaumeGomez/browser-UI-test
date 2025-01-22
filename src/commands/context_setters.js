@@ -213,6 +213,31 @@ if (oldValue !== true) {
     };
 }
 
+// Possible inputs:
+//
+// * (selector, block)
+function parseWithinIFrame(parser) {
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                {
+                    kind: 'selector',
+                },
+                {
+                    kind: 'block',
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
+    }
+    return {
+        'instructions': [],
+    };
+}
+
 module.exports = {
     'parseDebug': parseDebug,
     'parseExpectFailure': parseExpectFailure,
@@ -223,4 +248,5 @@ module.exports = {
     'parseScreenshotOnFailure': parseScreenshotOnFailure,
     'parseShowText': parseShowText,
     'parseSetTimeout': parseSetTimeout,
+    'parseWithinIFrame': parseWithinIFrame,
 };

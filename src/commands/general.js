@@ -1,5 +1,6 @@
 // Contains commands which don't really have a "category".
 
+const { AstLoader } = require('../ast.js');
 const path = require('path');
 const { getAndSetElements, indentString } = require('./utils.js');
 const { validator } = require('../validator.js');
@@ -224,7 +225,22 @@ function parseInclude(parser) {
         return ret;
     }
 
-    return {'path': ret.value.value };
+    const includePath = ret.value.value;
+    const dirPath = path.dirname(parser.get_current_context().ast.absolutePath);
+    const ast = new AstLoader(includePath, dirPath);
+    if (ast.hasErrors()) {
+        return {'errors': ast.errors};
+    }
+    parser.pushNewContext({
+        'ast': ast,
+        'commands': ast.commands,
+        'currentCommand': 0,
+        'functionArgs': Object.create(null),
+    });
+
+    return {
+        'skipInstructions': true,
+    };
 }
 
 module.exports = {

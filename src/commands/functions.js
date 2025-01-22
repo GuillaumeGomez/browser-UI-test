@@ -99,9 +99,30 @@ the \`define-function\` command`,
 ${plural('argument', expected_args)}, found ${args.length}`,
         };
     }
+
+    const funcArgs = Object.create(null);
+    const func = parser.definedFunctions[func_name];
+    for (const arg_name of func['arguments']) {
+        const index = args.findIndex(arg => arg.key.value === arg_name);
+        if (index === -1) {
+            return {
+                'error': `Missing argument "${arg_name}"`,
+                'line': parser.get_current_command_line(),
+                'fatal_error': true,
+            };
+        }
+        funcArgs[arg_name] = args[index].value;
+    }
+    const context = parser.get_current_context();
+    parser.pushNewContext({
+        'ast': context.ast,
+        'commands': func.commands,
+        'currentCommand': 0,
+        'functionArgs': Object.assign({}, context.functionArgs, funcArgs),
+        'filePath': func.filePath,
+    });
     return {
-        'function': func_name,
-        'args': args,
+        'skipInstructions': true,
     };
 }
 
