@@ -1,6 +1,11 @@
 instructions = [
   """const iframe = await page.$(\"a\");
 if (iframe === null) { throw '\"a\" not found'; }
+await iframe.evaluate(el => {
+    if (el.tagName !== \"IFRAME\") {
+        throw \"selector `a` is not an `<iframe>` but a `<\" + el.tagName.toLowerCase() + \">`\";
+    }
+});
 pages.push(iframe);""",
 ]
 noPosIncrease = true

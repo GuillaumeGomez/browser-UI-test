@@ -246,6 +246,12 @@ function parseWithinIFrame(parser) {
 
     const code = `\
 ${getAndSetElements(selector, 'iframe', false)}
+await iframe.evaluate(el => {
+    if (el.tagName !== "IFRAME") {
+        throw "selector \`${selector.value}\` is not an \`<iframe>\` but a \`<" + \
+el.tagName.toLowerCase() + ">\`";
+    }
+});
 pages.push(iframe);`;
 
     return {
