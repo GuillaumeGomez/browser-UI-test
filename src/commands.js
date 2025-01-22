@@ -2,7 +2,6 @@ const { AstLoader } = require('./ast.js');
 const process = require('process');
 const commands = require('./commands/all.js');
 const consts = require('./consts.js');
-const path = require('path');
 const { stripCommonPathsPrefix } = require('./utils.js');
 
 const ORDERS = {
@@ -117,6 +116,7 @@ const ORDERS = {
     'wait-for-text-false': commands.parseWaitForTextFalse,
     'wait-for-window-property': commands.parseWaitForWindowProperty,
     'wait-for-window-property-false': commands.parseWaitForWindowPropertyFalse,
+    'within-iframe': commands.parseWithinIFrame,
     'write': commands.parseWrite,
     'write-into': commands.parseWriteInto,
 };
@@ -164,6 +164,7 @@ const FATAL_ERROR_COMMANDS = [
     'wait-for-property-false',
     'wait-for-text',
     'wait-for-text-false',
+    'within-iframe',
     'write',
     'write-into',
 ];
@@ -262,64 +263,6 @@ class ParserWithContext {
         }
     }
 
-    setup_user_function_call(ast) {
-        const ret = commands.parseCallFunction(this);
-        if (ret.error !== undefined) {
-            ret.line = this.get_current_command_line();
-            if (ast.length !== 0) {
-                ret.error += ` (from command \`${ast[0].getErrorText()}\`)`;
-            }
-            return ret;
-        }
-        const args = Object.create(null);
-        const func = this.definedFunctions[ret['function']];
-        for (const arg_name of func['arguments']) {
-            const index = ret['args'].findIndex(arg => arg.key.value === arg_name);
-            if (index === -1) {
-                return {
-                    'error': `Missing argument "${arg_name}"`,
-                    'line': this.get_current_command_line(),
-                    'fatal_error': true,
-                };
-            }
-            args[arg_name] = ret['args'][index].value;
-        }
-        const context = this.get_current_context();
-        this.pushNewContext({
-            'ast': context.ast,
-            'commands': func.commands,
-            'currentCommand': 0,
-            'functionArgs': Object.assign({}, context.functionArgs, args),
-            'filePath': func.filePath,
-        });
-        // We disable the `increasePos` in the context to prevent it to be done twice.
-        return this.get_next_command(false);
-    }
-
-    setup_include() {
-        const ret = commands.parseInclude(this);
-        if (ret.error !== undefined) {
-            ret.line = this.get_current_command_line();
-            if (ast.length !== 0) {
-                ret.error += ` (from command \`${ast[0].getErrorText()}\`)`;
-            }
-            return ret;
-        }
-        const dirPath = path.dirname(this.get_current_context().ast.absolutePath);
-        const ast = new AstLoader(ret.path, dirPath);
-        if (ast.hasErrors()) {
-            return {'errors': ast.errors};
-        }
-        this.pushNewContext({
-            'ast': ast,
-            'commands': ast.commands,
-            'currentCommand': 0,
-            'functionArgs': Object.create(null),
-        });
-        // We disable the `increasePos` in the context to prevent it to be done twice.
-        return this.get_next_command(false);
-    }
-
     getCurrentFile() {
         const context = this.get_current_context();
         if (context === null) {
@@ -330,19 +273,12 @@ class ParserWithContext {
         return context.ast.absolutePath;
     }
 
-    run_order(order, ast) {
+    run_order(pages, order, ast) {
         // This is needed because for now, all commands get access to the ast
         // through `ParserWithContext`.
         this.elems = ast;
 
-        if (order === 'call-function') {
-            // We need to special-case `call-function` since it needs to access variables of this
-            // class.
-            return this.setup_user_function_call(ast);
-        } else if (order === 'include') {
-            // We need to special-case `include` since it needs to parse a new file when called.
-            return this.setup_include();
-        } else if (!Object.prototype.hasOwnProperty.call(ORDERS, order)) {
+        if (!Object.prototype.hasOwnProperty.call(ORDERS, order)) {
             return {'error': `Unknown command "${order}"`, 'line': this.get_current_command_line()};
         }
         if (this.firstGotoParsed === false) {
@@ -367,10 +303,15 @@ class ParserWithContext {
         if (res.error !== undefined) {
             res.line = this.get_current_command_line();
             if (this.elems.length !== 0) {
-                res.error += ` (from command \`${this.elems[0].getErrorText()}\`)`;
+                res.error += ` (from command \`${order}: ${this.elems[0].getErrorText()}\`)`;
             }
             return res;
         }
+        if (res.skipInstructions) {
+            // We disable the `increasePos` in the context to prevent it to be done twice.
+            return this.get_next_command(pages, false);
+        }
+
         return {
             'fatal_error': FATAL_ERROR_COMMANDS.indexOf(order) !== -1,
             'wait': res['wait'],
@@ -380,13 +321,18 @@ class ParserWithContext {
             'instructions': res['instructions'],
             'infos': res['infos'],
             'warnings': res['warnings'],
+            'callback': res['callback'],
+            'noPosIncrease': res['noPosIncrease'],
         };
     }
 
-    get_next_command(increasePos = true) {
+    get_next_command(pages, increasePos = true) {
         let context = this.get_current_context();
         while (context !== null && context.currentCommand >= context.commands.length) {
-            this.contexts.pop();
+            const prevContext = this.contexts.pop();
+            if (prevContext.dropCallback !== undefined) {
+                prevContext.dropCallback(pages);
+            }
             context = this.get_current_context();
             if (context !== null) {
                 context.currentCommand += 1;
@@ -404,8 +350,8 @@ class ParserWithContext {
                 'errors': inferred.errors,
             };
         }
-        const ret = this.run_order(command.commandName, inferred.ast);
-        if (increasePos) {
+        const ret = this.run_order(pages, command.commandName, inferred.ast);
+        if (increasePos && !ret['noPosIncrease']) {
             this.increase_context_pos();
         }
         return ret;

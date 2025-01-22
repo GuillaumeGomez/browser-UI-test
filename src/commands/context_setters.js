@@ -3,6 +3,7 @@
 const consts = require('../consts.js');
 const { validator } = require('../validator.js');
 const { hasError } = require('../utils.js');
+const { getAndSetElements } = require('./utils.js');
 
 // Possible inputs:
 //
@@ -162,7 +163,7 @@ function parseSetTimeout(parser) {
     }
     return {
         'instructions': [
-            `page.setDefaultTimeout(${ret.value.value})`,
+            `pages[0].setDefaultTimeout(${ret.value.value})`,
         ],
         'wait': false,
         'warnings': warnings.length > 0 ? warnings : undefined,
@@ -213,6 +214,67 @@ if (oldValue !== true) {
     };
 }
 
+// Possible inputs:
+//
+// * (selector, block)
+function parseWithinIFrame(parser) {
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                {
+                    kind: 'selector',
+                },
+                {
+                    kind: 'block',
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
+    }
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+    const isPseudo = !selector.isXPath && selector.pseudo !== null;
+
+    if (isPseudo) {
+        return {
+            'error': 'Pseudo elements cannot be <iframe>',
+        };
+    }
+
+    const code = `\
+${getAndSetElements(selector, 'iframe', false)}
+await iframe.evaluate(el => {
+    if (el.tagName !== "IFRAME") {
+        throw "selector \`${selector.value}\` is not an \`<iframe>\` but a \`<" + \
+el.tagName.toLowerCase() + ">\`";
+    }
+});
+pages.push(iframe);`;
+
+    return {
+        'instructions': [code],
+        'callback': () => {
+            const context = parser.get_current_context();
+            parser.pushNewContext({
+                'ast': context.ast,
+                'commands': tuple[1].value.value,
+                'currentCommand': 0,
+                'functionArgs': Object.create(null),
+                'dropCallback': pages => {
+                    if (pages.length < 2) {
+                        throw new Error('`pages` is empty whereas it should never happen!');
+                    }
+                    pages.pop();
+                },
+            });
+        },
+        'noPosIncrease': true,
+    };
+}
+
 module.exports = {
     'parseDebug': parseDebug,
     'parseExpectFailure': parseExpectFailure,
@@ -223,4 +285,5 @@ module.exports = {
     'parseScreenshotOnFailure': parseScreenshotOnFailure,
     'parseShowText': parseShowText,
     'parseSetTimeout': parseSetTimeout,
+    'parseWithinIFrame': parseWithinIFrame,
 };

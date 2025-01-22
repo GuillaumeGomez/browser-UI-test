@@ -3,5 +3,5 @@ instructions = [
 if (parseWriteVar === null) { throw '\"//a\" not found'; }
 parseWriteVar.focus();
 await parseWriteVar;
-page.keyboard.press(String.fromCharCode(13));""",
+pages[0].keyboard.press(String.fromCharCode(13));""",
 ]

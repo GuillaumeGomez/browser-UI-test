@@ -33,7 +33,6 @@ function helper() {
     print('  --incognito                   : Enable incognito mode');
     print('  --jobs [N]                    : Number of parallel jobs, defaults to number of CPUs');
     print('  --no-headless                 : Disable headless mode');
-    print('  --no-sandbox                  : Disable the sandbox (use with caution!)');
     print('  --pause-on-error [true|false] : Pause execution script until user press ENTER');
     print('  --permission [PERMISSION]     : Add a permission to enable');
     print('  --run-id [id]                 : Id to be used for failed images extension (\'test\'');
@@ -92,7 +91,6 @@ class Options {
         this.showText = false;
         this.debug = false;
         this.screenshotComparison = false;
-        this.noSandbox = false;
         this.allowFileAccessFromFiles = false;
         this.testFiles = [];
         this.variables = Object.create(null);
@@ -125,7 +123,6 @@ class Options {
         copy.showText = this.showText;
         copy.debug = this.debug;
         copy.screenshotComparison = this.screenshotComparison;
-        copy.noSandbox = this.noSandbox;
         copy.allowFileAccessFromFiles = this.allowFileAccessFromFiles;
         copy.testFiles = JSON.parse(JSON.stringify(this.testFiles));
         copy.variables = JSON.parse(JSON.stringify(this.variables));
@@ -194,8 +191,6 @@ class Options {
                 this.debug = true;
             } else if (args[it] === '--enable-screenshot-comparison') {
                 this.screenshotComparison = true;
-            } else if (args[it] === '--no-sandbox') {
-                this.noSandbox = true;
             } else if (args[it] === '--allow-file-access-from-files') {
                 this.allowFileAccessFromFiles = true;
             } else if (args[it] === '--incognito') {
@@ -386,7 +381,6 @@ class Options {
         validateField('onPageCreatedCallback', 'function');
         validateField('failOnJsError', 'boolean');
         validateField('failOnRequestError', 'boolean');
-        validateField('noSandbox', 'boolean');
         validateField('allowFileAccessFromFiles', 'boolean');
         validateField('screenshotOnFailure', 'boolean');
         validateField('nbThreads', 'number');

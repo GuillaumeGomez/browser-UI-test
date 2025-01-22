@@ -29,7 +29,7 @@ ${indentString(error, 1)}
 
 function getWaitForElems(varName, code, error) {
     return [`\
-const timeLimit = page.getDefaultTimeout();
+const timeLimit = pages[0].getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let ${varName} = null;`,

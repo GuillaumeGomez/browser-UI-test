@@ -1,5 +1,5 @@
 instructions = [
-  """page.setDefaultTimeout(0)""",
+  """pages[0].setDefaultTimeout(0)""",
 ]
 wait = false
 warnings = [

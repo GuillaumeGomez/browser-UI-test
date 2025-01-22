@@ -963,8 +963,10 @@ call-function: ("hello",{})`,
     // Running `define-function`.
     x.assert(pcontext.get_next_command().error === undefined);
     // Running `call-function`.
-    x.assertError(pcontext.get_next_command(),
-        'function `hello` expected 1 argument, found 0 (from command `("hello",{})`)',
+    x.assertError(
+        pcontext.get_next_command(),
+        'function `hello` expected 1 argument, found 0 (from command `call-function: \
+("hello",{})`)',
     );
 
     function callFunc(x, data, toCheck) {
@@ -991,29 +993,7 @@ call-function: ("hello",{})`,
 define-function: ("hello", [a], block {})
 call-function: ("hello",{"a": "1"})`,
         {
-            function: 'hello',
-            args: [
-                {
-                    key: {
-                        kind: 'string',
-                        value: 'a',
-                        startPos: 67,
-                        endPos: 70,
-                        fullText: '"a"',
-                        line: 2,
-                        error: null,
-                    },
-                    value: {
-                        kind: 'string',
-                        value: '1',
-                        startPos: 72,
-                        endPos: 75,
-                        fullText: '"1"',
-                        line: 2,
-                        error: null,
-                    },
-                },
-            ],
+            'skipInstructions': true,
         },
     );
     callFunc(
@@ -1022,29 +1002,7 @@ call-function: ("hello",{"a": "1"})`,
 define-function: ("hello", [a], block {})
 call-function: ("hello",{"a": "1"})`,
         {
-            function: 'hello',
-            args: [
-                {
-                    key: {
-                        kind: 'string',
-                        value: 'a',
-                        startPos: 67,
-                        endPos: 70,
-                        fullText: '"a"',
-                        line: 2,
-                        error: null,
-                    },
-                    value: {
-                        kind: 'string',
-                        value: '1',
-                        startPos: 72,
-                        endPos: 75,
-                        fullText: '"1"',
-                        line: 2,
-                        error: null,
-                    },
-                },
-            ],
+            'skipInstructions': true,
         },
     );
 }
@@ -1434,9 +1392,6 @@ function checkHistory(x, func) {
 function checkInclude(x, func) {
     func('-12', 'err-1');
     func('(-12, "a")', 'err-2');
-
-    func('"a"', 'basic-1');
-    func('"/a"', 'basic-2');
 }
 
 function checkJavascript(x, func) {
@@ -1591,7 +1546,7 @@ try {
             'original': 'reload:',
             'line': '2',
             'instructions': [`\
-const ret = page.reload({'waitUntil': 'domcontentloaded', 'timeout': 30000});
+const ret = pages[0].reload({'waitUntil': 'domcontentloaded', 'timeout': 30000});
 await ret;`,
             ],
             'warnings': [],
@@ -2320,6 +2275,19 @@ function checkObjProperty(x, func) {
     func('{"a": "2", "b"."c": "b"}', 'object-path-2');
 }
 
+function checkWithinIframe(x, func) {
+    func('"', 'err-1');
+    func('', 'err-2');
+    func('"a"', 'err-3');
+    func('("a")', 'err-4');
+    func('("a", {"b": 1})', 'err-5');
+    func('("a::before", {"b": 1})', 'err-6');
+
+    func('("a", block {})', 'basic-1');
+    func('("a", block { assert: "b" })', 'basic-2');
+    func('("//a", block {})', 'basic-3');
+}
+
 function checkWrite(x, func) {
     // check string argument
     func('"', 'str-1');
@@ -2958,6 +2926,11 @@ const TO_CHECK = [
         'name': 'set-window-property',
         'func': checkObjProperty,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetWindowProperty, x, e, name, o),
+    },
+    {
+        'name': 'within-iframe',
+        'func': checkWithinIframe,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWithinIFrame, x, e, name, o),
     },
     {
         'name': 'write',

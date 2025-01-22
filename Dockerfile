@@ -32,7 +32,6 @@ COPY ./package*.json ./
 
 RUN npm install
 
-# never use the "--no-sandbox" outside of a container!
-ENTRYPOINT ["node", "./browser-ui-test-src/index.js", "--no-sandbox"]
+ENTRYPOINT ["node", "./browser-ui-test-src/index.js"]
 # to be able to pass arguments to index.js
 CMD []

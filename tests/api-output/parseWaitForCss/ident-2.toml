@@ -28,7 +28,7 @@ async function checkCssForElem(elem) {
     return nonMatchingProps;
 }
 
-const timeLimit = page.getDefaultTimeout();
+const timeLimit = pages[0].getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForCss = null;

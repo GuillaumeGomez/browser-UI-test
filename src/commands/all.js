@@ -125,6 +125,7 @@ module.exports = {
     'parseWaitForTextFalse': wait.parseWaitForTextFalse,
     'parseWaitForWindowProperty': wait.parseWaitForWindowProperty,
     'parseWaitForWindowPropertyFalse': wait.parseWaitForWindowPropertyFalse,
+    'parseWithinIFrame': context_setters.parseWithinIFrame,
     'parseWrite': input.parseWrite,
     'parseWriteInto': input.parseWriteInto,
 };

@@ -1,5 +1,6 @@
 // Contains commands which don't really have a "category".
 
+const { AstLoader } = require('../ast.js');
 const path = require('path');
 const { getAndSetElements, indentString } = require('./utils.js');
 const { validator } = require('../validator.js');
@@ -68,7 +69,7 @@ function innerParseScreenshot(options, filename, selector) {
         }
     } else {
         // In case no selector was specified, we take a screenshot of the whole page.
-        instructions += `const ${varName} = page;\n`;
+        instructions += `const ${varName} = pages[0];\n`;
     }
 
     const p = path.join(options.getImageFolder(), filename) + '.png';
@@ -224,7 +225,22 @@ function parseInclude(parser) {
         return ret;
     }
 
-    return {'path': ret.value.value };
+    const includePath = ret.value.value;
+    const dirPath = path.dirname(parser.get_current_context().ast.absolutePath);
+    const ast = new AstLoader(includePath, dirPath);
+    if (ast.hasErrors()) {
+        return {'errors': ast.errors};
+    }
+    parser.pushNewContext({
+        'ast': ast,
+        'commands': ast.commands,
+        'currentCommand': 0,
+        'functionArgs': Object.create(null),
+    });
+
+    return {
+        'skipInstructions': true,
+    };
 }
 
 module.exports = {

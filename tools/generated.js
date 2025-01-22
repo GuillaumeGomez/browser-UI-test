@@ -9,6 +9,8 @@ const path = require('path');
 const fs = require('fs');
 const toml = require('@iarna/toml');
 const {getCurrentDir, stripCommonPathsPrefix} = require('../src/utils.js');
+process.env.debug_tests = '1'; // We enable this to get CODE_WRAPPER from `src/index.js`.
+const { CODE_WRAPPER } = require('../src/index.js');
 
 async function checkGeneratedJs(x) {
     const { ESLint } = require('eslint');
@@ -38,7 +40,7 @@ async function checkGeneratedJs(x) {
         const full = `\
 ${script}
 
-module.exports.f = async function(page, arg){
+${CODE_WRAPPER}
 
 // Start of code.
 ${content['instructions'].join('\n// ----------\n')}

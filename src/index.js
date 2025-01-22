@@ -21,6 +21,14 @@ const consts = require('./consts.js');
 const Module = require('module');
 const readline = require('readline-sync');
 
+const CODE_WRAPPER = `module.exports.f = async function(pages, arg){
+let page = pages[pages.length - 1];
+if (page.contentFrame) {
+    page = await page.contentFrame();
+} else {
+    page = page.mainFrame();
+}`;
+
 // TODO: Make it into a class to provide some utility methods like 'isFailure'.
 const Status = {
     'Ok': 0,
@@ -34,7 +42,9 @@ const Status = {
 function loadContent(content) {
     const m = new Module();
     m.paths = [__dirname];
-    m._compile(`module.exports.f = async function(page, arg){ ${content} };`, __dirname);
+    m._compile(`${CODE_WRAPPER}
+${content}
+};`, __dirname);
     return m.exports.f;
 }
 
@@ -113,7 +123,7 @@ function checkFolders(options) {
 }
 
 // Returns `false` if it failed.
-async function screenshot(extras, filename, selector, page, logs, commandLogs, warnings) {
+async function screenshot(extras, filename, selector, pages, logs, commandLogs, warnings) {
     const data = innerParseScreenshot(extras, filename, selector);
     let screenshot_error = null;
     for (const instruction of data.instructions) {
@@ -125,7 +135,7 @@ async function screenshot(extras, filename, selector, page, logs, commandLogs, w
             break;
         }
         try {
-            await loadedInstruction(page, extras);
+            await loadedInstruction(pages, extras);
         } catch (err) { // execution error
             screenshot_error = err;
             break;
@@ -148,23 +158,23 @@ function waitUntilEnterPressed(error_log) {
     readline.question('Press ENTER to continue...');
 }
 
-async function runInstruction(loadedInstruction, page, extras) {
+async function runInstruction(loadedInstruction, pages, extras) {
     try {
-        await loadedInstruction(page, extras);
+        await loadedInstruction(pages, extras);
         return;
     } catch (err) { // execution error
         if (err.message && err.message.indexOf
             && err.message.indexOf('Execution context was destroyed') === 0) {
             // Puppeteer error so this time we wait until the document is ready before trying
             // again.
-            await page.waitForFunction('document.readyState === "complete"');
+            await pages[0].waitForFunction('document.readyState === "complete"');
         } else {
             // Not a context error because of navigation, throwing it again.
             throw err;
         }
     }
     // We give it another chance...
-    await loadedInstruction(page, extras);
+    await loadedInstruction(pages, extras);
 }
 
 async function runAllCommands(loaded, logs, options, browser) {
@@ -247,6 +257,7 @@ async function runAllCommands(loaded, logs, options, browser) {
         const script = fs.readFileSync(path.join(__dirname, 'helpers.js'), 'utf8');
         debug_log.append(`Injecting helpers script into page: "${script}"`);
         await page.evaluateOnNewDocument(script);
+        const pages = [page];
 
         let line_number;
 
@@ -274,7 +285,7 @@ async function runAllCommands(loaded, logs, options, browser) {
 
         command_loop:
         for (let nb_commands = 0;; ++nb_commands) {
-            const command = context_parser.get_next_command();
+            const command = context_parser.get_next_command(pages);
             if (command === null) {
                 if (nb_commands === 0) {
                     logs.append('FAILED (No command to execute)', true);
@@ -324,7 +335,7 @@ ${error.message}\n`;
                     break command_loop;
                 }
                 try {
-                    await runInstruction(loadedInstruction, page, extras);
+                    await runInstruction(loadedInstruction, pages, extras);
                 } catch (err) { // execution error
                     if (err === COLOR_CHECK_ERROR) {
                         error_log += `[ERROR] ${getFileInfo(context_parser, line_number)}: \
@@ -355,6 +366,9 @@ ${s_err}`);
                 } else if (stopInnerLoop) {
                     break;
                 }
+            }
+            if (failed === false && command['callback']) {
+                command['callback']();
             }
             if (failed === false
                 && command['checkResult'] === true
@@ -397,7 +411,7 @@ ${s_err}`);
             }
             if (extras.screenshotOnFailure === true) {
                 await screenshot(
-                    extras, `${loaded['file']}-failure`, null, page, logs, commandLogs, warnings);
+                    extras, `${loaded['file']}-failure`, null, pages, logs, commandLogs, warnings);
             }
             await page.close();
             return Status.Failure;
@@ -424,7 +438,7 @@ ${s_err}`);
         }
 
         if (!await screenshot(
-            extras, `${loaded['file']}-${options.runId}`, selector, page, logs, commandLogs,
+            extras, `${loaded['file']}-${options.runId}`, selector, pages, logs, commandLogs,
             warnings)
         ) {
             await page.close();
@@ -770,8 +784,7 @@ async function runTests(extras = null) {
 }
 
 process.on('browser-ui-test-puppeter-failure', () => {
-    console.error('ERROR: puppeteer failed when trying to create a new page. Please try again with \
-`--no-sandbox`');
+    console.error('ERROR: puppeteer failed when trying to create a new page.');
     process.exit(1);
 });
 
@@ -819,4 +832,7 @@ if (require.main === module) {
         'Options': Options,
         'loadBrowser': loadPuppeteer,
     };
+    if (process.env.debug_tests === '1') {
+        module.exports['CODE_WRAPPER'] = CODE_WRAPPER;
+    }
 }

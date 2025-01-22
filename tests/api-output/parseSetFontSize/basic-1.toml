@@ -1,5 +1,5 @@
 instructions = [
-  """const client = await page.target().createCDPSession();
+  """const client = await pages[0].target().createCDPSession();
 await client.send(\"Page.enable\");
 await client.send(\"Page.setFontSizes\", {
     fontSizes: {

@@ -90,7 +90,7 @@ if (ret === null) {
     }
     return {
         'instructions': [`\
-const ret = page.${jsFunc}({'waitUntil': 'domcontentloaded', 'timeout': ${timeout}});
+const ret = pages[0].${jsFunc}({'waitUntil': 'domcontentloaded', 'timeout': ${timeout}});
 ${insertAfter}await ret;`,
         ],
         'warnings': warnings,

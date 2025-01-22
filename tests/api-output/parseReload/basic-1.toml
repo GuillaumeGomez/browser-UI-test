@@ -1,5 +1,5 @@
 instructions = [
-  """const ret = page.reload({'waitUntil': 'domcontentloaded', 'timeout': 30000});
+  """const ret = pages[0].reload({'waitUntil': 'domcontentloaded', 'timeout': 30000});
 await ret;""",
 ]
 warnings = [

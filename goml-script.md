@@ -246,6 +246,7 @@ Here's the command list:
  * [`wait-for-size-false`](#wait-for-size-false)
  * [`wait-for-window-property`](#wait-for-window-property)
  * [`wait-for-window-property-false`](#wait-for-window-property-false)
+ * [`within-iframe`](#within-iframe)
  * [`write`](#write)
  * [`write-into`](#write-into)
 
@@ -2399,6 +2400,17 @@ wait-for-window-property-false: ({"key": "value", "key2": "value2"}, [ENDS_WITH,
 ```
 
 If you want to wait for all properties to have the expected value, take a look at [`wait-for-window-property`](#wait-for-window-property).
+
+#### within-iframe
+
+**within-iframe** commands moves the context inside the provided `<iframe>` selector. Inside it, all selectors are relative to the `iframe`, same if you use `go-to`. Examples:
+
+```
+within-iframe: ("#iframe", block {
+    // We try to click on an element inside the `#iframe` element.
+    click: "#element"
+})
+```
 
 #### write
 

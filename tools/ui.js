@@ -9,9 +9,8 @@ utils.print = function print() {}; // overwriting the print function to avoid th
 const {runTests, Options} = require('../src/index.js');
 const {Assert, plural, print} = require('./utils.js');
 
-async function wrapRunTests(noSandbox, browser, options = new Options()) {
+async function wrapRunTests(browser, options = new Options()) {
     options.screenshotComparison = false;
-    options.noSandbox = noSandbox;
     const ret = await runTests({
         'options': options,
         'browser': browser,
@@ -32,7 +31,7 @@ function runAsyncUiTest(x, file, output, tests_queue, browser) {
 
     const callback = x.assertTryUi(
         wrapRunTests,
-        [x.noSandboxEnabled, browser, options],
+        [browser, options],
         output.replaceAll('$CURRENT_DIR', utils.getCurrentDir()),
         file,
         false,
@@ -75,7 +74,6 @@ async function compareOutput(x) {
     process.setMaxListeners(cpuCount);
     const tests_queue = [];
     const options = new Options();
-    options.noSandbox = x.noSandboxEnabled;
     const browser = await utils.loadPuppeteer(options);
 
     for (const file of filesToTest) {
@@ -149,18 +147,12 @@ if (require.main === module) {
     for (const arg of process.argv.slice(2)) {
         if (arg === '--bless') {
             x.blessEnabled = true;
-        } else if (arg === '--no-sandbox') {
-            x.noSandboxEnabled = true;
         } else {
             x.extraArgs.push(arg);
         }
     }
     if (!x.blessEnabled) {
         x.blessEnabled = process.env.npm_config_bless === 'true';
-    }
-    if (!x.noSandboxEnabled) {
-        // The value is `true` if it's enabled.
-        x.noSandboxEnabled = process.env.npm_config_sandbox === '';
     }
     checkUi(x).then(nbErrors => {
         process.exit(nbErrors !== 0 ? 1 : 0);
