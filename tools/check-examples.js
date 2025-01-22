@@ -56,9 +56,11 @@ function checkContent(x, example, file, line, firstCommand) {
         context_parser.variables['height'] = 1;
         context_parser.variables['A_VARIABLE'] = 'a';
         context_parser.variables['DOC_PATH'] = './a';
+        // Needed for `within-iframe` commands.
+        const pages = [0, 0, 0, 0, 0];
 
         for (let nb_commands = 0;; ++nb_commands) {
-            const command = context_parser.get_next_command();
+            const command = context_parser.get_next_command(pages);
             if (command === null) {
                 if (nb_commands === 0) {
                     x.addError(`${fileAndLine}: FAILED (No command to execute)`);
@@ -78,6 +80,8 @@ ${command['error']}`);
                 }).join('\n');
                 x.addError(`${fileAndLine}: ${error}`);
                 return;
+            } else if (command['callback']) {
+                command['callback']();
             }
         }
     } catch (err) {
