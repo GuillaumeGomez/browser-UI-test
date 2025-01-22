@@ -34,13 +34,13 @@ function parseSetWindowSize(parser) {
     return {
         'instructions': [
             `\
-const viewport = page.viewport();
+const viewport = pages[0].viewport();
 const newViewport = {
     ...viewport,
     width: ${width},
     height: ${height},
 };
-await page.setViewport(newViewport);`,
+await pages[0].setViewport(newViewport);`,
         ],
     };
 }
@@ -64,12 +64,12 @@ function parseSetDevicePixelRatio(parser) {
     return {
         'instructions': [
             `\
-const viewport = page.viewport();
+const viewport = pages[0].viewport();
 const newViewport = {
     ...viewport,
     deviceScaleFactor: ${ret.value.getRaw()},
 };
-await page.setViewport(newViewport);`,
+await pages[0].setViewport(newViewport);`,
         ],
     };
 }
@@ -97,7 +97,7 @@ if (arg.puppeteer.KnownDevices["${device}"] === undefined) {
 https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js or \
 you can use \`--show-devices\` option';
 } else {
-    await page.emulate(arg.puppeteer.KnownDevices["${device}"]);
+    await pages[0].emulate(arg.puppeteer.KnownDevices["${device}"]);
 }`,
         ],
     };
@@ -128,7 +128,7 @@ function parseGeolocation(parser) {
     const tuple = ret.value.entries;
     return {
         'instructions': [
-            `await page.setGeolocation(${tuple[0].value.getRaw()}, ${tuple[1].value.getRaw()});`,
+            `await pages[0].setGeolocation(${tuple[0].value.getRaw()},${tuple[1].value.getRaw()});`,
         ],
     };
 }
@@ -178,7 +178,7 @@ function parseJavascript(parser) {
 
     return {
         'instructions': [
-            `await page.setJavaScriptEnabled(${ret.value.getRaw()});`,
+            `await pages[0].setJavaScriptEnabled(${ret.value.getRaw()});`,
         ],
     };
 }
@@ -200,7 +200,7 @@ function parseSetFontSize(parser) {
 
     return {
         'instructions': [`\
-const client = await page.target().createCDPSession();
+const client = await pages[0].target().createCDPSession();
 await client.send("Page.enable");
 await client.send("Page.setFontSizes", {
     fontSizes: {

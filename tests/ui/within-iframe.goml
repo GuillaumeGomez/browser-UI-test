@@ -1,0 +1,41 @@
+// This test checks that the `within-iframe` command is working.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/iframe.html"
+
+define-function: ("check-elements-inside-iframe", [], block {
+    // This is inside an iframe so should not be available directly.
+    assert-false: "#the-input"
+    assert-false: "#drag"
+
+    within-iframe: ("#iframe1", block {
+        // This time we have access to this element.
+        assert: "#the-input"
+        // But still not to this one.
+        assert-false: "#drag"
+    })
+    within-iframe: ("#iframe2", block {
+        // This time we have access to this element.
+        assert: "#drag"
+        // But not to this one anymore.
+        assert-false: "#the-input"
+    })
+})
+
+call-function: ("check-elements-inside-iframe", {})
+
+// Checking recursive iframes.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/iframe-ception.html"
+assert-false: "#the-input"
+assert-false: "#drag"
+assert-false: "#iframe1"
+assert-false: "#iframe2"
+
+within-iframe: ("#iframe0", block {
+    // Now that we're inside `iframe0`, they should be visible.
+    assert: "#iframe1"
+    assert: "#iframe2"
+
+    call-function: ("check-elements-inside-iframe", {})
+})
+
+// And now we check the error message in case the iframe selector doesn't exist.
+within-iframe: ("#ifra", block {})

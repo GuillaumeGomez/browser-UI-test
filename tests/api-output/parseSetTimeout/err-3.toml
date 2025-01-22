@@ -1,4 +1,4 @@
 instructions = [
-  """page.setDefaultTimeout(12)""",
+  """pages[0].setDefaultTimeout(12)""",
 ]
 wait = false

@@ -1546,7 +1546,7 @@ try {
             'original': 'reload:',
             'line': '2',
             'instructions': [`\
-const ret = page.reload({'waitUntil': 'domcontentloaded', 'timeout': 30000});
+const ret = pages[0].reload({'waitUntil': 'domcontentloaded', 'timeout': 30000});
 await ret;`,
             ],
             'warnings': [],
@@ -2275,6 +2275,19 @@ function checkObjProperty(x, func) {
     func('{"a": "2", "b"."c": "b"}', 'object-path-2');
 }
 
+function checkWithinIframe(x, func) {
+    func('"', 'err-1');
+    func('', 'err-2');
+    func('"a"', 'err-3');
+    func('("a")', 'err-4');
+    func('("a", {"b": 1})', 'err-5');
+    func('("a::before", {"b": 1})', 'err-6');
+
+    func('("a", block {})', 'basic-1');
+    func('("a", block { assert: "b" })', 'basic-2');
+    func('("//a", block {})', 'basic-3');
+}
+
 function checkWrite(x, func) {
     // check string argument
     func('"', 'str-1');
@@ -2913,6 +2926,11 @@ const TO_CHECK = [
         'name': 'set-window-property',
         'func': checkObjProperty,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetWindowProperty, x, e, name, o),
+    },
+    {
+        'name': 'within-iframe',
+        'func': checkWithinIframe,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWithinIFrame, x, e, name, o),
     },
     {
         'name': 'write',

@@ -1,5 +1,5 @@
 instructions = [
-  """const ret = page.goBack({'waitUntil': 'domcontentloaded', 'timeout': 0});
+  """const ret = pages[0].goBack({'waitUntil': 'domcontentloaded', 'timeout': 0});
 if (ret === null) {
     throw \"cannot go back in history\";
 }

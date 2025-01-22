@@ -1,3 +1,3 @@
 instructions = [
-  """await page.keyboard.press(String.fromCharCode(13));""",
+  """await pages[0].keyboard.press(String.fromCharCode(13));""",
 ]

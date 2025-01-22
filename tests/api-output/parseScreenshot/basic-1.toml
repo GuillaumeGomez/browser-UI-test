@@ -1,5 +1,5 @@
 instructions = [
-  """const screenshotElem = page;
+  """const screenshotElem = pages[0];
 await screenshotElem.screenshot({\"path\":\"a.png\",\"fullPage\":true});""",
 ]
 wait = false

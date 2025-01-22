@@ -69,7 +69,7 @@ function innerParseScreenshot(options, filename, selector) {
         }
     } else {
         // In case no selector was specified, we take a screenshot of the whole page.
-        instructions += `const ${varName} = page;\n`;
+        instructions += `const ${varName} = pages[0];\n`;
     }
 
     const p = path.join(options.getImageFolder(), filename) + '.png';

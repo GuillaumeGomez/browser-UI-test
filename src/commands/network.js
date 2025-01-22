@@ -17,8 +17,8 @@ function parseBlockNetworkRequest(parser) {
 
     return {
         'instructions': [
-            `await page.setRequestInterception(true);
-            page.on('request', interceptedRequest => {
+            `await pages[0].setRequestInterception(true);
+            pages[0].on('request', interceptedRequest => {
                 if (interceptedRequest.isInterceptResolutionHandled()) return;
                 function matchesGlob(glob, text) {
                     const wildcard = glob.indexOf("*");

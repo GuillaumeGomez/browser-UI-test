@@ -273,7 +273,7 @@ class ParserWithContext {
         return context.ast.absolutePath;
     }
 
-    run_order(order, ast) {
+    run_order(pages, order, ast) {
         // This is needed because for now, all commands get access to the ast
         // through `ParserWithContext`.
         this.elems = ast;
@@ -309,7 +309,7 @@ class ParserWithContext {
         }
         if (res.skipInstructions) {
             // We disable the `increasePos` in the context to prevent it to be done twice.
-            return this.get_next_command(false);
+            return this.get_next_command(pages, false);
         }
 
         return {
@@ -321,13 +321,18 @@ class ParserWithContext {
             'instructions': res['instructions'],
             'infos': res['infos'],
             'warnings': res['warnings'],
+            'callback': res['callback'],
+            'noPosIncrease': res['noPosIncrease'],
         };
     }
 
-    get_next_command(increasePos = true) {
+    get_next_command(pages, increasePos = true) {
         let context = this.get_current_context();
         while (context !== null && context.currentCommand >= context.commands.length) {
-            this.contexts.pop();
+            const prevContext = this.contexts.pop();
+            if (prevContext.dropCallback !== undefined) {
+                prevContext.dropCallback(pages);
+            }
             context = this.get_current_context();
             if (context !== null) {
                 context.currentCommand += 1;
@@ -345,8 +350,8 @@ class ParserWithContext {
                 'errors': inferred.errors,
             };
         }
-        const ret = this.run_order(command.commandName, inferred.ast);
-        if (increasePos) {
+        const ret = this.run_order(pages, command.commandName, inferred.ast);
+        if (increasePos && !ret['noPosIncrease']) {
             this.increase_context_pos();
         }
         return ret;

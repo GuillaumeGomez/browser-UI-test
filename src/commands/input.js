@@ -35,7 +35,7 @@ function parseClick(parser) {
         const tuple = p.entries;
         return {
             'instructions': [
-                `await page.mouse.click(${tuple[0].value.value}, ${tuple[1].value.value});`,
+                `await page.click(${tuple[0].value.value}, ${tuple[1].value.value});`,
             ],
         };
     }
@@ -158,13 +158,13 @@ function parseWrite(parser) {
     if (value.kind === 'number') {
         return {
             'instructions': [
-                `await page.keyboard.press(String.fromCharCode(${value.value}));`,
+                `await pages[0].keyboard.press(String.fromCharCode(${value.value}));`,
             ],
         };
     }
     return {
         'instructions': [
-            `await page.keyboard.type("${value.getStringValue()}");`,
+            `await pages[0].keyboard.type("${value.getStringValue()}");`,
         ],
     };
 }
@@ -213,7 +213,7 @@ await ${varName}.type("${value.getStringValue()}");`,
 ${getAndSetElements(selector, varName, false)}
 ${varName}.focus();
 await ${varName};
-page.keyboard.press(String.fromCharCode(${value.value}));`],
+pages[0].keyboard.press(String.fromCharCode(${value.value}));`],
     };
 }
 
@@ -259,13 +259,13 @@ function parsePressKey(parser) {
     if (value.kind === 'number') {
         return {
             'instructions': [
-                `await page.keyboard.press(String.fromCharCode(${value.value}))`,
+                `await pages[0].keyboard.press(String.fromCharCode(${value.value}))`,
             ],
         };
     } else if (value.kind === 'string') {
         return {
             'instructions': [
-                `await page.keyboard.press("${value.getStringValue()}")`,
+                `await pages[0].keyboard.press("${value.getStringValue()}")`,
             ],
         };
     }
@@ -278,13 +278,13 @@ function parsePressKey(parser) {
     if (tuple[0].value.kind === 'string') {
         return {
             'instructions': [
-                `await page.keyboard.press("${tuple[0].value.getStringValue()}", ${delay})`,
+                `await pages[0].keyboard.press("${tuple[0].value.getStringValue()}", ${delay})`,
             ],
         };
     }
     return {
         'instructions': [
-            `await page.keyboard.press(String.fromCharCode(${tuple[0].value.value}), ${delay})`,
+            `await pages[0].keyboard.press(String.fromCharCode(${tuple[0].value.value}), ${delay})`,
         ],
     };
 }
@@ -316,7 +316,7 @@ function parseMoveCursorTo(parser) {
         const [x, y] = value.entries;
         return {
             'instructions': [
-                `await page.mouse.move(${x.value.value}, ${y.value.value});`,
+                `await pages[0].mouse.move(${x.value.value}, ${y.value.value});`,
             ],
         };
     }
@@ -387,15 +387,15 @@ function parseDragAndDrop(parser) {
             const args = arg.value.entries;
             code += `const ${posName} = [${args[0].value.getRaw()}, ${args[1].value.getRaw()}];\n`;
         }
-        return `${code}await page.mouse.move(${posName}[0], ${posName}[1]);`;
+        return `${code}await pages[0].mouse.move(${posName}[0], ${posName}[1]);`;
     }
 
     return {
         'instructions': [`\
 ${setupThings(tuple[0], 'parseDragAndDropElem', 'start')}
-await page.mouse.down();
+await pages[0].mouse.down();
 ${setupThings(tuple[1], 'parseDragAndDropElem2', 'end')}
-await page.mouse.up();`,
+await pages[0].mouse.up();`,
         ],
     };
 }

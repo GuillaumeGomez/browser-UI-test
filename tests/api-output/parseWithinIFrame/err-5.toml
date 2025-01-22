@@ -1,0 +1,1 @@
+error = """expected a block, found `{\"b\": 1}` (a JSON dict) (second element of the tuple)"""

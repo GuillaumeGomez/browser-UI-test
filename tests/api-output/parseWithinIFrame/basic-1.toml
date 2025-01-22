@@ -1,0 +1,6 @@
+instructions = [
+  """const iframe = await page.$(\"a\");
+if (iframe === null) { throw '\"a\" not found'; }
+pages.push(iframe);""",
+]
+noPosIncrease = true
