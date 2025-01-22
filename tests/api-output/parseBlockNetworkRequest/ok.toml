@@ -1,33 +1,33 @@
 instructions = [
   """await pages[0].setRequestInterception(true);
-            pages[0].on('request', interceptedRequest => {
-                if (interceptedRequest.isInterceptResolutionHandled()) return;
-                function matchesGlob(glob, text) {
-                    const wildcard = glob.indexOf(\"*\");
-                    if (wildcard === -1) {
-                        return glob === text;
-                    }
-                    const prefixGlob = glob.substring(0, wildcard);
-                    const prefixText = text.substring(0, wildcard);
-                    if (prefixGlob !== prefixText) {
-                        return false;
-                    }
-                    const suffixGlob = glob.substring(wildcard + 1);
-                    let suffixText = text.substring(wildcard);
-                    if (suffixGlob.indexOf(\"*\") === -1) {
-                        return suffixText.endsWith(suffixGlob);
-                    }
-                    let matched = matchesGlob(suffixGlob, suffixText);
-                    while (suffixText !== \"\" && !matched) {
-                        suffixText = suffixText.substring(1);
-                        matched = matchesGlob(suffixGlob, suffixText);
-                    }
-                    return matched;
-                }
-                if (matchesGlob(\"x\", interceptedRequest.url())) {
-                    interceptedRequest.abort();
-                } else {
-                    interceptedRequest.continue({}, 0);
-                }
-            });""",
+pages[0].on('request', interceptedRequest => {
+    if (interceptedRequest.isInterceptResolutionHandled()) return;
+    function matchesGlob(glob, text) {
+        const wildcard = glob.indexOf(\"*\");
+        if (wildcard === -1) {
+            return glob === text;
+        }
+        const prefixGlob = glob.substring(0, wildcard);
+        const prefixText = text.substring(0, wildcard);
+        if (prefixGlob !== prefixText) {
+            return false;
+        }
+        const suffixGlob = glob.substring(wildcard + 1);
+        let suffixText = text.substring(wildcard);
+        if (suffixGlob.indexOf(\"*\") === -1) {
+            return suffixText.endsWith(suffixGlob);
+        }
+        let matched = matchesGlob(suffixGlob, suffixText);
+        while (suffixText !== \"\" && !matched) {
+            suffixText = suffixText.substring(1);
+            matched = matchesGlob(suffixGlob, suffixText);
+        }
+        return matched;
+    }
+    if (matchesGlob(\"x\", interceptedRequest.url())) {
+        interceptedRequest.abort();
+    } else {
+        interceptedRequest.continue({}, 0);
+    }
+});""",
 ]

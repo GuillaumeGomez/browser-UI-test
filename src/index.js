@@ -21,6 +21,14 @@ const consts = require('./consts.js');
 const Module = require('module');
 const readline = require('readline-sync');
 
+const CODE_WRAPPER = `module.exports.f = async function(pages, arg){
+let page = pages[pages.length - 1];
+if (page.contentFrame) {
+    page = await page.contentFrame();
+} else {
+    page = page.mainFrame();
+}`;
+
 // TODO: Make it into a class to provide some utility methods like 'isFailure'.
 const Status = {
     'Ok': 0,
@@ -34,13 +42,7 @@ const Status = {
 function loadContent(content) {
     const m = new Module();
     m.paths = [__dirname];
-    m._compile(`module.exports.f = async function(pages, arg){
-let page = pages[pages.length - 1];
-if (page.contentFrame) {
-    page = await page.contentFrame();
-} else {
-    page = page.mainFrame();
-}
+    m._compile(`${CODE_WRAPPER}
 ${content}
 };`, __dirname);
     return m.exports.f;
@@ -830,4 +832,7 @@ if (require.main === module) {
         'Options': Options,
         'loadBrowser': loadPuppeteer,
     };
+    if (process.env.debug_tests === '1') {
+        module.exports['CODE_WRAPPER'] = CODE_WRAPPER;
+    }
 }
