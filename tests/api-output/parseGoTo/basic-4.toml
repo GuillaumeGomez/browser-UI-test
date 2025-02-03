@@ -1,5 +1,5 @@
 instructions = [
-  """const url = page.url().split(\"/\").slice(0, -1).join(\"/\") + \"/./a\";
+  """const url = page.url().split(\"/\").slice(0, -1).join(\"/\") + \"/\" + \"./a\";
 try {
     await page.goto(url);
 } catch(exc) {
