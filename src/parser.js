@@ -158,39 +158,6 @@ function isArrayElementCompatible(expected, elem) {
     return expected.kind === elem.kind;
 }
 
-// Used to concatenate all elements into a string, like `1 + "a" + 12` -> "1a12".
-function concatExprAsString(elems) {
-    let out = '';
-    for (const elem of elems) {
-        if (elem.kind === 'operator') {
-            continue;
-        } else if (['number', 'string', 'boolean'].includes(elem.kind)) {
-            out += elem.value;
-        } else {
-            out += concatExprAsString(elem.value);
-        }
-    }
-    return out;
-}
-
-function concatExprAsObjectPath(elems) {
-    let s = '';
-    const parts = [];
-
-    for (const elem of elems) {
-        if (elem.kind === 'operator') {
-            continue;
-        } else if (elem.kind !== 'object-path') {
-            s += concatExprAsString([elem]);
-        } else {
-            elem.value[0].value = s + elem.value[0].value;
-            parts.push(...elem.value);
-            s = '';
-        }
-    }
-    return parts;
-}
-
 // This function is used when generating an expression interpreted as a boolean.
 function concatExprAsExpr(elems) {
     const out = [];
@@ -261,24 +228,19 @@ function canBeCompared(kind1, kind2) {
 }
 
 function convertAsString(elem) {
-    if (elem.value.some(v => v.kind === 'object-path')) {
-        return new ObjectPathElement(
-            concatExprAsObjectPath(elem.value),
-            elem.startPos,
-            elem.endPos,
-            elem.fullText,
-            elem.line,
-            elem.error,
-        );
+    const pos = elem.value.findIndex(v => v.kind === 'object-path');
+    elem.kind = 'string';
+    if (pos !== -1) {
+        // We remove the object-path from the expression.
+        const objPath = elem.value.pop();
+        // We remove the first item of the object path and push it at the end of the expression.
+        elem.value.push(...objPath.value.splice(0, 1));
+        // We put the expression as the first element of the object path.
+        objPath.value.splice(0, 0, elem);
+        // All done!
+        return objPath;
     }
-    return new StringElement(
-        concatExprAsString(elem.value),
-        elem.startPos,
-        elem.endPos,
-        elem.fullText,
-        elem.line,
-        elem.error,
-    );
+    return elem;
 }
 
 function convertExprAs(elem, convertAs) {
@@ -363,7 +325,8 @@ class Element {
     }
 
     isRecursive() {
-        // Only Tuple and JSON elements are "recursive" (meaning they can contain sub-levels).
+        // Expression, Array, Tuple and JSON elements are "recursive" (meaning they can contain
+        // sub-levels).
         return false;
     }
 
@@ -431,6 +394,18 @@ class OperatorElement extends Element {
 class ExpressionElement extends Element {
     constructor(value, startPos, endPos, fullText, line, error = null) {
         super('expression', value, startPos, endPos, fullText, line, error);
+    }
+
+    isRecursive() {
+        return true;
+    }
+
+    displayInCode() {
+        return this.value.map(v => v.displayInCode()).join('');
+    }
+
+    getStringValue() {
+        return this.value.map(v => v.getStringValue()).join('');
     }
 
     clone() {
@@ -537,8 +512,8 @@ class ObjectPathElement extends Element {
         super('object-path', value, startPos, endPos, fullText, line, error);
     }
 
-    getStringValue(trim, clean = true) {
-        const content = this.value.map(v => `"${v.getStringValue(clean)}"`).join(',');
+    getStringValue() {
+        const content = this.value.map(v => `${v.displayInCode()}`).join(',');
         return `[${content}]`;
     }
 
