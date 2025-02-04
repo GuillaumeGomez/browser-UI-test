@@ -6,7 +6,7 @@ store2... FAILED
 [ERROR] `tests/ui/store2.goml` line 20: The following errors happened: [`{"background-color":"rgb(17, 17, 17)"}` isn't equal to `a`]: for command `assert-variable: (css_checks, "a")`
 [ERROR] `tests/ui/store2.goml` line 22: The following errors happened: [`Other page` isn't equal to `Other`]: for command `assert-variable: (document_v, "Other")`
 [ERROR] `tests/ui/store2.goml` line 24: The following errors happened: [`0` isn't equal to `Other`]: for command `assert-variable: (window_v, "Other")`
-[ERROR] `tests/ui/store2.goml` line 64: Condition `0 == 0 && 102 == 98` was evaluated as false: for command `assert: |x| == 0 && |y| == 98`
+[ERROR] `tests/ui/store2.goml` line 64: Condition `|x| == 0 && |y| == 98` (`0 == 0 && 102 == 98`) was evaluated as false: for command `assert: |x| == 0 && |y| == 98`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

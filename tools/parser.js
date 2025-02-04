@@ -1079,7 +1079,7 @@ function checkNumber(x) {
     p.parse();
     x.assert(p.errors, []);
     x.assert(p.elems[0].kind, 'number');
-    x.assert(p.elems[0].getRaw(), '1 - 2');
+    x.assert(p.elems[0].getRaw(), -1);
     x.assert(p.elems[0].getErrorText(), '1-2');
     x.assert(p.elems[0].error, null);
 
@@ -1921,7 +1921,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '1 + 1');
+    x.assert(p.elems[0].getRaw(), 2);
     x.assert(p.elems[0].getErrorText(), '1 + 1');
 
     p = inferredValues('1 + 1 +    4');
@@ -1929,7 +1929,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '1 + 1 + 4');
+    x.assert(p.elems[0].getRaw(), 6);
     x.assert(p.elems[0].getErrorText(), '1 + 1 +    4');
 
     p = inferredValues('"a" + "b" ');
@@ -1987,7 +1987,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '1 + 2');
+    x.assert(p.elems[0].getRaw(), 3);
     x.assert(p.elems[0].getErrorText(), '|variable| + 2');
     process.env['variable'] = undefined;
 
@@ -2056,7 +2056,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '1 + (1 + 3)');
+    x.assert(p.elems[0].getRaw(), 5);
     x.assert(p.elems[0].getErrorText(), '1 + (1 + 3)');
 
     p = inferredValues('1 + (1 + |var| * (1 + (4 * (7 / |var|))))', {'var': 4});
@@ -2064,7 +2064,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '1 + (1 + 4 * (1 + (4 * (7 / 4))))');
+    x.assert(p.elems[0].getRaw(), 41);
     x.assert(p.elems[0].getErrorText(), '1 + (1 + |var| * (1 + (4 * (7 / |var|))))');
 
     p = inferredValues('true || |variable|', {'variable': true});
@@ -2099,7 +2099,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '(1 + 2) * 4');
+    x.assert(p.elems[0].getRaw(), 12);
     x.assert(p.elems[0].getErrorText(), '(1 + 2) * 4');
 
     p = inferredValues('(1 + 2) < (4 * 3)');
@@ -2107,7 +2107,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'boolean');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '(1 + 2) < (4 * 3)');
+    x.assert(p.elems[0].getRaw(), '(3) < (12)');
     x.assert(p.elems[0].getErrorText(), '(1 + 2) < (4 * 3)');
 
     p = inferredValues('(1 - -2) * 4');
@@ -2115,7 +2115,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '(1 - -2) * 4');
+    x.assert(p.elems[0].getRaw(), 12);
     x.assert(p.elems[0].getErrorText(), '(1 - -2) * 4');
 
     p = inferredValues('-1-2');
@@ -2123,7 +2123,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '-1 - 2');
+    x.assert(p.elems[0].getRaw(), -3);
     x.assert(p.elems[0].getErrorText(), '-1-2');
 
     p = inferredValues('|var| == (true || false)', {'var': false});
