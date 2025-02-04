@@ -66,11 +66,16 @@ store-value: (effect, ":hover")
 set-text: ("element" + |variable|, "something " + 2 + " something else")
 ```
 
-Rules of concatenation are simple: if any of the element is a string, then it'll concatenate as a string. Examples:
+Operations are handled from the left to the right. Operations between parens are performed first:
 
 ```ignore
-1 + 2 + "a" // gives string "12a"
-1 + 2 // gives number 3
+1 + 2 + "a" + (4 * 3)
+// first the parens
+1 + 2 + "a" + 12
+// then from left to right
+3 + "a" + 12
+"3a" + 12
+"3a12"
 ```
 
 This is just a sub-part of expressions which allow more things.

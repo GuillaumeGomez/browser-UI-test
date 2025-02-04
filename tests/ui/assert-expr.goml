@@ -18,6 +18,8 @@ assert: ["1", "2"] != ["1", "2"]
 store-value: (var, (1 + 2) * 4 + 1)
 assert: |var| == 13
 assert: |var| != 12 && 1 < 2
+assert: 1 + 2 + "a" == "3a"
+assert: 1 + 2 + "a" + (4 * 3) == "3a12"
 
 // Should fail.
 assert: |var| != 13

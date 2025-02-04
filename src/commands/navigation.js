@@ -1,6 +1,5 @@
 // Commands changing the current location or reloading the page.
 
-const { cleanString } = require('../parser.js');
 const { hasError } = require('../utils.js');
 const { validator } = require('../validator.js');
 
@@ -22,7 +21,8 @@ function parseGoTo(parser) {
         return ret;
     }
 
-    const path = ret.value.value.trim();
+    const path = ret.value.getStringValue();
+    const code = ret.value.displayInCode();
 
     let goto_arg;
     const permissions = 'await arg.browser.overridePermissions(page.url(), arg.permissions);';
@@ -32,11 +32,11 @@ function parseGoTo(parser) {
         || path.startsWith('www.') === true
         || path.startsWith('file://') === true
     ) {
-        goto_arg = `"${cleanString(path)}"`;
+        goto_arg = code;
     } else if (path.startsWith('.')) {
-        goto_arg = `page.url().split("/").slice(0, -1).join("/") + "/${cleanString(path)}"`;
+        goto_arg = `page.url().split("/").slice(0, -1).join("/") + "/" + ${code}`;
     } else if (path.startsWith('/')) {
-        goto_arg = `page.url().split("/").slice(0, -1).join("/") + "${cleanString(path)}"`;
+        goto_arg = `page.url().split("/").slice(0, -1).join("/") + ${code}`;
     } else {
         return {'error': `a relative path or a full URL was expected, found \`${path}\``};
     }

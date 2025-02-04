@@ -1,5 +1,5 @@
 instructions = [
-  """const url = \"file://foo/a\";
+  """const url = \"file://\"+\"foo\"+\"/a\";
 try {
     await page.goto(url);
 } catch(exc) {

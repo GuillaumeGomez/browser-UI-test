@@ -1,5 +1,5 @@
 instructions = [
-  """const url = \"http://foo/tadam/fa\";
+  """const url = \"http://foo/\"+\"tadam/\"+\"fa\";
 try {
     await page.goto(url);
 } catch(exc) {
