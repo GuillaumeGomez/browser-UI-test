@@ -133,11 +133,11 @@ async function checkUi(x) {
     checkImageFileForTest(
         x, 'tests/ui/screenshot-on-failure-failure.png', 'screenshot-on-failure.goml');
 
+    const errors = x.getTotalErrors();
     print('');
     print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
-        `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
+        `${x.getTotalErrors()} ${plural('error', errors)}`);
 
-    const errors = x.getTotalErrors();
     x.endTestSuite(false);
     return errors;
 }
