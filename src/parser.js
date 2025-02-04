@@ -228,19 +228,37 @@ function canBeCompared(kind1, kind2) {
 }
 
 function convertAsString(elem) {
-    const pos = elem.value.findIndex(v => v.kind === 'object-path');
     elem.kind = 'string';
-    if (pos !== -1) {
+    if (elem.value.some(v => v.kind === 'object-path')) {
         // We remove the object-path from the expression.
         const objPath = elem.value.pop();
         // We remove the first item of the object path and push it at the end of the expression.
         elem.value.push(...objPath.value.splice(0, 1));
+        // FIXME: not great to use eval...
+        const out = eval(elem.displayInCode());
+        const newElem = new StringElement(
+            out,
+            elem.startPos,
+            elem.value[elem.value.length - 1].endPos,
+            elem.fullText,
+            elem.line,
+            elem.error,
+        );
         // We put the expression as the first element of the object path.
-        objPath.value.splice(0, 0, elem);
+        objPath.value.splice(0, 0, newElem);
         // All done!
         return objPath;
     }
-    return elem;
+    // FIXME: not great to use eval...
+    const out = eval(elem.displayInCode());
+    return new StringElement(
+        out,
+        elem.startPos,
+        elem.endPos,
+        elem.fullText,
+        elem.line,
+        elem.error,
+    );
 }
 
 function convertExprAs(elem, convertAs) {
