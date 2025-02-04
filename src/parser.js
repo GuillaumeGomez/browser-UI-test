@@ -21,7 +21,7 @@ function isLetter(c) {
 function matchInteger(s) {
     if (typeof s === 'number' || s instanceof Number) {
         return true;
-    } else if (typeof s === 'string' || s instanceof String) {
+    } else if ((typeof s === 'string' || s instanceof String) && s.length !== 0) {
         for (let i = s.length - 1; i >= 0; --i) {
             if (!isNumber(s.charAt(i))) {
                 return false;

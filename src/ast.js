@@ -35,15 +35,14 @@ function replaceVariable(elem, variables, functionArgs, forceVariableAsString, e
     if (associatedValue instanceof Element) {
         // Nothing to be done in here.
         return associatedValue;
-    } else if (['number', 'string', 'boolean'].includes(typeof associatedValue)) {
-        if (typeof associatedValue === 'boolean') {
-            return new IdentElement(
-                associatedValue.toString(), startPos, endPos, lineNumber);
-        } else if (typeof associatedValue === 'number' ||
-            // eslint-disable-next-line no-extra-parens
-            (!forceVariableAsString && matchInteger(associatedValue) === true)) {
-            return new NumberElement(associatedValue, startPos, endPos, lineNumber);
-        }
+    } else if (typeof associatedValue === 'boolean') {
+        return new IdentElement(
+            associatedValue.toString(), startPos, endPos, lineNumber);
+    } else if (typeof associatedValue === 'number' ||
+        // eslint-disable-next-line no-extra-parens
+        (!forceVariableAsString && matchInteger(associatedValue) === true)) {
+        return new NumberElement(associatedValue, startPos, endPos, lineNumber);
+    } else if (typeof associatedValue === 'string') {
         return new StringElement(
             associatedValue,
             startPos,
