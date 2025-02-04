@@ -925,6 +925,10 @@ function parseAssertInner(parser, assertFalse) {
     const [insertBefore, insertAfter] = getInsertStrings(assertFalse, false);
 
     if (value.kind === 'boolean') {
+        let extra = '';
+        if (value.originallyExpression) {
+            extra = ` (\`${cleanString(value.getRaw())}\`)`;
+        }
         return {
             'instructions': [`\
 function compareArrayLike(t1, t2) {
@@ -954,7 +958,7 @@ function compareJson(j1, j2) {
 
 const check = ${value.value};
 ${insertBefore}if (!check) {
-    throw "Condition \`${cleanString(value.getRaw())}\` was evaluated as false";
+    throw "Condition \`${cleanString(value.getErrorText())}\`${extra} was evaluated as false";
 }${insertAfter}`],
             'wait': false,
             'checkResult': true,

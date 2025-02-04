@@ -477,7 +477,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw().length, 3);
     x.assert(p.elems[0].getRaw()[0].error, null);
     x.assert(p.elems[0].getRaw()[0].kind, 'string');
-    x.assert(p.elems[0].getRaw()[0].displayInCode(), '".result-"+"a"+" ."+"a"');
+    x.assert(p.elems[0].getRaw()[0].value, '.result-a .a');
     x.assert(p.elems[0].getRaw()[1].error, null);
     x.assert(p.elems[0].getRaw()[1].kind, 'json');
     x.assert(p.elems[0].getRaw()[1].getRaw().length, 1);
@@ -507,7 +507,7 @@ function checkTuple(x) {
     x.assert(p.elems[0].getRaw()[0].value, '1');
     x.assert(p.elems[0].getRaw()[1].error, null);
     x.assert(p.elems[0].getRaw()[1].kind, 'string');
-    x.assert(p.elems[0].getRaw()[1].displayInCode(), '".result-"+"a"');
+    x.assert(p.elems[0].getRaw()[1].value, '.result-a');
     x.assert(p.elems[0].getRaw()[2].error, null);
     x.assert(p.elems[0].getRaw()[2].kind, 'json');
     x.assert(p.elems[0].getRaw()[2].getRaw().length, 1);
@@ -1079,7 +1079,7 @@ function checkNumber(x) {
     p.parse();
     x.assert(p.errors, []);
     x.assert(p.elems[0].kind, 'number');
-    x.assert(p.elems[0].getRaw(), '1 - 2');
+    x.assert(p.elems[0].getRaw(), -1);
     x.assert(p.elems[0].getErrorText(), '1-2');
     x.assert(p.elems[0].error, null);
 
@@ -1579,8 +1579,8 @@ assert-css: (".item-left sup", {"color": |color|})`);
     x.assert(p.elems[0].getRaw()[0].key.getErrorText(), '"x"');
     x.assert(p.elems[0].getRaw()[0].value.kind, 'string');
     x.assert(p.elems[0].getRaw()[0].value.getErrorText(), '2 + |y|');
-    x.assert(p.elems[0].getRaw()[0].value.getRaw().length, 3);
-    x.assert(p.elems[0].getRaw()[0].value.displayInCode(), '2+"a"');
+    x.assert(p.elems[0].getRaw()[0].value.getRaw().length, 2);
+    x.assert(p.elems[0].getRaw()[0].value.displayInCode(), '"2a"');
 
 
     p = new Parser('{"x" {"y": 1}}');
@@ -1921,7 +1921,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '1 + 1');
+    x.assert(p.elems[0].getRaw(), 2);
     x.assert(p.elems[0].getErrorText(), '1 + 1');
 
     p = inferredValues('1 + 1 +    4');
@@ -1929,7 +1929,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '1 + 1 + 4');
+    x.assert(p.elems[0].getRaw(), 6);
     x.assert(p.elems[0].getErrorText(), '1 + 1 +    4');
 
     p = inferredValues('"a" + "b" ');
@@ -1937,7 +1937,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].displayInCode(), '"a"+"b"');
+    x.assert(p.elems[0].displayInCode(), '"ab"');
     x.assert(p.elems[0].getErrorText(), '"a" + "b" ');
 
     p = inferredValues('"a" +   "b"');
@@ -1945,7 +1945,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].displayInCode(), '"a"+"b"');
+    x.assert(p.elems[0].displayInCode(), '"ab"');
     x.assert(p.elems[0].getErrorText(), '"a" +   "b"');
 
     p = inferredValues('"a" + 1 ');
@@ -1953,7 +1953,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].displayInCode(), '"a"+1');
+    x.assert(p.elems[0].displayInCode(), '"a1"');
     x.assert(p.elems[0].getErrorText(), '"a" + 1 ');
 
     p = inferredValues('1 + "a" ');
@@ -1961,7 +1961,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].displayInCode(), '1+"a"');
+    x.assert(p.elems[0].displayInCode(), '"1a"');
     x.assert(p.elems[0].getErrorText(), '1 + "a" ');
 
     p = inferredValues('1 + "a" + 4 +    "bcd"');
@@ -1969,7 +1969,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].displayInCode(), '1+"a"+4+"bcd"');
+    x.assert(p.elems[0].displayInCode(), '"1a4bcd"');
     x.assert(p.elems[0].getErrorText(), '1 + "a" + 4 +    "bcd"');
 
     process.env['variable'] = 'hello';
@@ -1978,7 +1978,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].displayInCode(), '"hello"+2');
+    x.assert(p.elems[0].displayInCode(), '"hello2"');
     x.assert(p.elems[0].getErrorText(), '|variable| + 2');
 
     process.env['variable'] = '1';
@@ -1987,7 +1987,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '1 + 2');
+    x.assert(p.elems[0].getRaw(), 3);
     x.assert(p.elems[0].getErrorText(), '|variable| + 2');
     process.env['variable'] = undefined;
 
@@ -1996,7 +1996,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].displayInCode(), '1+""+2');
+    x.assert(p.elems[0].displayInCode(), '"12"');
     x.assert(p.elems[0].getErrorText(), '1 + "" + 2');
 
     p = inferredValues('1 + 2 + "a"');
@@ -2004,7 +2004,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].displayInCode(), '1+2+"a"');
+    x.assert(p.elems[0].displayInCode(), '"3a"');
     x.assert(p.elems[0].getErrorText(), '1 + 2 + "a"');
 
     p = inferredValues('"a" + 1 + 2');
@@ -2012,7 +2012,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].displayInCode(), '"a"+1+2');
+    x.assert(p.elems[0].displayInCode(), '"a12"');
     x.assert(p.elems[0].getErrorText(), '"a" + 1 + 2');
 
     p = inferredValues('"a" + 1 + \n2');
@@ -2020,7 +2020,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].displayInCode(), '"a"+1+2');
+    x.assert(p.elems[0].displayInCode(), '"a12"');
     x.assert(p.elems[0].getErrorText(), '"a" + 1 + \n2');
 
     p = inferredValues('"a" + 1 + // comment?\n2');
@@ -2028,7 +2028,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].displayInCode(), '"a"+1+2');
+    x.assert(p.elems[0].displayInCode(), '"a12"');
     x.assert(p.elems[0].getErrorText(), '"a" + 1 + // comment?\n2');
 
     p = inferredValues('{"x" + 2: 1,}');
@@ -2039,7 +2039,7 @@ function checkExpr(x) {
     x.assert(p.elems[0].getErrorText(), '{"x" + 2: 1,}');
     x.assert(p.elems[0].getRaw()[0].key.kind, 'string');
     x.assert(p.elems[0].getRaw()[0].key.getErrorText(), '"x" + 2');
-    x.assert(p.elems[0].getRaw()[0].key.displayInCode(), '"x"+2');
+    x.assert(p.elems[0].getRaw()[0].key.displayInCode(), '"x2"');
     x.assert(p.elems[0].getRaw()[0].value.kind, 'number');
     x.assert(p.elems[0].getRaw()[0].value.getRaw(), '1');
 
@@ -2056,7 +2056,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '1 + (1 + 3)');
+    x.assert(p.elems[0].getRaw(), 5);
     x.assert(p.elems[0].getErrorText(), '1 + (1 + 3)');
 
     p = inferredValues('1 + (1 + |var| * (1 + (4 * (7 / |var|))))', {'var': 4});
@@ -2064,7 +2064,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '1 + (1 + 4 * (1 + (4 * (7 / 4))))');
+    x.assert(p.elems[0].getRaw(), 41);
     x.assert(p.elems[0].getErrorText(), '1 + (1 + |var| * (1 + (4 * (7 / |var|))))');
 
     p = inferredValues('true || |variable|', {'variable': true});
@@ -2099,7 +2099,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '(1 + 2) * 4');
+    x.assert(p.elems[0].getRaw(), 12);
     x.assert(p.elems[0].getErrorText(), '(1 + 2) * 4');
 
     p = inferredValues('(1 + 2) < (4 * 3)');
@@ -2107,7 +2107,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'boolean');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '(1 + 2) < (4 * 3)');
+    x.assert(p.elems[0].getRaw(), '(3) < (12)');
     x.assert(p.elems[0].getErrorText(), '(1 + 2) < (4 * 3)');
 
     p = inferredValues('(1 - -2) * 4');
@@ -2115,7 +2115,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '(1 - -2) * 4');
+    x.assert(p.elems[0].getRaw(), 12);
     x.assert(p.elems[0].getErrorText(), '(1 - -2) * 4');
 
     p = inferredValues('-1-2');
@@ -2123,7 +2123,7 @@ function checkExpr(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'number');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getRaw(), '-1 - 2');
+    x.assert(p.elems[0].getRaw(), -3);
     x.assert(p.elems[0].getErrorText(), '-1-2');
 
     p = inferredValues('|var| == (true || false)', {'var': false});
@@ -2182,19 +2182,33 @@ function checkExpr(x) {
     x.assert(p.elems[0].getRaw(), '!compareArrayLike(["1", 1], ["a", 3, 2])');
     x.assert(p.elems[0].getErrorText(), '("1", 1) != ("a", 3, 2)');
 
-    p = inferredValues('(1 * 3) + "a"');
+    p = inferredValues('(2 * 3) + "a"');
     x.assert(p.errors, []);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].displayInCode(), '(1 * 3)+"a"');
+    x.assert(p.elems[0].displayInCode(), '"6a"');
 
-    p = inferredValues('(|x| * 3) + "a"', {'x': 1});
+    p = inferredValues('"a" + (2 * 3)');
     x.assert(p.errors, []);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].displayInCode(), '(1 * 3)+"a"');
+    x.assert(p.elems[0].displayInCode(), '"a6"');
+
+    p = inferredValues('"a" + (2 * 3) + 4');
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].displayInCode(), '"a64"');
+
+    p = inferredValues('(|x| * 3) + "a"', {'x': 2});
+    x.assert(p.errors, []);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'string');
+    x.assert(p.elems[0].error, null);
+    x.assert(p.elems[0].displayInCode(), '"6a"');
 }
 
 function checkBlock(x) {
@@ -2463,12 +2477,12 @@ function checkObjectPath(x) {
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'object-path');
     x.assert(p.elems[0].error, null);
-    x.assert(p.elems[0].getStringValue(), '["a","b"+"c","d"]');
+    x.assert(p.elems[0].getStringValue(), '["a","bc","d"]');
     x.assert(p.elems[0].value.length, 3);
     x.assert(p.elems[0].value[0].kind, 'string');
     x.assert(p.elems[0].value[0].value, 'a');
     x.assert(p.elems[0].value[1].kind, 'string');
-    x.assert(p.elems[0].value[1].displayInCode(), '"b"+"c"');
+    x.assert(p.elems[0].value[1].displayInCode(), '"bc"');
     x.assert(p.elems[0].value[2].kind, 'string');
     x.assert(p.elems[0].value[2].value, 'd');
 
@@ -2479,7 +2493,7 @@ function checkObjectPath(x) {
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].value.length, 2);
     x.assert(p.elems[0].value[0].kind, 'string');
-    x.assert(p.elems[0].value[0].displayInCode(), '2+"c"');
+    x.assert(p.elems[0].value[0].displayInCode(), '"2c"');
     x.assert(p.elems[0].value[1].kind, 'string');
     x.assert(p.elems[0].value[1].value, 'd');
 
@@ -2492,7 +2506,7 @@ function checkObjectPath(x) {
     x.assert(p.elems[0].value[0].kind, 'string');
     x.assert(p.elems[0].value[0].value, 'a');
     x.assert(p.elems[0].value[1].kind, 'string');
-    x.assert(p.elems[0].value[1].displayInCode(), '"b"+2+"c"');
+    x.assert(p.elems[0].value[1].displayInCode(), '"b2c"');
     x.assert(p.elems[0].value[2].kind, 'string');
     x.assert(p.elems[0].value[2].value, 'd');
 
@@ -2505,7 +2519,7 @@ function checkObjectPath(x) {
     x.assert(p.elems[0].value[0].kind, 'string');
     x.assert(p.elems[0].value[0].value, 'a');
     x.assert(p.elems[0].value[1].kind, 'string');
-    x.assert(p.elems[0].value[1].displayInCode(), '"b"+"c"');
+    x.assert(p.elems[0].value[1].displayInCode(), '"bc"');
 
     p = inferredValues('"a"."b" + 2');
     x.assert(p.errors, []);
@@ -2516,7 +2530,7 @@ function checkObjectPath(x) {
     x.assert(p.elems[0].value[0].kind, 'string');
     x.assert(p.elems[0].value[0].value, 'a');
     x.assert(p.elems[0].value[1].kind, 'string');
-    x.assert(p.elems[0].value[1].displayInCode(), '"b"+2');
+    x.assert(p.elems[0].value[1].displayInCode(), '"b2"');
 
     p = inferredValues('"a"."b" + "c" + 2');
     x.assert(p.errors, []);
@@ -2527,7 +2541,7 @@ function checkObjectPath(x) {
     x.assert(p.elems[0].value[0].kind, 'string');
     x.assert(p.elems[0].value[0].value, 'a');
     x.assert(p.elems[0].value[1].kind, 'string');
-    x.assert(p.elems[0].value[1].displayInCode(), '"b"+"c"+2');
+    x.assert(p.elems[0].value[1].displayInCode(), '"bc2"');
 
     p = inferredValues('"a"."b" + |c| + 2', {'c': 'r'});
     x.assert(p.errors, []);
@@ -2538,7 +2552,7 @@ function checkObjectPath(x) {
     x.assert(p.elems[0].value[0].kind, 'string');
     x.assert(p.elems[0].value[0].value, 'a');
     x.assert(p.elems[0].value[1].kind, 'string');
-    x.assert(p.elems[0].value[1].displayInCode(), '"b"+"r"+2');
+    x.assert(p.elems[0].value[1].displayInCode(), '"br2"');
 
     p = inferredValues('"a".|c|', {'c': 'r'});
     x.assert(p.errors, []);

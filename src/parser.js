@@ -227,20 +227,122 @@ function canBeCompared(kind1, kind2) {
     return ok2.includes(kind1) && ok2.includes(kind2);
 }
 
-function convertAsString(elem) {
-    const pos = elem.value.findIndex(v => v.kind === 'object-path');
-    elem.kind = 'string';
-    if (pos !== -1) {
+function evalExpr(expr) {
+    let isNumber = false;
+    let isString = false;
+    let lastOperator = null;
+    let out = null;
+    for (const elem of expr.value) {
+        if (out === null) {
+            if (elem.kind === 'tuple') {
+                out = evalExpr(elem);
+                if (typeof out === 'string') {
+                    isString = true;
+                } else {
+                    isNumber = true;
+                }
+            } else if (elem.kind === 'string') {
+                isString = true;
+                out = elem.value;
+            } else {
+                isNumber = true;
+                out = Number(elem.value);
+            }
+        } else if (elem.kind === 'operator') {
+            lastOperator = elem.value;
+        } else if (isString) {
+            if (elem.kind === 'tuple') {
+                out += evalExpr(elem);
+            } else {
+                out += elem.getStringValue();
+            }
+        } else if (isNumber) {
+            let value = elem.value;
+            let kind = elem.kind;
+            if (elem.kind === 'tuple') {
+                value = evalExpr(elem);
+                kind = typeof value;
+            }
+            if (kind === 'string') {
+                isString = true;
+                isNumber = false;
+                out += elem.value;
+            } else {
+                value = Number(value);
+                switch (lastOperator) {
+                case '+':
+                    out += value;
+                    break;
+                case '-':
+                    out -= value;
+                    break;
+                case '*':
+                    out *= value;
+                    break;
+                case '/':
+                    out /= value;
+                    break;
+                case '%':
+                    out %= value;
+                    break;
+                default:
+                    console.error(`Unknown operator ${lastOperator}`);
+                }
+            }
+        } else {
+            if (elem.kind === 'tuple') {
+                out += evalExpr(elem);
+            } else {
+                out += elem.value;
+            }
+        }
+    }
+    return out;
+}
+
+function evaluteExpression(elem) {
+    if (elem.value.some(v => v.kind === 'object-path')) {
         // We remove the object-path from the expression.
         const objPath = elem.value.pop();
         // We remove the first item of the object path and push it at the end of the expression.
         elem.value.push(...objPath.value.splice(0, 1));
+        const out = evalExpr(elem);
+        const newElem = new StringElement(
+            out,
+            elem.startPos,
+            elem.value[elem.value.length - 1].endPos,
+            elem.fullText,
+            elem.line,
+            elem.error,
+        );
         // We put the expression as the first element of the object path.
-        objPath.value.splice(0, 0, elem);
+        objPath.value.splice(0, 0, newElem);
         // All done!
         return objPath;
     }
-    return elem;
+    const out = evalExpr(elem);
+    let ret;
+    if (typeof out === 'string') {
+        ret = new StringElement(
+            out,
+            elem.startPos,
+            elem.endPos,
+            elem.fullText,
+            elem.line,
+            elem.error,
+        );
+    } else {
+        ret = new NumberElement(
+            out,
+            elem.startPos,
+            elem.endPos,
+            elem.line,
+            elem.error,
+            elem.fullText,
+        );
+    }
+    ret.originallyExpression = true;
+    return ret;
 }
 
 function convertExprAs(elem, convertAs) {
@@ -551,8 +653,11 @@ class IdentElement extends Element {
 }
 
 class NumberElement extends Element {
-    constructor(value, startPos, endPos, line, error = null) {
-        super('number', value, startPos, endPos, value, line, error);
+    constructor(value, startPos, endPos, line, error, fullText = null) {
+        if (fullText === null) {
+            fullText = value;
+        }
+        super('number', value, startPos, endPos, fullText, line, error);
         value = String(value);
         this.isFloat = value.includes('.');
         this.isNegative = value.startsWith('-');
@@ -1646,7 +1751,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                     return;
                 }
                 const nb = this.text.substring(start, this.pos);
-                this.push(new NumberElement(nb, start, this.pos, this.currentLine), pushTo);
+                this.push(new NumberElement(nb, start, this.pos, this.currentLine, null), pushTo);
                 this.decreasePos();
                 return;
             } else {
@@ -1655,7 +1760,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
             this.increasePos();
         }
         const nb = this.text.substring(start, this.pos);
-        this.push(new NumberElement(nb, start, this.pos, this.currentLine), pushTo);
+        this.push(new NumberElement(nb, start, this.pos, this.currentLine, null), pushTo);
     }
 
     getPushTo(pushTo) {
@@ -1939,11 +2044,10 @@ ${article}${extra}`);
             return null;
         }
 
-        if (['number', 'boolean'].includes(evaluatedType)) {
-            return convertExprAs(expr, evaluatedType);
+        if (evaluatedType === 'boolean') {
+            return convertExprAs(expr, 'boolean');
         }
-        // Creating the string.
-        return convertAsString(expr);
+        return evaluteExpression(expr);
     }
 
     // In this case, there is no conditional nor comparison operators so the check is only for

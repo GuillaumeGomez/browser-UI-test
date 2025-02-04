@@ -4,7 +4,7 @@ debug...
 [DEBUG] Done!
 [DEBUG] EXECUTING (line 2) "arg.screenshotComparison = false;"
 [DEBUG] Done!
-[DEBUG] EXECUTING (line 3) "const url = "file://"+"$CURRENT_DIR"+"/"+"tests/html_files"+"/elements.html";
+[DEBUG] EXECUTING (line 3) "const url = "file://$CURRENT_DIR/tests/html_files/elements.html";
 try {
     await page.goto(url);
 } catch(exc) {

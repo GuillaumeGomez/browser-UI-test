@@ -69,13 +69,14 @@ set-text: ("element" + |variable|, "something " + 2 + " something else")
 Operations are handled from the left to the right. Operations between parens are performed first:
 
 ```ignore
-1 + 2 + "a" + (4 * 3)
+1 + 2 + "a" + (4 * 3) + 4
 // first the parens
-1 + 2 + "a" + 12
+1 + 2 + "a" + 12 + 4
 // then from left to right
-3 + "a" + 12
-"3a" + 12
-"3a12"
+3 + "a" + 12 + 4
+"3a" + 12 + 4
+"3a12" + 4
+"3a124"
 ```
 
 This is just a sub-part of expressions which allow more things.

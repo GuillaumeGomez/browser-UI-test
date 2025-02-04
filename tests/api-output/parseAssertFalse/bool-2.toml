@@ -24,10 +24,10 @@ function compareJson(j1, j2) {
     return true;
 }
 
-const check = 1 >= 2 / (3 + 6);
+const check = 1 >= 2 / (9);
 try {
 if (!check) {
-    throw \"Condition `1 >= 2 / (3 + 6)` was evaluated as false\";
+    throw \"Condition `1 >= 2 / (3 + 6)` (`1 >= 2 / (9)`) was evaluated as false\";
 }
 } catch(e) { return; } throw \"assert didn't fail\";""",
 ]
