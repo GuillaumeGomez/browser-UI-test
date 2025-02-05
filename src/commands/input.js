@@ -35,7 +35,7 @@ function parseClick(parser) {
         const tuple = p.entries;
         return {
             'instructions': [
-                `await page.click(${tuple[0].value.value}, ${tuple[1].value.value});`,
+                `await pages[0].mouse.click(${tuple[0].value.value}, ${tuple[1].value.value});`,
             ],
         };
     }

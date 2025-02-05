@@ -1,0 +1,7 @@
+// Ensure that `click` works for both coordinates and selector.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+store-position: ("#js-call", {"x": x, "y": y})
+click: (|x|, |y|)
+wait-for-css-false: ("#js-call", {"margin-top": "0px"})
+click: "#the-input"
+assert: "#the-input"
