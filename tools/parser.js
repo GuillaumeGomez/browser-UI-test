@@ -2209,6 +2209,17 @@ function checkExpr(x) {
     x.assert(p.elems[0].kind, 'string');
     x.assert(p.elems[0].error, null);
     x.assert(p.elems[0].displayInCode(), '"6a"');
+
+    // FIXME: This is a known limitation of current parser. Putting `3 * 2` in parens fixes it.
+    p = inferredValues('"a" + 3 * 2');
+    x.assert(p.errors, [{
+        'message': '`*` is not supported for string elements (in `"a" + 3 * 2`)',
+        'isFatal': false,
+        'line': 1,
+    }]);
+    x.assert(p.elems.length, 1);
+    x.assert(p.elems[0].kind, 'expression');
+    // x.assert(p.elems[0].displayInCode(), '"a6"');
 }
 
 function checkBlock(x) {
