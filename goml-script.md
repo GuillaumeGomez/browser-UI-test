@@ -145,6 +145,8 @@ Here's the command list:
  * [`assert-false`](#assert-false)
  * [`assert-attribute`](#assert-attribute)
  * [`assert-attribute-false`](#assert-attribute-false)
+ * [`assert-clipboard`](#assert-clipboard)
+ * [`assert-clipboard-false`](#assert-clipboard-false)
  * [`assert-count`](#assert-count)
  * [`assert-count-false`](#assert-count-false)
  * [`assert-css`](#assert-css)
@@ -221,6 +223,7 @@ Here's the command list:
  * [`set-window-property`](#set-window-property)
  * [`show-text`](#show-text)
  * [`store-attribute`](#store-attribute)
+ * [`store-clipboard`](#store-clipboard)
  * [`store-css`](#store-css)
  * [`store-document-property`](#store-document-property)
  * [`store-local-storage`](#store-local-storage)
@@ -234,6 +237,8 @@ Here's the command list:
  * [`wait-for-false`](#wait-for-false)
  * [`wait-for-attribute`](#wait-for-attribute)
  * [`wait-for-attribute-false`](#wait-for-attribute-false)
+ * [`wait-for-clipboard`](#wait-for-clipboard)
+ * [`wait-for-clipboard-false`](#wait-for-clipboard-false)
  * [`wait-for-count`](#wait-for-count)
  * [`wait-for-count-false`](#wait-for-count-false)
  * [`wait-for-css`](#wait-for-css)
@@ -382,6 +387,51 @@ assert-attribute-false: (
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-attribute-false) command.
 
 Another thing to be noted: if you don't care whether the selector exists or not either, take a look at the [`expect-failure`](#expect-failure) command too.
+
+#### assert-clipboard
+
+**assert-clipboard** command checks the content of the clipboard. To run this command, you need
+to first enable the `clipboard-read` permission:
+
+```
+permissions: ["clipboard-read"]
+```
+
+Examples:
+
+```
+assert-clipboard: "hello"
+```
+
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH" or "STARTS_WITH":
+
+```
+assert-clipboard: ("hello", CONTAINS)
+assert-clipboard: ("hello", [CONTAINS, STARTS_WITH])
+```
+
+#### assert-clipboard-false
+
+**assert-clipboard-false** command checks that the clipboard doesn't contain the specified content.
+To run this command, you need to first enable the `clipboard-read` permission:
+
+```
+permissions: ["clipboard-read"]
+```
+
+Examples:
+
+```
+assert-clipboard-false: "hello"
+```
+
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH" or "STARTS_WITH":
+
+```
+// You can also add some sub checks:
+assert-clipboard-false: ("hello", CONTAINS)
+assert-clipboard-false: ("hello", [CONTAINS, STARTS_WITH])
+```
 
 #### assert-count
 
@@ -1704,6 +1754,22 @@ store-attribute: ("#button", {"id": variable_name, "class": another_variable})
 
 For more information about variables, read the [variables section](#variables).
 
+#### store-clipboard
+
+**store-clipboard** command stores the content of the clipboard. To run this command, you need
+to first enable the `clipboard-read` permission:
+
+```
+permissions: ["clipboard-read"]
+```
+
+Examples:
+
+```
+store-clipboard: variable
+assert: |variable| == "clipboard_content"
+```
+
 #### store-css
 
 **store-css** command stores an element's CSS into a variable. Examples:
@@ -1972,6 +2038,50 @@ wait-for-attribute-false: (
 ```
 
 If you want to wait for attributes to be removed or have the expected value, take a look at [`wait-for-attribute`](#wait-for-attribute).
+
+#### wait-for-clipboard
+
+**wait-for-clipboard** command waits for the clipboard content to be as expected. To run this
+command, you need to first enable the `clipboard-read` permission:
+
+```
+permissions: ["clipboard-read"]
+```
+
+Examples:
+
+```
+wait-for-clipboard: "a"
+```
+
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH" or "STARTS_WITH":
+
+```
+wait-for-clipboard: ("hello", CONTAINS)
+wait-for-clipboard: ("hello", [CONTAINS, STARTS_WITH])
+```
+
+#### wait-for-clipboard-false
+
+**wait-for-clipboard-false** command waits for the clipboard content to not be as provided. To run
+this command, you need to first enable the `clipboard-read` permission:
+
+```
+permissions: ["clipboard-read"]
+```
+
+Examples:
+
+```
+wait-for-clipboard-false: "a"
+```
+
+You can use more specific checks as well by using one of the following identifiers: "CONTAINS", "ENDS_WITH" or "STARTS_WITH":
+
+```
+wait-for-clipboard-false: ("hello", CONTAINS)
+wait-for-clipboard-false: ("hello", [CONTAINS, STARTS_WITH])
+```
 
 #### wait-for-count
 
