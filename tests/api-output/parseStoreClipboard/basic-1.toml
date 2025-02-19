@@ -1,0 +1,9 @@
+instructions = [
+  """if (!arg.permissions.includes('clipboard-read')) {
+    throw 'Missing `clipboard-read` permission. You can enable by using `permissions: [\"clipboard-read\"]`';
+}
+
+const clipData = await page.evaluate(() => navigator.clipboard.readText());
+arg.setVariable(\"tmp\", clipData);""",
+]
+wait = false

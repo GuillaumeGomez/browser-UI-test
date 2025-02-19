@@ -1,0 +1,20 @@
+instructions = [
+  """if (!arg.permissions.includes('clipboard-read')) {
+    throw 'Missing `clipboard-read` permission. You can enable by using `permissions: [\"clipboard-read\"]`';
+}
+
+const value = \"a\";
+const elemText = await page.evaluate(() => navigator.clipboard.readText());
+const errors = [];
+if (elemText !== value) {
+    errors.push(\"`\" + elemText + \"` isn't equal to `\" + value + \"`\");
+}
+if (errors.length !== 0) {
+    const errs = errors.join(\"; \");
+    throw \"The following errors happened: [\" + errs + \"]\";
+}""",
+]
+wait = false
+checkResult = true
+warnings = [
+]
