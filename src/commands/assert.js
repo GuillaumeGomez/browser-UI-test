@@ -12,6 +12,7 @@ const {
     commonPositionCheckCode,
     commonSizeCheckCode,
     generateCheckObjectPaths,
+    checkClipboardPermission,
 } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 const { cleanString } = require('../parser.js');
@@ -792,7 +793,7 @@ function parseAssertCountFalse(parser) {
 }
 
 function parseAssertTextInner(parser, assertFalse) {
-    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH', 'NEAR', 'ALL'];
+    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH', 'ALL'];
     const ret = validator(parser,
         {
             kind: 'tuple',
@@ -1408,12 +1409,98 @@ function parseAssertSizeFalse(parser) {
     return parseAssertSizeInner(parser, true);
 }
 
+function parseAssertClipboardInner(parser, assertFalse) {
+    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH'];
+    const ret = validator(parser, {
+        kind: 'string',
+        alternatives: [
+            {
+                kind: 'tuple',
+                elements: [
+                    { kind: 'string' },
+                    {
+                        kind: 'ident',
+                        allowed: identifiers,
+                        optional: true,
+                        alternatives: [
+                            {
+                                kind: 'array',
+                                valueTypes: {
+                                    'ident': {
+                                        allowed: identifiers,
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const enabledChecks = new Set();
+    let value;
+    const warnings = [];
+    if (ret.value.kind === 'tuple') {
+        const tuple = ret.value.entries;
+
+        if (tuple.length > 1) {
+            fillEnabledChecksV2(tuple[1], enabledChecks, warnings, 'second');
+        }
+        value = tuple[0].value.displayInCode();
+    } else {
+        value = ret.value.displayInCode();
+    }
+
+    const [init, getter, callback] = checkClipboardPermission('elemText');
+    const command = `${init}
+const value = ${value};
+${getter}
+const errors = [];
+${makeTextExtendedChecks(enabledChecks, assertFalse).join('\n')}
+if (errors.length !== 0) {
+    const errs = errors.join("; ");
+    throw "The following errors happened: [" + errs + "]";
+}`;
+    return {
+        'instructions': [command],
+        'wait': false,
+        'checkResult': true,
+        'warnings': warnings,
+        'callback': callback,
+    };
+}
+
+// Possible inputs:
+//
+// * "string"
+// * ("string")
+// * ("string", IDENT)
+// * ("string", [IDENT])
+function parseAssertClipboard(parser) {
+    return parseAssertClipboardInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * "string"
+// * ("string")
+// * ("string", IDENT)
+// * ("string", [IDENT])
+function parseAssertClipboardFalse(parser) {
+    return parseAssertClipboardInner(parser, true);
+}
 
 module.exports = {
     'parseAssert': parseAssert,
     'parseAssertFalse': parseAssertFalse,
     'parseAssertAttribute': parseAssertAttribute,
     'parseAssertAttributeFalse': parseAssertAttributeFalse,
+    'parseAssertClipboard': parseAssertClipboard,
+    'parseAssertClipboardFalse': parseAssertClipboardFalse,
     'parseAssertCount': parseAssertCount,
     'parseAssertCountFalse': parseAssertCountFalse,
     'parseAssertCss': parseAssertCss,

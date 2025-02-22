@@ -219,6 +219,18 @@ function checkAssertAttribute(x, func) {
     func('("//a",\n    \n{"b": "c"}, \n ALL)', 'multiline-2');
 }
 
+function checkAssertClipboard(x, func) {
+    func('1', 'err-1');
+    func('("a", {})', 'err-2');
+    func('("a", [A])', 'err-3');
+    func('("a", [ALL])', 'err-4');
+
+    func('"a"', 'basic-1');
+    func('("a",)', 'basic-2');
+    func('("a", CONTAINS)', 'basic-3');
+    func('("a", [CONTAINS])', 'basic-4');
+}
+
 function checkAssertCount(x, func) {
     func('("a", 1, "c")', 'err-1');
     func('("a", 1 2)', 'err-2');
@@ -1857,6 +1869,14 @@ function checkStoreAttribute(x, func) {
     func('("//a", {"blop": a})', 'xpath-1');
 }
 
+function checkStoreClipboard(x, func) {
+    func('', 'err-1');
+    func('null', 'err-2');
+    func('"a"', 'err-3');
+
+    func('tmp', 'basic-1');
+}
+
 function checkStoreCss(x, func) {
     func('', 'err-1');
     func('hello', 'err-2');
@@ -2129,6 +2149,18 @@ function checkWaitForAttribute(x, func) {
     func('("a", {"x": 1}, [CONTAINS, ALL])', 'extra-3');
 }
 
+function checkWaitForClipboard(x, func) {
+    func('1', 'err-1');
+    func('("a", {})', 'err-2');
+    func('("a", [A])', 'err-3');
+    func('("a", [ALL])', 'err-4');
+
+    func('"a"', 'basic-1');
+    func('("a",)', 'basic-2');
+    func('("a", CONTAINS)', 'basic-3');
+    func('("a", [CONTAINS])', 'basic-4');
+}
+
 function checkWaitForProperty(x, func) {
     // Check integer
     func('', 'err-1');
@@ -2349,6 +2381,16 @@ const TO_CHECK = [
         'name': 'assert-attribute-false',
         'func': checkAssertAttribute,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertAttributeFalse, x, e, name, o),
+    },
+    {
+        'name': 'assert-clipboard',
+        'func': checkAssertClipboard,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertClipboard, x, e, name, o),
+    },
+    {
+        'name': 'assert-clipboard-false',
+        'func': checkAssertClipboard,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertClipboardFalse, x, e, name, o),
     },
     {
         'name': 'assert-css',
@@ -2752,6 +2794,11 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreAttribute, x, e, name, o),
     },
     {
+        'name': 'store-clipboard',
+        'func': checkStoreClipboard,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreClipboard, x, e, name, o),
+    },
+    {
         'name': 'store-css',
         'func': checkStoreCss,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreCss, x, e, name, o),
@@ -2825,6 +2872,16 @@ const TO_CHECK = [
         'name': 'wait-for-attribute-false',
         'func': checkWaitForAttribute,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForAttributeFalse, x, e, name, o),
+    },
+    {
+        'name': 'wait-for-clipboard',
+        'func': checkWaitForClipboard,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForClipboard, x, e, name, o),
+    },
+    {
+        'name': 'wait-for-clipboard-false',
+        'func': checkWaitForClipboard,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseWaitForClipboardFalse, x, e, name, o),
     },
     {
         'name': 'wait-for-count',

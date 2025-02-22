@@ -1,0 +1,23 @@
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+set-timeout: 500
+
+assert-clipboard: ""
+assert-clipboard-false: "a"
+store-clipboard: value
+assert: |value| == ""
+// Should not wait
+wait-for-clipboard-false: "a"
+
+click: "#clipboard"
+wait-for-clipboard: "hello"
+wait-for-clipboard: ("hell", [CONTAINS, STARTS_WITH])
+assert-clipboard-false: ""
+assert-clipboard: "hello"
+assert-clipboard: ("hell", [STARTS_WITH])
+assert-clipboard: ("llo", [ENDS_WITH])
+store-clipboard: value
+assert: |value| == "hello"
+
+// Should fail
+wait-for-clipboard-false: "hello"
+wait-for-clipboard: "hell"

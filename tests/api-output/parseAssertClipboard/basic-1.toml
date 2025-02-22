@@ -1,0 +1,32 @@
+instructions = [
+  """await page.evaluate(() => {
+    (function() {
+        if (document.getElementById(\"created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\")) {
+            return;
+        }
+        const tmp = document.createElement(\"div\");
+        tmp.id = \"created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\";
+        tmp.style = \"height:2px;width:2px;position:static;\";
+        tmp.onclick = () => {
+            tmp.clipboardContent = navigator.clipboard.readText();
+        };
+        document.body.appendChild(tmp);
+    }());
+});
+const clipboardClickElem = await page.waitForSelector(\"#created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\", {timeout: 1000});
+const value = \"a\";
+await clipboardClickElem.click();
+const elemText = await page.evaluate(() => document.getElementById(\"created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\").clipboardContent);
+const errors = [];
+if (elemText !== value) {
+    errors.push(\"`\" + elemText + \"` isn't equal to `\" + value + \"`\");
+}
+if (errors.length !== 0) {
+    const errs = errors.join(\"; \");
+    throw \"The following errors happened: [\" + errs + \"]\";
+}""",
+]
+wait = false
+checkResult = true
+warnings = [
+]

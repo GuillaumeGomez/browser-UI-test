@@ -1,0 +1,45 @@
+instructions = [
+  """await page.evaluate(() => {
+    (function() {
+        if (document.getElementById(\"created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\")) {
+            return;
+        }
+        const tmp = document.createElement(\"div\");
+        tmp.id = \"created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\";
+        tmp.style = \"height:2px;width:2px;position:static;\";
+        tmp.onclick = () => {
+            tmp.clipboardContent = navigator.clipboard.readText();
+        };
+        document.body.appendChild(tmp);
+    }());
+});
+const clipboardClickElem = await page.waitForSelector(\"#created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\", {timeout: 1000});
+const value = \"a\";const timeLimit = pages[0].getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let errors = null;
+while (true) {
+    await clipboardClickElem.click();
+    const elemText = await page.evaluate(() => document.getElementById(\"created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\").clipboardContent);
+    errors = [];
+    if (!elemText.includes(value)) {
+        errors.push(\"`\" + elemText + \"` doesn't contain `\" + value + \"` (for CONTAINS check)\");
+    }
+    if (errors.length === 0) {
+        break;
+    }
+    const err = errors.join(\", \");
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error(\"The following checks still fail: [\" + err + \"]\");
+    }
+}""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

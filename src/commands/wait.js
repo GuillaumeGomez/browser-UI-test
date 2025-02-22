@@ -10,6 +10,7 @@ const {
     commonPositionCheckCode,
     commonSizeCheckCode,
     generateCheckObjectPaths,
+    checkClipboardPermission,
 } = require('./utils.js');
 const { validator } = require('../validator.js');
 // Not the same `utils.js`!
@@ -1323,11 +1324,111 @@ ${indentString(incr, 1)}
     };
 }
 
+function parseWaitForClipboardInner(parser, waitFalse) {
+    const identifiers = ['CONTAINS', 'ENDS_WITH', 'STARTS_WITH'];
+    const ret = validator(parser, {
+        kind: 'string',
+        alternatives: [
+            {
+                kind: 'tuple',
+                elements: [
+                    { kind: 'string' },
+                    {
+                        kind: 'ident',
+                        allowed: identifiers,
+                        optional: true,
+                        alternatives: [
+                            {
+                                kind: 'array',
+                                valueTypes: {
+                                    'ident': {
+                                        allowed: identifiers,
+                                    },
+                                },
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const enabledChecks = new Set();
+    let value;
+    const warnings = [];
+    if (ret.value.kind === 'tuple') {
+        const tuple = ret.value.entries;
+
+        if (tuple.length > 1) {
+            fillEnabledChecksV2(tuple[1], enabledChecks, warnings, 'second');
+        }
+        value = tuple[0].value.displayInCode();
+    } else {
+        value = ret.value.displayInCode();
+    }
+    let errorMessage = '"The following checks still fail: [" + err + "]"';
+    let comp = '===';
+    if (waitFalse) {
+        comp = '!==';
+        errorMessage = '"All checks still succeed"';
+    }
+    const varName = 'errors';
+
+    const [init, getter, callback] = checkClipboardPermission('elemText');
+    let instructions = `${init}
+const value = ${value};`;
+    instructions += getWaitForElems(
+        varName,
+        `\
+${getter}
+${varName} = [];
+${makeTextExtendedChecks(enabledChecks, waitFalse).join('\n')}
+if (${varName}.length ${comp} 0) {
+    break;
+}
+const err = ${varName}.join(", ");`,
+        `throw new Error(${errorMessage});`,
+    ).join('\n');
+
+    return {
+        'instructions': [instructions],
+        'wait': false,
+        'warnings': warnings,
+        'checkResult': true,
+        'callback': callback,
+    };
+}
+
+// Possible inputs:
+//
+// * "string"
+// * ("string")
+// * ("string", IDENT)
+// * ("string", [IDENT])
+function parseWaitForClipboard(parser) {
+    return parseWaitForClipboardInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * "string"
+// * ("string")
+// * ("string", IDENT)
+// * ("string", [IDENT])
+function parseWaitForClipboardFalse(parser) {
+    return parseWaitForClipboardInner(parser, true);
+}
+
 module.exports = {
     'parseWaitFor': parseWaitFor,
     'parseWaitForFalse': parseWaitForFalse,
     'parseWaitForAttribute': parseWaitForAttribute,
     'parseWaitForAttributeFalse': parseWaitForAttributeFalse,
+    'parseWaitForClipboard': parseWaitForClipboard,
+    'parseWaitForClipboardFalse': parseWaitForClipboardFalse,
     'parseWaitForCount': parseWaitForCount,
     'parseWaitForCountFalse': parseWaitForCountFalse,
     'parseWaitForCss': parseWaitForCss,
