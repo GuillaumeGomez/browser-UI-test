@@ -1,0 +1,37 @@
+instructions = [
+  """const permissions = [\"clipboard-read\", \"clipboard-write\"];
+const permErrors = [];
+
+for (const permission of permissions) {
+    if (!arg.permissions.includes(permission)) {
+        throw 'Missing `' + permission + '` permission. You can enable it by using `permissions: [' + permissions.map(x => '\"' + x + '\"').join(', ') + ']`';
+    }
+}
+const value = \"a\";const timeLimit = pages[0].getDefaultTimeout();
+const timeAdd = 50;
+let allTime = 0;
+let errors = null;
+while (true) {
+    const elemText = await page.evaluate(() => navigator.clipboard.readText());
+    errors = [];
+    if (elemText === value) {
+        errors.push(\"`\" + elemText + \"` is equal to `\" + value + \"`\");
+    }
+    if (errors.length !== 0) {
+        break;
+    }
+    const err = errors.join(\", \");
+    await new Promise(r => setTimeout(r, timeAdd));
+    if (timeLimit === 0) {
+        continue;
+    }
+    allTime += timeAdd;
+    if (allTime >= timeLimit) {
+        throw new Error(\"All checks still succeed\");
+    }
+}""",
+]
+wait = false
+warnings = [
+]
+checkResult = true

@@ -392,6 +392,19 @@ function checkObjectPaths(object, path, callback, notFoundCallback) {
 }`;
 }
 
+function checkClipboardPermission() {
+    return `\
+const permissions = ["clipboard-read"];
+const permErrors = [];
+
+for (const permission of permissions) {
+    if (!arg.permissions.includes(permission)) {
+        throw 'Missing \`' + permission + '\` permission. You can enable it by using \`\
+permissions: [' + permissions.map(x => '"' + x + '"').join(', ') + ']\`';
+    }
+}`;
+}
+
 module.exports = {
     'getAndSetElements': getAndSetElements,
     'getInsertStrings': getInsertStrings,
@@ -404,4 +417,5 @@ module.exports = {
     'commonPositionCheckCode': commonPositionCheckCode,
     'commonSizeCheckCode': commonSizeCheckCode,
     'generateCheckObjectPaths': generateCheckObjectPaths,
+    'checkClipboardPermission': checkClipboardPermission,
 };

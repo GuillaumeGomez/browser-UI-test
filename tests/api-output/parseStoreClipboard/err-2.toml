@@ -1,0 +1,1 @@
+error = """unexpected ident `null`. Not allowed idents are [`CURRENT_DIR`, `null`]"""

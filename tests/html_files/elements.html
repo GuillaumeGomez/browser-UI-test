@@ -81,6 +81,7 @@ header {
 		<button id="js-change-pos" onclick="updateWaitElementPosition()">hey</button>
 		<button id="js-change-size" onclick="updateWaitElementSize()" style="width:30px;height:20px;">hey</button>
 		<button id="js-remove-elem" onclick="removeElem()">hey</button>
+		<button id="clipboard" onclick="copyToClipboard()">hey</button>
 		<script>
 window.windowProp = null;
 document.windowProp = null;
@@ -178,6 +179,19 @@ async function updateButtonsColor() {
 }
 function removeElem() {
 setTimeout(() => document.getElementById('created-one').remove(), 100);
+}
+function copyToClipboard() {
+const el = document.createElement("textarea");
+el.value = "hello";
+el.setAttribute("readonly", "");
+// To not make it appear on the screen.
+el.style.position = "absolute";
+el.style.left = "-9999px";
+
+document.body.appendChild(el);
+el.select();
+document.execCommand("copy");
+document.body.removeChild(el);
 }
 </script>
 	</body>

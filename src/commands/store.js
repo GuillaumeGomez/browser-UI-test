@@ -5,6 +5,7 @@ const {
     indentString,
     getSizes,
     generateCheckObjectPaths,
+    checkClipboardPermission,
 } = require('./utils.js');
 const { validator } = require('../validator.js');
 // Not the same `utils.js`!
@@ -607,8 +608,32 @@ function parseStoreWindowProperty(parser) {
     return parseStoreObjectInner(parser, 'window');
 }
 
+// Possible inputs:
+//
+// * ident
+function parseStoreClipboard(parser) {
+    const ret = validator(parser, {
+        kind: 'ident',
+        notAllowed: [RESERVED_VARIABLE_NAME, 'null'],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const command = `${checkClipboardPermission()}
+
+const clipData = await page.evaluate(() => navigator.clipboard.readText());
+arg.setVariable("${ret.value.displayInCode()}", clipData);`;
+
+    return {
+        'instructions': [command],
+        'wait': false,
+    };
+}
+
 module.exports = {
     'parseStoreAttribute': parseStoreAttribute,
+    'parseStoreClipboard': parseStoreClipboard,
     'parseStoreCss': parseStoreCss,
     'parseStoreDocumentProperty': parseStoreDocumentProperty,
     'parseStoreLocalStorage': parseStoreLocalStorage,

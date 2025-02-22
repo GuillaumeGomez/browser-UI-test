@@ -1,0 +1,14 @@
+instructions = [
+  """const permissions = [\"clipboard-read\", \"clipboard-write\"];
+const permErrors = [];
+
+for (const permission of permissions) {
+    if (!arg.permissions.includes(permission)) {
+        throw 'Missing `' + permission + '` permission. You can enable it by using `permissions: [' + permissions.map(x => '\"' + x + '\"').join(', ') + ']`';
+    }
+}
+
+const clipData = await page.evaluate(() => navigator.clipboard.readText());
+arg.setVariable(\"tmp\", clipData);""",
+]
+wait = false
