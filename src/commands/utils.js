@@ -392,6 +392,42 @@ function checkObjectPaths(object, path, callback, notFoundCallback) {
 }`;
 }
 
+function checkClipboardPermission(varName) {
+    const id = 'created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts';
+    return [
+        `\
+await page.evaluate(() => {
+    (function() {
+        if (document.getElementById("${id}")) {
+            return;
+        }
+        const tmp = document.createElement("div");
+        tmp.id = "${id}";
+        tmp.style = "height:2px;width:2px;position:static;";
+        tmp.onclick = () => {
+            tmp.clipboardContent = navigator.clipboard.readText();
+        };
+        document.body.appendChild(tmp);
+    }());
+});
+const clipboardClickElem = await page.waitForSelector("#${id}", {timeout: 1000});`,
+        `\
+await clipboardClickElem.click();
+const ${varName} = await page.evaluate(() => document.getElementById("${id}").clipboardContent);`,
+        async page => {
+            if (!page) {
+                return;
+            }
+            await page.evaluate(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.remove();
+                }
+            }, id);
+        },
+    ];
+}
+
 module.exports = {
     'getAndSetElements': getAndSetElements,
     'getInsertStrings': getInsertStrings,
@@ -404,4 +440,5 @@ module.exports = {
     'commonPositionCheckCode': commonPositionCheckCode,
     'commonSizeCheckCode': commonSizeCheckCode,
     'generateCheckObjectPaths': generateCheckObjectPaths,
+    'checkClipboardPermission': checkClipboardPermission,
 };

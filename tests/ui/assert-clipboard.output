@@ -1,12 +1,8 @@
 => Starting doc-ui tests...
 
 assert-clipboard... FAILED
-[ERROR] `tests/ui/assert-clipboard.goml` line 5: Missing `clipboard-read` permission. You can enable by using `permissions: ["clipboard-read"]`: for command `assert-clipboard: "a"`
-[ERROR] `tests/ui/assert-clipboard.goml` line 6: Missing `clipboard-read` permission. You can enable by using `permissions: ["clipboard-read"]`: for command `assert-clipboard-false: "a"`
-[ERROR] `tests/ui/assert-clipboard.goml` line 7: Missing `clipboard-read` permission. You can enable by using `permissions: ["clipboard-read"]`: for command `store-clipboard: value`
-[ERROR] `tests/ui/assert-clipboard.goml` line 8: Missing `clipboard-read` permission. You can enable by using `permissions: ["clipboard-read"]`: for command `wait-for-clipboard: "a"`
-[ERROR] `tests/ui/assert-clipboard.goml` line 16: Error: All checks still succeed: for command `wait-for-clipboard-false: "a"`
-[ERROR] `tests/ui/assert-clipboard.goml` line 30: Error: The following checks still fail: [`hello` isn't equal to `hell`]: for command `wait-for-clipboard: "hell"`
+[ERROR] `tests/ui/assert-clipboard.goml` line 9: Error: All checks still succeed: for command `wait-for-clipboard-false: "a"`
+[ERROR] `tests/ui/assert-clipboard.goml` line 23: Error: The following checks still fail: [`hello` isn't equal to `hell`]: for command `wait-for-clipboard: "hell"`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

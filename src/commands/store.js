@@ -5,6 +5,7 @@ const {
     indentString,
     getSizes,
     generateCheckObjectPaths,
+    checkClipboardPermission,
 } = require('./utils.js');
 const { validator } = require('../validator.js');
 // Not the same `utils.js`!
@@ -619,18 +620,17 @@ function parseStoreClipboard(parser) {
         return ret;
     }
 
-    const permission = 'clipboard-read';
-    const command = `if (!arg.permissions.includes('${permission}')) {
-    throw 'Missing \`${permission}\` permission. You can enable by using \`permissions: \
-["${permission}"]\`';
-}
+    const varName = 'clipData';
+    const [init, getter, callback] = checkClipboardPermission(varName);
+    const command = `${init}
 
-const clipData = await page.evaluate(() => navigator.clipboard.readText());
-arg.setVariable("${ret.value.displayInCode()}", clipData);`;
+${getter}
+arg.setVariable("${ret.value.displayInCode()}", ${varName});`;
 
     return {
         'instructions': [command],
         'wait': false,
+        'removeElement': callback,
     };
 }
 

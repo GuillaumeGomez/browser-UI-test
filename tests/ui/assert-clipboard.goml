@@ -1,13 +1,6 @@
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 set-timeout: 500
 
-// Should fail because the permission isn't set.
-assert-clipboard: "a"
-assert-clipboard-false: "a"
-store-clipboard: value
-wait-for-clipboard: "a"
-
-permissions: ["clipboard-read"]
 assert-clipboard: ""
 assert-clipboard-false: "a"
 store-clipboard: value

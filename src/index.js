@@ -187,7 +187,14 @@ async function runAllCommands(loaded, logs, options, browser) {
     const debug_log = new Debug(options.debug, logs);
     const warnings = [];
 
-    const page = await browser.newPage(options, debug_log);
+    let page;
+    try {
+        page = await browser.newPage(options, debug_log);
+    } catch (e) {
+        // try again after waiting a bit first to avoid "Session with given id not found" error...
+        await new Promise(r => setTimeout(r, 100));
+        page = await browser.newPage(options, debug_log);
+    }
     await browser.emulate(options, page, debug_log);
     try {
         const extras = {
@@ -368,7 +375,7 @@ ${s_err}`);
                 }
             }
             if (failed === false && command['callback']) {
-                command['callback']();
+                await command['callback'](pages[pages.length - 1]);
             }
             if (failed === false
                 && command['checkResult'] === true

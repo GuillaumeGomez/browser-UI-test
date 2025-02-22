@@ -1,10 +1,22 @@
 instructions = [
-  """if (!arg.permissions.includes('clipboard-read')) {
-    throw 'Missing `clipboard-read` permission. You can enable by using `permissions: [\"clipboard-read\"]`';
-}
-
+  """await page.evaluate(() => {
+    (function() {
+        if (document.getElementById(\"created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\")) {
+            return;
+        }
+        const tmp = document.createElement(\"div\");
+        tmp.id = \"created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\";
+        tmp.style = \"height:2px;width:2px;position:static;\";
+        tmp.onclick = () => {
+            tmp.clipboardContent = navigator.clipboard.readText();
+        };
+        document.body.appendChild(tmp);
+    }());
+});
+const clipboardClickElem = await page.waitForSelector(\"#created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\", {timeout: 1000});
 const value = \"a\";
-const elemText = await page.evaluate(() => navigator.clipboard.readText());
+await clipboardClickElem.click();
+const elemText = await page.evaluate(() => document.getElementById(\"created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\").clipboardContent);
 const errors = [];
 if (elemText.includes(value)) {
     errors.push(\"`\" + elemText + \"` contains `\" + value + \"` (for CONTAINS check)\");

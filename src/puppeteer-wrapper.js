@@ -1,7 +1,9 @@
 const process = require('process');
 
 function buildPuppeteerOptions(options) {
-    const puppeteer_options = {'args': ['--font-render-hinting=none']};
+    const puppeteer_options = {'args': [
+        '--font-render-hinting=none',
+    ]};
     if (options.headless === false) {
         puppeteer_options['headless'] = false;
     } else {
@@ -111,8 +113,10 @@ class PuppeteerWrapper {
         if (this.browser === null) {
             return;
         }
-        const context = this.browser.defaultBrowserContext();
-        await context.overridePermissions(url, permissions);
+        permissions = new Set(permissions);
+        permissions.add('clipboard-read');
+        const context = this.context === null ? this.browser.defaultBrowserContext() : this.context;
+        await context.overridePermissions(url, Array.from(permissions));
     }
 
     async emulate(options, page, debug_log) {
