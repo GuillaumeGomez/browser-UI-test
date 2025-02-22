@@ -12,6 +12,7 @@ const {
     commonPositionCheckCode,
     commonSizeCheckCode,
     generateCheckObjectPaths,
+    checkClipboardPermission,
 } = require('./utils.js');
 const { COLOR_CHECK_ERROR } = require('../consts.js');
 const { cleanString } = require('../parser.js');
@@ -1454,12 +1455,7 @@ function parseAssertClipboardInner(parser, assertFalse) {
         value = ret.value.displayInCode();
     }
 
-    const permission = 'clipboard-read';
-    const command = `if (!arg.permissions.includes('${permission}')) {
-    throw 'Missing \`${permission}\` permission. You can enable by using \`permissions: \
-["${permission}"]\`';
-}
-
+    const command = `${checkClipboardPermission()}
 const value = ${value};
 const elemText = await page.evaluate(() => navigator.clipboard.readText());
 const errors = [];

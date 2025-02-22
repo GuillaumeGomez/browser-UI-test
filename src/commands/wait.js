@@ -10,6 +10,7 @@ const {
     commonPositionCheckCode,
     commonSizeCheckCode,
     generateCheckObjectPaths,
+    checkClipboardPermission,
 } = require('./utils.js');
 const { validator } = require('../validator.js');
 // Not the same `utils.js`!
@@ -1368,7 +1369,6 @@ function parseWaitForClipboardInner(parser, waitFalse) {
     } else {
         value = ret.value.displayInCode();
     }
-    const permission = 'clipboard-read';
     let errorMessage = '"The following checks still fail: [" + err + "]"';
     let comp = '===';
     if (waitFalse) {
@@ -1377,10 +1377,7 @@ function parseWaitForClipboardInner(parser, waitFalse) {
     }
     const varName = 'errors';
 
-    let instructions = `if (!arg.permissions.includes('${permission}')) {
-    throw 'Missing \`${permission}\` permission. You can enable by using \`permissions: \
-["${permission}"]\`';
-}
+    let instructions = `${checkClipboardPermission()}
 const value = ${value};`;
     instructions += getWaitForElems(
         varName,
