@@ -1,7 +1,12 @@
 const process = require('process');
 
 function buildPuppeteerOptions(options) {
-    const puppeteer_options = {'args': ['--font-render-hinting=none']};
+    const puppeteer_options = {'args': [
+        '--font-render-hinting=none',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+    ]};
     if (options.headless === false) {
         puppeteer_options['headless'] = false;
     } else {
@@ -111,7 +116,7 @@ class PuppeteerWrapper {
         if (this.browser === null) {
             return;
         }
-        const context = this.browser.defaultBrowserContext();
+        const context = this.context === null ? this.browser.defaultBrowserContext() : this.context;
         await context.overridePermissions(url, permissions);
     }
 

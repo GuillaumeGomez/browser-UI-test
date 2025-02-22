@@ -394,7 +394,7 @@ function checkObjectPaths(object, path, callback, notFoundCallback) {
 
 function checkClipboardPermission() {
     return `\
-const permissions = ["clipboard-read", "clipboard-write"];
+const permissions = ["clipboard-read"];
 const permErrors = [];
 
 for (const permission of permissions) {

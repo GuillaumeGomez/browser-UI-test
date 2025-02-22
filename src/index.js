@@ -188,6 +188,8 @@ async function runAllCommands(loaded, logs, options, browser) {
     const warnings = [];
 
     const page = await browser.newPage(options, debug_log);
+    const session = await page.createCDPSession();
+    await session.send('Emulation.setFocusEmulationEnabled', { enabled: true });
     await browser.emulate(options, page, debug_log);
     try {
         const extras = {
