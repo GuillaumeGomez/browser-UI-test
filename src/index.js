@@ -375,7 +375,10 @@ ${s_err}`);
                 }
             }
             if (failed === false && command['callback']) {
-                await command['callback'](pages[pages.length - 1]);
+                await command['callback']();
+            }
+            if (command['afterCallback']) {
+                await command['afterCallback'](pages[pages.length - 1]);
             }
             if (failed === false
                 && command['checkResult'] === true

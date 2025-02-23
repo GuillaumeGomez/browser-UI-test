@@ -1370,9 +1370,7 @@ function parseWaitForClipboardInner(parser, waitFalse) {
         value = ret.value.displayInCode();
     }
     let errorMessage = '"The following checks still fail: [" + err + "]"';
-    let comp = '===';
     if (waitFalse) {
-        comp = '!==';
         errorMessage = '"All checks still succeed"';
     }
     const varName = 'errors';
@@ -1386,7 +1384,7 @@ const value = ${value};`;
 ${getter}
 ${varName} = [];
 ${makeTextExtendedChecks(enabledChecks, waitFalse).join('\n')}
-if (${varName}.length ${comp} 0) {
+if (${varName}.length === 0) {
     break;
 }
 const err = ${varName}.join(", ");`,
@@ -1398,7 +1396,7 @@ const err = ${varName}.join(", ");`,
         'wait': false,
         'warnings': warnings,
         'checkResult': true,
-        'callback': callback,
+        'afterCallback': callback,
     };
 }
 

@@ -158,6 +158,8 @@ const FATAL_ERROR_COMMANDS = [
     'store-value',
     'store-window-property',
     'wait-for',
+    'wait-for-clipboard',
+    'wait-for-clipboard-false',
     'wait-for-false',
     'wait-for-attribute',
     'wait-for-attribute-false',

@@ -403,7 +403,7 @@ await page.evaluate(() => {
         }
         const tmp = document.createElement("div");
         tmp.id = "${id}";
-        tmp.style = "height:2px;width:2px;position:static;";
+        tmp.style = "height:2px;width:2px;position:static;z-index:1000000;left:0;top:0;";
         tmp.onclick = () => {
             tmp.clipboardContent = navigator.clipboard.readText();
         };

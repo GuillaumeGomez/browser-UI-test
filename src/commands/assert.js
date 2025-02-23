@@ -1470,7 +1470,7 @@ if (errors.length !== 0) {
         'wait': false,
         'checkResult': true,
         'warnings': warnings,
-        'callback': callback,
+        'afterCallback': callback,
     };
 }
 

@@ -118,11 +118,37 @@ class PuppeteerWrapper {
         if (value === undefined) {
             // FIXME: should we really set this permission by default?
             this.permissions.set(url, new Set(['clipboard-read']));
+            // this.permissions.set(url, new Map());
             value = this.permissions.get(url);
         }
+        permissions = new Set(permissions);
         for (const permission of permissions) {
             value.add(permission);
         }
+        // FIXME: Once we have a way to call this function when drop a page (because we leave an
+        // iframe or we are done with a page), we can call this code.
+        // let current_permissions = new Set(value.keys());
+        // // We increase the permissions we already have.
+        // for (const permission of permissions) {
+        //     const nb = current_permissions.get(permission);
+        //     if (nb !== undefined) {
+        //         this.permissions.set(permission, nb + 1);
+        //     } else {
+        //         this.permissions.set(permission, 1);
+        //     }
+        // }
+        // // We remove the permissions that are not used anymore.
+        // for (const permission of current_permissions) {
+        //     if (permission.has(permission)) {
+        //         continue;
+        //     }
+        //     const nb = this.permissions.get(permission);
+        //     if (nb < 2) {
+        //         value.delete(permission);
+        //     } else {
+        //         value.set(permission, nb - 1);
+        //     }
+        // }
         const context = this.context === null ? this.browser.defaultBrowserContext() : this.context;
         await context.overridePermissions(url, Array.from(value));
     }
