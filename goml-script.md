@@ -1500,12 +1500,14 @@ pause-on-error: false
 
 #### permissions
 
-**permissions** command allows you to enable some of the browser's permissions. **All non-given permissions  will be disabled!** You can see the list of the permissions with the `--show-permissions` option. Examples:
+**permissions** command allows you to enable some of the browser's permissions. You can see the list of the permissions with the `--show-permissions` option. Examples:
 
 ```
 permissions: ["geolocation"] // "geolocation" permission is enabled
 permissions: ["camera"] // "camera" permission is enabled and "geolocation" is disabled
 ```
+
+To be noted: because the permissions are set for a given URL, each time you add a new permission, it is added for the current URL, so if other tests in the same browser are using this URL, they will also get this permission.
 
 #### press-key
 
