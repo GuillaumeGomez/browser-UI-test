@@ -52,6 +52,7 @@ class PuppeteerWrapper {
         this.puppeteer = require('puppeteer');
         this.browser = null;
         this.context = null;
+        this.permissions = new Map();
     }
 
     async init(options) {
@@ -113,10 +114,17 @@ class PuppeteerWrapper {
         if (this.browser === null) {
             return;
         }
-        permissions = new Set(permissions);
-        permissions.add('clipboard-read');
+        let value = this.permissions.get(url);
+        if (value === undefined) {
+            // FIXME: should we really set this permission by default?
+            this.permissions.set(url, new Set(['clipboard-read']));
+            value = this.permissions.get(url);
+        }
+        for (const permission of permissions) {
+            value.add(permission);
+        }
         const context = this.context === null ? this.browser.defaultBrowserContext() : this.context;
-        await context.overridePermissions(url, Array.from(permissions));
+        await context.overridePermissions(url, Array.from(value));
     }
 
     async emulate(options, page, debug_log) {
