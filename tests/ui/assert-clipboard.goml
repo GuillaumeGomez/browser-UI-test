@@ -20,4 +20,5 @@ assert: |value| == "hello"
 
 // Should fail
 wait-for-clipboard-false: "hello"
+// Shoud not be displayed.
 wait-for-clipboard: "hell"

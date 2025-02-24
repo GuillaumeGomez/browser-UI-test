@@ -630,7 +630,7 @@ arg.setVariable("${ret.value.displayInCode()}", ${varName});`;
     return {
         'instructions': [command],
         'wait': false,
-        'removeElement': callback,
+        'afterCallback': callback,
     };
 }
 

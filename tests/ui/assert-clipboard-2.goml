@@ -1,0 +1,9 @@
+// Checks that when `wait-for-clipboard` fails, there is nothing run afterwards.
+
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+set-timeout: 500
+
+// Should fail
+wait-for-clipboard: "hell"
+// Shoud not be displayed.
+wait-for-clipboard-false: ""

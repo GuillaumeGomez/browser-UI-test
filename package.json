@@ -37,7 +37,7 @@
     "dependencies": {
         "css-unit-converter": "^1.1.2",
         "pngjs": "^3.4.0",
-        "puppeteer": "^22.12.1",
+        "puppeteer": "^22.15.0",
         "readline-sync": "^1.4.10"
     },
     "devDependencies": {
