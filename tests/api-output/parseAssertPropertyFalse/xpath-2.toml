@@ -38,7 +38,7 @@ await page.evaluate(e => {
                 return;
             }
             const prop = String(val);
-            if (prop === parseAssertElemPropValue) {
+            if (prop == parseAssertElemPropValue) {
                 nonMatchingProps.push(\"assert didn't fail for property `\" + parseAssertElemPropKey.map(p => `\"${p}\"`).join('.') + \"` (`\" + prop + \"`)\");
             }
         }, parseAssertElemPropKey => {

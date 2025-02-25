@@ -37,7 +37,7 @@ await page.evaluate(e => {
                 return;
             }
             const prop = String(val);
-            if (prop !== parseAssertElemPropValue) {
+            if (prop != parseAssertElemPropValue) {
                 nonMatchingProps.push(\"expected `\" + parseAssertElemPropValue + \"` for property `\" + parseAssertElemPropKey.map(p => `\"${p}\"`).join('.') + \"`, found `\" + prop + \"`\");
             }
         }, parseAssertElemPropKey => {

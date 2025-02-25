@@ -38,7 +38,7 @@ while (true) {
                     return;
                 }
                 const property = String(val);
-                if (property !== propertyValue) {
+                if (property != propertyValue) {
                     errors.push(\"expected `\" + propertyValue + \"` for document property `\" + propertyKey + \"`, found `\" + property + \"`\");
                 }
             }, _notFound => {

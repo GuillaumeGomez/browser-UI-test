@@ -17,7 +17,7 @@ await page.evaluate(e => {
             continue;
         }
         const attr = e.getAttribute(parseAssertElemAttrAttribute);
-        if (attr !== parseAssertElemAttrValue) {
+        if (attr != parseAssertElemAttrValue) {
             nonMatchingAttrs.push(\"expected `\" + parseAssertElemAttrValue + \"` for attribute `\" + parseAssertElemAttrAttribute + \"`, found `\" + attr + \"`\");
         }
     }

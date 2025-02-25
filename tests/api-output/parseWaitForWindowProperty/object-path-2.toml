@@ -38,7 +38,7 @@ while (true) {
                     return;
                 }
                 const property = String(val);
-                if (property !== propertyValue) {
+                if (property != propertyValue) {
                     errors.push(\"expected `\" + propertyValue + \"` for window property `\" + propertyKey + \"`, found `\" + property + \"`\");
                 }
             }, _notFound => {

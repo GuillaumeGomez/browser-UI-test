@@ -36,7 +36,7 @@ instructions = [
                 return;
             }
             const prop = String(val);
-            if (prop === parseAssertObjValue) {
+            if (prop == parseAssertObjValue) {
                 nonMatchingProps.push(\"assert didn't fail for document property `\" + parseAssertObjKey + \"` (`\" + prop + \"`)\");
             }
         }, parseAssertObjKey => {

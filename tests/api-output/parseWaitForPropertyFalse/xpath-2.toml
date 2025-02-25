@@ -35,7 +35,7 @@ instructions = [
                     nonMatchingProps.push(\"Property `\" + p + \"` doesn't exist\");
                     return;
                 }
-                if (val !== parseWaitForPropValue) {
+                if (val != parseWaitForPropValue) {
                     nonMatchingProps.push(\"expected `\" + parseWaitForPropValue + \"` for property `\" + parseWaitForPropKey + \"`, found `\" + val + \"`\");
                 }
             }, _notFound => {
