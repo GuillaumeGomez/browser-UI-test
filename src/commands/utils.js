@@ -130,13 +130,13 @@ ${varValue} + '\` (for NEAR check)');
     if (checks.length === 0) {
         if (assertFalse) {
             checks.push(`\
-if (${storedVar} === ${varValue}) {
+if (${storedVar} == ${varValue}) {
     ${pushTo}.push("assert didn't fail for ${kind} \`" + ${varKey} + "\` (\`" + ${storedVar} + \
 "\`)");
 }`);
         } else {
             checks.push(`\
-if (${storedVar} !== ${varValue}) {
+if (${storedVar} != ${varValue}) {
     ${pushTo}.push("expected \`" + ${varValue} + "\` for ${kind} \`" + ${varKey} + "\`, found \`" \
 + ${storedVar} + "\`");
 }`);
