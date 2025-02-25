@@ -6,7 +6,7 @@ instructions = [
         }
         const tmp = document.createElement(\"div\");
         tmp.id = \"created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\";
-        tmp.style = \"height:2px;width:2px;position:static;\";
+        tmp.style = \"height:2px;width:2px;position:static;z-index:1000000;left:0;top:0;\";
         tmp.onclick = () => {
             tmp.clipboardContent = navigator.clipboard.readText();
         };
@@ -25,7 +25,7 @@ while (true) {
     if (elemText.includes(value)) {
         errors.push(\"`\" + elemText + \"` contains `\" + value + \"` (for CONTAINS check)\");
     }
-    if (errors.length !== 0) {
+    if (errors.length === 0) {
         break;
     }
     const err = errors.join(\", \");

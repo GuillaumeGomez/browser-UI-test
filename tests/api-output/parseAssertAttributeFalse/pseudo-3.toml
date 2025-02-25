@@ -16,7 +16,7 @@ await page.evaluate(e => {
             continue;
         }
         const attr = e.getAttribute(parseAssertElemAttrAttribute);
-        if (attr === parseAssertElemAttrValue) {
+        if (attr == parseAssertElemAttrValue) {
             nonMatchingAttrs.push(\"assert didn't fail for attribute `\" + parseAssertElemAttrAttribute + \"` (`\" + attr + \"`)\");
         }
     }

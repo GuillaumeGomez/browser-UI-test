@@ -35,7 +35,7 @@ instructions = [
                 return;
             }
             const prop = String(val);
-            if (prop !== parseAssertObjValue) {
+            if (prop != parseAssertObjValue) {
                 nonMatchingProps.push(\"expected `\" + parseAssertObjValue + \"` for window property `\" + parseAssertObjKey + \"`, found `\" + prop + \"`\");
             }
         }, parseAssertObjKey => {
