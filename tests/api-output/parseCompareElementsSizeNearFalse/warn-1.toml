@@ -1,8 +1,8 @@
 instructions = [
   """const parseCompareElementsSizeNear1 = await page.$(\"a\");
-if (parseCompareElementsSizeNear1 === null) { throw '\"a\" not found'; }
+if (parseCompareElementsSizeNear1 === null) { throw \"`a` not found\"; }
 const parseCompareElementsSizeNear2 = await page.$(\"b\");
-if (parseCompareElementsSizeNear2 === null) { throw '\"b\" not found'; }
+if (parseCompareElementsSizeNear2 === null) { throw \"`b` not found\"; }
 await page.evaluate((elem1, elem2) => {
 function browserGetElementSizes1(e) {
     const height = e.offsetHeight;

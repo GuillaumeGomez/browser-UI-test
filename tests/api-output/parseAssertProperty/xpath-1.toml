@@ -1,6 +1,6 @@
 instructions = [
   """const parseAssertElemProp = await page.$(\"::-p-xpath(//a)\");
-if (parseAssertElemProp === null) { throw '\"//a\" not found'; }
+if (parseAssertElemProp === null) { throw \"`//a` not found\"; }
 await page.evaluate(e => {
     function checkObjectPaths(object, path, callback, notFoundCallback) {
         const found = [];

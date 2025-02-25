@@ -1,8 +1,8 @@
 instructions = [
   """const parseCompareElementsText1 = await page.$(\"a\");
-if (parseCompareElementsText1 === null) { throw '\"a\" not found'; }
+if (parseCompareElementsText1 === null) { throw \"`a` not found\"; }
 const parseCompareElementsText2 = await page.$(\"::-p-xpath(//b)\");
-if (parseCompareElementsText2 === null) { throw '\"//b\" not found'; }
+if (parseCompareElementsText2 === null) { throw \"`//b` not found\"; }
 await page.evaluate((e1, e2) => {
 let e1value;
 if (e1.tagName.toLowerCase() === \"input\") {

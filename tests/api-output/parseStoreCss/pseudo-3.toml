@@ -1,6 +1,6 @@
 instructions = [
   """const parseStoreCss = await page.$(\"a\");
-if (parseStoreCss === null) { throw '\"a\" not found'; }
+if (parseStoreCss === null) { throw \"`a` not found\"; }
 const jsHandle = await parseStoreCss.evaluateHandle(e => {
     const style = getComputedStyle(e, \"::after\");
     const props = [\"bip\",\"bla\"];

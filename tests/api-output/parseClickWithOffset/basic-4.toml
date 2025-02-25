@@ -1,6 +1,6 @@
 instructions = [
   """const parseClickWithOffsetVar = await page.$(\"a\");
-if (parseClickWithOffsetVar === null) { throw '\"a\" not found'; }
+if (parseClickWithOffsetVar === null) { throw \"`a` not found\"; }
 await parseClickWithOffsetVar.click({
     \"offset\": {\"x\": 1, \"y\": 2},
 });""",

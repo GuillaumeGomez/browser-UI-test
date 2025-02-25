@@ -1,6 +1,6 @@
 instructions = [
   """const parseStoreText = await page.$(\"::-p-xpath(//a)\");
-if (parseStoreText === null) { throw '\"//a\" not found'; }
+if (parseStoreText === null) { throw \"`//a` not found\"; }
 const jsHandle = await parseStoreText.evaluateHandle(e => {
     return browserUiTestHelpers.getElemText(e, \"\");
 });

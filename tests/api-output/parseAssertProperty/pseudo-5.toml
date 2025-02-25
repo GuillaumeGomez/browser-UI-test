@@ -1,6 +1,6 @@
 instructions = [
   """const parseAssertElemProp = await page.$(\"a ::after\");
-if (parseAssertElemProp === null) { throw '\"a ::after\" not found'; }
+if (parseAssertElemProp === null) { throw \"`a ::after` not found\"; }
 await page.evaluate(e => {
     function checkObjectPaths(object, path, callback, notFoundCallback) {
         const found = [];

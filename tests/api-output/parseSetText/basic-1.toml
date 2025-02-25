@@ -1,6 +1,6 @@
 instructions = [
   """const parseSetTextElem = await page.$(\"a\");
-if (parseSetTextElem === null) { throw '\"a\" not found'; }
+if (parseSetTextElem === null) { throw \"`a` not found\"; }
 await page.evaluate(e => {
     if ([\"input\", \"textarea\"].indexOf(e.tagName.toLowerCase()) !== -1) {
         e.value = \"b\";

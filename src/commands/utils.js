@@ -5,11 +5,11 @@ function getAndSetElements(selector, varName, checkAllElements) {
     if (!checkAllElements) {
         return `\
 const ${varName} = await page.$("${selectorS}");
-if (${varName} === null) { throw '"${selector.value}" not found'; }`;
+if (${varName} === null) { throw "\`${selector.value}\` not found"; }`;
     }
     return `\
 const ${varName} = await page.$$("${selectorS}");
-if (${varName}.length === 0) { throw '"${selector.value}" not found'; }`;
+if (${varName}.length === 0) { throw "\`${selector.value}\` not found"; }`;
 }
 
 function getInsertStrings(assertFalse, insideLoop, extra = '', backlineAtEnd = true) {

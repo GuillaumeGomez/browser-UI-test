@@ -1,8 +1,8 @@
 instructions = [
   """const parseCompareElementsSize1 = await page.$(\"a\");
-if (parseCompareElementsSize1 === null) { throw '\"a\" not found'; }
+if (parseCompareElementsSize1 === null) { throw \"`a` not found\"; }
 const parseCompareElementsSize2 = await page.$(\"b\");
-if (parseCompareElementsSize2 === null) { throw '\"b\" not found'; }
+if (parseCompareElementsSize2 === null) { throw \"`b` not found\"; }
 await page.evaluate((elem1, elem2) => {
     function browserGetElementSizes1(e) {
         const style = getComputedStyle(e, \"::after\");

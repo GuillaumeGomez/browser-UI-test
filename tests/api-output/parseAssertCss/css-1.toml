@@ -31,7 +31,7 @@ async function checkElem(elem) {
     }
 }
 const parseAssertElemCss = await page.$(\"a\");
-if (parseAssertElemCss === null) { throw '\"a\" not found'; }
+if (parseAssertElemCss === null) { throw \"`a` not found\"; }
 await checkElem(parseAssertElemCss);""",
 ]
 wait = false

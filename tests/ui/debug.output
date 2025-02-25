@@ -29,9 +29,9 @@ try {
 }"
 [DEBUG] Done!
 [DEBUG] EXECUTING (line 5) "const parseCompareElementsCss1 = await page.$(".content>.right>p");
-if (parseCompareElementsCss1 === null) { throw '".content>.right>p" not found'; }
+if (parseCompareElementsCss1 === null) { throw "`.content>.right>p` not found"; }
 const parseCompareElementsCss2 = await page.$(".content>.left");
-if (parseCompareElementsCss2 === null) { throw '".content>.left" not found'; }
+if (parseCompareElementsCss2 === null) { throw "`.content>.left` not found"; }
 
 await page.evaluate((e1, e2) => {
     let computed_style1 = getComputedStyle(e1);

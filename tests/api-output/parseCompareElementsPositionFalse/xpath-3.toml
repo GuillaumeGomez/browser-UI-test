@@ -1,8 +1,8 @@
 instructions = [
   """const parseCompareElementsPos1 = await page.$(\"::-p-xpath(//a)\");
-if (parseCompareElementsPos1 === null) { throw '\"//a\" not found'; }
+if (parseCompareElementsPos1 === null) { throw \"`//a` not found\"; }
 const parseCompareElementsPos2 = await page.$(\"::-p-xpath(//b)\");
-if (parseCompareElementsPos2 === null) { throw '\"//b\" not found'; }
+if (parseCompareElementsPos2 === null) { throw \"`//b` not found\"; }
 await page.evaluate((elem1, elem2) => {
     function browserComparePosition(e1, e2, kind, property) {
         let err = null;

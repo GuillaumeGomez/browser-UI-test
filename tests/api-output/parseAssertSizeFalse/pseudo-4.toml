@@ -1,6 +1,6 @@
 instructions = [
   """const assertSizeElem = await page.$$(\"a:focus\");
-if (assertSizeElem.length === 0) { throw '\"a:focus\" not found'; }
+if (assertSizeElem.length === 0) { throw \"`a:focus` not found\"; }
 async function checkElemSize(elem) {
     return await elem.evaluate(e => {
         const innerErrors = [];

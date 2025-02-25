@@ -1,12 +1,12 @@
 instructions = [
   """const parseDragAndDropElem = await page.$(\"a\");
-if (parseDragAndDropElem === null) { throw '\"a\" not found'; }
+if (parseDragAndDropElem === null) { throw \"`a` not found\"; }
 const parseDragAndDropElem_box = await parseDragAndDropElem.boundingBox();
 const start = [parseDragAndDropElem_box.x + parseDragAndDropElem_box.width / 2, parseDragAndDropElem_box.y + parseDragAndDropElem_box.height / 2];
 await pages[0].mouse.move(start[0], start[1]);
 await pages[0].mouse.down();
 const parseDragAndDropElem2 = await page.$(\"b\");
-if (parseDragAndDropElem2 === null) { throw '\"b\" not found'; }
+if (parseDragAndDropElem2 === null) { throw \"`b` not found\"; }
 const parseDragAndDropElem2_box = await parseDragAndDropElem2.boundingBox();
 const end = [parseDragAndDropElem2_box.x + parseDragAndDropElem2_box.width / 2, parseDragAndDropElem2_box.y + parseDragAndDropElem2_box.height / 2];
 await pages[0].mouse.move(end[0], end[1]);

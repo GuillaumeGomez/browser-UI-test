@@ -1,6 +1,6 @@
 instructions = [
   """const parseAssertElemAttr = await page.$$(\"::-p-xpath(//a)\");
-if (parseAssertElemAttr.length === 0) { throw '\"//a\" not found'; }
+if (parseAssertElemAttr.length === 0) { throw \"`//a` not found\"; }
 for (let i = 0, len = parseAssertElemAttr.length; i < len; ++i) {
     await page.evaluate(e => {
         const nonMatchingAttrs = [];

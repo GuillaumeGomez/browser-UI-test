@@ -1,6 +1,6 @@
 instructions = [
   """const elem = await page.$(\"a\");
-if (elem === null) { throw '\"a\" not found'; }
+if (elem === null) { throw \"`a` not found\"; }
 const jsHandle = await elem.evaluateHandle(e => {
     const x = browserUiTestHelpers.getElementPosition(e, \"\", \"left\", \"marginLeft\");
     const y = browserUiTestHelpers.getElementPosition(e, \"\", \"top\", \"marginTop\");

@@ -1,6 +1,6 @@
 instructions = [
   """const screenshotElem = await page.$(\"b\");
-if (screenshotElem === null) { throw '\"b\" not found'; }
+if (screenshotElem === null) { throw \"`b` not found\"; }
 await screenshotElem.screenshot({\"path\":\"a.png\",\"fullPage\":false});""",
 ]
 wait = false

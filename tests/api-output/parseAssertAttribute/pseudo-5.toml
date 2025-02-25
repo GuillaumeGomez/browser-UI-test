@@ -1,6 +1,6 @@
 instructions = [
   """const parseAssertElemAttr = await page.$(\"a ::after\");
-if (parseAssertElemAttr === null) { throw '\"a ::after\" not found'; }
+if (parseAssertElemAttr === null) { throw \"`a ::after` not found\"; }
 await page.evaluate(e => {
     const nonMatchingAttrs = [];
     const parseAssertElemAttrDict = {\"a\":\"1\"};
