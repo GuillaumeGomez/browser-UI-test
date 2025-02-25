@@ -254,7 +254,7 @@ function evalExpr(expr) {
             if (elem.kind === 'tuple') {
                 out += evalExpr(elem);
             } else {
-                out += elem.getStringValue();
+                out += elem.value;
             }
         } else if (isNumber) {
             let value = elem.value;
