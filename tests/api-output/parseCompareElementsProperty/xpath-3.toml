@@ -1,8 +1,8 @@
 instructions = [
   """const parseCompareElementsProp1 = await page.$(\"::-p-xpath(//a)\");
-if (parseCompareElementsProp1 === null) { throw '\"//a\" not found'; }
+if (parseCompareElementsProp1 === null) { throw \"`//a` not found\"; }
 const parseCompareElementsProp2 = await page.$(\"::-p-xpath(//b)\");
-if (parseCompareElementsProp2 === null) { throw '\"//b\" not found'; }
+if (parseCompareElementsProp2 === null) { throw \"`//b` not found\"; }
 const parseCompareElementsProps = [[\"margin\"]];
 for (const property of parseCompareElementsProps) {
     const value = await parseCompareElementsProp1.evaluateHandle((e, p) => {

@@ -1,6 +1,6 @@
 instructions = [
   """const parseDragAndDropElem = await page.$(\"::-p-xpath(//a)\");
-if (parseDragAndDropElem === null) { throw '\"//a\" not found'; }
+if (parseDragAndDropElem === null) { throw \"`//a` not found\"; }
 const parseDragAndDropElem_box = await parseDragAndDropElem.boundingBox();
 const start = [parseDragAndDropElem_box.x + parseDragAndDropElem_box.width / 2, parseDragAndDropElem_box.y + parseDragAndDropElem_box.height / 2];
 await pages[0].mouse.move(start[0], start[1]);

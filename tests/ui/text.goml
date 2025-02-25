@@ -12,3 +12,6 @@ set-text: ("header", "a")
 assert-text: ("header", "a")
 set-text: ("header", "")
 assert-text: ("header", "")
+
+// Checking that expr is correctly escaped.
+assert-text: ("p[id='" + "another-one" + "'] + button", "hey")

@@ -1,6 +1,6 @@
 instructions = [
   """const assertPosition = await page.$(\"a:focus\");
-if (assertPosition === null) { throw '\"a:focus\" not found'; }
+if (assertPosition === null) { throw \"`a:focus` not found\"; }
 const errors = [];
 errors.push(...await page.evaluate(elem => {
     const innerErrors = [];

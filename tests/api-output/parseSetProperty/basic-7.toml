@@ -1,6 +1,6 @@
 instructions = [
   """const parseSetPropertyElem = await page.$(\"a\");
-if (parseSetPropertyElem === null) { throw '\"a\" not found'; }
+if (parseSetPropertyElem === null) { throw \"`a` not found\"; }
 await page.evaluate(e => {
     function setObjValue(object, path, value) {
         for (let i = 0; i < path.length - 1; ++i) {

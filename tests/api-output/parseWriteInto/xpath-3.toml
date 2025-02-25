@@ -1,6 +1,6 @@
 instructions = [
   """const parseWriteVar = await page.$(\"::-p-xpath(//a)\");
-if (parseWriteVar === null) { throw '\"//a\" not found'; }
+if (parseWriteVar === null) { throw \"`//a` not found\"; }
 parseWriteVar.focus();
 await parseWriteVar;
 pages[0].keyboard.press(String.fromCharCode(13));""",

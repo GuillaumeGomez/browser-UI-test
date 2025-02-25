@@ -1,5 +1,5 @@
 instructions = [
   """const parseFocusVar = await page.$(\"\\\"a\");
-if (parseFocusVar === null) { throw '\"\\\"a\" not found'; }
+if (parseFocusVar === null) { throw \"`\\\"a` not found\"; }
 await parseFocusVar.focus();""",
 ]

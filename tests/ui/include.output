@@ -8,7 +8,7 @@ include... FAILED
     from `tests/ui/include.goml` line 5: The following errors happened: [`` isn't equal to `hoho`]: for command `assert-text: ("header", "hoho")`
 [ERROR] `tests/ui/include.goml` line 6: The following errors happened: [`` isn't equal to `tadam`]: for command `assert-text: ("header", "tadam")`
 [ERROR] `tests/ui/sub/func.goml` line 5
-    from `tests/ui/include.goml` line 10: "#does_not-exist" not found: for command `click: "#does_not-exist"`
+    from `tests/ui/include.goml` line 10: `#does_not-exist` not found: for command `click: "#does_not-exist"`
 
 
 <= doc-ui tests done: 0 succeeded, 1 failed

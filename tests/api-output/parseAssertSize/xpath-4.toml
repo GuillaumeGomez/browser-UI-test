@@ -1,6 +1,6 @@
 instructions = [
   """const assertSizeElem = await page.$(\"::-p-xpath(//a)\");
-if (assertSizeElem === null) { throw '\"//a\" not found'; }
+if (assertSizeElem === null) { throw \"`//a` not found\"; }
 async function checkElemSize(elem) {
     return await elem.evaluate(e => {
         const innerErrors = [];

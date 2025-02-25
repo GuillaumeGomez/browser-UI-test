@@ -1655,7 +1655,7 @@ async function checkTextForElem(elem) {
 }
 
 const parseAssertElemStr = await page.$("a");
-if (parseAssertElemStr === null) { throw '"a" not found'; }
+if (parseAssertElemStr === null) { throw "\`a\` not found"; }
 await checkTextForElem(parseAssertElemStr);`,
             ],
             'warnings': [],
