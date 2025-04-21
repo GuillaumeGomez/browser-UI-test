@@ -7,6 +7,12 @@ assert-css: ("#useless\.input", {"height": "10px"})
 // Checking escape in dict.
 assert-css-false: ("#useless\.input", {"\"\\height": "10px"})
 assert-false: '"a'
+
+// This one ensures that string are correctly escaped when stored in variables.
+store-css: ("#another-one::after", {"content": content})
+// FIXME: We need to escape quotes too many times, it's wrong.
+assert: |content| == "url(\"data:image/svg+xml,<svg xmlns=\\\"http://www.w3.org/2000/svg\\\"></svg>\")"
+
 expect-failure: true
 click: '"a'
 // Checking backline.

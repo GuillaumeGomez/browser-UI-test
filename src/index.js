@@ -10,7 +10,6 @@ const {
     add_warning,
     loadPuppeteer,
     getFileInfo,
-    escapeBackslahes,
     extractFileNameWithoutExtension,
 } = require('./utils.js');
 const { Options } = require('./options.js');
@@ -216,7 +215,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             'variables': options.variables,
             'setVariable': (varName, value) => {
                 if (typeof value === 'string') {
-                    value = escapeBackslahes(value);
+                    value = JSON.stringify(value).slice(1, -1);
                 }
                 extras.variables[varName] = value;
             },

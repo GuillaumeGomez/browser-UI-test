@@ -18,7 +18,7 @@ function addSlash(s) {
 }
 
 function escapeBackslahes(s) {
-    return s.split('\\').join('\\\\');
+    return JSON.stringify(s).slice(1, -1);
 }
 
 function getCurrentDir() {
