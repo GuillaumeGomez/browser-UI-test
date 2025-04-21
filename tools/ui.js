@@ -44,7 +44,9 @@ function runAsyncUiTest(x, file, output, tests_queue, browser) {
             );
             print(`Blessed \`${filePath}\``);
         },
-    ).finally(() => {
+    );
+    callback._currentTest = file;
+    callback.finally(() => {
         print(`Finished testing "${file}"`);
         if (testOutput.length > 0) {
             print(testOutput);
@@ -96,8 +98,15 @@ async function compareOutput(x) {
             await Promise.race(tests_queue);
         }
     }
-    if (tests_queue.length > 0) {
-        await Promise.all(tests_queue);
+    while (tests_queue.length > 0) {
+        await Promise.race([...tests_queue, new Promise((resolve, reject) => {
+            // Reject after 20 seconds
+            setTimeout(() => {
+                const runningTests = tests_queue.map(x => x._currentTest);
+                const err = new Error('The following tests take too long to run: ' + runningTests);
+                reject(err);
+            }, 20_000);
+        })]);
     }
     await browser.close();
 }
