@@ -1,0 +1,16 @@
+// This test ensures that the line of `define-function` is used and not the last command
+// within it (so line 4 in this test).
+
+define-function: (
+    "check_title_position",
+    (),
+    block {
+        store-position: (".example-wrap.scraped-example .src-line-numbers", {"x": x, "y": y})
+        store-size: (".example-wrap.scraped-example .scraped-example-title", { "height": title_height })
+
+        assert-position: (".example-wrap.scraped-example .scraped-example-title", {
+            "x": |x|, // same X position.
+            "y": |y| - |title_height|,
+        })
+    }
+)

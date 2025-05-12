@@ -3,7 +3,7 @@
 functions... FAILED
 [WARNING] `tests/ui/functions.goml` line 12
 [WARNING]     from `tests/ui/functions.goml` line 22: overwriting existing `fn1` function
-[WARNING] `tests/ui/functions.goml` line 31: overwriting existing `fn1` function
+[WARNING] `tests/ui/functions.goml` line 26: overwriting existing `fn1` function
 
 [ERROR] `tests/ui/functions.goml` line 8
     from `tests/ui/functions.goml` line 22: The following errors happened (for selector `header`): [expected `a` for key `background-color`, found `rgb(17, 17, 17)`; expected `y` for key `color`, found `rgb(255, 255, 255)`]: for command `assert-css: ("header", {"background-color": |background_color|, "color": |color|})`
