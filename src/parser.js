@@ -845,6 +845,7 @@ class Parser {
             };
         }
         this.commandLine = this.currentLine;
+        const commandLine = this.currentLine;
         const order = this.command.getRaw().toLowerCase();
         if (!Object.prototype.hasOwnProperty.call(this.orders, order)) {
             this.setError(`Unknown command "${order}"`, false);
@@ -862,6 +863,7 @@ class Parser {
         return {
             'errors': this.errors.length !== nbErrors || this.hasFatalError,
             'finished': false,
+            'commandLine': commandLine,
         };
     }
 

@@ -1,0 +1,18 @@
+=> Starting doc-ui tests...
+
+define-function... FAILED
+[ERROR] `tests/ui/define-function.goml` line 4: expected an array, found `()` (a tuple) (second element of the tuple) (from command `define-function: (
+    "check_title_position",
+    (),
+    block {
+        store-position: (".example-wrap.scraped-example .src-line-numbers", {"x": x, "y": y})
+        store-size: (".example-wrap.scraped-example .scraped-example-title", { "height": title_height })
+
+        assert-position: (".example-wrap.scraped-example .scraped-example-title", {
+            "x": |x|, // same X position.
+            "y": |y| - |title_height|,
+        })
+    }
+)`)
+
+<= doc-ui tests done: 0 succeeded, 1 failed

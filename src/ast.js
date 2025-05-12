@@ -193,7 +193,7 @@ class AstLoader {
             } else {
                 this.commands.push(new CommandNode(
                     parser.command.getRaw(),
-                    parser.commandLine,
+                    ret.commandLine,
                     parser.elems,
                     parser.hasVariable,
                     parser.commandStart,
