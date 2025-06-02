@@ -19,7 +19,9 @@ function replaceVariable(elem, variables, functionArgs, forceVariableAsString, e
         errors.push({
             'message': message,
             'isFatal': true,
-            'line': line,
+            'line': {
+                'line': line,
+            },
         });
     };
     const variableName = elem.value;

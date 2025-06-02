@@ -781,7 +781,9 @@ function addErrorTo(message, line, isFatal, errors) {
         errors.push({
             'message': message,
             'isFatal': isFatal,
-            'line': line,
+            'line': {
+                'line': line,
+            },
         });
     }
 }

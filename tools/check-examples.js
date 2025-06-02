@@ -130,10 +130,10 @@ async function checkExamples(x) {
         x.startTestSuite(file);
         try {
             checkFileExamples(x, file);
-            x.endTestSuite();
         } catch (err) {
-            x.endTestSuite(false, true);
+            x.addError(err);
         }
+        x.endTestSuite();
     }
 
     print('');

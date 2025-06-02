@@ -99,10 +99,10 @@ function parseDebug(parser) {
 
     return {
         'instructions': [`\
-if (arg && arg.debug_log && arg.debug_log.setDebugEnabled) {
-    arg.debug_log.setDebugEnabled(${ret.value.getRaw()});
+if (arg && arg.logs && arg.logs.setDebugEnabled) {
+    arg.logs.setDebugEnabled(${ret.value.getRaw()});
 } else {
-    throw "\`debug\` command needs an object with a \`debug_log\` field of \`Debug\` type!";
+    throw "\`debug\` command needs an object with a \`logs\` field of \`Logs\` type!";
 }`,
         ],
         'wait': false,

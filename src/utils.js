@@ -180,10 +180,11 @@ function hasError(x) {
 function getFileInfo(context_parser, line, isExact = true) {
     const file = stripCommonPathsPrefix(context_parser.getCurrentFile());
     const file_s = file.length > 0 ? `\`${file}\` ` : '';
-    if (isExact) {
-        return `${file_s}line ${line}`;
-    }
-    return `${file_s}around line ${line}`;
+    return {
+        'file': file_s,
+        'line': line,
+        'is_line_exact': isExact,
+    };
 }
 
 module.exports = {
