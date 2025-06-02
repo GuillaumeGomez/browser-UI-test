@@ -1,5 +1,4 @@
 => Starting doc-ui tests...
-
-property... OK
-
+property... 
+property: OK
 <= doc-ui tests done: 1 succeeded, 0 failed

@@ -1,7 +1,5 @@
 => Starting doc-ui tests...
-
-error-before-variable-inference... FAILED
-Syntax errors:
-`tests/ui/error-before-variable-inference.goml` line 3: Unknown command "whatever"
-
+error-before-variable-inference... 
+[ERROR] `tests/ui/error-before-variable-inference.goml` line 3: Unknown command "whatever"
+error-before-variable-inference: FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed

@@ -4,24 +4,26 @@ set-window-size: (800, 500)
 store-value: (background_color, "rgb(17, 17, 17)")
 set-local-storage: {"a key": "a value"}
 store-local-storage: {"a key": local}
-// Should fail.
 assert-variable: (local, "a key")
+//~^ ERROR: [`a value` isn't equal to `a key`]
 // Should succeed.
 assert-variable: (local, "a value")
 store-text: (text, "#another-one")
-// Should fail.
 assert-variable: (text, "hoy")
+//~^ ERROR: [`hey` isn't equal to `hoy`]
 // Should succeed.
 assert-variable: (text, "hey")
 store-value: (css_checks, {"background-color": |background_color|})
 assert-css: ("header", |css_checks|)
 assert-variable: (css_checks, {"background-color": "rgb(17, 17, 17)"})
-// Should fail
 assert-variable: (css_checks, "a")
+//~^ ERROR: [`{"background-color":"rgb(17, 17, 17)"}` isn't equal to `a`]
 store-document-property: {"title": document_v}
 assert-variable: (document_v, "Other")
+//~^ ERROR: [`Other page` isn't equal to `Other`]
 store-window-property: {"pageYOffset": window_v}
 assert-variable: (window_v, "Other")
+//~^ ERROR: [`0` isn't equal to `Other`]
 
 //
 // store-document-property
@@ -62,3 +64,4 @@ assert: |x| == 400 && |y| == 24
 // Checking for pseudo element now.
 store-position: ("#another-one::before", {"x": x, "y": y})
 assert: |x| == 0 && |y| == 98
+//~^ ERROR: (`0 == 0 && 102 == 98`) was evaluated as false

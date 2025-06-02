@@ -10,7 +10,9 @@ wait-for-size: ("#js-change-size", {"width": 33})
 click: "#js-change-size"
 // Should wait for 250ms here.
 wait-for-size: ("#js-change-size", {"height": 26}, ALL)
-// This next one should fail.
+// This next one should fail...
 wait-for-size: ("#js-change-size", {"height": 26, "width": 33})
-// And it should not stop the script.
+//~^ ERROR: [expected a width of `33`, found `36`]
+// ... And it should not stop the script.
 assert-size: ("#js-change-size", {"height": 26, "width": 33})
+//~^ ERROR: [expected a width of `33`, found `36`]

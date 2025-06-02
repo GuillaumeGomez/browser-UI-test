@@ -2,3 +2,4 @@
 screenshot-comparison: false
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 compare-elements-css: (".content>.right>p", "a", ["color"])
+//~^ ERROR: `show-text: true` needs to be used before checking for `color` (otherwise the browser doesn't compute it)

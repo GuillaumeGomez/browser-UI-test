@@ -1,5 +1,6 @@
-// Checks that the script stops at the first "fatal error" (here the "goto").
+// Checks that the script stops at the first "fatal error" (here the "click").
 screenshot-comparison: false
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 click: "#something"
+//~^ ERROR: `#something` not found
 assert: "#something"

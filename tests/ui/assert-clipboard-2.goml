@@ -3,7 +3,7 @@
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 set-timeout: 500
 
-// Should fail
 wait-for-clipboard: "hell"
+//~^ ERROR: [`hello` isn't equal to `hell`]
 // Shoud not be displayed.
 wait-for-clipboard-false: ""

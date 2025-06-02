@@ -1,14 +1,15 @@
 // Check that the `assert-size` command is working as expected.
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 set-window-size: (670, 650)
-// Should fail.
 assert-size: ("header", {"width": 670, "height": 650})
+//~^ ERROR: [expected a height of `650`, found `24`]
 // Should succeed.
-assert-size: ("header", {"width": 650, "height": 24})
-// Should fail.
-assert-size-false: ("header", {"width": 650, "height": 24})
+assert-size: ("header", {"width": 670, "height": 24})
+assert-size-false: ("header", {"width": 670, "height": 24})
+//~^ ERROR: [width is equal to `670`; height is equal to `24`]
 // Should succeed.
-assert-size-false: ("header", {"width": 670, "height": 650})
+assert-size-false: ("header", {"width": 650, "height": 650})
 // Checking `ALL`.
 assert-size: ("button", {"width": 670, "height": 21}, ALL)
+//~^ ERROR: [expected a width of `670`, found `38`]
 assert-size-false: ("button", {"width": 670, "height": 650}, ALL)

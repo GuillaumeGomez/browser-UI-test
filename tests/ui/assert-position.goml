@@ -1,10 +1,12 @@
 // Checking assert-position output
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 assert-position: ("#the-input", {"x": 0, "y": 29})
-// Should fail
+//~^ ERROR: [different Y values: 24 (or 24) != 29]
 assert-position: ("#the-input", {"x": 1, "y": 2})
+//~^ ERROR: [different X values: 0 (or 0) != 1; different Y values: 24 (or 24) != 2]
 assert-position-false: ("#the-input", {"x": 1, "y": 2})
-// Should fail
 assert-position-false: ("#the-input", {"x": 0, "y": 29})
+//~^ ERROR: [same X values (whereas it shouldn't): 0 (or 0) != 0]
 // It ensures pseudo-elements are handlded correctly.
 assert-position: ("#the-input::after", {"x": 1, "y": 2})
+//~^ ERROR: [different X values: 0 (or 0) != 1; different Y values: 24 (or 24) != 2]

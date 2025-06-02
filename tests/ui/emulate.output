@@ -1,5 +1,4 @@
 => Starting doc-ui tests...
-
-emulate... OK
-
+emulate... 
+emulate: OK
 <= doc-ui tests done: 1 succeeded, 0 failed

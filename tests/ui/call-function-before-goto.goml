@@ -24,4 +24,5 @@ call-function: ("fn1", {
     "background_color": "a",
     "whole_check": {"color": "a"},
 })
+//~^^^^ ERROR: First command must be `go-to`
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"

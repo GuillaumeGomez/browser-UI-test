@@ -1,13 +1,17 @@
 // This test is mostly to check the output of the local-storage command.
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 assert-local-storage: {"something": "whatever", "other": "hehe"}
+//~^ ERROR: [localStorage item "something" (of value "whatever") != "null"; localStorage item "other" (of value "hehe") != "null"]
 click: "#js-local-storage"
 assert-local-storage-false: {"something": "whatever"}
 assert-local-storage: {"something": "whatever"}
+//~^ ERROR: [localStorage item "something" (of value "whatever") != "hello"]
 assert-local-storage: {"something": "hello"}
 assert-local-storage-false: {"something": "hello"}
+//~^ ERROR: [localStorage item "something" (of value "hello") == "hello"]
 set-local-storage: {"something": "whatever"}
 assert-local-storage: {"something": "whatever"}
 assert-local-storage: {"something": "whatever", "other": "hehe"}
+//~^ ERROR: [localStorage item "other" (of value "hehe") != "null"]
 set-local-storage: {"other": "hehe"}
 assert-local-storage: {"something": "whatever", "other": "hehe"}

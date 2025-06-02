@@ -18,7 +18,7 @@ assert-clipboard: ("llo", [ENDS_WITH])
 store-clipboard: value
 assert: |value| == "hello"
 
-// Should fail
 wait-for-clipboard-false: "hello"
+//~^ ERROR: All checks still succeed
 // Shoud not be displayed.
 wait-for-clipboard: "hell"

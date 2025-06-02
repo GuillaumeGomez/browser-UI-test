@@ -39,3 +39,4 @@ within-iframe: ("#iframe0", block {
 
 // And now we check the error message in case the iframe selector doesn't exist.
 within-iframe: ("#ifra", block {})
+//~^ ERROR: `#ifra` not found

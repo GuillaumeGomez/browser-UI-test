@@ -1,3 +1,4 @@
 // This test ensures that if the command is unknown, it'll fail before trying to infer variables.
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 whatever: {"a": |non_existent|}
+//~^ ERROR: Unknown command "whatever"

@@ -2,3 +2,4 @@
 screenshot-comparison: false
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 screenshot: ("tadam", "#js-call-attr")
+//~^ INFO: Generating screenshot for CSS selector `#js-call-attr`

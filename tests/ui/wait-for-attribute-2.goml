@@ -4,9 +4,11 @@ show-text: true
 // Shouldn't wait here since the "data-hoho" attribute doesn't exist yet.
 // Also should emit a warning.
 wait-for-attribute: ("button", {"data-hoho": null}, [ALL, STARTS_WITH])
+//~^ WARNING: Special checks (STARTS_WITH) will be ignored for `null`
 // Testing the `ALL` ident.
 click: "#js-change-colors"
 wait-for-attribute: ("button", {"data-hoho": "heh"}, [ALL, STARTS_WITH])
 set-timeout: 100
 // Should fail since the element doesn't exist.
 wait-for-attribute: ("#i-dont-exist", {"data-hoho": "heh"}, ALL)
+//~^ ERROR: The CSS selector "#i-dont-exist" was not found

@@ -1,4 +1,13 @@
 // This test ensure that the parsing doesn't stop at the first error.
 assert-css: ("a", foo {1: 2})
+//~^ ERROR: expected `,` or `)`
+//~^^ ERROR: only strings and object paths can be used as keys in JSON dict, found a number (`1`)
+//~^^^ ERROR: only strings and object paths can be used as keys in JSON dict, found a number (`1`)
 assert: ["a", 2] + ["a" |b]
+//~^ ERROR: all array's elements must be of the same kind
+//~^^ ERROR: expected `,` or `]` after `"a"`
+//~^^^ ERROR: unexpected character `]` after `|b`
 assert: (a b) + (a |b)
+//~^ ERROR: expected `,` or `)` after `a`, found `b`
+//~^^ ERROR: expected `,` or `)` after `a`, found `|b`
+//~^^^ ERROR: unexpected character `)` after `|b`

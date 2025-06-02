@@ -6,14 +6,23 @@ define-function: (
     [],
     block {
         assert-css: ("header", {"background-color": "a"})
+        //~^ ERROR: [expected `a` for key `background-color`, found `rgb(17, 17, 17)`]
         assert-css: ("header", {"background-color": "b"})
+        //~^ ERROR: [expected `b` for key `background-color`, found `rgb(17, 17, 17)`]
         assert-css: ("header", {"background-color": "c"})
+        //~^ ERROR: [expected `c` for key `background-color`, found `rgb(17, 17, 17)`]
         assert-css: ("header", {"background-color": "d"})
+        //~^ ERROR: [expected `d` for key `background-color`, found `rgb(17, 17, 17)`]
         assert-css: ("header", {"background-color": "e"})
+        //~^ ERROR: [expected `e` for key `background-color`, found `rgb(17, 17, 17)`]
         assert-css: ("header", {"background-color": "f"})
+        //~^ ERROR: [expected `f` for key `background-color`, found `rgb(17, 17, 17)`]
         assert-css: ("header", {"background-color": "g"})
+        //~^ ERROR: [expected `g` for key `background-color`, found `rgb(17, 17, 17)`]
         assert-css: ("header", {"background-color": "h"})
+        //~^ ERROR: [expected `h` for key `background-color`, found `rgb(17, 17, 17)`]
         assert-css: ("header", {"background-color": "i"})
+        //~^ ERROR: [expected `i` for key `background-color`, found `rgb(17, 17, 17)`]
     },
 )
 call-function: ("fn1", {})

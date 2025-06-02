@@ -3,80 +3,117 @@
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 // This test ensures it fails because "header" doesn't end with "Another" but starts with it.
 assert-text-false: ("header", "Another", [ENDS_WITH, STARTS_WITH])
+//~^ ERROR: [`Another page!` starts with `Another` (for STARTS_WITH check)]
 assert-text-false: ("header", "Another", STARTS_WITH)
+//~^ ERROR: [`Another page!` starts with `Another` (for STARTS_WITH check)]
 // This test ensures it fails because ".content"'s className doesn't end with ".con" but
 // starts with it.
 assert-property: (".content", {"className": "con"}, [ENDS_WITH, STARTS_WITH])
+//~^ ERROR: [property `"className"` (`content`) doesn't end with `con`]
 assert-property: (".content", {"className": "con"}, [STARTS_WITH, ENDS_WITH])
+//~^ ERROR: [property `"className"` (`content`) doesn't end with `con`]
 assert-property: (".content", {"className": "con"}, STARTS_WITH)
 // text check (for near)
 assert-property: (".content", {"className": "wowo"}, [CONTAINS, NEAR])
+//~^ ERROR: [property `"className"` (`content`) doesn't contain `wowo` (for CONTAINS check); property `"className"` (`content`) is NaN (for NEAR check)]
 // number check (for near)
 assert-property: (".content", {"clientWidth": "999"}, [CONTAINS, NEAR])
+//~^ ERROR: [property `"clientWidth"` (`1000`) doesn't contain `999` (for CONTAINS check)]
 assert-property-false: (".content", {"className": "con"}, [STARTS_WITH, ENDS_WITH])
+//~^ ERROR: [assert didn't fail for property `"className"` (`content`) (for STARTS_WITH check)]
 assert-property-false: (".content", {"className": "con"}, [STARTS_WITH, ENDS_WITH])
+//~^ ERROR: [assert didn't fail for property `"className"` (`content`) (for STARTS_WITH check)]
 assert-property-false: (".content", {"className": "con"}, ENDS_WITH)
 // text check (for near)
 assert-property-false: (".content", {"className": "wowo"}, [CONTAINS, NEAR])
+//~^ ERROR: [property `"className"` (`content`) is NaN (for NEAR check)]
 // number check (for near)
 assert-property-false: (".content", {"clientWidth": "999"}, [CONTAINS, NEAR])
+//~^ ERROR: [property `"clientWidth"` (`1000`) is within 1 of `999` (for NEAR check)]
 // We also check that the command fails if the attribute doesn't exist:
 assert-property: (".content", {"does-not-exist": ".con"})
+//~^ ERROR: [expected `.con` for property `"does-not-exist"`, found `undefined`]
 // Check that the "false" command succeeds if the attribute doesn't exist.
 assert-property-false: (".content", {"does-not-exist": ".con"})
 // This test ensures it fails because ".content"'s class doesn't end with ".con" but
 // starts with it.
 assert-attribute: (".content", {"class": ".con"}, [ENDS_WITH, STARTS_WITH])
+//~^ ERROR: [attribute `class` (`content`) doesn't start with `.con` (for STARTS_WITH check); attribute `class` (`content`) doesn't end with `.con`]
 assert-attribute: (".content", {"class": ".con"}, [STARTS_WITH, ENDS_WITH])
+//~^ ERROR: [attribute `class` (`content`) doesn't start with `.con` (for STARTS_WITH check); attribute `class` (`content`) doesn't end with `.con`]
 assert-attribute: (".content", {"class": ".con"}, STARTS_WITH)
+//~^ ERROR: [attribute `class` (`content`) doesn't start with `.con` (for STARTS_WITH check)]
 assert-attribute: (".content", {"class": ".con"}, CONTAINS)
+//~^ ERROR: [attribute `class` (`content`) doesn't contain `.con` (for CONTAINS check)]
 // text check (for near)
 assert-attribute: (".content", {"class": ".con"}, NEAR)
+//~^ ERROR: [attribute `class` (`content`) is NaN (for NEAR check)]
 // number check (for near)
 assert-attribute: (".content", {"nb-value": 999}, NEAR)
+//~^ ERROR: [attribute `nb-value` (`12`) is not within 1 of `999` (for NEAR check)]
 assert-attribute: (".content", {"\"class": ".con"})
+//~^ ERROR: [No attribute named `"class`]
 assert-attribute-false: (".content", {"class": ".con"}, [STARTS_WITH, ENDS_WITH])
 assert-attribute-false: (".content", {"class": ".con"}, [STARTS_WITH, ENDS_WITH])
 assert-attribute-false: (".content", {"class": ".con"}, ENDS_WITH)
 // text check (for near)
 assert-attribute-false: (".content", {"class": ".con"}, NEAR)
+//~^ ERROR: [attribute `class` (`content`) is NaN (for NEAR check)]
 // number check (for near)
 assert-attribute-false: (".content", {"nb-value": 999}, NEAR)
 // We also check that the command fails if the attribute doesn't exist:
 assert-attribute: (".content", {"does-not-exist": ".con"})
+//~^ ERROR: [No attribute named `does-not-exist`]
 // Check that the "false" command succeeds if the attribute doesn't exist.
 assert-attribute-false: (".content", {"does-not-exist": ".con"})
 // Checks that if a command failed before this one, it'll still continue
 click: "header"
 // The opposite of the previous check.
 assert-text: ("header", "Another", [STARTS_WITH, ENDS_WITH])
+//~^ ERROR: [`Another page!` doesn't end with `Another` (for ENDS_WITH check)]
 assert-text: ("header", "Another", ENDS_WITH)
+//~^ ERROR: [`Another page!` doesn't end with `Another` (for ENDS_WITH check)]
 // Same check on assert-document-property.
 assert-document-property-false: ({"title": "Other", "bgColor": ""}, [ENDS_WITH, STARTS_WITH])
+//~^ ERROR: [assert didn't fail for document property `title` (`Other page`) (for STARTS_WITH check); assert didn't fail for document property `bgColor` (``) (for STARTS_WITH check); assert didn't fail for document property `bgColor` (``) (for ENDS_WITH check)]
 assert-document-property-false: ({"title": "Other"}, STARTS_WITH)
+//~^ ERROR: [assert didn't fail for document property `title` (`Other page`) (for STARTS_WITH check)]
 // text check (for near)
 assert-document-property-false: ({"nodeName": ".con"}, NEAR)
+//~^ ERROR: [document property `nodeName` (`#document`) is NaN (for NEAR check)]
 // number check (for near)
 assert-document-property-false: ({"nodeType": 999}, NEAR)
 assert-document-property: ({"title": "Other", "bgColor": "a"}, [STARTS_WITH, ENDS_WITH])
+//~^ ERROR: [document property `title` (`Other page`) doesn't end with `Other`; document property `bgColor` (``) doesn't start with `a` (for STARTS_WITH check); document property `bgColor` (``) doesn't end with `a`]
 assert-document-property: ({"title": "Other"}, ENDS_WITH)
+//~^ ERROR: [document property `title` (`Other page`) doesn't end with `Other`]
 // text check (for near)
 assert-document-property: ({"nodeName": ".con"}, NEAR)
+//~^ ERROR: [document property `nodeName` (`#document`) is NaN (for NEAR check)]
 // number check (for near)
 assert-document-property: ({"nodeType": 999}, NEAR)
+//~^ ERROR: [document property `nodeType` (`9`) is not within 1 of `999` (for NEAR check)]
 // Same check on assert-document-property.
 assert-window-property-false: ({"pageYOffset": "0", "pageXOffset": "0"}, [ENDS_WITH, STARTS_WITH])
+//~^ ERROR: [assert didn't fail for window property `pageYOffset` (`0`) (for STARTS_WITH check); assert didn't fail for window property `pageYOffset` (`0`) (for ENDS_WITH check); assert didn't fail for window property `pageXOffset` (`0`) (for STARTS_WITH check); assert didn't fail for window property `pageXOffset` (`0`) (for ENDS_WITH check)]
 assert-window-property-false: ({"pageYOffset": "0"}, STARTS_WITH)
+//~^ ERROR: [assert didn't fail for window property `pageYOffset` (`0`) (for STARTS_WITH check)]
 // text check (for near)
 assert-window-property-false: ({"name": ".con"}, NEAR)
+//~^ ERROR: [window property `name` (``) is NaN (for NEAR check)]
 // number check (for near)
 assert-window-property-false: ({"length": 999}, NEAR)
 assert-window-property: ({"pageYOffset": "www", "pageXOffset": "www"}, [STARTS_WITH, ENDS_WITH])
+//~^ ERROR: [window property `pageYOffset` (`0`) doesn't start with `www` (for STARTS_WITH check); window property `pageYOffset` (`0`) doesn't end with `www`; window property `pageXOffset` (`0`) doesn't start with `www` (for STARTS_WITH check); window property `pageXOffset` (`0`) doesn't end with `www`]
 assert-window-property: ({"pageYOffset": "www"}, ENDS_WITH)
+//~^ ERROR: [window property `pageYOffset` (`0`) doesn't end with `www`]
 // text check (for near)
 assert-window-property: ({"name": ".con"}, NEAR)
+//~^ ERROR: [window property `name` (``) is NaN (for NEAR check)]
 // number check (for near)
 assert-window-property: ({"length": 999}, NEAR)
+//~^ ERROR: [window property `length` (`0`) is not within 1 of `999` (for NEAR check)]
 // Ensures that a "fatal error" stops the script as expected.
 click: "#non-existent"
+//~^ ERROR: `#non-existent` not found
 assert-document-property: ({"title": "Other"}, ENDS_WITH)

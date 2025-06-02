@@ -2,6 +2,7 @@
 // within it (so line 4 in this test).
 
 define-function: (
+//~^ ERROR: expected an array, found `()` (a tuple) (second element of the tuple)
     "check_title_position",
     (),
     block {

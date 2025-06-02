@@ -5,5 +5,6 @@ assert-window-property: {"innerWidth": "670", "innerHeight": "650"}
 set-window-size: (610, 600)
 assert-window-property: {"innerWidth": "610", "innerHeight": "600"}
 set-window-size: (-10, 0.2)
+//~^ ERROR: expected only positive numbers, found `-10`
 // It should not run the next command.
 assert: ".whatever"

@@ -10,10 +10,12 @@ wait-for-document-property-false: {"windowProp": null}
 click: "#js-wait-document-prop"
 // Should wait for 100ms here.
 wait-for-document-property-false: ({"windowProp": "0", "non-existent": "bla"}, ENDS_WITH)
-// This next one should fail.
-wait-for-document-property-false: {"windowProp": "tadam"}
+wait-for-document-property: {"windowProp": "hello1"}
+wait-for-document-property-false: {"windowProp": "hello1"}
+//~^ ERROR: The document properties still all match
 // Check that the script won't stop running anything after the previous command failed.
-assert-document-property: {"windowProp": "tadam"}
+wait-for-document-property-false: {"windowProp": "hello1"}
+//~^ ERROR: The document properties still all match
 
 // object-path
 assert-document-property: {"bob"."y": null}

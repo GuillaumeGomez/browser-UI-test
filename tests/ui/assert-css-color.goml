@@ -5,5 +5,5 @@ assert-css: ("#js-create-elem", {
     "border": "1px solid rgb(1, 1, 1)",
     "border-color": "rgb(1, 1, 1)"}
 )
-// This test should fail.
 assert-css: (".content>.right>p", {"color": "rgb(0, 0, 0)"})
+//~^ ERROR: `show-text: true` needs to be used before checking for `color` (otherwise the browser doesn't compute it)

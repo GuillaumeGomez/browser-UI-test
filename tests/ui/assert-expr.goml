@@ -13,6 +13,7 @@ assert-false: {"a": 2} != |var3|
 assert: (1, "a") == (1, "a")
 assert: [1, 2] == [1, 2]
 assert: ["1", "2"] != ["1", "2"]
+//~^ ERROR: Condition `["1", "2"] != ["1", "2"]` (`!compareArrayLike(["1", "2"], ["1", "2"])`) was evaluated as false
 
 // Checking order of operations.
 store-value: (var, (1 + 2) * 4 + 1)
@@ -21,10 +22,15 @@ assert: |var| != 12 && 1 < 2
 assert: 1 + 2 + "a" == "3a"
 assert: 1 + 2 + "a" + (4 * 3) == "3a12"
 
-// Should fail.
 assert: |var| != 13
+//~^ ERROR: Condition `|var| != 13` (`13 != 13`) was evaluated as false
 assert-false: |var| == 13
+//~^ ERROR: assert didn't fail
 assert: |var2| == |var|
+//~^ ERROR: Condition `|var2| == |var|` (`"a" == 13`) was evaluated as false
 assert: {"b": 3} == |var3|
+//~^ ERROR: Condition `{"b": 3} == |var3|` (`compareJson({"b": 3}, {"a": 2})`) was evaluated as false
 assert: (1, "a") == (2, 3)
+//~^ ERROR: Condition `(1, "a") == (2, 3)` (`compareArrayLike([1, "a"], [2, 3])`) was evaluated as false
 assert: [1, 2] == ["a", "b"]
+//~^ ERROR: Condition `[1, 2] == ["a", "b"]` (`compareArrayLike([1, 2], ["a", "b"])`) was evaluated as false

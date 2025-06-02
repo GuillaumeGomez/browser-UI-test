@@ -1,7 +1,7 @@
 // This test is to ensure that if "show-text" is false, then it fails.
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 show-text: true
-// This test should fail and suggest "whitesmoke".
 assert-css: (".content>.left>p", {"color": "white"})
-// This test should fail and suggest an RGB color.
+//~^ ERROR: [expected `white` for key `color`, found `whitesmoke`]
 assert-css: (".content>.right>p", {"color": "white"})
+//~^ ERROR: [expected `white` for key `color`, found `rgb(244, 245, 245)`]

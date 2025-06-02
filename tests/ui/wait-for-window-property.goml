@@ -10,10 +10,12 @@ wait-for-window-property: {"windowProp": "hello"}
 click: "#js-wait-window-prop"
 // Should wait for 100ms here.
 wait-for-window-property: ({"windowProp": "1", "non-existent": null}, ENDS_WITH)
-// This next one should fail.
+//~^ WARNING: Special checks (ENDS_WITH) will be ignored for `null`
 wait-for-window-property: {"windowProp": "tadam"}
+//~^ ERROR: [expected `tadam` for window property `windowProp`, found `hello1`]
 // Check that the script won't stop running anything after the previous command failed.
 assert-window-property: {"windowProp": "tadam"}
+//~^ ERROR: [expected `tadam` for window property `windowProp`, found `hello1`]
 
 // object-path
 assert-window-property: {"ba"."x": null}

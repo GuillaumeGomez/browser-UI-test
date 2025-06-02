@@ -1,7 +1,5 @@
 => Starting doc-ui tests...
-
-wait-for-css-2... FAILED
+wait-for-css-2... 
 [ERROR] `tests/ui/wait-for-css-2.goml` line 9: Error: The CSS selector "#i-dont-exist" was not found: for command `wait-for-css: ("#i-dont-exist", {"color": "blue"}, ALL)`
-
-
+wait-for-css-2: FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed

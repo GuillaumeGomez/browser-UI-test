@@ -1,8 +1,6 @@
 => Starting doc-ui tests...
-
-assert-css... FAILED
-[ERROR] `tests/ui/assert-css.goml` line 5: The following errors happened (for selector `.content>.left>p`): [expected `white` for key `color`, found `whitesmoke`]: for command `assert-css: (".content>.left>p", {"color": "white"})`
-[ERROR] `tests/ui/assert-css.goml` line 7: The following errors happened (for selector `.content>.right>p`): [expected `white` for key `color`, found `rgb(244, 245, 245)`]: for command `assert-css: (".content>.right>p", {"color": "white"})`
-
-
+assert-css... 
+[ERROR] `tests/ui/assert-css.goml` line 4: The following errors happened (for selector `.content>.left>p`): [expected `white` for key `color`, found `whitesmoke`]: for command `assert-css: (".content>.left>p", {"color": "white"})`
+[ERROR] `tests/ui/assert-css.goml` line 6: The following errors happened (for selector `.content>.right>p`): [expected `white` for key `color`, found `rgb(244, 245, 245)`]: for command `assert-css: (".content>.right>p", {"color": "white"})`
+assert-css: FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed

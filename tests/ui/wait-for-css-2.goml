@@ -7,3 +7,4 @@ wait-for-css: ("button", {"color": "blue"}, ALL)
 set-timeout: 100
 // Should fail since the element doesn't exist.
 wait-for-css: ("#i-dont-exist", {"color": "blue"}, ALL)
+//~^ ERROR: The CSS selector "#i-dont-exist" was not found
