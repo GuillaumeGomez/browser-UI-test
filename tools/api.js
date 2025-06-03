@@ -1473,7 +1473,7 @@ function checkParseContent(x, func) {
     x.assert(func('a: '), [{
         'message': 'Unknown command "a"',
         'isFatal': false,
-        'line': {'line': 1}
+        'line': {'line': 1},
     }]);
     x.assert(
         func(':'),

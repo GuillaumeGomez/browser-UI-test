@@ -1,8 +1,8 @@
 instructions = [
-  """if (arg && arg.debug_log && arg.debug_log.setDebugEnabled) {
-    arg.debug_log.setDebugEnabled(true);
+  """if (arg && arg.logs && arg.logs.setDebugEnabled) {
+    arg.logs.setDebugEnabled(true);
 } else {
-    throw \"`debug` command needs an object with a `debug_log` field of `Debug` type!\";
+    throw \"`debug` command needs an object with a `logs` field of `Logs` type!\";
 }""",
 ]
 wait = false
