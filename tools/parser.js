@@ -2215,7 +2215,7 @@ function checkExpr(x) {
     x.assert(p.errors, [{
         'message': '`*` is not supported for string elements (in `"a" + 3 * 2`)',
         'isFatal': false,
-        'line': 1,
+        'line': {'line': 1},
     }]);
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'expression');
@@ -2403,7 +2403,7 @@ function checkObjectPath(x) {
     x.assert(p.errors[0], {
         message: 'expected a string after `.`',
         isFatal: false,
-        line: 1,
+        line: {line: 1},
     });
     x.assert(p.elems.length, 1);
     x.assert(p.elems[0].kind, 'object-path');
