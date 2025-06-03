@@ -1,13 +1,15 @@
 // This test ensures that the `compare*` commands are working as expected.
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
-// Should fail.
 compare-elements-property: ("header", "#the-input", ["clientHeight"])
+//~^ ERROR: clientHeight: `24` !== `6`
+
 // Should succeed.
 compare-elements-property: ("#useless\.input", "#the-input", ["clientHeight"])
-// Should succeed.
 compare-elements-property-false: ("header", "#the-input", ["clientHeight"])
-// Should fail.
+
 compare-elements-property-false: ("#useless\.input", "#the-input", ["clientHeight"])
+//~^ ERROR: assert didn't fail
+
 // Should succeed.
 compare-elements-position: ("#the-input", "#useless\.input", ["x"])
 compare-elements-position-near: ("#the-input", "#useless\.input", {"x": 1, "y": 12})
@@ -15,35 +17,47 @@ compare-elements-position: ("#another-one::before", "#another-one::before", ["y"
 compare-elements-position-near: ("#another-one::before", "#another-one::before", {"y": 1, "x": 1})
 compare-elements-position-false: ("#the-input", "#useless\.input", ["y"])
 compare-elements-position-near-false: ("#the-input", "#useless\.input", {"y": 8})
-// Should emit a warning.
+
 compare-elements-position-near: ("#the-input", "#useless\.input", {"x": 0, "y": 12})
-// Should fail.
+//~^ WARNING: Delta is 0 for "x", maybe try to use `compare-elements-position` instead?
 compare-elements-position: ("#the-input", "#useless\.input", ["y"])
+//~^ ERROR: different Y values: 24 != 34
 compare-elements-position: ("#another-one::before", "#useless\.input", ["y", "x"])
+//~^ ERROR: different Y values: 102 != 34
 compare-elements-position-false: ("#the-input", "#useless\.input", ["x"])
+//~^ ERROR: comparison didn't fail
 compare-elements-position-near: ("#another-one::before", "#useless\.input", {"y": 1, "x": 2})
+//~^ ERROR: delta Y values too large: 68 > 1
 compare-elements-position-near-false: ("#the-input", "#useless\.input", {"x": 1, "y": 12})
+//~^ ERROR: comparison didn't fail
+
 // Should succeed.
 compare-elements-css: ("#the-input", "#useless\.input", ["width"])
 compare-elements-css-false: ("#the-input", "#js-call", ["width"])
-// Should fail.
+
 compare-elements-css-false: ("#the-input", "#useless\.input", ["width"])
+//~^ ERROR: assert didn't fail
 compare-elements-css: ("#the-input", "#js-call", ["width"])
+//~^ ERROR: CSS property `width` did not match: 1000px != 37.5px
 // Should succeed.
 compare-elements-attribute: (".content .right", ".content .left", ["data-whatever"])
 compare-elements-attribute-false: (".content .right", ".content .left", ["class"])
-// Should fail.
 compare-elements-attribute-false: (".content .right", ".content .left", ["data-whatever"])
+//~^ ERROR: assert didn't fail
 compare-elements-attribute: (".content .right", ".content .left", ["class"])
+//~^ ERROR: class: right !== left
 // Should succeed.
 compare-elements-size: (".content .right", ".content .left", ["width"])
 compare-elements-size-near: (".content .right", ".content .left", {"width": 1})
 compare-elements-size-false: ("#another-one::before", ".content .left span", ["height"])
 compare-elements-size-near-false: ("#another-one::before", ".content .left span", {"height": 1})
-// Should warn.
 compare-elements-size-near: (".content .right", ".content .left", {"width": 0})
-// Should fail.
+//~^ WARNING: Delta is 0 for "width", maybe try to use `compare-elements-size` instead?
 compare-elements-size-false: (".content .right", ".content .left", ["width"])
+//~^ ERROR: comparison didn't fail
 compare-elements-size-near-false: (".content .right", ".content .left", {"width": 1})
+//~^ ERROR: comparison didn't fail
 compare-elements-size: ("#another-one::before", ".content .left span", ["height"])
+//~^ ERROR: heights don't match: 14 != 1
 compare-elements-size-near: ("#another-one::before", ".content .left span", {"height": 1})
+//~^ ERROR: delta for height values too large: 13 > 1

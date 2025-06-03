@@ -2,6 +2,7 @@ const path = require('path');
 const fs = require('fs');
 const process = require('process');
 const { plural } = require('../src/utils.js');
+const { convertMessageFromJson } = require('../src/logs.js');
 
 function toJSON(value) {
     if (typeof value === 'object') {
@@ -19,11 +20,15 @@ function getStackInfo(stack, level = 2) {
     return {'file': file_name, 'line': line};
 }
 
-function print(x, out) {
+function print(x, out, backline = true) {
     if (typeof out !== 'undefined') {
         out(x);
     } else {
-        process.stdout.write(`${x}\n`);
+        if (backline) {
+            process.stdout.write(`${x}\n`);
+        } else {
+            process.stdout.write(x);
+        }
     }
 }
 
@@ -34,6 +39,67 @@ function printDiff(i, value, out) {
         i += 1;
     }
     print(s, out);
+}
+
+function extractExpectedErrors(filePath) {
+    const content = fs.readFileSync(filePath, 'utf8').split('\n');
+    const expected = [];
+    let i = 0;
+    while (i < content.length) {
+        let line = content[i].trim();
+        i += 1;
+        if (!line.startsWith('//~')) {
+            continue;
+        }
+        let ups = 0;
+        let x = 3;
+        while (x < line.length && line[x] === '^') {
+            ups += 1;
+            x += 1;
+        }
+        if (i - ups < 0) {
+            throw new Error(`Invalid number of \`~\` at line ${i + 1} in file \`${filePath}\``);
+        }
+        while (x < line.length && line[x] === ' ') {
+            x += 1;
+        }
+        line = line.slice(x);
+        const sub = line.split(' ')[0];
+        let level = '';
+        if (sub === 'ERROR:') {
+            level = 'error';
+        } else if (sub === 'WARNING:') {
+            level = 'warning';
+        } else if (sub === 'INFO:') {
+            level = 'info';
+        } else if (sub === 'DEBUG:') {
+            level = 'debug';
+        } else {
+            throw new Error(`Unknown level \`${sub}\` at line ${i} in file \`${filePath}\``);
+        }
+        const message = line.slice(sub.length + 1).trim();
+        if (message.length === 0) {
+            throw new Error(`Missing message after level at line ${i} in file \`${filePath}\``);
+        }
+        expected.push({
+            level: level,
+            message: message,
+            line: i - ups,
+            originalLine: i,
+        });
+    }
+    return expected;
+}
+
+function isMatchingError(error, msg) {
+    if (error.found === true || error.level !== msg.level || !msg.message.includes(error.message)) {
+        return false;
+    }
+    if (error.line === msg.line.line) {
+        return true;
+    }
+    const backtrace = msg.line.backtrace;
+    return Array.isArray(backtrace) && backtrace[backtrace.length - 1].line === error.line;
 }
 
 class Assert {
@@ -174,7 +240,7 @@ class Assert {
 
     // Same as `assertTry` but handle some corner cases linked to UI tests.
     async assertTryUi(
-        callback, args, expectedValue, extraInfo, toJson = true, out = undefined,
+        callback, args, expectedValue, file, toJson = true, out = undefined,
         errCallback = undefined,
     ) {
         if (!this.blessEnabled) {
@@ -182,31 +248,71 @@ class Assert {
         }
         const pos = getStackInfo(new Error().stack, 2);
         try {
-            const ret = await callback(...args);
+            const messages = await callback(...args);
+            const expectedErrors = extractExpectedErrors(file);
+            // Now we get each JSON error message.
+            let output = '';
+            const unexpectedErrors = [];
+            const notFoundErrors = [];
+            for (const msg of messages) {
+                output += convertMessageFromJson(msg);
+                if (msg.line === undefined || msg.line === null) {
+                    continue;
+                }
+                const match = expectedErrors.find(e => isMatchingError(e, msg));
+                if (match === undefined) {
+                    unexpectedErrors.push(`[${msg.level}] ${convertMessageFromJson(msg)}`);
+                } else {
+                    match.found = true;
+                }
+            }
+            for (const expected of expectedErrors) {
+                if (expected.found !== true) {
+                    notFoundErrors.push(`\`${file}\`: Expected error not found at line ` +
+                        expected.originalLine);
+                }
+            }
+            if (notFoundErrors.length + unexpectedErrors.length !== 0) {
+                if (unexpectedErrors.length !== 0) {
+                    print('Unexpected errors:');
+                    for (const err of unexpectedErrors) {
+                        print(`==> ${err}`, undefined, false);
+                    }
+                }
+                if (notFoundErrors.length !== 0) {
+                    print('Not found errors:');
+                    for (const err of notFoundErrors) {
+                        print(`==> ${err}`);
+                    }
+                }
+                this._addTest();
+                this._incrError();
+                return false;
+            }
             const parts = expectedValue.split('$LINE');
             let startIndex = 0;
             if (parts.length > 1) {
                 for (const part of parts) {
-                    const toCheck = ret.slice(startIndex, startIndex + part.length);
-                    if (!this.assert(toCheck, part, pos, extraInfo, toJson)) {
-                        if (typeof errCallback !== 'undefined') {
-                            errCallback(ret, expectedValue);
+                    const toCheck = output.slice(startIndex, startIndex + part.length);
+                    if (!this.assert(toCheck, part, pos, file, toJson)) {
+                        if (errCallback !== undefined) {
+                            errCallback(output, expectedValue);
                         } else {
-                            print(`===full output===\n${ret}\n==end of output==`);
+                            print(`===full output===\n${output}\n==end of output==`);
                         }
                         return false;
                     }
                     startIndex = part.length;
-                    while (startIndex < ret.length && ret[startIndex] !== ')') {
+                    while (startIndex < output.length && output[startIndex] !== ')') {
                         startIndex += 1;
                     }
                 }
                 return true;
             }
-            return this.assert(ret, expectedValue, pos, extraInfo, toJson, out, errCallback);
+            return this.assert(output, expectedValue, pos, file, toJson, out, errCallback);
         } catch (err) {
             return this.assert(
-                err.message, expectedValue, pos, extraInfo, toJson, out, errCallback);
+                err.message, expectedValue, pos, file, toJson, out, errCallback);
         }
     }
 

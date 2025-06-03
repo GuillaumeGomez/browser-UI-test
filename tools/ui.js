@@ -25,6 +25,7 @@ function runAsyncUiTest(x, file, output, tests_queue, browser) {
     options.parseArguments([
         '--variable', 'DOC_PATH', 'tests/html_files',
         '--variable', 'WINDOWS_PATH', 'C:\\a\\b',
+        '--message-format', 'json',
         '--test-files', file,
     ]);
     let testOutput = '';

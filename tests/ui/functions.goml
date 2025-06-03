@@ -23,15 +23,24 @@ call-function: ("fn1", {
     "background_color": "a",
     "whole_check": {"color": "a"},
 })
+//~^^^^ ERROR: [expected `a` for key `background-color`, found `rgb(17, 17, 17)`; expected `y` for key `color`, found `rgb(255, 255, 255)`]
+//~^^^^^ ERROR: [expected `a` for key `color`, found `rgb(255, 255, 255)`]
+//~^^^^^^ WARNING: overwriting existing `fn1` function
+//~^^^^^^^ ERROR: [No attribute named `color`]
+//~^^^^^^^^ ERROR: [expected `red` for key `color`, found `white`]
 define-function: (
+    //~^ WARNING: overwriting existing `fn1` function
     "fn1",
     [background_color, whole_check],
     block {
         assert-css: ("header", {"background-color": |background_color|})
+        //~^ ERROR: [expected `a` for key `background-color`, found `rgb(17, 17, 17)`]
         assert-css: ("header", |whole_check|)
+        //~^ ERROR: [expected `a` for key `color`, found `rgb(255, 255, 255)`]
     },
 )
 // Again...
 call-function: ("fn1", {"background_color": "a", "whole_check": {"color": "a"}})
 // Error because there is a missing argument.
 call-function: ("fn1", {"background_color": "a", "k": {"color": "a"}})
+//~^ ERROR: Missing argument "whole_check"

@@ -4,11 +4,11 @@ go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 // assert-attribute
 //
 assert-attribute: ("header", {"whatever": null})
-// Should fail.
 assert-attribute: (".content", {"nb-value": null})
+//~^ ERROR: [Expected attribute `nb-value` to not exist, found: `12`]
 assert-attribute-false: (".content", {"nb-value": null})
-// Should fail.
 assert-attribute-false: ("header", {"whatever": null})
+//~^ ERROR: [Attribute named `whatever` doesn't exist]
 // Should succeed.
 set-attribute: ("header", {"nb-value": "a", "b": "c"})
 assert-attribute: ("header", {"nb-value": "a", "b": "c"})
@@ -18,20 +18,20 @@ assert-attribute: ("header", {"nb-value": null, "b": "d"})
 // Checking the warnings.
 // There should be no warning for this one.
 assert-attribute: ("header", {"whatever": null}, ALL)
-// Should warn.
 assert-attribute: ("header", {"whatever": null}, CONTAINS)
-// Should warn.
+//~^ WARNING: Special checks (CONTAINS) will be ignored for `null`
 assert-attribute: ("header", {"whatever": null}, [ALL, CONTAINS])
+//~^ WARNING: Special checks (CONTAINS) will be ignored for `null`
 
 //
 // assert-property
 //
 assert-property: ("header", {"yolo": null})
-// Should fail.
 assert-property: (".content", {"bgColor": null})
 assert-property-false: ("header", {"bgColor": null})
-// Should fail.
+//~^ ERROR: [Property named `"bgColor"` doesn't exist]
 assert-property-false: ("header", {"yolo": null})
+//~^ ERROR: [Property named `"yolo"` doesn't exist]
 // Should succeed.
 set-property: ("header", {"yolo": "a", "b": "c"})
 assert-property: ("header", {"yolo": "a", "b": "c"})
@@ -41,20 +41,21 @@ assert-attribute: ("header", {"yolo": null, "b": "d"})
 // Checking the warnings.
 // There should be no warning for this one.
 assert-property: ("header", {"whatever": null}, ALL)
-// Should warn.
 assert-property: ("header", {"whatever": null}, CONTAINS)
-// Should warn.
+//~^ WARNING: Special checks (CONTAINS) will be ignored for `null`
 assert-property: ("header", {"whatever": null}, [ALL, CONTAINS])
+//~^ WARNING: Special checks (CONTAINS) will be ignored for `null`
 
 //
 // assert-document-property
 //
 assert-document-property: {"yolo": null}
-// Should fail.
 assert-document-property: {"bgColor": null}
+//~^ ERROR: [Expected property `"bgColor"` to not exist, found: ``]
 assert-document-property-false: {"bgColor": null}
-// Should fail.
 assert-document-property-false: {"yolo": null}
+//~^ ERROR: [Property named `"yolo"` doesn't exist]
 
 // Checking the warnings.
 assert-document-property: ({"yolo": null}, CONTAINS)
+//~^ WARNING: Special checks (CONTAINS) will be ignored for `null`

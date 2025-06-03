@@ -1,8 +1,8 @@
 // Checks that "screenshot-on-failure" command is working as expected.
 screenshot-on-failure: true
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
-// Should fail.
 assert-attribute: (".content", {"nb-value": null})
+//~^ ERROR: [Expected attribute `nb-value` to not exist, found: `12`]
 // This one shouldn't appear in the log since the script is supposed to stop
 // at the first error because of `screenshot-on-failure`.
 assert-attribute-false: ("header", {"whatever": null})

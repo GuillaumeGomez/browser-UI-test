@@ -6,7 +6,8 @@ wait-for-local-storage-false: {"something3": "a"}
 click: "#js-wait-local-storage-2"
 // Should wait for 100ms here.
 wait-for-local-storage-false: {"something3": null}
-// This next one should fail.
 wait-for-local-storage-false: {"something3": "hello hi"}
+//~^ ERROR: All local storage entries still match
 // Check that the script won't stop running anything after the previous command failed.
 assert-local-storage: {"something3": "tadam"}
+//~^ ERROR: [localStorage item "something3" (of value "tadam") != "hello hi"]

@@ -12,7 +12,8 @@ set-css: ("#js-change-pos", {"margin-top": "0"})
 click: "#js-change-pos"
 // Should wait for 250ms here.
 wait-for-position-false: ("#js-change-pos", {"y": 88}, ALL)
-// This next one should fail.
 wait-for-position-false: ("#js-change-pos", {"y": 91})
+//~^ ERROR: All checks still succeed
 // We ensure that it still runs commands after failing:
 assert-position: ("#js-change-pos", {"y": 16})
+//~^ ERROR: [different Y values: 91 (or 91) != 16]

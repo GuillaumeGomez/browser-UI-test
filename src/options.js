@@ -33,6 +33,8 @@ function helper() {
     print('  --incognito                   : Enable incognito mode');
     print('  --jobs [N]                    : Number of parallel jobs, defaults to number of CPUs');
     print('  --no-headless                 : Disable headless mode');
+    print('  --message-format [human|json] : In which format the messages (like errors) should be' +
+        ' emitted');
     print('  --pause-on-error [true|false] : Pause execution script until user press ENTER');
     print('  --permission [PERMISSION]     : Add a permission to enable');
     print('  --run-id [id]                 : Id to be used for failed images extension (\'test\'');
@@ -105,6 +107,7 @@ class Options {
         this.failOnJsError = false;
         this.screenshotOnFailure = false;
         this.nbThreads = os.cpus().length;
+        this.messageFormat = 'human';
         // Enabled by default!
         this.failOnRequestError = true;
         this.executablePath = null;
@@ -139,6 +142,7 @@ class Options {
         copy.executablePath = this.executablePath !== null ? this.executablePath.slice() : null;
         copy.screenshotOnFailure = this.screenshotOnFailure;
         copy.nbThreads = this.nbThreads;
+        copy.messageFormat = this.messageFormat.slice();
         return copy;
     }
 
@@ -304,6 +308,17 @@ class Options {
                 } else {
                     throw new Error('Missing number after `--jobs` option');
                 }
+            } else if (args[it] === '--message-format') {
+                if (it + 1 < args.length) {
+                    if (!['human', 'json'].includes(args[it + 1].trim())) {
+                        throw new Error(`\`--message-format\` option only accepts \`human\` or \
+                            \`json\` as values, found \`${args[it + 1]}\``);
+                    }
+                    this.messageFormat = args[it + 1].trim();
+                    it += 1;
+                } else {
+                    throw new Error('Missing message format after `--message-format` option');
+                }
             } else {
                 throw new Error(`Unknown option \`${args[it]}\`\n` +
                     'Use `--help` if you want the list of the available commands');
@@ -349,6 +364,10 @@ class Options {
         this.validateFields();
     }
 
+    isJsonOutput() {
+        return this.messageFormat === 'json';
+    }
+
     validateFields() {
         // Check if variables have the expected types (you never know...).
         const validateField = (fieldName, expectedType) => {
@@ -384,6 +403,7 @@ class Options {
         validateField('allowFileAccessFromFiles', 'boolean');
         validateField('screenshotOnFailure', 'boolean');
         validateField('nbThreads', 'number');
+        validateField('messageFormat', 'string');
         // eslint-disable-next-line eqeqeq
         if (this.variables.constructor != Object && typeof this.variables !== 'object') {
             throw new Error('`Options.variables` field is supposed to be a dictionary-like! ' +

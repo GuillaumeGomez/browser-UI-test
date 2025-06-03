@@ -2,3 +2,4 @@ screenshot-comparison: false
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 show-text: true
 compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])
+//~^ ERROR: assert didn't fail

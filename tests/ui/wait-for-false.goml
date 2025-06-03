@@ -7,5 +7,5 @@ click: "#js-create-elem"
 wait-for: "#created-one"
 click: "#js-remove-elem"
 wait-for-false: "#created-one"
-// Should fail.
 wait-for: "#created-one"
+//~^ ERROR: The CSS selector "#created-one" was not found

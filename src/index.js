@@ -13,7 +13,7 @@ const {
     extractFileNameWithoutExtension,
 } = require('./utils.js');
 const { Options } = require('./options.js');
-const {Debug, Logs} = require('./logs.js');
+const { Logs } = require('./logs.js');
 const process = require('process');
 const path = require('path');
 const consts = require('./consts.js');
@@ -47,7 +47,7 @@ ${content}
     return m.exports.f;
 }
 
-function comparePixels(img1, img2, debug_log) {
+function comparePixels(img1, img2, logs, currentFile) {
     const a = PNG.sync.read(fs.readFileSync(img1));
     const b = PNG.sync.read(fs.readFileSync(img2));
 
@@ -65,7 +65,7 @@ function comparePixels(img1, img2, debug_log) {
             || aData[i + 2] !== bData[i + 2] /* blue */ ) {
             const x = i % (a.width * 4);
             const y = (i - x) / (a.width * 4);
-            debug_log.append(`comparePixels FAILED at position (${x}, ${y}), colors: ` +
+            logs.debug(currentFile, `comparePixels FAILED at position (${x}, ${y}), colors: ` +
                 `[${aData[i]}, ${aData[i + 1]}, ${aData[i + 2]}] VS ` +
                 `[${bData[i]}, ${bData[i + 1]}, ${bData[i + 2]}]`);
             return false;
@@ -122,7 +122,7 @@ function checkFolders(options) {
 }
 
 // Returns `false` if it failed.
-async function screenshot(extras, filename, selector, pages, logs, commandLogs, warnings) {
+async function screenshot(extras, filename, selector, pages, logs) {
     const data = innerParseScreenshot(extras, filename, selector);
     let screenshot_error = null;
     for (const instruction of data.instructions) {
@@ -141,19 +141,19 @@ async function screenshot(extras, filename, selector, pages, logs, commandLogs, 
         }
     }
 
+    const fileInfo = {'file': filename};
     if (screenshot_error !== null) {
-        logs.append(`FAILED (Cannot take screenshot: element \`${extras.screenshotComparison}\` \
-not found: ${screenshot_error})`, true);
-        logs.appendLogs(commandLogs);
-        logs.warn(warnings);
+        logs.failure(fileInfo, `Cannot take screenshot: element \
+\`${extras.screenshotComparison}\` not found: ${screenshot_error}`);
         return false;
     }
-    commandLogs.info(data['infos']);
+    logs.info(fileInfo, data['infos']);
     return true;
 }
 
-function waitUntilEnterPressed(error_log) {
-    print('An error occurred: `' + error_log + '`');
+function waitUntilEnterPressed(logs) {
+    const last = logs.lastError();
+    print('An error occurred: `' + last.message + '`');
     readline.question('Press ENTER to continue...');
 }
 
@@ -177,24 +177,22 @@ async function runInstruction(loadedInstruction, pages, extras) {
 }
 
 async function runAllCommands(loaded, logs, options, browser) {
-    const commandLogs = new Logs(false);
-    logs.append(loaded['file'] + '... ');
+    const currentFile = {'file': loaded['file']};
+    logs.display(loaded['file'] + '... ');
     const context_parser = loaded['parser'];
 
     let notOk = false;
     let returnValue = Status.Ok;
-    const debug_log = new Debug(options.debug, logs);
-    const warnings = [];
 
     let page;
     try {
-        page = await browser.newPage(options, debug_log);
+        page = await browser.newPage(options, currentFile, logs);
     } catch (e) {
         // try again after waiting a bit first to avoid "Session with given id not found" error...
         await new Promise(r => setTimeout(r, 100));
-        page = await browser.newPage(options, debug_log);
+        page = await browser.newPage(options, currentFile, logs);
     }
-    await browser.emulate(options, page, debug_log);
+    await browser.emulate(options, currentFile, page, logs);
     try {
         const extras = {
             'screenshotComparison': options.screenshotComparison === true,
@@ -203,7 +201,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             'puppeteer': browser.puppeteer,
             'browser': browser,
             'permissions': options.permissions,
-            'debug_log': debug_log,
+            'logs': logs,
             // If the `--no-headless` option is set, we enable it by default.
             'pauseOnError': options.shouldPauseOnError(),
             'screenshotOnFailure': options.screenshotOnFailure,
@@ -261,20 +259,20 @@ async function runAllCommands(loaded, logs, options, browser) {
         await options.onPageCreatedCallback(page, loaded['file']);
         // eslint-disable-next-line no-undef
         const script = fs.readFileSync(path.join(__dirname, 'helpers.js'), 'utf8');
-        debug_log.append(`Injecting helpers script into page: "${script}"`);
+        logs.debug(currentFile, `Injecting helpers script into page: "${script}"`);
         await page.evaluateOnNewDocument(script);
         const pages = [page];
 
         let line_number;
 
-        // Defined here because we need `error_log` to be updated without being returned.
+        // Defined here because we need `logs` to be updated without being returned.
         // `checkPageErrors` shouldn't be called directly.
         const checkPageErrors = (option, field, message) => {
             if (!extras[option] || extras[field].length === 0) {
                 return false;
             }
-            const info = getFileInfo(context_parser, line_number, false);
-            error_log += `[ERROR] ${info}: ${message}: ` + extras[field].join('\n');
+            logs.error(getFileInfo(context_parser, line_number, false), `${message}: ` +
+                extras[field].join('\n'));
             // We empty the errors to prevent having it duplicated.
             extras[field].splice(0, extras[field].length);
             return true;
@@ -286,7 +284,6 @@ async function runAllCommands(loaded, logs, options, browser) {
             return checkPageErrors('failOnRequestError', 'requestErrors', 'request failed');
         };
 
-        let error_log = '';
         let current_url = '';
 
         command_loop:
@@ -294,26 +291,28 @@ async function runAllCommands(loaded, logs, options, browser) {
             const command = context_parser.get_next_command(pages);
             if (command === null) {
                 if (nb_commands === 0) {
-                    logs.append('FAILED (No command to execute)', true);
-                    logs.appendLogs(commandLogs);
+                    logs.failure(currentFile, 'No command to execute');
                     return Status.Failure;
                 }
                 break;
             }
             if (command['warnings'] !== undefined) {
+                const fileInfo = getFileInfo(context_parser, command['line']);
                 for (const warning of command['warnings']) {
-                    warnings.push(`${getFileInfo(context_parser, command['line'])}: ${warning}`);
+                    logs.warn(fileInfo, warning);
                 }
             }
             // FIXME: This is ugly to have both 'error' and 'errors'. Clean that up!
             if (command['error'] !== undefined) {
-                error_log += `[ERROR] ${getFileInfo(context_parser, command['line'])}: \
-${command['error']}`;
+                logs.error(getFileInfo(context_parser, command['line']), command['error']);
                 break;
             } else if (command['errors'] !== undefined && command['errors'].length > 0) {
-                error_log += command['errors'].map(e => {
-                    return `[ERROR] ${getFileInfo(context_parser, e['line'])}: ${e['message']}`;
-                }).join('\n');
+                for (const error of command['errors']) {
+                    logs.error(
+                        getFileInfo(context_parser, error['line']),
+                        error['message'],
+                    );
+                }
                 break;
             }
             let failed = false;
@@ -327,46 +326,46 @@ ${command['error']}`;
             let stopInnerLoop = false;
 
             for (const instruction of instructions) {
-                debug_log.append(`EXECUTING (line ${line_number}) "${instruction}"`);
+                const fileInfo = getFileInfo(context_parser, line_number);
+                logs.debug(fileInfo, `EXECUTING (line ${line_number.line}) "${instruction}"`);
                 let loadedInstruction;
                 try {
                     loadedInstruction = loadContent(instruction);
                 } catch (error) { // parsing error
-                    error_log += `${getFileInfo(context_parser, line_number)} output:\n\
-${error.message}\n`;
-                    if (debug_log.isEnabled()) {
-                        error_log += `command \`${command['original']}\` failed on ` +
-                            `\`${instruction}\`\n`;
-                    }
+                    logs.error(fileInfo, `output:\n${error.message}`);
+                    logs.debug(
+                        fileInfo,
+                        `command \`${command['original']}\` failed on \`${instruction}\``,
+                    );
                     break command_loop;
                 }
                 try {
                     await runInstruction(loadedInstruction, pages, extras);
                 } catch (err) { // execution error
                     if (err === COLOR_CHECK_ERROR) {
-                        error_log += `[ERROR] ${getFileInfo(context_parser, line_number)}: \
-${err}\n`;
+                        logs.error(
+                            getFileInfo(context_parser, line_number),
+                            err,
+                        );
                         stopLoop = true;
                     } else {
                         failed = true;
                         const s_err = err.toString();
+                        const fileInfo = getFileInfo(context_parser, line_number);
                         if (extras.expectedToFail !== true) {
                             const original = command['original'];
-                            error_log += `[ERROR] ${getFileInfo(context_parser, line_number)}: \
-${s_err}: for command \`${original}\`\n`;
+                            logs.error(fileInfo, `${s_err}: for command \`${original}\``);
                             stopInnerLoop = true;
                             if (extras.screenshotOnFailure) {
                                 stopLoop = true;
                             }
                         } else {
                             // it's an expected failure so no need to log it
-                            debug_log.append(
-                                `[EXPECTED FAILURE] ${getFileInfo(context_parser, line_number)}: \
-${s_err}`);
+                            logs.debug(fileInfo, `[EXPECTED FAILURE] ${s_err}`);
                         }
                     }
                 }
-                debug_log.append('Done!');
+                logs.debug(currentFile, 'Done!');
                 if (stopLoop || checkJsErrors() || checkRequestErrors()) {
                     break command_loop;
                 } else if (stopInnerLoop) {
@@ -383,8 +382,10 @@ ${s_err}`);
                 && command['checkResult'] === true
                 && extras.expectedToFail === true
             ) {
-                error_log += `${getFileInfo(context_parser, line_number)}: command \
-\`${command['original']}\` was supposed to fail but succeeded\n`;
+                logs.error(
+                    getFileInfo(context_parser, line_number),
+                    `command \`${command['original']}\` was supposed to fail but succeeded`,
+                );
             }
             let shouldWait = false;
             if (failed === true && extras.expectedToFail === false) {
@@ -394,7 +395,9 @@ ${s_err}`);
             } else if (command['wait'] !== false) {
                 shouldWait = true;
             }
-            commandLogs.info(command['infos']);
+            if (command['infos'] !== undefined) {
+                logs.info(getFileInfo(context_parser, line_number), command['infos']);
+            }
             if (shouldWait) {
                 // We wait a bit between each command to be sure the browser can follow.
                 await new Promise(r => setTimeout(r, 50));
@@ -410,17 +413,14 @@ ${s_err}`);
                 break command_loop;
             }
         }
-        if (error_log.length > 0 || checkJsErrors() || checkRequestErrors()) {
-            logs.append('FAILED', true);
-            logs.appendLogs(commandLogs);
-            logs.warn(warnings);
-            logs.append(error_log);
+        if (logs.lastError() !== null || checkJsErrors() || checkRequestErrors()) {
+            logs.failure(currentFile, '');
             if (extras.pauseOnError === true) {
-                waitUntilEnterPressed(error_log);
+                waitUntilEnterPressed(logs);
             }
             if (extras.screenshotOnFailure === true) {
                 await screenshot(
-                    extras, `${loaded['file']}-failure`, null, pages, logs, commandLogs, warnings);
+                    extras, `${loaded['file']}-failure`, null, pages, logs);
             }
             await page.close();
             return Status.Failure;
@@ -429,62 +429,62 @@ ${s_err}`);
         let selector = null;
         if (extras.screenshotComparison !== true) {
             if (extras.screenshotComparison === false) {
-                logs.append('OK', true);
-                logs.appendLogs(commandLogs);
-                debug_log.append('=> [NO SCREENSHOT COMPARISON]');
-                logs.warn(warnings);
+                logs.success(currentFile, 'OK');
+                logs.debug(currentFile, '=> [NO SCREENSHOT COMPARISON]');
                 await page.close();
                 return Status.Ok;
             }
             selector = parser.getSelector(extras.screenshotComparison);
             if (selector.error !== undefined) {
-                logs.append(`FAILED (Cannot take screenshot: ${selector.error.join('\n')})`, true);
-                logs.appendLogs(commandLogs);
-                logs.warn(warnings);
+                logs.failure(currentFile, `Cannot take screenshot: ${selector.error.join('\n')}`);
                 await page.close();
                 return Status.MissingElementForScreenshot;
             }
         }
 
         if (!await screenshot(
-            extras, `${loaded['file']}-${options.runId}`, selector, pages, logs, commandLogs,
-            warnings)
+            extras, `${loaded['file']}-${options.runId}`, selector, pages, logs)
         ) {
             await page.close();
             return Status.MissingElementForScreenshot;
         }
 
         const compare_s = options.generateImages === false ? 'COMPARISON' : 'GENERATION';
-        debug_log.append(`=> [SCREENSHOT ${compare_s}]`);
+        logs.debug(currentFile, `=> [SCREENSHOT ${compare_s}]`);
         const p = path.join(options.getImageFolder(), loaded['file']);
         const newImage = `${p}-${options.runId}.png`;
         const originalImage = `${p}.png`;
 
         if (fs.existsSync(originalImage) === false) {
             if (options.generateImages === false) {
-                logs.append('FAILED ("' + originalImage + '" not found, use "--generate-images" ' +
-                    'if you want to generate it)', true);
+                logs.failure(
+                    currentFile,
+                    '"' + originalImage + '" not found, use "--generate-images" ' +
+                    'if you want to generate it',
+                );
                 notOk = true;
                 returnValue = Status.ScreenshotNotFound;
             } else {
                 fs.renameSync(newImage, originalImage);
-                logs.append('generated', true);
+                logs.info(currentFile, 'generated');
                 notOk = true; // To avoid displaying 'ok' at the end.
             }
-        } else if (comparePixels(newImage, originalImage, debug_log) === false) {
+        } else if (comparePixels(newImage, originalImage, logs, currentFile) === false) {
             const saved = save_failure(options.getImageFolder(), options.getFailureFolder(),
                 loaded['file'] + `-${options.runId}.png`);
             returnValue = Status.ScreenshotComparisonFailed;
             if (saved === true) {
                 const failedPath = path.join(
                     options.getFailureFolder(), `${loaded['file']}-${options.runId}.png`);
-                logs.append(
-                    `FAILED (images "${failedPath}" and "${originalImage}" are different)`,
-                    true);
+                logs.failure(
+                    currentFile,
+                    `images "${failedPath}" and "${originalImage}" are different`,
+                );
             } else {
-                logs.append(
-                    `FAILED (images "${newImage}" and "${originalImage}" are different)`,
-                    true);
+                logs.failure(
+                    currentFile,
+                    `images "${newImage}" and "${originalImage}" are different`,
+                );
             }
             notOk = true;
         } else {
@@ -492,21 +492,19 @@ ${s_err}`);
             fs.unlinkSync(newImage);
         }
     } catch (err) {
-        logs.append('FAILED', true);
+        logs.failure(currentFile, '');
         let msg = loaded['file'] + ' output:\n' + err.message + '\n';
         if (err.stack !== undefined) {
             msg += `stack: ${err.stack}\n`;
         }
-        logs.append(msg);
+        logs.error(currentFile, msg);
         notOk = true;
         returnValue = Status.ExecutionError;
     }
     await page.close();
     if (notOk === false) {
-        logs.append('ok', true);
+        logs.success(currentFile, 'OK');
     }
-    logs.appendLogs(commandLogs);
-    logs.warn(warnings);
     return returnValue;
 }
 
@@ -549,7 +547,7 @@ async function innerRunTests(logs, options, browser) {
         options.testFolder = path.dirname(options.testFiles[0]);
     }
     if (checkFolders(options) === false) {
-        return ['', 1];
+        return [[], 1];
     }
 
     // A little sort on tests' name.
@@ -590,12 +588,12 @@ async function innerRunTests(logs, options, browser) {
                 false,
             ).then(out => {
                 const [output, nbFailures] = out;
-                logs.append(output);
+                logs.appendLogs(output);
                 if (nbFailures === 0) {
                     successes += 1;
                 }
             }).catch(err => {
-                logs.append(err);
+                logs.error({'file': testName, err});
             }).finally(() => {
                 // We now remove the promise from the testsQueue.
                 testsQueue.splice(testsQueue.indexOf(callback), 1);
@@ -613,14 +611,16 @@ async function innerRunTests(logs, options, browser) {
             await browser.close();
         }
 
-        logs.append(`\n<= doc-ui tests done: ${successes} succeeded, ${total - successes} failed`);
-
-        if (logs.showLogs === true) {
-            logs.append('');
+        let extra = '';
+        if (!options.isJsonOutput()) {
+            extra = '\n';
         }
+        logs.display(
+            `${extra}<= doc-ui tests done: ${successes} succeeded, ${total - successes} \
+failed${extra}`);
     } catch (error) {
-        logs.append(`An exception occured: ${error.message}\n== STACKTRACE ==\n` +
-            `${new Error().stack}`);
+        logs.display(`An exception occured: ${error.message}\n== STACKTRACE ==\n` +
+            `${new Error().stack}\n`);
         return [logs.logs, 1];
     }
 
@@ -636,10 +636,10 @@ async function innerRunTestCode(
     checkTestFolder,
     content = null,
 ) {
-    const logs = new Logs(showLogs);
+    const logs = new Logs(showLogs, options);
 
     if (checkTestFolder === true && options.testFolder.length > 0) {
-        logs.append('[WARNING] `--test-folder` option will be ignored.\n');
+        logs.warn({}, '`--test-folder` option will be ignored.');
     }
 
     try {
@@ -647,11 +647,14 @@ async function innerRunTestCode(
         if (loaded === null) {
             return [logs.logs, 1];
         } else if (loaded.parser.get_parser_errors().length !== 0) {
-            const errors = loaded.parser.get_parser_errors()
-                .map(e => `${getFileInfo(loaded.parser, e.line)}: ${e.message}`)
-                .join('\n');
-            logs.append(testName + '... FAILED');
-            logs.append(`Syntax errors:\n${errors}`);
+            logs.display(testName + '... ');
+            for (const error of loaded.parser.get_parser_errors()) {
+                logs.error(
+                    getFileInfo(loaded.parser, error.line),
+                    error.message,
+                );
+            }
+            logs.failure({'file': testName}, '');
             return [logs.logs, 1];
         }
 
@@ -669,8 +672,10 @@ async function innerRunTestCode(
             return [logs.logs, 1];
         }
     } catch (error) {
-        logs.append(`An exception occured: ${error.message}\n== STACKTRACE ==\n` +
-            `${error.stack}`);
+        logs.error(
+            {'file': testName},
+            `An exception occured: ${error.message}\n== STACKTRACE ==\n${error.stack}`,
+        );
         return [logs.logs, 1];
     }
 
@@ -755,7 +760,7 @@ async function runTest(testPath, extras = null) {
     }
 
     if (checkFolders(optionsCopy) === false) {
-        return ['', 1];
+        return [[], 1];
     }
 
     return innerRunTestCode(
@@ -776,18 +781,18 @@ async function runTests(extras = null) {
     const [browser, options, showLogs, newExtras] = checkExtras(extras);
     options.validate();
 
-    const logs = new Logs(showLogs);
+    const logs = new Logs(showLogs, options);
     const s = options.nbThreads > 1 ? 's' : '';
     const extra =
         newExtras['showNbThreads'] !== false ? ` (on ${options.nbThreads} thread${s})` : '';
 
-    logs.append(`=> Starting doc-ui tests${extra}...\n`);
+    logs.display(`=> Starting doc-ui tests${extra}...`);
 
     try {
         return innerRunTests(logs, options, browser);
     } catch (error) {
-        logs.append(
-            `An exception occured: ${error.message}\n== STACKTRACE ==\n${new Error().stack}`);
+        logs.display(
+            `An exception occured: ${error.message}\n== STACKTRACE ==\n${new Error().stack}\n`);
         return [logs.logs, 1];
     }
 }

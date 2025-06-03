@@ -1,4 +1,6 @@
 // This test ensures that when using pseudo elements, there are warnings.
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 assert-attribute: (".content::after", {"class": "content"})
+//~^ WARNING: Pseudo-elements (`::after`) don't have attributes so the check will be performed on the element itself
 assert-property: (".content::after", {"className": "content"})
+//~^ WARNING: Pseudo-elements (`::after`) don't have properties so the check will be performed on the element itself

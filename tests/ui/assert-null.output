@@ -1,18 +1,15 @@
 => Starting doc-ui tests...
-
-assert-null... FAILED
-[WARNING] `tests/ui/assert-null.goml` line 22: Special checks (CONTAINS) will be ignored for `null`
-[WARNING] `tests/ui/assert-null.goml` line 24: Special checks (CONTAINS) will be ignored for `null`
-[WARNING] `tests/ui/assert-null.goml` line 45: Special checks (CONTAINS) will be ignored for `null`
-[WARNING] `tests/ui/assert-null.goml` line 47: Special checks (CONTAINS) will be ignored for `null`
+assert-null... 
+[ERROR] `tests/ui/assert-null.goml` line 7: The following errors happened (for selector `.content`): [Expected attribute `nb-value` to not exist, found: `12`]: for command `assert-attribute: (".content", {"nb-value": null})`
+[ERROR] `tests/ui/assert-null.goml` line 10: The following errors happened (for selector `header`): [Attribute named `whatever` doesn't exist]: for command `assert-attribute-false: ("header", {"whatever": null})`
+[WARNING] `tests/ui/assert-null.goml` line 21: Special checks (CONTAINS) will be ignored for `null`
+[WARNING] `tests/ui/assert-null.goml` line 23: Special checks (CONTAINS) will be ignored for `null`
+[ERROR] `tests/ui/assert-null.goml` line 31: The following errors happened (for selector `header`): [Property named `"bgColor"` doesn't exist]: for command `assert-property-false: ("header", {"bgColor": null})`
+[ERROR] `tests/ui/assert-null.goml` line 33: The following errors happened (for selector `header`): [Property named `"yolo"` doesn't exist]: for command `assert-property-false: ("header", {"yolo": null})`
+[WARNING] `tests/ui/assert-null.goml` line 44: Special checks (CONTAINS) will be ignored for `null`
+[WARNING] `tests/ui/assert-null.goml` line 46: Special checks (CONTAINS) will be ignored for `null`
+[ERROR] `tests/ui/assert-null.goml` line 53: The following errors happened: [Expected property `"bgColor"` to not exist, found: ``]: for command `assert-document-property: {"bgColor": null}`
+[ERROR] `tests/ui/assert-null.goml` line 56: The following errors happened: [Property named `"yolo"` doesn't exist]: for command `assert-document-property-false: {"yolo": null}`
 [WARNING] `tests/ui/assert-null.goml` line 60: Special checks (CONTAINS) will be ignored for `null`
-
-[ERROR] `tests/ui/assert-null.goml` line 8: The following errors happened (for selector `.content`): [Expected attribute `nb-value` to not exist, found: `12`]: for command `assert-attribute: (".content", {"nb-value": null})`
-[ERROR] `tests/ui/assert-null.goml` line 11: The following errors happened (for selector `header`): [Attribute named `whatever` doesn't exist]: for command `assert-attribute-false: ("header", {"whatever": null})`
-[ERROR] `tests/ui/assert-null.goml` line 32: The following errors happened (for selector `header`): [Property named `"bgColor"` doesn't exist]: for command `assert-property-false: ("header", {"bgColor": null})`
-[ERROR] `tests/ui/assert-null.goml` line 34: The following errors happened (for selector `header`): [Property named `"yolo"` doesn't exist]: for command `assert-property-false: ("header", {"yolo": null})`
-[ERROR] `tests/ui/assert-null.goml` line 54: The following errors happened: [Expected property `"bgColor"` to not exist, found: ``]: for command `assert-document-property: {"bgColor": null}`
-[ERROR] `tests/ui/assert-null.goml` line 57: The following errors happened: [Property named `"yolo"` doesn't exist]: for command `assert-document-property-false: {"yolo": null}`
-
-
+assert-null: FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed

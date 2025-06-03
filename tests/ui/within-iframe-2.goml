@@ -2,3 +2,4 @@
 
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/basic.html"
 within-iframe: ("#the-input", block {})
+//~^ ERROR: selector `#the-input` is not an `<iframe>` but a `<input>`

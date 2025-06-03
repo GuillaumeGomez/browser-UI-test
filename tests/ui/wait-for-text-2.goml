@@ -7,5 +7,5 @@ wait-for-text: ("button", "he", [ALL, STARTS_WITH])
 click: "#js-change-colors"
 wait-for-text: ("button", "ihi", [ALL, ENDS_WITH])
 set-timeout: 100
-// Should fail since the element doesn't exist.
 wait-for-text: ("#i-dont-exist", "oho")
+//~^ ERROR: The CSS selector "#i-dont-exist" was not found

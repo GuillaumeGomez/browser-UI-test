@@ -79,7 +79,7 @@ class PuppeteerWrapper {
         }
     }
 
-    async newPage(options, debug_log) {
+    async newPage(options, fileInfo, logs) {
         // If chromium has an issue, puppeteer simply exits instead of returning an error...
         // So to let the user knows what happened, we need to catch it so we can display an error
         // to let them know how to go around this problem.
@@ -87,7 +87,7 @@ class PuppeteerWrapper {
 
         let page;
         if (this.context) {
-            debug_log.append('Starting test in incognito mode.');
+            logs.debug(fileInfo, 'Starting test in incognito mode.');
             page = await this.context.newPage();
         } else {
             page = await this.browser.newPage();
@@ -153,7 +153,7 @@ class PuppeteerWrapper {
         await context.overridePermissions(url, Array.from(value));
     }
 
-    async emulate(options, page, debug_log) {
+    async emulate(options, fileInfo, page, logs) {
         if (options.emulate === '') {
             // Setting default size then.
             const viewport = page.viewport();
@@ -170,8 +170,8 @@ class PuppeteerWrapper {
                 'can be found there: ' +
                 'https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js');
         }
-        debug_log.append(`Emulating "${options.emulate}" device.`);
-        await page.emulate(this.puppeteer.KnownDevices[options.emulate]);
+        logs.debug(`Emulating "${options.emulate}" device.`);
+        await page.emulate(fileInfo, this.puppeteer.KnownDevices[options.emulate]);
     }
 }
 

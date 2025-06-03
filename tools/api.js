@@ -1470,17 +1470,21 @@ function checkParseContent(x, func) {
     x.assert(func(''), []);
     x.assert(func('// just a comment'), []);
     x.assert(func('  // just a comment'), []);
-    x.assert(func('a: '), [{'message': 'Unknown command "a"', 'isFatal': false, 'line': 1}]);
+    x.assert(func('a: '), [{
+        'message': 'Unknown command "a"',
+        'isFatal': false,
+        'line': {'line': 1},
+    }]);
     x.assert(
         func(':'),
-        [{'message': 'Unexpected `:` when parsing command', 'isFatal': true, 'line': 1}],
+        [{'message': 'Unexpected `:` when parsing command', 'isFatal': true, 'line': {'line': 1}}],
     );
 
     x.assert(func('go-to: "file:///home"'), [
         {
             'fatal_error': true,
             'original': 'go-to: "file:///home"',
-            'line': '1',
+            'line': {'line': 1},
             'instructions': [
                 `\
 const url = "file:///home";
@@ -1503,20 +1507,20 @@ try {
             '`fail-on-js-error`, `fail-on-request-error`, `include`, `javascript`, ' +
             '`screenshot-comparison`, `screenshot-on-failure`, `store-value` or `set-timeout` ' +
             'can be used before)!',
-        'line': '1',
+        'line': {'line': 1},
     }]);
     x.assert(func('expect-failure: true\ngo-to: "file:///home"'), [
         {
             'fatal_error': false,
             'wait': false,
             'original': 'expect-failure: true',
-            'line': '1',
+            'line': {'line': 1},
             'instructions': ['arg.expectedToFail = true;'],
         },
         {
             'fatal_error': true,
             'original': 'go-to: "file:///home"',
-            'line': '2',
+            'line': {'line': 2},
             'instructions': [
                 `\
 const url = "file:///home";
@@ -1537,7 +1541,7 @@ try {
         {
             'fatal_error': true,
             'original': 'go-to: "file:///home"',
-            'line': '1',
+            'line': {'line': 1},
             'instructions': [
                 `\
 const url = "file:///home";
@@ -1556,7 +1560,7 @@ try {
         {
             'fatal_error': false,
             'original': 'reload:',
-            'line': '2',
+            'line': {'line': 2},
             'instructions': [`\
 const ret = pages[0].reload({'waitUntil': 'domcontentloaded', 'timeout': 30000});
 await ret;`,
@@ -1566,7 +1570,7 @@ await ret;`,
         {
             'fatal_error': true,
             'original': 'go-to: "file:///home"',
-            'line': '3',
+            'line': {'line': 3},
             'instructions': [
                 `\
 const url = "file:///home";
@@ -1585,13 +1589,13 @@ try {
     ]);
     x.assert(
         func('// just a comment\na: b'),
-        [{'message': 'Unknown command "a"', 'isFatal': false, 'line': 2}],
+        [{'message': 'Unknown command "a"', 'isFatal': false, 'line': {'line': 2}}],
     );
     x.assert(func('go-to: "file:///home"\nemulate: "test"'), [
         {
             'fatal_error': true,
             'original': 'go-to: "file:///home"',
-            'line': '1',
+            'line': {'line': 1},
             'instructions': [
                 `\
 const url = "file:///home";
@@ -1609,14 +1613,14 @@ try {
         },
         {
             'error': 'Command `emulate` must be used before first `go-to`!',
-            'line': '2',
+            'line': {'line': 2},
         },
     ]);
     x.assert(func('go-to: "file:///home"\nassert-text: ("a", "b")'), [
         {
             'fatal_error': true,
             'original': 'go-to: "file:///home"',
-            'line': '1',
+            'line': {'line': 1},
             'instructions': [
                 `\
 const url = "file:///home";
@@ -1637,7 +1641,7 @@ try {
             'wait': false,
             'checkResult': true,
             'original': 'assert-text: ("a", "b")',
-            'line': '2',
+            'line': {'line': 2},
             'instructions': [`\
 async function checkTextForElem(elem) {
     await elem.evaluate(e => {

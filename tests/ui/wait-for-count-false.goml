@@ -6,7 +6,7 @@ wait-for-count-false: ("#js-create-elem", 2)
 click: "#js-create-elem"
 // Should wait for 250ms here.
 wait-for-count-false: (".random-class", 1)
-// This next one should fail.
 wait-for-count-false: (".random-class", 2)
+//~^ ERROR: Still found 2 instances of ".random-class"
 // Check that the script won't stop running anything after the previous command failed.
 assert-count: ("//*[@class='random-class']", 3)

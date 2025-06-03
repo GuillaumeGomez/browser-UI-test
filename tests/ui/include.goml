@@ -2,9 +2,14 @@
 // of `sub/include.goml` as well.
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 assert-text: ("header", "tadam")
+//~^ ERROR: [`Another page!` isn't equal to `tadam`]
 include: "sub/include.goml"
+//~^ ERROR: [`Basic test!` isn't equal to `hoho`]
+//~^^ ERROR: [`` isn't equal to `hoho`]
 assert-text: ("header", "tadam")
+//~^ ERROR: [`` isn't equal to `tadam`]
 
 include: "sub/func.goml"
 // Should fail but it allows to confirm that the right path is displayed.
 call-function: ("sub-func", {})
+//~^ ERROR: `#does_not-exist` not found

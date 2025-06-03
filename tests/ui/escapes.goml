@@ -20,6 +20,6 @@ assert: ("//*
 b")
 expect-failure: false
 go-to: "file://" + |WINDOWS_PATH| + "\\d\\elements.html"
-assert-document-property: {"URL": "file://C:\\a\\b\\d\\elements.html"}
-// Just to ensure all commands have been run.
+//~^ ERROR: Cannot navigate to invalid URL `file://C:\a\b\d\elements.html`
+// Shouldn't be run.
 assert: 12 == 13

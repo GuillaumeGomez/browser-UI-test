@@ -1,7 +1,5 @@
 => Starting doc-ui tests...
-
-wait-for-attribute... FAILED
-[ERROR] `tests/ui/wait-for-attribute.goml` line 14: Error: The following attributes still don't match: [expected `c` for attribute `data-a`, found `b`]: for command `wait-for-attribute: ("#js-call-attr", {"data-a": "c"})`
-
-
+wait-for-attribute... 
+[ERROR] `tests/ui/wait-for-attribute.goml` line 13: Error: The following attributes still don't match: [expected `c` for attribute `data-a`, found `b`]: for command `wait-for-attribute: ("#js-call-attr", {"data-a": "c"})`
+wait-for-attribute: FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed

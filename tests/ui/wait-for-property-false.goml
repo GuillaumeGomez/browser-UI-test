@@ -16,8 +16,7 @@ assert-property: ("#js-wait-prop2", {"toto"."z": null})
 click: "#js-wait-prop2"
 // Should wait for 100ms here.
 wait-for-property-false: ("#js-wait-prop2", {"toto"."z": null})
-
-// This next one should fail.
 wait-for-property-false: ("#js-wait-prop", {"hehe": "hoho"})
+//~^ ERROR: All properties still match
 // Check that the script won't run anything after the previous command failed.
-assert-property: ("#js-wait-prop", {"data-a": "c"})
+assert-property: ("#js-wait-prop", {"hehe": "c"})

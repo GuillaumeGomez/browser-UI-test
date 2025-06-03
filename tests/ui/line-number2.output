@@ -1,7 +1,5 @@
 => Starting doc-ui tests...
-
-line-number2... FAILED
-`tests/ui/line-number2.goml` line 5: command `compare-elements-css: (".content>.right>p", ".content>.left", ["color"])` was supposed to fail but succeeded
-
-
+line-number2... 
+[ERROR] `tests/ui/line-number2.goml` line 5: command `compare-elements-css: (".content>.right>p", ".content>.left", ["color"])` was supposed to fail but succeeded
+line-number2: FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed

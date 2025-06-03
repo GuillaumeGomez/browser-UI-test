@@ -250,13 +250,22 @@ class ParserWithContext {
 
     get_current_command_line() {
         const command = this.get_current_command();
-        const text = [`${command.line}`];
+        const backtrace = [];
         for (let i = this.contexts.length - 2; i >= 0; --i) {
             const c = this.contexts[i];
             const shortPath = stripCommonPathsPrefix(c.ast.absolutePath);
-            text.push(`    from \`${shortPath}\` line ${c.commands[c.currentCommand].line}`);
+            backtrace.push({
+                'file': shortPath,
+                'line': c.commands[c.currentCommand].line,
+            });
         }
-        return text.join('\n');
+        const lineInfo = {
+            'line': command.line,
+        };
+        if (backtrace.length !== 0) {
+            lineInfo.backtrace = backtrace;
+        }
+        return lineInfo;
     }
 
     pushNewContext(context) {

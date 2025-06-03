@@ -8,5 +8,7 @@ click: "#js-wait-local-storage"
 wait-for-local-storage: {"something2": "hello hi"}
 // This next one should fail.
 wait-for-local-storage: {"something2": "tadam"}
+//~^ ERROR: [localStorage item "something2" (of value "tadam") != "hello hi"]
 // Check that the script won't stop running anything after the previous command failed.
 assert-local-storage: {"something2": "tadam"}
+//~^ ERROR: [localStorage item "something2" (of value "tadam") != "hello hi"]
