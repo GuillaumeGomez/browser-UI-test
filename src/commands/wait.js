@@ -162,8 +162,8 @@ function parseWaitForCountInner(parser, waitFalse) {
 \\"${selector.value}\\" (found " + ${varName} + ")"`;
     if (waitFalse) {
         comp = '!==';
-        errorMessage = `"Still found ${count} ${plural('instance', count)} of \
-\\"${selector.value}\\" (found " + ${varName} + ")"`;
+        errorMessage = `"There are still ${count} ${plural('instance', count)} of \
+\\"${selector.value}\\""`;
     }
 
     const instructions = getWaitForElems(
