@@ -1,5 +1,5 @@
 => Starting doc-ui tests...
 wait-for-count-false... 
-[ERROR] `tests/ui/wait-for-count-false.goml` line 9: Error: Still found 2 instances of ".random-class" (found 2): for command `wait-for-count-false: (".random-class", 2)`
+[ERROR] `tests/ui/wait-for-count-false.goml` line 9: Error: There are still 2 instances of ".random-class": for command `wait-for-count-false: (".random-class", 2)`
 wait-for-count-false: FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed
