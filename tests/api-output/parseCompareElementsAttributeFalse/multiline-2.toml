@@ -8,7 +8,7 @@ const attributes = [\"\\\"data-whatever\"];
 for (const attr of attributes) {
     try {
     if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
-        throw attr + \": \" + e1.getAttribute(attr) + \" !== \" + e2.getAttribute(attr);
+        throw \"Attribute `\" + attr + \"` isn't equal: `\" + e1.getAttribute(attr) + \"` !== `\" + e2.getAttribute(attr) + \"`\";
     }
     } catch(e) { continue; } throw \"assert didn't fail\";
 }

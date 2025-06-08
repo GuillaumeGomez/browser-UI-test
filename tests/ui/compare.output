@@ -11,7 +11,7 @@ compare...
 [ERROR] `tests/ui/compare.goml` line 38: assert didn't fail: for command `compare-elements-css-false: ("#the-input", "#useless\.input", ["width"])`
 [ERROR] `tests/ui/compare.goml` line 40: CSS property `width` did not match: 1000px != 37.5px: for command `compare-elements-css: ("#the-input", "#js-call", ["width"])`
 [ERROR] `tests/ui/compare.goml` line 45: assert didn't fail: for command `compare-elements-attribute-false: (".content .right", ".content .left", ["data-whatever"])`
-[ERROR] `tests/ui/compare.goml` line 47: class: right !== left: for command `compare-elements-attribute: (".content .right", ".content .left", ["class"])`
+[ERROR] `tests/ui/compare.goml` line 47: Attribute `class` isn't equal: `right` !== `left`: for command `compare-elements-attribute: (".content .right", ".content .left", ["class"])`
 [WARNING] `tests/ui/compare.goml` line 54: Delta is 0 for "width", maybe try to use `compare-elements-size` instead?
 [ERROR] `tests/ui/compare.goml` line 56: comparison didn't fail: for command `compare-elements-size-false: (".content .right", ".content .left", ["width"])`
 [ERROR] `tests/ui/compare.goml` line 58: comparison didn't fail: for command `compare-elements-size-near-false: (".content .right", ".content .left", {"width": 1})`
