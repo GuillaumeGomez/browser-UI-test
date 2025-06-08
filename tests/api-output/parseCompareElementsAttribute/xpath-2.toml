@@ -7,7 +7,7 @@ await page.evaluate((e1, e2) => {
 const attributes = [];
 for (const attr of attributes) {
     if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
-        throw attr + \": \" + e1.getAttribute(attr) + \" !== \" + e2.getAttribute(attr);
+        throw \"Attribute `\" + attr + \"` isn't equal: `\" + e1.getAttribute(attr) + \"` !== `\" + e2.getAttribute(attr) + \"`\";
     }
 }
 }, parseCompareElementsAttr1, parseCompareElementsAttr2);""",

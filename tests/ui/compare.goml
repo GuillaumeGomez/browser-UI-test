@@ -45,7 +45,7 @@ compare-elements-attribute-false: (".content .right", ".content .left", ["class"
 compare-elements-attribute-false: (".content .right", ".content .left", ["data-whatever"])
 //~^ ERROR: assert didn't fail
 compare-elements-attribute: (".content .right", ".content .left", ["class"])
-//~^ ERROR: class: right !== left
+//~^ ERROR: Attribute `class` isn't equal: `right` !== `left`
 // Should succeed.
 compare-elements-size: (".content .right", ".content .left", ["width"])
 compare-elements-size-near: (".content .right", ".content .left", {"width": 1})

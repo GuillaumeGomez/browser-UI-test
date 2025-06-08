@@ -8,15 +8,15 @@ const attributes = [\"\\\"data-whatever\"];
 for (const attr of attributes) {
     let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
     if (value1 === null) {
-        throw attr + \" (\" + e1.getAttribute(attr) + \") from `a` isn't a number so comparison cannot be performed\";
+        throw \"Attribute `\" + attr + \"` (`\" + e1.getAttribute(attr) + \"`) from `a` isn't a number so comparison cannot be performed\";
     }
     let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
     if (value2 === null) {
-        throw attr + \" (\" + e2.getAttribute(attr) + \") from `b` isn't a number so comparison cannot be performed\";
+        throw \"Attribute `\" + attr + \"` (`\" + e2.getAttribute(attr) + \"`) from `b` isn't a number so comparison cannot be performed\";
     }
     try {
     if (value1 <= value2) {
-        throw attr + \": \" + e1.getAttribute(attr) + \" <= \" + e2.getAttribute(attr);
+        throw \"Attribute comparison failed for `\" + attr + \"`: `\" + e1.getAttribute(attr) + \"` <= `\" + e2.getAttribute(attr) + \"`\";
     }
     } catch(e) { continue; } throw \"assert didn't fail\";
 }
