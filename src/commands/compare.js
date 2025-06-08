@@ -113,7 +113,8 @@ function parseCompareElementsAttributeInner(parser, assertFalse) {
     if (operator === '=') {
         comparison = `\
 ${insertBefore}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
-    throw attr + ": " + e1.getAttribute(attr) + " !== " + e2.getAttribute(attr);
+    throw "Attribute \`" + attr + "\` isn't equal: \`" + e1.getAttribute(attr) + "\` !== \`" + \
+e2.getAttribute(attr) + "\`";
 }${insertAfter}`;
     } else {
         const matchings = {
@@ -125,16 +126,17 @@ ${insertBefore}if (e1.getAttribute(attr) !== e2.getAttribute(attr)) {
         comparison = `\
 let value1 = browserUiTestHelpers.extractFloat(e1.getAttribute(attr));
 if (value1 === null) {
-    throw attr + " (" + e1.getAttribute(attr) + ") from \`${selector1.value}\` isn't a number so \
-comparison cannot be performed";
+    throw "Attribute \`" + attr + "\` (\`" + e1.getAttribute(attr) + "\`) from \
+\`${selector1.value}\` isn't a number so comparison cannot be performed";
 }
 let value2 = browserUiTestHelpers.extractFloat(e2.getAttribute(attr));
 if (value2 === null) {
-    throw attr + " (" + e2.getAttribute(attr) + ") from \`${selector2.value}\` isn't a number so \
-comparison cannot be performed";
+    throw "Attribute \`" + attr + "\` (\`" + e2.getAttribute(attr) + "\`) from \
+\`${selector2.value}\` isn't a number so comparison cannot be performed";
 }
 ${insertBefore}if (value1 ${matchings[operator]} value2) {
-    throw attr + ": " + e1.getAttribute(attr) + " ${matchings[operator]} " + e2.getAttribute(attr);
+    throw "Attribute comparison failed for \`" + attr + "\`: \`" + e1.getAttribute(attr) + "\
+\` ${matchings[operator]} \`" + e2.getAttribute(attr) + "\`";
 }${insertAfter}`;
     }
 
