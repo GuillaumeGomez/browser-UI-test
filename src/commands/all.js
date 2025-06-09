@@ -26,6 +26,8 @@ module.exports = {
     'parseAssertCssFalse': assert.parseAssertCssFalse,
     'parseAssertDocumentProperty': assert.parseAssertDocumentProperty,
     'parseAssertDocumentPropertyFalse': assert.parseAssertDocumentPropertyFalse,
+    'parseAssertFindText': assert.parseAssertFindText,
+    'parseAssertFindTextFalse': assert.parseAssertFindTextFalse,
     'parseAssertLocalStorage': assert.parseAssertLocalStorage,
     'parseAssertLocalStorageFalse': assert.parseAssertLocalStorageFalse,
     'parseAssertPosition': assert.parseAssertPosition,

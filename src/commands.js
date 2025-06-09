@@ -17,6 +17,8 @@ const ORDERS = {
     'assert-css-false': commands.parseAssertCssFalse,
     'assert-document-property': commands.parseAssertDocumentProperty,
     'assert-document-property-false': commands.parseAssertDocumentPropertyFalse,
+    'assert-find-text': commands.parseAssertFindText,
+    'assert-find-text-false': commands.parseAssertFindTextFalse,
     'assert-local-storage': commands.parseAssertLocalStorage,
     'assert-local-storage-false': commands.parseAssertLocalStorageFalse,
     'assert-position': commands.parseAssertPosition,

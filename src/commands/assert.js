@@ -1494,6 +1494,109 @@ function parseAssertClipboardFalse(parser) {
     return parseAssertClipboardInner(parser, true);
 }
 
+function parseAssertFindTextInner(parser, assertFalse) {
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                {
+                    kind: 'string',
+                    allowEmpty: false,
+                },
+                {
+                    kind: 'json',
+                    keyTypes: {
+                        string: ['case-sensitive', 'whole-word'],
+                    },
+                    valueTypes: {
+                        boolean: {},
+                    },
+                    optional: true,
+                },
+            ],
+            alternatives: [
+                {
+                    kind: 'string',
+                    allowEmpty: false,
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    let caseSensitive = false;
+    let wholeWord = false;
+    const backward = false;
+    const wrapAround = true;
+    const searchInFrames = true;
+    const showDialog = false;
+    let needle;
+
+    if (ret.value.kind !== 'tuple') {
+        needle = ret.value.displayInCode();
+    } else {
+        const tuple = ret.value.entries;
+        needle = tuple[0].value.displayInCode();
+        if (tuple.length > 1) {
+            const extraValues = tuple[1].value.entries;
+            if (extraValues.has('case-sensitive')) {
+                caseSensitive = extraValues.get('case-sensitive').value;
+            }
+            if (extraValues.has('whole-word')) {
+                wholeWord = extraValues.get('whole-word').value;
+            }
+        }
+    }
+    let comparison;
+    if (assertFalse) {
+        comparison = `\
+if (found) {
+    throw new Error("Found text \`" + ${needle} + "\`");
+}`;
+    } else {
+        comparison = `\
+if (!found) {
+    throw new Error("Didn't find text \`" + ${needle} + "\`");
+}`;
+    }
+    const code = `\
+await page.evaluate(() => {
+    const found = window.find(
+        ${needle},
+        ${caseSensitive},
+        ${backward},
+        ${wrapAround},
+        ${wholeWord},
+        ${searchInFrames},
+        ${showDialog},
+    );
+${indentString(comparison, 1)}
+});`;
+    return {
+        'instructions': [code],
+        'wait': false,
+        'checkResult': true,
+    };
+}
+
+// Possible inputs:
+//
+// * ("string")
+// * ("string", JSON object)
+function parseAssertFindText(parser) {
+    return parseAssertFindTextInner(parser, false);
+}
+
+// Possible inputs:
+//
+// * ("string")
+// * ("string", JSON object)
+function parseAssertFindTextFalse(parser) {
+    return parseAssertFindTextInner(parser, true);
+}
+
 module.exports = {
     'parseAssert': parseAssert,
     'parseAssertFalse': parseAssertFalse,
@@ -1507,6 +1610,8 @@ module.exports = {
     'parseAssertCssFalse': parseAssertCssFalse,
     'parseAssertDocumentProperty': parseAssertDocumentProperty,
     'parseAssertDocumentPropertyFalse': parseAssertDocumentPropertyFalse,
+    'parseAssertFindText': parseAssertFindText,
+    'parseAssertFindTextFalse': parseAssertFindTextFalse,
     'parseAssertLocalStorage': parseAssertLocalStorage,
     'parseAssertLocalStorageFalse': parseAssertLocalStorageFalse,
     'parseAssertPosition': parseAssertPosition,
