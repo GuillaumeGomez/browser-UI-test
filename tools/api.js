@@ -2365,6 +2365,23 @@ function checkWriteInto(x, func) {
     func('(\n"//a", \n13)', 'multiline-2');
 }
 
+function checkAssertFindText(x, func) {
+    func('"', 'err-1');
+    func('("a", "b"', 'err-2');
+    func('("")', 'err-3');
+    func('("a", {"bla": true})', 'err-4');
+    func('("a", {"case-sensitive": "a"})', 'err-5');
+
+    func('("a")', 'basic-1');
+    func('"a"', 'basic-2');
+    func('("a", )', 'basic-3');
+    func('("a", {"case-sensitive": true})', 'basic-4');
+    func('("a", {"case-sensitive": false})', 'basic-5');
+    func('("a", {"whole-word": true})', 'basic-6');
+    func('("a", {"whole-word": false})', 'basic-7');
+    func('("a", {"case-sensitive": true, "whole-word": true})', 'basic-8');
+}
+
 const TO_CHECK = [
     {
         'name': 'assert',
@@ -2407,6 +2424,16 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertCssFalse, x, e, name, o),
     },
     {
+        'name': 'assert-count',
+        'func': checkAssertCount,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertCount, x, e, name, o),
+    },
+    {
+        'name': 'assert-count-false',
+        'func': checkAssertCount,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertCountFalse, x, e, name, o),
+    },
+    {
         'name': 'assert-document-property',
         'func': checkAssertObjProperty,
         'toCall': (x, e, name, o) => {
@@ -2421,14 +2448,18 @@ const TO_CHECK = [
         },
     },
     {
-        'name': 'assert-count',
-        'func': checkAssertCount,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertCount, x, e, name, o),
+        'name': 'assert-find-text',
+        'func': checkAssertFindText,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseAssertFindText, x, e, name, o);
+        },
     },
     {
-        'name': 'assert-count-false',
-        'func': checkAssertCount,
-        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseAssertCountFalse, x, e, name, o),
+        'name': 'assert-find-text-false',
+        'func': checkAssertFindText,
+        'toCall': (x, e, name, o) => {
+            return wrapper(parserFuncs.parseAssertFindTextFalse, x, e, name, o);
+        },
     },
     {
         'name': 'assert-local-storage',

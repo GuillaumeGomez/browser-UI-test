@@ -1,0 +1,1 @@
+error = """type \"string\" (`\"a\"`) is not allowed as value in this JSON dict, allowed types are: [`boolean`] (second element of the tuple)"""
