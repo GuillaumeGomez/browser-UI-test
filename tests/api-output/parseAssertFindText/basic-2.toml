@@ -1,0 +1,18 @@
+instructions = [
+  """await page.evaluate(() => {
+    const found = window.find(
+        \"a\",
+        false,
+        false,
+        true,
+        false,
+        true,
+        false,
+    );
+    if (!found) {
+        throw new Error(\"Didn't find text `\" + \"a\" + \"`\");
+    }
+});""",
+]
+wait = false
+checkResult = true

@@ -153,6 +153,8 @@ Here's the command list:
  * [`assert-css-false`](#assert-css-false)
  * [`assert-document-property`](#assert-document-property)
  * [`assert-document-property-false`](#assert-document-property-false)
+ * [`assert-find-text`](#assert-find-text)
+ * [`assert-find-text-false`](#assert-find-text-false)
  * [`assert-local-storage`](#assert-local-storage)
  * [`assert-local-storage-false`](#assert-local-storage-false)
  * [`assert-position`](#assert-position)
@@ -548,6 +550,38 @@ You can even combine the checks:
 
 ```
 assert-document-property-false: ({"URL": "https://some.where", "title": "a title"}, [STARTS_WITH, ENDS_WITH])
+```
+
+#### assert-find-text
+
+**assert-find-text** command is an equivalent of the web browser "find in page" (with CTRL+F key combination often) which allows you to check if a text is available in the page:
+
+```
+assert-find-text: "Is it there?"
+// Strictly equivalent:
+assert-find-text: ("Is it there?")
+```
+
+You can modify the search with two extra values: `case-sensitive` and `whole-word`:
+
+```
+assert-find-text: ("Is it there?", {"case-sensitive": true})
+```
+
+#### assert-find-text-false
+
+**assert-find-text-false** command is an equivalent of the web browser "find in page" (with CTRL+F key combination often) which allows you to check if a text is NOT available in the page:
+
+```
+assert-find-text-false: "Is it there?"
+// Strictly equivalent:
+assert-find-text-false: ("Is it there?")
+```
+
+You can modify the search with two extra values: `case-sensitive` and `whole-word`:
+
+```
+assert-find-text-false: ("Is it there?", {"case-sensitive": true})
 ```
 
 #### assert-local-storage

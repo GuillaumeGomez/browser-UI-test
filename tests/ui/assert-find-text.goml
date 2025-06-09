@@ -1,0 +1,12 @@
+// This test ensures that the `assert-find-text*` commands are working as expected.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+assert-find-text-false: "anather"
+assert-find-text-false: ("another", {"case-sensitive": true})
+assert-find-text: "another"
+assert-find-text: ("Another", {"case-sensitive": true})
+
+// An error should not stop the script.
+assert-find-text: ("another", {"case-sensitive": true})
+//~^ ERROR: Didn't find text
+assert-find-text-false: ("Another", {"case-sensitive": true})
+//~^ ERROR: Found text
