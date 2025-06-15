@@ -2,7 +2,8 @@
 store-value: (variable_name, "hello")
 assert-variable: (variable_name, "he", STARTS_WITH)
 assert-variable: (variable_name, "o", ENDS_WITH)
-assert-variable: (variable_name, 10, NEAR) // should fail
+assert-variable: (variable_name, 10, NEAR)
+//~^ ERROR: `hello` is not a number (for NEAR check)
 store-value: (variable_name, 10)
 assert-variable: (variable_name, 10, NEAR)
 assert-variable: (variable_name, 9, NEAR)

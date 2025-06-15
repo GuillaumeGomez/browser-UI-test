@@ -11,9 +11,10 @@ const errors = [];
 if (value1.startsWith(value2)) {
     errors.push(\"`\" + value1 + \"` starts with `\" + value2 + \"` (for STARTS_WITH check)\");
 }
-if (Number.isNaN(value1)) {
-    errors.push('`' + value1 + '` is NaN (for NEAR check)');
-} else if (Math.abs(value1 - value2) <= 1) {
+const parsedInt = Number.parseInt(value1, 10);
+if (Number.isNaN(parsedInt)) {
+    errors.push('`' + value1 + '` is not a number (for NEAR check)');
+} else if (Math.abs(parsedInt - value2) <= 1) {
     errors.push('`' + value1 + '` is within 1 of `' + value2 + '` (for NEAR check)');
 }
 if (errors.length !== 0) {

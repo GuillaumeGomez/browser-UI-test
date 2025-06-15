@@ -2,10 +2,10 @@ instructions = [
   """await page.evaluate(() => {
     const found = window.find(
         \"a\",
-        true,
+        false,
         false,
         true,
-        true,
+        false,
         true,
         false,
     );

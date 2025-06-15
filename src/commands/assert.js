@@ -1276,16 +1276,18 @@ if (!value1.endsWith(value2)) {
     if (enabledChecks.has('NEAR')) {
         if (assertFalse) {
             checks.push(`\
-if (Number.isNaN(value1)) {
-    errors.push('\`' + value1 + '\` is NaN (for NEAR check)');
-} else if (Math.abs(value1 - value2) <= 1) {
+const parsedInt = Number.parseInt(value1, 10);
+if (Number.isNaN(parsedInt)) {
+    errors.push('\`' + value1 + '\` is not a number (for NEAR check)');
+} else if (Math.abs(parsedInt - value2) <= 1) {
     errors.push('\`' + value1 + '\` is within 1 of \`' + value2 + '\` (for NEAR check)');
 }`);
         } else {
             checks.push(`\
-if (Number.isNaN(value1)) {
-    errors.push('\`' + value1 + '\` is NaN (for NEAR check)');
-} else if (Math.abs(value1 - value2) > 1) {
+const parsedInt = Number.parseInt(value1, 10);
+if (Number.isNaN(parsedInt)) {
+    errors.push('\`' + value1 + '\` is not a number (for NEAR check)');
+} else if (Math.abs(parsedInt - value2) > 1) {
     errors.push('\`' + value1 + '\` is not within 1 of \`' + value2 + '\` (for NEAR \
 check)');
 }`);
