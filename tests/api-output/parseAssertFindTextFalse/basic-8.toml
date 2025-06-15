@@ -2,15 +2,15 @@ instructions = [
   """await page.evaluate(() => {
     const found = window.find(
         \"a\",
-        false,
+        true,
         false,
         true,
         true,
         true,
         false,
     );
-    if (!found) {
-        throw new Error(\"Didn't find text `\" + \"a\" + \"`\");
+    if (found) {
+        throw new Error(\"Found text `\" + \"a\" + \"`\");
     }
 });""",
 ]
