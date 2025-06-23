@@ -850,7 +850,7 @@ class Parser {
         const commandLine = this.currentLine;
         const order = this.command.getRaw().toLowerCase();
         if (!Object.prototype.hasOwnProperty.call(this.orders, order)) {
-            this.setError(`Unknown command "${order}"`, false);
+            this.setError(`Unknown command "${order}"`, this.commandLine, false);
         }
         if (endChars === null) {
             endChars = ['\n'];
@@ -1964,18 +1964,18 @@ class ExpressionsValidator {
             if (elem.kind === 'array') {
                 const error = elem.validate(false);
                 if (error !== null) {
-                    this.setError(error, false);
+                    this.setError(error, elem.line, false);
                 }
                 this.checkElements(elem.value);
             } else if (elem.kind === 'tuple') {
                 this.checkElements(elem.value);
             } else if (elem.kind === 'json') {
                 for (const entry of elem.value) {
-                    if (!['string', 'object-path'].includes(entry.key.kind)) {
+                    if (!['string', 'object-path', 'variable'].includes(entry.key.kind)) {
                         const article = entry.key.getArticleKind();
                         const extra = ` (\`${entry.key.getErrorText()}\`)`;
-                        this.setError(`only strings can be used as keys in JSON dict, found \
-${article}${extra}`);
+                        this.setError(`only strings and object-paths can be used as keys in JSON \
+dict, found ${article}${extra}`, elem.line, false);
                     } else {
                         this.checkElements([entry]);
                     }
@@ -1983,7 +1983,7 @@ ${article}${extra}`);
             } else if (elem.kind === 'object-path') {
                 const error = elem.validate();
                 if (error !== null) {
-                    this.setError(error, false);
+                    this.setError(error, elem.line, false);
                 }
                 this.checkElements(elem.value);
             }
