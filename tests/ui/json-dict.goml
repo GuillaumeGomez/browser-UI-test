@@ -1,0 +1,8 @@
+// Test to ensure what can be used as JSON key.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+assert-local-storage-false: {"bla": "what"}
+store-value: (key, "value")
+assert-local-storage-false: {|key|: "what"}
+store-value: (key, 1)
+assert-local-storage-false: {|key|: "what"}
+//~^ ERROR: only strings and object-paths can be used as keys in JSON dict
