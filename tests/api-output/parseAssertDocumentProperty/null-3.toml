@@ -29,7 +29,7 @@ instructions = [
     }
     for (const [parseAssertObjKey, parseAssertObjValue] of parseAssertObjDict) {
         checkObjectPaths(document, parseAssertObjKey, val => {
-            if (val === undefined && val === null) {
+            if (val === undefined || val === null) {
                 const p = parseAssertObjKey.map(p => `\"${p}\"`).join('.');
                 nonMatchingProps.push('Unknown document property `' + p + '`');
                 return;

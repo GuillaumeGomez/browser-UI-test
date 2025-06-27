@@ -32,7 +32,7 @@ instructions = [
     }
     for (const [parseAssertObjKey, parseAssertObjValue] of parseAssertObjDict) {
         checkObjectPaths(window, parseAssertObjKey, val => {
-            if (val === undefined && val === null) {
+            if (val === undefined || val === null) {
                 return;
             }
             const prop = String(val);

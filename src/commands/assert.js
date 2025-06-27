@@ -315,7 +315,7 @@ ${indentString(unexpectedPropError, 4)}
     }
     for (const [${varKey}, ${varValue}] of ${varDict}) {
         checkObjectPaths(${objName}, ${varKey}, val => {
-            if (val === undefined && val === null) {${indentString(unknown, 4)}
+            if (val === undefined || val === null) {${indentString(unknown, 4)}
                 return;
             }
             const prop = String(val);
@@ -515,7 +515,7 @@ ${indentString(unexpectedPropError, 4)}
     }
     for (const [${varKey}, ${varValue}] of ${varDict}) {
         checkObjectPaths(e, ${varKey}, val => {
-            if (val === undefined && val === null) {${indentString(unknown, 4)}
+            if (val === undefined || val === null) {${indentString(unknown, 4)}
                 return;
             }
             const prop = String(val);
