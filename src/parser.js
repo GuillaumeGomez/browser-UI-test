@@ -808,7 +808,7 @@ class Parser {
         this.checkObjectPath = true;
     }
 
-    setError(error, isFatal) {
+    setParserError(error, isFatal) {
         addErrorTo(error, this.currentLine, isFatal, this.errors);
         if (isFatal) {
             this.hasFatalError = true;
@@ -850,7 +850,7 @@ class Parser {
         const commandLine = this.currentLine;
         const order = this.command.getRaw().toLowerCase();
         if (!Object.prototype.hasOwnProperty.call(this.orders, order)) {
-            this.setError(`Unknown command "${order}"`, this.commandLine, false);
+            this.setParserError(`Unknown command "${order}"`, false);
         }
         if (endChars === null) {
             endChars = ['\n'];
@@ -915,7 +915,7 @@ class Parser {
             if (this.isCommentStart()) {
                 this.parseComment(tmp);
                 if (tmp.length !== 0) {
-                    this.setError('Unexpected `/` when parsing command', true);
+                    this.setParserError('Unexpected `/` when parsing command', true);
                     return null;
                 }
             } else if (isWhiteSpace(c)) {
@@ -927,7 +927,7 @@ class Parser {
             } else if (endChars !== null && endChars.includes(c)) {
                 return null;
             } else {
-                this.setError(`Unexpected ${showChar(c)} when parsing command`, true);
+                this.setParserError(`Unexpected ${showChar(c)} when parsing command`, true);
                 return null;
             }
             this.increasePos();
@@ -948,25 +948,28 @@ class Parser {
             if (c === '/') {
                 // No need to check anything, if there is a comment, it means it'll be on two lines,
                 // which isn't allowed.
-                this.setError('Unexpected `/` when parsing command ' +
+                this.setParserError('Unexpected `/` when parsing command ' +
                     `(after \`${command.getRaw()}\`)`, true);
                 return null;
             } else if (c === '\n') {
-                this.setError('Backlines are not allowed between command identifier and `:`', true);
+                this.setParserError(
+                    'Backlines are not allowed between command identifier and `:`',
+                    true,
+                );
                 return null;
             } else if (isWhiteSpace(c)) {
                 // Do nothing...
             } else if (c === ':') {
                 stop = true;
             } else {
-                this.setError(`Unexpected ${showChar(c)} when parsing command ` +
+                this.setParserError(`Unexpected ${showChar(c)} when parsing command ` +
                     `(after \`${command.getRaw()}\`)`, true);
                 return null;
             }
             this.increasePos();
         }
         if (!stop) {
-            this.setError(
+            this.setParserError(
                 `Missing \`:\` after command identifier (after \`${command.getRaw()}\`)`, true);
             return null;
         }
@@ -1077,7 +1080,7 @@ found \`${showEnd(prevElem)}\``;
             } else {
                 prevElem.error = err;
             }
-            this.setError(err, nbElems === elems.length);
+            this.setParserError(err, nbElems === elems.length);
             // We put back the errors we removed in the right order.
             removedErrors.reverse();
             this.errors.push(...removedErrors);
@@ -1110,17 +1113,17 @@ found \`${showEnd(prevElem)}\``;
                 if (elems.length === 0) {
                     const e = `unexpected \`${separator}\` as first element`;
                     this.push(new CharElement(separator, this.pos, this.currentLine, e), pushTo);
-                    this.setError(e, false);
+                    this.setParserError(e, false);
                 } else if (prev === separator) {
                     const e = `unexpected \`${separator}\` after \`${separator}\``;
                     this.push(new CharElement(separator, this.pos, this.currentLine, e), pushTo);
-                    this.setError(e, false);
+                    this.setParserError(e, false);
                 } else if (elems[elems.length - 1].kind === 'char') {
                     // TODO: not sure if this block is useful...
                     const prevElem = elems[elems.length - 1].text;
                     const e = `unexpected \`${separator}\` after \`${prevElem}\``;
                     this.push(new CharElement(separator, this.pos, this.currentLine, e), pushTo);
-                    this.setError(e, false);
+                    this.setParserError(e, false);
                 } else {
                     prev = separator;
                 }
@@ -1178,7 +1181,7 @@ found \`${showEnd(prevElem)}\``;
                         const prevElem = elems[elems.length - 2].getErrorText();
                         el.error = `unexpected token \`${token}\` after \`${prevElem}\``;
                     }
-                    this.setError(el.error, false);
+                    this.setParserError(el.error, false);
                 }
             }
             this.increasePos(true, skipBackline);
@@ -1211,7 +1214,7 @@ found \`${showEnd(prevElem)}\``;
                 ),
                 pushTo,
             );
-            this.setError(error, false);
+            this.setParserError(error, false);
         };
 
         while (!this.hasFatalError) {
@@ -1241,7 +1244,7 @@ missing \`)\` at the end of the expression started line ${startLine}`;
                         ),
                         pushTo,
                     );
-                    this.setError(err, false);
+                    this.setParserError(err, false);
                     return;
                 }
                 if (stop) {
@@ -1302,14 +1305,14 @@ missing \`)\` at the end of the expression started line ${startLine}`;
         // Checking all potential errors now.
         if (elems.length === 0) {
             expr.error = 'empty expressions (`()`) are not allowed';
-            this.setError(expr.error, false);
+            this.setParserError(expr.error, false);
             return;
         }
 
         if (elems[0].kind === 'operator') {
             elems[0].error = `unexpected operator \`${elems[0].getErrorText()}\``;
             expr.error = elems[0].error;
-            this.setError(elems[0].error, false);
+            this.setParserError(elems[0].error, false);
             return;
         }
 
@@ -1326,7 +1329,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
 \`${prevElem.getErrorText()}\`, found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                 }
                 expr.error = el.error;
-                this.setError(el.error, false);
+                this.setParserError(el.error, false);
                 return;
             }
             prev = el.kind === 'operator' ? 'operator' : 'element';
@@ -1337,7 +1340,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         if (last.kind === 'operator') {
             last.error = `missing element after operator \`${last.getErrorText()}\``;
             expr.error = last.error;
-            this.setError(last.error, false);
+            this.setParserError(last.error, false);
             return;
         }
     }
@@ -1364,7 +1367,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                 } else {
                     const e = `unknown operator \`${op}\``;
                     this.push(new OperatorElement(op, start, this.pos, startLine, e), pushTo);
-                    this.setError(e, false);
+                    this.setParserError(e, false);
                 }
                 return false;
             }
@@ -1412,7 +1415,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                     new constructor(elems, start, this.pos, full, startLine, foundSeparator, e),
                     pushTo,
                 );
-                this.setError(e, true);
+                this.setParserError(e, true);
             } else {
                 let err;
 
@@ -1427,7 +1430,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                     new constructor(elems, start, this.pos, full, startLine, foundSeparator, err),
                     pushTo,
                 );
-                this.setError(err, false);
+                this.setParserError(err, false);
             }
         } else {
             this.push(
@@ -1449,7 +1452,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         if (tmp[0].error === null && tmp[0].getRaw().length > 1) {
             const error = tmp[0].validate(true);
             if (error !== null) {
-                this.setError(error, false);
+                this.setParserError(error, false);
             }
         }
         this.push(tmp[0], pushTo);
@@ -1485,7 +1488,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         if (prev !== '') {
             error = 'expected a string after `.`';
             if (nbErrors === this.errors.length) {
-                this.setError(error, false);
+                this.setParserError(error, false);
             }
         }
         this.checkObjectPath = true;
@@ -1495,7 +1498,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         if (error === null) {
             error = elem.validate(true);
             if (error !== null) {
-                this.setError(error, false);
+                this.setParserError(error, false);
             }
         }
         this.push(elem, pushTo);
@@ -1530,7 +1533,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
             new StringElement(value, start, this.pos, full, this.currentLine, e),
             pushTo,
         );
-        this.setError(e, false);
+        this.setParserError(e, false);
     }
 
     parseIdent(pushTo = null, specialChars = null) {
@@ -1588,7 +1591,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                 ),
                 pushTo,
             );
-            this.setError(e, false);
+            this.setParserError(e, false);
             return;
         }
         const blockLine = this.currentLine;
@@ -1616,7 +1619,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                 c = this.getCurrentChar();
                 if (c !== '}') {
                     error = `Expected \`}\` to end the block, found \`${showChar(c)}\``;
-                    this.setError(error, true);
+                    this.setParserError(error, true);
                 }
                 break;
             } else {
@@ -1633,7 +1636,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
             c = this.getCurrentChar();
             if (c === null) {
                 error = 'Missing `}` to end the block';
-                this.setError(error, true);
+                this.setParserError(error, true);
                 break;
             }
         }
@@ -1702,7 +1705,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                     ),
                     pushTo,
                 );
-                this.setError(e, false);
+                this.setParserError(e, false);
                 this.decreasePos();
                 return;
             }
@@ -1722,7 +1725,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
             ),
             pushTo,
         );
-        this.setError(e, false);
+        this.setParserError(e, false);
     }
 
     parseNumber(pushTo = null) {
@@ -1741,7 +1744,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                     const e = `unexpected \`.\` after \`${nb}\``;
                     this.push(
                         new NumberElement(nb, start, this.pos, this.currentLine, e), pushTo);
-                    this.setError(e, false);
+                    this.setParserError(e, false);
                     return;
                 }
                 hasDot = true;
@@ -1751,7 +1754,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
                     const e = `unexpected \`${c}\` after \`${nb}\``;
                     this.push(
                         new NumberElement(nb, start, this.pos, this.currentLine, e), pushTo);
-                    this.setError(e, false);
+                    this.setParserError(e, false);
                     return;
                 }
                 const nb = this.text.substring(start, this.pos);
@@ -1785,7 +1788,7 @@ found \`${el.getErrorText()}\` (${el.getArticleKind()})`;
         let error = null;
 
         const keyError = errorMsg => {
-            this.setError(errorMsg, false);
+            this.setParserError(errorMsg, false);
             if (error === null) {
                 error = errorMsg;
             }
@@ -1919,11 +1922,11 @@ found \`:\``);
         if (ender !== '}') {
             if (json.length === 0) {
                 error = 'unclosed empty JSON object';
-                this.setError(error, true);
+                this.setParserError(error, true);
             } else {
                 const last = json[json.length - 1].value;
                 error = `unclosed JSON object: expected \`}\` after \`${last.getErrorText()}\``;
-                this.setError(error, true);
+                this.setParserError(error, true);
             }
         }
 
