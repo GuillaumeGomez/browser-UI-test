@@ -25,6 +25,7 @@ instructions = [
     });
 }
 
+let erroredElem = null;
 const timeLimit = pages[0].getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
@@ -44,11 +45,13 @@ while (true) {
             throw new Error(\"The CSS selector \\\"a\\\" was not found\");
         }
     }
+    erroredElem = null;
     let nonMatchingAttrs = [];
-    for (const elem of parseWaitForAttr) {
+    for (const [i, elem] of parseWaitForAttr.entries()) {
         const ret = await checkAttrForElem(elem);
         if (ret.length !== 0) {
             nonMatchingAttrs = ret;
+            erroredElem = i;
             break;
         }
     }
@@ -62,7 +65,7 @@ while (true) {
     allTime += timeAdd;
     if (allTime >= timeLimit) {
         const props = nonMatchingAttrs.join(\", \");
-        throw new Error(\"The following attributes still don't match: [\" + props + \"]\");
+        throw new Error(\"The following attributes still don't match: [\" + props + \"]\" + \" (on the element number \" + erroredElem + \")\");
     }
 }""",
 ]

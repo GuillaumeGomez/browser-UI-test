@@ -2,7 +2,7 @@ instructions = [
   """const parseAssertElemProp = await page.$$(\"::-p-xpath(//a)\");
 if (parseAssertElemProp.length === 0) { throw \"`//a` not found\"; }
 for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
-    await page.evaluate(e => {
+    await page.evaluate((e, i) => {
         function checkObjectPaths(object, path, callback, notFoundCallback) {
             const found = [];
 
@@ -47,9 +47,13 @@ for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
         }
         if (nonMatchingProps.length !== 0) {
             const props = nonMatchingProps.join(\"; \");
-            throw \"The following errors happened (for XPath `//a`): [\" + props + \"]\";
+            let err = \"The following errors happened (for XPath `//a`): [\" + props + \"]\";
+            if (i !== undefined) {
+                err += ' (on the element number ' + i + ')';
+            }
+            throw err;
         }
-    }, parseAssertElemProp[i]);
+    }, parseAssertElemProp[i], i);
 }""",
 ]
 wait = false

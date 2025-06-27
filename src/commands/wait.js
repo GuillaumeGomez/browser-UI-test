@@ -11,6 +11,7 @@ const {
     commonSizeCheckCode,
     generateCheckObjectPaths,
     checkClipboardPermission,
+    nthFailedElement,
 } = require('./utils.js');
 const { validator } = require('../validator.js');
 // Not the same `utils.js`!
@@ -522,9 +523,11 @@ function parseWaitForCssInner(parser, waitFalse) {
 
     const varName = 'parseWaitForCss';
     const errorsVar = 'nonMatchingProps';
+    const errorPosVarName = 'erroredElem';
 
     let comp = '===';
-    let errorMessage = '"The following CSS properties still don\'t match: [" + props + "]"';
+    let errorMessage = '"The following CSS properties still don\'t match: [" + props + "]"' +
+        nthFailedElement(checkAll, errorPosVarName);
     if (waitFalse) {
         comp = '!==';
         errorMessage = '"All CSS properties still match"';
@@ -536,10 +539,11 @@ function parseWaitForCssInner(parser, waitFalse) {
     } else {
         checker = `\
 let ${errorsVar} = [];
-for (const elem of ${varName}) {
+for (const [i, elem] of ${varName}.entries()) {
     const ret = await checkCssForElem(elem);
     if (ret.length !== 0) {
         ${errorsVar} = ret;
+        ${errorPosVarName} = i;
         break;
     }
 }`;
@@ -590,8 +594,10 @@ async function checkCssForElem(elem) {
 }
 
 ${init}
+let ${errorPosVarName} = null;
 while (true) {
 ${indentString(looper, 1)}
+    ${errorPosVarName} = null;
 ${indentString(checker, 1)}
     if (${errorsVar}.length ${comp} 0) {
         break;
@@ -686,20 +692,23 @@ function parseWaitForAttributeInner(parser, waitFalse) {
     const varKey = varName + 'Key';
     const varValue = varName + 'Value';
     const errorsVar = 'nonMatchingAttrs';
+    const errorPosVarName = 'erroredElem';
+    const checkAll = enabledChecks.has('ALL');
 
     const { checks, hasSpecialChecks } = makeExtendedChecks(
         enabledChecks, false, errorsVar, 'attribute', 'attr', varKey, varValue);
 
     let checker;
-    if (!enabledChecks.has('ALL')) {
+    if (!checkAll) {
         checker = `const ${errorsVar} = await checkAttrForElem(${varName});`;
     } else {
         checker = `\
 let ${errorsVar} = [];
-for (const elem of ${varName}) {
+for (const [i, elem] of ${varName}.entries()) {
     const ret = await checkAttrForElem(elem);
     if (ret.length !== 0) {
         ${errorsVar} = ret;
+        ${errorPosVarName} = i;
         break;
     }
 }`;
@@ -730,13 +739,14 @@ the check will be performed on the element itself`);
     }
 
     let comp = '===';
-    let errorMessage = '"The following attributes still don\'t match: [" + props + "]"';
+    let errorMessage = '"The following attributes still don\'t match: [" + props + "]"' +
+        nthFailedElement(checkAll, errorPosVarName);
     if (waitFalse) {
         comp = '!==';
         errorMessage = '"All attributes still match"';
     }
 
-    const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
+    const [init, looper] = waitForElement(selector, varName, {checkAll: checkAll});
     const incr = incrWait(`\
 const props = ${errorsVar}.join(", ");
 throw new Error(${errorMessage});`);
@@ -767,9 +777,11 @@ ${indentString(checks.join('\n'), 3)}
     });
 }
 
+let ${errorPosVarName} = null;
 ${init}
 while (true) {
 ${indentString(looper, 1)}
+    ${errorPosVarName} = null;
 ${indentString(checker, 1)}
     if (${errorsVar}.length ${comp} 0) {
         break;
@@ -863,20 +875,23 @@ function parseWaitForPropertyInner(parser, waitFalse) {
     const varDict = varName + 'Dict';
     const varKey = varName + 'Key';
     const varValue = varName + 'Value';
+    const errorPosVarName = 'erroredElem';
+    const checkAll = enabledChecks.has('ALL');
 
     const { checks, hasSpecialChecks } = makeExtendedChecks(
         enabledChecks, false, 'nonMatchingProps', 'property', 'val', varKey, varValue);
 
     let checker;
-    if (!enabledChecks.has('ALL')) {
+    if (!checkAll) {
         checker = `const nonMatchingProps = await checkPropForElem(${varName});`;
     } else {
         checker = `\
 let nonMatchingProps = [];
-for (const elem of ${varName}) {
+for (const [i, elem] of ${varName}.entries()) {
     const ret = await checkPropForElem(elem);
     if (ret.length !== 0) {
         nonMatchingProps = ret;
+        ${errorPosVarName} = i;
         break;
     }
 }`;
@@ -908,13 +923,14 @@ the check will be performed on the element itself`);
     }
 
     let comp = '===';
-    let errorMessage = '"The following properties still don\'t match: [" + props + "]"';
+    let errorMessage = '"The following properties still don\'t match: [" + props + "]"' +
+        nthFailedElement(checkAll, errorPosVarName);
     if (waitFalse) {
         comp = '!==';
         errorMessage = '"All properties still match"';
     }
 
-    const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
+    const [init, looper] = waitForElement(selector, varName, {checkAll: checkAll});
     const incr = incrWait(`\
 const props = nonMatchingProps.join(", ");
 throw new Error(${errorMessage});`);
@@ -956,8 +972,10 @@ ${indentString(checks.join('\n'), 4)}
 }
 
 ${init}
+let ${errorPosVarName} = null;
 while (true) {
 ${indentString(looper, 1)}
+    ${errorPosVarName} = null;
 ${indentString(checker, 1)}
     if (nonMatchingProps.length ${comp} 0) {
         break;
@@ -1042,29 +1060,33 @@ the check will be performed on the element itself`);
     }
 
     const checks = makeTextExtendedChecks(enabledChecks, false);
+    const errorPosVarName = 'erroredElem';
+    const checkAll = enabledChecks.has('ALL');
 
     let checker;
-    if (!enabledChecks.has('ALL')) {
+    if (!checkAll) {
         checker = `const errors = await checkTextForElem(${varName});`;
     } else {
         checker = `\
 let errors = [];
-for (const elem of ${varName}) {
+for (const [i, elem] of ${varName}.entries()) {
     errors = await checkTextForElem(elem);
     if (errors.length !== 0) {
+        ${errorPosVarName} = i;
         break;
     }
 }`;
     }
 
     let comp = '===';
-    let errorMessage = '"The following checks still fail: [" + err + "]"';
+    let errorMessage = '"The following checks still fail: [" + err + "]"' +
+        nthFailedElement(checkAll, errorPosVarName);
     if (waitFalse) {
         comp = '!==';
         errorMessage = '"All checks still pass"';
     }
 
-    const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
+    const [init, looper] = waitForElement(selector, varName, {checkAll: checkAll});
     const incr = incrWait(`\
 const err = errors.join(", ");
 throw new Error(${errorMessage});`);
@@ -1081,8 +1103,10 @@ ${indentString(checks.join('\n'), 2)}
     });
 }
 const value = "${value}";
+let ${errorPosVarName} = null;
 while (true) {
 ${indentString(looper, 1)}
+    ${errorPosVarName} = null;
 ${indentString(checker, 1)}
     if (errors.length ${comp} 0) {
         break;
@@ -1173,32 +1197,37 @@ function parseWaitForPositionInner(parser, waitFalse) {
 
     const varName = 'assertPosition';
     const errorsVarName = 'errors';
+    const errorPosVarName = 'erroredElem';
+    const checkAll = enabledChecks.has('ALL');
 
     const whole = commonPositionCheckCode(
         selector,
         checks,
-        enabledChecks.has('ALL'),
+        checkAll,
         varName,
         errorsVarName,
         false,
     );
 
     let comp = '===';
-    let errorMessage = '"The following checks still fail: [" + err + "]"';
+    let errorMessage = '"The following checks still fail: [" + err + "]"' +
+        nthFailedElement(checkAll, errorPosVarName);
     if (waitFalse) {
         comp = '!==';
         errorMessage = '"All checks still succeed"';
     }
 
-    const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
+    const [init, looper] = waitForElement(selector, varName, {checkAll: checkAll});
     const incr = incrWait(`\
 const err = ${errorsVarName}.join(", ");
 throw new Error(${errorMessage});`);
 
     const instructions = `\
 ${init}
+let ${errorPosVarName} = null;
 while (true) {
 ${indentString(looper, 1)}
+    ${errorPosVarName} = null;
 ${indentString(whole, 1)}
     if (errors.length ${comp} 0) {
         break;
@@ -1288,26 +1317,30 @@ function parseWaitForSizeInner(parser, waitFalse) {
 
     const varName = 'assertSize';
     const errorsVarName = 'errors';
+    const errorPosVarName = 'erroredElem';
+    const checkAll = enabledChecks.has('ALL');
 
     const whole = commonSizeCheckCode(
-        selector, enabledChecks.has('ALL'), false, json, varName, errorsVarName);
+        selector, checkAll, false, json, varName, errorsVarName, errorPosVarName);
 
     let comp = '===';
-    let errorMessage = '"The following checks still fail: [" + err + "]"';
+    let errorMessage = `"The following checks still fail: [" + ${errorsVarName}.join(", ") + "]"` +
+        nthFailedElement(checkAll, errorPosVarName);
     if (waitFalse) {
         comp = '!==';
         errorMessage = '"All checks still pass"';
     }
 
-    const [init, looper] = waitForElement(selector, varName, {checkAll: enabledChecks.has('ALL')});
+    const [init, looper] = waitForElement(selector, varName, {checkAll: checkAll});
     const incr = incrWait(`\
-const err = ${errorsVarName}.join(", ");
-throw new Error(${errorMessage});`);
+let err = ${errorMessage};
+throw new Error(err);`);
 
     const instructions = `\
 ${init}
 while (true) {
 ${indentString(looper, 1)}
+    let ${errorPosVarName} = null;
 ${indentString(whole, 1)}
     if (errors.length ${comp} 0) {
         break;

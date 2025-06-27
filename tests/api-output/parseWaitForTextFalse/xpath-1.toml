@@ -15,6 +15,7 @@ async function checkTextForElem(elem) {
     });
 }
 const value = \"b\";
+let erroredElem = null;
 while (true) {
     while (true) {
         parseWaitForText = await page.$$(\"::-p-xpath(//a)\");
@@ -31,6 +32,7 @@ while (true) {
             throw new Error(\"The XPath \\\"//a\\\" was not found\");
         }
     }
+    erroredElem = null;
     const errors = await checkTextForElem(parseWaitForText);
     if (errors.length !== 0) {
         break;

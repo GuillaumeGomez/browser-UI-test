@@ -2,5 +2,6 @@
 wait-for-size... 
 [ERROR] `tests/ui/wait-for-size.goml` line 14: Error: The following checks still fail: [expected a width of `33`, found `36`]: for command `wait-for-size: ("#js-change-size", {"height": 26, "width": 33})`
 [ERROR] `tests/ui/wait-for-size.goml` line 17: The following errors happened: [expected a width of `33`, found `36`]: for command `assert-size: ("#js-change-size", {"height": 26, "width": 33})`
+[ERROR] `tests/ui/wait-for-size.goml` line 20: Error: The following checks still fail: [expected a width of `33`, found `36`] (on the element number 0): for command `wait-for-size: ("#js-change-size", {"height": 26, "width": 33}, ALL)`
 wait-for-size: FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed

@@ -3,6 +3,7 @@ instructions = [
 const timeAdd = 50;
 let allTime = 0;
 let assertPosition = null;
+let erroredElem = null;
 while (true) {
     while (true) {
         assertPosition = await page.$$(\"a:focus\");
@@ -19,6 +20,7 @@ while (true) {
             throw new Error(\"The CSS selector \\\"a:focus\\\" was not found\");
         }
     }
+    erroredElem = null;
     const errors = [];
     errors.push(...await page.evaluate(elem => {
         const innerErrors = [];

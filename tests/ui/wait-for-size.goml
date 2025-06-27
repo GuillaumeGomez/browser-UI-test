@@ -16,3 +16,6 @@ wait-for-size: ("#js-change-size", {"height": 26, "width": 33})
 // ... And it should not stop the script.
 assert-size: ("#js-change-size", {"height": 26, "width": 33})
 //~^ ERROR: [expected a width of `33`, found `36`]
+// It should mention which element failed.
+wait-for-size: ("#js-change-size", {"height": 26, "width": 33}, ALL)
+//~^ ERROR: [expected a width of `33`, found `36`] (on the element number 0)

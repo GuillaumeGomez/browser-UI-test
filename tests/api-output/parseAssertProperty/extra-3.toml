@@ -1,7 +1,7 @@
 instructions = [
   """const parseAssertElemProp = await page.$(\"a\");
 if (parseAssertElemProp === null) { throw \"`a` not found\"; }
-await page.evaluate(e => {
+await page.evaluate((e, i) => {
     function checkObjectPaths(object, path, callback, notFoundCallback) {
         const found = [];
 
@@ -50,9 +50,13 @@ await page.evaluate(e => {
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(\"; \");
-        throw \"The following errors happened (for selector `a`): [\" + props + \"]\";
+        let err = \"The following errors happened (for selector `a`): [\" + props + \"]\";
+        if (i !== undefined) {
+            err += ' (on the element number ' + i + ')';
+        }
+        throw err;
     }
-}, parseAssertElemProp);""",
+}, parseAssertElemProp, undefined);""",
 ]
 wait = false
 warnings = [

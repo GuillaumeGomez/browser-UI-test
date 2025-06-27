@@ -316,7 +316,7 @@ const width = e.offsetWidth;`;
 }
 
 function commonSizeCheckCode(
-    selector, checkAllElements, assertFalse, json, varName, errorsVarName,
+    selector, checkAllElements, assertFalse, json, varName, errorsVarName, errorPosVarName,
 ) {
     const checks = [];
     const width = json.get('width');
@@ -352,9 +352,10 @@ if (height !== ${height.value}) {
     let checker;
     if (checkAllElements) {
         checker = `\
-for (const elem of ${varName}) {
+for (const [i, elem] of ${varName}.entries()) {
     ${errorsVarName}.push(...await checkElemSize(elem));
     if (${errorsVarName}.length !== 0) {
+        ${errorPosVarName} = i;
         break;
     }
 }`;
@@ -428,6 +429,10 @@ const ${varName} = await page.evaluate(() => document.getElementById("${id}").cl
     ];
 }
 
+function nthFailedElement(checkAll, errorPosVarName) {
+    return checkAll ? ` + " (on the element number " + ${errorPosVarName} + ")"` : '';
+}
+
 module.exports = {
     'getAndSetElements': getAndSetElements,
     'getInsertStrings': getInsertStrings,
@@ -441,4 +446,5 @@ module.exports = {
     'commonSizeCheckCode': commonSizeCheckCode,
     'generateCheckObjectPaths': generateCheckObjectPaths,
     'checkClipboardPermission': checkClipboardPermission,
+    'nthFailedElement': nthFailedElement,
 };

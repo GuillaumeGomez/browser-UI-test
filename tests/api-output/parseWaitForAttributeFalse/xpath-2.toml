@@ -25,6 +25,7 @@ instructions = [
     });
 }
 
+let erroredElem = null;
 const timeLimit = pages[0].getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
@@ -45,6 +46,7 @@ while (true) {
             throw new Error(\"The XPath \\\"//a\\\" was not found\");
         }
     }
+    erroredElem = null;
     const nonMatchingAttrs = await checkAttrForElem(parseWaitForAttr);
     if (nonMatchingAttrs.length !== 0) {
         break;
