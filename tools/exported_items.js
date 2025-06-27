@@ -317,9 +317,9 @@ async function checkOptions(x) {
     await x.assert(options.incognito, false);
     await x.assertTry(() => options.parseArguments(['--incognito']), [], true);
     await x.assert(options.incognito, true);
-    await x.assert(options.failOnJsError, false);
-    await x.assertTry(() => options.parseArguments(['--enable-fail-on-js-error']), [], true);
     await x.assert(options.failOnJsError, true);
+    await x.assertTry(() => options.parseArguments(['--disable-fail-on-js-error']), [], true);
+    await x.assert(options.failOnJsError, false);
     await x.assert(options.failOnRequestError, true);
     await x.assertTry(() => options.parseArguments(['--disable-fail-on-request-error']), [], true);
     await x.assert(options.failOnRequestError, false);
