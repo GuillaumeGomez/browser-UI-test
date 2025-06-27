@@ -8,7 +8,7 @@ assert-variable: (local, "a key")
 //~^ ERROR: [`a value` isn't equal to `a key`]
 // Should succeed.
 assert-variable: (local, "a value")
-store-text: (text, "#another-one")
+store-text: ("#another-one", text)
 assert-variable: (text, "hoy")
 //~^ ERROR: [`hey` isn't equal to `hoy`]
 // Should succeed.

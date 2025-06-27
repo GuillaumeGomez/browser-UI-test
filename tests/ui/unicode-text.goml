@@ -4,7 +4,7 @@ assert-text: ("#unicode", "−")
 assert-text: ("#unicode", "\u2212")
 assert-text: ("#unicode2", "a\nb")
 assert-text: ("#unicode3", "\\u2212")
-store-text: (check, "#unicode")
+store-text: ("#unicode", check)
 assert-text: ("#unicode", |check|)
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 assert-css-false: ("#useless\.input", {"\"\\height": "10px"})
