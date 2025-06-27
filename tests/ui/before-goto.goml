@@ -1,0 +1,3 @@
+// Checks the output when an invalid command is run before `go-to`.
+assert-window-property: {"innerWidth": "900", "innerHeight": "900"}
+//~^ ERROR: First command must be `go-to`

@@ -195,6 +195,7 @@ const NO_INTERACTION_COMMANDS = [
     'screenshot-on-failure',
     'store-value',
     'set-timeout',
+    'set-window-size',
 ];
 
 // Commands which can only be used before the first `goto` command.

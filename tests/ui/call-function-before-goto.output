@@ -1,6 +1,6 @@
 => Starting doc-ui tests...
 call-function-before-goto... 
 [ERROR] `tests/ui/call-function-before-goto.goml` line 7
-    from `tests/ui/call-function-before-goto.goml` line 23: First command must be `go-to` (`assert-variable`, `assert-variable-false`, `call-function`, `debug`, `define-function`, `emulate`, `expect-failure`, `fail-on-js-error`, `fail-on-request-error`, `include`, `javascript`, `screenshot-comparison`, `screenshot-on-failure`, `store-value` or `set-timeout` can be used before)!
+    from `tests/ui/call-function-before-goto.goml` line 23: First command must be `go-to` (`assert-variable`, `assert-variable-false`, `call-function`, `debug`, `define-function`, `emulate`, `expect-failure`, `fail-on-js-error`, `fail-on-request-error`, `include`, `javascript`, `screenshot-comparison`, `screenshot-on-failure`, `store-value`, `set-timeout` or `set-window-size` can be used before)!
 call-function-before-goto: FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed
