@@ -67,8 +67,8 @@ function parseAssertCssInner(parser, assertFalse) {
     let extra;
     if (checkAllElements) {
         extra = `\
-for (const elem of ${varName}) {
-    await checkElem(elem);
+for (const [i, elem] of ${varName}.entries()) {
+    await checkElem(elem, i);
 }`;
     } else {
         extra = `await checkElem(${varName});`;
@@ -105,7 +105,7 @@ if (!arg.showText) {
     instructions.push(`\
 const { checkCssProperty } = require('command-helpers.js');
 
-async function checkElem(elem) {
+async function checkElem(elem, i) {
     const nonMatchingProps = [];
     const jsHandle = await elem.evaluateHandle(e => {
         const ${varDict} = [${keys}];
@@ -131,7 +131,12 @@ ${indentString(assertCheck, 3)}
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join("; ");
-        throw "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props + "]";
+        let err = "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props \
++ "]";
+        if (i !== undefined) {
+            err += ' (on the element number ' + i + ')';
+        }
+        throw err;
     }
 }
 ${getAndSetElements(selector, varName, checkAllElements)}
@@ -498,7 +503,7 @@ nonMatchingProps.push("Property named \`" + p + "\` doesn't exist");`;
         whole += `for (let i = 0, len = ${varName}.length; i < len; ++i) {\n`;
     }
     whole += indentString(`\
-await page.evaluate(e => {
+await page.evaluate((e, i) => {
 ${indentString(generateCheckObjectPaths(), 1)}
 
     const nonMatchingProps = [];
@@ -525,14 +530,19 @@ ${indentString(checks.join('\n'), 3)}
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join("; ");
-        throw "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props + "]";
+        let err = "The following errors happened (for ${xpath}\`${selector.value}\`): [" + props \
++ "]";
+        if (i !== undefined) {
+            err += ' (on the element number ' + i + ')';
+        }
+        throw err;
     }
 `, indent);
     if (checkAllElements) {
-        whole += `    }, ${varName}[i]);
+        whole += `    }, ${varName}[i], i);
 }`;
     } else {
-        whole += `}, ${varName});`;
+        whole += `}, ${varName}, undefined);`;
     }
     return {
         'instructions': [whole],
@@ -1381,12 +1391,20 @@ function parseAssertSizeInner(parser, assertFalse) {
     const selector = tuple[0].value;
 
     const varName = 'assertSizeElem';
+    const errorVarName = 'errors';
+    const errorPosVarName = 'erroredElem';
     const instructions = `\
 ${getAndSetElements(selector, varName, checkAllElements)}
-${commonSizeCheckCode(selector, checkAllElements, assertFalse, json, varName, 'errors')}
-if (errors.length !== 0) {
-    const errs = errors.join("; ");
-    throw "The following errors happened: [" + errs + "]";
+let ${errorPosVarName} = null;
+${commonSizeCheckCode(
+        selector, checkAllElements, assertFalse, json, varName, errorVarName, errorPosVarName)}
+if (${errorVarName}.length !== 0) {
+    const errs = ${errorVarName}.join("; ");
+    let err = "The following errors happened: [" + errs + "]";
+    if (${errorPosVarName} !== null) {
+        err += ' (on the element number ' + ${errorPosVarName} + ')';
+    }
+    throw err;
 }
 `;
 
