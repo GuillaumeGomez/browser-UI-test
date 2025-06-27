@@ -483,17 +483,17 @@ ${code.join('\n')}`,
 
 // Possible inputs:
 //
-// * (ident, "CSS selector" | "XPath")
+// * ("CSS selector" | "XPath", ident)
 function parseStoreText(parser) {
     const ret = validator(parser, {
         kind: 'tuple',
         elements: [
             {
-                kind: 'ident',
-                notAllowed: [RESERVED_VARIABLE_NAME, 'null'],
+                kind: 'selector',
             },
             {
-                kind: 'selector',
+                kind: 'ident',
+                notAllowed: [RESERVED_VARIABLE_NAME, 'null'],
             },
         ],
     });
@@ -502,7 +502,7 @@ function parseStoreText(parser) {
     }
 
     const tuple = ret.value.entries;
-    const selector = tuple[1].value;
+    const selector = tuple[0].value;
     const warnings = [];
     const isPseudo = !selector.isXPath && selector.pseudo !== null;
     if (isPseudo) {
@@ -516,7 +516,7 @@ ${getAndSetElements(selector, varName, false)}
 const jsHandle = await ${varName}.evaluateHandle(e => {
     return browserUiTestHelpers.getElemText(e, "");
 });
-arg.setVariable("${tuple[0].value.displayInCode()}", await jsHandle.jsonValue());`;
+arg.setVariable("${tuple[1].value.displayInCode()}", await jsHandle.jsonValue());`;
 
     return {
         'instructions': [code],
