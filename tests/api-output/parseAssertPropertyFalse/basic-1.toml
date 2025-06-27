@@ -34,7 +34,7 @@ await page.evaluate(e => {
     }
     for (const [parseAssertElemPropKey, parseAssertElemPropValue] of parseAssertElemPropDict) {
         checkObjectPaths(e, parseAssertElemPropKey, val => {
-            if (val === undefined && val === null) {
+            if (val === undefined || val === null) {
                 return;
             }
             const prop = String(val);

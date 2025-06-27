@@ -32,7 +32,7 @@ assert-property-false: (".content", {"clientWidth": "999"}, [CONTAINS, NEAR])
 //~^ ERROR: [property `"clientWidth"` (`1000`) is within 1 of `999` (for NEAR check)]
 // We also check that the command fails if the attribute doesn't exist:
 assert-property: (".content", {"does-not-exist": ".con"})
-//~^ ERROR: [expected `.con` for property `"does-not-exist"`, found `undefined`]
+//~^ ERROR: [Unknown property `"does-not-exist"`]
 // Check that the "false" command succeeds if the attribute doesn't exist.
 assert-property-false: (".content", {"does-not-exist": ".con"})
 // This test ensures it fails because ".content"'s class doesn't end with ".con" but

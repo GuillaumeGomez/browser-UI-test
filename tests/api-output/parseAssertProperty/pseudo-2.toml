@@ -32,7 +32,7 @@ for (let i = 0, len = parseAssertElemProp.length; i < len; ++i) {
         }
         for (const [parseAssertElemPropKey, parseAssertElemPropValue] of parseAssertElemPropDict) {
             checkObjectPaths(e, parseAssertElemPropKey, val => {
-                if (val === undefined && val === null) {
+                if (val === undefined || val === null) {
                     const p = parseAssertElemPropKey.map(p => `\"${p}\"`).join('.');
                     nonMatchingProps.push('Unknown property `' + p + '`');
                     return;
