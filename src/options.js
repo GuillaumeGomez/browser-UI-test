@@ -16,12 +16,12 @@ function helper() {
     print(`  --browser [BROWSER NAME]      : Run tests on given browser (${browsers})`);
     print('                                  /!\\ Only testing on chrome is stable!');
     print('  --debug                       : Display more information');
+    print('  --disable-fail-on-js-error    : If a JS error occurs on a web page, the test will ' +
+        'not fail');
     print('  --disable-fail-on-request-error: If a request failed, it won\'t fail the test');
     print('  --emulate [DEVICE NAME]       : Emulate the given device');
     print('  --enable-screenshot-comparison: Enable screenshot comparisons at the end of the ');
     print('                                  scripts by the end');
-    print('  --enable-fail-on-js-error     : If a JS error occurs on a web page, the test will ' +
-        'fail');
     print('  --executable-path [PATH]      : Path of the browser\'s executable you want to use');
     print('  --extension [PATH]            : Add an extension to load from the given path');
     print('  --failure-folder [PATH]       : Path of the folder where failed tests image will');
@@ -104,7 +104,7 @@ class Options {
         this.pauseOnError = null;
         this.permissions = [];
         this.onPageCreatedCallback = async function() {};
-        this.failOnJsError = false;
+        this.failOnJsError = true;
         this.screenshotOnFailure = false;
         this.nbThreads = os.cpus().length;
         this.messageFormat = 'human';
@@ -284,8 +284,8 @@ class Options {
                 } else {
                     throw new Error('Missing executable path after `--executable-path` option');
                 }
-            } else if (args[it] === '--enable-fail-on-js-error') {
-                this.failOnJsError = true;
+            } else if (args[it] === '--disable-fail-on-js-error') {
+                this.failOnJsError = false;
             } else if (args[it] === '--disable-fail-on-request-error') {
                 this.failOnRequestError = false;
             } else if (args[it] === '--screenshot-on-failure') {
