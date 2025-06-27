@@ -276,13 +276,13 @@ class Assert {
                 if (unexpectedErrors.length !== 0) {
                     print('Unexpected errors:');
                     for (const err of unexpectedErrors) {
-                        print(`==> ${err}`, undefined, false);
+                        print(`+> ${err}`, undefined, false);
                     }
                 }
                 if (notFoundErrors.length !== 0) {
                     print('Not found errors:');
                     for (const err of notFoundErrors) {
-                        print(`==> ${err}`);
+                        print(`+> ${err}`);
                     }
                 }
                 this._addTest();
