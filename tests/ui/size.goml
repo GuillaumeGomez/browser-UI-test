@@ -1,5 +1,9 @@
 // Check that the `size` command is working as expected.
+// First we check that it can be run before `go-to`.
+set-window-size: (900, 900)
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+assert-window-property: {"innerWidth": "900", "innerHeight": "900"}
+// Some more checks...
 set-window-size: (670, 650)
 assert-window-property: {"innerWidth": "670", "innerHeight": "650"}
 set-window-size: (610, 600)
