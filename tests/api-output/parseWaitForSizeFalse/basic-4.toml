@@ -19,6 +19,7 @@ while (true) {
             throw new Error(\"The CSS selector \\\"a\\\" was not found\");
         }
     }
+    let erroredElem = null;
     async function checkElemSize(elem) {
         return await elem.evaluate(e => {
             const innerErrors = [];
@@ -42,8 +43,8 @@ while (true) {
     }
     allTime += timeAdd;
     if (allTime >= timeLimit) {
-        const err = errors.join(\", \");
-        throw new Error(\"All checks still pass\");
+        let err = \"All checks still pass\";
+        throw new Error(err);
     }
 }""",
 ]

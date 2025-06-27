@@ -1,0 +1,6 @@
+// Checks that `ALL` selectors mentions which element failed.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+show-text: true
+set-timeout: 100
+wait-for-text: ("button", "heafd", [ALL])
+//~^ ERROR: [`hey` isn't equal to `heafd`] (on the element number 0)

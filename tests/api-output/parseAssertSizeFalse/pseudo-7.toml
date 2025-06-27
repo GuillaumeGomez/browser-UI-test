@@ -1,6 +1,7 @@
 instructions = [
   """const assertSizeElem = await page.$$(\"a ::after\");
 if (assertSizeElem.length === 0) { throw \"`a ::after` not found\"; }
+let erroredElem = null;
 async function checkElemSize(elem) {
     return await elem.evaluate(e => {
         const innerErrors = [];
@@ -13,15 +14,20 @@ async function checkElemSize(elem) {
     });
 }
 const errors = [];
-for (const elem of assertSizeElem) {
+for (const [i, elem] of assertSizeElem.entries()) {
     errors.push(...await checkElemSize(elem));
     if (errors.length !== 0) {
+        erroredElem = i;
         break;
     }
 }
 if (errors.length !== 0) {
     const errs = errors.join(\"; \");
-    throw \"The following errors happened: [\" + errs + \"]\";
+    let err = \"The following errors happened: [\" + errs + \"]\";
+    if (erroredElem !== null) {
+        err += ' (on the element number ' + erroredElem + ')';
+    }
+    throw err;
 }
 """,
 ]

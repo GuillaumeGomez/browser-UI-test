@@ -11,5 +11,5 @@ assert-size-false: ("header", {"width": 670, "height": 24})
 assert-size-false: ("header", {"width": 650, "height": 650})
 // Checking `ALL`.
 assert-size: ("button", {"width": 670, "height": 21}, ALL)
-//~^ ERROR: [expected a width of `670`, found `38`]
+//~^ ERROR: [expected a width of `670`, found `38`] (on the element number 0)
 assert-size-false: ("button", {"width": 670, "height": 650}, ALL)

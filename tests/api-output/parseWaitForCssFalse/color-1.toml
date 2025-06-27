@@ -35,6 +35,7 @@ const timeLimit = pages[0].getDefaultTimeout();
 const timeAdd = 50;
 let allTime = 0;
 let parseWaitForCss = null;
+let erroredElem = null;
 while (true) {
     while (true) {
         parseWaitForCss = await page.$$(\"a\");
@@ -51,6 +52,7 @@ while (true) {
             throw new Error(\"The CSS selector \\\"a\\\" was not found\");
         }
     }
+    erroredElem = null;
     const nonMatchingProps = await checkCssForElem(parseWaitForCss);
     if (nonMatchingProps.length !== 0) {
         break;

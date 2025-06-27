@@ -1,0 +1,5 @@
+// Ensure that the `ALL` check mentions which element failed.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+set-timeout: 100
+wait-for-attribute: ("button", {"data-hoho": "heh"}, ALL)
+//~^ ERROR: [Attribute named `data-hoho` doesn't exist] (on the element number 0)

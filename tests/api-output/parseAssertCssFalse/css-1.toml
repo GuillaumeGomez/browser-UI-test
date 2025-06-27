@@ -1,7 +1,7 @@
 instructions = [
   """const { checkCssProperty } = require('command-helpers.js');
 
-async function checkElem(elem) {
+async function checkElem(elem, i) {
     const nonMatchingProps = [];
     const jsHandle = await elem.evaluateHandle(e => {
         const parseAssertElemCssDict = [];
@@ -29,7 +29,11 @@ async function checkElem(elem) {
     }
     if (nonMatchingProps.length !== 0) {
         const props = nonMatchingProps.join(\"; \");
-        throw \"The following errors happened (for selector `a`): [\" + props + \"]\";
+        let err = \"The following errors happened (for selector `a`): [\" + props + \"]\";
+        if (i !== undefined) {
+            err += ' (on the element number ' + i + ')';
+        }
+        throw err;
     }
 }
 const parseAssertElemCss = await page.$(\"a\");

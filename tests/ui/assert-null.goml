@@ -45,6 +45,9 @@ assert-property: ("header", {"whatever": null}, CONTAINS)
 //~^ WARNING: Special checks (CONTAINS) will be ignored for `null`
 assert-property: ("header", {"whatever": null}, [ALL, CONTAINS])
 //~^ WARNING: Special checks (CONTAINS) will be ignored for `null`
+// Checking the mention to nth element failed
+assert-property: ("header", {"whatever": "a"}, ALL)
+//~^ ERROR: [Unknown property `"whatever"`] (on the element number 0)
 
 //
 // assert-document-property

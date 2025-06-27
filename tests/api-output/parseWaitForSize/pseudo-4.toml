@@ -18,6 +18,7 @@ while (true) {
             throw new Error(\"The CSS selector \\\"a:focus\\\" was not found\");
         }
     }
+    let erroredElem = null;
     async function checkElemSize(elem) {
         return await elem.evaluate(e => {
             const innerErrors = [];
@@ -30,9 +31,10 @@ while (true) {
         });
     }
     const errors = [];
-    for (const elem of assertSize) {
+    for (const [i, elem] of assertSize.entries()) {
         errors.push(...await checkElemSize(elem));
         if (errors.length !== 0) {
+            erroredElem = i;
             break;
         }
     }
@@ -46,8 +48,8 @@ while (true) {
     }
     allTime += timeAdd;
     if (allTime >= timeLimit) {
-        const err = errors.join(\", \");
-        throw new Error(\"The following checks still fail: [\" + err + \"]\");
+        let err = \"The following checks still fail: [\" + errors.join(\", \") + \"]\" + \" (on the element number \" + erroredElem + \")\";
+        throw new Error(err);
     }
 }""",
 ]

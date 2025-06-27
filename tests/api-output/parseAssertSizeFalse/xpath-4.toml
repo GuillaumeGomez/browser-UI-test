@@ -1,6 +1,7 @@
 instructions = [
   """const assertSizeElem = await page.$(\"::-p-xpath(//a)\");
 if (assertSizeElem === null) { throw \"`//a` not found\"; }
+let erroredElem = null;
 async function checkElemSize(elem) {
     return await elem.evaluate(e => {
         const innerErrors = [];
@@ -19,7 +20,11 @@ const errors = [];
 errors.push(...await checkElemSize(assertSizeElem));
 if (errors.length !== 0) {
     const errs = errors.join(\"; \");
-    throw \"The following errors happened: [\" + errs + \"]\";
+    let err = \"The following errors happened: [\" + errs + \"]\";
+    if (erroredElem !== null) {
+        err += ' (on the element number ' + erroredElem + ')';
+    }
+    throw err;
 }
 """,
 ]
