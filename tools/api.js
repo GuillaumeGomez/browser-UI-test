@@ -2019,14 +2019,14 @@ function checkStoreText(x, func) {
     func('(', 'err-3');
     func('(1)', 'err-4');
     func('(1, 1)', 'err-5');
-    func('(a, 1)', 'err-6');
-    func('(VAR, \'\')', 'err-7');
-    func(`(${RESERVED_VARIABLE_NAME}, "a")`, 'err-8');
+    func('(1, a)', 'err-6');
+    func('(\'\', VAR)', 'err-7');
+    func(`("a", ${RESERVED_VARIABLE_NAME})`, 'err-8');
 
-    func('(VAR, "a")', 'basic-1');
-    func('(VAR, "//a")', 'basic-2');
+    func('("a", VAR)', 'basic-1');
+    func('("//a", VAR)', 'basic-2');
 
-    func('(VAR, "a::after")', 'pseudo-1');
+    func('("a::after", VAR)', 'pseudo-1');
 }
 
 function checkStoreValue(x, func) {

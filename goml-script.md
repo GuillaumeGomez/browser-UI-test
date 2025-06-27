@@ -1910,7 +1910,7 @@ For more information about variables, read the [variables section](#variables).
 **store-text** command stores an element's text into a variable. Examples:
 
 ```
-store-property: ("#button", {"innerText": variable_name})
+store-text: ("#button", variable_name)
 assert-variable: (variable_name, "click me")
 ```
 
