@@ -845,6 +845,7 @@ if (require.main === module) {
         'runTests': runTests,
         'Options': Options,
         'loadBrowser': loadPuppeteer,
+        'convertMessagesFromJson': convertMessagesFromJson,
     };
     if (process.env.debug_tests === '1') {
         module.exports['CODE_WRAPPER'] = CODE_WRAPPER;
