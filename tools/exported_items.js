@@ -6,26 +6,22 @@ utils.print = function print() {}; // overwriting the print function to avoid th
 
 const {runTestCode, runTest, runTests, Options} = require('../src/index.js');
 const {Assert, plural, print, removeFolder} = require('./utils.js');
-const { convertMessagesFromJson } = require('../src/logs.js');
 
 async function wrapRunTests(options = new Options()) {
     options.screenshotComparison = false;
-    const [logs, code] = await runTests({'options': options, 'showLogs': false});
-    return [convertMessagesFromJson(logs), code];
+    return await runTests({'options': options, 'showLogs': false});
 }
 async function wrapRunTest(testPath, options = new Options()) {
     options.screenshotComparison = false;
-    const [logs, code] = await runTest(testPath, {'options': options, 'showLogs': false});
-    return [convertMessagesFromJson(logs), code];
+    return await runTest(testPath, {'options': options, 'showLogs': false});
 }
 async function wrapRunTestCode(testName, content, options = new Options()) {
     options.screenshotComparison = false;
-    const [logs, code] = await runTestCode(
+    return await runTestCode(
         testName,
         content,
         {'options': options, 'showLogs': false},
     );
-    return [convertMessagesFromJson(logs), code];
 }
 
 async function checkRunTest(x, func) {
@@ -157,19 +153,19 @@ async function checkRunTests(x, func) {
     // non-existent folder
     let options = new Options();
     options.parseArguments(['--test-folder', './yolo']);
-    await x.assertTry(func, [options], 'Folder `./yolo` not found');
+    await x.assertTry(func, [options], ['Folder `./yolo` not found\n', 1]);
 
     // "empty" folder (e.g. no .goml files)
     options = new Options();
     options.parseArguments(['--test-folder', './']);
     await x.assertTry(func, [options],
-        'No files found. Check your `--test-folder` and `--test-files` options');
+        ['No files found. Check your `--test-folder` and `--test-files` options\n', 1]);
 
     // with just one non-existent file through "--test-files" options
     options = new Options();
     options.parseArguments(['--test-files', './tests/fail.goml']);
     await x.assertTry(func, [options],
-        'File `./tests/fail.goml` not found (passed with `--test-files` option)');
+        ['File `./tests/fail.goml` not found (passed with `--test-files` option)\n', 1]);
 
     // with just one file through "--test-files" options
     options = new Options();

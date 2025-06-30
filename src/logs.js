@@ -95,9 +95,13 @@ class Logs {
     }
 
     appendLogs(other) {
-        for (const log of other) {
+        for (const log of other.logs) {
             this.append(log);
         }
+    }
+
+    clear() {
+        this.logs = [];
     }
 
     failure(fileInfo, message) {
@@ -166,6 +170,12 @@ class Logs {
             }
         }
         return null;
+    }
+
+    // This method returns either the `vec` of string if this is in JSON output format, otherwise
+    // returns a string.
+    getLogsInExpectedFormat() {
+        return this.jsonOutput ? this.logs : convertMessagesFromJson(this.logs);
     }
 }
 

@@ -38,6 +38,13 @@ const Status = {
     'ExecutionError': 5,
 };
 
+class ConfigError extends Error {
+    constructor(message) {
+        super(message);
+        this.name = 'ConfigError';
+    }
+}
+
 function loadContent(content) {
     const m = new Module();
     m.paths = [__dirname];
@@ -515,7 +522,7 @@ async function innerRunTests(logs, options, browser) {
 
     if (options.testFolder.length > 0) {
         if (!fs.existsSync(options.testFolder) || !fs.lstatSync(options.testFolder).isDirectory()) {
-            throw new Error(`Folder \`${options.testFolder}\` not found`);
+            throw new ConfigError(`Folder \`${options.testFolder}\` not found`);
         }
         fs.readdirSync(options.testFolder).forEach(function(file) {
             const fullPath = path.join(options.testFolder, file);
@@ -531,12 +538,14 @@ async function innerRunTests(logs, options, browser) {
                 allFiles.push(fullPath);
             }
         } else {
-            throw new Error(`File \`${testFile}\` not found (passed with \`--test-files\` option)`);
+            throw new ConfigError(
+                `File \`${testFile}\` not found (passed with \`--test-files\` option)`);
         }
     }
 
     if (allFiles.length === 0) {
-        throw new Error('No files found. Check your `--test-folder` and `--test-files` options');
+        throw new ConfigError(
+            'No files found. Check your `--test-folder` and `--test-files` options');
     }
 
     if (options.testFolder.length === 0
@@ -547,7 +556,7 @@ async function innerRunTests(logs, options, browser) {
         options.testFolder = path.dirname(options.testFiles[0]);
     }
     if (checkFolders(options) === false) {
-        return [[], 1];
+        return 1;
     }
 
     // A little sort on tests' name.
@@ -621,10 +630,10 @@ failed${extra}`);
     } catch (error) {
         logs.display(`An exception occured: ${error.message}\n== STACKTRACE ==\n` +
             `${new Error().stack}\n`);
-        return [logs.logs, 1];
+        return 1;
     }
 
-    return [logs.logs, total - successes];
+    return total - successes;
 }
 
 async function innerRunTestCode(
@@ -645,7 +654,7 @@ async function innerRunTestCode(
     try {
         const loaded = parseTest(testName, testPath, logs, options, content);
         if (loaded === null) {
-            return [logs.logs, 1];
+            return [logs, 1];
         } else if (loaded.parser.get_parser_errors().length !== 0) {
             logs.display(testName + '... ');
             for (const error of loaded.parser.get_parser_errors()) {
@@ -655,7 +664,7 @@ async function innerRunTestCode(
                 );
             }
             logs.failure({'file': testName}, '');
-            return [logs.logs, 1];
+            return [logs, 1];
         }
 
         const needCloseBrowser = browser === null;
@@ -669,17 +678,17 @@ async function innerRunTestCode(
         }
 
         if (ret !== Status.Ok) {
-            return [logs.logs, 1];
+            return [logs, 1];
         }
     } catch (error) {
         logs.error(
             {'file': testName},
             `An exception occured: ${error.message}\n== STACKTRACE ==\n${error.stack}`,
         );
-        return [logs.logs, 1];
+        return [logs, 1];
     }
 
-    return [logs.logs, 0];
+    return [logs, 0];
 }
 
 function checkExtras(extras) {
@@ -699,11 +708,11 @@ function checkExtras(extras) {
     const showLogs = extras['showLogs'] !== undefined ? extras['showLogs'] : false;
 
     if (options.validate === undefined) {
-        throw new Error('`extras["options"]` must be an "Options" type!');
+        throw new ConfigError('`extras["options"]` must be an "Options" type!');
     } else if (browser !== null && (typeof browser !== 'object' || browser.newPage === undefined)) {
-        throw new Error('`extras["browser"]` must be created using `loadBrowser`!');
+        throw new ConfigError('`extras["browser"]` must be created using `loadBrowser`!');
     } else if (typeof showLogs !== 'boolean') {
-        throw new Error('`extras["showLogs"]` must be a boolean!');
+        throw new ConfigError('`extras["showLogs"]` must be a boolean!');
     }
     // "light" validation of the Options type.
     options.validateFields();
@@ -719,17 +728,22 @@ async function runTestCode(testName, content, extras = null) {
     // content, browser = null, options = new Options(), showLogs = false
     if (typeof testName !== 'string') {
         const e = typeof testName;
-        throw new Error(`expected \`runTestCode\` first argument to be a string, found \`${e}\``);
+        throw new ConfigError(
+            `expected \`runTestCode\` first argument to be a string, found \`${e}\``);
     } else if (typeof content !== 'string') {
         const e = typeof content;
-        throw new Error(`expected \`runTestCode\` second argument to be a string, found \`${e}\``);
+        throw new ConfigError(
+            `expected \`runTestCode\` second argument to be a string, found \`${e}\``);
     } else if (testName.length === 0) {
-        throw new Error('`runTestCode` first argument cannot be empty');
+        throw new ConfigError(
+            '`runTestCode` first argument cannot be empty');
     }
 
     const [browser, options, showLogs] = checkExtras(extras);
 
-    return await innerRunTestCode(testName, '', options, browser, showLogs, true, content);
+    const [logs, exit_code] = await innerRunTestCode(
+        testName, '', options, browser, showLogs, true, content);
+    return [logs.getLogsInExpectedFormat(), exit_code];
 }
 
 // `extras` values are as follows:
@@ -738,11 +752,11 @@ async function runTestCode(testName, content, extras = null) {
 //  * `showLogs`: If not set, it'll be set to `false`.
 async function runTest(testPath, extras = null) {
     if (typeof testPath !== 'string' || typeof testPath === 'undefined') {
-        throw new Error('expected `runTest` first argument to be a string');
+        throw new ConfigError('expected `runTest` first argument to be a string');
     } else if (!fs.existsSync(testPath) || !fs.lstatSync(testPath).isFile()) {
-        throw new Error(`No file found with path \`${testPath}\``);
+        throw new ConfigError(`No file found with path \`${testPath}\``);
     } else if (!testPath.endsWith('.goml')) {
-        throw new Error(`Expected a \`.goml\` script, found ${path.basename(testPath)}`);
+        throw new ConfigError(`Expected a \`.goml\` script, found ${path.basename(testPath)}`);
     }
 
     const [browser, options, showLogs] = checkExtras(extras);
@@ -760,10 +774,10 @@ async function runTest(testPath, extras = null) {
     }
 
     if (checkFolders(optionsCopy) === false) {
-        return [[], 1];
+        return [options.isJsonOutput() ? [] : '', 1];
     }
 
-    return innerRunTestCode(
+    const [logs, exit_code] = await innerRunTestCode(
         extractFileNameWithoutExtension(testPath),
         testPath,
         optionsCopy,
@@ -771,6 +785,7 @@ async function runTest(testPath, extras = null) {
         showLogs,
         checkTestFolder,
     );
+    return [logs.getLogsInExpectedFormat(), exit_code];
 }
 
 // `extras` values are as follows:
@@ -789,11 +804,17 @@ async function runTests(extras = null) {
     logs.display(`=> Starting doc-ui tests${extra}...`);
 
     try {
-        return innerRunTests(logs, options, browser);
+        const exit_code = await innerRunTests(logs, options, browser);
+        return [logs.getLogsInExpectedFormat(), exit_code];
     } catch (error) {
-        logs.display(
-            `An exception occured: ${error.message}\n== STACKTRACE ==\n${new Error().stack}\n`);
-        return [logs.logs, 1];
+        if (error instanceof ConfigError) {
+            logs.clear();
+            logs.display(error.message);
+        } else {
+            logs.display(
+                `An exception occured: ${error.message}\n== STACKTRACE ==\n${new Error().stack}\n`);
+        }
+        return [logs.getLogsInExpectedFormat(), 1];
     }
 }
 
