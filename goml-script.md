@@ -1393,11 +1393,11 @@ assert-text: ("#elem", "not hello")
 
 #### fail-on-js-error
 
-**fail-on-js-error** command sets changes the behaviour of `browser-ui-test` when a JS error occurs on the web page. By default, the test fails if a JS error occurs. It overloads the value from the `--enable-on-js-error-fail` option. Example:
+**fail-on-js-error** command sets changes the behaviour of `browser-ui-test` when a JS error occurs on the web page. By default, the test fails if a JS error occurs. It overloads the value from the `--disable-on-js-error-fail` option. Example:
 
 ```
-// To enable the check:
-fail-on-js-error: true
+// To disable the check:
+fail-on-js-error: false
 ```
 
 #### fail-on-request-error
