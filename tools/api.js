@@ -1505,8 +1505,8 @@ try {
         'error': 'First command must be `go-to` (`assert-variable`, `assert-variable-false`, ' +
             '`call-function`, `debug`, `define-function`, `emulate`, `expect-failure`, ' +
             '`fail-on-js-error`, `fail-on-request-error`, `include`, `javascript`, ' +
-            '`screenshot-comparison`, `screenshot-on-failure`, `store-value` or `set-timeout` ' +
-            'can be used before)!',
+            '`screenshot-comparison`, `screenshot-on-failure`, `store-value`, `set-timeout` or ' +
+            '`set-window-size` can be used before)!',
         'line': {'line': 1},
     }]);
     x.assert(func('expect-failure: true\ngo-to: "file:///home"'), [
