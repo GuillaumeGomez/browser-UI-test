@@ -3049,61 +3049,64 @@ function checkCommandsSets(x, commands) {
 }
 
 async function checkCommands(x) {
-    x.startTestSuite('API', false);
-    print('=> Starting API tests...');
-    print('');
+    return await x.startTestSuite('all API tests', false, async() => {
+        await x.startTestSuite('API', false, async() => {
+            print('=> Starting API tests...');
+            print('');
 
-    for (let i = 0; i < TO_CHECK.length; ++i) {
-        x.startTestSuite(TO_CHECK[i].name);
-        try {
-            TO_CHECK[i].func(x, (e, name, o) => TO_CHECK[i].toCall(x, e, name, o));
-            x.endTestSuite();
-        } catch (err) {
-            x.endTestSuite(false, true);
-            print(`<== "${TO_CHECK[i].name}" failed: ${err}\n${err.stack}`);
-        }
-    }
+            for (let i = 0; i < TO_CHECK.length; ++i) {
+                await x.startTestSuite(TO_CHECK[i].name, true, async(level, suiteName) => {
+                    try {
+                        TO_CHECK[i].func(x, (e, name, o) => TO_CHECK[i].toCall(x, e, name, o));
+                        print(`<${'='.repeat(level + 1)} "${suiteName}": ${x.getTotalErrors()} ` +
+                            `${plural('error', x.getTotalErrors())} (in ${x.getTotalRanTests()} ` +
+                            `${plural('test', x.getTotalRanTests())})`);
+                    } catch (err) {
+                        print(`<== "${TO_CHECK[i].name}" failed: ${err}\n${err.stack}`);
+                        return true;
+                    }
+                });
+            }
 
-    print('');
-    print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
-        `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
+            print('');
+            print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} ` +
+                `with ${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
+        });
 
-    const api_errors = x.getTotalErrors();
-    x.endTestSuite(false);
+        print('');
+        // The goal here is to check that each command listed in the various sets actually exists.
+        await x.startTestSuite('Commands sets', false, async() => {
+            print('=> Starting commands sets tests...');
 
-    print('');
-    // The goal here is to check that each command listed in the various sets actually exists.
-    x.startTestSuite('Commands sets', false);
-    print('=> Starting commands sets tests...');
+            checkCommandsSets(x, parserFuncs.FATAL_ERROR_COMMANDS);
+            checkCommandsSets(x, parserFuncs.NO_INTERACTION_COMMANDS);
+            checkCommandsSets(x, parserFuncs.BEFORE_GOTO);
 
-    checkCommandsSets(x, parserFuncs.FATAL_ERROR_COMMANDS);
-    checkCommandsSets(x, parserFuncs.NO_INTERACTION_COMMANDS);
-    checkCommandsSets(x, parserFuncs.BEFORE_GOTO);
+            print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} ` +
+                `with ${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
+        });
 
-    const exports_errors = x.getTotalErrors();
+        print('');
+        // The goal in this one is to check that all commands are tested.
+        await x.startTestSuite('Commands tested', false, async() => {
+            print('=> Starting checking if all commands are tested...');
 
-    print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
-        `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
+            for (const order of Object.keys(parserFuncs.ORDERS)) {
+                if (TO_CHECK.findIndex(c => c.name === order) === -1) {
+                    x.addError(`command "${order}" needs to be tested!`);
+                } else {
+                    x.addSuccess();
+                }
+            }
 
-    x.endTestSuite(false);
+            if (x.getTotalRanTests() === 0) {
+                throw 'No command found!';
+            }
 
-    print('');
-    // The goal in this one is to check that all commands are tested.
-    x.startTestSuite('Commands tested', false);
-    print('=> Starting checking if all commands are tested...');
-
-    for (const order of Object.keys(parserFuncs.ORDERS)) {
-        if (TO_CHECK.findIndex(c => c.name === order) === -1) {
-            x.addError(`command "${order}" needs to be tested!`);
-        }
-    }
-    const untested_errors = x.getTotalErrors();
-
-    print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
-        `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
-    x.endTestSuite(false);
-
-    return api_errors + exports_errors + untested_errors;
+            print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} ` +
+                `with ${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
+        });
+    });
 }
 
 if (require.main === module) {
@@ -3112,8 +3115,12 @@ if (require.main === module) {
     if (!x.blessEnabled) {
         x.blessEnabled = process.env.npm_config_bless === 'true';
     }
-    checkCommands(x).then(nbErrors => {
-        process.exit(nbErrors !== 0 ? 1 : 0);
+    checkCommands(x).then(({totalRanTests, totalErrors}) => {
+        print('');
+        print(`\
+++> API tests done: found ${totalErrors} ${plural('error', totalErrors)} in ${totalRanTests} tests`,
+        );
+        process.exit(totalErrors !== 0 ? 1 : 0);
     });
 } else {
     module.exports = {

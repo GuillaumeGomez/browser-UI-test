@@ -211,9 +211,11 @@ class Assert {
     }
 
     _incrField(fieldName, pos) {
-        for (pos = pos >= this.testSuite.length ? this.testSuite.length - 1 : pos;
+        for (
+            pos = pos >= this.testSuite.length ? this.testSuite.length - 1 : pos;
             pos >= 0;
-            --pos) {
+            --pos
+        ) {
             if (this.testSuite[pos][fieldName] !== undefined) {
                 this.testSuite[pos][fieldName] += 1;
             }
@@ -316,7 +318,7 @@ class Assert {
         }
     }
 
-    startTestSuite(name, printMsg = true) {
+    async startTestSuite(name, printMsg, callback) {
         this.testSuite.push({
             'name': name,
             'errors': 0,
@@ -327,21 +329,18 @@ class Assert {
         if (printMsg === true) {
             print(`${'='.repeat(this.testSuite.length)}> Checking "${name}"...`);
         }
-    }
-
-    endTestSuite(printMsg = true, errorOccurred = false) {
-        if (this.testSuite.length === 0) {
-            throw new Error('No test suite is running, call `startTestSuite` first');
+        let errorOccurred = false;
+        try {
+            errorOccurred = await callback(this.testSuite.length, name);
+        } catch (err) {
+            print(err);
+            errorOccurred = true;
         }
-        const {name, totalErrors, totalRanTests} = this.testSuite.pop();
-        if (printMsg === true) {
-            print(`<${'='.repeat(this.testSuite.length + 1)} "${name}": ${totalErrors} ` +
-                `${plural('error', totalErrors)} (in ${totalRanTests} ` +
-                `${plural('test', totalRanTests)})`);
-        }
+        const {totalErrors, totalRanTests} = this.testSuite.pop();
         if (errorOccurred === true) {
             this._incrError();
         }
+        return {totalRanTests, totalErrors};
     }
 
     getTotalRanTests() {
