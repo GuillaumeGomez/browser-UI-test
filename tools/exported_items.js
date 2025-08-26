@@ -482,33 +482,33 @@ const TO_CHECK = [
 ];
 
 async function checkExportedItems(x = new Assert()) {
-    x.startTestSuite('exported items', false);
-    print('=> Starting EXPORTED ITEMS tests...');
-    print('');
+    return await x.startTestSuite('exported items', false, async() => {
+        print('=> Starting EXPORTED ITEMS tests...');
+        print('');
 
-    for (let i = 0; i < TO_CHECK.length; ++i) {
-        x.startTestSuite(TO_CHECK[i].name);
-        try {
-            await TO_CHECK[i].func(x, TO_CHECK[i].toCall);
-            x.endTestSuite();
-        } catch (err) {
-            x.endTestSuite(false, true);
-            print(`<== "${TO_CHECK[i].name}" failed: ${err}\n${err.stack}`);
+        for (let i = 0; i < TO_CHECK.length; ++i) {
+            await x.startTestSuite(TO_CHECK[i].name, true, async(level, suiteName) => {
+                try {
+                    await TO_CHECK[i].func(x, TO_CHECK[i].toCall);
+                    print(`<${'='.repeat(level + 1)} "${suiteName}": ${x.getTotalErrors()} ` +
+                        `${plural('error', x.getTotalErrors())} (in ${x.getTotalRanTests()} ` +
+                        `${plural('test', x.getTotalRanTests())})`);
+                } catch (err) {
+                    print(`<== "${TO_CHECK[i].name}" failed: ${err}\n${err.stack}`);
+                    return false;
+                }
+            });
         }
-    }
 
-    print('');
-    print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
-        `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
-
-    const errors = x.getTotalErrors();
-    x.endTestSuite(false);
-    return errors;
+        print('');
+        print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
+            `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
+    });
 }
 
 if (require.main === module) {
-    checkExportedItems().then(nbErrors => {
-        process.exit(nbErrors !== 0 ? 1 : 0);
+    checkExportedItems().then(({totalErrors}) => {
+        process.exit(totalErrors !== 0 ? 1 : 0);
     });
 } else {
     module.exports = {

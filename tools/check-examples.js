@@ -121,32 +121,34 @@ function checkFileExamples(x, filePath) {
 }
 
 async function checkExamples(x) {
-    x.startTestSuite('examples', false);
-    print('=> Starting code examples checks...');
-    print('');
+    return await x.startTestSuite('examples', false, async() => {
+        print('=> Starting code examples checks...');
+        print('');
 
-    const files = getAllFiles(path.join(__dirname, '..'), 0);
-    for (const file of files) {
-        x.startTestSuite(file);
-        try {
-            checkFileExamples(x, file);
-        } catch (err) {
-            x.addError(err);
+        const files = getAllFiles(path.join(__dirname, '..'), 0);
+        for (const file of files) {
+            await x.startTestSuite(file, true, async(level, suiteName) => {
+                try {
+                    checkFileExamples(x, file);
+                    print(`<${'='.repeat(level + 1)} "${suiteName}": ${x.getTotalErrors()} ` +
+                        `${plural('error', x.getTotalErrors())} (in ${x.getTotalRanTests()} ` +
+                        `${plural('test', x.getTotalRanTests())})`);
+                } catch (err) {
+                    x.addError(err);
+                }
+            });
         }
-        x.endTestSuite();
-    }
 
-    print('');
-    print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
-        `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
-
-    return x.getTotalErrors();
+        print('');
+        print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
+            `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
+    });
 }
 
 if (require.main === module) {
     const x = new Assert();
-    checkExamples(x).then(nbErrors => {
-        process.exit(nbErrors !== 0 ? 1 : 0);
+    checkExamples(x).then(({totalErrors}) => {
+        process.exit(totalErrors !== 0 ? 1 : 0);
     });
 } else {
     module.exports = {

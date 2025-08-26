@@ -126,30 +126,31 @@ function checkImageFileForTest(x, screenshotFile, testName) {
 }
 
 async function checkUi(x) {
-    x.startTestSuite('ui items', false);
-    print('=> Starting UI tests...');
-    print('');
+    return await x.startTestSuite('ui items', false, async() => {
+        print('=> Starting UI tests...');
+        print('');
 
-    x.startTestSuite('ui-test');
-    try {
-        await compareOutput(x);
-        x.endTestSuite();
-    } catch (err) {
-        x.endTestSuite(false, true);
-        print(`<== "ui-test" failed: ${err}\n${err.stack}`);
-    }
+        await x.startTestSuite('ui-test', true, async(level, suiteName) => {
+            try {
+                await compareOutput(x);
+                print(`<${'='.repeat(level + 1)} "${suiteName}": ${x.getTotalErrors()} ` +
+                    `${plural('error', x.getTotalErrors())} (in ${x.getTotalRanTests()} ` +
+                    `${plural('test', x.getTotalRanTests())})`);
+            } catch (err) {
+                print(`<== "ui-test" failed: ${err}\n${err.stack}`);
+                return false;
+            }
+        });
 
-    checkImageFileForTest(x, 'tests/ui/tadam.png', 'screenshot-info.goml');
-    checkImageFileForTest(
-        x, 'tests/ui/screenshot-on-failure-failure.png', 'screenshot-on-failure.goml');
+        checkImageFileForTest(x, 'tests/ui/tadam.png', 'screenshot-info.goml');
+        checkImageFileForTest(
+            x, 'tests/ui/screenshot-on-failure-failure.png', 'screenshot-on-failure.goml');
 
-    const errors = x.getTotalErrors();
-    print('');
-    print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
-        `${x.getTotalErrors()} ${plural('error', errors)}`);
-
-    x.endTestSuite(false);
-    return errors;
+        const errors = x.getTotalErrors();
+        print('');
+        print(`<= Ending ${x.getTotalRanTests()} ui ${plural('test', x.getTotalRanTests())} with ` +
+            `${x.getTotalErrors()} ${plural('error', errors)}`);
+    });
 }
 
 if (require.main === module) {
@@ -164,8 +165,8 @@ if (require.main === module) {
     if (!x.blessEnabled) {
         x.blessEnabled = process.env.npm_config_bless === 'true';
     }
-    checkUi(x).then(nbErrors => {
-        process.exit(nbErrors !== 0 ? 1 : 0);
+    checkUi(x).then(({totalErrors}) => {
+        process.exit(totalErrors !== 0 ? 1 : 0);
     });
 } else {
     module.exports = {
