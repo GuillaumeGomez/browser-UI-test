@@ -211,6 +211,7 @@ Here's the command list:
  * [`screenshot`](#screenshot)
  * [`screenshot-comparison`](#screenshot-comparison)
  * [`screenshot-on-failure`](#screenshot-on-failure)
+ * [`scroll-element-to`](#scroll-element-to)
  * [`scroll-to`](#scroll-to)
  * [`set-attribute`](#set-attribute)
  * [`set-css`](#set-css)
@@ -1612,9 +1613,25 @@ screenshot-on-failure: true
 screenshot-on-failure: false
 ```
 
+#### scroll-element-to
+
+**scroll-element-to** command scrolls an element to the given position inside itself or element it contains.
+
+```
+// Scrolling to (x) 10 and (y) 20.
+scroll-element-to: ("#element-to-scroll", (10, 20))
+// Same with an XPath.
+scroll-element-to: ("//*[@id='element-to-scroll']", (10, 20))
+
+// Scroll to an element inside `#element-to-scroll`:
+scroll-element-to: ("#element-to-scroll", ".element-inside")
+// Same with an XPath.
+scroll-element-to: ("#element-to-scroll", "//*[@class='element-inside']")
+```
+
 #### scroll-to
 
-**scroll-to** command scrolls to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector. Examples:
+**scroll-to** command scrolls to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS/XPath selector. Examples:
 
 ```
 scroll-to: "#element"
@@ -1627,6 +1644,8 @@ scroll-to: "//*[@class='element']"
 
 scroll-to: (10, 12)
 ```
+
+This command scrolls the `<body>` element. If you want to scroll another element, use the [`scroll-element-to`][#scroll-element-to] command instead.
 
 #### set-attribute
 
