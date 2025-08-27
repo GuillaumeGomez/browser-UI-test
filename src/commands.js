@@ -75,6 +75,7 @@ const ORDERS = {
     'screenshot': commands.parseScreenshot,
     'screenshot-comparison': commands.parseScreenshotComparison,
     'screenshot-on-failure': commands.parseScreenshotOnFailure,
+    'scroll-element-to': commands.parseScrollElementTo,
     'scroll-to': commands.parseScrollTo,
     'set-attribute': commands.parseSetAttribute,
     'set-css': commands.parseSetCss,

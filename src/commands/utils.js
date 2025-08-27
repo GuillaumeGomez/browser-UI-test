@@ -1,14 +1,19 @@
 // Utility functions used by the command parsing functions.
 
-function getAndSetElements(selector, varName, checkAllElements) {
+function codeSelector(selector) {
     const selectorS = selector.isXPath ? `::-p-xpath(${selector.value})` : selector.value;
+    return `"${selectorS}"`;
+}
+
+function getAndSetElements(selector, varName, checkAllElements, elemName = "page") {
+    const selectorS = codeSelector(selector);
     if (!checkAllElements) {
         return `\
-const ${varName} = await page.$("${selectorS}");
+const ${varName} = await ${elemName}.$(${selectorS});
 if (${varName} === null) { throw "\`${selector.value}\` not found"; }`;
     }
     return `\
-const ${varName} = await page.$$("${selectorS}");
+const ${varName} = await ${elemName}.$$(${selectorS});
 if (${varName}.length === 0) { throw "\`${selector.value}\` not found"; }`;
 }
 
@@ -434,6 +439,7 @@ function nthFailedElement(checkAll, errorPosVarName) {
 }
 
 module.exports = {
+    'codeSelector': codeSelector,
     'getAndSetElements': getAndSetElements,
     'getInsertStrings': getInsertStrings,
     'fillEnabledChecksV2': fillEnabledChecksV2,
