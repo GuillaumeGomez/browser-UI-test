@@ -1,3 +1,5 @@
 instructions = [
-  """await page.hover(\"\\\"a\");""",
+  """const parseMoveCursorToVar = await page.$(\"\\\"a\");
+if (parseMoveCursorToVar === null) { throw \"`\\\"a` not found\"; }
+await parseMoveCursorToVar.hover();""",
 ]

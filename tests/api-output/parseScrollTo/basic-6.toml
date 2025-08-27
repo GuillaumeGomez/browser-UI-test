@@ -1,3 +1,5 @@
 instructions = [
-  """await page.hover(\"\\\"a\");""",
+  """const parseScrollToVar = await page.$(\"\\\"a\");
+if (parseScrollToVar === null) { throw \"`\\\"a` not found\"; }
+await parseScrollToVar.scrollIntoView();""",
 ]

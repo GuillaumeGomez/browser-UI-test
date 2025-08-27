@@ -1,6 +1,6 @@
 // List commands handling inputs.
 
-const { getAndSetElements } = require('./utils.js');
+const { codeSelector, getAndSetElements } = require('./utils.js');
 const { validator } = require('../validator.js');
 // Not the same `utils.js`!
 const { hasError } = require('../utils.js');
@@ -320,18 +320,11 @@ function parseMoveCursorTo(parser) {
             ],
         };
     }
-    if (value.isXPath) {
-        const varName = 'parseMoveCursorToVar';
-        return {
-            'instructions': [`\
+    const varName = 'parseMoveCursorToVar';
+    return {
+        'instructions': [`\
 ${getAndSetElements(value, varName, false)}
 await ${varName}.hover();`,
-            ],
-        };
-    }
-    return {
-        'instructions': [
-            `await page.hover("${value.value}");`,
         ],
     };
 }
@@ -342,7 +335,91 @@ await ${varName}.hover();`,
 // * "CSS selector" (for example: "#elementID")
 // * "XPath" (for example: "//*[@id='elementID']")
 function parseScrollTo(parser) {
-    return parseMoveCursorTo(parser); // The page will scroll to the element
+    const number = {
+        kind: 'number',
+        allowNegative: false,
+        allowFloat: false,
+    };
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [number, number],
+        alternatives: [
+            { kind: 'selector' },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const value = ret.value;
+    if (value.kind === 'tuple') {
+        const [x, y] = value.entries;
+        return {
+            'instructions': [`\
+await page.evaluate(() => { window.scroll(${x.value.value}, ${y.value.value}); });`,
+            ],
+        };
+    }
+
+    const varName = 'parseScrollToVar';
+    return {
+        'instructions': [`\
+${getAndSetElements(value, varName, false)}
+await ${varName}.scrollIntoView();`,
+        ],
+    };
+}
+
+// Possible inputs:
+//
+// * ("CSS selector"|"XPath", (X, Y))
+// * ("CSS selector"|"XPath", "CSS selector"|"XPath")
+function parseScrollElementTo(parser) {
+    const number = {
+        kind: 'number',
+        allowNegative: false,
+        allowFloat: false,
+    };
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'tuple',
+                elements: [number, number],
+                alternatives: [
+                    { kind: 'selector' },
+                ],
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const [selector, value] = ret.value.entries;
+    const varName = 'parseScrollElementToVar';
+    if (value.value.kind === 'tuple') {
+        const [x, y] = value.value.entries;
+        return {
+            'instructions': [`\
+${getAndSetElements(selector.value, varName, false)}
+await page.locator(${codeSelector(selector.value)}).scroll({
+    scrollLeft: ${x.value.value},
+    scrollTop: ${y.value.value},
+});`,
+            ],
+        };
+    }
+    return {
+        'instructions': [`\
+${getAndSetElements(selector.value, varName, false)}
+${getAndSetElements(value.value, varName + '2', false, varName)}
+await ${varName}2.scrollIntoView();`,
+        ],
+    };
 }
 
 
@@ -408,6 +485,7 @@ module.exports = {
     'parseMoveCursorTo': parseMoveCursorTo,
     'parsePressKey': parsePressKey,
     'parseScrollTo': parseScrollTo,
+    'parseScrollElementTo': parseScrollElementTo,
     'parseWrite': parseWrite,
     'parseWriteInto': parseWriteInto,
 };

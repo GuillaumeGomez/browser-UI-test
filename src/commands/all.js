@@ -85,6 +85,7 @@ module.exports = {
     'parseScreenshotComparison': context_setters.parseScreenshotComparison,
     'parseScreenshotOnFailure': context_setters.parseScreenshotOnFailure,
     'parseScrollTo': input.parseScrollTo,
+    'parseScrollElementTo': input.parseScrollElementTo,
     'parseSetAttribute': dom_modifiers.parseSetAttribute,
     'parseSetCss': dom_modifiers.parseSetCss,
     'parseSetDevicePixelRatio': emulation.parseSetDevicePixelRatio,
