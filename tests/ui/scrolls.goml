@@ -1,0 +1,23 @@
+// This test ensures that the various scroll command work as expected.
+set-window-size: (600, 600)
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/big-page.html"
+
+// First we check `scroll-to`.
+assert-window-property: {"scrollY": 0}
+scroll-to: (0, 30)
+assert-window-property: {"scrollY": 30}
+store-position: (".titles h2:last-child", {"y": y})
+scroll-to: ".titles h2:last-child"
+store-window-property: {"scrollY": scrollY}
+assert: |scrollY| > 30 && |scrollY| <= |y|
+
+// Then we check `scroll-element-to`.
+assert-property: (".absolute", {"scrollTop": 0})
+scroll-element-to: (".absolute", (0, 50))
+assert-property: (".absolute", {"scrollTop": 50})
+scroll-element-to: (".absolute", "li:last-child")
+store-property: (".absolute", {"scrollTop": scrollY})
+assert: |scrollY| > 50
+// Should fail.
+scroll-element-to: (".absolute", "#does-not-exist")
+//~^ ERROR: `#does-not-exist` not found

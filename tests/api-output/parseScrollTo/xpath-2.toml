@@ -1,5 +1,5 @@
 instructions = [
-  """const parseMoveCursorToVar = await page.$(\"::-p-xpath(//a)\");
-if (parseMoveCursorToVar === null) { throw \"`//a` not found\"; }
-await parseMoveCursorToVar.hover();""",
+  """const parseScrollToVar = await page.$(\"::-p-xpath(//a)\");
+if (parseScrollToVar === null) { throw \"`//a` not found\"; }
+await parseScrollToVar.scrollIntoView();""",
 ]

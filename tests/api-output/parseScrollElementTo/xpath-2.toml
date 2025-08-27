@@ -1,0 +1,8 @@
+instructions = [
+  """const parseScrollElementToVar = await page.$(\"::-p-xpath(//a)\");
+if (parseScrollElementToVar === null) { throw \"`//a` not found\"; }
+await page.locator(\"::-p-xpath(//a)\").scroll({
+    scrollLeft: 1,
+    scrollTop: 2,
+});""",
+]

@@ -1783,6 +1783,37 @@ function checkScreenshotOnFailure(x, func) {
     func('true', 'basic-2');
 }
 
+function checkScrollElementTo(x, func) {
+    // Check position
+    func('hello', 'err-1');
+    func('()', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1,)', 'err-5');
+    func('(1,,2)', 'err-6');
+    func('(,2)', 'err-7');
+    func('(a,2)', 'err-8');
+    func('("a",-1,2)', 'err-9');
+    func('("a", (-1,2))', 'err-10');
+    func('("a", (1,-2))', 'err-11');
+    func('("a", (-1.0,2))', 'err-12');
+    func('("a", (1.0,2))', 'err-13');
+    func('("a", (2,-1.0))', 'err-14');
+    func('("a", (2,1.0))', 'err-15');
+
+    func('("a", (1,2))', 'pos-1');
+    func('("a", (1,2,))', 'pos-2');
+    func('("a", "a")', 'pos-3');
+
+    // XPath
+    func('("/a", (1, 2))', 'xpath-1');
+    func('("//a", (1, 2))', 'xpath-2');
+
+    // Multiline
+    func('(a,\n2\n)', 'multiline-1');
+    func('("a", (1\n,\n2))', 'multiline-2');
+}
+
 function checkScrollTo(x, func) {
     // Check position
     func('hello', 'err-1');
@@ -2807,6 +2838,11 @@ const TO_CHECK = [
         'name': 'screenshot-on-failure',
         'func': checkScreenshotOnFailure,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseScreenshotOnFailure, x, e, name, o),
+    },
+    {
+        'name': 'scroll-element-to',
+        'func': checkScrollElementTo,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseScrollElementTo, x, e, name, o),
     },
     {
         'name': 'scroll-to',
