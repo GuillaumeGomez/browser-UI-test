@@ -355,8 +355,8 @@ function parseScrollTo(parser) {
     if (value.kind === 'tuple') {
         const [x, y] = value.entries;
         return {
-            'instructions': [
-                `await page.evaluate(() => { window.scroll(${x.value.value}, ${y.value.value}); });`
+            'instructions': [`\
+await page.evaluate(() => { window.scroll(${x.value.value}, ${y.value.value}); });`,
             ],
         };
     }
@@ -401,7 +401,7 @@ function parseScrollElementTo(parser) {
 
     const [selector, value] = ret.value.entries;
     const varName = 'parseScrollElementToVar';
-    if (value.value.kind === "tuple") {
+    if (value.value.kind === 'tuple') {
         const [x, y] = value.value.entries;
         return {
             'instructions': [`\
@@ -416,7 +416,7 @@ await page.locator(${codeSelector(selector.value)}).scroll({
     return {
         'instructions': [`\
 ${getAndSetElements(selector.value, varName, false)}
-${getAndSetElements(value.value, varName + "2", false, varName)}
+${getAndSetElements(value.value, varName + '2', false, varName)}
 await ${varName}2.scrollIntoView();`,
         ],
     };

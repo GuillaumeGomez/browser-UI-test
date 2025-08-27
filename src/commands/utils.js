@@ -5,7 +5,7 @@ function codeSelector(selector) {
     return `"${selectorS}"`;
 }
 
-function getAndSetElements(selector, varName, checkAllElements, elemName = "page") {
+function getAndSetElements(selector, varName, checkAllElements, elemName = 'page') {
     const selectorS = codeSelector(selector);
     if (!checkAllElements) {
         return `\
