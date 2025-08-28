@@ -1297,6 +1297,16 @@ function checkEmulate(x, func) {
     func('"a"', 'basic-1');
 }
 
+function checkEmulateMediaFeatures(x, func) {
+    func('', 'err-1');
+    func('1', 'err-2');
+    func('"a"', 'err-3');
+    func('[]', 'err-4');
+    func('{"random": "a"}', 'err-5');
+
+    func('{"prefers-color-scheme": "a"}', 'basic-1');
+}
+
 function checkExpectFailure(x, func) {
     func('', 'err-1');
     func('hello', 'err-2');
@@ -1503,10 +1513,10 @@ try {
     ]);
     x.assert(func('focus: "#foo"'), [{
         'error': 'First command must be `go-to` (`assert-variable`, `assert-variable-false`, ' +
-            '`call-function`, `debug`, `define-function`, `emulate`, `expect-failure`, ' +
-            '`fail-on-js-error`, `fail-on-request-error`, `include`, `javascript`, ' +
-            '`screenshot-comparison`, `screenshot-on-failure`, `store-value`, `set-timeout` or ' +
-            '`set-window-size` can be used before)!',
+            '`call-function`, `debug`, `define-function`, `emulate`, `emulate-media-features`, ' +
+            '`expect-failure`, `fail-on-js-error`, `fail-on-request-error`, `include`, ' +
+            '`javascript`, `screenshot-comparison`, `screenshot-on-failure`, `store-value`, ' +
+            '`set-timeout` or `set-window-size` can be used before)!',
         'line': {'line': 1},
     }]);
     x.assert(func('expect-failure: true\ngo-to: "file:///home"'), [
@@ -2733,6 +2743,11 @@ const TO_CHECK = [
         'name': 'emulate',
         'func': checkEmulate,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseEmulate, x, e, name, o),
+    },
+    {
+        'name': 'emulate-media-features',
+        'func': checkEmulateMediaFeatures,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseEmulateMediaFeatures, x, e, name, o),
     },
     {
         'name': 'expect-failure',

@@ -347,6 +347,13 @@ async function checkOptions(x) {
     await x.assertTry(() => options.parseArguments(['--jobs', '8']), [], true);
     await x.assert(options.nbThreads, 8);
 
+    await x.assertTry(() => options.parseArguments(['--emulate-media-feature'], [],
+        'Missing media feature name and value after `--emulate-media-feature` option'));
+    await x.assertTry(() => options.parseArguments(['--emulate-media-feature', 'a'], [],
+        'Missing media feature value after `--emulate-media-feature` option'));
+    await x.assertTry(() => options.parseArguments(['--emulate-media-feature', 'a', 'b'], [],
+        'Unknown key `a` in `--emulate-media-feature`'));
+
     options = new Options();
     options.runId = true;
     await x.assertTry(() => options.validateFields(), [],
@@ -472,6 +479,15 @@ async function checkOptions(x) {
     options.nbThreads = '';
     await x.assertTry(() => options.validateFields(), [],
         '`Options.nbThreads` field is supposed to be a number! (Type is string)');
+
+    options = new Options();
+    options.emulateMediaFeatures = {};
+    await x.assertTry(() => options.validateFields(), [],
+        '`Options.emulateMediaFeatures` field is supposed to be a `Map`! (Type is object)');
+    options.emulateMediaFeatures = new Map();
+    options.emulateMediaFeatures.set('a', 'b');
+    await x.assertTry(() => options.validateFields(), [],
+        'Unknown key `a` in `Options.emulateMediaFeatures` field');
 }
 
 const TO_CHECK = [

@@ -1,4 +1,5 @@
 // This test simply checks that the `emulate` command is working.
 emulate: "Galaxy S III"
+emulate-media-features: {"prefers-color-scheme": "light"}
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 assert: ".content>.left>p"

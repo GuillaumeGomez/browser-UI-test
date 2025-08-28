@@ -1,0 +1,3 @@
+instructions = [
+  """await pages[0].emulateMediaFeatures([{name: \"prefers-color-scheme\", value: \"a\"}]);""",
+]
