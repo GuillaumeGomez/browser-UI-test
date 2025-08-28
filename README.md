@@ -214,6 +214,7 @@ The list of fields of the `Options` class is the following:
  * `allowFileAccessFromFiles`: if set to `true`, it will disable CORS errors for local files
  * `debug`: display more information
  * `emulate`: name of the device you want to emulate (list of available devices is [here](https://github.com/puppeteer/puppeteer/blob/b5020dc04121b265c77662237dfb177d6de06053/src/common/DeviceDescriptors.ts) or you can use `--show-devices` option)
+ * `emulateMediaFeatures`: media features to be used in the `.goml` scripts
  * `executablePath`: browser's executable path to be used
  * `extensions`: extensions to be loaded by the browser
  * `failOnJsError`: if set to `true`, if a web page has a JS error, the test will fail
