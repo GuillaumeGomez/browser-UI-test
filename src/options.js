@@ -10,47 +10,44 @@ const BROWSERS = ['chrome', 'firefox'];
 function helper() {
     const browsers = BROWSERS.map(e => `"${e}"`).join(' or ');
 
-    print('Available options:');
-    print('');
-    print('  --allow-file-access-from-files: Disable CORS errors when testing with local files');
-    print(`  --browser [BROWSER NAME]      : Run tests on given browser (${browsers})`);
-    print('                                  /!\\ Only testing on chrome is stable!');
-    print('  --debug                       : Display more information');
-    print('  --disable-fail-on-js-error    : If a JS error occurs on a web page, the test will ' +
-        'not fail');
-    print('  --disable-fail-on-request-error: If a request failed, it won\'t fail the test');
-    print('  --emulate [DEVICE NAME]       : Emulate the given device');
-    print('  --enable-screenshot-comparison: Enable screenshot comparisons at the end of the ');
-    print('                                  scripts by the end');
-    print('  --executable-path [PATH]      : Path of the browser\'s executable you want to use');
-    print('  --extension [PATH]            : Add an extension to load from the given path');
-    print('  --failure-folder [PATH]       : Path of the folder where failed tests image will');
-    print('                                  be placed (same as `image-folder` if not provided)');
-    print('  --generate-images             : If provided, it\'ll generate missing test images');
-    print('  --image-folder [PATH]         : Path of the folder where screenshots will be ' +
-        'generated');
-    print('                                  (same as `test-folder` if not provided)');
-    print('  --incognito                   : Enable incognito mode');
-    print('  --jobs [N]                    : Number of parallel jobs, defaults to number of CPUs');
-    print('  --no-headless                 : Disable headless mode');
-    print('  --message-format [human|json] : In which format the messages (like errors) should be' +
-        ' emitted');
-    print('  --pause-on-error [true|false] : Pause execution script until user press ENTER');
-    print('  --permission [PERMISSION]     : Add a permission to enable');
-    print('  --run-id [id]                 : Id to be used for failed images extension (\'test\'');
-    print('                                  by default)');
-    print('  --screenshot-on-failure       : If a test fails, a screenshot will be generated and');
-    print('                                  the test execution will be stopped');
-    print('  --show-devices                : Show list of available devices');
-    print('  --show-text                   : Disable text invisibility (be careful when using ' +
-        'it!)');
-    print('  --show-permissions            : Show list of available permissions');
-    print('  --test-folder [PATH]          : Path of the folder where `.goml` script files are');
-    print('  --timeout [MILLISECONDS]      : Set default timeout for all tests');
-    print('  --test-files [PATHs]          : List of `.goml` files\' path to be run');
-    print('  --variable [name] [value]     : Variable to be used in scripts');
-    print('  --version                     : Show the current version of the framework');
-    print('  --help | -h                   : Show this text');
+    print(`\
+Available options:
+
+  --allow-file-access-from-files: Disable CORS errors when testing with local files
+  --browser [BROWSER NAME]      : Run tests on given browser (${browsers})
+                                  /!\\ Only testing on chrome is stable!
+  --debug                       : Display more information
+  --disable-fail-on-js-error    : If a JS error occurs on a web page, the test will not fail
+  --disable-fail-on-request-error: If a request failed, it won't fail the test
+  --emulate [DEVICE NAME]       : Emulate the given device
+  --emulate-media-feature [name] [value]: Add a new \`media-feature\` to emulate
+  --enable-screenshot-comparison: Enable screenshot comparisons at the end of the scripts by the end
+  --executable-path [PATH]      : Path of the browser's executable you want to use
+  --extension [PATH]            : Add an extension to load from the given path
+  --failure-folder [PATH]       : Path of the folder where failed tests image will
+                                  be placed (same as \`image-folder\` if not provided)
+  --generate-images             : If provided, it'll generate missing test images
+  --image-folder [PATH]         : Path of the folder where screenshots will be generated (same as
+                                  \`test-folder\` if not provided)
+  --incognito                   : Enable incognito mode
+  --jobs [N]                    : Number of parallel jobs, defaults to number of CPUs
+  --no-headless                 : Disable headless mode
+  --message-format [human|json] : In which format the messages (like errors) should be emitted
+  --pause-on-error [true|false] : Pause execution script until user press ENTER
+  --permission [PERMISSION]     : Add a permission to enable
+  --run-id [id]                 : Id to be used for failed images extension (\`test\` by default)
+  --screenshot-on-failure       : If a test fails, a screenshot will be generated and the test
+                                  execution will be stopped
+  --show-devices                : Show list of available devices
+  --show-text                   : Disable text invisibility (be careful when using it!)
+  --show-permissions            : Show list of available permissions
+  --test-folder [PATH]          : Path of the folder where \`.goml\` script files are
+  --timeout [MILLISECONDS]      : Set default timeout for all tests
+  --test-files [PATHs]          : List of \`.goml\` files path to be run
+  --variable [name] [value]     : Variable to be used in scripts
+  --version                     : Show the current version of the framework
+  --help | -h                   : Show this text
+`);
 }
 
 function showVersion() {
@@ -100,6 +97,7 @@ class Options {
         this.browser = 'chrome';
         this.incognito = false;
         this.emulate = '';
+        this.emulateMediaFeatures = new Map();
         this.timeout = 30000;
         this.pauseOnError = null;
         this.permissions = [];
@@ -133,6 +131,9 @@ class Options {
         copy.browser = this.browser.slice();
         copy.incognito = this.incognito;
         copy.emulate = this.emulate.slice();
+        copy.emulateMediaFeatures = new Map(
+            Object.entries(JSON.parse(JSON.stringify(this.emulateMediaFeatures))),
+        );
         copy.timeout = this.timeout;
         copy.pauseOnError = this.pauseOnError;
         copy.permissions = JSON.parse(JSON.stringify(this.permissions));
@@ -252,6 +253,29 @@ class Options {
                     it += 1;
                 } else {
                     throw new Error('Missing device name after `--emulate` option');
+                }
+            } else if (args[it] === '--emulate-media-feature') {
+                if (it + 2 < args.length) {
+                    const key = args[it + 1];
+                    if (!utils.ALLOWED_EMULATE_MEDIA_FEATURES_KEYS.includes(key)) {
+                        throw new Error(
+                            `Unknown key \`${key}\` in \`--emulate-media-feature\` option`);
+                    }
+
+                    this.emulateMediaFeatures.set(
+                        key,
+                        // No need to escape it as it is used "as is" and not in generated JS code.
+                        args[it + 2],
+                    );
+                    it += 2;
+                } else if (it + 1 < args.length) {
+                    throw new Error(
+                        'Missing media feature value after `--emulate-media-feature` option');
+                } else {
+                    throw new Error(
+                        'Missing media feature name and value after `--emulate-media-feature` \
+option',
+                    );
                 }
             } else if (args[it] === '--timeout') {
                 if (it + 1 < args.length) {
@@ -408,6 +432,16 @@ class Options {
         if (this.variables.constructor != Object && typeof this.variables !== 'object') {
             throw new Error('`Options.variables` field is supposed to be a dictionary-like! ' +
                 `(Type is ${typeof this.variables})`);
+        }
+        // eslint-disable-next-line eqeqeq
+        if (!(this.emulateMediaFeatures instanceof Map)) {
+            throw new Error('`Options.emulateMediaFeatures` field is supposed to be a ' +
+                `\`Map\`! (Type is ${typeof this.emulateMediaFeatures})`);
+        }
+        for (const key of this.emulateMediaFeatures.keys()) {
+            if (!utils.ALLOWED_EMULATE_MEDIA_FEATURES_KEYS.includes(key)) {
+                throw new Error(`Unknown key \`${key}\` in \`Options.emulateMediaFeatures\` field`);
+            }
         }
         if (BROWSERS.indexOf(this.browser) === -1) {
             const browsers = BROWSERS.map(e => `"${e}"`).join(' or ');

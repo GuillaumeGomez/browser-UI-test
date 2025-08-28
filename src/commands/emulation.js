@@ -3,7 +3,7 @@
 const consts = require('../consts.js');
 const { validator } = require('../validator.js');
 // Not the same `utils.js`!
-const { hasError } = require('../utils.js');
+const { ALLOWED_EMULATE_MEDIA_FEATURES_KEYS, hasError } = require('../utils.js');
 
 // Possible inputs:
 //
@@ -99,6 +99,44 @@ you can use \`--show-devices\` option';
 } else {
     await pages[0].emulate(arg.puppeteer.KnownDevices["${device}"]);
 }`,
+        ],
+    };
+}
+
+// Possible inputs:
+//
+// * JSON dict
+function parseEmulateMediaFeatures(parser) {
+    const ret = validator(parser,
+        {
+            kind: 'json',
+            allowEmptyValues: false,
+            keyTypes: {
+                'string': ALLOWED_EMULATE_MEDIA_FEATURES_KEYS,
+            },
+            valueTypes: {
+                'string': {},
+            },
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const json_dict = ret.value.entries;
+    const mediaFeatures = [];
+    for (const [k, v] of json_dict) {
+        mediaFeatures.push(`{name: "${k}", value: "${v.value}"}`);
+    }
+    if (mediaFeatures.length === 0) {
+        return {
+            'instructions': [],
+            'wait': false,
+        };
+    }
+    return {
+        'instructions': [`\
+await pages[0].emulateMediaFeatures([${mediaFeatures.join(',')}]);`,
         ],
     };
 }
@@ -215,6 +253,7 @@ await client.send("Page.setFontSizes", {
 module.exports = {
     'parseSetDevicePixelRatio': parseSetDevicePixelRatio,
     'parseEmulate': parseEmulate,
+    'parseEmulateMediaFeatures': parseEmulateMediaFeatures,
     'parseSetFontSize': parseSetFontSize,
     'parseGeolocation': parseGeolocation,
     'parseJavascript': parseJavascript,

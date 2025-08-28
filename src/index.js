@@ -200,6 +200,7 @@ async function runAllCommands(loaded, logs, options, browser) {
         page = await browser.newPage(options, currentFile, logs);
     }
     await browser.emulate(options, currentFile, page, logs);
+    await browser.emulateMediaFeatures(options, currentFile, page, logs);
     try {
         const extras = {
             'screenshotComparison': options.screenshotComparison === true,

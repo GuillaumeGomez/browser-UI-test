@@ -193,6 +193,7 @@ Here's the command list:
  * [`define-function`](#define-function)
  * [`drag-and-drop`](#drag-and-drop)
  * [`emulate`](#emulate)
+ * [`emulate-media-features`](#emulate-media-features)
  * [`expect-failure`](#expect-failure)
  * [`fail-on-js-error`](#fail-on-js-error)
  * [`fail-on-request-error`](#fail-on-request-error)
@@ -1369,6 +1370,20 @@ emulate: "iPhone 8"
 ```
 
 To see the list of available devices, either run this framework with `--show-devices` option or go [here](https://github.com/GoogleChrome/puppeteer/blob/master/lib/DeviceDescriptors.js).
+
+#### emulate-media-features
+
+**emulate-media-features** command allows to emulate CSS media features. **It can only be used before the first `goto` call!** Example:
+
+```
+emulate-media-features: {
+    "prefers-color-scheme": "dark",
+    "prefers-reduced-motion": "reduce",
+    "color-gamut": "srgb",
+}
+```
+
+This command will overload the values passed with the `--emulate-media-feature` command line option.
 
 #### expect-failure
 

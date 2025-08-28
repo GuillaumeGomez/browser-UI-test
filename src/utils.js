@@ -5,6 +5,11 @@ const process = require('process');
 const {PuppeteerWrapper} = require('./puppeteer-wrapper.js');
 
 const RESERVED_VARIABLE_NAME = 'CURRENT_DIR';
+const ALLOWED_EMULATE_MEDIA_FEATURES_KEYS = [
+    'prefers-color-scheme',
+    'prefers-reduced-motion',
+    'color-gamut',
+];
 
 String.prototype.replaceAll = function(search, replace_with) {
     return this.split(search).join(replace_with);
@@ -209,4 +214,5 @@ module.exports = {
     'plural': plural,
     'hasError': hasError,
     'getFileInfo': getFileInfo,
+    'ALLOWED_EMULATE_MEDIA_FEATURES_KEYS': ALLOWED_EMULATE_MEDIA_FEATURES_KEYS,
 };

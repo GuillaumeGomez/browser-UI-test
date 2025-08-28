@@ -1,0 +1,1 @@
+error = """unexpected key `\"random\"`, allowed keys are: [`color-gamut`, `prefers-color-scheme`, `prefers-reduced-motion`]"""

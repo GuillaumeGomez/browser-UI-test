@@ -66,6 +66,7 @@ module.exports = {
     'parseDefineFunction': functions.parseDefineFunction,
     'parseDragAndDrop': input.parseDragAndDrop,
     'parseEmulate': emulation.parseEmulate,
+    'parseEmulateMediaFeatures': emulation.parseEmulateMediaFeatures,
     'parseExpectFailure': context_setters.parseExpectFailure,
     'parseFailOnJsError': context_setters.parseFailOnJsError,
     'parseFailOnRequestError': context_setters.parseFailOnRequestError,
