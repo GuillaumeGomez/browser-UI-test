@@ -57,6 +57,7 @@ const ORDERS = {
     'define-function': commands.parseDefineFunction,
     'drag-and-drop': commands.parseDragAndDrop,
     'emulate': commands.parseEmulate,
+    'emulate-media-features': commands.parseEmulateMediaFeatures,
     'expect-failure': commands.parseExpectFailure,
     'fail-on-js-error': commands.parseFailOnJsError,
     'fail-on-request-error': commands.parseFailOnRequestError,
@@ -138,6 +139,7 @@ const FATAL_ERROR_COMMANDS = [
     'click',
     'drag-and-drop',
     'emulate',
+    'emulate-media-features',
     'focus',
     'go-to',
     'include',
@@ -187,6 +189,7 @@ const NO_INTERACTION_COMMANDS = [
     'debug',
     'define-function',
     'emulate',
+    'emulate-media-features',
     'expect-failure',
     'fail-on-js-error',
     'fail-on-request-error',
@@ -202,6 +205,7 @@ const NO_INTERACTION_COMMANDS = [
 // Commands which can only be used before the first `goto` command.
 const BEFORE_GOTO = [
     'emulate',
+    'emulate-media-features',
 ];
 
 class ParserWithContext {

@@ -173,6 +173,17 @@ class PuppeteerWrapper {
         logs.debug(`Emulating "${options.emulate}" device.`);
         await page.emulate(fileInfo, this.puppeteer.KnownDevices[options.emulate]);
     }
+
+    async emulateMediaFeatures(options, fileInfo, page, logs) {
+        if (options.emulateMediaFeatures.size === 0) {
+            await page.emulateMediaFeatures([{name: 'prefers-color-scheme', value: 'light'}]);
+            return;
+        }
+        for (const [key, value] of options.emulateMediaFeatures) {
+            await page.emulateMediaFeatures([{name: key, value}]);
+            logs.debug(`Emulating media feature \`${key}\` (with value \`${value}\`)`);
+        }
+    }
 }
 
 module.exports = {
