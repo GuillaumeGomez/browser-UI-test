@@ -81,9 +81,8 @@ function add_log(output, level) {
 function getVariableValue(variables, variableName, functionArgs = null) {
     if (variableName === RESERVED_VARIABLE_NAME) {
         return getCurrentDir();
-    } else if (functionArgs !== null &&
-        Object.prototype.hasOwnProperty.call(functionArgs, variableName)) {
-        return functionArgs[variableName];
+    } else if (functionArgs !== null && functionArgs.has(variableName)) {
+        return functionArgs.get(variableName);
     } else if (variables.has(variableName)) {
         return variables.get(variableName);
     } else if (Object.prototype.hasOwnProperty.call(process.env, variableName)) {

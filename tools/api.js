@@ -77,7 +77,7 @@ function wrapper(callback, x, arg, name, options) {
     if (context.get_parser_errors().length !== 0) {
         res = {'error': context.get_parser_errors().map(e => e.message).join('\n')};
     } else {
-        const inferred = context.get_current_command().getInferredAst(context.variables, {});
+        const inferred = context.get_current_command().getInferredAst(context.variables, new Map());
         if (inferred.errors.length !== 0) {
             res = {'error': inferred.errors.map(e => e.message).join('\n')};
         } else {
@@ -141,7 +141,7 @@ function wrapperDefineFunction(callback, arg, options) {
     if (context.get_parser_errors().length !== 0) {
         return [{'error': context.get_parser_errors().map(e => e.message).join('\n')}, context];
     }
-    const inferred = context.get_current_command().getInferredAst(context.variables, {});
+    const inferred = context.get_current_command().getInferredAst(context.variables, new Map());
     context.elems = inferred.ast;
     return [callback(context, options), context];
 }
@@ -1031,7 +1031,7 @@ call-function: ("hello",{"a": "1"})`,
 function checkDefineFunction(x, func) {
     const transform = data => {
         const ret = Object.create(null);
-        for (const [key, value] of Object.entries(data)) {
+        for (const [key, value] of data.entries()) {
             ret[key] = {
                 'arguments': value.arguments,
                 'commands': value.commands.map(c => {

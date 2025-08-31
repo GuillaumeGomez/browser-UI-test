@@ -235,7 +235,7 @@ function parseInclude(parser) {
         'ast': ast,
         'commands': ast.commands,
         'currentCommand': 0,
-        'functionArgs': Object.create(null),
+        'functionArgs': new Map(),
     });
 
     return {

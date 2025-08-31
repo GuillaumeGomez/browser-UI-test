@@ -215,13 +215,13 @@ class ParserWithContext {
         this.options = options;
         this.callingFunc = [];
         this.variables = options.variables;
-        this.definedFunctions = Object.create(null);
+        this.definedFunctions = new Map();
         this.contexts = [
             {
                 'ast': ast,
                 'commands': ast.commands,
                 'currentCommand': 0,
-                'functionArgs': Object.create(null),
+                'functionArgs': new Map(),
             },
         ];
     }

@@ -23,7 +23,7 @@ function inferredValues(text, variables = null) {
     } else if (!(variables instanceof Map)) {
         variables = new Map(Object.entries(variables));
     }
-    const ret = command.getInferredAst(variables, {});
+    const ret = command.getInferredAst(variables, new Map());
     parser.errors.push(...ret.errors);
     if (parser.errors.length !== 0) {
         parser.elems = ret.ast;
