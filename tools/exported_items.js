@@ -402,7 +402,7 @@ async function checkOptions(x) {
     options = new Options();
     options.variables = '';
     await x.assertTry(() => options.validateFields(), [],
-        '`Options.variables` field is supposed to be a dictionary-like! (Type is string)');
+        '`Options.variables` field is supposed to be a `Map`! (Type is string)');
 
     options = new Options();
     options.browser = 12;

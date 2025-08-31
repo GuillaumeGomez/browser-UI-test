@@ -19,7 +19,9 @@ function inferredValues(text, variables = null) {
         text,
     );
     if (variables === null) {
-        variables = {};
+        variables = new Map();
+    } else if (!(variables instanceof Map)) {
+        variables = new Map(Object.entries(variables));
     }
     const ret = command.getInferredAst(variables, {});
     parser.errors.push(...ret.errors);

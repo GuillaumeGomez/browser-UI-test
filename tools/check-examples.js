@@ -49,13 +49,13 @@ function checkContent(x, example, file, line, firstCommand) {
         }
         const context_parser = loaded['parser'];
         // Variables used in some examples.
-        context_parser.variables['variable'] = 1;
-        context_parser.variables['class_var'] = 1;
-        context_parser.variables['window_height'] = 1;
-        context_parser.variables['width'] = 1;
-        context_parser.variables['height'] = 1;
-        context_parser.variables['A_VARIABLE'] = 'a';
-        context_parser.variables['DOC_PATH'] = './a';
+        context_parser.variables.set('variable', 1);
+        context_parser.variables.set('class_var', 1);
+        context_parser.variables.set('window_height', 1);
+        context_parser.variables.set('width', 1);
+        context_parser.variables.set('height', 1);
+        context_parser.variables.set('A_VARIABLE', 'a');
+        context_parser.variables.set('DOC_PATH', './a');
         // Needed for `within-iframe` commands.
         const pages = [0, 0, 0, 0, 0];
 
