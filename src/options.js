@@ -92,7 +92,7 @@ class Options {
         this.screenshotComparison = false;
         this.allowFileAccessFromFiles = false;
         this.testFiles = [];
-        this.variables = Object.create(null);
+        this.variables = new Map();
         this.extensions = [];
         this.browser = 'chrome';
         this.incognito = false;
@@ -126,14 +126,16 @@ class Options {
         copy.screenshotComparison = this.screenshotComparison;
         copy.allowFileAccessFromFiles = this.allowFileAccessFromFiles;
         copy.testFiles = JSON.parse(JSON.stringify(this.testFiles));
-        copy.variables = JSON.parse(JSON.stringify(this.variables));
+        copy.variables = new Map(
+            Object.entries(JSON.parse(JSON.stringify(Object.fromEntries(this.variables)))),
+        );
         copy.extensions = JSON.parse(JSON.stringify(this.extensions));
         copy.browser = this.browser.slice();
         copy.incognito = this.incognito;
         copy.emulate = this.emulate.slice();
-        copy.emulateMediaFeatures = new Map(
-            Object.entries(JSON.parse(JSON.stringify(this.emulateMediaFeatures))),
-        );
+        copy.emulateMediaFeatures = new Map(Object.entries(
+            JSON.parse(JSON.stringify(Object.fromEntries(this.emulateMediaFeatures))),
+        ));
         copy.timeout = this.timeout;
         copy.pauseOnError = this.pauseOnError;
         copy.permissions = JSON.parse(JSON.stringify(this.permissions));
@@ -212,7 +214,7 @@ class Options {
                 addPath(args[it]);
             } else if (args[it] === '--variable') {
                 if (it + 2 < args.length) {
-                    this.variables[args[it + 1]] = utils.escapeBackslahes(args[it + 2]);
+                    this.variables.set(args[it + 1], utils.escapeBackslahes(args[it + 2]));
                     it += 2;
                 } else if (it + 1 < args.length) {
                     throw new Error('Missing variable value after `--variable` option');
@@ -428,12 +430,10 @@ option',
         validateField('screenshotOnFailure', 'boolean');
         validateField('nbThreads', 'number');
         validateField('messageFormat', 'string');
-        // eslint-disable-next-line eqeqeq
-        if (this.variables.constructor != Object && typeof this.variables !== 'object') {
-            throw new Error('`Options.variables` field is supposed to be a dictionary-like! ' +
+        if (!(this.variables instanceof Map)) {
+            throw new Error('`Options.variables` field is supposed to be a `Map`! ' +
                 `(Type is ${typeof this.variables})`);
         }
-        // eslint-disable-next-line eqeqeq
         if (!(this.emulateMediaFeatures instanceof Map)) {
             throw new Error('`Options.emulateMediaFeatures` field is supposed to be a ' +
                 `\`Map\`! (Type is ${typeof this.emulateMediaFeatures})`);

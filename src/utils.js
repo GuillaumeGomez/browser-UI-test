@@ -84,8 +84,8 @@ function getVariableValue(variables, variableName, functionArgs = null) {
     } else if (functionArgs !== null &&
         Object.prototype.hasOwnProperty.call(functionArgs, variableName)) {
         return functionArgs[variableName];
-    } else if (Object.prototype.hasOwnProperty.call(variables, variableName)) {
-        return variables[variableName];
+    } else if (variables.has(variableName)) {
+        return variables.get(variableName);
     } else if (Object.prototype.hasOwnProperty.call(process.env, variableName)) {
         return process.env[variableName];
     }

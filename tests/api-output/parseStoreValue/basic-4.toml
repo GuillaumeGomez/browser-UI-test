@@ -1,4 +1,4 @@
 instructions = [
-  """arg.variables[\"a\"] = {\"a\": \"b\"};""",
+  """arg.variables.set(\"a\", {\"a\": \"b\"});""",
 ]
 wait = false

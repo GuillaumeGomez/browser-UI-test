@@ -425,7 +425,7 @@ function parseStoreValue(parser) {
     const tuple = ret.value.entries;
     return {
         'instructions': [`\
-arg.variables["${tuple[0].value.displayInCode()}"] = ${tuple[1].value.displayInCode()};`,
+arg.variables.set("${tuple[0].value.displayInCode()}", ${tuple[1].value.displayInCode()});`,
         ],
         'wait': false,
     };

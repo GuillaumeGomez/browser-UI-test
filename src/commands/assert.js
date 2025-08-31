@@ -1325,7 +1325,7 @@ function stringifyValue(value) {
     }
     return JSON.stringify(value);
 }
-const value1 = stringifyValue(arg.variables["${tuple[0].value.displayInCode()}"]);
+const value1 = stringifyValue(arg.variables.get("${tuple[0].value.displayInCode()}"));
 const value2 = stringifyValue(${tuple[1].value.displayInCode()});
 const errors = [];
 ${checks.join('\n')}

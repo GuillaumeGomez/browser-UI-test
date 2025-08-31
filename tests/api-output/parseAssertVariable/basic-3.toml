@@ -5,7 +5,7 @@ instructions = [
     }
     return JSON.stringify(value);
 }
-const value1 = stringifyValue(arg.variables[\"VAR\"]);
+const value1 = stringifyValue(arg.variables.get(\"VAR\"));
 const value2 = stringifyValue(\"\\'a\");
 const errors = [];
 if (value1 !== value2) {

@@ -223,7 +223,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                 if (typeof value === 'string') {
                     value = JSON.stringify(value).slice(1, -1);
                 }
-                extras.variables[varName] = value;
+                extras.variables.set(varName, value);
             },
         };
         page.on('pageerror', message => {

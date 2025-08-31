@@ -48,6 +48,9 @@ function wrapper(callback, x, arg, name, options) {
     if (typeof options === 'undefined') {
         options = new Options();
     }
+    if (!(options.variables instanceof Map)) {
+        options.variables = new Map(Object.entries(options.variables));
+    }
     let expected;
     const parent = path.join(API_OUTPUT, callback.name);
     const filePath = path.join(parent, `${name}.toml`);
@@ -105,6 +108,9 @@ function wrapperParseContent(arg, options) {
     if (typeof options === 'undefined') {
         options = new Options();
     }
+    if (!(options.variables instanceof Map)) {
+        options.variables = new Map(Object.entries(options.variables));
+    }
     const parser = new parserFuncs.ParserWithContext('<test>', options, arg);
     if (parser.get_parser_errors().length !== 0) {
         return parser.get_parser_errors();
@@ -126,6 +132,9 @@ function wrapperParseContent(arg, options) {
 function wrapperDefineFunction(callback, arg, options) {
     if (typeof options === 'undefined') {
         options = new Options();
+    }
+    if (!(options.variables instanceof Map)) {
+        options.variables = new Map(Object.entries(options.variables));
     }
 
     const context = new parserFuncs.ParserWithContext('<test>', options, 'go-to:' + arg);
