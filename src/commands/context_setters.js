@@ -262,7 +262,7 @@ pages.push(iframe);`;
                 'ast': context.ast,
                 'commands': tuple[1].value.value,
                 'currentCommand': 0,
-                'functionArgs': Object.create(null),
+                'functionArgs': new Map(),
                 'dropCallback': pages => {
                     if (pages.length < 2) {
                         throw new Error('`pages` is empty whereas it should never happen!');
