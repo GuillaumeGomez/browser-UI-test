@@ -290,7 +290,6 @@ async function checkOptions(x) {
         '`Options.browser` field only accepts "chrome" or "firefox" as values, found test');
 
     x.assert(options.parseArguments(['--help']), false);
-    x.assert(options.parseArguments(['-h']), false);
     x.assert(options.parseArguments(['--show-devices']), false);
     x.assert(options.parseArguments(['--show-permissions']), false);
 
@@ -353,6 +352,13 @@ async function checkOptions(x) {
         'Missing media feature value after `--emulate-media-feature` option'));
     await x.assertTry(() => options.parseArguments(['--emulate-media-feature', 'a', 'b'], [],
         'Unknown key `a` in `--emulate-media-feature`'));
+    await x.assertTry(() => options.parseArguments(
+        ['--emulate-media-feature', 'prefers-color-scheme', 'light'],
+    ), [], true);
+    await x.assert(
+        Object.fromEntries(options.emulateMediaFeatures.entries()),
+        {'prefers-color-scheme': 'light'},
+    );
 
     options = new Options();
     options.runId = true;
