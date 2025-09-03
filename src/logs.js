@@ -237,6 +237,8 @@ class Logs {
             this.displayCompactFileInfo();
             process.stdout.write(EOL);
 
+            this.ranTests.sort();
+
             // Now we display logs that might need to be displayed, like warnings and errors.
             for (const test of this.ranTests) {
                 const messages = this.logs.filter(log => log.file === test && log.level !== 'info');

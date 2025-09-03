@@ -186,9 +186,9 @@ async function runInstruction(loadedInstruction, pages, extras) {
 }
 
 async function runAllCommands(loaded, logs, options, browser) {
-    const currentFile = {'file': loaded['file']};
     logs.info(loaded['file'] + '... ');
     const context_parser = loaded['parser'];
+    const currentFile = getFileInfo(context_parser);
 
     let notOk = false;
     let returnValue = Status.Ok;
@@ -515,6 +515,21 @@ async function runAllCommands(loaded, logs, options, browser) {
     return returnValue;
 }
 
+function filterTests(options, allFiles) {
+    if (options.filter === null) {
+        return 0;
+    }
+
+    let filteredOut = 0;
+    for (let i = allFiles.length - 1; i >= 0; --i) {
+        if (!path.basename(allFiles[i]).includes(options.filter)) {
+            allFiles.splice(i, 1);
+            filteredOut += 1;
+        }
+    }
+    return filteredOut;
+}
+
 async function innerRunTests(logs, options, browser) {
     let successes = 0;
     let total = 0;
@@ -524,7 +539,7 @@ async function innerRunTests(logs, options, browser) {
         if (!fs.existsSync(options.testFolder) || !fs.lstatSync(options.testFolder).isDirectory()) {
             throw new ConfigError(`Folder \`${options.testFolder}\` not found`);
         }
-        fs.readdirSync(options.testFolder).forEach(function(file) {
+        fs.readdirSync(options.testFolder).forEach(file => {
             const fullPath = path.join(options.testFolder, file);
             if (file.endsWith('.goml') && fs.lstatSync(fullPath).isFile()) {
                 allFiles.push(path.resolve(fullPath));
@@ -542,6 +557,7 @@ async function innerRunTests(logs, options, browser) {
                 `File \`${testFile}\` not found (passed with \`--test-files\` option)`);
         }
     }
+    const filteredOut = filterTests(options, allFiles);
 
     if (allFiles.length === 0) {
         throw new ConfigError(
@@ -629,7 +645,7 @@ async function innerRunTests(logs, options, browser) {
         }
         logs.conclude(
             `${extra}<= doc-ui tests done: ${successes} succeeded, ${total - successes} \
-failed${extra}`);
+failed, ${filteredOut} filtered out${extra}`);
     } catch (error) {
         logs.conclude(`An exception occured: ${error.message}${EOL}== STACKTRACE ==${EOL}` +
             `${new Error().stack}${EOL}`);

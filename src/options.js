@@ -78,6 +78,7 @@ class Options {
         this.nbThreads = os.cpus().length;
         this.messageFormat = 'human';
         this.displayFormat = 'normal';
+        this.filter = null;
         // Enabled by default!
         this.failOnRequestError = true;
         this.executablePath = null;
@@ -119,6 +120,7 @@ class Options {
         copy.nbThreads = this.nbThreads;
         copy.messageFormat = this.messageFormat.slice();
         copy.displayFormat = this.displayFormat.slice();
+        copy.filter = this.filter.slice();
         return copy;
     }
 
@@ -249,6 +251,13 @@ class Options {
                     '`image-folder` if not provided)',
                 'extra': '[PATH]',
                 'handler': addPath,
+            }],
+            ['--filter', {
+                'help': 'Only run test with the provided filter is in their file name',
+                'extra': '[NAME]',
+                'handler': () => {
+                    this.filter = oneArg('filter');
+                },
             }],
             ['--generate-images', {
                 'help': 'If provided, it\'ll generate missing test images',
