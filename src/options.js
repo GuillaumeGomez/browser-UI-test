@@ -120,7 +120,7 @@ class Options {
         copy.nbThreads = this.nbThreads;
         copy.messageFormat = this.messageFormat.slice();
         copy.displayFormat = this.displayFormat.slice();
-        copy.filter = this.filter.slice();
+        copy.filter = this.filter !== null ? this.filter.slice() : null;
         return copy;
     }
 

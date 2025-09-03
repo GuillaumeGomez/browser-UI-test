@@ -5,7 +5,7 @@ function convertMessageFromJson(message) {
     const lineInfo = message.is_line_exact ? 'line' : 'around line';
     let lineDisplay = '';
     if (message.line !== null && message.line !== undefined) {
-        lineDisplay += `${lineInfo} ${message.line.line}`;
+        lineDisplay += ` ${lineInfo} ${message.line.line}`;
         if (Array.isArray(message.line.backtrace)) {
             for (const msg of message.line.backtrace) {
                 lineDisplay += `${EOL}    from \`${msg.file}\` line ${msg.line}`;
@@ -14,7 +14,7 @@ function convertMessageFromJson(message) {
     }
     const fileDisplay =
         message.file !== null && message.file !== undefined && message.showFile !== false
-            ? `\`${message.file}\` ${lineDisplay}: `
+            ? `\`${message.file}\`${lineDisplay}: `
             : '';
     const levelDisplay = message.showLogLevel !== false ? `[${message.level.toUpperCase()}] ` : '';
     return `${levelDisplay}${fileDisplay}${message.message}${EOL}`;
@@ -139,6 +139,13 @@ class Logs {
             this.ranTests.push(file);
             if (this.ranTests.length % 50 === 0) {
                 this.displayCompactFileInfo();
+            } else if (this.ranTests.length === this.nbTests) {
+                let s = '';
+                for (let i = this.ranTests.length % 50; i < 50; ++i) {
+                    s += ' ';
+                }
+                process.stdout.write(s);
+                this.displayCompactFileInfo();
             }
         }
     }
@@ -179,6 +186,12 @@ class Logs {
                     break;
                 }
             }
+        }
+    }
+
+    startTest(testName) {
+        if (!this.isCompactDisplay()) {
+            this.display(testName + '... ');
         }
     }
 
@@ -229,12 +242,6 @@ class Logs {
 
     conclude(message) {
         if (this.isCompactDisplay()) {
-            let s = '';
-            for (let i = this.ranTests.length % 50; i < 50; ++i) {
-                s += ' ';
-            }
-            process.stdout.write(s);
-            this.displayCompactFileInfo();
             process.stdout.write(EOL);
 
             this.ranTests.sort();

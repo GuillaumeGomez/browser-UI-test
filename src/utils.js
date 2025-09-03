@@ -1,6 +1,7 @@
 const fs = require('fs');
 const config = require('./config.js');
 const path = require('path');
+const { EOL } = require('os');
 const process = require('process');
 const {PuppeteerWrapper} = require('./puppeteer-wrapper.js');
 
@@ -46,7 +47,7 @@ function readFile(filePath, encoding, callback) {
 
 function print(s, backline = true) {
     if (typeof s === 'string') {
-        process.stdout.write(`${s}${backline === true ? '\n' : ''}`);
+        process.stdout.write(`${s}${backline === true ? EOL : ''}`);
     }
 }
 

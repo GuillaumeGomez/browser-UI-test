@@ -186,9 +186,9 @@ async function runInstruction(loadedInstruction, pages, extras) {
 }
 
 async function runAllCommands(loaded, logs, options, browser) {
-    logs.info(loaded['file'] + '... ');
     const context_parser = loaded['parser'];
     const currentFile = getFileInfo(context_parser);
+    logs.startTest(loaded['file']);
 
     let notOk = false;
     let returnValue = Status.Ok;
@@ -568,7 +568,7 @@ async function innerRunTests(logs, options, browser) {
         && options.getFailureFolder() === ''
         && options.getImageFolder() === ''
     ) {
-        logs.warn({}, 'No failure or image folder set, taking first test file\'s folder');
+        print('[WARNING] No failure or image folder set, taking first test file\'s folder');
         options.testFolder = path.dirname(options.testFiles[0]);
     }
     if (checkFolders(options) === false) {
@@ -680,7 +680,7 @@ async function innerRunTestCode(
         if (loaded === null) {
             return [logs, 1];
         } else if (loaded.parser.get_parser_errors().length !== 0) {
-            logs.info(getFileInfo(loaded.parser), testName + '... ');
+            logs.startTest(testName);
             for (const error of loaded.parser.get_parser_errors()) {
                 logs.error(
                     getFileInfo(loaded.parser, error.line),
