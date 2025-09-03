@@ -1,5 +1,5 @@
 => Starting doc-ui tests...
 escapes... 
 [ERROR] `tests/ui/escapes.goml` line 22: Cannot navigate to invalid URL `file://C:\a\b\d\elements.html`: for command `go-to: "file://" + |WINDOWS_PATH| + "\\d\\elements.html"`
-escapes: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/escapes.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

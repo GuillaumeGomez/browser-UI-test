@@ -1,5 +1,5 @@
 => Starting doc-ui tests...
 size... 
 [ERROR] `tests/ui/size.goml` line 11: expected only positive numbers, found `-10` (first element of the tuple) (from command `set-window-size: (-10, 0.2)`)
-size: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/size.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

@@ -9,5 +9,5 @@ parser-errors...
 [ERROR] `tests/ui/parser-errors.goml` line 10: expected `,` or `)` after `a`, found `b`
 [ERROR] `tests/ui/parser-errors.goml` line 10: expected `,` or `)` after `a`, found `|b`
 [ERROR] `tests/ui/parser-errors.goml` line 10: unexpected character `)` after `|b`
-parser-errors: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/parser-errors.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

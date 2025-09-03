@@ -77,6 +77,8 @@ class Options {
         this.screenshotOnFailure = false;
         this.nbThreads = os.cpus().length;
         this.messageFormat = 'human';
+        this.displayFormat = 'normal';
+        this.filter = null;
         // Enabled by default!
         this.failOnRequestError = true;
         this.executablePath = null;
@@ -117,6 +119,8 @@ class Options {
         copy.screenshotOnFailure = this.screenshotOnFailure;
         copy.nbThreads = this.nbThreads;
         copy.messageFormat = this.messageFormat.slice();
+        copy.displayFormat = this.displayFormat.slice();
+        copy.filter = this.filter !== null ? this.filter.slice() : null;
         return copy;
     }
 
@@ -139,12 +143,20 @@ class Options {
                 throw new Error(`Missing path after \`${args[it]}\` option`);
             }
         };
-        const oneArg = name => {
+        const oneArg = (name, accepted) => {
             if (it + 1 >= args.length) {
                 throw new Error(`Missing ${name} after \`${args[it]}\` option`);
             }
             it += 1;
-            return args[it];
+            const arg = args[it].trim();
+            if (accepted !== undefined) {
+                if (!accepted.includes(arg)) {
+                    const s = accepted.map(a => `\`${a}\``).join(' or ');
+                    throw new Error(`\`${args[it - 1]}\` option only accepts ${s} as value, found` +
+                        ` \`${arg}\``);
+                }
+            }
+            return arg;
         };
         const twoArgs = name => {
             if (it + 2 < args.length) {
@@ -170,13 +182,7 @@ class Options {
                     ' is stable!',
                 'extra': '[BROWSER NAME]',
                 'handler': () => {
-                    const browser = oneArg('browser name').trim();
-                    if (BROWSERS.indexOf(browser) === -1) {
-                        const browsers = BROWSERS.map(e => `"${e}"`).join(' or ');
-                        throw new Error(`\`--browser\` option only accepts ${browsers} as values,` +
-                            ` found \`${browser}\``);
-                    }
-                    this.browser = browser;
+                    this.browser = oneArg('browser name', BROWSERS);
                 },
             }],
             ['--debug', {
@@ -246,6 +252,13 @@ class Options {
                 'extra': '[PATH]',
                 'handler': addPath,
             }],
+            ['--filter', {
+                'help': 'Only run test with the provided filter is in their file name',
+                'extra': '[NAME]',
+                'handler': () => {
+                    this.filter = oneArg('filter');
+                },
+            }],
             ['--generate-images', {
                 'help': 'If provided, it\'ll generate missing test images',
                 'handler': () => {
@@ -286,27 +299,26 @@ class Options {
                     this.headless = false;
                 },
             }],
+            ['--display-format', {
+                'help': 'If tests should display all information or just the minimum (like ' +
+                    'warnings and errors)',
+                'extra': '[normal|compact]',
+                'handler': () => {
+                    this.displayFormat = oneArg('display format', ['normal', 'compact']);
+                },
+            }],
             ['--message-format', {
                 'help': 'In which format the messages (like errors) should be emitted',
                 'extra': '[human|json]',
                 'handler': () => {
-                    const format = oneArg('message format').trim();
-                    if (!['human', 'json'].includes(format)) {
-                        throw new Error(`\`--message-format\` option only accepts \`human\` or \
-                            \`json\` as values, found \`${format}\``);
-                    }
-                    this.messageFormat = format;
+                    this.messageFormat = oneArg('message format', ['human', 'json']);
                 },
             }],
             ['--pause-on-error', {
                 'help': 'Pause execution script until user press ENTER',
                 'extra': '[true|false]',
                 'handler': () => {
-                    this.pauseOnError = oneArg('`true` or `false`');
-                    if (['true', 'false'].indexOf(this.pauseOnError) === -1) {
-                        throw new Error('`--pause-on-error` can only be `true` or `false`!');
-                    }
-                    this.pauseOnError = this.pauseOnError === 'true';
+                    this.pauseOnError = oneArg('`true` or `false`', ['true', 'false']) === 'true';
                 },
             }],
             ['--permission', {
@@ -468,6 +480,10 @@ class Options {
         return this.messageFormat === 'json';
     }
 
+    isCompactDisplay() {
+        return this.displayFormat === 'compact';
+    }
+
     validateFields() {
         // Check if variables have the expected types (you never know...).
         const validateField = (fieldName, expectedType) => {
@@ -504,6 +520,7 @@ class Options {
         validateField('screenshotOnFailure', 'boolean');
         validateField('nbThreads', 'number');
         validateField('messageFormat', 'string');
+        validateField('displayFormat', 'string');
         if (!(this.variables instanceof Map)) {
             throw new Error('`Options.variables` field is supposed to be a `Map`! ' +
                 `(Type is ${typeof this.variables})`);

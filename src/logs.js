@@ -1,4 +1,5 @@
 const process = require('process');
+const { EOL } = require('os');
 
 function convertMessageFromJson(message) {
     const lineInfo = message.is_line_exact ? 'line' : 'around line';
@@ -7,15 +8,18 @@ function convertMessageFromJson(message) {
         lineDisplay += `${lineInfo} ${message.line.line}`;
         if (Array.isArray(message.line.backtrace)) {
             for (const msg of message.line.backtrace) {
-                lineDisplay += `\n    from \`${msg.file}\` line ${msg.line}`;
+                lineDisplay += `${EOL}    from \`${msg.file}\` line ${msg.line}`;
             }
         }
+        lineDisplay += ': ';
     }
-    const fileDisplay = message.file !== null && message.file !== undefined
-        ? `${message.file}${lineDisplay}: `
-        : '';
+    const fileDisplay =
+        message.file !== null && message.file !== undefined && message.file !== '' &&
+            message.showFile !== false
+            ? `\`${message.file}\` `
+            : '';
     const levelDisplay = message.showLogLevel !== false ? `[${message.level.toUpperCase()}] ` : '';
-    return `${levelDisplay}${fileDisplay}${message.message}\n`;
+    return `${levelDisplay}${fileDisplay}${lineDisplay}${message.message}${EOL}`;
 }
 
 function convertMessagesFromJson(messages) {
@@ -24,20 +28,38 @@ function convertMessagesFromJson(messages) {
 
 class Logs {
     constructor(showLogs, options) {
+        this.logs = [];
         this.showLogs = showLogs;
-        if (options === undefined) {
-            this.jsonOutput = false;
-            this.showDebug = false;
-        } else {
+        this.jsonOutput = false;
+        this.showDebug = false;
+        this.displayCompact = false;
+        this.nbTests = null;
+        this.ranTests = [];
+
+        if (options !== undefined) {
             this.jsonOutput = options.isJsonOutput();
             this.showDebug = options.debug;
+            if (!this.jsonOutput) {
+                this.displayCompact = options.isCompactDisplay();
+            }
         }
-        this.logs = [];
+    }
+
+    shallowClone() {
+        const ret = new Logs(this.showLogs);
+
+        ret.jsonOutput = this.jsonOutput;
+        ret.showDebug = this.showDebug;
+        ret.displayCompact = this.displayCompact;
+        ret.nbTests = this.nbTests;
+        ret.ranTests = this.ranTests;
+
+        return ret;
     }
 
     _addLog(level, fileInfo, newLog) {
         if (Array.isArray(newLog)) {
-            newLog = newLog.join('\n');
+            newLog = newLog.join(EOL);
         }
         if (typeof newLog !== 'string' || newLog.length === 0) {
             return;
@@ -67,8 +89,8 @@ class Logs {
         this.logs.push(newLog);
         if (this.showLogs === true) {
             if (this.jsonOutput) {
-                process.stdout.write(JSON.stringify(newLog) + '\n');
-            } else {
+                process.stdout.write(JSON.stringify(newLog) + EOL);
+            } else if (newLog.ignoreCompact === true || !this.isCompactDisplay()) {
                 process.stdout.write(convertMessageFromJson(newLog));
             }
         }
@@ -102,12 +124,39 @@ class Logs {
 
     clear() {
         this.logs = [];
+        this.nbTests = null;
+    }
+
+    isCompactDisplay() {
+        return this.displayCompact && this.nbTests !== null;
+    }
+
+    displayCompactFileInfo() {
+        process.stdout.write(` (${this.ranTests.length}/${this.nbTests})${EOL}`);
+    }
+
+    updateCompactDisplay(file, success) {
+        if (this.isCompactDisplay()) {
+            process.stdout.write(success ? '.' : 'F');
+            this.ranTests.push(file);
+            if (this.ranTests.length % 50 === 0) {
+                this.displayCompactFileInfo();
+            } else if (this.ranTests.length === this.nbTests) {
+                let s = '';
+                for (let i = this.ranTests.length % 50; i < 50; ++i) {
+                    s += ' ';
+                }
+                process.stdout.write(s);
+                this.displayCompactFileInfo();
+            }
+        }
     }
 
     failure(fileInfo, message) {
         const msg = message.length > 0 ? `FAILED (${message})` : 'FAILED';
         if (!this.jsonOutput) {
-            fileInfo.file = null;
+            this.updateCompactDisplay(fileInfo.file, false);
+            fileInfo.showFile = false;
         }
         fileInfo.showLogLevel = false;
         this.error(fileInfo, msg);
@@ -125,7 +174,8 @@ class Logs {
 
     success(fileInfo, message) {
         if (!this.jsonOutput) {
-            fileInfo.file = null;
+            this.updateCompactDisplay(fileInfo.file, true);
+            fileInfo.showFile = false;
         }
         fileInfo.showLogLevel = false;
         this.info(fileInfo, message);
@@ -141,11 +191,18 @@ class Logs {
         }
     }
 
+    startTest(testName) {
+        if (!this.isCompactDisplay()) {
+            this.display(testName + '... ');
+        }
+    }
+
     display(message) {
         this.append({
             'message': message,
             'level': 'info',
             'showLogLevel': false,
+            'ignoreCompact': true,
         });
     }
 
@@ -176,6 +233,32 @@ class Logs {
     // returns a string.
     getLogsInExpectedFormat() {
         return this.jsonOutput ? this.logs : convertMessagesFromJson(this.logs);
+    }
+
+    setNbTests(nbTests) {
+        this.nbTests = nbTests;
+        if (this.isCompactDisplay()) {
+            process.stdout.write(EOL);
+        }
+    }
+
+    conclude(message) {
+        if (this.isCompactDisplay()) {
+            process.stdout.write(EOL);
+
+            this.ranTests.sort();
+
+            // Now we display logs that might need to be displayed, like warnings and errors.
+            for (const test of this.ranTests) {
+                const messages = this.logs.filter(log => log.file === test && log.level !== 'info');
+                if (messages.length !== 0) {
+                    process.stdout.write(`======== ${test} ========${EOL}${EOL}`);
+                    process.stdout.write(convertMessagesFromJson(messages));
+                    process.stdout.write(EOL);
+                }
+            }
+        }
+        this.display(message);
     }
 }
 

@@ -1,5 +1,5 @@
 => Starting doc-ui tests...
 within-iframe... 
 [ERROR] `tests/ui/within-iframe.goml` line 41: `#ifra` not found: for command `within-iframe: ("#ifra", block {})`
-within-iframe: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/within-iframe.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

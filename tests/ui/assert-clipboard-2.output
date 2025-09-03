@@ -1,5 +1,5 @@
 => Starting doc-ui tests...
 assert-clipboard-2... 
 [ERROR] `tests/ui/assert-clipboard-2.goml` line 6: Error: The following checks still fail: [`hello` isn't equal to `hell`]: for command `wait-for-clipboard: "hell"`
-assert-clipboard-2: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/assert-clipboard-2.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

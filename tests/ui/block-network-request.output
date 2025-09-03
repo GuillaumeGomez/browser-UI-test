@@ -1,4 +1,4 @@
 => Starting doc-ui tests...
 block-network-request... 
-block-network-request: OK
-<= doc-ui tests done: 1 succeeded, 0 failed
+`tests/ui/block-network-request.goml` OK
+<= doc-ui tests done: 1 succeeded, 0 failed, 0 filtered out

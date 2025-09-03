@@ -1,6 +1,7 @@
 const fs = require('fs');
 const config = require('./config.js');
 const path = require('path');
+const { EOL } = require('os');
 const process = require('process');
 const {PuppeteerWrapper} = require('./puppeteer-wrapper.js');
 
@@ -46,7 +47,7 @@ function readFile(filePath, encoding, callback) {
 
 function print(s, backline = true) {
     if (typeof s === 'string') {
-        process.stdout.write(`${s}${backline === true ? '\n' : ''}`);
+        process.stdout.write(`${s}${backline === true ? EOL : ''}`);
     }
 }
 
@@ -181,14 +182,17 @@ function hasError(x) {
     return x.error !== undefined && x.error !== null;
 }
 
-function getFileInfo(context_parser, line, isExact = true) {
-    const file = stripCommonPathsPrefix(context_parser.getCurrentFile());
-    const file_s = file.length > 0 ? `\`${file}\` ` : '';
+function getFileInfoFromPath(path, line = null, isExact = true) {
+    const file = stripCommonPathsPrefix(path);
     return {
-        'file': file_s,
+        'file': file,
         'line': line,
         'is_line_exact': isExact,
     };
+}
+
+function getFileInfo(context_parser, line = null, isExact = true) {
+    return getFileInfoFromPath(context_parser.getCurrentFile(), line, isExact);
 }
 
 module.exports = {
@@ -213,5 +217,6 @@ module.exports = {
     'plural': plural,
     'hasError': hasError,
     'getFileInfo': getFileInfo,
+    'getFileInfoFromPath': getFileInfoFromPath,
     'ALLOWED_EMULATE_MEDIA_FEATURES_KEYS': ALLOWED_EMULATE_MEDIA_FEATURES_KEYS,
 };

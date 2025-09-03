@@ -14,5 +14,5 @@ define-function...
         })
     }
 )`)
-define-function: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/define-function.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

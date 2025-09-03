@@ -8,5 +8,5 @@ include...
 [ERROR] `tests/ui/include.goml` line 9: The following errors happened: [`` isn't equal to `tadam`]: for command `assert-text: ("header", "tadam")`
 [ERROR] `tests/ui/sub/func.goml` line 5
     from `tests/ui/include.goml` line 14: `#does_not-exist` not found: for command `click: "#does_not-exist"`
-include: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/include.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

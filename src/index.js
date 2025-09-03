@@ -10,13 +10,15 @@ const {
     add_warning,
     loadPuppeteer,
     getFileInfo,
+    getFileInfoFromPath,
     extractFileNameWithoutExtension,
 } = require('./utils.js');
+const consts = require('./consts.js');
 const { Options } = require('./options.js');
 const { Logs } = require('./logs.js');
+const { EOL } = require('os');
 const process = require('process');
 const path = require('path');
-const consts = require('./consts.js');
 const Module = require('module');
 const readline = require('readline-sync');
 
@@ -184,9 +186,9 @@ async function runInstruction(loadedInstruction, pages, extras) {
 }
 
 async function runAllCommands(loaded, logs, options, browser) {
-    const currentFile = {'file': loaded['file']};
-    logs.display(loaded['file'] + '... ');
     const context_parser = loaded['parser'];
+    const currentFile = getFileInfo(context_parser);
+    logs.startTest(loaded['file']);
 
     let notOk = false;
     let returnValue = Status.Ok;
@@ -280,7 +282,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                 return false;
             }
             logs.error(getFileInfo(context_parser, line_number, false), `${message}: ` +
-                extras[field].join('\n'));
+                extras[field].join(EOL));
             // We empty the errors to prevent having it duplicated.
             extras[field].splice(0, extras[field].length);
             return true;
@@ -299,20 +301,23 @@ async function runAllCommands(loaded, logs, options, browser) {
             const command = context_parser.get_next_command(pages);
             if (command === null) {
                 if (nb_commands === 0) {
-                    logs.failure(currentFile, 'No command to execute');
+                    logs.failure(getFileInfo(context_parser), 'No command to execute');
                     return Status.Failure;
                 }
                 break;
             }
+            // `line_number` is declared outside of the loop because it's used in the closures
+            // above.
+            line_number = command['line'];
+            const fileInfo = getFileInfo(context_parser, line_number);
             if (command['warnings'] !== undefined) {
-                const fileInfo = getFileInfo(context_parser, command['line']);
                 for (const warning of command['warnings']) {
                     logs.warn(fileInfo, warning);
                 }
             }
             // FIXME: This is ugly to have both 'error' and 'errors'. Clean that up!
             if (command['error'] !== undefined) {
-                logs.error(getFileInfo(context_parser, command['line']), command['error']);
+                logs.error(fileInfo, command['error']);
                 break;
             } else if (command['errors'] !== undefined && command['errors'].length > 0) {
                 for (const error of command['errors']) {
@@ -329,18 +334,16 @@ async function runAllCommands(loaded, logs, options, browser) {
             //
             // (It is needed because we cannot break from inside the `await.catch`.)
             let stopLoop = false;
-            line_number = command['line'];
             const instructions = command['instructions'];
             let stopInnerLoop = false;
 
             for (const instruction of instructions) {
-                const fileInfo = getFileInfo(context_parser, line_number);
                 logs.debug(fileInfo, `EXECUTING (line ${line_number.line}) "${instruction}"`);
                 let loadedInstruction;
                 try {
                     loadedInstruction = loadContent(instruction);
                 } catch (error) { // parsing error
-                    logs.error(fileInfo, `output:\n${error.message}`);
+                    logs.error(fileInfo, `output:${EOL}}${error.message}`);
                     logs.debug(
                         fileInfo,
                         `command \`${command['original']}\` failed on \`${instruction}\``,
@@ -351,15 +354,11 @@ async function runAllCommands(loaded, logs, options, browser) {
                     await runInstruction(loadedInstruction, pages, extras);
                 } catch (err) { // execution error
                     if (err === COLOR_CHECK_ERROR) {
-                        logs.error(
-                            getFileInfo(context_parser, line_number),
-                            err,
-                        );
+                        logs.error(fileInfo, err);
                         stopLoop = true;
                     } else {
                         failed = true;
                         const s_err = err.toString();
-                        const fileInfo = getFileInfo(context_parser, line_number);
                         if (extras.expectedToFail !== true) {
                             const original = command['original'];
                             logs.error(fileInfo, `${s_err}: for command \`${original}\``);
@@ -373,7 +372,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                         }
                     }
                 }
-                logs.debug(currentFile, 'Done!');
+                logs.debug(fileInfo, 'Done!');
                 if (stopLoop || checkJsErrors() || checkRequestErrors()) {
                     break command_loop;
                 } else if (stopInnerLoop) {
@@ -391,7 +390,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                 && extras.expectedToFail === true
             ) {
                 logs.error(
-                    getFileInfo(context_parser, line_number),
+                    fileInfo,
                     `command \`${command['original']}\` was supposed to fail but succeeded`,
                 );
             }
@@ -404,7 +403,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                 shouldWait = true;
             }
             if (command['infos'] !== undefined) {
-                logs.info(getFileInfo(context_parser, line_number), command['infos']);
+                logs.info(fileInfo, command['infos']);
             }
             if (shouldWait) {
                 // We wait a bit between each command to be sure the browser can follow.
@@ -444,7 +443,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             }
             selector = parser.getSelector(extras.screenshotComparison);
             if (selector.error !== undefined) {
-                logs.failure(currentFile, `Cannot take screenshot: ${selector.error.join('\n')}`);
+                logs.failure(currentFile, `Cannot take screenshot: ${selector.error.join(EOL)}`);
                 await page.close();
                 return Status.MissingElementForScreenshot;
             }
@@ -501,9 +500,9 @@ async function runAllCommands(loaded, logs, options, browser) {
         }
     } catch (err) {
         logs.failure(currentFile, '');
-        let msg = loaded['file'] + ' output:\n' + err.message + '\n';
+        let msg = `${loaded['file']} output:${EOL}${err.message}${EOL}`;
         if (err.stack !== undefined) {
-            msg += `stack: ${err.stack}\n`;
+            msg += `stack: ${err.stack}${EOL}`;
         }
         logs.error(currentFile, msg);
         notOk = true;
@@ -516,6 +515,21 @@ async function runAllCommands(loaded, logs, options, browser) {
     return returnValue;
 }
 
+function filterTests(options, allFiles) {
+    if (options.filter === null) {
+        return 0;
+    }
+
+    let filteredOut = 0;
+    for (let i = allFiles.length - 1; i >= 0; --i) {
+        if (!path.basename(allFiles[i]).includes(options.filter)) {
+            allFiles.splice(i, 1);
+            filteredOut += 1;
+        }
+    }
+    return filteredOut;
+}
+
 async function innerRunTests(logs, options, browser) {
     let successes = 0;
     let total = 0;
@@ -525,7 +539,7 @@ async function innerRunTests(logs, options, browser) {
         if (!fs.existsSync(options.testFolder) || !fs.lstatSync(options.testFolder).isDirectory()) {
             throw new ConfigError(`Folder \`${options.testFolder}\` not found`);
         }
-        fs.readdirSync(options.testFolder).forEach(function(file) {
+        fs.readdirSync(options.testFolder).forEach(file => {
             const fullPath = path.join(options.testFolder, file);
             if (file.endsWith('.goml') && fs.lstatSync(fullPath).isFile()) {
                 allFiles.push(path.resolve(fullPath));
@@ -543,6 +557,7 @@ async function innerRunTests(logs, options, browser) {
                 `File \`${testFile}\` not found (passed with \`--test-files\` option)`);
         }
     }
+    const filteredOut = filterTests(options, allFiles);
 
     if (allFiles.length === 0) {
         throw new ConfigError(
@@ -572,6 +587,8 @@ async function innerRunTests(logs, options, browser) {
         return 0;
     });
 
+    logs.setNbTests(allFiles.length);
+
     process.setMaxListeners(options.nbThreads + 1);
     try {
         const needCloseBrowser = browser === null;
@@ -596,6 +613,7 @@ async function innerRunTests(logs, options, browser) {
                 browser,
                 false,
                 false,
+                { logs: logs.shallowClone() },
             ).then(out => {
                 const [output, nbFailures] = out;
                 logs.appendLogs(output);
@@ -603,7 +621,7 @@ async function innerRunTests(logs, options, browser) {
                     successes += 1;
                 }
             }).catch(err => {
-                logs.error({'file': testName, err});
+                logs.error(getFileInfoFromPath(testName), err);
             }).finally(() => {
                 // We now remove the promise from the testsQueue.
                 testsQueue.splice(testsQueue.indexOf(callback), 1);
@@ -623,14 +641,14 @@ async function innerRunTests(logs, options, browser) {
 
         let extra = '';
         if (!options.isJsonOutput()) {
-            extra = '\n';
+            extra = EOL;
         }
-        logs.display(
+        logs.conclude(
             `${extra}<= doc-ui tests done: ${successes} succeeded, ${total - successes} \
-failed${extra}`);
+failed, ${filteredOut} filtered out${extra}`);
     } catch (error) {
-        logs.display(`An exception occured: ${error.message}\n== STACKTRACE ==\n` +
-            `${new Error().stack}\n`);
+        logs.conclude(`An exception occured: ${error.message}${EOL}== STACKTRACE ==${EOL}` +
+            `${new Error().stack}${EOL}`);
         return 1;
     }
 
@@ -644,9 +662,14 @@ async function innerRunTestCode(
     browser,
     showLogs,
     checkTestFolder,
-    content = null,
+    {
+        content = null,
+        logs = null,
+    } = {},
 ) {
-    const logs = new Logs(showLogs, options);
+    if (logs === null) {
+        logs = new Logs(showLogs, options);
+    }
 
     if (checkTestFolder === true && options.testFolder.length > 0) {
         logs.warn({}, '`--test-folder` option will be ignored.');
@@ -657,14 +680,14 @@ async function innerRunTestCode(
         if (loaded === null) {
             return [logs, 1];
         } else if (loaded.parser.get_parser_errors().length !== 0) {
-            logs.display(testName + '... ');
+            logs.startTest(testName);
             for (const error of loaded.parser.get_parser_errors()) {
                 logs.error(
                     getFileInfo(loaded.parser, error.line),
                     error.message,
                 );
             }
-            logs.failure({'file': testName}, '');
+            logs.failure(getFileInfo(loaded.parser), '');
             return [logs, 1];
         }
 
@@ -684,7 +707,7 @@ async function innerRunTestCode(
     } catch (error) {
         logs.error(
             {'file': testName},
-            `An exception occured: ${error.message}\n== STACKTRACE ==\n${error.stack}`,
+            `An exception occured: ${error.message}${EOL}== STACKTRACE ==${EOL}${error.stack}`,
         );
         return [logs, 1];
     }
@@ -743,7 +766,7 @@ async function runTestCode(testName, content, extras = null) {
     const [browser, options, showLogs] = checkExtras(extras);
 
     const [logs, exit_code] = await innerRunTestCode(
-        testName, '', options, browser, showLogs, true, content);
+        testName, null, options, browser, showLogs, true, { content });
     return [logs.getLogsInExpectedFormat(), exit_code];
 }
 
@@ -812,8 +835,9 @@ async function runTests(extras = null) {
             logs.clear();
             logs.display(error.message);
         } else {
-            logs.display(
-                `An exception occured: ${error.message}\n== STACKTRACE ==\n${new Error().stack}\n`);
+            logs.conclude(
+                `An exception occured: ${error.message}${EOL}== STACKTRACE ==${EOL}` +
+                `${new Error().stack}${EOL}`);
         }
         return [logs.getLogsInExpectedFormat(), 1];
     }

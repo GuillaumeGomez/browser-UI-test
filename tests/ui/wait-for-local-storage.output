@@ -2,5 +2,5 @@
 wait-for-local-storage... 
 [ERROR] `tests/ui/wait-for-local-storage.goml` line 10: Error: The following local storage entries still don't match: [localStorage item "something2" (of value "tadam") != "hello hi"]: for command `wait-for-local-storage: {"something2": "tadam"}`
 [ERROR] `tests/ui/wait-for-local-storage.goml` line 13: The following errors happened: [localStorage item "something2" (of value "tadam") != "hello hi"]: for command `assert-local-storage: {"something2": "tadam"}`
-wait-for-local-storage: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/wait-for-local-storage.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

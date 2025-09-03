@@ -1,4 +1,4 @@
 => Starting doc-ui tests...
 request-failure-disabled... 
-request-failure-disabled: OK
-<= doc-ui tests done: 1 succeeded, 0 failed
+`tests/ui/request-failure-disabled.goml` OK
+<= doc-ui tests done: 1 succeeded, 0 failed, 0 filtered out

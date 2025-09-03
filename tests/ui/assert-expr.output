@@ -7,5 +7,5 @@ assert-expr...
 [ERROR] `tests/ui/assert-expr.goml` line 31: Condition `{"b": 3} == |var3|` (`compareJson({"b": 3}, {"a": 2})`) was evaluated as false: for command `assert: {"b": 3} == |var3|`
 [ERROR] `tests/ui/assert-expr.goml` line 33: Condition `(1, "a") == (2, 3)` (`compareArrayLike([1, "a"], [2, 3])`) was evaluated as false: for command `assert: (1, "a") == (2, 3)`
 [ERROR] `tests/ui/assert-expr.goml` line 35: Condition `[1, 2] == ["a", "b"]` (`compareArrayLike([1, 2], ["a", "b"])`) was evaluated as false: for command `assert: [1, 2] == ["a", "b"]`
-assert-expr: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/assert-expr.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

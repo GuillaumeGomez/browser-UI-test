@@ -1,4 +1,4 @@
 => Starting doc-ui tests...
 emulate... 
-emulate: OK
-<= doc-ui tests done: 1 succeeded, 0 failed
+`tests/ui/emulate.goml` OK
+<= doc-ui tests done: 1 succeeded, 0 failed, 0 filtered out

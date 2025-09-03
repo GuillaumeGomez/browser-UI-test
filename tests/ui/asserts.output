@@ -37,5 +37,5 @@ asserts...
 [ERROR] `tests/ui/asserts.goml` line 111: The following errors happened: [window property `name` (``) is NaN (for NEAR check)]: for command `assert-window-property: ({"name": ".con"}, NEAR)`
 [ERROR] `tests/ui/asserts.goml` line 114: The following errors happened: [window property `length` (`0`) is not within 1 of `999` (for NEAR check)]: for command `assert-window-property: ({"length": 999}, NEAR)`
 [ERROR] `tests/ui/asserts.goml` line 117: `#non-existent` not found: for command `click: "#non-existent"`
-asserts: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/asserts.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out
