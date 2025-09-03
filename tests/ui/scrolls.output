@@ -1,5 +1,5 @@
 => Starting doc-ui tests...
 scrolls... 
 [ERROR] `tests/ui/scrolls.goml` line 22: `#does-not-exist` not found: for command `scroll-element-to: (".absolute", "#does-not-exist")`
-scrolls: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/scrolls.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

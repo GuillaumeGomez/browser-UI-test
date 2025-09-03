@@ -12,5 +12,5 @@ assert-null...
 [ERROR] `tests/ui/assert-null.goml` line 56: The following errors happened: [Expected property `"bgColor"` to not exist, found: ``]: for command `assert-document-property: {"bgColor": null}`
 [ERROR] `tests/ui/assert-null.goml` line 59: The following errors happened: [Property named `"yolo"` doesn't exist]: for command `assert-document-property-false: {"yolo": null}`
 [WARNING] `tests/ui/assert-null.goml` line 63: Special checks (CONTAINS) will be ignored for `null`
-assert-null: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/assert-null.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

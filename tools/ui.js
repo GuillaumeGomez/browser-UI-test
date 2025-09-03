@@ -125,6 +125,54 @@ function checkImageFileForTest(x, screenshotFile, testName) {
     }
 }
 
+async function checkCompactDisplayFormat(x) {
+    const options = new Options();
+    options.parseArguments([
+        '--test-folder', 'tests/ui/',
+        '--variable', 'DOC_PATH', 'tests/html_files',
+        '--display-format', 'compact',
+        '--filter', 'assert-c',
+    ]);
+    options.screenshotComparison = false;
+    const browser = await utils.loadPuppeteer(options);
+
+    // We replace stdout and stderr.
+    let output = '';
+    function write(arg) {
+        output += arg;
+    }
+    const oldStdout = process.stdout.write;
+    process.stdout.write = write;
+    const oldStderr = process.stderr.write;
+    process.stderr.write = write;
+
+    let err = null;
+    try {
+        await runTests({
+            'options': options,
+            'browser': browser,
+            'showLogs': true,
+            'showNbThreads': false,
+        });
+    } catch (exc) {
+        err = exc;
+    }
+    process.stdout.write = oldStdout;
+    process.stderr.write = oldStderr;
+
+    if (err !== null) {
+        x.addError(`${err}\n\nOutput: ${output}`);
+    } else {
+        x.assertOrBlessIntoFile(output, 'tests/compact-display/compact-display.output');
+    }
+
+    try {
+        await browser.close();
+    } catch (exc) {
+        print(`Failed to close browser: ${exc}`);
+    }
+}
+
 async function checkUi(x) {
     return await x.startTestSuite('ui items', false, async() => {
         print('=> Starting UI tests...');
@@ -145,6 +193,10 @@ async function checkUi(x) {
         checkImageFileForTest(x, 'tests/ui/tadam.png', 'screenshot-info.goml');
         checkImageFileForTest(
             x, 'tests/ui/screenshot-on-failure-failure.png', 'screenshot-on-failure.goml');
+
+        await x.startTestSuite('compact display-format', true, async() => {
+            await checkCompactDisplayFormat(x);
+        });
 
         const errors = x.getTotalErrors();
         print('');

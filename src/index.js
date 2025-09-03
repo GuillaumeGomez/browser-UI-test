@@ -766,7 +766,7 @@ async function runTestCode(testName, content, extras = null) {
     const [browser, options, showLogs] = checkExtras(extras);
 
     const [logs, exit_code] = await innerRunTestCode(
-        testName, '', options, browser, showLogs, true, { content });
+        testName, null, options, browser, showLogs, true, { content });
     return [logs.getLogsInExpectedFormat(), exit_code];
 }
 

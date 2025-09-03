@@ -1,5 +1,5 @@
 => Starting doc-ui tests...
 fail-on-js-error... 
 [ERROR] `tests/ui/fail-on-js-error.goml` around line 4: JS errors occurred: TypeError: Cannot read properties of null (reading 'hello')
-fail-on-js-error: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/fail-on-js-error.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

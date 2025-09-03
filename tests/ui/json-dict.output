@@ -1,5 +1,5 @@
 => Starting doc-ui tests...
 json-dict... 
 [ERROR] `tests/ui/json-dict.goml` line 7: only strings and object-paths can be used as keys in JSON dict, found a number (`1`)
-json-dict: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/json-dict.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

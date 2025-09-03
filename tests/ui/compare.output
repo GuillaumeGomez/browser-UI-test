@@ -17,5 +17,5 @@ compare...
 [ERROR] `tests/ui/compare.goml` line 58: comparison didn't fail: for command `compare-elements-size-near-false: (".content .right", ".content .left", {"width": 1})`
 [ERROR] `tests/ui/compare.goml` line 60: heights don't match: 14 != 1: for command `compare-elements-size: ("#another-one::before", ".content .left span", ["height"])`
 [ERROR] `tests/ui/compare.goml` line 62: delta for height values too large: 13 > 1: for command `compare-elements-size-near: ("#another-one::before", ".content .left span", {"height": 1})`
-compare: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/compare.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

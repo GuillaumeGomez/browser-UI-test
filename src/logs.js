@@ -5,19 +5,21 @@ function convertMessageFromJson(message) {
     const lineInfo = message.is_line_exact ? 'line' : 'around line';
     let lineDisplay = '';
     if (message.line !== null && message.line !== undefined) {
-        lineDisplay += ` ${lineInfo} ${message.line.line}`;
+        lineDisplay += `${lineInfo} ${message.line.line}`;
         if (Array.isArray(message.line.backtrace)) {
             for (const msg of message.line.backtrace) {
                 lineDisplay += `${EOL}    from \`${msg.file}\` line ${msg.line}`;
             }
         }
+        lineDisplay += ': ';
     }
     const fileDisplay =
-        message.file !== null && message.file !== undefined && message.showFile !== false
-            ? `\`${message.file}\`${lineDisplay}: `
+        message.file !== null && message.file !== undefined && message.file !== '' &&
+            message.showFile !== false
+            ? `\`${message.file}\` `
             : '';
     const levelDisplay = message.showLogLevel !== false ? `[${message.level.toUpperCase()}] ` : '';
-    return `${levelDisplay}${fileDisplay}${message.message}${EOL}`;
+    return `${levelDisplay}${fileDisplay}${lineDisplay}${message.message}${EOL}`;
 }
 
 function convertMessagesFromJson(messages) {

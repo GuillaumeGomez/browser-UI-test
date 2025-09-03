@@ -3,5 +3,5 @@ pseudo-element-selection...
 [ERROR] `tests/ui/pseudo-element-selection.goml` line 5: `#before-1:after` not found: for command `assert-css: ("#before-1:after", {"content": '"a"'})`
 [ERROR] `tests/ui/pseudo-element-selection.goml` line 9: `#before:after` not found: for command `assert-css: ("#before:after", {"content": '"b"'})`
 [ERROR] `tests/ui/pseudo-element-selection.goml` line 13: `#before-:after` not found: for command `assert-css: ("#before-:after", {"content": '"c"'})`
-pseudo-element-selection: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/pseudo-element-selection.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

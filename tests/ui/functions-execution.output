@@ -18,5 +18,5 @@ functions-execution...
     from `tests/ui/functions-execution.goml` line 28: The following errors happened (for selector `header`): [expected `h` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": "h"})`
 [ERROR] `tests/ui/functions-execution.goml` line 24
     from `tests/ui/functions-execution.goml` line 28: The following errors happened (for selector `header`): [expected `i` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": "i"})`
-functions-execution: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/functions-execution.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

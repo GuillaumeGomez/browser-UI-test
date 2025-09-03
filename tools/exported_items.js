@@ -176,7 +176,7 @@ async function checkRunTests(x, func) {
         [`=> Starting doc-ui tests (on ${nbThreads} threads)...
 basic... OK
 
-<= doc-ui tests done: 1 succeeded, 0 failed
+<= doc-ui tests done: 1 succeeded, 0 failed, 0 filtered out
 
 `, 0]);
 
@@ -276,7 +276,7 @@ async function checkOptions(x) {
     await x.assertTry(() => options.parseArguments(['--browser']), [],
         'Missing browser name after `--browser` option');
     await x.assertTry(() => options.parseArguments(['--browser', 'test']), [],
-        '`--browser` option only accepts "chrome" or "firefox" as values, found `test`');
+        '`--browser` option only accepts `chrome` or `firefox` as value, found `test`');
     await x.assertTry(() => options.parseArguments(['--browser', 'firefox']), [], true);
     await x.assert(options.browser, 'firefox');
     await x.assertTry(() => options.parseArguments(['--browser', 'chrome']), [], true);
@@ -328,7 +328,7 @@ async function checkOptions(x) {
     await x.assertTry(() => options.parseArguments(['--browser']), [],
         'Missing browser name after `--browser` option');
     await x.assertTry(() => options.parseArguments(['--browser', 'opera']), [],
-        '`--browser` option only accepts "chrome" or "firefox" as values, found `opera`');
+        '`--browser` option only accepts `chrome` or `firefox` as value, found `opera`');
     await x.assertTry(() => options.parseArguments(['--browser', 'firefox']), [], true);
     await x.assert(options.browser, 'firefox');
     await x.assertTry(() => options.parseArguments(['--browser', 'chrome  ']), [], true);

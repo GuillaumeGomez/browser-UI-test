@@ -1,5 +1,5 @@
 => Starting doc-ui tests...
 wait-for-property... 
 [ERROR] `tests/ui/wait-for-property.goml` line 20: Error: The following properties still don't match: [Property `"data-a"` doesn't exist]: for command `wait-for-property: ("#js-wait-prop", {"data-a": "c"})`
-wait-for-property: FAILED
-<= doc-ui tests done: 0 succeeded, 1 failed
+`tests/ui/wait-for-property.goml` FAILED
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

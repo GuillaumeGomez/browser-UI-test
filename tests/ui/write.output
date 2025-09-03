@@ -1,4 +1,4 @@
 => Starting doc-ui tests...
 write... 
-write: OK
-<= doc-ui tests done: 1 succeeded, 0 failed
+`tests/ui/write.goml` OK
+<= doc-ui tests done: 1 succeeded, 0 failed, 0 filtered out

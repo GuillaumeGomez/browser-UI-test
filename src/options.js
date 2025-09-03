@@ -152,8 +152,8 @@ class Options {
             if (accepted !== undefined) {
                 if (!accepted.includes(arg)) {
                     const s = accepted.map(a => `\`${a}\``).join(' or ');
-                    throw new Error(`\`${name}\` option only accepts ${s} as value, found ` +
-                        `\`${arg}\``);
+                    throw new Error(`\`${args[it - 1]}\` option only accepts ${s} as value, found` +
+                        ` \`${arg}\``);
                 }
             }
             return arg;

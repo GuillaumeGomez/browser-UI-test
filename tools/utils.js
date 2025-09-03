@@ -113,6 +113,24 @@ class Assert {
         this.extraArgs = [];
     }
 
+    assertOrBlessIntoFile(value, filePath) {
+        let fileContent = '';
+        try {
+            fileContent = fs.readFileSync(filePath, 'utf8');
+        } catch (exc) {
+            if (this.blessEnabled) {
+                this._addTest();
+                fs.writeFileSync(filePath, value);
+            } else {
+                this.addError(`Failed to read file \`${filePath}\`: ${exc}`);
+            }
+            return;
+        }
+        this.assertOrBless(value, fileContent, () => {
+            fs.writeFileSync(filePath, value);
+        }, undefined, undefined, false);
+    }
+
     assertOrBless(value1, value2, errCallback, pos, extraInfo, toJson = true, out = undefined) {
         let callback = undefined;
         if (this.blessEnabled) {
