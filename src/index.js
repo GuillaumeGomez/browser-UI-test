@@ -12,6 +12,7 @@ const {
     getFileInfo,
     getFileInfoFromPath,
     extractFileNameWithoutExtension,
+    plural,
 } = require('./utils.js');
 const consts = require('./consts.js');
 const { Options } = require('./options.js');
@@ -530,7 +531,7 @@ function filterTests(options, allFiles) {
     return filteredOut;
 }
 
-async function innerRunTests(logs, options, browser) {
+async function innerRunTests(logs, options, browser, showNbThreads) {
     let successes = 0;
     let total = 0;
     const allFiles = [];
@@ -587,14 +588,15 @@ async function innerRunTests(logs, options, browser) {
         return 0;
     });
 
+    const extra = showNbThreads !== false ?
+        ` (on ${options.nbThreads} ${plural('thread', options.nbThreads)})` : '';
+    logs.display(
+        `=> Running ${allFiles.length} doc-ui ${plural('test', allFiles.length)}${extra}...`);
+
     logs.setNbTests(allFiles.length);
 
     process.setMaxListeners(options.nbThreads + 1);
     try {
-        const needCloseBrowser = browser === null;
-        if (browser === null) {
-            browser = await loadPuppeteer(options);
-        }
         const testsQueue = [];
 
         for (const file of allFiles) {
@@ -633,10 +635,6 @@ async function innerRunTests(logs, options, browser) {
         }
         if (testsQueue.length > 0) {
             await Promise.all(testsQueue);
-        }
-
-        if (needCloseBrowser) {
-            await browser.close();
         }
 
         let extra = '';
@@ -821,14 +819,9 @@ async function runTests(extras = null) {
     options.validate();
 
     const logs = new Logs(showLogs, options);
-    const s = options.nbThreads > 1 ? 's' : '';
-    const extra =
-        newExtras['showNbThreads'] !== false ? ` (on ${options.nbThreads} thread${s})` : '';
-
-    logs.display(`=> Starting doc-ui tests${extra}...`);
 
     try {
-        const exit_code = await innerRunTests(logs, options, browser);
+        const exit_code = await innerRunTests(logs, options, browser, newExtras['showNbThreads']);
         return [logs.getLogsInExpectedFormat(), exit_code];
     } catch (error) {
         if (error instanceof ConfigError) {
@@ -866,19 +859,11 @@ if (require.main === module) {
         }
         process.exit(1);
     }
-    loadPuppeteer(options).then(browser => {
-        runTests({'options': options, 'browser': browser, 'showLogs': true}).then(x => {
-            const [_output, nb_failures] = x;
-            process.exit(nb_failures);
-        }).catch(err => {
-            print(err.message);
-            if (options.debug === true) {
-                print(err.stack);
-            }
-            process.exit(1);
-        });
+    runTests({'options': options, 'showLogs': true}).then(x => {
+        const [_output, nb_failures] = x;
+        process.exit(nb_failures);
     }).catch(err => {
-        print(err);
+        print(err.message);
         if (options.debug === true) {
             print(err.stack);
         }
