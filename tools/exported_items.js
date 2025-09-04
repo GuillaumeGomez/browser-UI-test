@@ -173,7 +173,7 @@ async function checkRunTests(x, func) {
         '--test-file', './tests/full-check/basic.goml']);
     const nbThreads = os.cpus().length;
     await x.assertTry(func, [options],
-        [`=> Starting doc-ui tests (on ${nbThreads} threads)...
+        [`=> Running 1 doc-ui test (on ${nbThreads} threads)...
 basic... OK
 
 <= doc-ui tests done: 1 succeeded, 0 failed, 0 filtered out

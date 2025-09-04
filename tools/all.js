@@ -33,7 +33,7 @@ async function runAllTests() {
                     continue;
                 }
             } catch (err) {
-                print(`failed to load \`${files[i]}\`, ignoring it...`);
+                x.addError(`failed to load \`${files[i]}\`: ${err}`);
             }
 
             try {
