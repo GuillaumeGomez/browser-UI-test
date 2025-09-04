@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxss1 \
     libxtst6
 
-RUN curl -sL https://deb.nodesource.com/setup_20.x | sudo -E bash - \
+RUN curl -sL https://deb.nodesource.com/setup_24.x | sudo -E bash - \
     && apt install -y nodejs
 
 RUN wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add - \
