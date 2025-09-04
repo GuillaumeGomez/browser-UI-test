@@ -387,18 +387,13 @@ class Options {
                     }
                 },
             }],
-            ['--test-files', {
-                'help': 'List of `.goml` files path to be run',
-                'extra': '[PATHs]',
+            ['--test-file', {
+                'help': 'Add the given path to the list of tests to be run (can be repeated)',
+                'extra': '[PATH]',
                 'handler': () => {
-                    if (it + 1 >= args.length) {
-                        throw new Error('Expected at least one path for `--test-files` option');
-                    }
-                    while (++it < args.length) {
-                        const arg = args[it];
-                        if (this.testFiles.indexOf(arg) === -1) {
-                            this.testFiles.push(arg);
-                        }
+                    const test = oneArg('test file');
+                    if (this.testFiles.indexOf(test) === -1) {
+                        this.testFiles.push(test);
                     }
                 },
             }],
@@ -460,7 +455,7 @@ class Options {
     validate() {
         if (this.testFolder.length === 0 && this.testFiles.length === 0) {
             throw new Error('You need to provide `--test-folder` option or at least one file ' +
-                'to test with `--test-files` option!');
+                'to test with `--test-file` option!');
         } else if (this.failureFolder.length === 0
             && this.screenshotComparison === true
             && this.testFolder.length === 0) {
@@ -469,7 +464,7 @@ class Options {
         }
         for (const test of this.testFiles) {
             if (test.endsWith('.goml') === false) {
-                throw new Error('Only `.goml` script files are allowed in the `--test-files` ' +
+                throw new Error('Only `.goml` script files are allowed in the `--test-file` ' +
                     `option, got \`${test}\``);
             }
         }
