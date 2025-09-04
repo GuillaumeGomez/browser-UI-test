@@ -26,7 +26,7 @@ function runAsyncUiTest(x, file, output, tests_queue, browser) {
         '--variable', 'DOC_PATH', 'tests/html_files',
         '--variable', 'WINDOWS_PATH', 'C:\\a\\b',
         '--message-format', 'json',
-        '--test-files', file,
+        '--test-file', file,
     ]);
     let testOutput = '';
 

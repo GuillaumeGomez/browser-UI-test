@@ -554,14 +554,14 @@ async function innerRunTests(logs, options, browser) {
             }
         } else {
             throw new ConfigError(
-                `File \`${testFile}\` not found (passed with \`--test-files\` option)`);
+                `File \`${testFile}\` not found (passed with \`--test-file\` option)`);
         }
     }
     const filteredOut = filterTests(options, allFiles);
 
     if (allFiles.length === 0) {
         throw new ConfigError(
-            'No files found. Check your `--test-folder` and `--test-files` options');
+            'No files found. Check your `--test-folder` and `--test-file` options');
     }
 
     if (options.testFolder.length === 0

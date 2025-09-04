@@ -54,7 +54,7 @@ The list of the commands is available [here](https://github.com/GuillaumeGomez/b
 If you installed it, you should have a script called "browser-ui-test". You can run it as follows:
 
 ```bash
-$ browser-ui-test --test-files some-file.goml
+$ browser-ui-test --test-file some-file.goml
 ```
 
 To see the list of available options, use `-h` or `--help`:

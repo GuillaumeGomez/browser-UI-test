@@ -60,10 +60,10 @@ async function checkRunTest(x, func) {
         ['[WARNING] `--test-folder` option will be ignored.\nbasic... OK\n', 0]);
     removeFolder('yolo'); // The folder is generated because failure and image folders use it.
 
-    // with just one file through "--test-files" options (the extra file should be ignored)
+    // with just one file through "--test-file" options (the extra file should be ignored)
     options = new Options();
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
-        '--test-files', './tests/full-check/basic.goml']);
+        '--test-file', './tests/full-check/basic.goml']);
     await x.assertTry(func, ['./tests/full-check/basic.goml', options], ['basic... OK\n', 0]);
 }
 
@@ -145,7 +145,7 @@ async function checkRunTests(x, func) {
     // empty options
     await x.assertTry(func, [],
         'You need to provide `--test-folder` option or at least one file to test with ' +
-        '`--test-files` option!');
+        '`--test-file` option!');
 
     // invalid Options type
     await x.assertTry(func, [{'test': false}], '`extras["options"]` must be an "Options" type!');
@@ -159,18 +159,18 @@ async function checkRunTests(x, func) {
     options = new Options();
     options.parseArguments(['--test-folder', './']);
     await x.assertTry(func, [options],
-        ['No files found. Check your `--test-folder` and `--test-files` options\n', 1]);
+        ['No files found. Check your `--test-folder` and `--test-file` options\n', 1]);
 
-    // with just one non-existent file through "--test-files" options
+    // with just one non-existent file through "--test-file" options
     options = new Options();
-    options.parseArguments(['--test-files', './tests/fail.goml']);
+    options.parseArguments(['--test-file', './tests/fail.goml']);
     await x.assertTry(func, [options],
-        ['File `./tests/fail.goml` not found (passed with `--test-files` option)\n', 1]);
+        ['File `./tests/fail.goml` not found (passed with `--test-file` option)\n', 1]);
 
-    // with just one file through "--test-files" options
+    // with just one file through "--test-file" options
     options = new Options();
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
-        '--test-files', './tests/full-check/basic.goml']);
+        '--test-file', './tests/full-check/basic.goml']);
     const nbThreads = os.cpus().length;
     await x.assertTry(func, [options],
         [`=> Starting doc-ui tests (on ${nbThreads} threads)...
@@ -192,9 +192,9 @@ async function checkOptions(x) {
 
     await x.assertTry(() => options.validate(), [],
         'You need to provide `--test-folder` option or at least one file to test with ' +
-        '`--test-files` option!');
+        '`--test-file` option!');
 
-    options.parseArguments(['--enable-screenshot-comparison', '--test-files', 'osef']);
+    options.parseArguments(['--enable-screenshot-comparison', '--test-file', 'osef']);
     await x.assertTry(() => options.validate(), [],
         'You need to provide `--failure-folder` or `--test-folder` option if ' +
         '`--enable-screenshot-comparison` option is used!');
@@ -203,7 +203,7 @@ async function checkOptions(x) {
     options.screenshotComparison = false;
     options.parseArguments([]);
     await x.assertTry(() => options.validate(), [],
-        'Only `.goml` script files are allowed in the `--test-files` option, got `osef`');
+        'Only `.goml` script files are allowed in the `--test-file` option, got `osef`');
 
     x.assert(options.runId, 'test');
     await x.assertTry(() => options.parseArguments(['--run-id']), [],
@@ -255,15 +255,15 @@ async function checkOptions(x) {
 
     options.clear();
     x.assert(options.testFiles, []);
-    await x.assertTry(() => options.parseArguments(['--test-files']), [],
-        'Expected at least one path for `--test-files` option');
-    await x.assertTry(() => options.parseArguments(['--test-files', 'hello']), [], true);
+    await x.assertTry(() => options.parseArguments(['--test-file']), [],
+        'Missing test file after `--test-file` option');
+    await x.assertTry(() => options.parseArguments(['--test-file', 'hello']), [], true);
     x.assert(options.testFiles, ['hello']);
-    await x.assertTry(() => options.parseArguments(['--test-files', 'hello2', '--test-folder']), [],
+    await x.assertTry(() => options.parseArguments(['--test-file', 'hello2']), [],
         true);
-    x.assert(options.testFiles, ['hello', 'hello2', '--test-folder']);
-    await x.assertTry(() => options.parseArguments(['--test-files', 'hello']), [], true);
-    x.assert(options.testFiles, ['hello', 'hello2', '--test-folder']);
+    x.assert(options.testFiles, ['hello', 'hello2']);
+    await x.assertTry(() => options.parseArguments(['--test-file', 'hello']), [], true);
+    x.assert(options.testFiles, ['hello', 'hello2']);
 
     await x.assertTry(() => options.parseArguments(['--doesnt-exist']), [],
         'Unknown option `--doesnt-exist`\nUse `--help` if you want the list of the available ' +
