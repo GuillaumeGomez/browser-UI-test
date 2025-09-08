@@ -137,7 +137,7 @@ Object paths also work with concatenation and variables:
 
 ## Command list
 
-Those scripts aim to be as quick to write and as small as possible. To do so, they provide a short list of commands. Please note that those scripts must **always** start with a [`goto`](#goto) command (non-interactional commands such as `screenshot-comparison` or `expect-failure` can be use first as well).
+Those scripts aim to be as quick to write and as small as possible. To do so, they provide a short list of commands. Please note that those scripts must **always** start with a [`go-to`](#go-to) command (non-interactional commands such as `screenshot-comparison` or `expect-failure` can be use first as well).
 
 Here's the command list:
 
@@ -1363,7 +1363,7 @@ drag-and-drop: ((10, 10), (20, 35)) // move the element at (10, 10) to (20, 35)
 
 #### emulate
 
-**emulate** command changes the display to look like the targetted device. **It can only be used before the first `goto` call!** Example:
+**emulate** command changes the display to look like the targetted device. **It can only be used before the first `go-to` call!** Example:
 
 ```
 emulate: "iPhone 8"
@@ -1373,7 +1373,7 @@ To see the list of available devices, either run this framework with `--show-dev
 
 #### emulate-media-features
 
-**emulate-media-features** command allows to emulate CSS media features. **It can only be used before the first `goto` call!** Example:
+**emulate-media-features** command allows to emulate CSS media features. **It can only be used before the first `go-to` call!** Example:
 
 ```
 emulate-media-features: {
@@ -1515,7 +1515,7 @@ include: "/babar/foo.goml" // It will load `/babar/foo.goml`
 
 #### javascript
 
-**javascript** command enables/disables the javascript. If you want to render the page without javascript, don't forget to disable it before the call to `goto`! Examples:
+**javascript** command enables/disables the javascript. If you want to render the page without javascript, don't forget to disable it before the call to `go-to`! Examples:
 
 ```
 javascript: false // we disable it before using go-to to have a page rendered without javascript
