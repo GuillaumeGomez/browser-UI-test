@@ -5,16 +5,21 @@ function codeSelector(selector) {
     return `"${selectorS}"`;
 }
 
-function getAndSetElements(selector, varName, checkAllElements, elemName = 'page') {
+function getAndSetElements(
+    selector, varName, checkAllElements, {elemName = 'page', failOnEmpty = true} = {},
+) {
     const selectorS = codeSelector(selector);
     if (!checkAllElements) {
         return `\
 const ${varName} = await ${elemName}.$(${selectorS});
 if (${varName} === null) { throw "\`${selector.value}\` not found"; }`;
     }
-    return `\
-const ${varName} = await ${elemName}.$$(${selectorS});
+    let code = `const ${varName} = await ${elemName}.$$(${selectorS});`;
+    if (failOnEmpty) {
+        code += `
 if (${varName}.length === 0) { throw "\`${selector.value}\` not found"; }`;
+    }
+    return code;
 }
 
 function getInsertStrings(assertFalse, insideLoop, extra = '', backlineAtEnd = true) {

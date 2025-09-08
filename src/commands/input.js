@@ -416,7 +416,7 @@ await page.locator(${codeSelector(selector.value)}).scroll({
     return {
         'instructions': [`\
 ${getAndSetElements(selector.value, varName, false)}
-${getAndSetElements(value.value, varName + '2', false, varName)}
+${getAndSetElements(value.value, varName + '2', false, { elemPage: varName })}
 await ${varName}2.scrollIntoView();`,
         ],
     };

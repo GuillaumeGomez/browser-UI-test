@@ -1,0 +1,5 @@
+instructions = [
+  """const storeCountVar = await page.$$(\"a\");
+arg.setVariable(\"a\", storeCountVar.length);""",
+]
+wait = false

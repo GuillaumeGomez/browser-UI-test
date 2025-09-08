@@ -1931,6 +1931,21 @@ function checkStoreClipboard(x, func) {
     func('tmp', 'basic-1');
 }
 
+function checkStoreCount(x, func) {
+    func('', 'err-1');
+    func('hello', 'err-2');
+    func('(', 'err-3');
+    func('(1)', 'err-4');
+    func('(1, 1)', 'err-5');
+    func('(a, 1)', 'err-6');
+    func(`("a", ${RESERVED_VARIABLE_NAME})`, 'err-7');
+
+    func('("a", a)', 'basic-1');
+
+    // XPATH
+    func('("//a", a)', 'xpath-1');
+}
+
 function checkStoreCss(x, func) {
     func('', 'err-1');
     func('hello', 'err-2');
@@ -2892,6 +2907,11 @@ const TO_CHECK = [
         'name': 'store-clipboard',
         'func': checkStoreClipboard,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreClipboard, x, e, name, o),
+    },
+    {
+        'name': 'store-count',
+        'func': checkStoreCount,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseStoreCount, x, e, name, o),
     },
     {
         'name': 'store-css',

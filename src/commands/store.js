@@ -634,9 +634,44 @@ arg.setVariable("${ret.value.displayInCode()}", ${varName});`;
     };
 }
 
+// Possible inputs:
+//
+// * (selector, ident)
+function parseStoreCount(parser) {
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'selector',
+            },
+            {
+                kind: 'ident',
+                notAllowed: [RESERVED_VARIABLE_NAME, 'null'],
+            },
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const tuple = ret.value.entries;
+    const selector = tuple[0].value;
+    const ident = tuple[1].value;
+    const varName = 'storeCountVar';
+
+    const code = `${getAndSetElements(selector, varName, true, {failOnEmpty: false})}
+arg.setVariable("${ident.displayInCode()}", ${varName}.length);`;
+
+    return {
+        'instructions': [code],
+        'wait': false,
+    };
+}
+
 module.exports = {
     'parseStoreAttribute': parseStoreAttribute,
     'parseStoreClipboard': parseStoreClipboard,
+    'parseStoreCount': parseStoreCount,
     'parseStoreCss': parseStoreCss,
     'parseStoreDocumentProperty': parseStoreDocumentProperty,
     'parseStoreLocalStorage': parseStoreLocalStorage,
