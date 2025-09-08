@@ -228,6 +228,7 @@ Here's the command list:
  * [`show-text`](#show-text)
  * [`store-attribute`](#store-attribute)
  * [`store-clipboard`](#store-clipboard)
+ * [`store-count`](#store-count)
  * [`store-css`](#store-css)
  * [`store-document-property`](#store-document-property)
  * [`store-local-storage`](#store-local-storage)
@@ -1839,6 +1840,17 @@ Examples:
 store-clipboard: variable
 assert: |variable| == "clipboard_content"
 ```
+
+#### store-count
+
+**store-count** command stores the number of elements matching the given selector. If no element matches, it will store 0 into the variable and not emit an error.
+
+```
+store-count: ("#button", variable_name)
+assert-variable: (variable_name, 1)
+```
+
+For more information about variables, read the [variables section](#variables).
 
 #### store-css
 
