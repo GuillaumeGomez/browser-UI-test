@@ -517,13 +517,13 @@ async function runAllCommands(loaded, logs, options, browser) {
 }
 
 function filterTests(options, allFiles) {
-    if (options.filter === null) {
+    if (options.filters.length === 0) {
         return 0;
     }
 
     let filteredOut = 0;
     for (let i = allFiles.length - 1; i >= 0; --i) {
-        if (!path.basename(allFiles[i]).includes(options.filter)) {
+        if (!options.filters.some(filter => path.basename(allFiles[i]).includes(filter))) {
             allFiles.splice(i, 1);
             filteredOut += 1;
         }

@@ -78,7 +78,7 @@ class Options {
         this.nbThreads = os.cpus().length;
         this.messageFormat = 'human';
         this.displayFormat = 'normal';
-        this.filter = null;
+        this.filters = [];
         // Enabled by default!
         this.failOnRequestError = true;
         this.executablePath = null;
@@ -120,7 +120,7 @@ class Options {
         copy.nbThreads = this.nbThreads;
         copy.messageFormat = this.messageFormat.slice();
         copy.displayFormat = this.displayFormat.slice();
-        copy.filter = this.filter !== null ? this.filter.slice() : null;
+        copy.filters = this.filters.slice();
         return copy;
     }
 
@@ -253,10 +253,11 @@ class Options {
                 'handler': addPath,
             }],
             ['--filter', {
-                'help': 'Only run test with the provided filter is in their file name',
+                'help': 'Only run test with the provided filters is in their file name (can ' +
+                    'be repeated)',
                 'extra': '[NAME]',
                 'handler': () => {
-                    this.filter = oneArg('filter');
+                    this.filters.push(oneArg('filter'));
                 },
             }],
             ['--generate-images', {
@@ -516,6 +517,7 @@ class Options {
         validateField('nbThreads', 'number');
         validateField('messageFormat', 'string');
         validateField('displayFormat', 'string');
+        validateField('filters', 'array');
         if (!(this.variables instanceof Map)) {
             throw new Error('`Options.variables` field is supposed to be a `Map`! ' +
                 `(Type is ${typeof this.variables})`);
