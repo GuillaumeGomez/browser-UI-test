@@ -101,6 +101,7 @@ module.exports = {
     'parseShowText': context_setters.parseShowText,
     'parseStoreAttribute': store.parseStoreAttribute,
     'parseStoreClipboard': store.parseStoreClipboard,
+    'parseStoreCount': store.parseStoreCount,
     'parseStoreCss': store.parseStoreCss,
     'parseStoreDocumentProperty': store.parseStoreDocumentProperty,
     'parseStoreLocalStorage': store.parseStoreLocalStorage,
