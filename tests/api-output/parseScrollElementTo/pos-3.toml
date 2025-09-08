@@ -1,7 +1,7 @@
 instructions = [
   """const parseScrollElementToVar = await page.$(\"a\");
 if (parseScrollElementToVar === null) { throw \"`a` not found\"; }
-const parseScrollElementToVar2 = await parseScrollElementToVar.$(\"a\");
+const parseScrollElementToVar2 = await page.$(\"a\");
 if (parseScrollElementToVar2 === null) { throw \"`a` not found\"; }
 await parseScrollElementToVar2.scrollIntoView();""",
 ]

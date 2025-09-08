@@ -1,0 +1,1 @@
+error = """unexpected ident `CURRENT_DIR` (second element of the tuple). Not allowed idents are [`CURRENT_DIR`, `null`]"""

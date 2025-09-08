@@ -65,3 +65,12 @@ assert: |x| == 400 && |y| == 24
 store-position: ("#another-one::before", {"x": x, "y": y})
 assert: |x| == 0 && |y| == 98
 //~^ ERROR: (`0 == 0 && 102 == 98`) was evaluated as false
+
+//
+// store-count
+//
+// It should not fail if the element doesn't exist.
+store-count: ("#does-not-exist", count)
+assert: |count| == 0
+store-count: ("button", count)
+assert: |count| == 18
