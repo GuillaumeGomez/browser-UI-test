@@ -1,6 +1,6 @@
 => Running 1 doc-ui test...
 wait-for-attribute-2... 
 [WARNING] `tests/ui/wait-for-attribute-2.goml` line 6: Special checks (STARTS_WITH) will be ignored for `null`
+`tests/ui/wait-for-attribute-2.goml`: FAILED
 [ERROR] `tests/ui/wait-for-attribute-2.goml` line 13: Error: The CSS selector "#i-dont-exist" was not found: for command `wait-for-attribute: ("#i-dont-exist", {"data-hoho": "heh"}, ALL)`
-`tests/ui/wait-for-attribute-2.goml` FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

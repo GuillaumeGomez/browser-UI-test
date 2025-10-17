@@ -1,5 +1,5 @@
 => Running 1 doc-ui test...
 wait-for-property-false... 
+`tests/ui/wait-for-property-false.goml`: FAILED
 [ERROR] `tests/ui/wait-for-property-false.goml` line 19: Error: All properties still match: for command `wait-for-property-false: ("#js-wait-prop", {"hehe": "hoho"})`
-`tests/ui/wait-for-property-false.goml` FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

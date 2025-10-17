@@ -1,5 +1,5 @@
 => Running 1 doc-ui test...
 wait-for-size-false... 
+`tests/ui/wait-for-size-false.goml`: FAILED
 [ERROR] `tests/ui/wait-for-size-false.goml` line 15: The following errors happened: [expected a height of `26`, found `23`]: for command `assert-size: ("#js-change-size", {"height": 26, "width": 33})`
-`tests/ui/wait-for-size-false.goml` FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

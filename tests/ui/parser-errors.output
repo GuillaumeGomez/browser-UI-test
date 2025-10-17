@@ -1,5 +1,6 @@
 => Running 1 doc-ui test...
 parser-errors... 
+`tests/ui/parser-errors.goml`: FAILED
 [ERROR] `tests/ui/parser-errors.goml` line 2: expected `,` or `)` after `foo`, found `{1: 2}`
 [ERROR] `tests/ui/parser-errors.goml` line 2: only strings and object paths can be used as keys in JSON dict, found a number (`1`)
 [ERROR] `tests/ui/parser-errors.goml` line 2: only strings and object paths can be used as keys in JSON dict, found a number (`1`)
@@ -9,5 +10,4 @@ parser-errors...
 [ERROR] `tests/ui/parser-errors.goml` line 10: expected `,` or `)` after `a`, found `b`
 [ERROR] `tests/ui/parser-errors.goml` line 10: expected `,` or `)` after `a`, found `|b`
 [ERROR] `tests/ui/parser-errors.goml` line 10: unexpected character `)` after `|b`
-`tests/ui/parser-errors.goml` FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

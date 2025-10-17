@@ -1,5 +1,5 @@
 => Running 1 doc-ui test...
 wait-for-text-all... 
+`tests/ui/wait-for-text-all.goml`: FAILED
 [ERROR] `tests/ui/wait-for-text-all.goml` line 5: Error: The following checks still fail: [`hey` isn't equal to `heafd`] (on the element number 0): for command `wait-for-text: ("button", "heafd", [ALL])`
-`tests/ui/wait-for-text-all.goml` FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

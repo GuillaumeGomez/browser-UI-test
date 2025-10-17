@@ -1,6 +1,6 @@
 => Running 1 doc-ui test...
 wait-for-document-property-false... 
+`tests/ui/wait-for-document-property-false.goml`: FAILED
 [ERROR] `tests/ui/wait-for-document-property-false.goml` line 14: Error: The document properties still all match: for command `wait-for-document-property-false: {"windowProp": "hello1"}`
 [ERROR] `tests/ui/wait-for-document-property-false.goml` line 17: Error: The document properties still all match: for command `wait-for-document-property-false: {"windowProp": "hello1"}`
-`tests/ui/wait-for-document-property-false.goml` FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out
