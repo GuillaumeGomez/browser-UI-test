@@ -11,8 +11,18 @@ function helper(args) {
     print('Available options:');
     print('');
 
-    for (const [option_name, value] of args.entries()) {
-        const extra = value.extra !== undefined ? value.extra : '';
+    const options = Array.from(args.entries());
+    options.sort(([a, _v1], [b, _v2]) => {
+        if (a > b) {
+            return 1;
+        } else if (a < b) {
+            return -1;
+        } else {
+            return 0;
+        }
+    });
+    for (const [option_name, value] of options) {
+        const extra = value.extra !== undefined ? ' ' + value.extra : '';
         let option = `  ${option_name}${extra}`;
         while (option.length < 32) {
             option += ' ';
