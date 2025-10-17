@@ -302,8 +302,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             const command = context_parser.get_next_command(pages);
             if (command === null) {
                 if (nb_commands === 0) {
-                    logs.failure(currentFile, 'No command to execute');
-                    return Status.Failure;
+                    logs.warn(currentFile, 'No command to execute');
                 }
                 break;
             }

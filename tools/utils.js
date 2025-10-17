@@ -53,12 +53,22 @@ function extractExpectedErrors(filePath) {
         }
         let ups = 0;
         let x = 3;
+        let unknownLocation = false;
         while (x < line.length && line[x] === '^') {
             ups += 1;
             x += 1;
         }
         if (i - ups < 0) {
             throw new Error(`Invalid number of \`~\` at line ${i + 1} in file \`${filePath}\``);
+        }
+        if (x < line.length && line[x] === '?') {
+            x += 1;
+            if (ups !== 0) {
+                throw new Error(
+                    `Mix of \`^\` and of \`?\` characters at line ${i + 1} in file \`${filePath}\``,
+                );
+            }
+            unknownLocation = true;
         }
         while (x < line.length && line[x] === ' ') {
             x += 1;
@@ -86,6 +96,7 @@ function extractExpectedErrors(filePath) {
             message: message,
             line: i - ups,
             originalLine: i,
+            unknownLocation,
         });
     }
     return expected;
@@ -95,7 +106,8 @@ function isMatchingError(error, msg) {
     if (error.found === true || error.level !== msg.level || !msg.message.includes(error.message)) {
         return false;
     }
-    if (error.line === msg.line.line) {
+    // eslint-disable-next-line no-extra-parens
+    if ((error.unknownLocation && !msg.line) || error.line === msg.line.line) {
         return true;
     }
     const backtrace = msg.line.backtrace;
@@ -276,11 +288,11 @@ class Assert {
             const notFoundErrors = [];
             for (const msg of messages) {
                 output += convertMessageFromJson(msg);
-                if (msg.line === undefined || msg.line === null) {
-                    continue;
-                }
                 const match = expectedErrors.find(e => isMatchingError(e, msg));
                 if (match === undefined) {
+                    if (msg.line === undefined || msg.line === null) {
+                        continue;
+                    }
                     unexpectedErrors.push(`[${msg.level}] ${convertMessageFromJson(msg)}`);
                 } else {
                     match.found = true;

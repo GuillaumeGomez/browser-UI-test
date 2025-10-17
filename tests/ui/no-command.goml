@@ -1,0 +1,2 @@
+// Checks that the test passes if no command is there (but still emit a warning).
+//~? WARNING: No command to execute

@@ -80,7 +80,7 @@ async function checkRunTestCode(x, func) {
     await x.assertTry(func, ['', ''], '`runTestCode` first argument cannot be empty');
 
     // no options
-    await x.assertTry(func, ['test', ''], ['test... \nFAILED (No command to execute)\n', 1]);
+    await x.assertTry(func, ['test', ''], ['test... OK\n[WARNING] No command to execute\n', 0]);
 
     // invalid Options type
     await x.assertTry(
