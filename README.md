@@ -15,8 +15,8 @@ This is a big README, so to make you go through it faster:
  * [Using this framework as a dependency](#using-this-framework-as-a-dependency)
  * [Exported elements](#exported-elements)
  * [Running it directly](#running-it-directly)
- * [`.goml` scripts](https://github.com/GuillaumeGomez/browser-UI-test/blob/master/goml-script.md)
- * [Command list](https://github.com/GuillaumeGomez/browser-UI-test/blob/master/goml-script.md#command-list)
+ * [`.goml` scripts](https://github.com/GuillaumeGomez/browser-UI-test/blob/main/goml-script.md)
+ * [Command list](https://github.com/GuillaumeGomez/browser-UI-test/blob/main/goml-script.md#command-list)
  * [Run tests](#run-tests)
  * [Donations](#donations)
 
@@ -47,7 +47,7 @@ set-text: ("#button", "hello") // set text of element #button
 assert-text: ("#button", "hello") // check if #button element's text has been set to "hello"
 ```
 
-The list of the commands is available [here](https://github.com/GuillaumeGomez/browser-UI-test/blob/master/goml-script.md).
+The list of the commands is available [here](https://github.com/GuillaumeGomez/browser-UI-test/blob/main/goml-script.md).
 
 ### Using this framework as a binary
 
@@ -103,12 +103,12 @@ this README.
 
 #### Docker hub
 
-Important note: each merge on master pushes a new image on docker hub. You can find them [here](https://hub.docker.com/repository/docker/gomezguillaume/browser-ui-test/general).
+Important note: each merge on `main` branch pushes a new image on docker hub. You can find them [here](https://hub.docker.com/repository/docker/gomezguillaume/browser-ui-test/general).
 
 There are three kinds of docker images:
 
  1. By (npm) version
- 2. Latest master branch update
+ 2. Latest main branch update
  3. By date
 
 ### Using this framework as a dependency
