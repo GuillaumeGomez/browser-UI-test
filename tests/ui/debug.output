@@ -1,5 +1,5 @@
 => Running 1 doc-ui test...
 debug... 
+`tests/ui/debug.goml`: FAILED
 [ERROR] `tests/ui/debug.goml` line 5: assert didn't fail: for command `compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])`
-`tests/ui/debug.goml` FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

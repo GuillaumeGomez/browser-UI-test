@@ -1,5 +1,5 @@
 => Running 1 doc-ui test...
 wait-for-text-false... 
+`tests/ui/wait-for-text-false.goml`: FAILED
 [ERROR] `tests/ui/wait-for-text-false.goml` line 12: Error: All checks still pass: for command `wait-for-text-false: ("#js-call-attr", "hello")`
-`tests/ui/wait-for-text-false.goml` FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

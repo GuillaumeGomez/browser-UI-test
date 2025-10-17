@@ -13,13 +13,16 @@ function convertMessageFromJson(message) {
         }
         lineDisplay += ': ';
     }
-    const fileDisplay =
-        message.file !== null && message.file !== undefined && message.file !== '' &&
-            message.showFile !== false
-            ? `\`${message.file}\` `
-            : '';
+    let fileDisplay = '';
+    if (message.file !== null && message.file !== undefined && message.file !== '' &&
+        message.showFile !== false
+    ) {
+        const extra = lineDisplay.length === 0 ? ': ' : ' ';
+        fileDisplay = `\`${message.file}\`${extra}`;
+    }
     const levelDisplay = message.showLogLevel !== false ? `[${message.level.toUpperCase()}] ` : '';
-    return `${levelDisplay}${fileDisplay}${lineDisplay}${message.message}${EOL}`;
+    const newLine = message.disableNewLine === true ? '' : EOL;
+    return `${levelDisplay}${fileDisplay}${lineDisplay}${message.message}${newLine}`;
 }
 
 function convertMessagesFromJson(messages) {
@@ -35,6 +38,7 @@ class Logs {
         this.displayCompact = false;
         this.nbTests = null;
         this.ranTests = [];
+        this.nbErrors = 0;
 
         if (options !== undefined) {
             this.jsonOutput = options.isJsonOutput();
@@ -53,11 +57,12 @@ class Logs {
         ret.displayCompact = this.displayCompact;
         ret.nbTests = this.nbTests;
         ret.ranTests = this.ranTests;
+        ret.nbErrors = this.nbErrors;
 
         return ret;
     }
 
-    _addLog(level, fileInfo, newLog) {
+    _addLog(level, fileInfo, newLog, fromLogs) {
         if (Array.isArray(newLog)) {
             newLog = newLog.join(EOL);
         }
@@ -69,6 +74,12 @@ class Logs {
         } else if (fileInfo === null) {
             fileInfo = {};
         }
+        if (!fromLogs && level === 'error') {
+            if (this.nbErrors === 0) {
+                this.failure(fileInfo, '', true);
+            }
+            this.nbErrors += 1;
+        }
         this.append({
             'file': fileInfo.file,
             'is_line_exact': fileInfo.is_line_exact,
@@ -76,10 +87,11 @@ class Logs {
             'showLogLevel': fileInfo.showLogLevel,
             'level': level,
             'message': newLog,
+            'showFile': fileInfo.showFile,
         });
     }
 
-    append(newLog) {
+    append(newLog, showLog = true) {
         if (newLog.message.length === 0) {
             return;
         } else if (!this.showDebug && newLog.level === 'debug') {
@@ -87,7 +99,7 @@ class Logs {
         }
 
         this.logs.push(newLog);
-        if (this.showLogs === true) {
+        if (this.showLogs === true && showLog) {
             if (this.jsonOutput) {
                 process.stdout.write(JSON.stringify(newLog) + EOL);
             } else if (newLog.ignoreCompact === true || !this.isCompactDisplay()) {
@@ -97,8 +109,8 @@ class Logs {
     }
 
     // Accepts either a string or an array of string.
-    error(fileInfo, newLog) {
-        this._addLog('error', fileInfo, newLog);
+    error(fileInfo, newLog, fromLogs) {
+        this._addLog('error', fileInfo, newLog, fromLogs);
     }
 
     // Accepts either a string or an array of string.
@@ -117,8 +129,9 @@ class Logs {
     }
 
     appendLogs(other) {
+        this.nbErrors += other.nbErrors;
         for (const log of other.logs) {
-            this.append(log);
+            this.append(log, false);
         }
     }
 
@@ -136,39 +149,37 @@ class Logs {
     }
 
     updateCompactDisplay(file, success) {
-        if (this.isCompactDisplay()) {
-            process.stdout.write(success ? '.' : 'F');
-            this.ranTests.push(file);
-            if (this.ranTests.length % 50 === 0) {
-                this.displayCompactFileInfo();
-            } else if (this.ranTests.length === this.nbTests) {
-                let s = '';
-                for (let i = this.ranTests.length % 50; i < 50; ++i) {
-                    s += ' ';
-                }
-                process.stdout.write(s);
-                this.displayCompactFileInfo();
+        if (!this.isCompactDisplay()) {
+            return;
+        }
+        process.stdout.write(success ? '.' : 'F');
+        this.ranTests.push(file);
+        if (this.ranTests.length % 50 === 0) {
+            this.displayCompactFileInfo();
+        } else if (this.ranTests.length === this.nbTests) {
+            let s = '';
+            for (let i = this.ranTests.length % 50; i < 50; ++i) {
+                s += ' ';
             }
+            process.stdout.write(s);
+            this.displayCompactFileInfo();
         }
     }
 
-    failure(fileInfo, message) {
+    failure(fileInfo, message, fromLogs) {
         const msg = message.length > 0 ? `FAILED (${message})` : 'FAILED';
-        if (!this.jsonOutput) {
-            this.updateCompactDisplay(fileInfo.file, false);
-            fileInfo.showFile = false;
-        }
-        fileInfo.showLogLevel = false;
-        this.error(fileInfo, msg);
-        // Little hack to have a nicer rendering...
-        if (!this.jsonOutput) {
-            const failure = this.logs.pop();
-            for (const log of this.logs) {
-                if (log.level === 'info') {
-                    log.message += failure.message;
-                    break;
-                }
+        // We clone to prevent updating the original `fileInfo`.
+        const copy = JSON.parse(JSON.stringify(fileInfo));
+        copy.showLogLevel = false;
+        copy.line = null;
+        if (this.isCompactDisplay()) {
+            copy.showFile = false;
+            this.updateCompactDisplay(copy.file, false);
+            if (!fromLogs && message.length > 0) {
+                this.error(fileInfo, message, true);
             }
+        } else {
+            this.info(copy, msg);
         }
     }
 
@@ -193,16 +204,17 @@ class Logs {
 
     startTest(testName) {
         if (!this.isCompactDisplay()) {
-            this.display(testName + '... ');
+            this.display(testName + '... ', this.isCompactDisplay());
         }
     }
 
-    display(message) {
+    display(message, disableNewLine = false) {
         this.append({
-            'message': message,
-            'level': 'info',
-            'showLogLevel': false,
-            'ignoreCompact': true,
+            message: message,
+            level: 'info',
+            showLogLevel: false,
+            ignoreCompact: true,
+            disableNewLine,
         });
     }
 

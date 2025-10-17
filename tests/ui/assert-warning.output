@@ -2,5 +2,5 @@
 assert-warning... 
 [WARNING] `tests/ui/assert-warning.goml` line 3: Pseudo-elements (`::after`) don't have attributes so the check will be performed on the element itself
 [WARNING] `tests/ui/assert-warning.goml` line 5: Pseudo-elements (`::after`) don't have properties so the check will be performed on the element itself
-`tests/ui/assert-warning.goml` OK
+`tests/ui/assert-warning.goml`: OK
 <= doc-ui tests done: 1 succeeded, 0 failed, 0 filtered out

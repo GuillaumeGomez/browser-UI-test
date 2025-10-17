@@ -302,7 +302,7 @@ async function runAllCommands(loaded, logs, options, browser) {
             const command = context_parser.get_next_command(pages);
             if (command === null) {
                 if (nb_commands === 0) {
-                    logs.failure(getFileInfo(context_parser), 'No command to execute');
+                    logs.failure(currentFile, 'No command to execute');
                     return Status.Failure;
                 }
                 break;
@@ -421,8 +421,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                 break command_loop;
             }
         }
-        if (logs.lastError() !== null || checkJsErrors() || checkRequestErrors()) {
-            logs.failure(currentFile, '');
+        if (logs.nbErrors > 0 || checkJsErrors() || checkRequestErrors()) {
             if (extras.pauseOnError === true) {
                 waitUntilEnterPressed(logs);
             }
@@ -500,7 +499,6 @@ async function runAllCommands(loaded, logs, options, browser) {
             fs.unlinkSync(newImage);
         }
     } catch (err) {
-        logs.failure(currentFile, '');
         let msg = `${loaded['file']} output:${EOL}${err.message}${EOL}`;
         if (err.stack !== undefined) {
             msg += `stack: ${err.stack}${EOL}`;
@@ -685,7 +683,6 @@ async function innerRunTestCode(
                     error.message,
                 );
             }
-            logs.failure(getFileInfo(loaded.parser), '');
             return [logs, 1];
         }
 

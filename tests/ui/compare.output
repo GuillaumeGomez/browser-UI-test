@@ -1,5 +1,6 @@
 => Running 1 doc-ui test...
 compare... 
+`tests/ui/compare.goml`: FAILED
 [ERROR] `tests/ui/compare.goml` line 3: clientHeight: `24` !== `6`: for command `compare-elements-property: ("header", "#the-input", ["clientHeight"])`
 [ERROR] `tests/ui/compare.goml` line 10: assert didn't fail: for command `compare-elements-property-false: ("#useless\.input", "#the-input", ["clientHeight"])`
 [WARNING] `tests/ui/compare.goml` line 21: Delta is 0 for "x", maybe try to use `compare-elements-position` instead?
@@ -17,5 +18,4 @@ compare...
 [ERROR] `tests/ui/compare.goml` line 58: comparison didn't fail: for command `compare-elements-size-near-false: (".content .right", ".content .left", {"width": 1})`
 [ERROR] `tests/ui/compare.goml` line 60: heights don't match: 14 != 1: for command `compare-elements-size: ("#another-one::before", ".content .left span", ["height"])`
 [ERROR] `tests/ui/compare.goml` line 62: delta for height values too large: 13 > 1: for command `compare-elements-size-near: ("#another-one::before", ".content .left span", {"height": 1})`
-`tests/ui/compare.goml` FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

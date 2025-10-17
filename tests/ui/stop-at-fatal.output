@@ -1,5 +1,5 @@
 => Running 1 doc-ui test...
 stop-at-fatal... 
+`tests/ui/stop-at-fatal.goml`: FAILED
 [ERROR] `tests/ui/stop-at-fatal.goml` line 4: `#something` not found: for command `click: "#something"`
-`tests/ui/stop-at-fatal.goml` FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

@@ -1,5 +1,5 @@
 => Running 1 doc-ui test...
 device-pixel-ratio... 
+`tests/ui/device-pixel-ratio.goml`: FAILED
 [ERROR] `tests/ui/device-pixel-ratio.goml` line 7: expected numbers above 0, found `-2` (from command `set-device-pixel-ratio: -2`)
-`tests/ui/device-pixel-ratio.goml` FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

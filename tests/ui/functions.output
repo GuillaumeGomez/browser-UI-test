@@ -1,5 +1,6 @@
 => Running 1 doc-ui test...
 functions... 
+`tests/ui/functions.goml`: FAILED
 [ERROR] `tests/ui/functions.goml` line 8
     from `tests/ui/functions.goml` line 22: The following errors happened (for selector `header`): [expected `a` for key `background-color`, found `rgb(17, 17, 17)`; expected `y` for key `color`, found `rgb(255, 255, 255)`]: for command `assert-css: ("header", {"background-color": |background_color|, "color": |color|})`
 [ERROR] `tests/ui/functions.goml` line 9
@@ -17,5 +18,4 @@ functions...
 [ERROR] `tests/ui/functions.goml` line 38
     from `tests/ui/functions.goml` line 43: The following errors happened (for selector `header`): [expected `a` for key `color`, found `rgb(255, 255, 255)`]: for command `assert-css: ("header", |whole_check|)`
 [ERROR] `tests/ui/functions.goml` line 45: Missing argument "whole_check" (from command `call-function: ("fn1", {"background_color": "a", "k": {"color": "a"}})`)
-`tests/ui/functions.goml` FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

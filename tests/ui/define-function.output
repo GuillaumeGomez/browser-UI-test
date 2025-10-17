@@ -1,5 +1,6 @@
 => Running 1 doc-ui test...
 define-function... 
+`tests/ui/define-function.goml`: FAILED
 [ERROR] `tests/ui/define-function.goml` line 4: expected an array, found `()` (a tuple) (second element of the tuple) (from command `define-function: (
 //~^ ERROR: expected an array, found `()` (a tuple) (second element of the tuple)
     "check_title_position",
@@ -14,5 +15,4 @@ define-function...
         })
     }
 )`)
-`tests/ui/define-function.goml` FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

@@ -38,8 +38,8 @@ async function checkRunTest(x, func) {
     // empty options
     const res = await func('./tests/full-check/basic.goml');
     x.assert(res[0],
-        'basic... FAILED\n[ERROR] `tests/full-check/basic.goml` line 1: variable `DOC_PATH` not ' +
-        'found in options nor environment\n');
+        'basic... \n`tests/full-check/basic.goml`: FAILED\n[ERROR] `tests/full-check/basic.goml` ' +
+        'line 1: variable `DOC_PATH` not found in options nor environment\n');
     x.assert(res[1], 1);
 
     // everything is supposed to work
@@ -80,7 +80,7 @@ async function checkRunTestCode(x, func) {
     await x.assertTry(func, ['', ''], '`runTestCode` first argument cannot be empty');
 
     // no options
-    await x.assertTry(func, ['test', ''], ['test... FAILED (No command to execute)\n', 1]);
+    await x.assertTry(func, ['test', ''], ['test... \nFAILED (No command to execute)\n', 1]);
 
     // invalid Options type
     await x.assertTry(
@@ -94,7 +94,10 @@ async function checkRunTestCode(x, func) {
     await x.assertTry(
         func,
         ['test', 'let x = true;'],
-        ['test... FAILED\n[ERROR] line 1: Unexpected `x` when parsing command (after `let`)\n', 1],
+        [
+            'test... \nFAILED\n[ERROR] line 1: Unexpected `x` when parsing command (after `let`)\n',
+            1,
+        ],
     );
 
     // Check a failing code
@@ -157,7 +160,7 @@ async function checkRunTests(x, func) {
 
     // "empty" folder (e.g. no .goml files)
     options = new Options();
-    options.parseArguments(['--test-folder', './']);
+    options.parseArguments(['--test-folder', 'src/']);
     await x.assertTry(func, [options],
         ['No files found. Check your `--test-folder` and `--test-file` options\n', 1]);
 

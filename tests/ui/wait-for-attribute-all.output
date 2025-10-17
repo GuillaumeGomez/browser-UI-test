@@ -1,5 +1,5 @@
 => Running 1 doc-ui test...
 wait-for-attribute-all... 
+`tests/ui/wait-for-attribute-all.goml`: FAILED
 [ERROR] `tests/ui/wait-for-attribute-all.goml` line 4: Error: The following attributes still don't match: [Attribute named `data-hoho` doesn't exist] (on the element number 0): for command `wait-for-attribute: ("button", {"data-hoho": "heh"}, ALL)`
-`tests/ui/wait-for-attribute-all.goml` FAILED
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out
