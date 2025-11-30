@@ -2,40 +2,77 @@
 asserts... 
 `tests/ui/asserts.goml`: FAILED
 [ERROR] `tests/ui/asserts.goml` line 5: The following errors happened: [`Another page!` starts with `Another` (for STARTS_WITH check)]: for command `assert-text-false: ("header", "Another", [ENDS_WITH, STARTS_WITH])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 7: The following errors happened: [`Another page!` starts with `Another` (for STARTS_WITH check)]: for command `assert-text-false: ("header", "Another", STARTS_WITH)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 11: The following errors happened (for selector `.content`): [property `"className"` (`content`) doesn't end with `con`]: for command `assert-property: (".content", {"className": "con"}, [ENDS_WITH, STARTS_WITH])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 13: The following errors happened (for selector `.content`): [property `"className"` (`content`) doesn't end with `con`]: for command `assert-property: (".content", {"className": "con"}, [STARTS_WITH, ENDS_WITH])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 17: The following errors happened (for selector `.content`): [property `"className"` (`content`) doesn't contain `wowo` (for CONTAINS check); property `"className"` (`content`) is NaN (for NEAR check)]: for command `assert-property: (".content", {"className": "wowo"}, [CONTAINS, NEAR])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 20: The following errors happened (for selector `.content`): [property `"clientWidth"` (`1000`) doesn't contain `999` (for CONTAINS check)]: for command `assert-property: (".content", {"clientWidth": "999"}, [CONTAINS, NEAR])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 22: The following errors happened (for selector `.content`): [assert didn't fail for property `"className"` (`content`) (for STARTS_WITH check)]: for command `assert-property-false: (".content", {"className": "con"}, [STARTS_WITH, ENDS_WITH])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 24: The following errors happened (for selector `.content`): [assert didn't fail for property `"className"` (`content`) (for STARTS_WITH check)]: for command `assert-property-false: (".content", {"className": "con"}, [STARTS_WITH, ENDS_WITH])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 28: The following errors happened (for selector `.content`): [property `"className"` (`content`) is NaN (for NEAR check)]: for command `assert-property-false: (".content", {"className": "wowo"}, [CONTAINS, NEAR])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 31: The following errors happened (for selector `.content`): [property `"clientWidth"` (`1000`) is within 1 of `999` (for NEAR check)]: for command `assert-property-false: (".content", {"clientWidth": "999"}, [CONTAINS, NEAR])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 34: The following errors happened (for selector `.content`): [Unknown property `"does-not-exist"`]: for command `assert-property: (".content", {"does-not-exist": ".con"})`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 40: The following errors happened (for selector `.content`): [attribute `class` (`content`) doesn't start with `.con` (for STARTS_WITH check); attribute `class` (`content`) doesn't end with `.con`]: for command `assert-attribute: (".content", {"class": ".con"}, [ENDS_WITH, STARTS_WITH])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 42: The following errors happened (for selector `.content`): [attribute `class` (`content`) doesn't start with `.con` (for STARTS_WITH check); attribute `class` (`content`) doesn't end with `.con`]: for command `assert-attribute: (".content", {"class": ".con"}, [STARTS_WITH, ENDS_WITH])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 44: The following errors happened (for selector `.content`): [attribute `class` (`content`) doesn't start with `.con` (for STARTS_WITH check)]: for command `assert-attribute: (".content", {"class": ".con"}, STARTS_WITH)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 46: The following errors happened (for selector `.content`): [attribute `class` (`content`) doesn't contain `.con` (for CONTAINS check)]: for command `assert-attribute: (".content", {"class": ".con"}, CONTAINS)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 49: The following errors happened (for selector `.content`): [attribute `class` (`content`) is NaN (for NEAR check)]: for command `assert-attribute: (".content", {"class": ".con"}, NEAR)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 52: The following errors happened (for selector `.content`): [attribute `nb-value` (`12`) is not within 1 of `999` (for NEAR check)]: for command `assert-attribute: (".content", {"nb-value": 999}, NEAR)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 54: The following errors happened (for selector `.content`): [No attribute named `"class`]: for command `assert-attribute: (".content", {"\"class": ".con"})`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 60: The following errors happened (for selector `.content`): [attribute `class` (`content`) is NaN (for NEAR check)]: for command `assert-attribute-false: (".content", {"class": ".con"}, NEAR)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 65: The following errors happened (for selector `.content`): [No attribute named `does-not-exist`]: for command `assert-attribute: (".content", {"does-not-exist": ".con"})`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 72: The following errors happened: [`Another page!` doesn't end with `Another` (for ENDS_WITH check)]: for command `assert-text: ("header", "Another", [STARTS_WITH, ENDS_WITH])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 74: The following errors happened: [`Another page!` doesn't end with `Another` (for ENDS_WITH check)]: for command `assert-text: ("header", "Another", ENDS_WITH)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 77: The following errors happened: [assert didn't fail for document property `title` (`Other page`) (for STARTS_WITH check); assert didn't fail for document property `bgColor` (``) (for STARTS_WITH check); assert didn't fail for document property `bgColor` (``) (for ENDS_WITH check)]: for command `assert-document-property-false: ({"title": "Other", "bgColor": ""}, [ENDS_WITH, STARTS_WITH])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 79: The following errors happened: [assert didn't fail for document property `title` (`Other page`) (for STARTS_WITH check)]: for command `assert-document-property-false: ({"title": "Other"}, STARTS_WITH)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 82: The following errors happened: [document property `nodeName` (`#document`) is NaN (for NEAR check)]: for command `assert-document-property-false: ({"nodeName": ".con"}, NEAR)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 86: The following errors happened: [document property `title` (`Other page`) doesn't end with `Other`; document property `bgColor` (``) doesn't start with `a` (for STARTS_WITH check); document property `bgColor` (``) doesn't end with `a`]: for command `assert-document-property: ({"title": "Other", "bgColor": "a"}, [STARTS_WITH, ENDS_WITH])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 88: The following errors happened: [document property `title` (`Other page`) doesn't end with `Other`]: for command `assert-document-property: ({"title": "Other"}, ENDS_WITH)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 91: The following errors happened: [document property `nodeName` (`#document`) is NaN (for NEAR check)]: for command `assert-document-property: ({"nodeName": ".con"}, NEAR)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 94: The following errors happened: [document property `nodeType` (`9`) is not within 1 of `999` (for NEAR check)]: for command `assert-document-property: ({"nodeType": 999}, NEAR)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 97: The following errors happened: [assert didn't fail for window property `pageYOffset` (`0`) (for STARTS_WITH check); assert didn't fail for window property `pageYOffset` (`0`) (for ENDS_WITH check); assert didn't fail for window property `pageXOffset` (`0`) (for STARTS_WITH check); assert didn't fail for window property `pageXOffset` (`0`) (for ENDS_WITH check)]: for command `assert-window-property-false: ({"pageYOffset": "0", "pageXOffset": "0"}, [ENDS_WITH, STARTS_WITH])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 99: The following errors happened: [assert didn't fail for window property `pageYOffset` (`0`) (for STARTS_WITH check)]: for command `assert-window-property-false: ({"pageYOffset": "0"}, STARTS_WITH)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 102: The following errors happened: [window property `name` (``) is NaN (for NEAR check)]: for command `assert-window-property-false: ({"name": ".con"}, NEAR)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 106: The following errors happened: [window property `pageYOffset` (`0`) doesn't start with `www` (for STARTS_WITH check); window property `pageYOffset` (`0`) doesn't end with `www`; window property `pageXOffset` (`0`) doesn't start with `www` (for STARTS_WITH check); window property `pageXOffset` (`0`) doesn't end with `www`]: for command `assert-window-property: ({"pageYOffset": "www", "pageXOffset": "www"}, [STARTS_WITH, ENDS_WITH])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 108: The following errors happened: [window property `pageYOffset` (`0`) doesn't end with `www`]: for command `assert-window-property: ({"pageYOffset": "www"}, ENDS_WITH)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 111: The following errors happened: [window property `name` (``) is NaN (for NEAR check)]: for command `assert-window-property: ({"name": ".con"}, NEAR)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 114: The following errors happened: [window property `length` (`0`) is not within 1 of `999` (for NEAR check)]: for command `assert-window-property: ({"length": 999}, NEAR)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/asserts.goml` line 117: `#non-existent` not found: for command `click: "#non-existent"`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

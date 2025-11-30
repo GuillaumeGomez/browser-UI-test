@@ -2,4 +2,5 @@
 within-iframe-2... 
 `tests/ui/within-iframe-2.goml`: FAILED
 [ERROR] `tests/ui/within-iframe-2.goml` line 4: selector `#the-input` is not an `<iframe>` but a `<input>`: for command `within-iframe: ("#the-input", block {})`
+    at <file://$CURRENT_DIR/tests/html_files/basic.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

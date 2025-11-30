@@ -2,4 +2,5 @@
 wait-for-property-3... 
 `tests/ui/wait-for-property-3.goml`: FAILED
 [ERROR] `tests/ui/wait-for-property-3.goml` line 6: Error: The following properties still don't match: [expected `a` for property `offsetLeft`, found `0`]: for command `wait-for-property: ("html", {"offsetLeft": "a"})`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

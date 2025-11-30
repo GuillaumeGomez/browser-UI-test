@@ -2,4 +2,5 @@
 wait-for-count-false... 
 `tests/ui/wait-for-count-false.goml`: FAILED
 [ERROR] `tests/ui/wait-for-count-false.goml` line 9: Error: There are still 2 instances of ".random-class": for command `wait-for-count-false: (".random-class", 2)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

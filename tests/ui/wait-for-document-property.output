@@ -3,5 +3,7 @@ wait-for-document-property...
 [WARNING] `tests/ui/wait-for-document-property.goml` line 12: Special checks (ENDS_WITH) will be ignored for `null`
 `tests/ui/wait-for-document-property.goml`: FAILED
 [ERROR] `tests/ui/wait-for-document-property.goml` line 14: Error: The following document properties still don't match: [expected `tadam` for document property `windowProp`, found `hello1`]: for command `wait-for-document-property: {"windowProp": "tadam"}`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/wait-for-document-property.goml` line 17: The following errors happened: [expected `tadam` for document property `windowProp`, found `hello1`]: for command `assert-document-property: {"windowProp": "tadam"}`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

@@ -2,5 +2,7 @@
 wait-for-position-false... 
 `tests/ui/wait-for-position-false.goml`: FAILED
 [ERROR] `tests/ui/wait-for-position-false.goml` line 15: Error: All checks still succeed: for command `wait-for-position-false: ("#js-change-pos", {"y": 91})`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/wait-for-position-false.goml` line 18: The following errors happened: [different Y values: 91 (or 91) != 16]: for command `assert-position: ("#js-change-pos", {"y": 16})`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

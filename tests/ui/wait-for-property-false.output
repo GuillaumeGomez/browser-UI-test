@@ -2,4 +2,5 @@
 wait-for-property-false... 
 `tests/ui/wait-for-property-false.goml`: FAILED
 [ERROR] `tests/ui/wait-for-property-false.goml` line 19: Error: All properties still match: for command `wait-for-property-false: ("#js-wait-prop", {"hehe": "hoho"})`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

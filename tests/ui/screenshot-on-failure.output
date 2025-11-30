@@ -2,5 +2,6 @@
 screenshot-on-failure... 
 `tests/ui/screenshot-on-failure.goml`: FAILED
 [ERROR] `tests/ui/screenshot-on-failure.goml` line 4: The following errors happened (for selector `.content`): [Expected attribute `nb-value` to not exist, found: `12`]: for command `assert-attribute: (".content", {"nb-value": null})`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [INFO] `screenshot-on-failure-failure`: Generating screenshot into `tests/ui/screenshot-on-failure-failure.png`
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

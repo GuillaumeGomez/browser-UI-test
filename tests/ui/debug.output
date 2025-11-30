@@ -2,4 +2,5 @@
 debug... 
 `tests/ui/debug.goml`: FAILED
 [ERROR] `tests/ui/debug.goml` line 5: assert didn't fail: for command `compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out
