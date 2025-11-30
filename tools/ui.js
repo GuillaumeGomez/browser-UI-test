@@ -163,7 +163,10 @@ async function checkCompactDisplayFormat(x) {
     if (err !== null) {
         x.addError(`${err}\n\nOutput: ${output}`);
     } else {
-        x.assertOrBlessIntoFile(output, 'tests/compact-display/compact-display.output');
+        x.assertOrBlessIntoFile(
+            output.replaceAll(`file://${utils.getCurrentDir()}`, 'file://$CURRENT_DIR'),
+            'tests/compact-display/compact-display.output',
+        );
     }
 
     try {
