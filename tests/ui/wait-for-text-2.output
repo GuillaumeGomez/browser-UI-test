@@ -2,4 +2,5 @@
 wait-for-text-2... 
 `tests/ui/wait-for-text-2.goml`: FAILED
 [ERROR] `tests/ui/wait-for-text-2.goml` line 10: Error: The CSS selector "#i-dont-exist" was not found: for command `wait-for-text: ("#i-dont-exist", "oho")`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

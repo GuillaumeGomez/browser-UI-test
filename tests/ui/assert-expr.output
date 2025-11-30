@@ -2,10 +2,17 @@
 assert-expr... 
 `tests/ui/assert-expr.goml`: FAILED
 [ERROR] `tests/ui/assert-expr.goml` line 15: Condition `["1", "2"] != ["1", "2"]` (`!compareArrayLike(["1", "2"], ["1", "2"])`) was evaluated as false: for command `assert: ["1", "2"] != ["1", "2"]`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/assert-expr.goml` line 25: Condition `|var| != 13` (`13 != 13`) was evaluated as false: for command `assert: |var| != 13`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/assert-expr.goml` line 27: assert didn't fail: for command `assert-false: |var| == 13`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/assert-expr.goml` line 29: Condition `|var2| == |var|` (`"a" == 13`) was evaluated as false: for command `assert: |var2| == |var|`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/assert-expr.goml` line 31: Condition `{"b": 3} == |var3|` (`compareJson({"b": 3}, {"a": 2})`) was evaluated as false: for command `assert: {"b": 3} == |var3|`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/assert-expr.goml` line 33: Condition `(1, "a") == (2, 3)` (`compareArrayLike([1, "a"], [2, 3])`) was evaluated as false: for command `assert: (1, "a") == (2, 3)`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/assert-expr.goml` line 35: Condition `[1, 2] == ["a", "b"]` (`compareArrayLike([1, 2], ["a", "b"])`) was evaluated as false: for command `assert: [1, 2] == ["a", "b"]`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

@@ -2,4 +2,5 @@
 wait-for-css-false... 
 `tests/ui/wait-for-css-false.goml`: FAILED
 [ERROR] `tests/ui/wait-for-css-false.goml` line 18: Error: All CSS properties still match: for command `wait-for-css-false: ("#js-call", {"margin-top": "12px"})`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

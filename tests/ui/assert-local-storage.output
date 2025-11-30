@@ -2,7 +2,11 @@
 assert-local-storage... 
 `tests/ui/assert-local-storage.goml`: FAILED
 [ERROR] `tests/ui/assert-local-storage.goml` line 3: The following errors happened: [localStorage item "something" (of value "whatever") != "null"; localStorage item "other" (of value "hehe") != "null"]: for command `assert-local-storage: {"something": "whatever", "other": "hehe"}`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/assert-local-storage.goml` line 7: The following errors happened: [localStorage item "something" (of value "whatever") != "hello"]: for command `assert-local-storage: {"something": "whatever"}`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/assert-local-storage.goml` line 10: The following errors happened: [localStorage item "something" (of value "hello") == "hello"]: for command `assert-local-storage-false: {"something": "hello"}`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 [ERROR] `tests/ui/assert-local-storage.goml` line 14: The following errors happened: [localStorage item "other" (of value "hehe") != "null"]: for command `assert-local-storage: {"something": "whatever", "other": "hehe"}`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

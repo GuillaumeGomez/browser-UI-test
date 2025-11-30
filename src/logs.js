@@ -22,7 +22,8 @@ function convertMessageFromJson(message) {
     }
     const levelDisplay = message.showLogLevel !== false ? `[${message.level.toUpperCase()}] ` : '';
     const newLine = message.disableNewLine === true ? '' : EOL;
-    return `${levelDisplay}${fileDisplay}${lineDisplay}${message.message}${newLine}`;
+    const url = typeof message.url === 'string' ? `${EOL}    at <${message.url}>` : '';
+    return `${levelDisplay}${fileDisplay}${lineDisplay}${message.message}${url}${newLine}`;
 }
 
 function convertMessagesFromJson(messages) {
@@ -62,7 +63,7 @@ class Logs {
         return ret;
     }
 
-    _addLog(level, fileInfo, newLog, fromLogs) {
+    _addLog(level, fileInfo, newLog, { fromLogs = false, url = undefined } = {}) {
         if (Array.isArray(newLog)) {
             newLog = newLog.join(EOL);
         }
@@ -88,6 +89,7 @@ class Logs {
             'level': level,
             'message': newLog,
             'showFile': fileInfo.showFile,
+            url,
         });
     }
 
@@ -109,8 +111,8 @@ class Logs {
     }
 
     // Accepts either a string or an array of string.
-    error(fileInfo, newLog, fromLogs) {
-        this._addLog('error', fileInfo, newLog, fromLogs);
+    error(fileInfo, newLog, { fromLogs = false, url = undefined } = {}) {
+        this._addLog('error', fileInfo, newLog, { fromLogs, url });
     }
 
     // Accepts either a string or an array of string.
@@ -176,7 +178,7 @@ class Logs {
             copy.showFile = false;
             this.updateCompactDisplay(copy.file, false);
             if (!fromLogs && message.length > 0) {
-                this.error(fileInfo, message, true);
+                this.error(fileInfo, message, { fromLogs: true });
             }
         } else {
             this.info(copy, msg);

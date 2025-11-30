@@ -2,4 +2,5 @@
 stop-at-fatal... 
 `tests/ui/stop-at-fatal.goml`: FAILED
 [ERROR] `tests/ui/stop-at-fatal.goml` line 4: `#something` not found: for command `click: "#something"`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

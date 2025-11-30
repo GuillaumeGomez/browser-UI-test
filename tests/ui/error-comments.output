@@ -2,4 +2,5 @@
 error-comments... 
 `tests/ui/error-comments.goml`: FAILED
 [ERROR] `tests/ui/error-comments.goml` line 4: The following errors happened (for selector `body`): [expected `194` for property `"clientWidth"`, found `1000`; expected `200` for property `"offsetWidth"`, found `1000`]: for command `assert-property: ("body", {"clientWidth": "194", "offsetWidth": "200"})`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

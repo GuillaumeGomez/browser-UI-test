@@ -2,4 +2,5 @@
 within-iframe... 
 `tests/ui/within-iframe.goml`: FAILED
 [ERROR] `tests/ui/within-iframe.goml` line 41: `#ifra` not found: for command `within-iframe: ("#ifra", block {})`
+    at <file://$CURRENT_DIR/tests/html_files/iframe-ception.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

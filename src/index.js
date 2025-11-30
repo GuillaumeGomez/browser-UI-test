@@ -282,8 +282,10 @@ async function runAllCommands(loaded, logs, options, browser) {
             if (!extras[option] || extras[field].length === 0) {
                 return false;
             }
-            logs.error(getFileInfo(context_parser, line_number, false), `${message}: ` +
-                extras[field].join(EOL));
+            logs.error(
+                getFileInfo(context_parser, line_number, false),
+                `${message}: ` + extras[field].join(EOL),
+            );
             // We empty the errors to prevent having it duplicated.
             extras[field].splice(0, extras[field].length);
             return true;
@@ -361,7 +363,11 @@ async function runAllCommands(loaded, logs, options, browser) {
                         const s_err = err.toString();
                         if (extras.expectedToFail !== true) {
                             const original = command['original'];
-                            logs.error(fileInfo, `${s_err}: for command \`${original}\``);
+                            logs.error(
+                                fileInfo,
+                                `${s_err}: for command \`${original}\``,
+                                { url: pages[pages.length - 1].url() },
+                            );
                             stopInnerLoop = true;
                             if (extras.screenshotOnFailure) {
                                 stopLoop = true;
@@ -392,6 +398,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                 logs.error(
                     fileInfo,
                     `command \`${command['original']}\` was supposed to fail but succeeded`,
+                    { url: pages[pages.length - 1].url() },
                 );
             }
             let shouldWait = false;
@@ -442,7 +449,11 @@ async function runAllCommands(loaded, logs, options, browser) {
             }
             selector = parser.getSelector(extras.screenshotComparison);
             if (selector.error !== undefined) {
-                logs.failure(currentFile, `Cannot take screenshot: ${selector.error.join(EOL)}`);
+                logs.failure(
+                    currentFile,
+                    `Cannot take screenshot: ${selector.error.join(EOL)}`,
+                    { url: pages[pages.length - 1].url() },
+                );
                 await page.close();
                 return Status.MissingElementForScreenshot;
             }
