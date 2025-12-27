@@ -1,5 +1,6 @@
 const process = require('process');
 const { EOL } = require('os');
+const { extractFileNameWithoutExtension } = require('./utils.js');
 
 function convertMessageFromJson(message) {
     const lineInfo = message.is_line_exact ? 'line' : 'around line';
@@ -13,21 +14,27 @@ function convertMessageFromJson(message) {
         }
         lineDisplay += ': ';
     }
-    let fileDisplay = '';
-    if (message.file !== null && message.file !== undefined && message.file !== '' &&
-        message.showFile !== false
-    ) {
-        const extra = lineDisplay.length === 0 ? ': ' : ' ';
-        fileDisplay = `\`${message.file}\`${extra}`;
-    }
     const levelDisplay = message.showLogLevel !== false ? `[${message.level.toUpperCase()}] ` : '';
     const newLine = message.disableNewLine === true ? '' : EOL;
     const url = typeof message.url === 'string' ? `${EOL}    at <${message.url}>` : '';
-    return `${levelDisplay}${fileDisplay}${lineDisplay}${message.message}${url}${newLine}`;
+    return `${levelDisplay}${lineDisplay}${message.message}${url}${newLine}`;
 }
 
 function convertMessagesFromJson(messages) {
     return messages.map(msg => convertMessageFromJson(msg)).join('');
+}
+
+// Gets the real test file from the `fileInfo`: if there is a backtrace, then we get its last item
+// as it will be the "real" test file.
+function getTestFile(fileInfo) {
+    let file = fileInfo.file;
+    if (fileInfo.line !== null
+        && fileInfo.line !== undefined
+        && Array.isArray(fileInfo.line.backtrace)
+    ) {
+        file = fileInfo.line.backtrace[fileInfo.line.backtrace.length - 1].file;
+    }
+    return file;
 }
 
 class Logs {
@@ -81,30 +88,48 @@ class Logs {
             }
             this.nbErrors += 1;
         }
-        this.append({
-            'file': fileInfo.file,
-            'is_line_exact': fileInfo.is_line_exact,
-            'line': fileInfo.line,
-            'showLogLevel': fileInfo.showLogLevel,
-            'level': level,
-            'message': newLog,
-            'showFile': fileInfo.showFile,
-            url,
-        });
+        this.append(
+            {
+                'file': fileInfo.file,
+                'is_line_exact': fileInfo.is_line_exact,
+                'line': fileInfo.line,
+                'showLogLevel': fileInfo.showLogLevel,
+                'level': level,
+                'message': newLog,
+                'showFile': fileInfo.showFile,
+                'testFile': getTestFile(fileInfo),
+                url,
+            },
+            {
+                fromLogs,
+            },
+        );
     }
 
-    append(newLog, showLog = true) {
+    append(newLog, { showLog = true, fromLogs = false } = {}) {
         if (newLog.message.length === 0) {
             return;
         } else if (!this.showDebug && newLog.level === 'debug') {
             return;
         }
 
-        this.logs.push(newLog);
+        const isInfo = newLog.level === 'info';
+        if (isInfo && fromLogs) {
+            // Insert at first position.
+            // FIXME: Should we push a "marker" log at the beginning of tests and replace it
+            // instead?
+            const pos = this.logs.findLastIndex(l => l.level === 'info');
+            this.logs.splice(pos + 1, 0, newLog);
+        } else {
+            this.logs.push(newLog);
+        }
         if (this.showLogs === true && showLog) {
             if (this.jsonOutput) {
                 process.stdout.write(JSON.stringify(newLog) + EOL);
-            } else if (newLog.ignoreCompact === true || !this.isCompactDisplay()) {
+            } else if (newLog.ignoreCompact === true ||
+                // eslint-disable-next-line no-extra-parens
+                (!this.isCompactDisplay() && isInfo)
+            ) {
                 process.stdout.write(convertMessageFromJson(newLog));
             }
         }
@@ -116,8 +141,8 @@ class Logs {
     }
 
     // Accepts either a string or an array of string.
-    info(fileInfo, newLog) {
-        this._addLog('info', fileInfo, newLog);
+    info(fileInfo, newLog, { fromLogs = false } = {}) {
+        this._addLog('info', fileInfo, newLog, { fromLogs });
     }
 
     // Accepts either a string or an array of string.
@@ -133,7 +158,7 @@ class Logs {
     appendLogs(other) {
         this.nbErrors += other.nbErrors;
         for (const log of other.logs) {
-            this.append(log, false);
+            this.append(log, { showLog: false });
         }
     }
 
@@ -150,12 +175,14 @@ class Logs {
         process.stdout.write(` (${this.ranTests.length}/${this.nbTests})${EOL}`);
     }
 
-    updateCompactDisplay(file, success) {
+    updateCompactDisplay(fileInfo, success) {
+        const file = getTestFile(fileInfo);
+        this.ranTests.push(file);
         if (!this.isCompactDisplay()) {
             return;
         }
         process.stdout.write(success ? '.' : 'F');
-        this.ranTests.push(file);
+
         if (this.ranTests.length % 50 === 0) {
             this.displayCompactFileInfo();
         } else if (this.ranTests.length === this.nbTests) {
@@ -174,40 +201,35 @@ class Logs {
         const copy = JSON.parse(JSON.stringify(fileInfo));
         copy.showLogLevel = false;
         copy.line = null;
+        // We need to update the file as we're not interested by the one where the error occurred
+        // but by the test file which started all this.
+        copy.file = getTestFile(fileInfo);
+        this.updateCompactDisplay(copy, false);
         if (this.isCompactDisplay()) {
             copy.showFile = false;
-            this.updateCompactDisplay(copy.file, false);
             if (!fromLogs && message.length > 0) {
                 this.error(fileInfo, message, { fromLogs: true });
             }
         } else {
-            this.info(copy, msg);
+            this.info(
+                copy,
+                `${extractFileNameWithoutExtension(copy.file)}... ${msg}`,
+                {fromLogs: true},
+            );
         }
     }
 
-    success(fileInfo, message) {
+    success(fileInfo) {
         if (!this.jsonOutput) {
-            this.updateCompactDisplay(fileInfo.file, true);
+            this.updateCompactDisplay(fileInfo, true);
             fileInfo.showFile = false;
         }
         fileInfo.showLogLevel = false;
-        this.info(fileInfo, message);
-        // Little hack to have a nicer rendering...
-        if (!this.jsonOutput) {
-            const success = this.logs.pop();
-            for (const log of this.logs) {
-                if (log.level === 'info') {
-                    log.message += success.message;
-                    break;
-                }
-            }
-        }
-    }
-
-    startTest(testName) {
-        if (!this.isCompactDisplay()) {
-            this.display(testName + '... ', this.isCompactDisplay());
-        }
+        this.info(
+            fileInfo,
+            `${extractFileNameWithoutExtension(fileInfo.file)}... OK`,
+            {fromLogs: true},
+        );
     }
 
     display(message, disableNewLine = false) {
@@ -257,14 +279,16 @@ class Logs {
     }
 
     conclude(message) {
-        if (this.isCompactDisplay()) {
+        if (!this.jsonOutput) {
             process.stdout.write(EOL);
 
             this.ranTests.sort();
 
             // Now we display logs that might need to be displayed, like warnings and errors.
             for (const test of this.ranTests) {
-                const messages = this.logs.filter(log => log.file === test && log.level !== 'info');
+                const messages = this.logs.filter(
+                    log => log.testFile === test && log.level !== 'info',
+                );
                 if (messages.length !== 0) {
                     process.stdout.write(`======== ${test} ========${EOL}${EOL}`);
                     process.stdout.write(convertMessagesFromJson(messages));

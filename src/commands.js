@@ -295,8 +295,10 @@ class ParserWithContext {
             return '';
         } else if (context.filePath !== undefined) {
             return context.filePath;
+        } else if (context.ast.absolutePath !== null) {
+            return context.ast.absolutePath;
         }
-        return context.ast.absolutePath;
+        return this.testName;
     }
 
     run_order(pages, order, ast) {
@@ -406,6 +408,7 @@ class ParserWithContext {
 function parseTest(testName, testPath, logs, options, content) {
     try {
         const parser = new ParserWithContext(testPath, options, content);
+        parser.testName = testName;
         return {
             'file': testName,
             'parser': parser,

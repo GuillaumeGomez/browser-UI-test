@@ -41,7 +41,8 @@ function runAsyncUiTest(x, file, output, tests_queue, browser) {
             const filePath = file.replace('.goml', '.output');
             fs.writeFileSync(
                 filePath,
-                value1.replaceAll(`file://${utils.getCurrentDir()}`, 'file://$CURRENT_DIR'),
+                value1.replaceAll(`file://${utils.getCurrentDir()}`, 'file://$CURRENT_DIR')
+                    .replaceAll(`\`${utils.getCurrentDir()}`, '`$CURRENT_DIR'),
             );
             print(`Blessed \`${filePath}\``);
         },
@@ -67,8 +68,16 @@ async function compareOutput(x) {
         if (fs.lstatSync(curPath).isDirectory() || !curPath.endsWith('.goml')) {
             return;
         }
+        if (!matchesFilter(x, file)) {
+            // We filter out arguments since we only want to run a few of them...
+            return;
+        }
         filesToTest.push(curPath.toString());
     });
+    if (filesToTest.length === 0) {
+        print('All UI tests filtered out, moving to next tests');
+        return;
+    }
 
     let cpuCount = os.cpus().length / 2 + 1;
     if (cpuCount < 1) {
@@ -80,11 +89,6 @@ async function compareOutput(x) {
     const browser = await utils.loadPuppeteer(options);
 
     for (const file of filesToTest) {
-        if (x.extraArgs.length !== 0 &&
-            x.extraArgs.findIndex(arg => file.indexOf(arg) !== -1) === -1) {
-            // We filter out arguments since we only want to run a few of them...
-            continue;
-        }
         const outputFile = file.replace('.goml', '.output');
         let output;
 
@@ -112,9 +116,13 @@ async function compareOutput(x) {
     await browser.close();
 }
 
+function matchesFilter(x, filter) {
+    return x.extraArgs.length === 0 ||
+        x.extraArgs.findIndex(arg => filter.indexOf(arg) !== -1) !== -1;
+}
+
 function checkImageFileForTest(x, screenshotFile, testName) {
-    if (x.extraArgs.length !== 0 &&
-        x.extraArgs.findIndex(arg => testName.indexOf(arg) !== -1) === -1) {
+    if (!matchesFilter(x, testName)) {
         // This test was not run so nothing to do in here...
         return;
     }
@@ -125,15 +133,21 @@ function checkImageFileForTest(x, screenshotFile, testName) {
     }
 }
 
-async function checkCompactDisplayFormat(x) {
+function getOptionsWithFilter(filter) {
     const options = new Options();
     options.parseArguments([
         '--test-folder', 'tests/ui/',
         '--variable', 'DOC_PATH', 'tests/html_files',
         '--display-format', 'compact',
-        '--filter', 'assert-c',
+        '--filter', filter,
     ]);
     options.screenshotComparison = false;
+    return options;
+}
+
+async function checkFailedTestName(x) {
+    // We ensure that only `failure-from-include` files are listed as failing tests.
+    const options = getOptionsWithFilter('failure-from-include');
     const browser = await utils.loadPuppeteer(options);
 
     // We replace stdout and stderr.
@@ -157,6 +171,66 @@ async function checkCompactDisplayFormat(x) {
     } catch (exc) {
         err = exc;
     }
+
+    process.stdout.write = oldStdout;
+    process.stderr.write = oldStderr;
+
+    if (err !== null) {
+        x.addError(`${err}\n\nOutput: ${output}`);
+    } else {
+        let nbFailures = 0;
+        for (const line of output.split('\n')) {
+            if (!line.startsWith('======== ')) {
+                continue;
+            }
+            nbFailures += 1;
+            const testName = line.split('========')[1].trim();
+            if (!testName.endsWith('failure-from-include-2.goml')
+                && !testName.endsWith('failure-from-include.goml')
+            ) {
+                x.addError(`Unexpected test name: \`${testName}\``);
+            } else {
+                x.addSuccess();
+            }
+        }
+        if (nbFailures < 1) {
+            x.addError(`No failed tests found in \`failed-test-name\`, full output:\n${output}`);
+        }
+    }
+
+    try {
+        await browser.close();
+    } catch (exc) {
+        print(`Failed to close browser: ${exc}`);
+    }
+}
+
+async function checkCompactDisplayFormat(x) {
+    const options = getOptionsWithFilter('assert-c');
+    const browser = await utils.loadPuppeteer(options);
+
+    // We replace stdout and stderr.
+    let output = '';
+    function write(arg) {
+        output += arg;
+    }
+    const oldStdout = process.stdout.write;
+    process.stdout.write = write;
+    const oldStderr = process.stderr.write;
+    process.stderr.write = write;
+
+    let err = null;
+    try {
+        await runTests({
+            'options': options,
+            'browser': browser,
+            'showLogs': true,
+            'showNbThreads': false,
+        });
+    } catch (exc) {
+        err = exc;
+    }
+
     process.stdout.write = oldStdout;
     process.stderr.write = oldStderr;
 
@@ -197,9 +271,20 @@ async function checkUi(x) {
         checkImageFileForTest(
             x, 'tests/ui/screenshot-on-failure-failure.png', 'screenshot-on-failure.goml');
 
-        await x.startTestSuite('compact display-format', true, async() => {
-            await checkCompactDisplayFormat(x);
-        });
+        if (matchesFilter(x, 'compact-display-format')) {
+            await x.startTestSuite('compact display-format', true, async() => {
+                await checkCompactDisplayFormat(x);
+            });
+        } else {
+            print('`compact-display-format` test filtered out');
+        }
+        if (matchesFilter(x, 'failed-test-name')) {
+            await x.startTestSuite('failed-test-name', true, async() => {
+                await checkFailedTestName(x);
+            });
+        } else {
+            print('`failed-test-name` test filtered out');
+        }
 
         const errors = x.getTotalErrors();
         print('');

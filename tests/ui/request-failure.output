@@ -1,5 +1,4 @@
 => Running 1 doc-ui test...
-request-failure... 
-`tests/ui/request-failure.goml`: FAILED
-[ERROR] `tests/ui/request-failure.goml` around line 2: request failed: [GET file://$CURRENT_DIR/tests/html_files/non-existent.css]: net::ERR_FILE_NOT_FOUND
+request-failure... FAILED
+[ERROR] around line 2: request failed: [GET file://$CURRENT_DIR/tests/html_files/non-existent.css]: net::ERR_FILE_NOT_FOUND
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

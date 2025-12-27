@@ -1,5 +1,4 @@
 => Running 1 doc-ui test...
-no-command... 
-[WARNING] `tests/ui/no-command.goml`: No command to execute
-`tests/ui/no-command.goml`: OK
+no-command... OK
+[WARNING] No command to execute
 <= doc-ui tests done: 1 succeeded, 0 failed, 0 filtered out

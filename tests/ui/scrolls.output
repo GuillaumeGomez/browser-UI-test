@@ -1,6 +1,5 @@
 => Running 1 doc-ui test...
-scrolls... 
-`tests/ui/scrolls.goml`: FAILED
-[ERROR] `tests/ui/scrolls.goml` line 22: `#does-not-exist` not found: for command `scroll-element-to: (".absolute", "#does-not-exist")`
+scrolls... FAILED
+[ERROR] line 22: `#does-not-exist` not found: for command `scroll-element-to: (".absolute", "#does-not-exist")`
     at <file://$CURRENT_DIR/tests/html_files/big-page.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

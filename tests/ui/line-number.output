@@ -1,6 +1,5 @@
 => Running 1 doc-ui test...
-line-number... 
-`tests/ui/line-number.goml`: FAILED
-[ERROR] `tests/ui/line-number.goml` line 4: assert didn't fail: for command `compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])`
+line-number... FAILED
+[ERROR] line 4: assert didn't fail: for command `compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

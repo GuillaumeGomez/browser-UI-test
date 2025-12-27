@@ -1,5 +1,4 @@
 => Running 1 doc-ui test...
-error-before-variable-inference... 
-`tests/ui/error-before-variable-inference.goml`: FAILED
-[ERROR] `tests/ui/error-before-variable-inference.goml` line 3: Unknown command "whatever"
+error-before-variable-inference... FAILED
+[ERROR] line 3: Unknown command "whatever"
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

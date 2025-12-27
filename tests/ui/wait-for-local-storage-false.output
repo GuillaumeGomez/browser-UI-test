@@ -1,8 +1,7 @@
 => Running 1 doc-ui test...
-wait-for-local-storage-false... 
-`tests/ui/wait-for-local-storage-false.goml`: FAILED
-[ERROR] `tests/ui/wait-for-local-storage-false.goml` line 9: Error: All local storage entries still match: for command `wait-for-local-storage-false: {"something3": "hello hi"}`
+wait-for-local-storage-false... FAILED
+[ERROR] line 9: Error: All local storage entries still match: for command `wait-for-local-storage-false: {"something3": "hello hi"}`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/wait-for-local-storage-false.goml` line 12: The following errors happened: [localStorage item "something3" (of value "tadam") != "hello hi"]: for command `assert-local-storage: {"something3": "tadam"}`
+[ERROR] line 12: The following errors happened: [localStorage item "something3" (of value "tadam") != "hello hi"]: for command `assert-local-storage: {"something3": "tadam"}`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

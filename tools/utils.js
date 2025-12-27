@@ -48,11 +48,12 @@ function extractExpectedErrors(filePath) {
     while (i < content.length) {
         let line = content[i].trim();
         i += 1;
-        if (!line.startsWith('//~')) {
+        if (!line.includes('//~')) {
             continue;
         }
+        line = line.split('//~')[1];
         let ups = 0;
-        let x = 3;
+        let x = 0;
         let unknownLocation = false;
         while (x < line.length && line[x] === '^') {
             ups += 1;
@@ -74,20 +75,20 @@ function extractExpectedErrors(filePath) {
             x += 1;
         }
         line = line.slice(x);
-        const sub = line.split(' ')[0];
+        const sub = line.split(':')[0].trim();
         let level = '';
-        if (sub === 'ERROR:') {
+        if (sub === 'ERROR') {
             level = 'error';
-        } else if (sub === 'WARNING:') {
+        } else if (sub === 'WARNING') {
             level = 'warning';
-        } else if (sub === 'INFO:') {
+        } else if (sub === 'INFO') {
             level = 'info';
-        } else if (sub === 'DEBUG:') {
+        } else if (sub === 'DEBUG') {
             level = 'debug';
         } else {
             throw new Error(`Unknown level \`${sub}\` at line ${i} in file \`${filePath}\``);
         }
-        const message = line.slice(sub.length + 1).trim();
+        const message = line.slice(line.split(':')[0].length + 1).trim();
         if (message.length === 0) {
             throw new Error(`Missing message after level at line ${i} in file \`${filePath}\``);
         }
@@ -343,8 +344,12 @@ class Assert {
             }
             return this.assert(output, expectedValue, pos, file, toJson, out, errCallback);
         } catch (err) {
-            return this.assert(
-                err.message, expectedValue, pos, file, toJson, out, errCallback);
+            print(`Failed to run \`${file}\``);
+            // `print` doesn't display the stack trace of the error so we need to use `console.log`.
+            // eslint-disable-next-line no-console
+            console.log(err);
+            this._incrError();
+            return false;
         }
     }
 

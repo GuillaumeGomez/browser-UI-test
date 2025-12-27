@@ -1,6 +1,5 @@
 => Running 1 doc-ui test...
-line-number2... 
-`tests/ui/line-number2.goml`: FAILED
-[ERROR] `tests/ui/line-number2.goml` line 5: command `compare-elements-css: (".content>.right>p", ".content>.left", ["color"])` was supposed to fail but succeeded
+line-number2... FAILED
+[ERROR] line 5: command `compare-elements-css: (".content>.right>p", ".content>.left", ["color"])` was supposed to fail but succeeded
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

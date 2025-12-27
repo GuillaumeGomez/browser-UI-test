@@ -189,7 +189,6 @@ async function runInstruction(loadedInstruction, pages, extras) {
 async function runAllCommands(loaded, logs, options, browser) {
     const context_parser = loaded['parser'];
     const currentFile = getFileInfo(context_parser);
-    logs.startTest(loaded['file']);
 
     let notOk = false;
     let returnValue = Status.Ok;
@@ -442,7 +441,7 @@ async function runAllCommands(loaded, logs, options, browser) {
         let selector = null;
         if (extras.screenshotComparison !== true) {
             if (extras.screenshotComparison === false) {
-                logs.success(currentFile, 'OK');
+                logs.success(currentFile);
                 logs.debug(currentFile, '=> [NO SCREENSHOT COMPARISON]');
                 await page.close();
                 return Status.Ok;
@@ -519,7 +518,7 @@ async function runAllCommands(loaded, logs, options, browser) {
     }
     await page.close();
     if (notOk === false) {
-        logs.success(currentFile, 'OK');
+        logs.success(currentFile);
     }
     return returnValue;
 }
@@ -653,7 +652,7 @@ async function innerRunTests(logs, options, browser, showNbThreads) {
             `${extra}<= doc-ui tests done: ${successes} succeeded, ${total - successes} \
 failed, ${filteredOut} filtered out${extra}`);
     } catch (error) {
-        logs.conclude(`An exception occured: ${error.message}${EOL}== STACKTRACE ==${EOL}` +
+        logs.conclude(`An exception occurred: ${error.message}${EOL}== STACKTRACE ==${EOL}` +
             `${new Error().stack}${EOL}`);
         return 1;
     }
@@ -686,7 +685,6 @@ async function innerRunTestCode(
         if (loaded === null) {
             return [logs, 1];
         } else if (loaded.parser.get_parser_errors().length !== 0) {
-            logs.startTest(testName);
             for (const error of loaded.parser.get_parser_errors()) {
                 logs.error(
                     getFileInfo(loaded.parser, error.line),

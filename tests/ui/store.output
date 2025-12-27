@@ -1,14 +1,13 @@
 => Running 1 doc-ui test...
-store... 
-`tests/ui/store.goml`: FAILED
-[ERROR] `tests/ui/store.goml` line 20: The following errors happened: [`24` isn't equal to `12`]: for command `assert-variable: (height, "12")`
+store... FAILED
+[ERROR] line 20: The following errors happened: [`24` isn't equal to `12`]: for command `assert-variable: (height, "12")`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/store.goml` line 22: The following errors happened: [`24` is equal to `24`]: for command `assert-variable-false: (height, "24")`
+[ERROR] line 22: The following errors happened: [`24` is equal to `24`]: for command `assert-variable-false: (height, "24")`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/store.goml` line 24: The following errors happened: [`24` contains `2` (for CONTAINS check); `24` starts with `2` (for STARTS_WITH check)]: for command `assert-variable-false: (height, "2", [STARTS_WITH, CONTAINS])`
+[ERROR] line 24: The following errors happened: [`24` contains `2` (for CONTAINS check); `24` starts with `2` (for STARTS_WITH check)]: for command `assert-variable-false: (height, "2", [STARTS_WITH, CONTAINS])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/store.goml` line 26: The following errors happened: [`24` contains `4` (for CONTAINS check); `24` ends with `4` (for ENDS_WITH check)]: for command `assert-variable-false: (height, "4", [CONTAINS, ENDS_WITH])`
+[ERROR] line 26: The following errors happened: [`24` contains `4` (for CONTAINS check); `24` ends with `4` (for ENDS_WITH check)]: for command `assert-variable-false: (height, "4", [CONTAINS, ENDS_WITH])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/store.goml` line 43: The following errors happened: ["No attribute named `data-whatever`"]: for command `store-attribute: ("header", {"data-whatever": attr})`
+[ERROR] line 43: The following errors happened: ["No attribute named `data-whatever`"]: for command `store-attribute: ("header", {"data-whatever": attr})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

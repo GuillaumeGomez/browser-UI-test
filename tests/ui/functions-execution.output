@@ -1,31 +1,30 @@
 => Running 1 doc-ui test...
-functions-execution... 
-`tests/ui/functions-execution.goml`: FAILED
-[ERROR] `tests/ui/functions-execution.goml` line 8
+functions-execution... FAILED
+[ERROR] line 8
     from `tests/ui/functions-execution.goml` line 28: The following errors happened (for selector `header`): [expected `a` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": "a"})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/functions-execution.goml` line 10
+[ERROR] line 10
     from `tests/ui/functions-execution.goml` line 28: The following errors happened (for selector `header`): [expected `b` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": "b"})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/functions-execution.goml` line 12
+[ERROR] line 12
     from `tests/ui/functions-execution.goml` line 28: The following errors happened (for selector `header`): [expected `c` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": "c"})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/functions-execution.goml` line 14
+[ERROR] line 14
     from `tests/ui/functions-execution.goml` line 28: The following errors happened (for selector `header`): [expected `d` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": "d"})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/functions-execution.goml` line 16
+[ERROR] line 16
     from `tests/ui/functions-execution.goml` line 28: The following errors happened (for selector `header`): [expected `e` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": "e"})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/functions-execution.goml` line 18
+[ERROR] line 18
     from `tests/ui/functions-execution.goml` line 28: The following errors happened (for selector `header`): [expected `f` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": "f"})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/functions-execution.goml` line 20
+[ERROR] line 20
     from `tests/ui/functions-execution.goml` line 28: The following errors happened (for selector `header`): [expected `g` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": "g"})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/functions-execution.goml` line 22
+[ERROR] line 22
     from `tests/ui/functions-execution.goml` line 28: The following errors happened (for selector `header`): [expected `h` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": "h"})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/functions-execution.goml` line 24
+[ERROR] line 24
     from `tests/ui/functions-execution.goml` line 28: The following errors happened (for selector `header`): [expected `i` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": "i"})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

@@ -38,8 +38,8 @@ async function checkRunTest(x, func) {
     // empty options
     const res = await func('./tests/full-check/basic.goml');
     x.assert(res[0],
-        'basic... \n`tests/full-check/basic.goml`: FAILED\n[ERROR] `tests/full-check/basic.goml` ' +
-        'line 1: variable `DOC_PATH` not found in options nor environment\n');
+        'basic... FAILED\n\
+[ERROR] line 1: variable `DOC_PATH` not found in options nor environment\n');
     x.assert(res[1], 1);
 
     // everything is supposed to work
@@ -57,7 +57,7 @@ async function checkRunTest(x, func) {
     // check if test-folder option is ignored
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files', '--test-folder', 'yolo']);
     await x.assertTry(func, ['./tests/full-check/basic.goml', options],
-        ['[WARNING] `--test-folder` option will be ignored.\nbasic... OK\n', 0]);
+        ['basic... OK\n[WARNING] `--test-folder` option will be ignored.\n', 0]);
     removeFolder('yolo'); // The folder is generated because failure and image folders use it.
 
     // with just one file through "--test-file" options (the extra file should be ignored)
@@ -95,7 +95,7 @@ async function checkRunTestCode(x, func) {
         func,
         ['test', 'let x = true;'],
         [
-            'test... \nFAILED\n[ERROR] line 1: Unexpected `x` when parsing command (after `let`)\n',
+            'test... FAILED\n[ERROR] line 1: Unexpected `x` when parsing command (after `let`)\n',
             1,
         ],
     );
@@ -113,7 +113,7 @@ assert-text: ("#button", "Go somewhere els!")`,
     options.parseArguments(['--variable', 'DOC_PATH', 'tests/html_files',
         '--test-folder', 'yolo']);
     await x.assertTry(func, ['test', 'expect-failure: false', options],
-        ['[WARNING] `--test-folder` option will be ignored.\ntest... OK\n', 0]);
+        ['test... OK\n[WARNING] `--test-folder` option will be ignored.\n', 0]);
 
     // Check a working code
     await x.assertTry(func, ['test',

@@ -1,0 +1,9 @@
+include: "utils.goml"
+
+define-function: (
+    "fail-2",
+    [],
+    block {
+        call-function: ("fail", {})
+    },
+)

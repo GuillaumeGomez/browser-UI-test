@@ -1,10 +1,9 @@
 => Running 1 doc-ui test...
-wait-for-size... 
-`tests/ui/wait-for-size.goml`: FAILED
-[ERROR] `tests/ui/wait-for-size.goml` line 14: Error: The following checks still fail: [expected a width of `33`, found `36`]: for command `wait-for-size: ("#js-change-size", {"height": 26, "width": 33})`
+wait-for-size... FAILED
+[ERROR] line 14: Error: The following checks still fail: [expected a width of `33`, found `36`]: for command `wait-for-size: ("#js-change-size", {"height": 26, "width": 33})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/wait-for-size.goml` line 17: The following errors happened: [expected a width of `33`, found `36`]: for command `assert-size: ("#js-change-size", {"height": 26, "width": 33})`
+[ERROR] line 17: The following errors happened: [expected a width of `33`, found `36`]: for command `assert-size: ("#js-change-size", {"height": 26, "width": 33})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/wait-for-size.goml` line 20: Error: The following checks still fail: [expected a width of `33`, found `36`] (on the element number 0): for command `wait-for-size: ("#js-change-size", {"height": 26, "width": 33}, ALL)`
+[ERROR] line 20: Error: The following checks still fail: [expected a width of `33`, found `36`] (on the element number 0): for command `wait-for-size: ("#js-change-size", {"height": 26, "width": 33}, ALL)`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out
