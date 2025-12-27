@@ -1,0 +1,8 @@
+=> Running 1 doc-ui test...
+failure-from-include-2... 
+`tests/ui/failure-from-include-2.goml`: FAILED
+[ERROR] `tests/ui/auxiliary/utils.goml` line 6
+    from `tests/ui/failure-from-include-2.goml` line 7
+    from `tests/ui/failure-from-include-2.goml` line 4: The following errors happened: [Unknown document property `"sakdaksdas"`]: for command `assert-document-property: {"sakdaksdas": "sndfsndds"}`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

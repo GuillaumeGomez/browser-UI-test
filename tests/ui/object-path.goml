@@ -14,7 +14,7 @@ assert-property: (
     "body",
     {"offsetWidth"."whatever": 2},
 )
-//~^^^^ ERROR: [expected `2` for property `"offsetWidth"."whatever"`, found `undefined`]
+//~^^^^ ERROR: [Unknown property `"offsetWidth"."whatever"`]
 // Should not fail.
 assert-property: ("body", {"firstElementChild"."innerTe": null, "offsetWidth2": null})
 
@@ -35,7 +35,7 @@ assert-document-property: {
     "body"."firstElementChild"."innerText": "Another page",
     "body"."offsetWidth": "200",
 }
-//~^^^^ ERROR: [expected `Another page` for document property `body,firstElementChild,innerText`, found `Another page!`; expected `200` for document property `offsetWidth`, found `undefined`]
+//~^^^^ ERROR: [expected `Another page` for document property `body,firstElementChild,innerText`, found `Another page!`; expected `200` for document property `body,offsetWidth`, found `1000`]
 // Should not fail.
 assert-document-property: {
     "body"."firstElementChild"."innerText": "Another page!",
@@ -43,7 +43,7 @@ assert-document-property: {
 }
 // Should fail (check that trying to access "whatever" from "offsetWidth", a number, should not crash).
 assert-document-property: { "body"."offsetWidth"."whatever": 2 }
-//~^ ERROR: [expected `2` for document property `body,offsetWidth,whatever`, found `undefined`]
+//~^ ERROR: [Unknown document property `"body"."offsetWidth"."whatever"`]
 // Should not fail.
 assert-document-property: { "body"."firstElementChild"."innerTe": null, "offsetWidth2": null}
 
@@ -79,7 +79,8 @@ assert-window-property: {
 }
 // Should fail (check that trying to access "whatever" from "offsetWidth", a number, should not crash).
 assert-window-property: { "document"."body"."offsetWidth"."whatever": 2 }
-//~^: [expected `2` for window property `document,body,offsetWidth,whatever`, found `undefined`]
+//~^ ERROR: [Unknown window property `"document"."body"."offsetWidth"."whatever"`]
+
 // Should not fail.
 assert-window-property: {
     "document"."body"."firstElementChild"."innerTe": null,

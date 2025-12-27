@@ -346,6 +346,7 @@ class Assert {
         } catch (err) {
             print(`Failed to run \`${file}\``);
             // `print` doesn't display the stack trace of the error so we need to use `console.log`.
+            // eslint-disable-next-line no-console
             console.log(err);
             this._incrError();
             return false;

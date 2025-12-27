@@ -1,0 +1,4 @@
+include: "auxiliary/utils.goml"
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+
+call-function: ("fail", {}) //~ ERROR: Unknown document property

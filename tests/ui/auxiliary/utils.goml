@@ -1,0 +1,8 @@
+define-function: (
+    "fail",
+    [],
+    block {
+        // Will alway fail.
+        assert-document-property: {"sakdaksdas": "sndfsndds"}
+    },
+)
