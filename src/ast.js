@@ -33,6 +33,7 @@ function replaceVariable(elem, variables, functionArgs, forceVariableAsString, e
     if (associatedValue === null) {
         const e = makeError(
             `variable \`${variableName}\` not found in options nor environment`, lineNumber);
+        errors.push(e);
         return new VariableElement(variableName, startPos, endPos, elem.fullText, lineNumber, e);
     }
     if (associatedValue instanceof Element) {

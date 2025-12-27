@@ -1,6 +1,5 @@
 => Running 1 doc-ui test...
-wait-for-text... 
-`tests/ui/wait-for-text.goml`: FAILED
-[ERROR] `tests/ui/wait-for-text.goml` line 12: Error: The following checks still fail: [`hello` isn't equal to `hello bis`]: for command `wait-for-text: ("#js-call-attr", "hello bis")`
+wait-for-text... FAILED
+[ERROR] line 12: Error: The following checks still fail: [`hello` isn't equal to `hello bis`]: for command `wait-for-text: ("#js-call-attr", "hello bis")`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

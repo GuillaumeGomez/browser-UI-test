@@ -1,6 +1,5 @@
 => Running 1 doc-ui test...
-assert-clipboard... 
-`tests/ui/assert-clipboard.goml`: FAILED
-[ERROR] `tests/ui/assert-clipboard.goml` line 21: Error: All checks still succeed: for command `wait-for-clipboard-false: "hello"`
+assert-clipboard... FAILED
+[ERROR] line 21: Error: All checks still succeed: for command `wait-for-clipboard-false: "hello"`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

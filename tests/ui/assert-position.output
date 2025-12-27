@@ -1,12 +1,11 @@
 => Running 1 doc-ui test...
-assert-position... 
-`tests/ui/assert-position.goml`: FAILED
-[ERROR] `tests/ui/assert-position.goml` line 3: The following errors happened: [different Y values: 24 (or 24) != 29]: for command `assert-position: ("#the-input", {"x": 0, "y": 29})`
+assert-position... FAILED
+[ERROR] line 3: The following errors happened: [different Y values: 24 (or 24) != 29]: for command `assert-position: ("#the-input", {"x": 0, "y": 29})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/assert-position.goml` line 5: The following errors happened: [different X values: 0 (or 0) != 1; different Y values: 24 (or 24) != 2]: for command `assert-position: ("#the-input", {"x": 1, "y": 2})`
+[ERROR] line 5: The following errors happened: [different X values: 0 (or 0) != 1; different Y values: 24 (or 24) != 2]: for command `assert-position: ("#the-input", {"x": 1, "y": 2})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/assert-position.goml` line 8: The following errors happened: [same X values (whereas it shouldn't): 0 (or 0) != 0]: for command `assert-position-false: ("#the-input", {"x": 0, "y": 29})`
+[ERROR] line 8: The following errors happened: [same X values (whereas it shouldn't): 0 (or 0) != 0]: for command `assert-position-false: ("#the-input", {"x": 0, "y": 29})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/assert-position.goml` line 11: The following errors happened: [different X values: 0 (or 0) != 1; different Y values: 24 (or 24) != 2]: for command `assert-position: ("#the-input::after", {"x": 1, "y": 2})`
+[ERROR] line 11: The following errors happened: [different X values: 0 (or 0) != 1; different Y values: 24 (or 24) != 2]: for command `assert-position: ("#the-input::after", {"x": 1, "y": 2})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

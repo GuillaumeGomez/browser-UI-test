@@ -1,10 +1,9 @@
 => Running 1 doc-ui test...
-pseudo-element-selection... 
-`tests/ui/pseudo-element-selection.goml`: FAILED
-[ERROR] `tests/ui/pseudo-element-selection.goml` line 5: `#before-1:after` not found: for command `assert-css: ("#before-1:after", {"content": '"a"'})`
+pseudo-element-selection... FAILED
+[ERROR] line 5: `#before-1:after` not found: for command `assert-css: ("#before-1:after", {"content": '"a"'})`
     at <file://$CURRENT_DIR/tests/html_files/change-page.html>
-[ERROR] `tests/ui/pseudo-element-selection.goml` line 9: `#before:after` not found: for command `assert-css: ("#before:after", {"content": '"b"'})`
+[ERROR] line 9: `#before:after` not found: for command `assert-css: ("#before:after", {"content": '"b"'})`
     at <file://$CURRENT_DIR/tests/html_files/change-page.html>
-[ERROR] `tests/ui/pseudo-element-selection.goml` line 13: `#before-:after` not found: for command `assert-css: ("#before-:after", {"content": '"c"'})`
+[ERROR] line 13: `#before-:after` not found: for command `assert-css: ("#before-:after", {"content": '"c"'})`
     at <file://$CURRENT_DIR/tests/html_files/change-page.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

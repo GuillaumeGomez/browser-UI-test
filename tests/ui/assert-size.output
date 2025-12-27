@@ -1,10 +1,9 @@
 => Running 1 doc-ui test...
-assert-size... 
-`tests/ui/assert-size.goml`: FAILED
-[ERROR] `tests/ui/assert-size.goml` line 4: The following errors happened: [expected a height of `650`, found `24`]: for command `assert-size: ("header", {"width": 670, "height": 650})`
+assert-size... FAILED
+[ERROR] line 4: The following errors happened: [expected a height of `650`, found `24`]: for command `assert-size: ("header", {"width": 670, "height": 650})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/assert-size.goml` line 8: The following errors happened: [width is equal to `670`; height is equal to `24`]: for command `assert-size-false: ("header", {"width": 670, "height": 24})`
+[ERROR] line 8: The following errors happened: [width is equal to `670`; height is equal to `24`]: for command `assert-size-false: ("header", {"width": 670, "height": 24})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/assert-size.goml` line 13: The following errors happened: [expected a width of `670`, found `38`] (on the element number 0): for command `assert-size: ("button", {"width": 670, "height": 21}, ALL)`
+[ERROR] line 13: The following errors happened: [expected a width of `670`, found `38`] (on the element number 0): for command `assert-size: ("button", {"width": 670, "height": 21}, ALL)`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

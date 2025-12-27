@@ -1,23 +1,22 @@
 => Running 1 doc-ui test...
-assert-null... 
-`tests/ui/assert-null.goml`: FAILED
-[ERROR] `tests/ui/assert-null.goml` line 7: The following errors happened (for selector `.content`): [Expected attribute `nb-value` to not exist, found: `12`]: for command `assert-attribute: (".content", {"nb-value": null})`
+assert-null... FAILED
+[ERROR] line 7: The following errors happened (for selector `.content`): [Expected attribute `nb-value` to not exist, found: `12`]: for command `assert-attribute: (".content", {"nb-value": null})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/assert-null.goml` line 10: The following errors happened (for selector `header`): [Attribute named `whatever` doesn't exist]: for command `assert-attribute-false: ("header", {"whatever": null})`
+[ERROR] line 10: The following errors happened (for selector `header`): [Attribute named `whatever` doesn't exist]: for command `assert-attribute-false: ("header", {"whatever": null})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[WARNING] `tests/ui/assert-null.goml` line 21: Special checks (CONTAINS) will be ignored for `null`
-[WARNING] `tests/ui/assert-null.goml` line 23: Special checks (CONTAINS) will be ignored for `null`
-[ERROR] `tests/ui/assert-null.goml` line 31: The following errors happened (for selector `header`): [Property named `"bgColor"` doesn't exist]: for command `assert-property-false: ("header", {"bgColor": null})`
+[WARNING] line 21: Special checks (CONTAINS) will be ignored for `null`
+[WARNING] line 23: Special checks (CONTAINS) will be ignored for `null`
+[ERROR] line 31: The following errors happened (for selector `header`): [Property named `"bgColor"` doesn't exist]: for command `assert-property-false: ("header", {"bgColor": null})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/assert-null.goml` line 33: The following errors happened (for selector `header`): [Property named `"yolo"` doesn't exist]: for command `assert-property-false: ("header", {"yolo": null})`
+[ERROR] line 33: The following errors happened (for selector `header`): [Property named `"yolo"` doesn't exist]: for command `assert-property-false: ("header", {"yolo": null})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[WARNING] `tests/ui/assert-null.goml` line 44: Special checks (CONTAINS) will be ignored for `null`
-[WARNING] `tests/ui/assert-null.goml` line 46: Special checks (CONTAINS) will be ignored for `null`
-[ERROR] `tests/ui/assert-null.goml` line 49: The following errors happened (for selector `header`): [Unknown property `"whatever"`] (on the element number 0): for command `assert-property: ("header", {"whatever": "a"}, ALL)`
+[WARNING] line 44: Special checks (CONTAINS) will be ignored for `null`
+[WARNING] line 46: Special checks (CONTAINS) will be ignored for `null`
+[ERROR] line 49: The following errors happened (for selector `header`): [Unknown property `"whatever"`] (on the element number 0): for command `assert-property: ("header", {"whatever": "a"}, ALL)`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/assert-null.goml` line 56: The following errors happened: [Expected property `"bgColor"` to not exist, found: ``]: for command `assert-document-property: {"bgColor": null}`
+[ERROR] line 56: The following errors happened: [Expected property `"bgColor"` to not exist, found: ``]: for command `assert-document-property: {"bgColor": null}`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/assert-null.goml` line 59: The following errors happened: [Property named `"yolo"` doesn't exist]: for command `assert-document-property-false: {"yolo": null}`
+[ERROR] line 59: The following errors happened: [Property named `"yolo"` doesn't exist]: for command `assert-document-property-false: {"yolo": null}`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[WARNING] `tests/ui/assert-null.goml` line 63: Special checks (CONTAINS) will be ignored for `null`
+[WARNING] line 63: Special checks (CONTAINS) will be ignored for `null`
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

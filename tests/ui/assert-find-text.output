@@ -1,8 +1,7 @@
 => Running 1 doc-ui test...
-assert-find-text... 
-`tests/ui/assert-find-text.goml`: FAILED
-[ERROR] `tests/ui/assert-find-text.goml` line 9: Error: Didn't find text `another`: for command `assert-find-text: ("another", {"case-sensitive": true})`
+assert-find-text... FAILED
+[ERROR] line 9: Error: Didn't find text `another`: for command `assert-find-text: ("another", {"case-sensitive": true})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/assert-find-text.goml` line 11: Error: Found text `Another`: for command `assert-find-text-false: ("Another", {"case-sensitive": true})`
+[ERROR] line 11: Error: Found text `Another`: for command `assert-find-text-false: ("Another", {"case-sensitive": true})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

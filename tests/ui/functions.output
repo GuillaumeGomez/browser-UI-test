@@ -1,27 +1,26 @@
 => Running 1 doc-ui test...
-functions... 
-`tests/ui/functions.goml`: FAILED
-[ERROR] `tests/ui/functions.goml` line 8
+functions... FAILED
+[ERROR] line 8
     from `tests/ui/functions.goml` line 22: The following errors happened (for selector `header`): [expected `a` for key `background-color`, found `rgb(17, 17, 17)`; expected `y` for key `color`, found `rgb(255, 255, 255)`]: for command `assert-css: ("header", {"background-color": |background_color|, "color": |color|})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/functions.goml` line 9
+[ERROR] line 9
     from `tests/ui/functions.goml` line 22: The following errors happened (for selector `header`): [expected `a` for key `color`, found `rgb(255, 255, 255)`]: for command `assert-css: ("header", |whole_check|)`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[WARNING] `tests/ui/functions.goml` line 12
+[WARNING] line 12
     from `tests/ui/functions.goml` line 22: overwriting existing `fn1` function
-[ERROR] `tests/ui/functions.goml` line 12
+[ERROR] line 12
     from `tests/ui/functions.goml` line 15
     from `tests/ui/functions.goml` line 22: The following errors happened (for selector `header`): [No attribute named `color`]: for command `assert-attribute: ("header", {"color": "blue"})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/functions.goml` line 16
+[ERROR] line 16
     from `tests/ui/functions.goml` line 22: The following errors happened (for selector `header`): [expected `red` for key `color`, found `white`]: for command `assert-css: ("header", {"color": "red"})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[WARNING] `tests/ui/functions.goml` line 31: overwriting existing `fn1` function
-[ERROR] `tests/ui/functions.goml` line 36
+[WARNING] line 31: overwriting existing `fn1` function
+[ERROR] line 36
     from `tests/ui/functions.goml` line 43: The following errors happened (for selector `header`): [expected `a` for key `background-color`, found `rgb(17, 17, 17)`]: for command `assert-css: ("header", {"background-color": |background_color|})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/functions.goml` line 38
+[ERROR] line 38
     from `tests/ui/functions.goml` line 43: The following errors happened (for selector `header`): [expected `a` for key `color`, found `rgb(255, 255, 255)`]: for command `assert-css: ("header", |whole_check|)`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/functions.goml` line 45: Missing argument "whole_check" (from command `call-function: ("fn1", {"background_color": "a", "k": {"color": "a"}})`)
+[ERROR] line 45: Missing argument "whole_check" (from command `call-function: ("fn1", {"background_color": "a", "k": {"color": "a"}})`)
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

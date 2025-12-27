@@ -1,17 +1,16 @@
 => Running 1 doc-ui test...
-include... 
-`tests/ui/include.goml`: FAILED
-[ERROR] `tests/ui/include.goml` line 4: The following errors happened: [`Another page!` isn't equal to `tadam`]: for command `assert-text: ("header", "tadam")`
+include... FAILED
+[ERROR] line 4: The following errors happened: [`Another page!` isn't equal to `tadam`]: for command `assert-text: ("header", "tadam")`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/sub/include.goml` line 3
+[ERROR] line 3
     from `tests/ui/include.goml` line 6: The following errors happened: [`Basic test!` isn't equal to `hoho`]: for command `assert-text: ("header", "hoho")`
     at <file://$CURRENT_DIR/tests/html_files/basic.html>
-[ERROR] `tests/ui/sub/include.goml` line 5
+[ERROR] line 5
     from `tests/ui/include.goml` line 6: The following errors happened: [`` isn't equal to `hoho`]: for command `assert-text: ("header", "hoho")`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/include.goml` line 9: The following errors happened: [`` isn't equal to `tadam`]: for command `assert-text: ("header", "tadam")`
+[ERROR] line 9: The following errors happened: [`` isn't equal to `tadam`]: for command `assert-text: ("header", "tadam")`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/sub/func.goml` line 5
+[ERROR] line 5
     from `tests/ui/include.goml` line 14: `#does_not-exist` not found: for command `click: "#does_not-exist"`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

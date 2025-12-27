@@ -1,5 +1,4 @@
 => Running 1 doc-ui test...
-screenshot-info... 
-[INFO] `tests/ui/screenshot-info.goml` line 4: Generating screenshot for CSS selector `#js-call-attr` into `tests/ui/tadam.png`
-`tests/ui/screenshot-info.goml`: OK
+[INFO] line 4: Generating screenshot for CSS selector `#js-call-attr` into `tests/ui/tadam.png`
+screenshot-info... OK
 <= doc-ui tests done: 1 succeeded, 0 failed, 0 filtered out

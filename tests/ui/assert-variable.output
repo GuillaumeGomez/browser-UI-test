@@ -1,10 +1,9 @@
 => Running 1 doc-ui test...
-assert-variable... 
-`tests/ui/assert-variable.goml`: FAILED
-[ERROR] `tests/ui/assert-variable.goml` line 5: The following errors happened: [`hello` is not a number (for NEAR check)]: for command `assert-variable: (variable_name, 10, NEAR)`
+assert-variable... FAILED
+[ERROR] line 5: The following errors happened: [`hello` is not a number (for NEAR check)]: for command `assert-variable: (variable_name, 10, NEAR)`
     at <about:blank>
-[ERROR] `tests/ui/assert-variable.goml` line 10: The following errors happened: [`10` is within 1 of `9` (for NEAR check)]: for command `assert-variable-false: (variable_name, 9, NEAR)`
+[ERROR] line 10: The following errors happened: [`10` is within 1 of `9` (for NEAR check)]: for command `assert-variable-false: (variable_name, 9, NEAR)`
     at <about:blank>
-[ERROR] `tests/ui/assert-variable.goml` line 14: The following errors happened: [`10` is not within 1 of `8` (for NEAR check)]: for command `assert-variable: (variable_name, 8, NEAR)`
+[ERROR] line 14: The following errors happened: [`10` is not within 1 of `8` (for NEAR check)]: for command `assert-variable: (variable_name, 8, NEAR)`
     at <about:blank>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

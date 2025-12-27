@@ -1,36 +1,35 @@
 => Running 1 doc-ui test...
-compare... 
-`tests/ui/compare.goml`: FAILED
-[ERROR] `tests/ui/compare.goml` line 3: clientHeight: `24` !== `6`: for command `compare-elements-property: ("header", "#the-input", ["clientHeight"])`
+compare... FAILED
+[ERROR] line 3: clientHeight: `24` !== `6`: for command `compare-elements-property: ("header", "#the-input", ["clientHeight"])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/compare.goml` line 10: assert didn't fail: for command `compare-elements-property-false: ("#useless\.input", "#the-input", ["clientHeight"])`
+[ERROR] line 10: assert didn't fail: for command `compare-elements-property-false: ("#useless\.input", "#the-input", ["clientHeight"])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[WARNING] `tests/ui/compare.goml` line 21: Delta is 0 for "x", maybe try to use `compare-elements-position` instead?
-[ERROR] `tests/ui/compare.goml` line 23: different Y values: 24 != 34: for command `compare-elements-position: ("#the-input", "#useless\.input", ["y"])`
+[WARNING] line 21: Delta is 0 for "x", maybe try to use `compare-elements-position` instead?
+[ERROR] line 23: different Y values: 24 != 34: for command `compare-elements-position: ("#the-input", "#useless\.input", ["y"])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/compare.goml` line 25: different Y values: 102 != 34: for command `compare-elements-position: ("#another-one::before", "#useless\.input", ["y", "x"])`
+[ERROR] line 25: different Y values: 102 != 34: for command `compare-elements-position: ("#another-one::before", "#useless\.input", ["y", "x"])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/compare.goml` line 27: comparison didn't fail: for command `compare-elements-position-false: ("#the-input", "#useless\.input", ["x"])`
+[ERROR] line 27: comparison didn't fail: for command `compare-elements-position-false: ("#the-input", "#useless\.input", ["x"])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/compare.goml` line 29: delta Y values too large: 68 > 1: for command `compare-elements-position-near: ("#another-one::before", "#useless\.input", {"y": 1, "x": 2})`
+[ERROR] line 29: delta Y values too large: 68 > 1: for command `compare-elements-position-near: ("#another-one::before", "#useless\.input", {"y": 1, "x": 2})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/compare.goml` line 31: comparison didn't fail: for command `compare-elements-position-near-false: ("#the-input", "#useless\.input", {"x": 1, "y": 12})`
+[ERROR] line 31: comparison didn't fail: for command `compare-elements-position-near-false: ("#the-input", "#useless\.input", {"x": 1, "y": 12})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/compare.goml` line 38: assert didn't fail: for command `compare-elements-css-false: ("#the-input", "#useless\.input", ["width"])`
+[ERROR] line 38: assert didn't fail: for command `compare-elements-css-false: ("#the-input", "#useless\.input", ["width"])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/compare.goml` line 40: CSS property `width` did not match: 1000px != 37.5px: for command `compare-elements-css: ("#the-input", "#js-call", ["width"])`
+[ERROR] line 40: CSS property `width` did not match: 1000px != 37.5px: for command `compare-elements-css: ("#the-input", "#js-call", ["width"])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/compare.goml` line 45: assert didn't fail: for command `compare-elements-attribute-false: (".content .right", ".content .left", ["data-whatever"])`
+[ERROR] line 45: assert didn't fail: for command `compare-elements-attribute-false: (".content .right", ".content .left", ["data-whatever"])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/compare.goml` line 47: Attribute `class` isn't equal: `right` !== `left`: for command `compare-elements-attribute: (".content .right", ".content .left", ["class"])`
+[ERROR] line 47: Attribute `class` isn't equal: `right` !== `left`: for command `compare-elements-attribute: (".content .right", ".content .left", ["class"])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[WARNING] `tests/ui/compare.goml` line 54: Delta is 0 for "width", maybe try to use `compare-elements-size` instead?
-[ERROR] `tests/ui/compare.goml` line 56: comparison didn't fail: for command `compare-elements-size-false: (".content .right", ".content .left", ["width"])`
+[WARNING] line 54: Delta is 0 for "width", maybe try to use `compare-elements-size` instead?
+[ERROR] line 56: comparison didn't fail: for command `compare-elements-size-false: (".content .right", ".content .left", ["width"])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/compare.goml` line 58: comparison didn't fail: for command `compare-elements-size-near-false: (".content .right", ".content .left", {"width": 1})`
+[ERROR] line 58: comparison didn't fail: for command `compare-elements-size-near-false: (".content .right", ".content .left", {"width": 1})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/compare.goml` line 60: heights don't match: 14 != 1: for command `compare-elements-size: ("#another-one::before", ".content .left span", ["height"])`
+[ERROR] line 60: heights don't match: 14 != 1: for command `compare-elements-size: ("#another-one::before", ".content .left span", ["height"])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
-[ERROR] `tests/ui/compare.goml` line 62: delta for height values too large: 13 > 1: for command `compare-elements-size-near: ("#another-one::before", ".content .left span", {"height": 1})`
+[ERROR] line 62: delta for height values too large: 13 > 1: for command `compare-elements-size-near: ("#another-one::before", ".content .left span", {"height": 1})`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out
