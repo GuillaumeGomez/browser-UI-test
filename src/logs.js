@@ -102,6 +102,7 @@ class Logs {
             'level': level,
             'message': newLog,
             'showFile': fileInfo.showFile,
+            'testFile': getTestFile(fileInfo),
             url,
         });
     }
@@ -283,7 +284,9 @@ class Logs {
 
             // Now we display logs that might need to be displayed, like warnings and errors.
             for (const test of this.ranTests) {
-                const messages = this.logs.filter(log => log.file === test && log.level !== 'info');
+                const messages = this.logs.filter(
+                    log => log.testFile === test && log.level !== 'info',
+                );
                 if (messages.length !== 0) {
                     process.stdout.write(`======== ${test} ========${EOL}${EOL}`);
                     process.stdout.write(convertMessagesFromJson(messages));

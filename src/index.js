@@ -653,7 +653,7 @@ async function innerRunTests(logs, options, browser, showNbThreads) {
             `${extra}<= doc-ui tests done: ${successes} succeeded, ${total - successes} \
 failed, ${filteredOut} filtered out${extra}`);
     } catch (error) {
-        logs.conclude(`An exception occured: ${error.message}${EOL}== STACKTRACE ==${EOL}` +
+        logs.conclude(`An exception occurred: ${error.message}${EOL}== STACKTRACE ==${EOL}` +
             `${new Error().stack}${EOL}`);
         return 1;
     }
