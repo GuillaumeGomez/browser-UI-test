@@ -67,6 +67,12 @@ async function compareOutput(x) {
         if (fs.lstatSync(curPath).isDirectory() || !curPath.endsWith('.goml')) {
             return;
         }
+        if (x.extraArgs.length !== 0 &&
+            x.extraArgs.findIndex(arg => file.indexOf(arg) !== -1) === -1
+        ) {
+            // We filter out arguments since we only want to run a few of them...
+            return;
+        }
         filesToTest.push(curPath.toString());
     });
 
@@ -80,11 +86,6 @@ async function compareOutput(x) {
     const browser = await utils.loadPuppeteer(options);
 
     for (const file of filesToTest) {
-        if (x.extraArgs.length !== 0 &&
-            x.extraArgs.findIndex(arg => file.indexOf(arg) !== -1) === -1) {
-            // We filter out arguments since we only want to run a few of them...
-            continue;
-        }
         const outputFile = file.replace('.goml', '.output');
         let output;
 
@@ -197,9 +198,13 @@ async function checkUi(x) {
         checkImageFileForTest(
             x, 'tests/ui/screenshot-on-failure-failure.png', 'screenshot-on-failure.goml');
 
-        await x.startTestSuite('compact display-format', true, async() => {
-            await checkCompactDisplayFormat(x);
-        });
+        if (x.extraArgs.length !== 0) {
+            print('Tests filtering detected. Skipping compact display-format test');
+        } else {
+            await x.startTestSuite('compact display-format', true, async() => {
+                await checkCompactDisplayFormat(x);
+            });
+        }
 
         const errors = x.getTotalErrors();
         print('');
