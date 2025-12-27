@@ -229,7 +229,11 @@ function parseInclude(parser) {
     const dirPath = path.dirname(parser.get_current_context().ast.absolutePath);
     const ast = new AstLoader(includePath, dirPath);
     if (ast.hasErrors()) {
-        return {'errors': ast.errors};
+        if (ast.errors.length === 1) {
+            return {'error': ast.errors[0].message};
+        }
+        const errors = ast.errors.map(e => e.message);
+        return {'error': `Errors occurred while loading \`${includePath}\`: ${errors}`};
     }
     parser.pushNewContext({
         'ast': ast,

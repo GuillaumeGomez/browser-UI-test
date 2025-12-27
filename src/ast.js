@@ -14,16 +14,17 @@ const path = require('path');
 
 const savedAsts = new Map();
 
-function replaceVariable(elem, variables, functionArgs, forceVariableAsString, errors) {
-    const makeError = (message, line) => {
-        errors.push({
-            'message': message,
-            'isFatal': true,
-            'line': {
-                'line': line,
-            },
-        });
+function makeError(message, line) {
+    return {
+        'message': message,
+        'isFatal': true,
+        'line': line === null ? null : {
+            'line': line,
+        },
     };
+}
+
+function replaceVariable(elem, variables, functionArgs, forceVariableAsString, errors) {
     const variableName = elem.value;
     const lineNumber = elem.line;
     const startPos = elem.startPos;
@@ -158,6 +159,8 @@ class AstLoader {
     constructor(filePath, currentDir, content = null) {
         this.filePath = filePath;
         this.absolutePath = null;
+        this.errors = [];
+        this.commands = [];
         if (content === null) {
             if (currentDir === null || path.isAbsolute(filePath)) {
                 this.absolutePath = path.normalize(filePath);
@@ -171,13 +174,20 @@ class AstLoader {
                 this.errors = ast.errors;
                 return;
             }
-            this.text = utils.readFile(this.absolutePath);
+            try {
+                this.text = utils.readFile(this.absolutePath);
+            } catch (err) {
+                this.errors.push(makeError(
+                    `File \`${filePath}\` (\`${this.absolutePath}\`) does not exist`,
+                    null,
+                ));
+                this.text = '';
+                return;
+            }
         } else {
             this.text = content;
         }
         const parser = new Parser(this.text);
-        this.commands = [];
-        this.errors = [];
         // eslint-disable-next-line no-constant-condition
         while (true) {
             const ret = parser.parseNextCommand();
