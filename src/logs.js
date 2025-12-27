@@ -30,6 +30,19 @@ function convertMessagesFromJson(messages) {
     return messages.map(msg => convertMessageFromJson(msg)).join('');
 }
 
+// Gets the real test file from the `fileInfo`: if there is a backtrace, then we get its last item
+// as it will be the "real" test file.
+function getTestFile(fileInfo) {
+    let file = fileInfo.file;
+    if (fileInfo.line !== null
+        && fileInfo.line !== undefined
+        && Array.isArray(fileInfo.line.backtrace)
+    ) {
+        file = fileInfo.line.backtrace[fileInfo.line.backtrace.length - 1].file;
+    }
+    return file;
+}
+
 class Logs {
     constructor(showLogs, options) {
         this.logs = [];
@@ -150,11 +163,14 @@ class Logs {
         process.stdout.write(` (${this.ranTests.length}/${this.nbTests})${EOL}`);
     }
 
-    updateCompactDisplay(file, success) {
+    updateCompactDisplay(fileInfo, success) {
         if (!this.isCompactDisplay()) {
             return;
         }
         process.stdout.write(success ? '.' : 'F');
+
+        const file = getTestFile(fileInfo);
+
         this.ranTests.push(file);
         if (this.ranTests.length % 50 === 0) {
             this.displayCompactFileInfo();
@@ -174,9 +190,12 @@ class Logs {
         const copy = JSON.parse(JSON.stringify(fileInfo));
         copy.showLogLevel = false;
         copy.line = null;
+        // We need to update the file as we're not interested by the one where the error occurred
+        // but by the test file which started all this.
+        copy.file = getTestFile(fileInfo);
         if (this.isCompactDisplay()) {
             copy.showFile = false;
-            this.updateCompactDisplay(copy.file, false);
+            this.updateCompactDisplay(copy, false);
             if (!fromLogs && message.length > 0) {
                 this.error(fileInfo, message, { fromLogs: true });
             }
@@ -187,7 +206,7 @@ class Logs {
 
     success(fileInfo, message) {
         if (!this.jsonOutput) {
-            this.updateCompactDisplay(fileInfo.file, true);
+            this.updateCompactDisplay(fileInfo, true);
             fileInfo.showFile = false;
         }
         fileInfo.showLogLevel = false;
