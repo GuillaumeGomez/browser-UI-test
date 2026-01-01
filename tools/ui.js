@@ -7,7 +7,7 @@ const utils = require('../src/utils.js');
 utils.print = function print() {}; // overwriting the print function to avoid the print
 
 const {runTests, Options} = require('../src/index.js');
-const {Assert, plural, print} = require('./utils.js');
+const {Assert, print} = require('./utils.js');
 
 async function wrapRunTests(browser, options = new Options()) {
     options.screenshotComparison = false;
@@ -252,19 +252,8 @@ async function checkCompactDisplayFormat(x) {
 
 async function checkUi(x) {
     return await x.startTestSuite('ui items', false, async() => {
-        print('=> Starting UI tests...');
-        print('');
-
-        await x.startTestSuite('ui-test', true, async(level, suiteName) => {
-            try {
-                await compareOutput(x);
-                print(`<${'='.repeat(level + 1)} "${suiteName}": ${x.getTotalErrors()} ` +
-                    `${plural('error', x.getTotalErrors())} (in ${x.getTotalRanTests()} ` +
-                    `${plural('test', x.getTotalRanTests())})`);
-            } catch (err) {
-                print(`<== "ui-test" failed: ${err}\n${err.stack}`);
-                return false;
-            }
+        await x.startTestSuite('ui-test', true, async(_level, _suiteName) => {
+            await compareOutput(x);
         });
 
         checkImageFileForTest(x, 'tests/ui/tadam.png', 'screenshot-info.goml');
@@ -285,11 +274,6 @@ async function checkUi(x) {
         } else {
             print('`failed-test-name` test filtered out');
         }
-
-        const errors = x.getTotalErrors();
-        print('');
-        print(`<= Ending ${x.getTotalRanTests()} ui ${plural('test', x.getTotalRanTests())} with ` +
-            `${x.getTotalErrors()} ${plural('error', errors)}`);
     });
 }
 

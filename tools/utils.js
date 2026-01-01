@@ -375,6 +375,14 @@ class Assert {
         if (errorOccurred === true) {
             this._incrError();
         }
+
+        if (printMsg === true) {
+            print('');
+            print(`<${'='.repeat(this.testSuite.length)} Ending ${this.getTotalRanTests()} \
+${plural('test', this.getTotalRanTests())} with ${this.getTotalErrors()} \
+${plural('error', this.getTotalErrors())}`);
+        }
+
         return {totalRanTests, totalErrors};
     }
 

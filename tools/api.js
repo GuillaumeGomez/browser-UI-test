@@ -3147,10 +3147,6 @@ async function checkCommands(x) {
                     }
                 });
             }
-
-            print('');
-            print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} ` +
-                `with ${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
         });
 
         print('');
@@ -3161,9 +3157,6 @@ async function checkCommands(x) {
             checkCommandsSets(x, parserFuncs.FATAL_ERROR_COMMANDS);
             checkCommandsSets(x, parserFuncs.NO_INTERACTION_COMMANDS);
             checkCommandsSets(x, parserFuncs.BEFORE_GOTO);
-
-            print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} ` +
-                `with ${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
         });
 
         print('');
@@ -3182,9 +3175,6 @@ async function checkCommands(x) {
             if (x.getTotalRanTests() === 0) {
                 throw 'No command found!';
             }
-
-            print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} ` +
-                `with ${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
         });
     });
 }

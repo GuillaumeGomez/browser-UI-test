@@ -3,7 +3,7 @@ const path = require('path');
 const { ORDERS } = require('../src/commands.js');
 const docFile = path.join(__dirname, '../goml-script.md');
 
-const {Assert, plural, print} = require('./utils.js');
+const {Assert, print} = require('./utils.js');
 
 function compareCommands(x, commands) {
     print(`Checking ${commands.length} commands from documentation (\
@@ -80,11 +80,6 @@ async function checkDoc(x = new Assert()) {
         if (x.getTotalRanTests() === 0) {
             x.addError('No commands found in doc...');
         }
-
-        const errors = x.getTotalErrors();
-        print('');
-        print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
-            `${errors} ${plural('error', errors)}`);
     });
 }
 

@@ -508,9 +508,6 @@ const TO_CHECK = [
 
 async function checkExportedItems(x = new Assert()) {
     return await x.startTestSuite('exported items', false, async() => {
-        print('=> Starting EXPORTED ITEMS tests...');
-        print('');
-
         for (let i = 0; i < TO_CHECK.length; ++i) {
             await x.startTestSuite(TO_CHECK[i].name, true, async(level, suiteName) => {
                 try {
@@ -524,10 +521,6 @@ async function checkExportedItems(x = new Assert()) {
                 }
             });
         }
-
-        print('');
-        print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
-            `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
     });
 }
 
