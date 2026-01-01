@@ -1,7 +1,7 @@
 const process = require('process');
 const fs = require('fs');
 const path = require('path');
-const {Assert, plural, print} = require('./utils.js');
+const {Assert, print} = require('./utils.js');
 
 const utils = require('../src/utils.js');
 utils.print = function() {}; // overwriting the print function to avoid the print
@@ -39,15 +39,9 @@ async function runAllTests() {
             try {
                 await tmp['check'](x);
             } catch (err) {
-                x._incrError();
-                print(`<== \`${files[i]}\` failed: ${err}\n${err.stack}`);
+                x.addError(`\`${files[i]}\` failed: ${err}\n${err.stack}`);
             }
-            print('');
         }
-
-        print('');
-        print(`< Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
-            `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
     });
 }
 

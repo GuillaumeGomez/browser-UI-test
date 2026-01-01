@@ -1,7 +1,7 @@
 const process = require('process');
 process.env.debug_tests = '1'; // We enable this to get all items from `commands.js`.
 
-const {Assert, plural, print} = require('./utils.js');
+const {Assert, print} = require('./utils.js');
 const { getFileInfo } = require('../src/utils.js');
 const { parseTest, BEFORE_GOTO } = require('../src/commands.js');
 const { Options } = require('../src/options.js');
@@ -127,21 +127,10 @@ async function checkExamples(x) {
 
         const files = getAllFiles(path.join(__dirname, '..'), 0);
         for (const file of files) {
-            await x.startTestSuite(file, true, async(level, suiteName) => {
-                try {
-                    checkFileExamples(x, file);
-                    print(`<${'='.repeat(level + 1)} "${suiteName}": ${x.getTotalErrors()} ` +
-                        `${plural('error', x.getTotalErrors())} (in ${x.getTotalRanTests()} ` +
-                        `${plural('test', x.getTotalRanTests())})`);
-                } catch (err) {
-                    x.addError(err);
-                }
+            await x.startTestSuite(file, true, async(_level, _suiteName) => {
+                checkFileExamples(x, file);
             });
         }
-
-        print('');
-        print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
-            `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
     });
 }
 

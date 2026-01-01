@@ -2,7 +2,7 @@ const process = require('process');
 const { CommandNode } = require('../src/ast.js');
 const { ExpressionsValidator, Parser } = require('../src/parser.js');
 const CssParser = require('../src/css_parser.js').CssParser;
-const {Assert, plural, print} = require('./utils.js');
+const {Assert} = require('./utils.js');
 
 function inferredValues(text, variables = null) {
     const parser = new Parser(text);
@@ -2642,26 +2642,11 @@ const TO_CHECK = [
 
 async function checkParsers(x = new Assert()) {
     return await x.startTestSuite('parser', false, async() => {
-        print('=> Starting parser tests...');
-        print('');
-
         for (let i = 0; i < TO_CHECK.length; ++i) {
-            await x.startTestSuite(TO_CHECK[i].name, true, async(level, suiteName) => {
-                try {
-                    TO_CHECK[i].func(x);
-                    print(`<${'='.repeat(level + 1)} "${suiteName}": ${x.getTotalErrors()} ` +
-                        `${plural('error', x.getTotalErrors())} (in ${x.getTotalRanTests()} ` +
-                        `${plural('test', x.getTotalRanTests())})`);
-                } catch (err) {
-                    print(`<== "${TO_CHECK[i].name}" failed: ${err}\n${err.stack}`);
-                    return true;
-                }
+            await x.startTestSuite(TO_CHECK[i].name, true, async(_level, _suiteName) => {
+                TO_CHECK[i].func(x);
             });
         }
-
-        print('');
-        print(`<= Ending ${x.getTotalRanTests()} ${plural('test', x.getTotalRanTests())} with ` +
-            `${x.getTotalErrors()} ${plural('error', x.getTotalErrors())}`);
     });
 }
 
