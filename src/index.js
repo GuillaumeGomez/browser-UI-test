@@ -886,6 +886,7 @@ if (require.main === module) {
         'runTestCode': runTestCode,
         'runTests': runTests,
         'Options': Options,
+        'Logs': Logs,
         'loadBrowser': loadPuppeteer,
     };
     if (process.env.debug_tests === '1') {
