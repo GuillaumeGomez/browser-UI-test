@@ -42,6 +42,34 @@ function checkCssProperty(key, value, simple, computed, localErr) {
     }
 }
 
+function compareArrayLike(t1, t2) {
+    if (t1.length !== t2.length) {
+        return false;
+    }
+    for (const [index, value] of t1.entries()) {
+        if (value !== t2[index]) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function compareJson(j1, j2) {
+    for (const key of Object.keys(j1)) {
+        if (j2[key] !== j1[key]) {
+            return false;
+        }
+    }
+    for (const key of Object.keys(j2)) {
+        if (j2[key] !== j1[key]) {
+            return false;
+        }
+    }
+    return true;
+}
+
 module.exports = {
     'checkCssProperty': checkCssProperty,
+    'compareJson': compareJson,
+    'compareArrayLike': compareArrayLike,
 };

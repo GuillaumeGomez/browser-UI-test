@@ -135,6 +135,22 @@ Object paths also work with concatenation and variables:
 |var|."a" + "b"."c"
 ```
 
+## Conditions
+
+Conditions are handled through commands `if`, `else-if` and `else`. Example:
+
+```ignore
+if: ("a" != "b", block {
+    // some code
+})
+else-if: ("a" == "b", block {
+    // some code
+})
+else: block {
+    // some code
+}
+```
+
 ## Command list
 
 Those scripts aim to be as quick to write and as small as possible. To do so, they provide a short list of commands. Please note that those scripts must **always** start with a [`go-to`](#go-to) command (non-interactional commands such as `screenshot-comparison` or `expect-failure` can be use first as well).
@@ -192,6 +208,8 @@ Here's the command list:
  * [`debug`](#debug)
  * [`define-function`](#define-function)
  * [`drag-and-drop`](#drag-and-drop)
+ * [`else`](#else)
+ * [`else-if`](#else-if)
  * [`emulate`](#emulate)
  * [`emulate-media-features`](#emulate-media-features)
  * [`expect-failure`](#expect-failure)
@@ -202,6 +220,7 @@ Here's the command list:
  * [`go-to`](#go-to)
  * [`history-go-back`](#history-go-back)
  * [`history-go-forward`](#history-go-forward)
+ * [`if`](#if)
  * [`include`](#include)
  * [`javascript`](#javascript)
  * [`move-cursor-to`](#move-cursor-to)
@@ -1362,6 +1381,42 @@ drag-and-drop: ((10, 10), "#button") // move the element at (10, 10) to where "#
 drag-and-drop: ((10, 10), (20, 35)) // move the element at (10, 10) to (20, 35)
 ```
 
+#### else
+
+**else** command is the last part of the `if`/`else-if`/`else` commands suite. It runs its block if none of the previous conditions was true. It **must** come right after an `if` or an `else-if` command:
+
+```
+if: ("a" == "b", block { // condition is false so it doesn't enter the block
+    // some code
+})
+else-if: ("a" == "b", block { // condition is false so it doesn't enter the block
+    // some code
+})
+else: block { // Since none of the previous conditions was true, we enter this block
+    // some code
+}
+```
+
+#### else-if
+
+**else-if** command is a part of the `if`/`else-if`/`else` commands suite. It runs its block if none of the previous conditions was true. It **must** come right after an `if` or an `else-if` command:
+
+```
+if: ("a" == "b", block { // condition is false so it doesn't enter the block
+    // some code
+})
+else-if: ("a" == "b", block { // condition is false so it doesn't enter the block
+    // some code
+})
+// None of the previous conditions was true and this condition matched, so we enter this block
+else-if: ("a" == "a", block {
+    // some code
+})
+else: block { // The `else-if` condition was true so it doesn't enter the block
+    // some code
+}
+```
+
 #### emulate
 
 **emulate** command changes the display to look like the targetted device. **It can only be used before the first `go-to` call!** Example:
@@ -1503,6 +1558,22 @@ history-go-back: 0 // disable timeout, be careful when using it!
 ```
 
 Please note that if no `timeout` is specified, the one from the [`timeout`](#timeout) command is used.
+
+#### if
+
+**if** command is the first part of the `if`/`else-if`/`else` commands suite. It runs its block if the condition is true:
+
+```
+if: ("a" == "a", block { // Condition is true so it enters the block
+    // some code
+})
+else-if: ("a" == "a", block { // The `if` condition was true so it doesn't enter the block
+    // some code
+})
+else: block { // The `if` condition was true so it doesn't enter the block
+    // some code
+}
+```
 
 #### include
 

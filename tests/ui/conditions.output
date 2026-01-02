@@ -1,0 +1,6 @@
+=> Running 1 doc-ui test...
+conditions... FAILED
+[ERROR] line 5: The following errors happened: [`1` isn't equal to `0`]: for command `assert-variable: (f, "0")`
+[ERROR] line 23: The following errors happened: [`1` isn't equal to `0`]: for command `assert-variable: (f, "0")`
+[ERROR] line 41: The following errors happened: [`1` isn't equal to `0`]: for command `assert-variable: (f, "0")`
+<= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

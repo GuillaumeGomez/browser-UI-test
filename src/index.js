@@ -186,6 +186,11 @@ async function runInstruction(loadedInstruction, pages, extras) {
     await loadedInstruction(pages, extras);
 }
 
+function getLogExtra(context, pages) {
+    const url = context.firstGotoParsed ? pages[pages.length - 1].url() : undefined;
+    return { url };
+}
+
 async function runAllCommands(loaded, logs, options, browser) {
     const context_parser = loaded['parser'];
     const currentFile = getFileInfo(context_parser);
@@ -227,6 +232,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                 }
                 extras.variables.set(varName, value);
             },
+            'context': context_parser,
         };
         page.on('pageerror', message => {
             extras.jsErrors.push(message);
@@ -365,7 +371,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                             logs.error(
                                 fileInfo,
                                 `${s_err}: for command \`${original}\``,
-                                { url: pages[pages.length - 1].url() },
+                                getLogExtra(context_parser, pages),
                             );
                             stopInnerLoop = true;
                             if (extras.screenshotOnFailure) {
@@ -397,7 +403,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                 logs.error(
                     fileInfo,
                     `command \`${command['original']}\` was supposed to fail but succeeded`,
-                    { url: pages[pages.length - 1].url() },
+                    getLogExtra(context_parser, pages),
                 );
             }
             let shouldWait = false;
@@ -451,7 +457,7 @@ async function runAllCommands(loaded, logs, options, browser) {
                 logs.failure(
                     currentFile,
                     `Cannot take screenshot: ${selector.error.join(EOL)}`,
-                    { url: pages[pages.length - 1].url() },
+                    getLogExtra(context_parser, pages),
                 );
                 await page.close();
                 return Status.MissingElementForScreenshot;

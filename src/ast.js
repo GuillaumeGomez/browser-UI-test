@@ -204,8 +204,22 @@ class AstLoader {
             } else if (ret.finished === true) {
                 break;
             } else {
+                const cmd = parser.command.getRaw();
+                if (['else-if', 'else'].includes(cmd)) {
+                    const lastCommand = this.commands.length === 0 ?
+                        '' : this.commands[this.commands.length - 1].commandName;
+                    if (!['if', 'else-if'].includes(lastCommand)) {
+                        this.errors.push(makeError(
+                            `\`${cmd}\` command must be preceded by an \`if\` or an \
+\`else-if\` command`,
+                            ret.commandLine,
+                        ));
+                        this.text = '';
+                        return;
+                    }
+                }
                 this.commands.push(new CommandNode(
-                    parser.command.getRaw(),
+                    cmd,
                     ret.commandLine,
                     parser.elems,
                     parser.hasVariable,

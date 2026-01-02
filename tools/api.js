@@ -1524,8 +1524,9 @@ try {
         'error': 'First command must be `go-to` (`assert-variable`, `assert-variable-false`, ' +
             '`call-function`, `debug`, `define-function`, `emulate`, `emulate-media-features`, ' +
             '`expect-failure`, `fail-on-js-error`, `fail-on-request-error`, `include`, ' +
-            '`javascript`, `screenshot-comparison`, `screenshot-on-failure`, `store-value`, ' +
-            '`set-timeout` or `set-window-size` can be used before)!',
+            '`if`, `else-if`, `else`, `javascript`, `screenshot-comparison`, ' +
+            '`screenshot-on-failure`, `store-value`, `set-timeout` or `set-window-size` ' +
+            'can be used before)!',
         'line': {'line': 1},
     }]);
     x.assert(func('expect-failure: true\ngo-to: "file:///home"'), [
@@ -2447,6 +2448,23 @@ function checkAssertFindText(x, func) {
     func('("a", {"case-sensitive": true, "whole-word": true})', 'basic-8');
 }
 
+function checkIf(x, func) {
+    func('(1, block {})', 'err-1');
+    func('(true)', 'err-2');
+
+    func('("a" == "b", block {})', 'basic-1');
+    func('(true, block {})', 'basic-2');
+}
+
+function checkElse(x, func) {
+    func('(1, block {})', 'err-1');
+    func('(true)', 'err-2');
+    func('(true, block {})', 'err-3');
+
+    func('(block {})', 'basic-1');
+    func('block {}', 'basic-2');
+}
+
 const TO_CHECK = [
     {
         'name': 'assert',
@@ -2764,6 +2782,16 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseDragAndDrop, x, e, name, o),
     },
     {
+        'name': 'else',
+        'func': checkElse,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseElse, x, e, name, o),
+    },
+    {
+        'name': 'else-if',
+        'func': checkIf,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseElseIf, x, e, name, o),
+    },
+    {
         'name': 'emulate',
         'func': checkEmulate,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseEmulate, x, e, name, o),
@@ -2817,6 +2845,11 @@ const TO_CHECK = [
         'name': 'history-go-forward',
         'func': checkHistory,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseHistoryGoForward, x, e, name, o),
+    },
+    {
+        'name': 'if',
+        'func': checkIf,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseIf, x, e, name, o),
     },
     {
         'name': 'include',
@@ -3129,29 +3162,16 @@ function checkCommandsSets(x, commands) {
 }
 
 async function checkCommands(x) {
-    return await x.startTestSuite('all API tests', false, async() => {
-        await x.startTestSuite('API', false, async() => {
-            print('=> Starting API tests...');
-            print('');
-
-            for (let i = 0; i < TO_CHECK.length; ++i) {
-                await x.startTestSuite(TO_CHECK[i].name, true, async(level, suiteName) => {
-                    try {
-                        TO_CHECK[i].func(x, (e, name, o) => TO_CHECK[i].toCall(x, e, name, o));
-                        print(`<${'='.repeat(level + 1)} "${suiteName}": ${x.getTotalErrors()} ` +
-                            `${plural('error', x.getTotalErrors())} (in ${x.getTotalRanTests()} ` +
-                            `${plural('test', x.getTotalRanTests())})`);
-                    } catch (err) {
-                        print(`<== "${TO_CHECK[i].name}" failed: ${err}\n${err.stack}`);
-                        return true;
-                    }
-                });
+    return await x.startTestSuite('all API tests', true, async() => {
+        await x.startTestSuite('API', true, async() => {
+            for (const check of TO_CHECK) {
+                check.func(x, (e, name, o) => check.toCall(x, e, name, o));
             }
         });
 
         print('');
         // The goal here is to check that each command listed in the various sets actually exists.
-        await x.startTestSuite('Commands sets', false, async() => {
+        await x.startTestSuite('Commands sets', true, async() => {
             print('=> Starting commands sets tests...');
 
             checkCommandsSets(x, parserFuncs.FATAL_ERROR_COMMANDS);
@@ -3161,7 +3181,7 @@ async function checkCommands(x) {
 
         print('');
         // The goal in this one is to check that all commands are tested.
-        await x.startTestSuite('Commands tested', false, async() => {
+        await x.startTestSuite('Commands tested', true, async() => {
             print('=> Starting checking if all commands are tested...');
 
             for (const order of Object.keys(parserFuncs.ORDERS)) {

@@ -1,0 +1,43 @@
+// Checking the `if`, `else-if` and `else` commands.
+
+store-value: (f, "1")
+if: (true, block {
+    assert-variable: (f, "0")
+    //~^ ERROR: `1` isn't equal to `0`
+})
+else-if: (true, block {
+    // Should not trigger
+    assert-variable: (f, "0")
+})
+else: block {
+    // Should not trigger
+    assert-variable: (f, "0")
+}
+
+// Same but this time we enter `else-if`.
+if: (false, block {
+    // Should not trigger
+    assert-variable: (f, "0")
+})
+else-if: (true, block {
+    assert-variable: (f, "0")
+    //~^ ERROR: `1` isn't equal to `0`
+})
+else: block {
+    // Should not trigger
+    assert-variable: (f, "0")
+}
+
+// Same but this time we enter `else`.
+if: (false, block {
+    // Should not trigger
+    assert-variable: (f, "0")
+})
+else-if: (false, block {
+    // Should not trigger
+    assert-variable: (f, "0")
+})
+else: block {
+    assert-variable: (f, "0")
+    //~^ ERROR: `1` isn't equal to `0`
+}
