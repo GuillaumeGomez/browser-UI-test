@@ -65,7 +65,6 @@ class Logs {
         ret.displayCompact = this.displayCompact;
         ret.nbTests = this.nbTests;
         ret.ranTests = this.ranTests;
-        ret.nbErrors = this.nbErrors;
 
         return ret;
     }
