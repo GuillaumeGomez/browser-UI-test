@@ -56,6 +56,9 @@ const ORDERS = {
     'debug': commands.parseDebug,
     'define-function': commands.parseDefineFunction,
     'drag-and-drop': commands.parseDragAndDrop,
+    'if': commands.parseIf,
+    'else': commands.parseElse,
+    'else-if': commands.parseElseIf,
     'emulate': commands.parseEmulate,
     'emulate-media-features': commands.parseEmulateMediaFeatures,
     'expect-failure': commands.parseExpectFailure,
@@ -196,6 +199,9 @@ const NO_INTERACTION_COMMANDS = [
     'fail-on-js-error',
     'fail-on-request-error',
     'include',
+    'if',
+    'else-if',
+    'else',
     'javascript',
     'screenshot-comparison',
     'screenshot-on-failure',
@@ -261,13 +267,18 @@ class ParserWithContext {
     get_current_command_line() {
         const command = this.get_current_command();
         const backtrace = [];
+        let prevIgnoreParent = this.contexts.length > 1 &&
+            this.contexts[this.contexts.length - 1]['ignoreParentBacktrace'] === true;
         for (let i = this.contexts.length - 2; i >= 0; --i) {
             const c = this.contexts[i];
-            const shortPath = stripCommonPathsPrefix(c.ast.absolutePath);
-            backtrace.push({
-                'file': shortPath,
-                'line': c.commands[c.currentCommand].line,
-            });
+            if (!prevIgnoreParent) {
+                const shortPath = stripCommonPathsPrefix(c.ast.absolutePath);
+                backtrace.push({
+                    'file': shortPath,
+                    'line': c.commands[c.currentCommand].line,
+                });
+            }
+            prevIgnoreParent = c['ignoreParentBacktrace'] === true;
         }
         const lineInfo = {
             'line': command.line,
@@ -414,8 +425,7 @@ function parseTest(testName, testPath, logs, options, content) {
             'parser': parser,
         };
     } catch (err) {
-        logs.append(testName + '... FAILED (exception occured)');
-        logs.append(`${err.message}\n${err.stack}`);
+        logs.failure({'file': testPath}, `${err.message}\n${err.stack}`);
     }
     return null;
 }

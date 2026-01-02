@@ -247,6 +247,151 @@ function parseInclude(parser) {
     };
 }
 
+// FIXME: `parseIf`, `parseElseIf` and `parseElse` likely could be somehow merged.
+
+// Possible inputs:
+//
+// * (boolean, block)
+function parseIf(parser) {
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                {
+                    kind: 'boolean',
+                },
+                {
+                    kind: 'block',
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
+    }
+    // We reinitialize the `if` state.
+    const context = parser.get_current_context();
+    context.prevCondition = false;
+
+    const tuple = ret.value.entries;
+    return {
+        'instructions': [`\
+const { compareArrayLike, compareJson } = require('command-helpers.js');
+
+arg.context.ifConditionResult = ${tuple[0].value.value};`],
+        'callback': () => {
+            if (parser.ifConditionResult !== true) {
+                context.prevCondition = false;
+                return;
+            }
+            context.prevCondition = true;
+            parser.pushNewContext({
+                'ast': context.ast,
+                'commands': tuple[1].value.value,
+                'currentCommand': 0,
+                'functionArgs': new Map(),
+                'ignoreParentBacktrace': true,
+            });
+        },
+    };
+}
+
+// Possible inputs:
+//
+// * (boolean, block)
+function parseElseIf(parser) {
+    const ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                {
+                    kind: 'boolean',
+                },
+                {
+                    kind: 'block',
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const context = parser.get_current_context();
+    if (context.prevCondition === true) {
+        return {
+            'instructions': [],
+        };
+    }
+    const tuple = ret.value.entries;
+    return {
+        'instructions': [`\
+const { compareArrayLike, compareJson } = require('command-helpers.js');
+
+arg.context.ifConditionResult = ${tuple[0].value.value};`],
+        'callback': () => {
+            if (parser.ifConditionResult !== true) {
+                context.prevCondition = false;
+                return;
+            }
+            context.prevCondition = true;
+            parser.pushNewContext({
+                'ast': context.ast,
+                'commands': tuple[1].value.value,
+                'currentCommand': 0,
+                'functionArgs': new Map(),
+                'ignoreParentBacktrace': true,
+            });
+        },
+    };
+}
+
+// Possible inputs:
+//
+// * block
+function parseElse(parser) {
+    let ret = validator(parser,
+        {
+            kind: 'tuple',
+            elements: [
+                {
+                    kind: 'block',
+                },
+            ],
+            alternatives: [
+                {
+                    kind: 'block',
+                },
+            ],
+        },
+    );
+    if (hasError(ret)) {
+        return ret;
+    }
+    if (ret.kind === 'tuple') {
+        ret = ret.value.entries[0];
+    }
+
+    const context = parser.get_current_context();
+    if (context.prevCondition === true) {
+        return {
+            'instructions': [],
+        };
+    }
+    return {
+        'instructions': [],
+        'callback': () => {
+            parser.pushNewContext({
+                'ast': context.ast,
+                'commands': ret.value.value,
+                'currentCommand': 0,
+                'functionArgs': new Map(),
+                'ignoreParentBacktrace': true,
+            });
+        },
+    };
+}
+
 module.exports = {
     'parseSetLocalStorage': parseSetLocalStorage,
     'parseScreenshot': parseScreenshot,
@@ -254,4 +399,7 @@ module.exports = {
     'parseSetDocumentProperty': parseSetDocumentProperty,
     'parseSetWindowProperty': parseSetWindowProperty,
     'parseInclude': parseInclude,
+    'parseIf': parseIf,
+    'parseElseIf': parseElseIf,
+    'parseElse': parseElse,
 };
