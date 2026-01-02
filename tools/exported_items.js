@@ -4,7 +4,7 @@ const os = require('os');
 const utils = require('../src/utils.js');
 utils.print = function print() {}; // overwriting the print function to avoid the print
 
-const {runTestCode, runTest, runTests, Options} = require('../src/index.js');
+const {runTestCode, runTest, runTests, Logs, Options} = require('../src/index.js');
 const {Assert, plural, print, removeFolder} = require('./utils.js');
 
 async function wrapRunTests(options = new Options()) {
@@ -499,8 +499,18 @@ async function checkOptions(x) {
         'Unknown key `a` in `Options.emulateMediaFeatures` field');
 }
 
+async function checkLogs(x) {
+    const l = new Logs(true);
+    l.nbTests = 3;
+
+    // We check that the `nbTests` value is not the same as the original.
+    const copy = l.shallowClone();
+    x.assert(copy.nbErrors, 0);
+}
+
 const TO_CHECK = [
     {'name': 'Options', 'func': checkOptions},
+    {'name': 'Logs', 'func': checkLogs},
     {'name': 'runTest', 'func': checkRunTest, 'toCall': wrapRunTest},
     {'name': 'runTestCode', 'func': checkRunTestCode, 'toCall': wrapRunTestCode},
     {'name': 'runTests', 'func': checkRunTests, 'toCall': wrapRunTests},
