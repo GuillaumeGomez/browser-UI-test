@@ -1,4 +1,4 @@
 => Running 1 doc-ui test...
 before-goto... FAILED
-[ERROR] line 2: First command must be `go-to` (`assert-variable`, `assert-variable-false`, `call-function`, `debug`, `define-function`, `emulate`, `emulate-media-features`, `expect-failure`, `fail-on-js-error`, `fail-on-request-error`, `include`, `javascript`, `screenshot-comparison`, `screenshot-on-failure`, `store-value`, `set-timeout` or `set-window-size` can be used before)!
+[ERROR] line 2: First command must be `go-to` (`assert-variable`, `assert-variable-false`, `call-function`, `debug`, `define-function`, `emulate`, `emulate-media-features`, `expect-failure`, `fail-on-js-error`, `fail-on-request-error`, `include`, `if`, `else-if`, `else`, `javascript`, `screenshot-comparison`, `screenshot-on-failure`, `store-value`, `set-timeout` or `set-window-size` can be used before)!
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

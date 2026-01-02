@@ -1,0 +1,5 @@
+instructions = [
+  """const { compareArrayLike, compareJson } = require('command-helpers.js');
+
+arg.context.ifConditionResult = true;""",
+]

@@ -345,9 +345,7 @@ class Assert {
             return this.assert(output, expectedValue, pos, file, toJson, out, errCallback);
         } catch (err) {
             print(`Failed to run \`${file}\``);
-            // `print` doesn't display the stack trace of the error so we need to use `console.log`.
-            // eslint-disable-next-line no-console
-            console.log(err);
+            print(`${err.message}\n${err.stack}`);
             this._incrError();
             return false;
         }
@@ -368,7 +366,7 @@ class Assert {
         try {
             errorOccurred = await callback(this.testSuite.length, name);
         } catch (err) {
-            print(err);
+            print(`${err.message}\n${err.stack}`);
             errorOccurred = true;
         }
         const {totalErrors, totalRanTests} = this.testSuite.pop();
