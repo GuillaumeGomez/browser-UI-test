@@ -248,6 +248,26 @@ async function runAllCommands(loaded, logs, options, browser) {
             extras.requestErrors.push(
                 `[${request.method()} ${request.url()}]: ${request.failure().errorText}`);
         });
+        const waitingForNavigation = [];
+        let url = '';
+        page.on('framenavigated', frame => {
+            if (frame !== page.mainFrame()) {
+                return;
+            }
+            if (frame.url === url) {
+                return;
+            }
+            url = frame.url;
+            // If we are on a new page, we wait for the DOM to be loaded or that 500 ms elapsed
+            // to not block for too long.
+            const callback = frame.waitForNavigation({waitUntil: 'domcontentloaded', timeout: 500})
+                .catch(() => {})
+                .finally(() => {
+                    // We now remove the promise from the waitingForNavigation.
+                    waitingForNavigation.splice(waitingForNavigation.indexOf(callback), 1);
+                });
+            waitingForNavigation.push(callback);
+        });
 
         await page.exposeFunction('BrowserUiStyleInserter', () => {
             return getGlobalStyle(extras.showText);
@@ -438,6 +458,10 @@ async function runAllCommands(loaded, logs, options, browser) {
             }
             if (checkJsErrors() || checkRequestErrors()) {
                 break command_loop;
+            }
+            // If we navigated to another location, wait for the DOM to be loaded.
+            if (waitingForNavigation.length > 0) {
+                await Promise.all(waitingForNavigation);
             }
         }
         if (logs.nbErrors > 0 || checkJsErrors() || checkRequestErrors()) {
