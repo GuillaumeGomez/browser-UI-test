@@ -254,10 +254,10 @@ async function runAllCommands(loaded, logs, options, browser) {
             if (frame !== page.mainFrame()) {
                 return;
             }
-            if (frame.url === url) {
+            if (frame.url() === url) {
                 return;
             }
-            url = frame.url;
+            url = frame.url();
             // If we are on a new page, we wait for the DOM to be loaded or that 500 ms elapsed
             // to not block for too long.
             const callback = frame.waitForNavigation({waitUntil: 'domcontentloaded', timeout: 500})
