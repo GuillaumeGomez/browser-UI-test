@@ -174,12 +174,16 @@ async function runInstruction(loadedInstruction, pages, extras) {
         await loadedInstruction(pages, extras);
         return;
     } catch (err) { // execution error
-        if (err.message && err.message.indexOf
-            && err.message.indexOf('Execution context was destroyed') === 0
+        if (err.message && err.message.includes
+            && err.message.includes('Execution context was destroyed')
         ) {
             // Puppeteer error so this time we wait until the document is ready before trying
             // again.
             await pages[0].waitForFunction('document.readyState === "complete"');
+        } else if (err.message && err.message.includes
+            && err.message.includes('.callFunctionOn timed out. Increase the \'protocolTimeout\'')
+        ) {
+            // We retry I guess...?
         } else {
             // Not a context error because of navigation, throwing it again.
             throw err;
