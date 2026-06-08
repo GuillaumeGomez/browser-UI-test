@@ -5,8 +5,11 @@ assert: ("#another-id")
 set-attribute: ("#another-id", {"id": "yet-another-id", "test": "lol"})
 assert-attribute: ("#yet-another-id", {"test": "lol"})
 expect-failure: true
+// `\"` is not valid in an attribute name so it should fail with:
+// DOMException: InvalidCharacterError: Failed to execute 'setAttribute' on 'Element': '"a' is not a valid attribute name
+// However it seems like it changed recently, so now it only fails because '"e' is not set...
 set-attribute: ("#yet-another-id", {"\"a": "'b", "c": "d"})
-assert-attribute: ("#yet-another-id", {"\a": "'b", "c": "d", "\"e": "'2"})
+assert-attribute: ("#yet-another-id", {"\"a": "'b", "c": "d", "\"e": "'2"})
 expect-failure: false
 set-attribute: ("#yet-another-id", {"\"e": "'2"})
 assert-attribute: ("#yet-another-id", {"\"e": "'2"})
