@@ -15,7 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     fonts-kacst \
     fonts-freefont-ttf \
     libxss1 \
-    libxtst6
+    libxtst6 \
+    unzip
 
 RUN curl -sL https://deb.nodesource.com/setup_24.x | sudo -E bash - \
     && apt install -y nodejs
