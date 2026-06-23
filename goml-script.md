@@ -923,7 +923,7 @@ assert-window-property: ({"pageYOffset": "0", "location": "https://some.where"})
 assert-window-property: {"pageYOffset": "0", "location": "https://some.where"}
 
 // To access a child element, you can use object paths:
-assert-document-property: { "document"."body"."firstChildElement"."clientTop": "10px" }
+assert-window-property: { "document"."body"."firstChildElement"."clientTop": "10px" }
 ```
 
 If you want to check that a property doesn't exist, you can use `null`:
@@ -2057,7 +2057,7 @@ store-window-property: {"pageYOffset": variable_name}
 store-window-property: {"devicePixelRatio": variable_name, "pageXOffset": another_var}
 
 // You can use object-path as well:
-store-document-property: {"document"."body"."scrollHeight": variable_name}
+store-window-property: {"document"."body"."scrollHeight": variable_name}
 ```
 
 For more information about variables, read the [variables section](#variables).
