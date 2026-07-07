@@ -181,7 +181,8 @@ async function runInstruction(loadedInstruction, pages, extras) {
             // again.
             await pages[0].waitForFunction('document.readyState === "complete"');
         } else if (err.message && err.message.includes
-            && err.message.includes('.callFunctionOn timed out. Increase the \'protocolTimeout\'')
+            && (err.message.includes('.callFunctionOn timed out. Increase the \'protocolTimeout\'')
+                || err.message.includes('Node is detached from document'))
         ) {
             // We retry I guess...?
         } else {
