@@ -1,5 +1,6 @@
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 set-timeout: 500
+permissions: ["clipboard-read"]
 
 assert-clipboard: ""
 assert-clipboard-false: "a"
