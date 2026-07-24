@@ -1,5 +1,7 @@
 // Utility functions used by the command parsing functions.
 
+const consts = require('../consts.js');
+
 function codeSelector(selector) {
     const selectorS = selector.isXPath ? `::-p-xpath(${selector.value})` : selector.value;
     return `"${selectorS}"`;
@@ -423,6 +425,9 @@ await page.evaluate(() => {
 });
 const clipboardClickElem = await page.waitForSelector("#${id}", {timeout: 1000});`,
         `\
+if (arg.permissions.indexOf("clipboard-read") < 0) {
+    throw '${consts.CLIPBOARD_PERMISSION_ERROR}';
+}
 await clipboardClickElem.click();
 const ${varName} = await page.evaluate(() => document.getElementById("${id}").clipboardContent);`,
         async page => {

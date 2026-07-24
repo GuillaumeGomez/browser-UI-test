@@ -19,6 +19,9 @@ const timeAdd = 50;
 let allTime = 0;
 let errors = null;
 while (true) {
+    if (arg.permissions.indexOf(\"clipboard-read\") < 0) {
+        throw '`permissions: [\"clipboard-read\"]` is needed before the clipboard can be read';
+    }
     await clipboardClickElem.click();
     const elemText = await page.evaluate(() => document.getElementById(\"created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\").clipboardContent);
     errors = [];

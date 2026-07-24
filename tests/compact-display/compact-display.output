@@ -4,12 +4,14 @@ FFFF                                               (4/4)
 
 ======== tests/ui/assert-clipboard-2.goml ========
 
-[ERROR] line 6: Error: The following checks still fail: [`hello` isn't equal to `hell`]: for command `wait-for-clipboard: "hell"`
+[ERROR] line 7: Error: The following checks still fail: [`hello` isn't equal to `hell`]: for command `wait-for-clipboard: "hell"`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 
 ======== tests/ui/assert-clipboard.goml ========
 
-[ERROR] line 21: Error: All checks still succeed: for command `wait-for-clipboard-false: "hello"`
+[ERROR] line 4: `permissions: ["clipboard-read"]` is needed before the clipboard can be read: for command `assert-clipboard: "qwfpgjluy;astdhnei"`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
+[ERROR] line 26: Error: All checks still succeed: for command `wait-for-clipboard-false: "hello"`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 
 ======== tests/ui/assert-css-color.goml ========

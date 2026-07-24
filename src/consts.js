@@ -22,4 +22,6 @@ module.exports = {
     ],
     'COLOR_CHECK_ERROR': '`show-text: true` needs to be used before checking for `color` ' +
         '(otherwise the browser doesn\'t compute it)',
+    'CLIPBOARD_PERMISSION_ERROR': '`permissions: ["clipboard-read"]` is needed before the ' +
+        'clipboard can be read',
 };

@@ -116,8 +116,7 @@ class PuppeteerWrapper {
         }
         let value = this.permissions.get(url);
         if (value === undefined) {
-            // FIXME: should we really set this permission by default?
-            this.permissions.set(url, new Set(['clipboard-read']));
+            this.permissions.set(url, new Set());
             // this.permissions.set(url, new Map());
             value = this.permissions.get(url);
         }
@@ -149,8 +148,12 @@ class PuppeteerWrapper {
         //         value.set(permission, nb - 1);
         //     }
         // }
-        const context = this.context === null ? this.browser.defaultBrowserContext() : this.context;
-        await context.overridePermissions(url, Array.from(value));
+        if (value.size) {
+            const context = this.context === null ?
+                this.browser.defaultBrowserContext() :
+                this.context;
+            await context.overridePermissions(url, Array.from(value));
+        }
     }
 
     async emulate(options, fileInfo, page, logs) {
