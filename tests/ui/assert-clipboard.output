@@ -1,5 +1,7 @@
 => Running 1 doc-ui test...
 assert-clipboard... FAILED
-[ERROR] line 22: Error: All checks still succeed: for command `wait-for-clipboard-false: "hello"`
+[ERROR] line 4: `permissions: ["clipboard-read"]` is needed before the clipboard can be read: for command `assert-clipboard: "qwfpgjluy;astdhnei"`
+    at <file://$CURRENT_DIR/tests/html_files/elements.html>
+[ERROR] line 26: Error: All checks still succeed: for command `wait-for-clipboard-false: "hello"`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out

@@ -431,6 +431,7 @@ function parseTest(testName, testPath, logs, options, content) {
 const EXPORTS = {
     'ParserWithContext': ParserWithContext,
     'COLOR_CHECK_ERROR': consts.COLOR_CHECK_ERROR,
+    'CLIPBOARD_PERMISSION_ERROR': consts.CLIPBOARD_PERMISSION_ERROR,
     'ORDERS': ORDERS,
     'parseTest': parseTest,
 };

@@ -15,6 +15,9 @@ instructions = [
 });
 const clipboardClickElem = await page.waitForSelector(\"#created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\", {timeout: 1000});
 
+if (arg.permissions.indexOf(\"clipboard-read\") < 0) {
+    throw '`permissions: [\"clipboard-read\"]` is needed before the clipboard can be read';
+}
 await clipboardClickElem.click();
 const clipData = await page.evaluate(() => document.getElementById(\"created-by-browser-ui-test-to-get-clipboard-content-in-all-contexts\").clipboardContent);
 arg.setVariable(\"tmp\", clipData);""",

@@ -1,5 +1,9 @@
 go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
 set-timeout: 500
+
+assert-clipboard: "qwfpgjluy;astdhnei"
+//~^ ERROR: `permissions: ["clipboard-read"]` is needed before the clipboard can be read
+
 permissions: ["clipboard-read"]
 
 assert-clipboard: ""
