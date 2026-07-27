@@ -113,7 +113,7 @@ class Logs {
     append(newLog, { showLog = true, fromLogs = false } = {}) {
         if (newLog.message.length === 0) {
             return;
-        } else if (!this.showDebug && newLog.level === 'debug') {
+        } else if (!fromLogs && !this.showDebug && newLog.level === 'debug') {
             return;
         }
 
@@ -162,7 +162,7 @@ class Logs {
     appendLogs(other) {
         this.nbErrors += other.nbErrors;
         for (const log of other.logs) {
-            this.append(log, { showLog: false });
+            this.append(log, { showLog: false, fromLogs: true });
         }
     }
 
