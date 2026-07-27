@@ -1610,6 +1610,8 @@ key-down-then-up: ("ShiftLeft", block {
 })
 ```
 
+If you only want to press a key without needing to run command while it's pressed, take a look at [`press-key`](#press-key).
+
 #### move-cursor-to
 
 **move-cursor-to** command moves the mouse cursor to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector. Examples:
@@ -1665,6 +1667,8 @@ press-key: ('Escape', 1000) // The keyup event will be send after 1000 ms.
 press-key: "t" // The "t" letter.
 press-key: "KeyT" // The keyboard "t" letter (useful for keys combinations).
 ```
+
+If you want a key to be pressed and released after you're done, take a look at [`key-down-then-up`](#key-down-then-up).
 
 #### reload
 
