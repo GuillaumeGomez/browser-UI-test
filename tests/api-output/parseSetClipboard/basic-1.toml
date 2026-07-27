@@ -1,0 +1,18 @@
+instructions = [
+  """if (arg.permissions.indexOf(\"clipboard-write\") < 0) {
+    throw '`permissions: [\"clipboard-write\"]` is needed before the clipboard can be updated';
+}
+await page.evaluate(() => {
+    const el = document.createElement(\"textarea\");
+    el.value = \"a\";
+    el.setAttribute(\"readonly\", \"\");
+    // To not make it appear on the screen.
+    el.style.position = \"absolute\";
+    el.style.left = \"-9999px\";
+
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand(\"copy\");
+    document.body.removeChild(el);
+});""",
+]

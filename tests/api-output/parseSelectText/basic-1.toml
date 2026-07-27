@@ -1,0 +1,14 @@
+instructions = [
+  """const startElem = await page.$(\"a\");
+if (startElem === null) { throw \"`a` not found\"; }
+const endElem = await page.$(\"a\");
+if (endElem === null) { throw \"`a` not found\"; }
+await page.evaluate((startElem, endElem) => {
+    const range = document.createRange();
+    const selection = window.getSelection();
+    range.setStart(startElem, 0);
+    range.setEnd(endElem, endElem.childNodes.length);
+    selection.removeAllRanges();
+    selection.addRange(range);
+}, startElem, endElem);""",
+]
