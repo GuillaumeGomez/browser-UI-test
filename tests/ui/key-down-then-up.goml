@@ -1,0 +1,13 @@
+// This test ensures that the `key-down-then-up` command is workind as expected.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+key-down-then-up: ("ShiftLeft", block {
+    focus: "#the-input"
+    press-key: "KeyT"
+    // Since the "shift" key is pressed, the text should be capitalized.
+    assert-text: ("#the-input", "T")
+})
+
+focus: "#useless\.input"
+press-key: "KeyT"
+// The "shift" key is not pressed anymore, the text should not be capitalized.
+assert-text: ("#useless\.input", "t")
