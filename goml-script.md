@@ -234,7 +234,9 @@ Here's the command list:
  * [`screenshot-on-failure`](#screenshot-on-failure)
  * [`scroll-element-to`](#scroll-element-to)
  * [`scroll-to`](#scroll-to)
+ * [`select-text`](#select-text)
  * [`set-attribute`](#set-attribute)
+ * [`set-clipboard`](#set-clipboard)
  * [`set-css`](#set-css)
  * [`set-device-pixel-ratio`](#set-device-pixel-ratio)
  * [`set-document-property`](#set-document-property)
@@ -1759,6 +1761,33 @@ scroll-to: (10, 12)
 
 This command scrolls the `<body>` element. If you want to scroll another element, use the [`scroll-element-to`][#scroll-element-to] command instead.
 
+#### select-text
+
+**select-text** command allows to select text. Nothing else. If you want to copy the selected text or something else, you'll another command.
+
+It takes a tuple of two selectors as argument: the first one is where the text selection should start and the second one is where the selection should end. Example with this HTML code:
+
+```html
+<div>
+    <p id="a">hello</p>
+    <p id="b">I'm</p>
+    <p id="c">some</p>
+    <p id="d">html</p>
+</div>
+```
+
+If we only want "I'm some", we use:
+
+```
+select-text: ("#b", "#c")
+```
+
+If we only want "some", we use:
+
+```
+select-text: ("#c", "#c")
+```
+
 #### set-attribute
 
 **set-attribute** command allows to update an element's attribute. Example:
@@ -1773,6 +1802,16 @@ To remove an attribute, you can use the `null` ident:
 
 ```
 set-attribute: ("a", {"href": null})
+```
+
+#### set-clipboard
+
+**set-clipboard** command allows to set the content of the clipboard. It needs the `clipboard-write` permission. Example:
+
+```
+permissions: ["clipboard-write"]
+set-clipboard: "hello"
+set-clipboard: 112
 ```
 
 #### set-css
