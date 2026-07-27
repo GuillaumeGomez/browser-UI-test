@@ -9,30 +9,35 @@ utils.print = function print() {}; // overwriting the print function to avoid th
 const {runTests, Options} = require('../src/index.js');
 const {Assert, print} = require('./utils.js');
 
-async function wrapRunTests(_browser, options = new Options()) {
+async function wrapRunTests(options) {
     options.screenshotComparison = false;
     const ret = await runTests({
         'options': options,
-        // 'browser': browser,
         'showLogs': false,
         'showNbThreads': false,
     });
     return ret[0];
 }
 
-function runAsyncUiTest(x, file, output, tests_queue, browser) {
-    const options = new Options();
-    options.parseArguments([
+function runAsyncUiTest(x, file, output, tests_queue) {
+    const args = [
         '--variable', 'DOC_PATH', 'tests/html_files',
         '--variable', 'WINDOWS_PATH', 'C:\\a\\b',
         '--message-format', 'json',
         '--test-file', file,
-    ]);
+    ];
+    if (x.extraArgs.indexOf('--no-headless') !== -1) {
+        args.push('--no-headless');
+    }
+
+    const options = new Options();
+    options.parseArguments(args);
+
     let testOutput = '';
 
     const callback = x.assertTryUi(
         wrapRunTests,
-        [browser, options],
+        [options],
         output.replaceAll('$CURRENT_DIR', utils.getCurrentDir()),
         file,
         false,
@@ -83,10 +88,11 @@ async function compareOutput(x) {
     if (cpuCount < 1) {
         cpuCount = 1;
     }
+    if (x.extraArgs.indexOf('--no-headless') !== -1) {
+        cpuCount = 1;
+    }
     process.setMaxListeners(cpuCount);
     const tests_queue = [];
-    const options = new Options();
-    const browser = await utils.loadPuppeteer(options);
 
     for (const file of filesToTest) {
         const outputFile = file.replace('.goml', '.output');
@@ -98,7 +104,7 @@ async function compareOutput(x) {
             output = `Cannot open file \`${outputFile}\``;
         }
 
-        runAsyncUiTest(x, file, output, tests_queue, browser);
+        runAsyncUiTest(x, file, output, tests_queue);
         if (tests_queue.length >= cpuCount) {
             await Promise.race(tests_queue);
         }
@@ -113,7 +119,6 @@ async function compareOutput(x) {
             }, 20_000);
         })]);
     }
-    await browser.close();
 }
 
 function matchesFilter(x, filter) {
@@ -379,6 +384,9 @@ if (require.main === module) {
     }
     if (!x.blessEnabled) {
         x.blessEnabled = process.env.npm_config_bless === 'true';
+    }
+    if (process.env.npm_config_headless === '') {
+        x.extraArgs.push('--no-headless');
     }
     checkUi(x).then(({totalErrors}) => {
         process.exit(totalErrors !== 0 ? 1 : 0);
