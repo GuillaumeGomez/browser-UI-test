@@ -331,6 +331,11 @@ class Assert {
                         print(`+> ${err}`);
                     }
                 }
+                print('');
+                print('=== Full output ==');
+                for (const msg of messages) {
+                    print(convertMessageFromJson(msg), undefined, false);
+                }
                 this._addTest();
                 this._incrError();
                 return false;

@@ -373,7 +373,8 @@ async function runAllCommands(loaded, logs, options, browser) {
             let stopInnerLoop = false;
 
             for (const instruction of instructions) {
-                const line_s = line_number !== null && line_number.line !== undefined ? ` (line ${line_number.line})` : '';
+                const line_s = line_number !== null && line_number.line !== undefined ?
+                    ` (line ${line_number.line})` : '';
                 logs.debug(fileInfo, `EXECUTING${line_s} "${instruction}"`);
                 let loadedInstruction;
                 try {
