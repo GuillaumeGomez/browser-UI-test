@@ -82,8 +82,10 @@ const ORDERS = {
     'screenshot-on-failure': commands.parseScreenshotOnFailure,
     'scroll-element-to': commands.parseScrollElementTo,
     'scroll-to': commands.parseScrollTo,
+    'select-text': commands.parseSelectText,
     'set-attribute': commands.parseSetAttribute,
     'set-css': commands.parseSetCss,
+    'set-clipboard': commands.parseSetClipboard,
     'set-device-pixel-ratio': commands.parseSetDevicePixelRatio,
     'set-document-property': commands.parseSetDocumentProperty,
     'set-font-size': commands.parseSetFontSize,
@@ -440,7 +442,8 @@ function parseTest(testName, testPath, logs, options, content) {
 const EXPORTS = {
     'ParserWithContext': ParserWithContext,
     'COLOR_CHECK_ERROR': consts.COLOR_CHECK_ERROR,
-    'CLIPBOARD_PERMISSION_ERROR': consts.CLIPBOARD_PERMISSION_ERROR,
+    'CLIPBOARD_READ_PERMISSION_ERROR': consts.CLIPBOARD_READ_PERMISSION_ERROR,
+    'CLIPBOARD_WRITE_PERMISSION_ERROR': consts.CLIPBOARD_WRITE_PERMISSION_ERROR,
     'ORDERS': ORDERS,
     'parseTest': parseTest,
 };

@@ -426,7 +426,7 @@ await page.evaluate(() => {
 const clipboardClickElem = await page.waitForSelector("#${id}", {timeout: 1000});`,
         `\
 if (arg.permissions.indexOf("clipboard-read") < 0) {
-    throw '${consts.CLIPBOARD_PERMISSION_ERROR}';
+    throw '${consts.CLIPBOARD_READ_PERMISSION_ERROR}';
 }
 await clipboardClickElem.click();
 const ${varName} = await page.evaluate(() => document.getElementById("${id}").clipboardContent);`,
