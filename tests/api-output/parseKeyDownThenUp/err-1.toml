@@ -1,0 +1,4 @@
+instructions = [
+  """await pages[0].keyboard.down(String.fromCharCode(1));""",
+]
+noPosIncrease = true

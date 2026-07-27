@@ -2473,6 +2473,14 @@ function checkElse(x, func) {
     func('block {}', 'basic-2');
 }
 
+function checkKeyDownThenUp(x, func) {
+    func('(1, block {})', 'err-1');
+    func('(true)', 'err-2');
+    func('(true, block {})', 'err-3');
+
+    func('("a", block {})', 'basic-1');
+}
+
 const TO_CHECK = [
     {
         'name': 'assert',
@@ -2869,6 +2877,12 @@ const TO_CHECK = [
         'func': checkJavascript,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseJavascript, x, e, name, o),
     },
+    {
+        'name': 'key-down-then-up',
+        'func': checkKeyDownThenUp,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseKeyDownThenUp, x, e, name, o),
+    },
+
     {
         'name': 'set-local-storage',
         'func': checkLocalStorage,

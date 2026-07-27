@@ -71,6 +71,7 @@ const ORDERS = {
     'history-go-forward': commands.parseHistoryGoForward,
     'include': commands.parseInclude,
     'javascript': commands.parseJavascript,
+    'key-down-then-up': commands.parseKeyDownThenUp,
     'move-cursor-to': commands.parseMoveCursorTo,
     'pause-on-error': commands.parsePauseOnError,
     'permissions': commands.parsePermissions,
@@ -147,6 +148,7 @@ const FATAL_ERROR_COMMANDS = [
     'focus',
     'go-to',
     'include',
+    'key-down-then-up',
     'move-cursor-to',
     'screenshot',
     'scroll-to',
@@ -373,6 +375,13 @@ class ParserWithContext {
             context = this.get_current_context();
             if (context !== null) {
                 context.currentCommand += 1;
+            }
+            if (prevContext.dropInstructions !== undefined) {
+                return {
+                    'instructions': prevContext.dropInstructions,
+                    'line': null,
+                    'filePath': prevContext.filePath,
+                };
             }
         }
         if (context === null) {

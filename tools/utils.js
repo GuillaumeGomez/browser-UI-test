@@ -302,7 +302,7 @@ class Assert {
                 output += convertMessageFromJson(msg);
                 const match = expectedErrors.find(e => isMatchingError(e, msg));
                 if (match === undefined) {
-                    if (msg.line === undefined || msg.line === null) {
+                    if (msg.line === undefined || msg.line === null || msg.level === 'debug') {
                         continue;
                     }
                     unexpectedErrors.push(`[${msg.level}] ${convertMessageFromJson(msg)}`);
@@ -330,6 +330,11 @@ class Assert {
                     for (const err of notFoundErrors) {
                         print(`+> ${err}`);
                     }
+                }
+                print('');
+                print('=== Full output ==');
+                for (const msg of messages) {
+                    print(convertMessageFromJson(msg), undefined, false);
                 }
                 this._addTest();
                 this._incrError();

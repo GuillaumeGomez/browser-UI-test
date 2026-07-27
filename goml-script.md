@@ -223,6 +223,7 @@ Here's the command list:
  * [`if`](#if)
  * [`include`](#include)
  * [`javascript`](#javascript)
+ * [`key-down-then-up`](#key-down-then-up)
  * [`move-cursor-to`](#move-cursor-to)
  * [`pause-on-error`](#pause-on-error)
  * [`permissions`](#permissions)
@@ -1594,6 +1595,21 @@ javascript: false // we disable it before using go-to to have a page rendered wi
 go-to: "https://somewhere.com" // rendering without javascript
 ```
 
+#### key-down-then-up
+
+**key-down-then-up** command presses down the given key and release it when the block is exited. Example:
+
+```
+key-down-then-up: ("ShiftLeft", block {
+    // We focus an `<input>` element.
+    focus: "input"
+    // We press the "T" keyboard K (not to be confused with just "t" which sends the "t" letter).
+    press-key: "KeyT"
+    // Since the "ShiftLeft" key was pressed, the letter enter was a capitalized "t".
+    assert-text: ("input", "T")
+})
+```
+
 #### move-cursor-to
 
 **move-cursor-to** command moves the mouse cursor to the given position or element. It expects a tuple of integers (`(x, y)`) or a CSS selector. Examples:
@@ -1635,6 +1651,8 @@ To be noted: because the permissions are set for a given URL, each time you add 
 
 **press-key** command sends a key event (both **keydown** and **keyup** events). It expects a tuple of `(keycode, delay)` or simply `keycode`. `keycode` is either a string or an integer. `delay` is the time to wait between **keydown** and **keyup** in milliseconds (if not specified, it is 0).
 
+Important to note: if you want to enter the keyboard letter and not the letter itself to get combinations of keys (like "CTRL+F", use `"KeyF"` instead of `"f"`).
+
 The key codes (both strings and integers) can be found [here](https://github.com/puppeteer/puppeteer/blob/v1.14.0/lib/USKeyboardLayout.js).
 
 Examples:
@@ -1643,6 +1661,9 @@ Examples:
 press-key: 'Escape'
 press-key: 27 // Same but with an integer
 press-key: ('Escape', 1000) // The keyup event will be send after 1000 ms.
+
+press-key: "t" // The "t" letter.
+press-key: "KeyT" // The keyboard "t" letter (useful for keys combinations).
 ```
 
 #### reload

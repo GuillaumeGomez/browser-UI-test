@@ -291,6 +291,63 @@ function parsePressKey(parser) {
 
 // Possible inputs:
 //
+// * ("key", block)
+// * (keycode, block)
+//
+// The key codes (both strings and integers) can be found here:
+// https://github.com/puppeteer/puppeteer/blob/v1.14.0/lib/USKeyboardLayout.js
+function parseKeyDownThenUp(parser) {
+    const block = { kind: 'block' };
+    const number = {
+        kind: 'number',
+        allowNegative: false,
+        allowFloat: false,
+    };
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [
+            {
+                kind: 'string',
+                allowEmpty: false,
+                alternatives: [number],
+            },
+            block,
+        ],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const tuple = ret.value.entries;
+
+    let code;
+    const value = tuple[0].value;
+    if (value.kind === 'number') {
+        code = `String.fromCharCode(${value.value})`;
+    } else {
+        code = `"${value.getStringValue()}"`;
+    }
+
+    return {
+        instructions: [`await pages[0].keyboard.down(${code});`],
+        callback: () => {
+            const context = parser.get_current_context();
+            parser.pushNewContext({
+                ast: context.ast,
+                commands: tuple[1].value.value,
+                currentCommand: 0,
+                functionArgs: new Map(),
+                ignoreParentBacktrace: true,
+                filePath: context.ast.filePath,
+                dropInstructions: [`await pages[0].keyboard.up(${code});`],
+            });
+        },
+        'noPosIncrease': true,
+    };
+}
+
+// Possible inputs:
+//
 // * (X, Y)
 // * "CSS selector" (for example: "#elementID")
 // * "XPath" (for example: "//*[@id='elementID']")
@@ -482,6 +539,7 @@ module.exports = {
     'parseClickWithOffset': parseClickWithOffset,
     'parseDragAndDrop': parseDragAndDrop,
     'parseFocus': parseFocus,
+    'parseKeyDownThenUp': parseKeyDownThenUp,
     'parseMoveCursorTo': parseMoveCursorTo,
     'parsePressKey': parsePressKey,
     'parseScrollTo': parseScrollTo,

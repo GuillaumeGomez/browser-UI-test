@@ -9,11 +9,11 @@ utils.print = function print() {}; // overwriting the print function to avoid th
 const {runTests, Options} = require('../src/index.js');
 const {Assert, print} = require('./utils.js');
 
-async function wrapRunTests(browser, options = new Options()) {
+async function wrapRunTests(_browser, options = new Options()) {
     options.screenshotComparison = false;
     const ret = await runTests({
         'options': options,
-        'browser': browser,
+        // 'browser': browser,
         'showLogs': false,
         'showNbThreads': false,
     });

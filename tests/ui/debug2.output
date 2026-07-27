@@ -1,5 +1,26 @@
 => Running 1 doc-ui test...
 debug2... FAILED
+[DEBUG] line 1: Done!
+[DEBUG] line 2: EXECUTING "arg.screenshotComparison = false;"
+[DEBUG] line 2: Done!
+[DEBUG] line 3: EXECUTING "const url = "file://$CURRENT_DIR/tests/html_files/elements.html";
+try {
+    await page.goto(url);
+} catch(exc) {
+    if (exc instanceof arg.puppeteer.ProtocolError) {
+        throw "Cannot navigate to invalid URL `" + url + "`";
+    } else {
+        throw exc;
+    }
+}"
+[DEBUG] line 3: Done!
+[DEBUG] line 3: EXECUTING "await arg.browser.overridePermissions(page.url(), arg.permissions);"
+[DEBUG] line 3: Done!
+[DEBUG] line 4: EXECUTING "if (arg && arg.logs && arg.logs.setDebugEnabled) {
+    arg.logs.setDebugEnabled(false);
+} else {
+    throw "`debug` command needs an object with a `logs` field of `Logs` type!";
+}"
 [ERROR] line 6: assert didn't fail: for command `compare-elements-css-false: (".content>.right>p", ".content>.left", ["color"])`
     at <file://$CURRENT_DIR/tests/html_files/elements.html>
 <= doc-ui tests done: 0 succeeded, 1 failed, 0 filtered out
