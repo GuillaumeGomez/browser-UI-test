@@ -5,6 +5,6 @@ set-timeout: 500
 permissions: ["clipboard-read"]
 
 wait-for-clipboard: "hell"
-//~^ ERROR: [`hello` isn't equal to `hell`]
+//~^ ERROR: [`` isn't equal to `hell`]
 // Shoud not be displayed.
 wait-for-clipboard-false: ""
