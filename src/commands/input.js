@@ -1,5 +1,6 @@
 // List commands handling inputs.
 
+const consts = require('../consts.js');
 const { codeSelector, getAndSetElements } = require('./utils.js');
 const { validator } = require('../validator.js');
 // Not the same `utils.js`!
@@ -534,6 +535,87 @@ await pages[0].mouse.up();`,
     };
 }
 
+// Possible inputs:
+//
+// * string
+// * number
+function parseSetClipboard(parser) {
+    const ret = validator(parser, {
+        kind: 'number',
+        allowFloat: true,
+        allowNegative: true,
+        alternatives: [{
+            kind: 'string',
+        }],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const value = ret.value;
+    let data;
+    if (value.kind === 'number') {
+        data = value.value;
+    } else {
+        data = `"${value.getStringValue()}"`;
+    }
+
+    return {
+        instructions: [
+            `\
+if (arg.permissions.indexOf("clipboard-write") < 0) {
+    throw '${consts.CLIPBOARD_WRITE_PERMISSION_ERROR}';
+}
+await page.evaluate(() => {
+    const el = document.createElement("textarea");
+    el.value = ${data};
+    el.setAttribute("readonly", "");
+    // To not make it appear on the screen.
+    el.style.position = "absolute";
+    el.style.left = "-9999px";
+
+    document.body.appendChild(el);
+    el.select();
+    document.execCommand("copy");
+    document.body.removeChild(el);
+});`,
+        ],
+    };
+}
+
+// Possible inputs:
+//
+// * ("selector", "selector")
+function parseSelectText(parser) {
+    const selector = {
+        kind: 'selector',
+    };
+    const ret = validator(parser, {
+        kind: 'tuple',
+        elements: [selector, selector],
+    });
+    if (hasError(ret)) {
+        return ret;
+    }
+
+    const [selector1, selector2] = ret.value.entries;
+
+    return {
+        'instructions': [`\
+${getAndSetElements(selector1.value, 'startElem', false)}
+${getAndSetElements(selector2.value, 'endElem', false)}
+await page.evaluate((startElem, endElem) => {
+    const range = document.createRange();
+    const selection = window.getSelection();
+    range.setStart(startElem, 0);
+    range.setEnd(endElem, endElem.childNodes.length);
+    selection.removeAllRanges();
+    selection.addRange(range);
+}, startElem, endElem);`,
+        ],
+    };
+}
+
 module.exports = {
     'parseClick': parseClick,
     'parseClickWithOffset': parseClickWithOffset,
@@ -544,6 +626,8 @@ module.exports = {
     'parsePressKey': parsePressKey,
     'parseScrollTo': parseScrollTo,
     'parseScrollElementTo': parseScrollElementTo,
+    'parseSelectText': parseSelectText,
+    'parseSetClipboard': parseSetClipboard,
     'parseWrite': parseWrite,
     'parseWriteInto': parseWriteInto,
 };

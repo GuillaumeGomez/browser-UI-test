@@ -1888,7 +1888,7 @@ function checkShowText(x, func) {
     func('true', 'basic-2');
 }
 
-function checkSize(x, func) {
+function checkWindowSize(x, func) {
     func('', 'err-1');
     func('hello', 'err-2');
     func('()', 'err-3');
@@ -2481,6 +2481,24 @@ function checkKeyDownThenUp(x, func) {
     func('("a", block {})', 'basic-1');
 }
 
+function checkSelectText(x, func) {
+    func('1', 'err-1');
+    func('(1, 1)', 'err-2');
+    func('("1", 1)', 'err-3');
+    func('(1, "1")', 'err-4');
+
+    func('("a", "a")', 'basic-1');
+}
+
+function checkSetClipboard(x, func) {
+    func('', 'err-1');
+    func('(1, 1)', 'err-2');
+    func('{}', 'err-3');
+
+    func('"a"', 'basic-1');
+    func('1', 'basic-2');
+}
+
 const TO_CHECK = [
     {
         'name': 'assert',
@@ -2949,8 +2967,18 @@ const TO_CHECK = [
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseShowText, x, e, name, o),
     },
     {
+        'name': 'select-text',
+        'func': checkSelectText,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSelectText, x, e, name, o),
+    },
+    {
+        'name': 'set-clipboard',
+        'func': checkSetClipboard,
+        'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetClipboard, x, e, name, o),
+    },
+    {
         'name': 'set-window-size',
-        'func': checkSize,
+        'func': checkWindowSize,
         'toCall': (x, e, name, o) => wrapper(parserFuncs.parseSetWindowSize, x, e, name, o),
     },
     {

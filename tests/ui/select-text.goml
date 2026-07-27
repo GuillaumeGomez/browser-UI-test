@@ -1,0 +1,14 @@
+// This test ensures that the `key-down-then-up` command is workind as expected.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+permissions: ["clipboard-read", "clipboard-write"]
+set-clipboard: ""
+assert-clipboard: ""
+
+show-text: true
+store-value: (header_text, "Another page!")
+assert-text: ("header", |header_text|)
+select-text: ("header", "header")
+key-down-then-up: ("ControlLeft", block {
+    press-key: "KeyC"
+})
+assert-clipboard: |header_text|
