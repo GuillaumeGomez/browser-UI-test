@@ -1,0 +1,7 @@
+// This test ensures that we can click on a `<select>`'s `<option>`.
+go-to: "file://" + |CURRENT_DIR| + "/" + |DOC_PATH| + "/elements.html"
+assert-property: ("#the-select", {"value": "blob"})
+click: "#the-select option[value='foo']"
+assert-property: ("#the-select", {"value": "foo"})
+click: "#the-select option[value='blob']"
+assert-property: ("#the-select", {"value": "blob"})

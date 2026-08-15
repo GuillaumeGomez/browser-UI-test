@@ -51,8 +51,28 @@ function parseClick(parser) {
 
     return {
         'instructions': [
-            getAndSetElements(selector, varName, false) + '\n' +
-            `await ${varName}.click();`,
+            `\
+${getAndSetElements(selector, varName, false)}
+const optionValue = await ${varName}.evaluate(elem => {
+    if (elem.tagName.toLowerCase() === "option" &&
+        elem.parentElement && elem.parentElement.tagName.toLowerCase() === "select")
+    {
+        return elem.value;
+    }
+    return null;
+});
+if (optionValue !== null) {
+    const selectHandle = await ${varName}.evaluateHandle(el => el.parentElement);
+    const parentSelect = selectHandle.asElement();
+    if (parentSelect) {
+        await parentSelect.select(optionValue);
+    } else {
+        throw "Couldn't convert parent select to a puppeteer handle";
+    }
+} else {
+    await ${varName}.click();
+}
+`,
         ],
         'warnings': warnings,
     };
