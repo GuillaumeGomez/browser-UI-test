@@ -1763,7 +1763,7 @@ This command scrolls the `<body>` element. If you want to scroll another element
 
 #### select-text
 
-**select-text** command allows to select text. Nothing else. If you want to copy the selected text or something else, you'll another command.
+**select-text** command allows to select text, nothing else. If you want to copy the selected text or something else, you'll need to use another command.
 
 It takes a tuple of two selectors as argument: the first one is where the text selection should start and the second one is where the selection should end. Example with this HTML code:
 
@@ -1786,6 +1786,17 @@ If we only want "some", we use:
 
 ```
 select-text: ("#c", "#c")
+```
+
+If you want to copy the text:
+
+```
+permissions: ["clipboard-read", "clipboard-write"]
+key-down-then-up: ("ControlLeft", block {
+    press-key: "KeyC"
+})
+// If you want to check the content of the clipboard:
+assert-clipboard: "content of the clipboard"
 ```
 
 #### set-attribute
