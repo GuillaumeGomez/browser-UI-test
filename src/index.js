@@ -170,6 +170,11 @@ function waitUntilEnterPressed(logs) {
 }
 
 async function runInstruction(loadedInstruction, pages, extras) {
+    const knownErrors = [
+        'ProtocolError:',
+        '.callFunctionOn timed out. Increase the \'protocolTimeout\'',
+        'Node is detached from document',
+    ];
     try {
         await loadedInstruction(pages, extras);
         return;
@@ -181,8 +186,7 @@ async function runInstruction(loadedInstruction, pages, extras) {
             // again.
             await pages[0].waitForFunction('document.readyState === "complete"');
         } else if (err.message && err.message.includes
-            && (err.message.includes('.callFunctionOn timed out. Increase the \'protocolTimeout\'')
-                || err.message.includes('Node is detached from document'))
+            && knownErrors.some(e => err.message.includes(e))
         ) {
             // We retry I guess...?
         } else {
