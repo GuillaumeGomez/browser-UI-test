@@ -18,7 +18,7 @@ const {
 } = require('./utils.js');
 const consts = require('./consts.js');
 const { Options } = require('./options.js');
-const { Logs } = require('./logs.js');
+const { Logs, convertMessageFromJson } = require('./logs.js');
 const { EOL } = require('os');
 const process = require('process');
 const path = require('path');
@@ -165,7 +165,7 @@ async function screenshot(extras, filename, selector, pages, logs) {
 
 function waitUntilEnterPressed(logs) {
     const last = logs.lastError();
-    print('An error occurred: `' + last.message + '`');
+    print('An error occurred: `' + convertMessageFromJson(last) + '`');
     readline.question('Press ENTER to continue...');
 }
 
