@@ -1548,7 +1548,7 @@ history-go-back: 12000 // wait for the previous page in history to render with a
 history-go-back: 0 // disable timeout, be careful when using it!
 ```
 
-Please note that if no `timeout` is specified, the one from the [`timeout`](#timeout) command is used.
+Please note that if no `timeout` is specified, the one from the [`set-timeout`](#set-timeout) command is used.
 
 #### history-go-forward
 
@@ -1560,7 +1560,7 @@ history-go-back: 12000 // wait for the previous page in history to render with a
 history-go-back: 0 // disable timeout, be careful when using it!
 ```
 
-Please note that if no `timeout` is specified, the one from the [`timeout`](#timeout) command is used.
+Please note that if no `timeout` is specified, the one from the [`set-timeout`](#set-timeout) command is used.
 
 #### if
 
@@ -1682,7 +1682,7 @@ reload: 12000 // reload the current page with a timeout of 12 seconds
 reload: 0 // disable timeout, be careful when using it!
 ```
 
-Please note that if no `timeout` is specified, the one from the [`timeout`](#timeout) command is used.
+Please note that if no `timeout` is specified, the one from the [`set-timeout`](#set-timeout) command is used.
 
 #### screenshot
 
@@ -2141,7 +2141,7 @@ For more information about variables, read the [variables section](#variables).
 
 **wait-for** command waits for a given duration or for an element to exist. It expects a CSS selector or an XPath or a duration in milliseconds.
 
-**/!\\** Be careful when using it: if the given selector is never created, the test will timeout after 30 seconds by default (can be changed with the [`timeout`](#timeout) command).
+**/!\\** Be careful when using it: if the given selector is never created, the test will timeout after 30 seconds by default (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2163,7 +2163,7 @@ If you want to wait for an element to be removed, take a look at [`wait-for-fals
 
 **wait-for-false** command waits for an element to not exist. It expects a CSS selector or an XPath.
 
-**/!\\** Be careful when using it: if the given selector exists and never gets removed, the test will timeout after 30 seconds by default (can be changed with the [`timeout`](#timeout) command).
+**/!\\** Be careful when using it: if the given selector exists and never gets removed, the test will timeout after 30 seconds by default (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2181,7 +2181,7 @@ If you want to wait for an element to be created, take a look at [`wait-for`](#w
 
 #### wait-for-attribute
 
-**wait-for-attribute** command waits for the given element to have the expected values for the given attributes. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-attribute** command waits for the given element to have the expected values for the given attributes. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2225,7 +2225,7 @@ If you want to wait for attributes to be created or to not have the expected val
 
 #### wait-for-attribute-false
 
-**wait-for-attribute-false** command waits for at least one of the provided attributes value to be different. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-attribute-false** command waits for at least one of the provided attributes value to be different. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2313,7 +2313,7 @@ wait-for-clipboard-false: ("hello", [CONTAINS, STARTS_WITH])
 
 #### wait-for-count
 
-**wait-for-count** command waits for the page to contain exactly the number of elements which match the provided selector. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-count** command waits for the page to contain exactly the number of elements which match the provided selector. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2328,7 +2328,7 @@ If you want to wait for the number of elements to not be there, take a look at [
 
 #### wait-for-count-false
 
-**wait-for-count-false** command waits for the page to not contain the number of elements which match the provided selector. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-count-false** command waits for the page to not contain the number of elements which match the provided selector. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2343,7 +2343,7 @@ If you want to wait for the number of elements, take a look at [`wait-for-count`
 
 #### wait-for-css
 
-**wait-for-css** command waits for the given element to have the expected values for the provided CSS keys. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-css** command waits for the given element to have the expected values for the provided CSS keys. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2368,7 +2368,7 @@ If you want to wait for the CSS keys to not have the expected values, take a loo
 
 #### wait-for-css-false
 
-**wait-for-css-false** command waits for the given element for at least one of the provided CSS keys to not not have the expected value. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-css-false** command waits for the given element for at least one of the provided CSS keys to not not have the expected value. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2393,7 +2393,7 @@ If you want to wait for all the CSS keys to have the expected values, take a loo
 
 #### wait-for-document-property
 
-**wait-for-document-property** command waits for the document objects properties to have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-document-property** command waits for the document objects properties to have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2418,7 +2418,7 @@ If you want to wait for at least one of the properties to not have the expected 
 
 #### wait-for-document-property-false
 
-**wait-for-document-property-false** command waits for at least one of the document objects properties to not have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-document-property-false** command waits for at least one of the document objects properties to not have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2443,7 +2443,7 @@ If you want to wait for all properties to have the expected value, take a look a
 
 #### wait-for-local-storage
 
-**wait-for-local-storage** command waits for the local storage keys to have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-local-storage** command waits for the local storage keys to have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2459,7 +2459,7 @@ If you want to wait for any of the keys to not have the expected values, take a 
 
 #### wait-for-local-storage-false
 
-**wait-for-local-storage-false** command waits for any of the local storage keys to not have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-local-storage-false** command waits for any of the local storage keys to not have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2505,7 +2505,7 @@ If you want to wait for the element(s) position to match the expected values, ta
 
 #### wait-for-property
 
-**wait-for-property** command waits for the given element(s) to have the expected values for the given properties. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-property** command waits for the given element(s) to have the expected values for the given properties. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2552,7 +2552,7 @@ If you want to wait for any of the properties to not be the provided ones, take 
 
 #### wait-for-property-false
 
-**wait-for-property-false** command waits for any of the given element(s) to not have the expected values for the given properties. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-property-false** command waits for any of the given element(s) to not have the expected values for the given properties. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2641,7 +2641,7 @@ size, the padding and the border.
 
 #### wait-for-text
 
-**wait-for-text** command waits for the given element(s) to have the expected text. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-text** command waits for the given element(s) to have the expected text. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2669,7 +2669,7 @@ If you want to wait for any of the given element(s) to not have the expected tex
 
 #### wait-for-text-false
 
-**wait-for-text-false** command waits for any of the given element(s) to not have the expected text. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-text-false** command waits for any of the given element(s) to not have the expected text. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2697,7 +2697,7 @@ If you want to wait for the given element(s) to have the expected text, take a l
 
 #### wait-for-window-property
 
-**wait-for-window-property** command waits for the window objects properties to have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-window-property** command waits for the window objects properties to have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
@@ -2722,7 +2722,7 @@ If you want to wait for at least one of the properties to not have the expected 
 
 #### wait-for-window-property-false
 
-**wait-for-window-property-false** command waits for at least one of the window objects properties to not have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`timeout`](#timeout) command).
+**wait-for-window-property-false** command waits for at least one of the window objects properties to not have the expected values. It'll wait up to 30 seconds by default before failing (can be changed with the [`set-timeout`](#set-timeout) command).
 
 Examples:
 
