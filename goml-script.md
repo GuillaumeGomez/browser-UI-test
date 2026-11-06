@@ -854,9 +854,9 @@ Apart from "ALL", you can also use "CONTAINS", "ENDS_WITH" and "STARTS_WITH" and
 ```
 assert-text-false: (".class", "hello", CONTAINS)
 // To check that no ".class" element contains "hello":
-assert-text: (".class", "hello", [ALL, CONTAINS])
+assert-text-false: (".class", "hello", [ALL, CONTAINS])
 // To check that all ".class" elements don't start nor end with "hello":
-assert-text: (".class", "hello", [ALL, STARTS_WITH, ENDS_WITH])
+assert-text-false: (".class", "hello", [ALL, STARTS_WITH, ENDS_WITH])
 ```
 
 Please note that if you want to compare DOM elements, you should take a look at the [`compare-elements-false`](#compare-elements-text-false) command.
@@ -1555,9 +1555,9 @@ Please note that if no `timeout` is specified, the one from the [`set-timeout`](
 **history-go-forward** command goes back to the next page in the browser history. If there no next page, it'll fail (if you want to check that, take a look at [`expect-failure`](#expect-failure)). Example:
 
 ```
-history-go-back:
-history-go-back: 12000 // wait for the previous page in history to render with a timeout of 12 seconds
-history-go-back: 0 // disable timeout, be careful when using it!
+history-go-forward:
+history-go-forward: 12000 // wait for the previous page in history to render with a timeout of 12 seconds
+history-go-forward: 0 // disable timeout, be careful when using it!
 ```
 
 Please note that if no `timeout` is specified, the one from the [`set-timeout`](#set-timeout) command is used.
@@ -1962,7 +1962,7 @@ show-text: true // text won't be invisible anymore
 **store-attribute** command stores an element's attribute into a variable. Examples:
 
 ```
-store-attribute: ("#button", {"id": variable_name})
+store-attribute: ("#button", {"id": variable})
 assert: |variable| == "button"
 
 // You can set multiple variables at once too:
@@ -2049,7 +2049,7 @@ For more information about variables, read the [variables section](#variables).
 ```
 store-position: ("#button", {"x": x})
 store-position: ("#button", {"y": variable})
-assert: |width| == 30 && |variable| == 10
+assert: |x| == 30 && |variable| == 10
 
 // It could be written like this too:
 store-position: ("#button", {"x": x, "y": var2})
